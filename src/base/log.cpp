@@ -20,6 +20,11 @@
 namespace
 {
 
+void clearLogSettings()
+{
+    boost::log::core::get()->remove_all_sinks();
+}
+
 void setLogLevel(base::LogLevel logLevel)
 {
     switch(logLevel) {
@@ -78,16 +83,18 @@ void setTerminalSettings()
 
 void disableLogger()
 {
-    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::fatal);
+    boost::log::core::get()->set_filter(boost::log::trivial::severity > boost::log::trivial::fatal);
 }
 
-}
+} // namespace
 
 namespace base
 {
 
 void initLog(base::LogLevel logLevel, size_t mode)
 {
+    clearLogSettings();
+
     if(!mode) {
         std::cout << "WARNING: LOG OUTPUT IS DISABLED" << std::endl; // TODO: remove later
         disableLogger();
@@ -108,4 +115,4 @@ void initLog(base::LogLevel logLevel, size_t mode)
     boost::log::add_common_attributes();
 }
 
-}
+} // namespace base
