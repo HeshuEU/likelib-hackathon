@@ -20,7 +20,7 @@
 namespace
 {
 
-void clearLogSettings()
+void clearLoggerSettings()
 {
     boost::log::core::get()->remove_all_sinks();
 }
@@ -52,7 +52,7 @@ void formatter(boost::log::record_view const& rec, boost::log::formatting_ostrea
     strm << " |" << rec[boost::log::trivial::severity] << "| " << rec[boost::log::expressions::smessage];
 }
 
-void setLogFileSettings()
+void setFileSink()
 {
     using textFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
 
@@ -70,7 +70,7 @@ void setLogFileSettings()
     boost::log::core::get()->add_sink(sink);
 }
 
-void setTerminalSettings()
+void setStdoutSink()
 {
     using text_sink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_ostream_backend>;
 
@@ -93,7 +93,7 @@ namespace base
 
 void initLog(base::LogLevel logLevel, size_t mode)
 {
-    clearLogSettings();
+    clearLoggerSettings();
 
     if(!mode) {
         std::cout << "WARNING: LOG OUTPUT IS DISABLED" << std::endl; // TODO: remove later
@@ -103,12 +103,12 @@ void initLog(base::LogLevel logLevel, size_t mode)
 
     setLogLevel(logLevel);
 
-    if(mode & base::TERMINAL) {
-        setTerminalSettings();
-        std::cout << "WARNING: TERMINAL LOG OUTPUT INITED" << std::endl; // TODO: remove later
+    if(mode & base::Sink::STDOUT) {
+        setStdoutSink();
+        std::cout << "WARNING: STDOUT LOG OUTPUT INITED" << std::endl; // TODO: remove later
     }
-    if(mode & base::FILE) {
-        setLogFileSettings();
+    if(mode & base::Sink::FILE) {
+        setFileSink();
         std::cout << "WARNING: FILE LOG OUTPUT INITED" << std::endl; // TODO: remove later
     }
 

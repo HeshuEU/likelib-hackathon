@@ -2,6 +2,8 @@
 
 #include <boost/log/trivial.hpp>
 
+#include <cstddef>
+
 namespace base
 {
 
@@ -14,12 +16,16 @@ enum class LogLevel
     ERROR
 };
 
-static constexpr const size_t DISABLE = 0;
-static constexpr const size_t TERMINAL = 1;
-static constexpr const size_t FILE = 2;
+
+namespace Sink
+{
+static constexpr const std::size_t DISABLE = 0;
+static constexpr const std::size_t STDOUT = 1;
+static constexpr const std::size_t FILE = 2;
+}
 
 
-void initLog(LogLevel logLevel = LogLevel::ALL, size_t mode = FILE);
+void initLog(LogLevel logLevel = LogLevel::ALL, std::size_t mode = Sink::FILE);
 } // namespace base
 
 #define LOG_TRACE BOOST_LOG_TRIVIAL(trace)

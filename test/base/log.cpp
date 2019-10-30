@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(log_plain_usage)
 BOOST_AUTO_TEST_CASE(log_init_file_and_terminal)
 {
     std::cout << "Note: expected enable file and terminal log outputs" << std::endl;
-    base::initLog(base::LogLevel::ERROR, base::FILE | base::TERMINAL);
+    base::initLog(base::LogLevel::ERROR, base::Sink::FILE | base::Sink::STDOUT);
     LOG_TRACE << "test message for trace log fn";
     LOG_DEBUG << "test message for debug log fn";
     LOG_INFO << "test message for info log fn";
@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(log_init_file_and_terminal)
 BOOST_AUTO_TEST_CASE(log_init_terminal)
 {
     std::cout << "Note: expected enable terminal log output" << std::endl;
-    base::initLog(base::LogLevel::ERROR, base::TERMINAL);
+    base::initLog(base::LogLevel::ERROR, base::Sink::STDOUT);
     LOG_TRACE << "test message for trace log fn";
     LOG_DEBUG << "test message for debug log fn";
     LOG_INFO << "test message for info log fn";
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(log_init_terminal)
 BOOST_AUTO_TEST_CASE(log_disable)
 {
     std::cout << "Note: expected disable log outputs" << std::endl;
-    base::initLog(base::LogLevel::ERROR, base::DISABLE);
+    base::initLog(base::LogLevel::ERROR, base::Sink::DISABLE);
     LOG_TRACE << "test message for trace log fn";
     LOG_DEBUG << "test message for debug log fn";
     LOG_INFO << "test message for info log fn";
