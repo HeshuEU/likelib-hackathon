@@ -12,6 +12,8 @@
 
 #include <boost/log/support/date_time.hpp>
 
+#include <boost/core/null_deleter.hpp>
+
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -75,6 +77,9 @@ void setStdoutSink()
     using text_sink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_ostream_backend>;
 
     boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
+
+    boost::shared_ptr<std::ostream> stream(&std::clog, boost::null_deleter());
+    sink->locked_backend()->add_stream(stream);
 
     sink->set_formatter(&formatter);
 
