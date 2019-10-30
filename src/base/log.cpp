@@ -1,5 +1,7 @@
 #include "log.hpp"
 
+#include "base/config.hpp"
+
 #include <boost/log/sources/record_ostream.hpp>
 
 #include <boost/log/sinks/text_ostream_backend.hpp>
@@ -15,31 +17,25 @@
 #include <boost/log/expressions.hpp>
 
 
-namespace base
+namespace
 {
 
-static constexpr const char* LOG_FILE_FORMAT = "app_%m-%d-%Y_%H:%M.log";
-static constexpr const char* LOG_FOLDER = "logs";
-static constexpr const int LOG_FILE_MAX_SIZE = 6 * 1024 * 1024;
-static constexpr const int LOG_FILE_MIN_SPACE = 100 * 1024 * 1024;
-static constexpr const int MAX_LOG_FILE_COUNT = 512;
-
-void setLogLevel(LogLevel logLevel)
+void setLogLevel(base::LogLevel logLevel)
 {
     switch(logLevel) {
-        case LogLevel::ALL:
+        case base::LogLevel::ALL:
             boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::trace);
             break;
-        case LogLevel::DEBUG:
+        case base::LogLevel::DEBUG:
             boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::debug);
             break;
-        case LogLevel::INFO:
+        case base::LogLevel::INFO:
             boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
             break;
-        case LogLevel::WARNING:
+        case base::LogLevel::WARNING:
             boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::warning);
             break;
-        case LogLevel::ERROR:
+        case base::LogLevel::ERROR:
             boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::error);
             break;
     }
@@ -55,12 +51,14 @@ void setLogFileSettings()
 {
     using textFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
 
-    boost::shared_ptr<textFileSink> sink(new textFileSink(boost::log::keywords::file_name = LOG_FILE_FORMAT));
+    boost::shared_ptr<textFileSink> sink(
+        new textFileSink(boost::log::keywords::file_name = base::config::LOG_FILE_FORMAT));
 
-    sink->locked_backend()->set_file_collector(boost::log::sinks::file::make_collector(
-        boost::log::keywords::target = LOG_FOLDER, boost::log::keywords::max_size = LOG_FILE_MAX_SIZE,
-        boost::log::keywords::min_free_space = LOG_FILE_MIN_SPACE,
-        boost::log::keywords::max_files = MAX_LOG_FILE_COUNT));
+    sink->locked_backend()->set_file_collector(
+        boost::log::sinks::file::make_collector(boost::log::keywords::target = base::config::LOG_FOLDER,
+                                                boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
+                                                boost::log::keywords::min_free_space = base::config::LOG_FILE_MIN_SPACE,
+                                                boost::log::keywords::max_files = base::config::MAX_LOG_FILE_COUNT));
 
     sink->set_formatter(&formatter);
 
@@ -83,26 +81,31 @@ void disableLogger()
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::fatal);
 }
 
-void initLog(LogLevel logLevel, size_t mode)
+}
+
+namespace base
+{
+
+void initLog(base::LogLevel logLevel, size_t mode)
 {
     if(!mode) {
-        std::cout << "WARNING: LOG OUTPUT IS DISABLED" << std::endl;
+        std::cout << "WARNING: LOG OUTPUT IS DISABLED" << std::endl; // TODO: remove later
         disableLogger();
         return;
     }
 
     setLogLevel(logLevel);
 
-    if(mode & TERMINAL) {
+    if(mode & base::TERMINAL) {
         setTerminalSettings();
-        std::cout << "WARNING: TERMINAL LOG OUTPUT INITED" << std::endl;
+        std::cout << "WARNING: TERMINAL LOG OUTPUT INITED" << std::endl; // TODO: remove later
     }
-    if(mode & FILE) {
+    if(mode & base::FILE) {
         setLogFileSettings();
-        std::cout << "WARNING: FILE LOG OUTPUT INITED" << std::endl;
+        std::cout << "WARNING: FILE LOG OUTPUT INITED" << std::endl; // TODO: remove later
     }
 
     boost::log::add_common_attributes();
 }
 
-} // namespace base
+}
