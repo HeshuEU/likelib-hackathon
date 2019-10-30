@@ -12,7 +12,21 @@ constexpr bool IS_DEBUG = true;
 //------------------------
 
 // OS_NAME definition
-constexpr const char* const OS_NAME = "Linux";
+constexpr const char* const OS_NAME =
+#if defined(_WIN32) || defined(_WIN64)
+    "Windows"
+#elif defined(__APPLE__) || defined(__MACH__)
+    "Mac OSX"
+#elif defined(__linux__)
+    "Linux"
+#elif defined(__FreeBSD__)
+    "FreeBSD"
+#elif defined(__unix) || defined(__unix__)
+    "Unix"
+#else
+    static_assert(false, "cannot determine OS")
+#endif
+    ;
 //------------------------
 
 // logging configuration
