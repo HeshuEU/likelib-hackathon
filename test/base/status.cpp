@@ -16,7 +16,7 @@ base::Status someFunction(int x)
     }
 }
 
-}
+} // namespace
 
 
 BOOST_AUTO_TEST_CASE(status_usage)
