@@ -44,4 +44,4 @@ ErrorCode Error::getErrorCode() const noexcept
     return _error_code;
 }
 
-}
+} // namespace base

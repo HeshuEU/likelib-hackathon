@@ -15,4 +15,4 @@ Status Status::Error(Args&&... args)
 }
 
 
-}
+} // namespace base

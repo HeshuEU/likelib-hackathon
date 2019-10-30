@@ -40,4 +40,4 @@ Status::operator bool() const noexcept
 }
 
 
-}
+} // namespace base

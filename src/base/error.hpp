@@ -13,12 +13,17 @@ class Error
 {
   public:
     Error(const std::string& message);
+
     Error(const ErrorCode& ec, const std::string& message = {});
+
     Error(const Error&) = default;
+
     Error(Error&&) = default;
+
     ~Error() = default;
 
     Error& operator=(const Error&) = default;
+
     Error& operator=(Error&&) = default;
 
     const std::string& what() const noexcept;
