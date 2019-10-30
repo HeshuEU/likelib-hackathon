@@ -2,6 +2,8 @@
 
 #include "result.hpp"
 
+#include "assert.hpp"
+
 #include <utility>
 
 
@@ -18,14 +20,14 @@ Result<T> Result<T>::ok(Args&&... args)
 
 
 template<typename T>
-Result<T> Result<T>::error(const Error& error)
+Result<T> Result<T>::fail(const Error& error)
 {
     return Result<T>{error};
 }
 
 
 template<typename T>
-Result<T> Result<T>::error(Error&& error)
+Result<T> Result<T>::fail(Error&& error)
 {
     return Result<T>{std::move(error)};
 }
@@ -42,17 +44,14 @@ Result<T>::Result(base::Error&& error) : _value(std::in_place_index<1>, std::mov
 
 
 template<typename T>
-template<typename... Args>
-Result<T>::Result(Args&&... args) : _value(std::in_place_index<0>, std::forward<Args>(args)...)
-{}
-
-template<typename T>
 Result<T>::Result(const T& v) : _value(std::in_place_index<0>, v)
 {}
+
 
 template<typename T>
 Result<T>::Result(T&& v) : _value(std::in_place_index<0>, std::move(v))
 {}
+
 
 template<typename T>
 bool Result<T>::isOk() const noexcept
@@ -97,49 +96,37 @@ Result<T>::operator T() const
 template<typename T>
 const base::Error& Result<T>::getError() const&
 {
-    if(!isError()) {
-        throw base::Error{base::ErrorCode::VALUE_TO_ERROR};
-    }
-    else {
-        return std::get<1>(_value);
-    }
+    CHECK(isError(), base::EnumToString(base::ErrorCode::VALUE_TO_ERROR));
+
+    return std::get<1>(_value);
 }
 
 
 template<typename T>
 base::Error&& Result<T>::getError() &&
 {
-    if(!isError()) {
-        throw base::Error{base::ErrorCode::VALUE_TO_ERROR};
-    }
-    else {
-        return std::get<1>(std::move(_value));
-    }
+    CHECK(isError(), base::EnumToString(base::ErrorCode::VALUE_TO_ERROR));
+
+    return std::get<1>(std::move(_value));
 }
 
 
 template<typename T>
 const T& Result<T>::getValue() const&
 {
-    if(isError()) {
-        throw base::Error{base::ErrorCode::ERROR_TO_VALUE};
-    }
-    else {
-        return std::get<0>(_value);
-    }
+    CHECK(isOk(), base::EnumToString(base::ErrorCode::ERROR_TO_VALUE));
+
+    return std::get<0>(_value);
 }
 
 
 template<typename T>
 T&& Result<T>::getValue() &&
 {
-    if(isError()) {
-        throw base::Error{base::ErrorCode::ERROR_TO_VALUE};
-    }
-    else {
-        return std::get<0>(std::move(_value));
-    }
+    CHECK(isOk(), base::EnumToString(base::ErrorCode::ERROR_TO_VALUE));
+
+    return std::get<0>(std::move(_value));
 }
 
 
-}
+} // namespace base

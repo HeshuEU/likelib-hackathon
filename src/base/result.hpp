@@ -16,14 +16,15 @@ class Result
     template<typename... Args>
     static Result<T> ok(Args&&... args);
 
-    static Result<T> error(const Error&);
-    static Result<T> error(Error&&);
+    static Result<T> fail(const Error&);
+    static Result<T> fail(Error&&);
     //----------------
     Result<T>(const T&);
     Result<T>(T&&);
 
-    template<typename... Args>
-    Result<T>(Args&&... args);
+    //template<typename... Args>
+    //Result<T>(Args&&... args);
+
 
     Result<T>(const base::Error& error);
     Result<T>(base::Error&& error);
@@ -62,5 +63,7 @@ class Result
 };
 
 } // namespace base
+
+#define RETURN_IF_ERROR_RESULT(result) if(!(result)) return (result).getError()
 
 #include "result.tpp"
