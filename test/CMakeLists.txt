@@ -5,8 +5,9 @@ set(TEST_SOURCES
         base/result.cpp
         base/log.cpp
         base/plain_result_use.cpp
+        node/rpc/base_rpc.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})
 
-target_link_libraries(run_tests base Boost::unit_test_framework)
+target_link_libraries(run_tests base rpc Boost::unit_test_framework)
