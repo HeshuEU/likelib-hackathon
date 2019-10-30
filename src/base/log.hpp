@@ -19,10 +19,10 @@ enum class LogLevel
 
 namespace Sink
 {
-static constexpr const std::size_t DISABLE = 0;
-static constexpr const std::size_t STDOUT = 1;
-static constexpr const std::size_t FILE = 2;
-}
+    static constexpr const std::size_t DISABLE = 0;
+    static constexpr const std::size_t STDOUT = 1;
+    static constexpr const std::size_t FILE = 2;
+} // namespace Sink
 
 
 void initLog(LogLevel logLevel = LogLevel::ALL, std::size_t mode = Sink::FILE);
