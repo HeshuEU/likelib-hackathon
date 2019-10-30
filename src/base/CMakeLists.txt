@@ -1,4 +1,5 @@
 set(BASE_HEADERS
+        assert.hpp
         error.hpp
         stringifiable_enum_class.hpp
         status.hpp

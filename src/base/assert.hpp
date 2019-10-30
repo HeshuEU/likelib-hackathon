@@ -1,3 +1,10 @@
 #pragma once
 
-#define ASSERT(condition, message) do { if(!(condition)) {  } } while(0)
+#include <cassert>
+
+#define CHECK(condition, message) \
+    do { \
+        if(!(condition)) { \
+            assert(false); \
+        } \
+    } while(0)
