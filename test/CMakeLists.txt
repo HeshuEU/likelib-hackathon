@@ -5,7 +5,7 @@ set(TEST_SOURCES
         base/result.cpp
         base/log.cpp
         base/plain_result_use.cpp
-        node/rpc/base_rpc.cpp
+        rpc/base_rpc.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})
