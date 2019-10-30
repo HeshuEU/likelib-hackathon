@@ -28,7 +28,8 @@ Error::Error(const std::string& message) : _error_code{ErrorCode::NONE}, _messag
 {}
 
 
-Error::Error(const ErrorCode& ec, const std::string& message) : _error_code{ec}, _message{buildMessage(_error_code, message)}
+Error::Error(const ErrorCode& ec, const std::string& message)
+    : _error_code{ec}, _message{buildMessage(_error_code, message)}
 {}
 
 

@@ -43,4 +43,7 @@ class Status
 
 } // namespace base
 
+#define RETURN_IF_ERROR_STATUS(status) if(!(status)) return (status).getError()
+
+
 #include "status.tpp"
