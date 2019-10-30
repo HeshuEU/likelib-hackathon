@@ -14,7 +14,12 @@ enum class LogLevel
     ERROR
 };
 
-void initLog(LogLevel logLevel = LogLevel::ALL);
+static constexpr const size_t DISABLE = 0;
+static constexpr const size_t TERMINAL = 1;
+static constexpr const size_t FILE = 2;
+
+
+void initLog(LogLevel logLevel = LogLevel::ALL, size_t mode = FILE);
 } // namespace base
 
 #define LOG_TRACE BOOST_LOG_TRIVIAL(trace)

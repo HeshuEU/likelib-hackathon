@@ -78,11 +78,30 @@ void setTerminalSettings()
     boost::log::core::get()->add_sink(sink);
 }
 
-void initLog(LogLevel logLevel)
+void disableLogger()
 {
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::fatal);
+}
+
+void initLog(LogLevel logLevel, size_t mode)
+{
+    if(!mode) {
+        std::cout << "WARNING: LOG OUTPUT IS DISABLED" << std::endl;
+        disableLogger();
+        return;
+    }
+
     setLogLevel(logLevel);
-    setLogFileSettings();
-    setTerminalSettings();
+
+    if(mode & TERMINAL) {
+        setTerminalSettings();
+        std::cout << "WARNING: TERMINAL LOG OUTPUT INITED" << std::endl;
+    }
+    if(mode & FILE) {
+        setLogFileSettings();
+        std::cout << "WARNING: FILE LOG OUTPUT INITED" << std::endl;
+    }
+
     boost::log::add_common_attributes();
 }
 
