@@ -1,5 +1,7 @@
 #include "error.hpp"
 
+#include <ostream>
+
 namespace
 {
 
@@ -33,15 +35,26 @@ Error::Error(const ErrorCode& ec, const std::string& message)
 {}
 
 
-const std::string& Error::what() const noexcept
+const std::string& Error::toStdString() const noexcept
 {
     return _message;
+}
+
+
+const char* Error::what() const noexcept
+{
+    return _message.c_str();
 }
 
 
 ErrorCode Error::getErrorCode() const noexcept
 {
     return _error_code;
+}
+
+std::ostream& operator<<(std::ostream& os, const Error& error)
+{
+    return os << error.what();
 }
 
 } // namespace base

@@ -17,6 +17,8 @@ class Status
     static Status Error(Args&&... args);
 
     //=====================
+    explicit Status(const base::Error& error);
+
     Status(const Status&) = default;
 
     Status& operator=(const Status&) = default;
@@ -38,8 +40,6 @@ class Status
   private:
     //=====================
     Status();
-
-    Status(const base::Error& error);
 
     //=====================
     bool _is_ok;
