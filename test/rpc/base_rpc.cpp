@@ -1,10 +1,10 @@
 #include <boost/test/unit_test.hpp>
 
-#include "rpc/base_rpc_server.hpp"
-#include "rpc/base_rpc_client.hpp"
+#include "rpc/base_server.hpp"
+#include "rpc/base_client.hpp"
 
 
-class TestServer : public BaseServer
+class TestServer : public rpc::BaseServer
 {
   public:
     base::BalanceIntType balance(const base::Address& address) override

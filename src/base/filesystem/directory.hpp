@@ -14,4 +14,7 @@ class Directory : public std::filesystem::path
 };
 
 
+void createIfNotExists(const Directory& directory);
+
+
 } // namespace base
