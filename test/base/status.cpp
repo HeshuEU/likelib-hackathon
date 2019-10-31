@@ -12,7 +12,7 @@ base::Status someFunction(int x)
         return base::Status::Ok();
     }
     else {
-        return base::Status::Error({base::ErrorCode::INVALID_PARAMETER, "is not even"});
+        return base::Status::Error({base::ErrorCode::INVALID_ARGUMENT, "is not even"});
     }
 }
 

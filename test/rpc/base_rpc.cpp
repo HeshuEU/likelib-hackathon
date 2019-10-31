@@ -6,7 +6,7 @@
 class TestServer : public BaseRpcServer
 {
   public:
-    int balance(const std::string& address) override
+    base::BalanceIntType balance(const std::string& address) override
     {
         return 1;
     }
@@ -24,7 +24,7 @@ class TestClient : public BaseRpcClient
     explicit TestClient(TestServer* const server) : _server(server)
     {}
 
-    int balance(const std::string& address) override
+    base::BalanceIntType balance(const std::string& address) override
     {
         return _server->balance(address);
     }
