@@ -1,12 +1,19 @@
 #pragma once
 
+#include "base/address.hpp"
 #include "base/types.hpp"
 
 #include <string>
 
-class BaseRpcClient
+namespace rpc
+{
+
+class BaseClient
 {
   public:
-    virtual base::BalanceIntType balance(const std::string& address) = 0;
-    virtual std::string transaction(int amount, const std::string& from_address, const std::string& to_address) = 0;
+    virtual base::BalanceIntType balance(const base::Address& address) = 0;
+    virtual std::string transaction(base::BalanceIntType amount, const base::Address& from_address,
+                                    const base::Address& to_address) = 0;
 };
+
+} // namespace rpc

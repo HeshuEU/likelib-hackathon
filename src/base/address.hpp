@@ -5,9 +5,8 @@ namespace base
 
 class Address
 {
-public:
-
-private:
+  public:
+  private:
 };
 
-}
+} // namespace base

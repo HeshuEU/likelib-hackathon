@@ -5,10 +5,10 @@
 namespace
 {
 
-std::string buildMessage(const base::ErrorCode& ec, const std::string& message)
+std::string buildMessage(const base::StatusCode& ec, const std::string& message)
 {
     std::string ret;
-    if(ec != base::ErrorCode::NONE) {
+    if(ec != base::StatusCode::NONE) {
         ret += base::EnumToString(ec);
     }
     if(!message.empty()) {
@@ -26,11 +26,11 @@ std::string buildMessage(const base::ErrorCode& ec, const std::string& message)
 namespace base
 {
 
-Error::Error(const std::string& message) : _error_code{ErrorCode::NONE}, _message{buildMessage(_error_code, message)}
+Error::Error(const std::string& message) : _error_code{StatusCode::NONE}, _message{buildMessage(_error_code, message)}
 {}
 
 
-Error::Error(const ErrorCode& ec, const std::string& message)
+Error::Error(const StatusCode& ec, const std::string& message)
     : _error_code{ec}, _message{buildMessage(_error_code, message)}
 {}
 
@@ -47,7 +47,7 @@ const char* Error::what() const noexcept
 }
 
 
-ErrorCode Error::getErrorCode() const noexcept
+StatusCode Error::getStatusCode() const noexcept
 {
     return _error_code;
 }
