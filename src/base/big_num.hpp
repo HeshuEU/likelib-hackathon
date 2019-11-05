@@ -29,7 +29,7 @@ namespace base
 
         //----------------------------------
 
-        const std::ostream& operator<<(const std::ostream&) const noexcept;
+        const std::ostream& operator<<(std::ostream&) const noexcept;
 
         std::istream& operator>>(std::istream&);
 

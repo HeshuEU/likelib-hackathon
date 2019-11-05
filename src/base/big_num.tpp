@@ -10,9 +10,9 @@ namespace base
     {}
 
     template<typename T>
-    const std::ostream& BigNum<T>::operator<<(const std::ostream& output) const noexcept
+    const std::ostream& BigNum<T>::operator<<(std::ostream& output) const noexcept
     {
-        return output << _number.str;
+        return output << _number.str();
     }
 
     template<typename T>
@@ -21,6 +21,7 @@ namespace base
         std::string str;
         input >> str;
         _number = boost::multiprecision::number<T>(str);
+        return input;
     }
 
     template<typename T>
@@ -122,6 +123,6 @@ namespace base
     template<typename T>
     std::string BigNum<T>::toString() const noexcept
     {
-        return _number.str;
+        return _number.str();
     }
 }
