@@ -1,5 +1,6 @@
 set(TEST_SOURCES
         main.cpp
+        base/big_num.cpp
         base/error_codes.cpp
         base/status.cpp
         base/result.cpp
