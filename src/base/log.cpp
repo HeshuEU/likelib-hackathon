@@ -12,21 +12,19 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 
-
 #include <ctime>
 
 namespace
 {
-
 
 std::string dateAsString()
 {
     std::time_t rawtime;
     std::tm* timeinfo;
     char buffer[80];
-    std::time (&rawtime);
+    std::time(&rawtime);
     timeinfo = std::localtime(&rawtime);
-    std::strftime(buffer, sizeof(buffer),"%d-%m-%Y %H:%M:%S", timeinfo);
+    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", timeinfo);
     return buffer;
 }
 
