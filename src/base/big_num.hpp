@@ -2,8 +2,8 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 
-#include <ostream>
 #include <istream>
+#include <ostream>
 
 namespace base
 {
@@ -69,16 +69,16 @@ namespace base
     };
 
     template<typename T>
-    const std::ostream& operator<<(std::ostream&, const BigNum<T>&) noexcept;
+    std::ostream& operator<<(std::ostream&, const BigNum<T>&);
 
     template<typename T>
     std::istream& operator>>(std::istream&, const BigNum<T>&);
 
     using Uint256 = BigNum<boost::multiprecision::backends::cpp_int_backend<256, 256, 
-    boost::multiprecision::cpp_integer_type::unsigned_magnitude, boost::multiprecision::cpp_int_check_type::unchecked, void>>;
+    boost::multiprecision::cpp_integer_type::unsigned_magnitude, boost::multiprecision::cpp_int_check_type::checked, void>>;
 
     using Uint512 = BigNum<boost::multiprecision::backends::cpp_int_backend<512, 512, 
-    boost::multiprecision::cpp_integer_type::unsigned_magnitude, boost::multiprecision::cpp_int_check_type::unchecked, void>>;
+    boost::multiprecision::cpp_integer_type::unsigned_magnitude, boost::multiprecision::cpp_int_check_type::checked, void>>;
 }
 
 #include "big_num.tpp"

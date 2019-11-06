@@ -112,7 +112,7 @@ namespace base
     }
 
     template<typename T>
-    const std::ostream& operator<<(std::ostream& output, const BigNum<T>& big_num) noexcept
+    std::ostream& operator<<(std::ostream& output, const BigNum<T>& big_num)
     {
         return output << big_num.toString();
     }
