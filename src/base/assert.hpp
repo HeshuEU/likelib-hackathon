@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cassert>
+#include "base/config.hpp"
 
-#define CHECK(condition, message) \
-    do { \
-        if(!(condition)) { \
-            assert(false); \
-        } \
-    } while(0)
+#ifdef CONFIG_IS_DEBUG
+    #define CHECK(condition, message) \
+        throw base::Error{message}
+#else
+    #define CHECK(condition, message) do {} while(0)
+#endif
