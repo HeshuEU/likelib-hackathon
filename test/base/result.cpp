@@ -14,7 +14,7 @@ base::Result<int> someFunction(int x)
         return x / 2;
     }
     else {
-        return base::Error{base::ErrorCode::INVALID_PARAMETER, "is not even"};
+        return base::Error{base::StatusCode::INVALID_ARGUMENT, "is not even"};
     }
 }
 
@@ -51,7 +51,7 @@ namespace
 base::Result<std::string> buildUpString(bool gonna_fail)
 {
     if(gonna_fail) {
-        return base::Error(base::ErrorCode::INVALID_PARAMETER, "set to fail");
+        return base::Error(base::StatusCode::INVALID_ARGUMENT, "set to fail");
     }
     else {
         return "ab " + std::to_string(0x42) + " cd";
@@ -74,7 +74,7 @@ base::Status topMostFunction(bool gonna_fail)
         return base::Status::Ok();
     }
     else {
-        return base::Status::Error(base::ErrorCode::INVALID_PARAMETER);
+        return base::Status::Error(base::StatusCode::INVALID_ARGUMENT);
     }
 }
 } // namespace

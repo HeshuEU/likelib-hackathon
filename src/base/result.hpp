@@ -76,6 +76,6 @@ class Result
 
 #define RETURN_IF_ERROR_RESULT(result) \
     if(!(result)) \
-    return (result).getError()
+    return static_cast<decltype(result)&&>(result).getError()
 
 #include "result.tpp"

@@ -1,1 +1,1 @@
-## likelib
+## LikeLib 2.0

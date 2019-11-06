@@ -4,3 +4,6 @@
 # IDE
 .idea/*
 .vs/*
+
+# documentation
+doc/html/

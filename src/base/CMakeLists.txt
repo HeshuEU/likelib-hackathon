@@ -11,6 +11,9 @@ set(BASE_HEADERS
         assert.hpp
         config.hpp
         log.hpp
+        types.hpp
+        address.hpp
+        filesystem/directory.hpp
         )
 
 set(BASE_SOURCES
@@ -18,6 +21,8 @@ set(BASE_SOURCES
         status.cpp
         result.cpp
         log.cpp
+        address.cpp
+        filesystem/directory.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
