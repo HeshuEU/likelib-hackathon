@@ -5,15 +5,41 @@
 namespace base::config
 {
 
-// IS_DEBUG definition
+// constexpr IS_DEBUG definition
+constexpr bool IS_DEBUG =
 #if defined(NDEBUG)
-constexpr bool IS_DEBUG = false;
+        false
 #else
-constexpr bool IS_DEBUG = true;
+        true
+#endif
+;
+
+// constexpr IS_DEBUG definition && macro CONFIG_IS_DEBUG or CONFIG_IS_RELEASE definition
+#if defined(NDEBUG)
+#define CONFIG_IS_RELEASE
+#else
+#define CONFIG_IS_DEBUG
 #endif
 //------------------------
 
-// OS_NAME definition
+// macro CONFIG_OS_FAMILY_NAME definition
+#if defined(_WIN32) || defined(_WIN64)
+#define CONFIG_OS_FAMILY_WINDOWS
+#elif defined(__APPLE__) || defined(__MACH__)
+#define CONFIG_OS_FAMILY_MAC_OSX
+#elif defined(__linux__)
+#define CONFIG_OS_FAMILY_UNIX
+#elif defined(__FreeBSD__)
+#define CONFIG_OS_FAMILY_UNIX
+#elif defined(__unix) || defined(__unix__)
+#define CONFIG_OS_FAMILY_UNIX
+#else
+    static_assert(false, "cannot determine OS")
+#endif
+    ;
+//------------------------
+
+// constexpr OS_NAME definition
 constexpr const char* const OS_NAME =
 #if defined(_WIN32) || defined(_WIN64)
     "Windows"
@@ -25,11 +51,10 @@ constexpr const char* const OS_NAME =
     "FreeBSD"
 #elif defined(__unix) || defined(__unix__)
     "Unix"
-#else
-    static_assert(false, "cannot determine OS")
 #endif
     ;
 //------------------------
+
 
 // logging configuration
 static constexpr const char* LOG_FILE_FORMAT = "app_%m-%d-%Y_%H:%M.log";
