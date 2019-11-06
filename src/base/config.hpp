@@ -64,4 +64,9 @@ static constexpr const int LOG_FILE_MIN_SPACE = 100 * 1024 * 1024;
 static constexpr const int LOG_MAX_FILE_COUNT = 512;
 //------------------------
 
+// exit codes
+static constexpr int EXIT_OK = 0;
+static constexpr int EXIT_FAIL = 1;
+static constexpr int EXIT_ASSERT_FAILED = 2;
+
 } // namespace base::config
