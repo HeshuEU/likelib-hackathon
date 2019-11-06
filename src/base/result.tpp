@@ -96,7 +96,7 @@ Result<T>::operator T() const
 template<typename T>
 const base::Error& Result<T>::getError() const&
 {
-    CHECK(isError(), base::EnumToString(base::StatusCode::VALUE_TO_ERROR));
+    CHECK(isError());
 
     return std::get<1>(_value);
 }
@@ -105,7 +105,7 @@ const base::Error& Result<T>::getError() const&
 template<typename T>
 base::Error&& Result<T>::getError() &&
 {
-    CHECK(isError(), base::EnumToString(base::StatusCode::VALUE_TO_ERROR));
+    CHECK(isError());
 
     return std::get<1>(std::move(_value));
 }
@@ -114,7 +114,7 @@ base::Error&& Result<T>::getError() &&
 template<typename T>
 const T& Result<T>::getValue() const&
 {
-    CHECK(isOk(), base::EnumToString(base::StatusCode::ERROR_TO_VALUE));
+    CHECK(isOk());
 
     return std::get<0>(_value);
 }
@@ -123,7 +123,7 @@ const T& Result<T>::getValue() const&
 template<typename T>
 T&& Result<T>::getValue() &&
 {
-    CHECK(isOk(), base::EnumToString(base::StatusCode::ERROR_TO_VALUE));
+    CHECK(isOk());
 
     return std::get<0>(std::move(_value));
 }

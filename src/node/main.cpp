@@ -1,11 +1,14 @@
 #include "base/log.hpp"
+#include "base/assert.hpp"
 
 #include <exception>
 
-int main()
+int main(int argc, char** argv)
 {
     try {
         base::initLog(base::LogLevel::ALL, base::Sink::STDOUT | base::Sink::FILE);
+
+        CHECK(argc > 1);
 
         LOG_INFO << "Application startup";
     }
