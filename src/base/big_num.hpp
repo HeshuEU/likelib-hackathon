@@ -29,12 +29,6 @@ namespace base
 
         //----------------------------------
 
-        const std::ostream& operator<<(std::ostream&) const noexcept;
-
-        std::istream& operator>>(std::istream&);
-
-        //----------------------------------
-
         BigNum<T> operator+(const BigNum<T>&) const;
 
         BigNum<T> operator-(const BigNum<T>&) const;
@@ -74,6 +68,11 @@ namespace base
         boost::multiprecision::number<T> _number;
     };
 
+    template<typename T>
+    const std::ostream& operator<<(std::ostream&, const BigNum<T>&) noexcept;
+
+    template<typename T>
+    std::istream& operator>>(std::istream&, const BigNum<T>&);
 
     using Uint256 = BigNum<boost::multiprecision::backends::cpp_int_backend<256, 256, 
     boost::multiprecision::cpp_integer_type::unsigned_magnitude, boost::multiprecision::cpp_int_check_type::unchecked, void>>;

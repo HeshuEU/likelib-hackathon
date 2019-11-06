@@ -368,7 +368,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_iostream)
 {
     std::stringstream stream;
     base::Uint256 num1(777777);
-    num1 << stream;
+    stream << num1;
     std::string str;
     stream >> str;
     BOOST_CHECK(str == "777777");
