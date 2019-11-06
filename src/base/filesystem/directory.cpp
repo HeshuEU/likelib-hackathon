@@ -10,13 +10,13 @@ bool checkIfExistingDirectory(const std::filesystem::path& path)
     std::error_code ec;
     bool result = std::filesystem::exists(path, ec);
     if(ec) {
-        LOG_WARNING << base::Error{base::StatusCode::FUNCTION_CALL_FAILED, ec.message()};
+        LOG_WARNING << base::Error{base::ErrorCode::FUNCTION_CALL_FAILED, ec.message()};
         return false;
     }
 
     result = result && std::filesystem::is_directory(path, ec);
     if(ec) {
-        LOG_WARNING << base::Error{base::StatusCode::FUNCTION_CALL_FAILED, ec.message()};
+        LOG_WARNING << base::Error{base::ErrorCode::FUNCTION_CALL_FAILED, ec.message()};
         return false;
     }
 
