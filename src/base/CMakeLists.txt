@@ -23,6 +23,8 @@ set(BASE_SOURCES
         filesystem/directory.cpp
         )
 
+add_definitions(-DBOOST_STACKTRACE_USE_BACKTRACE)
+
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
 
-target_link_libraries(base Boost::log)
+target_link_libraries(base Boost::log dl backtrace)
