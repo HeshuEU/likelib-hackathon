@@ -3,24 +3,32 @@
 #include "base/config.hpp"
 
 #include <boost/log/sources/record_ostream.hpp>
-
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/sinks/text_file_backend.hpp>
-
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/file.hpp>
-
-#include <boost/log/support/date_time.hpp>
-
 #include <boost/core/null_deleter.hpp>
-
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 
 
+#include <ctime>
+
 namespace
 {
+
+
+std::string dateAsString()
+{
+    std::time_t rawtime;
+    std::tm* timeinfo;
+    char buffer[80];
+    std::time (&rawtime);
+    timeinfo = std::localtime(&rawtime);
+    std::strftime(buffer, sizeof(buffer),"%d-%m-%Y %H:%M:%S", timeinfo);
+    return buffer;
+}
 
 void clearLoggerSettings()
 {
@@ -50,8 +58,8 @@ void setLogLevel(base::LogLevel logLevel)
 
 void formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& strm)
 {
-    strm << boost::posix_time::second_clock::local_time();
-    strm << " |" << rec[boost::log::trivial::severity] << "| " << rec[boost::log::expressions::smessage];
+    strm << dateAsString() << " | " << rec[boost::log::trivial::severity] << " | "
+         << rec[boost::log::expressions::smessage];
 }
 
 void setFileSink()
