@@ -15,7 +15,7 @@ Status Status::Error(const base::Error& error)
 }
 
 
-Status::Status() : _is_ok{true}, _error{base::StatusCode::NONE}
+Status::Status() : _is_ok{true}, _error{base::ErrorCode::NONE}
 {}
 
 

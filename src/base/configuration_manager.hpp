@@ -1,8 +1,28 @@
-//
-// Created by siu on 6.11.19.
-//
+#pragma once
 
-#ifndef LIKELIB_CONFIGURATION_MANAGER_HPP
-#define LIKELIB_CONFIGURATION_MANAGER_HPP
+#include <boost/property_tree/ptree.hpp>
 
-#endif //LIKELIB_CONFIGURATION_MANAGER_HPP
+#include <filesystem>
+#include <string>
+
+namespace base
+{
+
+class Configuration
+{
+  public:
+    Configuration(const boost::property_tree::ptree& ptree);
+
+    bool hasKey(const std::string& path) const;
+
+    template<typename R>
+    R get(const std::string& path);
+
+  private:
+    boost::property_tree::ptree _ptree;
+};
+
+Configuration readConfig(const std::filesystem::path& config_file);
+} // namespace base
+
+#include "configuration_manager.tpp"

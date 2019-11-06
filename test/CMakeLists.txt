@@ -4,6 +4,7 @@ set(TEST_SOURCES
         base/status.cpp
         base/result.cpp
         base/log.cpp
+        base/configuration_manager.cpp
         base/plain_result_use.cpp
         rpc/base_rpc.cpp
         )
