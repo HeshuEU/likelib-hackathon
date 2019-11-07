@@ -60,7 +60,7 @@ std::ostream& operator<<(std::ostream& os, const Error& error);
         expr; \
     } \
     catch(const std::exception& e) { \
-        throw base::Error{std::string{message} + std::string{": "} + e.what()}; \
+        RAISE_ERROR(std::string{message} + std::string{": "} + e.what()); \
     }
 
 } // namespace base

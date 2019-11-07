@@ -18,7 +18,7 @@
 
 #define ASSERT_SOFT(condition) \
     if(!(condition)) { \
-        LOG_WARNING << "Soft check failed: " << #condition << '\n' << boost::stacktrace::stacktrace(); \
+        LOG_WARNING << "Soft assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace(); \
     }
 
 #else
