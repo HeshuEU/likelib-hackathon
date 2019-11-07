@@ -10,6 +10,10 @@ set(BASE_HEADERS
         filesystem/directory.hpp
         property_tree.hpp
         property_tree.tpp
+        network/connection_acceptor.hpp
+        network/connection.hpp
+        network/manager.hpp
+        bytes.hpp
         )
 
 set(BASE_SOURCES
@@ -18,9 +22,10 @@ set(BASE_SOURCES
         address.cpp
         filesystem/directory.cpp
         property_tree.cpp
+        network/connection_acceptor.cpp
+        network/connection.cpp
+        bytes.cpp
         )
-
-add_definitions(-DBOOST_STACKTRACE_USE_BACKTRACE)
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
 
