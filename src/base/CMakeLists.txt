@@ -2,10 +2,6 @@ set(BASE_HEADERS
         assert.hpp
         error.hpp
         stringifiable_enum_class.hpp
-        status.hpp
-        status.tpp
-        result.hpp
-        result.tpp
         assert.hpp
         config.hpp
         log.hpp
@@ -18,8 +14,6 @@ set(BASE_HEADERS
 
 set(BASE_SOURCES
         error.cpp
-        status.cpp
-        result.cpp
         log.cpp
         address.cpp
         filesystem/directory.cpp

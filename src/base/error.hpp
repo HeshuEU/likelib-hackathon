@@ -10,16 +10,10 @@
 
 namespace base
 {
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
-    ErrorCode,
-    (NONE)(INVALID_ARGUMENT)(FILE_NOT_FOUND)(SYSTEM_CALL_FAILED)(VALUE_TO_ERROR)(ERROR_TO_VALUE)(FUNCTION_CALL_FAILED));
-
 class Error : public std::exception
 {
   public:
     Error(const std::string& message);
-
-    Error(const ErrorCode& ec, const std::string& message = {});
 
     Error(const Error&) = default;
 
@@ -35,17 +29,38 @@ class Error : public std::exception
 
     const char* what() const noexcept override;
 
-    ErrorCode getErrorCode() const noexcept;
-
   private:
-    ErrorCode _error_code;
     std::string _message;
+};
+
+class InvalidArgument : public Error
+{
+    using Error::Error;
+};
+
+class UnaccessibleFile : public Error
+{
+    using Error::Error;
+};
+
+class SystemCallFailed : public Error
+{
+    using Error::Error;
 };
 
 std::ostream& operator<<(std::ostream& os, const Error& error);
 
 #define RAISE_ERROR(message) \
-    throw base::Error(std::string{__FILE__} + std::string{":"} + std::string{__LINE__} + \
-                      std::string{BOOST_CURRENT_FUNCTION} + std::string{" ::"} + (message))
+    throw base::Error(std::string{__FILE__} + std::string{":"} + std::to_string(__LINE__) + std::string{" :: "} + \
+                      std::string{BOOST_CURRENT_FUNCTION} + std::string{" :: "} + (message))
+
+
+#define CLARIFY_ERROR(expr, message) \
+    try { \
+        expr; \
+    } \
+    catch(const std::exception& e) { \
+        throw base::Error{std::string{message} + std::string{": "} + e.what()}; \
+    }
 
 } // namespace base
