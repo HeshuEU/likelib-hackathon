@@ -3,6 +3,7 @@ set(TEST_SOURCES
         base/log.cpp
         base/property_tree.cpp
         rpc/base_rpc.cpp
+        base/bytes.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})
