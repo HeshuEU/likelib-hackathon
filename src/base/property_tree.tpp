@@ -1,6 +1,6 @@
 #pragma once
 
-#include "configuration_manager.hpp"
+#include "property_tree.hpp"
 
 #include "base/error.hpp"
 
@@ -8,7 +8,7 @@ namespace base
 {
 
 template<typename R>
-R Configuration::get(const std::string& path)
+R PropertyTree::get(const std::string& path)
 {
     try {
         return _ptree.get<R>(std::string{path});

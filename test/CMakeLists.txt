@@ -1,7 +1,7 @@
 set(TEST_SOURCES
         main.cpp
         base/log.cpp
-        base/configuration_manager.cpp
+        base/property_tree.cpp
         rpc/base_rpc.cpp
         )
 

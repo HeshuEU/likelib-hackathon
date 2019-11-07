@@ -8,10 +8,10 @@
 namespace base
 {
 
-class Configuration
+class PropertyTree
 {
   public:
-    Configuration(const boost::property_tree::ptree& ptree);
+    PropertyTree(const boost::property_tree::ptree& ptree);
 
     bool hasKey(const std::string& path) const;
 
@@ -22,7 +22,7 @@ class Configuration
     boost::property_tree::ptree _ptree;
 };
 
-Configuration readConfig(const std::filesystem::path& config_file);
+PropertyTree readConfig(const std::filesystem::path& config_file);
 } // namespace base
 
-#include "configuration_manager.tpp"
+#include "property_tree.tpp"

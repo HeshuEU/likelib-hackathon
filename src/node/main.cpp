@@ -1,3 +1,6 @@
+#include "soft_config.hpp"
+#include "hard_config.hpp"
+
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
@@ -41,20 +44,27 @@ int main(int argc, char** argv)
         base::initLog(base::LogLevel::ALL, base::Sink::STDOUT | base::Sink::FILE);
         LOG_INFO << "Application startup";
 
+        // handlers initialization
+
         for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGABRT, SIGFPE}) {
-            CHECK_SOFT(std::signal(signal_code, signalHandler) != SIG_ERR);
+            ASSERT_SOFT(std::signal(signal_code, signalHandler) != SIG_ERR);
         }
 
-        CHECK_SOFT(std::atexit(atExitHandler) == 0);
+        ASSERT_SOFT(std::atexit(atExitHandler) == 0);
+
+        //=====================
+
+        SoftConfig exe_config(config::CONFIG_PATH);
+        LOG_INFO << "got name = " << exe_config.get<std::string>("name");
 
         return base::config::EXIT_OK;
     }
     catch(const std::exception& error) {
-        LOG_ERROR << "Exception caught in main: " << error.what();
+        LOG_ERROR << "[exception caught in main] " << error.what();
         return base::config::EXIT_FAIL;
     }
     catch(...) {
-        LOG_ERROR << "Unknown exception caught";
+        LOG_ERROR << "[unknown exception caught]";
         return base::config::EXIT_FAIL;
     }
 }

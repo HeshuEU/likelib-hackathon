@@ -8,8 +8,8 @@ set(BASE_HEADERS
         types.hpp
         address.hpp
         filesystem/directory.hpp
-        configuration_manager.hpp
-        configuration_manager.tpp
+        property_tree.hpp
+        property_tree.tpp
         )
 
 set(BASE_SOURCES
@@ -17,7 +17,7 @@ set(BASE_SOURCES
         log.cpp
         address.cpp
         filesystem/directory.cpp
-        configuration_manager.cpp
+        property_tree.cpp
         )
 
 add_definitions(-DBOOST_STACKTRACE_USE_BACKTRACE)
