@@ -13,6 +13,8 @@ namespace base
 class Error : public std::exception
 {
   public:
+    Error() = default;
+
     Error(const std::string& message);
 
     Error(const Error&) = default;
@@ -38,7 +40,7 @@ class InvalidArgument : public Error
     using Error::Error;
 };
 
-class UnaccessibleFile : public Error
+class InaccessibleFile : public Error
 {
     using Error::Error;
 };
@@ -48,19 +50,24 @@ class SystemCallFailed : public Error
     using Error::Error;
 };
 
+class ParsingError : public Error
+{
+    using Error::Error;
+};
+
 std::ostream& operator<<(std::ostream& os, const Error& error);
 
-#define RAISE_ERROR(message) \
-    throw base::Error(std::string{__FILE__} + std::string{":"} + std::to_string(__LINE__) + std::string{" :: "} + \
-                      std::string{BOOST_CURRENT_FUNCTION} + std::string{" :: "} + (message))
+#define RAISE_ERROR(error_type, message) \
+    throw base::error_type(std::string{__FILE__} + std::string{":"} + std::to_string(__LINE__) + std::string{" :: "} + \
+                           std::string{BOOST_CURRENT_FUNCTION} + std::string{" :: "} + (message))
 
 
-#define CLARIFY_ERROR(expr, message) \
+#define CLARIFY_ERROR(error_type, expr, message) \
     try { \
         expr; \
     } \
     catch(const std::exception& e) { \
-        RAISE_ERROR(std::string{message} + std::string{": "} + e.what()); \
+        RAISE_ERROR(error_type, std::string{message} + std::string{": "} + e.what()); \
     }
 
 } // namespace base

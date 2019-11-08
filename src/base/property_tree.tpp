@@ -14,7 +14,8 @@ R PropertyTree::get(const std::string& path)
         return _ptree.get<R>(std::string{path});
     }
     catch(const std::exception& e) {
-        RAISE_ERROR(std::string{"Cannot get given value from configuration. Additional info = "} + e.what());
+        RAISE_ERROR(InvalidArgument,
+                    std::string{"Cannot get given value from configuration. Additional info = "} + e.what());
     }
 }
 
