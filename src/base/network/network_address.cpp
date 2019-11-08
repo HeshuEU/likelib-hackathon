@@ -36,7 +36,7 @@ NetworkAddress::NetworkAddress(const std::string_view& address, std::size_t port
 
 std::string NetworkAddress::toString()
 {
-    return _address.to_string() + ":" + std::to_string(33333);
+    return _address.to_string() + ":" + std::to_string(_port);
 }
 
 

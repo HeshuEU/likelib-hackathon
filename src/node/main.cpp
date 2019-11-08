@@ -5,6 +5,7 @@
 #include "base/log.hpp"
 #include "base/assert.hpp"
 #include "base/network/manager.hpp"
+#include "base/network/network_address.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
@@ -59,8 +60,7 @@ int main(int argc, char** argv)
         SoftConfig exe_config(config::CONFIG_PATH);
 
         base::network::Manager manager;
-        boost::asio::ip::tcp::endpoint ip_to_bind_to(boost::asio::ip::make_address("0.0.0.0"), 20203);
-        manager.acceptClients(ip_to_bind_to);
+        manager.acceptClients(base::network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
         manager.waitForFinish();
 
