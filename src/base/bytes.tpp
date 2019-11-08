@@ -6,8 +6,7 @@ namespace base
 {
 
 template<typename I>
-Bytes::Bytes(I begin, I end)
-    : _raw(begin, end)
+Bytes::Bytes(I begin, I end) : _raw(begin, end)
 {}
 
 } // namespace base
