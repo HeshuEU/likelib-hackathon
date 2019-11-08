@@ -7,20 +7,7 @@ namespace
 {
 bool checkIfExistingDirectory(const std::filesystem::path& path)
 {
-    std::error_code ec;
-    bool result = std::filesystem::exists(path, ec);
-    if(ec) {
-        LOG_WARNING << base::UnaccessibleFile{ec.message()};
-        return false;
-    }
-
-    result = result && std::filesystem::is_directory(path, ec);
-    if(ec) {
-        LOG_WARNING << base::UnaccessibleFile{ec.message()};
-        return false;
-    }
-
-    return result;
+    return std::filesystem::exists(path) && std::filesystem::is_directory(path);
 }
 } // namespace
 
