@@ -17,7 +17,7 @@ class NetworkAddress
     NetworkAddress(const std::string_view& address_with_port);
     NetworkAddress(const std::string_view& address, std::size_t port);
 
-    std::string toString();
+    std::string toString() const;
 
     unsigned short getPort() const noexcept;
 

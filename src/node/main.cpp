@@ -14,6 +14,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <exception>
+#include <thread>
 
 
 namespace
@@ -44,7 +45,7 @@ int main(int argc, char** argv)
 {
     try {
         base::initLog(base::LogLevel::ALL, base::Sink::STDOUT | base::Sink::FILE);
-        LOG_INFO << "Application startup";
+        LOG_INFO << "Node startup";
 
         // handlers initialization
 
@@ -62,7 +63,8 @@ int main(int argc, char** argv)
         base::network::Manager manager;
         manager.acceptClients(base::network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
-        manager.waitForFinish();
+
+        std::this_thread::sleep_for(std::chrono::seconds(15));
 
         return base::config::EXIT_OK;
     }

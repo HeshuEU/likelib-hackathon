@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <thread>
+#include <vector>
 
 namespace base::network
 {
@@ -14,6 +15,11 @@ namespace base::network
 class Manager
 {
   public:
+    //===================
+    Manager() = default;
+
+    ~Manager();
+    //===================
     void run();
 
     void acceptClients(const boost::asio::ip::tcp::endpoint& listen_ip);
@@ -27,7 +33,10 @@ class Manager
     boost::asio::io_context _io_context;
 
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
-    void _acceptHandler(std::shared_ptr<Connection> connection, const boost::system::error_code&);
+    void _acceptOne();
+    void _acceptHandler(const boost::system::error_code& ec, boost::asio::ip::tcp::socket socket);
+
+    std::vector<Connection> _connections;
 };
 
 

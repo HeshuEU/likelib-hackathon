@@ -31,10 +31,13 @@ NetworkAddress::NetworkAddress(const std::string_view& address_with_port)
 }
 
 NetworkAddress::NetworkAddress(const std::string_view& address, std::size_t port)
-{}
+{
+    _address = boost::asio::ip::make_address_v4(address);
+    _port = port;
+}
 
 
-std::string NetworkAddress::toString()
+std::string NetworkAddress::toString() const
 {
     return _address.to_string() + ":" + std::to_string(_port);
 }
