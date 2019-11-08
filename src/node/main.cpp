@@ -46,6 +46,7 @@ int main(int argc, char** argv)
 
         // handlers initialization
 
+        // setup handler for all signal types defined in Standard. Not all POSIX signals
         for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGABRT, SIGFPE}) {
             ASSERT_SOFT(std::signal(signal_code, signalHandler) != SIG_ERR);
         }
