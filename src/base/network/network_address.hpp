@@ -19,7 +19,7 @@ class NetworkAddress
 
     std::string toString();
 
-    std::size_t getPort() const noexcept;
+    unsigned short getPort() const noexcept;
 
     operator boost::asio::ip::address_v4();
 
@@ -27,7 +27,9 @@ class NetworkAddress
 
   private:
     boost::asio::ip::address_v4 _address;
-    std::size_t _port;
+
+    // unsigned short is used in Boost to represent port number
+    unsigned short _port;
 };
 
 } // namespace base::network

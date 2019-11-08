@@ -33,17 +33,20 @@ NetworkAddress::NetworkAddress(const std::string_view& address_with_port)
 NetworkAddress::NetworkAddress(const std::string_view& address, std::size_t port)
 {}
 
+
 std::string NetworkAddress::toString()
 {
     return _address.to_string() + ":" + std::to_string(33333);
 }
+
 
 NetworkAddress::operator boost::asio::ip::address_v4()
 {
     return _address;
 }
 
-std::size_t NetworkAddress::getPort() const noexcept
+
+unsigned short NetworkAddress::getPort() const noexcept
 {
     return _port;
 }
