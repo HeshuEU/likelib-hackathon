@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/asio/ip/address_v4.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
 #include <cstddef>
 #include <string_view>
@@ -21,6 +22,8 @@ class NetworkAddress
     std::size_t getPort() const noexcept;
 
     operator boost::asio::ip::address_v4();
+
+    operator boost::asio::ip::tcp::endpoint();
 
   private:
     boost::asio::ip::address_v4 _address;

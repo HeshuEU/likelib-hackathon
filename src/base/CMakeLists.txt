@@ -14,7 +14,7 @@ set(BASE_HEADERS
         network/connection.hpp
         network/manager.hpp
         bytes.hpp
-        network/ipv4_address.hpp
+        network/network_address.hpp
         )
 
 set(BASE_SOURCES
@@ -27,7 +27,7 @@ set(BASE_SOURCES
         network/connection.cpp
         network/manager.cpp
         bytes.cpp
-        network/ipv4_address.cpp
+        network/network_address.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})

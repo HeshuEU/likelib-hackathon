@@ -1,4 +1,4 @@
-#include "ipv4_address.hpp"
+#include "network_address.hpp"
 
 #include "base/error.hpp"
 
@@ -46,6 +46,12 @@ NetworkAddress::operator boost::asio::ip::address_v4()
 std::size_t NetworkAddress::getPort() const noexcept
 {
     return _port;
+}
+
+
+NetworkAddress::operator boost::asio::ip::tcp::endpoint()
+{
+    return {_address, _port};
 }
 
 
