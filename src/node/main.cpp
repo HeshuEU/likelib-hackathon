@@ -4,6 +4,7 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
+#include "base/network/manager.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
@@ -56,7 +57,12 @@ int main(int argc, char** argv)
         //=====================
 
         SoftConfig exe_config(config::CONFIG_PATH);
-        LOG_INFO << "got name = " << exe_config.get<std::string>("name");
+
+        base::network::Manager manager;
+        boost::asio::ip::tcp::endpoint ip_to_bind_to(boost::asio::ip::make_address("0.0.0.0"), 20203);
+        manager.acceptClients(ip_to_bind_to);
+        manager.run();
+        manager.waitForFinish();
 
         return base::config::EXIT_OK;
     }

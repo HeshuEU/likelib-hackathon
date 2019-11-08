@@ -11,8 +11,7 @@ ConnectionAcceptor::ConnectionAcceptor(ba::io_context& io_context, const ba::ip:
 
 
 void ConnectionAcceptor::startAcceptLoop()
-{
-}
+{}
 
 
 } // namespace base::network

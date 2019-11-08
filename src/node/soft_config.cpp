@@ -4,5 +4,5 @@
 
 SoftConfig::SoftConfig(const std::filesystem::path& path) : base::PropertyTree{base::readConfig(path)}
 {
-    ASSERT(hasKey("root_node"));
+    // ASSERT(hasKey("root_node"));
 }
