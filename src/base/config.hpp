@@ -57,16 +57,22 @@ constexpr const char* const OS_NAME =
 
 
 // logging configuration
-static constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H:%M.log";
-static constexpr const char* LOG_FOLDER = "logs";
-static constexpr const int LOG_FILE_MAX_SIZE = 6 * 1024 * 1024;
-static constexpr const int LOG_FILE_MIN_SPACE = 100 * 1024 * 1024;
-static constexpr const int LOG_MAX_FILE_COUNT = 512;
+constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H:%M.log";
+constexpr const char* LOG_FOLDER = "logs";
+constexpr const std::size_t LOG_FILE_MAX_SIZE = 6 * 1024 * 1024;
+constexpr const std::size_t LOG_FILE_MIN_SPACE = 100 * 1024 * 1024;
+constexpr const std::size_t LOG_MAX_FILE_COUNT = 512;
 //------------------------
 
 // exit codes
-static constexpr int EXIT_OK = 0;
-static constexpr int EXIT_FAIL = 1;
-static constexpr int EXIT_ASSERT_FAILED = 2;
+constexpr int EXIT_OK = 0;
+constexpr int EXIT_FAIL = 1;
+// to better see when ASSERTIONS failed during debug
+constexpr int EXIT_ASSERT_FAILED = 2;
+//------------------------
+
+// network
+constexpr std::size_t NETWORK_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
+//------------------------
 
 } // namespace base::config
