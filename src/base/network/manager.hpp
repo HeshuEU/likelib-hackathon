@@ -36,7 +36,7 @@ class Manager
     void _acceptOne();
     void _acceptHandler(const boost::system::error_code& ec, boost::asio::ip::tcp::socket socket);
 
-    std::queue<Connection> _connections;
+    std::queue<std::unique_ptr<Connection>> _connections;
 };
 
 

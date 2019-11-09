@@ -55,14 +55,18 @@ void Manager::_acceptHandler(const boost::system::error_code& ec, ba::ip::tcp::s
         LOG_WARNING << "Connection accept failed: " << ec;
     }
     else {
-        Connection connection(std::move(socket));
-        LOG_INFO << "Connection accepted: " << connection.getRemoteNetworkAddress().toString();
+        std::unique_ptr<Connection> connection = std::make_unique<Connection>(std::move(socket));
+        LOG_INFO << "Connection accepted: " << connection->getRemoteNetworkAddress().toString();
         Bytes b(2);
         b[0] = 48;
         b[1] = 49;
 
         _connections.push(std::move(connection));
-        _connections.front().send(std::move(b));
+        _connections.front()->setOnReceive([](const base::Bytes& message) {
+           LOG_INFO << "Received: " << message.toArray();
+        });
+        _connections.front()->startReceivingMessages();
+        _connections.front()->send(std::move(b));
     }
     _acceptOne();
 }

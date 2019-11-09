@@ -13,15 +13,18 @@ namespace ba = boost::asio;
 namespace base::network
 {
 
+
+base::Bytes Connection::_read_buffer{config::NETWORK_MESSAGE_BUFFER_SIZE};
+
+
 Connection::Connection(boost::asio::ip::tcp::socket&& socket)
     : _io_context{socket.get_io_context()}, _socket{std::move(socket)}
 {
     ASSERT(_socket.is_open());
     _network_address = std::make_unique<NetworkAddress>(_socket.remote_endpoint().address().to_string(),
                                                         _socket.remote_endpoint().port());
-
-    _receiveOne();
 }
+
 
 Connection::~Connection()
 {
@@ -39,24 +42,40 @@ Connection::~Connection()
     }
 }
 
+
 const NetworkAddress& Connection::getRemoteNetworkAddress() const
 {
     return *_network_address;
 }
 
 
+void Connection::startReceivingMessages()
+{
+    ASSERT_SOFT(!_is_receiving_enabled);
+    _is_receiving_enabled = true;
+    _receiveOne();
+}
+
+
+void Connection::stopReceivingMessages()
+{
+    ASSERT_SOFT(_is_receiving_enabled);
+    _is_receiving_enabled = false;
+}
+
+
 void Connection::_receiveOne()
 {
-    //    boost::asio::async_read(
-    //        _socket, boost::asio::buffer(_read_buffer.toArray(), _read_buffer.size()),
-    //        std::bind(&Connection::_receiveHandler, this, std::placeholders::_1, std::placeholders::_2));
+    // ba::transfer_at_least just for now for debugging purposes, of course will be changed later
+    ba::async_read(_socket, ba::buffer(_read_buffer.toVector()), ba::transfer_at_least(5),
+                   std::bind(&Connection::_receiveHandler, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 
 void Connection::send(base::Bytes&& data)
 {
-    bool is_already_writing = !_write_pending_messages.empty();
-    _write_pending_messages.push(std::move(data));
+    bool is_already_writing = !_pending_send_messages.empty();
+    _pending_send_messages.push(std::move(data));
 
     if(!is_already_writing) {
         _sendPendingMessages();
@@ -66,13 +85,13 @@ void Connection::send(base::Bytes&& data)
 
 void Connection::_sendPendingMessages()
 {
-    ASSERT_SOFT(!_write_pending_messages.empty());
-    if(_write_pending_messages.empty()) {
+    ASSERT_SOFT(!_pending_send_messages.empty());
+    if(_pending_send_messages.empty()) {
         return;
     }
 
-    base::Bytes& message = _write_pending_messages.front();
-    ba::async_write(_socket, boost::asio::buffer(message.toVector()),
+    base::Bytes& message = _pending_send_messages.front();
+    ba::async_write(_socket, ba::buffer(message.toVector()),
                     std::bind(&Connection::_sendHandler, this, std::placeholders::_1, std::placeholders::_2));
 }
 
@@ -85,22 +104,31 @@ void Connection::_sendHandler(const boost::system::error_code& ec, std::size_t b
     }
 
     LOG_INFO << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
-    _write_pending_messages.pop();
+    _pending_send_messages.pop();
 
-    if(!_write_pending_messages.empty()) {
+    if(!_pending_send_messages.empty()) {
         _sendPendingMessages();
     }
 }
 
 
-void Connection::_receiveHandler(const boost::system::error_code& error, std::size_t bytes_received)
+void Connection::_receiveHandler(const boost::system::error_code& ec, std::size_t bytes_received)
 {
-    LOG_INFO << "Received " << bytes_received << " bytes from " << _network_address->toString();
-    if(_on_receive) {
-        ReadHandler& user_handler = *_on_receive;
-        // user_handler(_read_buffer);
+    if(ec) {
+        LOG_WARNING << "Error occurred while receiving: " << ec;
     }
-    _receiveOne();
+    LOG_INFO << "Received " << bytes_received << " bytes from " << _network_address->toString();
+    if(_is_receiving_enabled) {
+        if(_on_receive) {
+            ReadHandler& user_handler = *_on_receive;
+            user_handler(_read_buffer);
+        }
+
+        // double-check since the value may be changed - we don't know how long the handler was executing
+        if(_is_receiving_enabled) {
+            _receiveOne();
+        }
+    }
 }
 
 
