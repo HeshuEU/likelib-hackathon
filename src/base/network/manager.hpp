@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <thread>
-#include <vector>
+#include <deque>
 
 namespace base::network
 {
@@ -36,7 +36,7 @@ class Manager
     void _acceptOne();
     void _acceptHandler(const boost::system::error_code& ec, boost::asio::ip::tcp::socket socket);
 
-    std::vector<Connection> _connections;
+    std::deque<Connection> _connections;
 };
 
 

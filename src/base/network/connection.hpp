@@ -6,7 +6,9 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
+#include <functional>
 #include <memory>
+#include <queue>
 
 namespace base::network
 {
@@ -25,16 +27,30 @@ class Connection
 
     ~Connection();
     //====================
+    using ReadHandler = std::function<void(const base::Bytes&)>;
 
-    void send(const base::Bytes&);
+    void send(base::Bytes&& data);
+
+    void setOnReceive(ReadHandler handler);
 
     const NetworkAddress& getRemoteNetworkAddress() const;
 
     boost::asio::ip::tcp::socket& getSocket(); // TODO: try come up with something better
 
   private:
+    boost::asio::io_context& _io_context;
     boost::asio::ip::tcp::socket _socket;
     std::unique_ptr<NetworkAddress> _network_address;
+
+    std::unique_ptr<ReadHandler> _on_receive;
+    void _sendHandler(const boost::system::error_code& error, std::size_t bytes_sent);
+
+    void _receiveOne();
+    void _receiveHandler(const boost::system::error_code& error, std::size_t bytes_received);
+
+    std::queue<base::Bytes> _write_pending_messages;
+
+    void _sendPendingMessages();
 };
 
 

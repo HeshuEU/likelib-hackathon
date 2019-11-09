@@ -32,6 +32,7 @@ extern "C" void signalHandler(int signal)
              << boost::stacktrace::stacktrace()
 #endif
         ;
+    std::exit(base::config::EXIT_FAIL);
 }
 
 void atExitHandler()
