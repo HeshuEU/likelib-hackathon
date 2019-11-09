@@ -57,11 +57,12 @@ void Manager::_acceptHandler(const boost::system::error_code& ec, ba::ip::tcp::s
     else {
         Connection connection(std::move(socket));
         LOG_INFO << "Connection accepted: " << connection.getRemoteNetworkAddress().toString();
-        Bytes b(42);
+        Bytes b(2);
         b[0] = 48;
         b[1] = 49;
-        connection.send(std::move(b));
-        _connections.push_back(std::move(connection));
+
+        _connections.push(std::move(connection));
+        _connections.front().send(std::move(b));
     }
     _acceptOne();
 }

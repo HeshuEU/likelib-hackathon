@@ -72,7 +72,7 @@ void Connection::_sendPendingMessages()
     }
 
     base::Bytes& message = _write_pending_messages.front();
-    ba::async_write(_socket, boost::asio::buffer(message.toArray(), message.size()),
+    ba::async_write(_socket, boost::asio::buffer(message.toVector()),
                     std::bind(&Connection::_sendHandler, this, std::placeholders::_1, std::placeholders::_2));
 }
 

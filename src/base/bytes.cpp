@@ -80,4 +80,16 @@ Byte* Bytes::toArray()
     return _raw.data();
 }
 
+
+std::vector<Byte>& Bytes::toVector() noexcept
+{
+    return _raw;
+}
+
+
+const std::vector<Byte>& Bytes::toVector() const noexcept
+{
+    return _raw;
+}
+
 } // namespace base
