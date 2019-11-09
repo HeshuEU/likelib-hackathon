@@ -10,8 +10,10 @@ namespace base
 Bytes::Bytes()
 {}
 
+
 Bytes::Bytes(std::size_t size) : _raw(size)
 {}
+
 
 Byte& Bytes::operator[](std::size_t index)
 {
@@ -19,11 +21,13 @@ Byte& Bytes::operator[](std::size_t index)
     return _raw[index];
 }
 
+
 const Byte& Bytes::operator[](std::size_t index) const
 {
     ASSERT(index < _raw.size());
     return _raw[index];
 }
+
 
 Bytes Bytes::takePart(std::size_t begin_index, std::size_t one_past_end_index)
 {
@@ -39,25 +43,41 @@ Bytes Bytes::takePart(std::size_t begin_index, std::size_t one_past_end_index)
     return Bytes(begin, end);
 }
 
+
 Bytes& Bytes::append(Byte byte)
 {
     _raw.push_back(byte);
     return *this;
 }
 
+
 std::size_t Bytes::size() const noexcept
 {
     return _raw.size();
 }
+
 
 bool Bytes::operator==(const Bytes& another) const
 {
     return _raw == another._raw;
 }
 
+
 bool Bytes::operator!=(const Bytes& another) const
 {
     return !(*this == another);
+}
+
+
+const Byte* Bytes::toArray() const
+{
+    return _raw.data();
+}
+
+
+Byte* Bytes::toArray()
+{
+    return _raw.data();
 }
 
 } // namespace base

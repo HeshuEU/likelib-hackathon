@@ -35,6 +35,10 @@ class Bytes
 
     std::size_t size() const noexcept;
 
+    const Byte* toArray() const;
+
+    Byte* toArray();
+
     //=============
     bool operator==(const Bytes& another) const;
     bool operator!=(const Bytes& another) const;
