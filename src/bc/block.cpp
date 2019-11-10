@@ -5,8 +5,8 @@
 namespace bc
 {
 
-Block::Block(const base::Bytes& prev_block_hash, const std::vector<bc::Transaction>& txs)
-    : _prev_block_hash{prev_block_hash}, _txs(txs)
+Block::Block(const base::Bytes& prev_block_hash, std::vector<bc::Transaction>&& txs)
+    : _prev_block_hash{prev_block_hash}, _txs(std::move(txs))
 {}
 
 
@@ -15,9 +15,16 @@ Block::Block(base::Bytes&& prev_block_hash, std::vector<bc::Transaction>&& txs)
 {}
 
 
-void BlockBuilder::setTransactions(const std::vector<bc::Transaction>& txs)
+
+const base::Bytes& Block::getPrevBlockHash() const
 {
-    _txs = txs;
+    return _prev_block_hash;
+}
+
+
+const std::vector<bc::Transaction>& Block::getTransactions() const
+{
+    return _txs;
 }
 
 
@@ -27,21 +34,9 @@ void BlockBuilder::setTransactions(std::vector<bc::Transaction>&& txs)
 }
 
 
-void BlockBuilder::addTransaction(const bc::Transaction& tx)
-{
-    _txs.push_back(tx);
-}
-
-
 void BlockBuilder::addTransaction(bc::Transaction&& tx)
 {
     _txs.push_back(std::move(tx));
-}
-
-
-Block BlockBuilder::build() const&
-{
-    return Block(_prev_block_hash, _txs);
 }
 
 
