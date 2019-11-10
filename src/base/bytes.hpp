@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <initializer_list>
 #include <vector>
 
 namespace base
@@ -16,6 +17,7 @@ class Bytes
     //==============
     Bytes();
     explicit Bytes(std::size_t size);
+    Bytes(std::initializer_list<Byte> l);
     Bytes(const Bytes&) = default;
     Bytes(Bytes&&) = default;
     Bytes& operator=(const Bytes&) = default;

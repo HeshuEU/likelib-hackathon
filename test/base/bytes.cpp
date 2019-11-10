@@ -29,6 +29,7 @@ BOOST_AUTO_TEST_CASE(bytes_size_change)
     BOOST_CHECK_EQUAL(bytes[bytes.size() - 1], 0x15);
 }
 
+
 BOOST_AUTO_TEST_CASE(bytes_take_part)
 {
     base::Bytes bytes(128);
@@ -44,4 +45,15 @@ BOOST_AUTO_TEST_CASE(bytes_take_part)
     base::Bytes part = bytes.takePart(20, 30);
     BOOST_CHECK(part == answer);
     BOOST_CHECK(!(part != answer));
+}
+
+
+BOOST_AUTO_TEST_CASE(bytes_intializer_list_constructor)
+{
+    base::Bytes bytes{0x1, 0xFF, 0x2, 0xFE};
+    BOOST_CHECK_EQUAL(bytes.size(), 4);
+    BOOST_CHECK_EQUAL(bytes[0], 0x1);
+    BOOST_CHECK_EQUAL(bytes[1], 0xFF);
+    BOOST_CHECK_EQUAL(bytes[2], 0x2);
+    BOOST_CHECK_EQUAL(bytes[3], 0xFE);
 }

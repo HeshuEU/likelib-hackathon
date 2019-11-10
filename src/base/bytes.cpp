@@ -15,6 +15,10 @@ Bytes::Bytes(std::size_t size) : _raw(size)
 {}
 
 
+Bytes::Bytes(std::initializer_list<Byte> l) : _raw(l)
+{}
+
+
 Byte& Bytes::operator[](std::size_t index)
 {
     ASSERT(index < _raw.size());
