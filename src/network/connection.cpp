@@ -102,8 +102,9 @@ void Connection::_sendHandler(const boost::system::error_code& ec, std::size_t b
         LOG_WARNING << "Error while sending message: " << ec;
         // TODO: do something
     }
-
-    LOG_INFO << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
+    else {
+        LOG_INFO << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
+    }
     _pending_send_messages.pop();
 
     if(!_pending_send_messages.empty()) {
@@ -116,6 +117,7 @@ void Connection::_receiveHandler(const boost::system::error_code& ec, std::size_
 {
     if(ec) {
         LOG_WARNING << "Error occurred while receiving: " << ec;
+        // TODO: do something
     }
     else {
         LOG_INFO << "Received " << bytes_received << " bytes from " << _network_address->toString();
