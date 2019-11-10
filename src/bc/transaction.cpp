@@ -28,6 +28,7 @@ const bc::Balance& Transaction::getAmount() const noexcept
 
 base::Bytes Transaction::serialize() const
 {
+    // TODO: implement
     return {0x43};
 }
 

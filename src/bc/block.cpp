@@ -29,6 +29,7 @@ const std::vector<bc::Transaction>& Block::getTransactions() const
 
 base::Bytes Block::serialize() const
 {
+    // TODO: implement
     return {0x42};
 }
 
