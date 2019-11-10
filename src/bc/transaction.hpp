@@ -1,8 +1,12 @@
-//
-// Created by siu on 10.11.19.
-//
+#pragma once
 
-#ifndef LIKELIB_TRANSACTION_HPP
-#define LIKELIB_TRANSACTION_HPP
+namespace bc
+{
 
-#endif //LIKELIB_TRANSACTION_HPP
+class Transaction
+{
+  public:
+  private:
+};
+
+} // namespace bc

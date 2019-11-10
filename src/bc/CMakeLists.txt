@@ -1,9 +1,14 @@
 set(BC_HEADERS
+        address.hpp
         block.hpp
+        transaction.hpp
+        types.hpp
         )
 
 set(BC_SOURCES
+        address.cpp
         block.cpp
+        transaction.cpp
         )
 
 add_library(bc ${BC_SOURCES} ${BC_HEADERS})
