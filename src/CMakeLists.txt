@@ -1,4 +1,5 @@
 add_subdirectory(./base)
+add_subdirectory(./bc)
 add_subdirectory(./network)
 add_subdirectory(./rpc)
 add_subdirectory(./node)
