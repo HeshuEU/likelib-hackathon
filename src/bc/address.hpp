@@ -1,6 +1,6 @@
 #pragma once
 
-namespace base
+namespace bc
 {
 
 class Address
@@ -9,4 +9,4 @@ class Address
   private:
 };
 
-} // namespace base
+} // namespace bc

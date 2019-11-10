@@ -1,0 +1,8 @@
+//
+// Created by siu on 10.11.19.
+//
+
+#ifndef LIKELIB_TRANSACTION_HPP
+#define LIKELIB_TRANSACTION_HPP
+
+#endif //LIKELIB_TRANSACTION_HPP
