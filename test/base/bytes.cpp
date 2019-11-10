@@ -18,6 +18,14 @@ BOOST_AUTO_TEST_CASE(bytes_storage_check)
 }
 
 
+BOOST_AUTO_TEST_CASE(bytes_string_ctor)
+{
+    base::Bytes b1{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30, 0x02};
+    base::Bytes b2("LIKELIB\t2.0\x02");
+    BOOST_CHECK(b1 == b2);
+}
+
+
 BOOST_AUTO_TEST_CASE(bytes_size_change)
 {
     base::Bytes bytes(128);

@@ -15,6 +15,14 @@ Bytes::Bytes(std::size_t size) : _raw(size)
 {}
 
 
+Bytes::Bytes(const std::string& s) : _raw(s.length()) {
+    std::size_t index = 0;
+    for(const char c : s) {
+        _raw[index++] = static_cast<Byte>(c);
+    }
+}
+
+
 Bytes::Bytes(std::initializer_list<Byte> l) : _raw(l)
 {}
 
