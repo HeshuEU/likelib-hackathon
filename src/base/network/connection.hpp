@@ -42,6 +42,8 @@ class Connection
     void startReceivingMessages();
     void stopReceivingMessages();
 
+    void startSession();
+
     const NetworkAddress& getRemoteNetworkAddress() const;
 
     boost::asio::ip::tcp::socket& getSocket(); // TODO: try come up with something better

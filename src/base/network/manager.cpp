@@ -61,12 +61,8 @@ void Manager::_acceptHandler(const boost::system::error_code& ec, ba::ip::tcp::s
         b[0] = 48;
         b[1] = 49;
 
+        connection->startSession();
         _connections.push(std::move(connection));
-        _connections.front()->setOnReceive([](const base::Bytes& message) {
-           LOG_INFO << "Received: " << message.toArray();
-        });
-        _connections.front()->startReceivingMessages();
-        _connections.front()->send(std::move(b));
     }
     _acceptOne();
 }

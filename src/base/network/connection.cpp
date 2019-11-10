@@ -14,7 +14,7 @@ namespace base::network
 {
 
 
-base::Bytes Connection::_read_buffer{config::NETWORK_MESSAGE_BUFFER_SIZE};
+base::Bytes Connection::_read_buffer(config::NETWORK_MESSAGE_BUFFER_SIZE);
 
 
 Connection::Connection(boost::asio::ip::tcp::socket&& socket)
@@ -117,7 +117,9 @@ void Connection::_receiveHandler(const boost::system::error_code& ec, std::size_
     if(ec) {
         LOG_WARNING << "Error occurred while receiving: " << ec;
     }
-    LOG_INFO << "Received " << bytes_received << " bytes from " << _network_address->toString();
+    else {
+        LOG_INFO << "Received " << bytes_received << " bytes from " << _network_address->toString();
+    }
     if(_is_receiving_enabled) {
         if(_on_receive) {
             ReadHandler& user_handler = *_on_receive;
@@ -135,6 +137,18 @@ void Connection::_receiveHandler(const boost::system::error_code& ec, std::size_
 void Connection::setOnReceive(Connection::ReadHandler handler)
 {
     _on_receive = std::make_unique<ReadHandler>(std::move(handler));
+}
+
+
+void Connection::startSession()
+{
+    setOnReceive([](const base::Bytes& message) {
+        LOG_INFO << "Received: " << reinterpret_cast<const char*>(message.toArray());
+    });
+    startReceivingMessages();
+
+
+    send({0x48, 0x49, 0x50, 68, 65, 81});
 }
 
 
