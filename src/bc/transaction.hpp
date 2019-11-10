@@ -24,6 +24,10 @@ class Transaction
     const bc::Address& getTo() const noexcept;
     const bc::Balance& getAmount() const noexcept;
 
+    //=================
+
+    base::Bytes serialize() const;
+
   private:
     bc::Address _from;
     bc::Address _to;

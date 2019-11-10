@@ -27,6 +27,7 @@ class Block
     const base::Bytes& getPrevBlockHash() const;
     const std::vector<bc::Transaction>& getTransactions() const;
 
+    base::Bytes serialize() const;
   private:
     base::Bytes _prev_block_hash;
     std::vector<bc::Transaction> _txs;

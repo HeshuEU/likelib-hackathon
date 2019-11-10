@@ -26,6 +26,12 @@ const bc::Balance& Transaction::getAmount() const noexcept
 }
 
 
+base::Bytes Transaction::serialize() const
+{
+    return {0x43};
+}
+
+
 void TransactionBuilder::setFrom(const bc::Address& from)
 {
     _from = from;

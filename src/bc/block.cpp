@@ -15,7 +15,6 @@ Block::Block(base::Bytes&& prev_block_hash, std::vector<bc::Transaction>&& txs)
 {}
 
 
-
 const base::Bytes& Block::getPrevBlockHash() const
 {
     return _prev_block_hash;
@@ -25,6 +24,12 @@ const base::Bytes& Block::getPrevBlockHash() const
 const std::vector<bc::Transaction>& Block::getTransactions() const
 {
     return _txs;
+}
+
+
+base::Bytes Block::serialize() const
+{
+    return {0x42};
 }
 
 
