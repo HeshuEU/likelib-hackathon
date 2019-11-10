@@ -10,6 +10,7 @@ set(BASE_HEADERS
         property_tree.hpp
         property_tree.tpp
         bytes.hpp
+        hash.hpp
         )
 
 set(BASE_SOURCES
@@ -18,6 +19,7 @@ set(BASE_SOURCES
         filesystem/directory.cpp
         property_tree.cpp
         bytes.cpp
+        hash.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
