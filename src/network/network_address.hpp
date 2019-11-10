@@ -7,7 +7,7 @@
 #include <string_view>
 
 
-namespace base::network
+namespace network
 {
 
 // TODO: think about naming of this class
@@ -32,4 +32,4 @@ class NetworkAddress
     unsigned short _port;
 };
 
-} // namespace base::network
+} // namespace network

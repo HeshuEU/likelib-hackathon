@@ -5,7 +5,7 @@
 
 namespace ba = boost::asio;
 
-namespace base::network
+namespace network
 {
 
 Manager::~Manager()
@@ -57,7 +57,7 @@ void Manager::_acceptHandler(const boost::system::error_code& ec, ba::ip::tcp::s
     else {
         std::unique_ptr<Connection> connection = std::make_unique<Connection>(std::move(socket));
         LOG_INFO << "Connection accepted: " << connection->getRemoteNetworkAddress().toString();
-        Bytes b(2);
+        base::Bytes b(2);
         b[0] = 48;
         b[1] = 49;
 
@@ -76,4 +76,4 @@ void Manager::waitForFinish()
     }
 }
 
-} // namespace base::network
+} // namespace network

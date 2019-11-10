@@ -2,7 +2,7 @@
 
 namespace ba = boost::asio;
 
-namespace base::network
+namespace network
 {
 
 ConnectionAcceptor::ConnectionAcceptor(ba::io_context& io_context, const ba::ip::address& bind_ip)
@@ -14,4 +14,4 @@ void ConnectionAcceptor::startAcceptLoop()
 {}
 
 
-} // namespace base::network
+} // namespace network

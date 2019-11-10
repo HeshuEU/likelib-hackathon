@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/network/connection.hpp"
+#include "connection.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -9,7 +9,7 @@
 #include <thread>
 #include <deque>
 
-namespace base::network
+namespace network
 {
 
 class Manager
@@ -40,4 +40,4 @@ class Manager
 };
 
 
-} // namespace base::network
+} // namespace network

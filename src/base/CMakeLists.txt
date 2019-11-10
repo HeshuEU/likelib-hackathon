@@ -10,11 +10,7 @@ set(BASE_HEADERS
         filesystem/directory.hpp
         property_tree.hpp
         property_tree.tpp
-        network/connection_acceptor.hpp
-        network/connection.hpp
-        network/manager.hpp
         bytes.hpp
-        network/network_address.hpp
         )
 
 set(BASE_SOURCES
@@ -23,11 +19,7 @@ set(BASE_SOURCES
         address.cpp
         filesystem/directory.cpp
         property_tree.cpp
-        network/connection_acceptor.cpp
-        network/connection.cpp
-        network/manager.cpp
         bytes.cpp
-        network/network_address.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})

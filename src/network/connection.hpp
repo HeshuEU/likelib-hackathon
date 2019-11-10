@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/bytes.hpp"
-#include "base/network/network_address.hpp"
+#include "network_address.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -11,7 +11,7 @@
 #include <memory>
 #include <queue>
 
-namespace base::network
+namespace network
 {
 
 class Connection
@@ -68,4 +68,4 @@ class Connection
 };
 
 
-} // namespace base::network
+} // namespace network

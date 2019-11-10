@@ -4,8 +4,8 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
-#include "base/network/manager.hpp"
-#include "base/network/network_address.hpp"
+#include "network/manager.hpp"
+#include "network/network_address.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
@@ -61,8 +61,8 @@ int main(int argc, char** argv)
 
         SoftConfig exe_config(config::CONFIG_PATH);
 
-        base::network::Manager manager;
-        manager.acceptClients(base::network::NetworkAddress{exe_config.get<std::string>("listen_address")});
+        network::Manager manager;
+        manager.acceptClients(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
 
         std::this_thread::sleep_for(std::chrono::seconds(15));

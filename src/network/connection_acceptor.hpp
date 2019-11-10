@@ -3,7 +3,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
 
-namespace base::network
+namespace network
 {
 
 
@@ -24,4 +24,4 @@ class ConnectionAcceptor
 };
 
 
-} // namespace base::network
+} // namespace network

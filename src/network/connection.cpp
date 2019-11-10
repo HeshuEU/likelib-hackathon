@@ -10,11 +10,11 @@
 
 namespace ba = boost::asio;
 
-namespace base::network
+namespace network
 {
 
 
-base::Bytes Connection::_read_buffer(config::NETWORK_MESSAGE_BUFFER_SIZE);
+base::Bytes Connection::_read_buffer(base::config::NETWORK_MESSAGE_BUFFER_SIZE);
 
 
 Connection::Connection(boost::asio::ip::tcp::socket&& socket)
@@ -148,8 +148,8 @@ void Connection::startSession()
     startReceivingMessages();
 
 
-    send({0x48, 0x49, 0x50, 68, 65, 81});
+    send({48, 49, 50, 68, 65, 78});
 }
 
 
-} // namespace base::network
+} // namespace network
