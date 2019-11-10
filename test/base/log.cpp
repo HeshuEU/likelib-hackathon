@@ -16,6 +16,7 @@ BOOST_AUTO_TEST_CASE(log_plain_usage)
     LOG_FATAL << "test message for fatal log fn";
 }
 
+
 BOOST_AUTO_TEST_CASE(log_init_file_and_terminal)
 {
     std::cout << "Note: expected enable file and terminal log outputs" << std::endl;
@@ -40,6 +41,7 @@ BOOST_AUTO_TEST_CASE(log_init_terminal)
     LOG_ERROR << "test message for error log fn";
     LOG_FATAL << "test message for fatal log fn";
 }
+
 
 BOOST_AUTO_TEST_CASE(log_disable)
 {
