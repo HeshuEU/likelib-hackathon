@@ -96,4 +96,29 @@ const std::vector<Byte>& Bytes::toVector() const noexcept
     return _raw;
 }
 
+
+std::string Bytes::toHex() const
+{
+    static constexpr const char HEX_DIGITS[] = "0123456789abcdef";
+    // since every byte is represented by 2 hex digits, we do * 2
+    std::string ret(_raw.size() * 2, static_cast<char>(0));
+    std::size_t index = 0;
+    for(const auto& c : _raw) {
+        ret[index++] = HEX_DIGITS[c >> 4];
+        ret[index++] = HEX_DIGITS[c & 0xF];
+    }
+    return ret;
+}
+
+
+std::string Bytes::toString() const
+{
+    std::string ret(_raw.size(), static_cast<char>(0));
+    std::size_t index = 0;
+    for(const auto& c : _raw) {
+        ret[index++] = static_cast<char>(c);
+    }
+    return ret;
+}
+
 } // namespace base

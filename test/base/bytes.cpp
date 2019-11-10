@@ -57,3 +57,17 @@ BOOST_AUTO_TEST_CASE(bytes_intializer_list_constructor)
     BOOST_CHECK_EQUAL(bytes[2], 0x2);
     BOOST_CHECK_EQUAL(bytes[3], 0xFE);
 }
+
+
+BOOST_AUTO_TEST_CASE(bytes_to_hex)
+{
+    base::Bytes bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
+    BOOST_CHECK_EQUAL(bytes.toHex(), "01ff02fe00");
+}
+
+
+BOOST_AUTO_TEST_CASE(bytes_to_string)
+{
+    base::Bytes bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30, 0x02};
+    BOOST_CHECK_EQUAL(bytes.toString(), "LIKELIB\t2.0\x02");
+}

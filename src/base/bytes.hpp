@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <string>
 #include <vector>
 
 namespace base
@@ -37,11 +38,18 @@ class Bytes
 
     std::size_t size() const noexcept;
 
+    //==============
     const Byte* toArray() const;
     Byte* toArray();
 
     std::vector<Byte>& toVector() noexcept;
     const std::vector<Byte>& toVector() const noexcept;
+    //==============
+
+    std::string toHex() const;
+
+    std::string toString() const;
+
     //=============
     bool operator==(const Bytes& another) const;
     bool operator!=(const Bytes& another) const;
