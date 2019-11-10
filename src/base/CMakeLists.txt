@@ -6,7 +6,7 @@ set(BASE_HEADERS
         config.hpp
         log.hpp
         types.hpp
-        filesystem/directory.hpp
+        directory.hpp
         property_tree.hpp
         property_tree.tpp
         bytes.hpp
@@ -16,7 +16,7 @@ set(BASE_HEADERS
 set(BASE_SOURCES
         error.cpp
         log.cpp
-        filesystem/directory.cpp
+        directory.cpp
         property_tree.cpp
         bytes.cpp
         hash.cpp
