@@ -15,6 +15,6 @@ BOOST_AUTO_TEST_CASE(sha_256_hash)
 BOOST_AUTO_TEST_CASE(sha_1_hash)
 {
     base::Bytes bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30};
-    // TOOD: uncomment later
+    // TODO: uncomment later
     // BOOST_CHECK_EQUAL(base::sha1(bytes).toHex(), "8b3b3476a984cc1c0d2bf1b3751ca366818f8b08");
 }
