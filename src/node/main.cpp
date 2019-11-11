@@ -37,7 +37,7 @@ extern "C" void signalHandler(int signal)
 
 void atExitHandler()
 {
-    LOG_INFO << "atExitHandler called";
+    LOG_INFO << "Node shutdown";
 }
 
 } // namespace
