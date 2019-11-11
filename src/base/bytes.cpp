@@ -15,9 +15,10 @@ Bytes::Bytes(std::size_t size) : _raw(size)
 {}
 
 
-Bytes::Bytes(const std::string& s) : _raw(s.length()) {
+Bytes::Bytes(const std::string& s) : _raw(s.length())
+{
     std::size_t index = 0;
-    for(const char c : s) {
+    for(const char c: s) {
         _raw[index++] = static_cast<Byte>(c);
     }
 }
@@ -111,7 +112,7 @@ std::string Bytes::toHex() const
     // since every byte is represented by 2 hex digits, we do * 2
     std::string ret(_raw.size() * 2, static_cast<char>(0));
     std::size_t index = 0;
-    for(const auto& c : _raw) {
+    for(const auto& c: _raw) {
         ret[index++] = HEX_DIGITS[c >> 4];
         ret[index++] = HEX_DIGITS[c & 0xF];
     }
@@ -123,7 +124,7 @@ std::string Bytes::toString() const
 {
     std::string ret(_raw.size(), static_cast<char>(0));
     std::size_t index = 0;
-    for(const auto& c : _raw) {
+    for(const auto& c: _raw) {
         ret[index++] = static_cast<char>(c);
     }
     return ret;
