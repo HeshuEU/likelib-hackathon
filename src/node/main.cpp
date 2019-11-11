@@ -65,7 +65,7 @@ int main(int argc, char** argv)
         manager.acceptClients(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
 
-        std::this_thread::sleep_for(std::chrono::seconds(15));
+        std::this_thread::sleep_for(std::chrono::seconds(45));
 
         return base::config::EXIT_OK;
     }
