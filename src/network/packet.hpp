@@ -21,6 +21,11 @@ class Packet
     static Packet deserialize(const base::Bytes& raw);
     //===================
 
+    bool operator==(const Packet& another) const noexcept;
+    bool operator!=(const Packet& another) const noexcept;
+
+    //===================
+
   private:
     Packet() = default;
 

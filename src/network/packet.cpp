@@ -26,6 +26,7 @@ void Packet::setVersion(std::size_t version)
     _version = version;
 }
 
+
 base::Bytes Packet::serialize() const
 {
     std::ostringstream oss;
@@ -34,6 +35,7 @@ base::Bytes Packet::serialize() const
 
     return base::Bytes(oss.str());
 }
+
 
 Packet Packet::deserialize(const base::Bytes& raw)
 {
@@ -44,6 +46,18 @@ Packet Packet::deserialize(const base::Bytes& raw)
     ti >> ret._version;
 
     return ret;
+}
+
+
+bool Packet::operator==(const Packet& another) const noexcept
+{
+    return _version == another._version;
+}
+
+
+bool Packet::operator!=(const Packet& another) const noexcept
+{
+    return !(*this == another);
 }
 
 } // namespace network
