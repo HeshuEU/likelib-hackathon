@@ -24,4 +24,4 @@ set(BASE_SOURCES
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
 
-target_link_libraries(base Boost::log dl backtrace)
+target_link_libraries(base Boost::log dl backtrace OpenSSL::SSL)
