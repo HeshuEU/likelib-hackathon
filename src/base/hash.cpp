@@ -12,18 +12,18 @@ namespace base
 
 base::Bytes sha256(const base::Bytes& data)
 {
-    base::Bytes ret(32);
-    SHA256(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray()));
-    ASSERT(ret.size() == 32);
+    base::Bytes ret(SHA256_DIGEST_LENGTH);
+    SHA256(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray())); //cast need if return type toArray is change
+    ASSERT(ret.size() == SHA256_DIGEST_LENGTH);
     return ret;
 }
 
 
 base::Bytes sha1(const base::Bytes& data)
 {
-    base::Bytes ret(20);
+    base::Bytes ret(SHA_DIGEST_LENGTH);
     SHA1(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray()));
-    ASSERT(ret.size() == 20);
+    ASSERT(ret.size() == SHA_DIGEST_LENGTH);
     return ret;
 }
 

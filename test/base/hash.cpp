@@ -14,6 +14,9 @@ BOOST_AUTO_TEST_CASE(sha_256_hash)
 
     base::Bytes bytes3("it's third test");
     BOOST_CHECK_EQUAL(base::sha256(bytes3).toHex(), "2431f272555362f2d9ee255ec2ea24dffa371a03137699cf9d0b96e988346421");
+
+    base::Bytes bytes("");
+    BOOST_CHECK_EQUAL(base::sha256(bytes).toHex(), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 }
 
 
@@ -27,4 +30,7 @@ BOOST_AUTO_TEST_CASE(sha_1_hash)
 
     base::Bytes bytes3("it's third test");
     BOOST_CHECK_EQUAL(base::sha1(bytes3).toHex(), "3f68e91144cc3d272df2950c0676918980a35d01");
+
+    base::Bytes bytes("");
+    BOOST_CHECK_EQUAL(base::sha1(bytes).toHex(), "da39a3ee5e6b4b0d3255bfef95601890afd80709");
 }
