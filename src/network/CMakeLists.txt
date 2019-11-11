@@ -16,4 +16,4 @@ set(NETWORK_SOURCES
 
 add_library(network ${NETWORK_SOURCES} ${NETWORK_HEADERS})
 
-target_link_libraries(network base)
+target_link_libraries(network base Boost::serialization)
