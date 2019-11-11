@@ -72,7 +72,7 @@ namespace base
     std::ostream& operator<<(std::ostream&, const BigNum<T>&);
 
     template<typename T>
-    std::istream& operator>>(std::istream&, const BigNum<T>&);
+    std::istream& operator>>(std::istream&, BigNum<T>&);
 
     using Uint256 = BigNum<boost::multiprecision::backends::cpp_int_backend<256, 256, 
     boost::multiprecision::cpp_integer_type::unsigned_magnitude, boost::multiprecision::cpp_int_check_type::checked, void>>;

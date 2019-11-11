@@ -118,7 +118,7 @@ namespace base
     }
 
     template<typename T>
-    std::istream& operator>>(std::istream& input, const BigNum<T>& big_num)
+    std::istream& operator>>(std::istream& input, BigNum<T>& big_num)
     {
         std::string str;
         input >> str;

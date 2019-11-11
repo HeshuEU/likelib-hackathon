@@ -2,22 +2,20 @@
 
 #include "base/stringifiable_enum_class.hpp"
 
+#include <boost/current_function.hpp>
+
 #include <exception>
 #include <iosfwd>
 #include <string>
 
 namespace base
 {
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
-    StatusCode,
-    (NONE)(INVALID_ARGUMENT)(FILE_NOT_FOUND)(SYSTEM_CALL_FAILED)(VALUE_TO_ERROR)(ERROR_TO_VALUE)(FUNCTION_CALL_FAILED));
-
 class Error : public std::exception
 {
   public:
-    Error(const std::string& message);
+    Error() = default;
 
-    Error(const StatusCode& ec, const std::string& message = {});
+    Error(const std::string& message);
 
     Error(const Error&) = default;
 
@@ -33,13 +31,43 @@ class Error : public std::exception
 
     const char* what() const noexcept override;
 
-    StatusCode getStatusCode() const noexcept;
-
   private:
-    StatusCode _error_code;
     std::string _message;
 };
 
+class InvalidArgument : public Error
+{
+    using Error::Error;
+};
+
+class InaccessibleFile : public Error
+{
+    using Error::Error;
+};
+
+class SystemCallFailed : public Error
+{
+    using Error::Error;
+};
+
+class ParsingError : public Error
+{
+    using Error::Error;
+};
+
 std::ostream& operator<<(std::ostream& os, const Error& error);
+
+#define RAISE_ERROR(error_type, message) \
+    throw base::error_type(std::string{__FILE__} + std::string{":"} + std::to_string(__LINE__) + std::string{" :: "} + \
+                           std::string{BOOST_CURRENT_FUNCTION} + std::string{" :: "} + (message))
+
+
+#define CLARIFY_ERROR(error_type, expr, message) \
+    try { \
+        expr; \
+    } \
+    catch(const std::exception& e) { \
+        RAISE_ERROR(error_type, std::string{message} + std::string{": "} + e.what()); \
+    }
 
 } // namespace base

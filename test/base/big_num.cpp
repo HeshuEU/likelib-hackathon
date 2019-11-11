@@ -30,12 +30,12 @@ BOOST_AUTO_TEST_CASE(BigNum_constructor)
     }
     BOOST_CHECK(res);
 
-    /*std::string str_num;
-    for(uint32_t i = 0; i < 256; i++){
-           str_num += '1';
+    base::Uint256 num256(1);
+    for(uint32_t i = 0; i < 255; i++){
+           num256 *= base::Uint256(2);
     }
-    base::Uint256 num256(str_num);
-    BOOST_CHECK(num256 == base::Uint256(str_num));*/
+    base::Uint256 num255 = num256 / base::Uint256(2);
+    BOOST_CHECK(num256 - num255 == num255);
 
     base::Uint512 num4(987u);
     BOOST_CHECK(num4 == base::Uint512(987u));
@@ -60,12 +60,12 @@ BOOST_AUTO_TEST_CASE(BigNum_constructor)
     }
     BOOST_CHECK(res);
 
-    /*str_num = "";
-    for(uint32_t i = 0; i < 512; i++){
-           str_num += '1';
+    base::Uint512 num512(1);
+    for(uint32_t i = 0; i < 511; i++){
+           num512 *= base::Uint512(2);
     }
-    base::Uint512 num512(str_num);
-    BOOST_CHECK(num512 == base::Uint512(str_num));*/
+    base::Uint512 num511 = num512 / base::Uint512(2);
+    BOOST_CHECK(num512 - num511 == num511);
 }
 
 //----------------------------------
@@ -369,7 +369,8 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_iostream)
     std::stringstream stream;
     base::Uint256 num1(777777);
     stream << num1 << ' ' <<  888;
+    base::Uint256 num2;
     std::string str, str2;
-    stream >> str >> str2;
-    BOOST_CHECK(str == "777777" && str2 == "888");
+    stream >> num1 >> num2;
+    BOOST_CHECK(num1.toString() == "777777" && num2.toString() == "888");
 }

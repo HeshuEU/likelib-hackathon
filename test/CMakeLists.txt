@@ -1,12 +1,10 @@
 set(TEST_SOURCES
         main.cpp
         base/big_num.cpp
-        base/error_codes.cpp
-        base/status.cpp
-        base/result.cpp
         base/log.cpp
-        base/plain_result_use.cpp
+        base/property_tree.cpp
         rpc/base_rpc.cpp
+        base/bytes.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})

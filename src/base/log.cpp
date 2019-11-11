@@ -3,24 +3,30 @@
 #include "base/config.hpp"
 
 #include <boost/log/sources/record_ostream.hpp>
-
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/sinks/text_file_backend.hpp>
-
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/file.hpp>
-
-#include <boost/log/support/date_time.hpp>
-
 #include <boost/core/null_deleter.hpp>
-
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 
+#include <ctime>
 
 namespace
 {
+
+std::string dateAsString()
+{
+    std::time_t raw_time;
+    std::tm* time_info;
+    char buffer[80];
+    std::time(&raw_time);
+    time_info = std::localtime(&raw_time);
+    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", time_info);
+    return buffer;
+}
 
 void clearLoggerSettings()
 {
@@ -48,18 +54,18 @@ void setLogLevel(base::LogLevel logLevel)
     }
 }
 
-void formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& strm)
+void formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& stream)
 {
-    strm << boost::posix_time::second_clock::local_time();
-    strm << " |" << rec[boost::log::trivial::severity] << "| " << rec[boost::log::expressions::smessage];
+    stream << dateAsString() << " | " << rec[boost::log::trivial::severity] << " | "
+           << rec[boost::log::expressions::smessage];
 }
 
 void setFileSink()
 {
-    using textFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
+    using TextFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
 
-    boost::shared_ptr<textFileSink> sink(
-        new textFileSink(boost::log::keywords::file_name = base::config::LOG_FILE_FORMAT));
+    boost::shared_ptr<TextFileSink> sink(
+        new TextFileSink(boost::log::keywords::file_name = base::config::LOG_FILE_FORMAT));
 
     sink->locked_backend()->set_file_collector(
         boost::log::sinks::file::make_collector(boost::log::keywords::target = base::config::LOG_FOLDER,
@@ -74,9 +80,9 @@ void setFileSink()
 
 void setStdoutSink()
 {
-    using text_sink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_ostream_backend>;
+    using TextSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_ostream_backend>;
 
-    boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
+    boost::shared_ptr<TextSink> sink = boost::make_shared<TextSink>();
 
     boost::shared_ptr<std::ostream> stream(&std::clog, boost::null_deleter());
     sink->locked_backend()->add_stream(stream);
@@ -101,7 +107,6 @@ void initLog(base::LogLevel logLevel, size_t mode)
     clearLoggerSettings();
 
     if(!mode) {
-        std::cout << "WARNING: LOG OUTPUT IS DISABLED" << std::endl; // TODO: remove later
         disableLogger();
         return;
     }
@@ -110,11 +115,9 @@ void initLog(base::LogLevel logLevel, size_t mode)
 
     if(mode & base::Sink::STDOUT) {
         setStdoutSink();
-        std::cout << "WARNING: STDOUT LOG OUTPUT INITED" << std::endl; // TODO: remove later
     }
     if(mode & base::Sink::FILE) {
         setFileSink();
-        std::cout << "WARNING: FILE LOG OUTPUT INITED" << std::endl; // TODO: remove later
     }
 
     boost::log::add_common_attributes();

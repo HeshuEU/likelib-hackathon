@@ -19,9 +19,9 @@ enum class LogLevel
 
 namespace Sink
 {
-    static constexpr const std::size_t DISABLE = 0;
-    static constexpr const std::size_t STDOUT = 1;
-    static constexpr const std::size_t FILE = 2;
+    static constexpr const std::size_t DISABLE = 0x0;
+    static constexpr const std::size_t STDOUT = 0x1;
+    static constexpr const std::size_t FILE = 0x2;
 } // namespace Sink
 
 
