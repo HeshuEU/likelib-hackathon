@@ -24,7 +24,7 @@ std::string dateAsString()
     char buffer[80];
     std::time(&raw_time);
     time_info = std::localtime(&raw_time);
-    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", time_info);
+    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H-%M-%S", time_info);
     return buffer;
 }
 
