@@ -10,8 +10,10 @@ set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS system exception log program_options unit_test_framework)
-find_package(OpenSSL REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
+
+# adding OpenSSL to project
+find_package(OpenSSL REQUIRED)
 
 # without following Boost.Stacktrace will print addresses insted of function names
 if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
