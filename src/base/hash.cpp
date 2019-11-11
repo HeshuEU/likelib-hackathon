@@ -6,17 +6,14 @@
 
 #include <sstream>
 #include <iomanip>
-#include <iostream>
 
 namespace base
 {
 
 base::Bytes sha256(const base::Bytes& data)
 {
-    char digest[SHA256_DIGEST_LENGTH + 1];
-    digest[SHA256_DIGEST_LENGTH] = '\0';
-    SHA256(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(&digest));
-    base::Bytes ret(digest);
+    base::Bytes ret(32);
+    SHA256(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray()));
     ASSERT(ret.size() == 32);
     return ret;
 }
@@ -24,10 +21,8 @@ base::Bytes sha256(const base::Bytes& data)
 
 base::Bytes sha1(const base::Bytes& data)
 {
-    char digest[SHA_DIGEST_LENGTH + 1];
-    digest[SHA_DIGEST_LENGTH] = '\0';
-    SHA1(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(&digest));
-    base::Bytes ret(digest);
+    base::Bytes ret(20);
+    SHA1(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray()));
     ASSERT(ret.size() == 20);
     return ret;
 }
