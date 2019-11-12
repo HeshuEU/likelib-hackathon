@@ -7,11 +7,11 @@
 
 namespace base
 {
+
 template<typename T>
 class BigNum
 {
   public:
-    //----------------------------------
     BigNum() = default;
 
     BigNum(const BigNum&) = default;
@@ -23,41 +23,51 @@ class BigNum
     BigNum& operator=(BigNum&&) = default;
 
     template<typename N>
-    BigNum(const N&);
+    BigNum(const N& num);
 
     ~BigNum() = default;
 
     //----------------------------------
 
-    BigNum<T> operator+(const BigNum<T>&) const;
+    BigNum<T> operator+(const BigNum<T>& big_num) const;
 
-    BigNum<T> operator-(const BigNum<T>&) const;
+    BigNum<T> operator-(const BigNum<T>& big_num) const;
 
-    BigNum<T> operator*(const BigNum<T>&)const;
+    BigNum<T> operator*(const BigNum<T>& big_num) const;
 
-    BigNum<T> operator/(const BigNum<T>&) const;
+    BigNum<T> operator/(const BigNum<T>& big_num) const;
 
-    BigNum<T>& operator+=(const BigNum<T>&);
+    BigNum<T>& operator+=(const BigNum<T>& big_num);
 
-    BigNum<T>& operator-=(const BigNum<T>&);
+    BigNum<T>& operator-=(const BigNum<T>& big_num);
 
-    BigNum<T>& operator*=(const BigNum<T>&);
+    BigNum<T>& operator*=(const BigNum<T>& big_num);
 
-    BigNum<T>& operator/=(const BigNum<T>&);
+    BigNum<T>& operator/=(const BigNum<T>& big_num);
 
     //----------------------------------
 
-    bool operator!=(const BigNum<T>&) const;
+    bool operator!=(const BigNum<T>& big_num) const;
 
-    bool operator==(const BigNum<T>&) const;
+    bool operator==(const BigNum<T>& big_num) const;
 
-    bool operator>(const BigNum<T>&) const;
+    bool operator>(const BigNum<T>& big_num) const;
 
-    bool operator<(const BigNum<T>&) const;
+    bool operator<(const BigNum<T>& big_num) const;
 
-    bool operator>=(const BigNum<T>&) const;
+    bool operator>=(const BigNum<T>& big_num) const;
 
-    bool operator<=(const BigNum<T>&) const;
+    bool operator<=(const BigNum<T>& big_num) const;
+
+    //----------------------------------
+
+    BigNum<T>& operator++();
+
+    BigNum<T>& operator++(int);
+
+    BigNum<T>& operator--();
+
+    BigNum<T>& operator--(int);
 
     //----------------------------------
 
@@ -68,10 +78,10 @@ class BigNum
 };
 
 template<typename T>
-std::ostream& operator<<(std::ostream&, const BigNum<T>&);
+std::ostream& operator<<(std::ostream& output, const BigNum<T>& big_num);
 
 template<typename T>
-std::istream& operator>>(std::istream&, BigNum<T>&);
+std::istream& operator>>(std::istream& input, BigNum<T>& big_num);
 
 using Uint256 =
     BigNum<boost::multiprecision::backends::cpp_int_backend<256, 256,

@@ -106,6 +106,34 @@ bool BigNum<T>::operator<=(const BigNum<T>& big_num) const
 }
 
 template<typename T>
+BigNum<T>& BigNum<T>::operator++()
+{
+    ++_number;
+    return *this;
+}
+
+template<typename T>
+BigNum<T>& BigNum<T>::operator++(int)
+{
+    _number++;
+    return *this;
+}
+
+template<typename T>
+BigNum<T>& BigNum<T>::operator--()
+{
+    --_number;
+    return *this;
+}
+
+template<typename T>
+BigNum<T>& BigNum<T>::operator--(int)
+{
+    _number--;
+    return *this;
+}
+
+template<typename T>
 std::string BigNum<T>::toString() const noexcept
 {
     return _number.str();
