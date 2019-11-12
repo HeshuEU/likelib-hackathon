@@ -22,4 +22,4 @@ base::Bytes sha1(const base::Bytes& data)
     return ret;
 }
 
-}
+} // namespace base
