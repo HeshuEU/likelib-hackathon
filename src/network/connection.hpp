@@ -18,7 +18,7 @@ class Connection
 {
   public:
     //====================
-    Connection(boost::asio::ip::tcp::socket&& socket);
+    Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket);
 
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection& other) = delete;
