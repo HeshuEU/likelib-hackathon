@@ -13,7 +13,7 @@ namespace base
 base::Bytes sha256(const base::Bytes& data)
 {
     base::Bytes ret(SHA256_DIGEST_LENGTH);
-    SHA256(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray())); //reinterpred_cast is necessary if the return type of toArray method changes
+    SHA256(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray())); //reinterpret_cast is necessary if the return type of toArray method changes
     ASSERT(ret.size() == SHA256_DIGEST_LENGTH);
     return ret;
 }
