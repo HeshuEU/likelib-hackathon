@@ -8,10 +8,12 @@
 namespace rpc
 {
 
-class BaseServer
+class BaseService
 {
   public:
-    virtual ~BaseServer() = default;
+    virtual ~BaseService() = default;
+
+    virtual void init() = 0;
 
     virtual bc::Balance balance(const bc::Address& address) = 0;
 

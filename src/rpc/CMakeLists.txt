@@ -3,23 +3,26 @@ find_package(GRPC REQUIRED)
 find_package(ZLIB REQUIRED)
 
 set(GENERATED
-        impl/grpc/gen/public_rpc.pb.cc
-        impl/grpc/gen/public_rpc.pb.h
-        impl/grpc/gen/public_rpc.grpc.pb.cc
-        impl/grpc/gen/public_rpc.grpc.pb.h
-        impl/grpc/hello_world_server.cpp)
+        grpc/gen/public_rpc.pb.cc
+        grpc/gen/public_rpc.pb.h
+        grpc/gen/public_rpc.grpc.pb.cc
+        grpc/gen/public_rpc.grpc.pb.h
+        )
 
 set(RPC_HEADERS
-        base_server.hpp
+        grpc/grpc_service.hpp
+        grpc/grpc_node_server.hpp
+        base_service.hpp
         base_client.hpp
+        base_service.hpp
+        factory.hpp
         )
 
 set(RPC_SOURCES
-        base_server.cpp
-        base_client.cpp
-        )
+        grpc/grpc_service.cpp
+        grpc/grpc_node_server.cpp
+        factory.cpp)
 
-add_library(rpc ${RPC_HEADERS} ${RPC_SOURCES})
-add_executable(rpc-test ${GENERATED})
+add_library(rpc ${RPC_HEADERS} ${RPC_SOURCES} ${GENERATED})
 
-target_link_libraries(rpc-test base gRPC::grpc++ gRPC::grpc protobuf::libprotobuf ZLIB::ZLIB)
+target_link_libraries(rpc base gRPC::grpc++ gRPC::grpc protobuf::libprotobuf ZLIB::ZLIB)

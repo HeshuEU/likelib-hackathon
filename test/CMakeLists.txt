@@ -5,7 +5,6 @@ set(TEST_SOURCES
         base/bytes.cpp
         base/hash.cpp
         network/packet.cpp
-        rpc/base_rpc.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})
