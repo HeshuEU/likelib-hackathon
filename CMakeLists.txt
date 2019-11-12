@@ -12,13 +12,15 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS system exception log program_options unit_test_framework)
 include_directories(${Boost_INCLUDE_DIR})
 
-# adding OpenSSL to project
-find_package(OpenSSL REQUIRED)
-
 # without following Boost.Stacktrace will print addresses insted of function names
 if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
 endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+
+#==========================
+
+# adding OpenSSL to project
+find_package(OpenSSL REQUIRED)
 
 #==========================
 
