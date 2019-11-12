@@ -22,11 +22,11 @@
     }
 
 #else
-#define ASSERT(condition, message) \
+#define ASSERT(condition) \
     do { \
     } while(0)
 
-#define ASSERT_SOFT(condition, message) \
+#define ASSERT_SOFT(condition) \
     do { \
     } while(0)
 #endif

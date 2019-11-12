@@ -17,11 +17,8 @@ if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
 endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 
-# adding grpc
-#list(APPEND CMAKE_PREFIX_PATH "/opt/grpc" "/opt/protobuf")
+# adding cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-find_package(Protobuf REQUIRED)
-find_package(GRPC REQUIRED)
 
 #==========================
 
