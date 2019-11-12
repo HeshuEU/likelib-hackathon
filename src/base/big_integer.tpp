@@ -6,156 +6,156 @@ namespace base
 {
 template<typename T>
 template<typename N>
-BigNum<T>::BigNum(const N& num) : _number(num)
+BigInteger<T>::BigInteger(const N& num) : _number(num)
 {}
 
 template<typename T>
-BigNum<T> BigNum<T>::operator+(const BigNum<T>& big_num) const
+BigInteger<T> BigInteger<T>::operator+(const BigInteger<T>& big_num) const
 {
-    BigNum<T> res;
+    BigInteger<T> res;
     res._number = _number + big_num._number;
     return res;
 }
 
 template<typename T>
-BigNum<T> BigNum<T>::operator-(const BigNum<T>& big_num) const
+BigInteger<T> BigInteger<T>::operator-(const BigInteger<T>& big_num) const
 {
-    BigNum<T> res;
+    BigInteger<T> res;
     res._number = _number - big_num._number;
     return res;
 }
 
 template<typename T>
-BigNum<T> BigNum<T>::operator*(const BigNum<T>& big_num) const
+BigInteger<T> BigInteger<T>::operator*(const BigInteger<T>& big_num) const
 {
-    BigNum<T> res;
+    BigInteger<T> res;
     res._number = _number * big_num._number;
     return res;
 }
 
 template<typename T>
-BigNum<T> BigNum<T>::operator/(const BigNum<T>& big_num) const
+BigInteger<T> BigInteger<T>::operator/(const BigInteger<T>& big_num) const
 {
-    BigNum<T> res;
+    BigInteger<T> res;
     res._number = _number / big_num._number;
     return res;
 }
 
 template<typename T>
-BigNum<T>& BigNum<T>::operator+=(const BigNum<T>& big_num)
+BigInteger<T>& BigInteger<T>::operator+=(const BigInteger<T>& big_num)
 {
     _number += big_num._number;
     return *this;
 }
 
 template<typename T>
-BigNum<T>& BigNum<T>::operator-=(const BigNum<T>& big_num)
+BigInteger<T>& BigInteger<T>::operator-=(const BigInteger<T>& big_num)
 {
     _number -= big_num._number;
     return *this;
 }
 
 template<typename T>
-BigNum<T>& BigNum<T>::operator*=(const BigNum<T>& big_num)
+BigInteger<T>& BigInteger<T>::operator*=(const BigInteger<T>& big_num)
 {
     _number *= big_num._number;
     return *this;
 }
 
 template<typename T>
-BigNum<T>& BigNum<T>::operator/=(const BigNum<T>& big_num)
+BigInteger<T>& BigInteger<T>::operator/=(const BigInteger<T>& big_num)
 {
     _number /= big_num._number;
     return *this;
 }
 
 template<typename T>
-bool BigNum<T>::operator!=(const BigNum<T>& big_num) const
+bool BigInteger<T>::operator!=(const BigInteger<T>& big_num) const
 {
     return _number != big_num._number;
 }
 
 template<typename T>
-bool BigNum<T>::operator==(const BigNum<T>& big_num) const
+bool BigInteger<T>::operator==(const BigInteger<T>& big_num) const
 {
     return _number == big_num._number;
 }
 
 template<typename T>
-bool BigNum<T>::operator>(const BigNum<T>& big_num) const
+bool BigInteger<T>::operator>(const BigInteger<T>& big_num) const
 {
     return _number > big_num._number;
 }
 
 template<typename T>
-bool BigNum<T>::operator<(const BigNum<T>& big_num) const
+bool BigInteger<T>::operator<(const BigInteger<T>& big_num) const
 {
     return _number < big_num._number;
 }
 
 template<typename T>
-bool BigNum<T>::operator>=(const BigNum<T>& big_num) const
+bool BigInteger<T>::operator>=(const BigInteger<T>& big_num) const
 {
     return _number >= big_num._number;
 }
 
 template<typename T>
-bool BigNum<T>::operator<=(const BigNum<T>& big_num) const
+bool BigInteger<T>::operator<=(const BigInteger<T>& big_num) const
 {
     return _number <= big_num._number;
 }
 
 template<typename T>
-BigNum<T>& BigNum<T>::operator++()
+BigInteger<T>& BigInteger<T>::operator++()
 {
     ++_number;
     return *this;
 }
 
 template<typename T>
-BigNum<T>& BigNum<T>::operator++(int)
+BigInteger<T>& BigInteger<T>::operator++(int)
 {
     _number++;
     return *this;
 }
 
 template<typename T>
-BigNum<T>& BigNum<T>::operator--()
+BigInteger<T>& BigInteger<T>::operator--()
 {
     --_number;
     return *this;
 }
 
 template<typename T>
-BigNum<T>& BigNum<T>::operator--(int)
+BigInteger<T>& BigInteger<T>::operator--(int)
 {
     _number--;
     return *this;
 }
 
 template<typename T>
-std::string BigNum<T>::toString() const noexcept
+std::string BigInteger<T>::toString() const noexcept
 {
     return _number.str();
 }
 
 template<typename T>
-std::ostream& operator<<(std::ostream& output, const BigNum<T>& big_num)
+std::ostream& operator<<(std::ostream& output, const BigInteger<T>& big_num)
 {
     return output << big_num.toString();
 }
 
 template<typename T>
-std::istream& operator>>(std::istream& input, BigNum<T>& big_num)
+std::istream& operator>>(std::istream& input, BigInteger<T>& big_num)
 {
     std::string str;
     input >> str;
-    big_num = BigNum<T>(str);
+    big_num = BigInteger<T>(str);
     return input;
 }
 
 template<typename T>
-bool operator==(const BigNum<T>& big_num, const int num)
+bool operator==(const BigInteger<T>& big_num, const int num)
 {
     return big_num._number == num;
 }
