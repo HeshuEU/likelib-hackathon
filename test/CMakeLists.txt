@@ -1,6 +1,6 @@
 set(TEST_SOURCES
         main.cpp
-        base/big_num.cpp
+        base/big_integer.cpp
         base/log.cpp
         base/property_tree.cpp
         rpc/base_rpc.cpp

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "big_num.hpp"
+#include "big_integer.hpp"
 
 namespace base
 {

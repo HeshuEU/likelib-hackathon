@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "base/big_num.hpp"
+#include "base/big_integer.hpp"
 
 #include <string>
 #include <sstream>

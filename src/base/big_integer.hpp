@@ -94,4 +94,4 @@ using Uint512 =
                                                             boost::multiprecision::cpp_int_check_type::checked, void>>;
 } // namespace base
 
-#include "big_num.tpp"
+#include "big_integer.tpp"
