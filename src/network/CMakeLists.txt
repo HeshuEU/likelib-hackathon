@@ -1,5 +1,4 @@
 set(NETWORK_HEADERS
-        connection_acceptor.hpp
         connection.hpp
         manager.hpp
         network_address.hpp
@@ -7,7 +6,6 @@ set(NETWORK_HEADERS
         )
 
 set(NETWORK_SOURCES
-        connection_acceptor.cpp
         connection.cpp
         manager.cpp
         network_address.cpp
