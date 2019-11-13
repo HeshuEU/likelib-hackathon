@@ -5,6 +5,8 @@
 #include "bc/base_service.hpp"
 
 #include "base/log.hpp"
+#include "base/error.hpp"
+#include "base/config.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -24,30 +26,36 @@ namespace rpc {
     private:
         LogicService _service;
 
-        grpc::Status
+        static constexpr const char *LOG_ID = " |GRPC SERVICE| ";
+
+        ::grpc::Status
         balance(grpc::ServerContext *context, const Likelib::Address *request, Likelib::Money *response) override {
-            logContextData(context);
-            response->set_money(_service.balance(request->address().c_str()));
-            return grpc::Status::OK;
+            auto address = request->address().c_str();
+
+            try {
+                response->set_money(_service.balance(address));
+            } catch (const base::Error &e) {
+                LOG_ERROR << LOG_ID << e.what();
+                return ::grpc::Status::CANCELLED;
+            }
+            return ::grpc::Status::OK;
         }
 
-        grpc::Status
+        ::grpc::Status
         transaction(grpc::ServerContext *context, const Likelib::Transaction *request,
                     Likelib::Hash *response) override {
-            logContextData(context);
             auto from_address = request->from_address().address().c_str();
             auto to_address = request->to_address().address().c_str();
             auto amount = request->amount().money();
-            response->set_hash_string(_service.transaction(amount, from_address, to_address));
-            return grpc::Status::OK;
-        }
 
-        static void logContextData(grpc::ServerContext *context) {
-            LOG_TRACE << "Peer:" << context->peer();
-            LOG_TRACE << "----------- Client metadata -----------";
-            for (auto &pair : context->client_metadata()) {
-                LOG_TRACE << "Key[" << pair.first.data() << "], value [" << pair.second.data() << "]";
+            try {
+                response->set_hash_string(_service.transaction(amount, from_address, to_address));
+            } catch (const base::Error &e) {
+                LOG_ERROR << LOG_ID << e.what();
+                return ::grpc::Status::CANCELLED;
             }
+
+            return ::grpc::Status::OK;
         }
     };
 

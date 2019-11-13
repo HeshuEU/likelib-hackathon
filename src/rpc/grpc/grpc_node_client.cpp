@@ -34,7 +34,7 @@ std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Addre
                                              const bc::Address &to_address) {
     // convert data for request
     auto request_amount = new Likelib::Money();
-    request_amount->set_money(amount);
+    request_amount->set_money(static_cast<google::protobuf::uint64>(amount));
 
     auto request_from_address = new Likelib::Address();
     request_from_address->set_address(from_address.toString());
