@@ -31,7 +31,6 @@ class Connection
     };
 
     //====================
-    Connection(boost::asio::io_context& io_context);
     Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket);
 
     Connection(const Connection&) = delete;
@@ -59,8 +58,6 @@ class Connection
     void startSession();
 
     const NetworkAddress& getRemoteNetworkAddress() const;
-
-    boost::asio::ip::tcp::socket& getSocket(); // TODO: try come up with something better
 
   private:
     boost::asio::io_context& _io_context;
