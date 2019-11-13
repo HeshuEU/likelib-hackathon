@@ -12,13 +12,18 @@
 
 namespace rpc {
 
+    /// Class implement receive gRPC messages and call similar method from LogicService instance and send answers or error messages
+    /// \tparam LogicService blockchain logic interface class implimented from bc::BaseService
     template<typename LogicService>
     class GrpcNodeServiceImpl final : public Likelib::Node::Service {
     public:
+        /// default constructor
         explicit GrpcNodeServiceImpl() : _service{} {}
 
+        /// default destructor
         ~GrpcNodeServiceImpl() override = default;
 
+        /// method that call init in LogicService instance was created by that
         void init() {
             _service.init();
         }

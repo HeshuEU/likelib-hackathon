@@ -10,6 +10,7 @@
 
 namespace rpc {
 
+    /// Class implimenting connect to node by gRPC and call methods
     class GrpcNodeClient final : bc::BaseClient {
     public:
         explicit GrpcNodeClient(const std::string &connect_address);

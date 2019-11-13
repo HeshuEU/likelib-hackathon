@@ -3,13 +3,17 @@
 #include "base/log.hpp"
 #include "base/error.hpp"
 
-
+/// Constructor that create lazy(connect will be established at call method) chanel to specified ip address
+/// \param connect_address ip:port
 rpc::GrpcNodeClient::GrpcNodeClient(const std::string &connect_address) {
     _stub = std::make_unique<Likelib::Node::Stub>(
             grpc::CreateChannel(connect_address, grpc::InsecureChannelCredentials()));
 }
 
-
+/// method call remote server method(specified ip address in constructor) with similar params
+/// \param address of account
+/// \return result of balance by specific address
+/// \throw base::Error if call was with any error
 bc::Balance rpc::GrpcNodeClient::balance(const bc::Address &address) {
     // convert data for request
     Likelib::Address request;
@@ -29,7 +33,12 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address &address) {
     }
 }
 
-
+/// method call remote server method(specified ip address in constructor) with similar params
+/// \param amount money
+/// \param from_address
+/// \param to_address
+/// \return hash of transaction
+/// \throw base::Error if call was with any error
 std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address &from_address,
                                              const bc::Address &to_address) {
     // convert data for request
