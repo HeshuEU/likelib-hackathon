@@ -5,9 +5,9 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
+#include <deque>
 #include <memory>
 #include <thread>
-#include <deque>
 
 namespace network
 {
@@ -16,13 +16,14 @@ class Manager
 {
   public:
     //===================
-    Manager() = default;
+    Manager(const NetworkAddress& listen_ip);
 
     ~Manager();
     //===================
     void run();
 
-    void acceptClients(const boost::asio::ip::tcp::endpoint& listen_ip);
+    void connect(const NetworkAddress& address);
+    void connect(const std::vector<NetworkAddress>& nodes);
 
     void waitForFinish();
 
@@ -30,11 +31,14 @@ class Manager
     void _networkThreadWorkerFunction() noexcept;
     std::unique_ptr<std::thread> _network_thread;
 
+    void _acceptClients();
+
     boost::asio::io_context _io_context;
 
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
-    void _acceptOne();
-    void _acceptHandler(const boost::system::error_code& ec, boost::asio::ip::tcp::socket socket);
+    const NetworkAddress& _listen_ip;
+
+    void _acceptLoop();
 
     std::queue<std::unique_ptr<Connection>> _connections;
 };

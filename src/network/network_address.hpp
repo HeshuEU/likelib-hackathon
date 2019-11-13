@@ -21,9 +21,9 @@ class NetworkAddress
 
     unsigned short getPort() const noexcept;
 
-    operator boost::asio::ip::address_v4();
+    operator boost::asio::ip::address_v4() const;
 
-    operator boost::asio::ip::tcp::endpoint();
+    operator boost::asio::ip::tcp::endpoint() const;
 
   private:
     boost::asio::ip::address_v4 _address;

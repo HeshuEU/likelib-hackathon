@@ -18,6 +18,20 @@ class Connection
 {
   public:
     //====================
+
+    enum class Status
+    {
+        ACCEPTED,
+        CONNECTED,
+
+        HANDSHAKE_1,
+        HANDSHAKE_2,
+
+        WAITING_FOR_PONG
+    };
+
+    //====================
+    Connection(boost::asio::io_context& io_context);
     Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket);
 
     Connection(const Connection&) = delete;

@@ -20,7 +20,6 @@
 namespace
 {
 
-
 extern "C" void signalHandler(int signal)
 {
     LOG_INFO << "Signal caught: " << signal
@@ -34,6 +33,7 @@ extern "C" void signalHandler(int signal)
         ;
     std::abort();
 }
+
 
 void atExitHandler()
 {
@@ -61,9 +61,14 @@ int main(int argc, char** argv)
 
         SoftConfig exe_config(config::CONFIG_PATH);
 
-        network::Manager manager;
-        manager.acceptClients(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
+        network::Manager manager(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
+
+        std::vector<network::NetworkAddress> nodes;
+        for(const auto& node_ip_string: exe_config.getVector<std::string>("nodes")) {
+            nodes.emplace_back(node_ip_string);
+        }
+        manager.connect(nodes);
 
         std::this_thread::sleep_for(std::chrono::seconds(45));
 

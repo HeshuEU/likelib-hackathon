@@ -43,7 +43,7 @@ std::string NetworkAddress::toString() const
 }
 
 
-NetworkAddress::operator boost::asio::ip::address_v4()
+NetworkAddress::operator boost::asio::ip::address_v4() const
 {
     return _address;
 }
@@ -55,7 +55,7 @@ unsigned short NetworkAddress::getPort() const noexcept
 }
 
 
-NetworkAddress::operator boost::asio::ip::tcp::endpoint()
+NetworkAddress::operator boost::asio::ip::tcp::endpoint() const
 {
     return {_address, _port};
 }

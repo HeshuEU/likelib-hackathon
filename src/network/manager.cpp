@@ -3,10 +3,16 @@
 #include "base/assert.hpp"
 #include "base/log.hpp"
 
+#include <boost/asio/connect.hpp>
+
 namespace ba = boost::asio;
 
 namespace network
 {
+
+Manager::Manager(const network::NetworkAddress& listen_ip) : _listen_ip{listen_ip}
+{}
+
 
 Manager::~Manager()
 {
@@ -18,16 +24,17 @@ Manager::~Manager()
 void Manager::run()
 {
     _network_thread = std::make_unique<std::thread>(&Manager::_networkThreadWorkerFunction, this);
+    _acceptClients();
 }
 
 
-void Manager::acceptClients(const boost::asio::ip::tcp::endpoint& listen_ip)
+void Manager::_acceptClients()
 {
     ASSERT(!_acceptor);
 
     using namespace ba::ip;
-    _acceptor = std::make_unique<tcp::acceptor>(_io_context, listen_ip);
-    _acceptOne();
+    _acceptor = std::make_unique<tcp::acceptor>(_io_context, static_cast<ba::ip::tcp::endpoint>(_listen_ip));
+    _acceptLoop();
 }
 
 
@@ -43,24 +50,42 @@ void Manager::_networkThreadWorkerFunction() noexcept
 }
 
 
-void Manager::_acceptOne()
+void Manager::_acceptLoop()
 {
-    _acceptor->async_accept(std::bind(&Manager::_acceptHandler, this, std::placeholders::_1, std::placeholders::_2));
+    _acceptor->async_accept([this](const boost::system::error_code& ec, ba::ip::tcp::socket socket) {
+        if(ec) {
+            LOG_WARNING << "Connection accept failed: " << ec;
+        }
+        else {
+            auto connection = std::make_unique<Connection>(_io_context, std::move(socket));
+            LOG_INFO << "Connection accepted: " << connection->getRemoteNetworkAddress().toString();
+            connection->startSession();
+            _connections.push(std::move(connection));
+        }
+        _acceptLoop();
+    });
 }
 
 
-void Manager::_acceptHandler(const boost::system::error_code& ec, ba::ip::tcp::socket socket)
+void Manager::connect(const std::vector<network::NetworkAddress>& addresses)
 {
-    if(ec) {
-        LOG_WARNING << "Connection accept failed: " << ec;
+    for(const auto& address : addresses) {
+        connect(address);
     }
-    else {
-        std::unique_ptr<Connection> connection = std::make_unique<Connection>(_io_context, std::move(socket));
-        LOG_INFO << "Connection accepted: " << connection->getRemoteNetworkAddress().toString();
-        connection->startSession();
-        _connections.push(std::move(connection));
-    }
-    _acceptOne();
+}
+
+
+void Manager::connect(const network::NetworkAddress& address)
+{
+    auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
+    socket->async_connect(static_cast<ba::ip::tcp::endpoint>(address),
+                          [this, socket = std::move(socket)](const boost::system::error_code& ec) mutable {
+                              auto connection = std::make_unique<Connection>(_io_context, std::move(*socket.release()));
+                              LOG_INFO << "Connection established: "
+                                       << connection->getRemoteNetworkAddress().toString();
+                              connection->startSession();
+                              _connections.push(std::move(connection));
+                          });
 }
 
 
