@@ -23,8 +23,8 @@ Manager::~Manager()
 
 void Manager::run()
 {
-    _network_thread = std::make_unique<std::thread>(&Manager::_networkThreadWorkerFunction, this);
     _acceptClients();
+    _network_thread = std::make_unique<std::thread>(&Manager::_networkThreadWorkerFunction, this);
 }
 
 
@@ -33,7 +33,9 @@ void Manager::_acceptClients()
     ASSERT(!_acceptor);
 
     using namespace ba::ip;
+    LOG_INFO << "Listening on " << _listen_ip.toString();
     _acceptor = std::make_unique<tcp::acceptor>(_io_context, static_cast<ba::ip::tcp::endpoint>(_listen_ip));
+    _acceptor->set_option(ba::socket_base::reuse_address(true));
     _acceptLoop();
 }
 
@@ -77,6 +79,7 @@ void Manager::connect(const std::vector<network::NetworkAddress>& addresses)
 
 void Manager::connect(const network::NetworkAddress& address)
 {
+    LOG_DEBUG << "Connecting to " << address.toString();
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
     socket->async_connect(static_cast<ba::ip::tcp::endpoint>(address),
                           [this, socket = std::move(socket)](const boost::system::error_code& ec) mutable {

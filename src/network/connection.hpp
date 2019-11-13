@@ -18,7 +18,6 @@ class Connection
 {
   public:
     //====================
-
     enum class Status
     {
         ACCEPTED,
@@ -29,7 +28,6 @@ class Connection
 
         WAITING_FOR_PONG
     };
-
     //====================
     Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket);
 
@@ -46,22 +44,23 @@ class Connection
 
     ~Connection();
     //====================
-    using ReadHandler = std::function<void(const base::Bytes&)>;
-
 
     void startSession();
 
     const NetworkAddress& getRemoteNetworkAddress() const;
-
+    //====================
   private:
     //====================
     boost::asio::io_context& _io_context;
     boost::asio::ip::tcp::socket _socket;
     std::unique_ptr<NetworkAddress> _network_address;
     //====================
+    using ReadHandler = std::function<void(const base::Bytes& message, std::size_t bytes_received)>;
     static base::Bytes _read_buffer;
     std::atomic<bool> _is_receiving_enabled{false};
+
     std::unique_ptr<ReadHandler> _on_receive;
+
     void _receiveOne();
     void _receiveHandler(const boost::system::error_code& error, std::size_t bytes_received);
     void _setOnReceive(ReadHandler handler);
