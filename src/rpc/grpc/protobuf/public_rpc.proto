@@ -6,7 +6,7 @@ option java_package = "by.heshu.likelib.node";
 option java_outer_classname = "LikelibNodeProto";
 option objc_class_prefix = "HLW";
 
-package Likelib;
+package likelib;
 
 service Node {
     rpc balance (Address) returns (Money) {

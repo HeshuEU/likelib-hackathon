@@ -15,7 +15,7 @@ namespace rpc {
     /// Class implement receive gRPC messages and call similar method from LogicService instance and send answers or error messages
     /// \tparam LogicService blockchain logic interface class implimented from bc::BaseService
     template<typename LogicService>
-    class GrpcNodeServiceImpl final : public Likelib::Node::Service {
+    class GrpcNodeServiceImpl final : public likelib::Node::Service {
     public:
         /// default constructor
         explicit GrpcNodeServiceImpl() : _service{} {}
@@ -34,7 +34,7 @@ namespace rpc {
         static constexpr const char *LOG_ID = " |GRPC SERVICE| ";
 
         ::grpc::Status
-        balance(grpc::ServerContext *context, const Likelib::Address *request, Likelib::Money *response) override {
+        balance(grpc::ServerContext *context, const likelib::Address *request, likelib::Money *response) override {
             auto address = request->address().c_str();
 
             try {
@@ -47,8 +47,8 @@ namespace rpc {
         }
 
         ::grpc::Status
-        transaction(grpc::ServerContext *context, const Likelib::Transaction *request,
-                    Likelib::Hash *response) override {
+        transaction(grpc::ServerContext *context, const likelib::Transaction *request,
+                    likelib::Hash *response) override {
             auto from_address = request->from_address().address().c_str();
             auto to_address = request->to_address().address().c_str();
             auto amount = request->amount().money();

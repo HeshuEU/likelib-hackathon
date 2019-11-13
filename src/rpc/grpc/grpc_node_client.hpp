@@ -23,7 +23,7 @@ namespace rpc {
                                 const bc::Address &to_address) override;
 
     private:
-        std::unique_ptr<Likelib::Node::Stub> _stub;
+        std::unique_ptr<likelib::Node::Stub> _stub;
     };
 
 }

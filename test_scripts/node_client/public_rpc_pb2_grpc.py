@@ -15,12 +15,12 @@ class NodeStub(object):
       channel: A grpc.Channel.
     """
     self.balance = channel.unary_unary(
-        '/Likelib.Node/balance',
+        '/likelib.Node/balance',
         request_serializer=public__rpc__pb2.Address.SerializeToString,
         response_deserializer=public__rpc__pb2.Money.FromString,
         )
     self.transaction = channel.unary_unary(
-        '/Likelib.Node/transaction',
+        '/likelib.Node/transaction',
         request_serializer=public__rpc__pb2.Transaction.SerializeToString,
         response_deserializer=public__rpc__pb2.Hash.FromString,
         )
@@ -59,5 +59,5 @@ def add_NodeServicer_to_server(servicer, server):
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
-      'Likelib.Node', rpc_method_handlers)
+      'likelib.Node', rpc_method_handlers)
   server.add_generic_rpc_handlers((generic_handler,))

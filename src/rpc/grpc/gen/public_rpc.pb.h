@@ -54,7 +54,7 @@ struct TableStruct_public_5frpc_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::uint32 offsets[];
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_public_5frpc_2eproto;
-namespace Likelib {
+namespace likelib {
 class Address;
 class AddressDefaultTypeInternal;
 extern AddressDefaultTypeInternal _Address_default_instance_;
@@ -67,19 +67,19 @@ extern MoneyDefaultTypeInternal _Money_default_instance_;
 class Transaction;
 class TransactionDefaultTypeInternal;
 extern TransactionDefaultTypeInternal _Transaction_default_instance_;
-}  // namespace Likelib
+}  // namespace likelib
 PROTOBUF_NAMESPACE_OPEN
-template<> ::Likelib::Address* Arena::CreateMaybeMessage<::Likelib::Address>(Arena*);
-template<> ::Likelib::Hash* Arena::CreateMaybeMessage<::Likelib::Hash>(Arena*);
-template<> ::Likelib::Money* Arena::CreateMaybeMessage<::Likelib::Money>(Arena*);
-template<> ::Likelib::Transaction* Arena::CreateMaybeMessage<::Likelib::Transaction>(Arena*);
+template<> ::likelib::Address* Arena::CreateMaybeMessage<::likelib::Address>(Arena*);
+template<> ::likelib::Hash* Arena::CreateMaybeMessage<::likelib::Hash>(Arena*);
+template<> ::likelib::Money* Arena::CreateMaybeMessage<::likelib::Money>(Arena*);
+template<> ::likelib::Transaction* Arena::CreateMaybeMessage<::likelib::Transaction>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
-namespace Likelib {
+namespace likelib {
 
 // ===================================================================
 
 class Transaction :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Likelib.Transaction) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:likelib.Transaction) */ {
  public:
   Transaction();
   virtual ~Transaction();
@@ -163,7 +163,7 @@ class Transaction :
   void InternalSwap(Transaction* other);
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Likelib.Transaction";
+    return "likelib.Transaction";
   }
   private:
   inline ::PROTOBUF_NAMESPACE_ID::Arena* GetArenaNoVirtual() const {
@@ -187,48 +187,48 @@ class Transaction :
 
   // accessors -------------------------------------------------------
 
-  // .Likelib.Money amount = 1;
+  // .likelib.Money amount = 1;
   bool has_amount() const;
   void clear_amount();
   static const int kAmountFieldNumber = 1;
-  const ::Likelib::Money& amount() const;
-  ::Likelib::Money* release_amount();
-  ::Likelib::Money* mutable_amount();
-  void set_allocated_amount(::Likelib::Money* amount);
+  const ::likelib::Money& amount() const;
+  ::likelib::Money* release_amount();
+  ::likelib::Money* mutable_amount();
+  void set_allocated_amount(::likelib::Money* amount);
 
-  // .Likelib.Address from_address = 2;
+  // .likelib.Address from_address = 2;
   bool has_from_address() const;
   void clear_from_address();
   static const int kFromAddressFieldNumber = 2;
-  const ::Likelib::Address& from_address() const;
-  ::Likelib::Address* release_from_address();
-  ::Likelib::Address* mutable_from_address();
-  void set_allocated_from_address(::Likelib::Address* from_address);
+  const ::likelib::Address& from_address() const;
+  ::likelib::Address* release_from_address();
+  ::likelib::Address* mutable_from_address();
+  void set_allocated_from_address(::likelib::Address* from_address);
 
-  // .Likelib.Address to_address = 3;
+  // .likelib.Address to_address = 3;
   bool has_to_address() const;
   void clear_to_address();
   static const int kToAddressFieldNumber = 3;
-  const ::Likelib::Address& to_address() const;
-  ::Likelib::Address* release_to_address();
-  ::Likelib::Address* mutable_to_address();
-  void set_allocated_to_address(::Likelib::Address* to_address);
+  const ::likelib::Address& to_address() const;
+  ::likelib::Address* release_to_address();
+  ::likelib::Address* mutable_to_address();
+  void set_allocated_to_address(::likelib::Address* to_address);
 
-  // @@protoc_insertion_point(class_scope:Likelib.Transaction)
+  // @@protoc_insertion_point(class_scope:likelib.Transaction)
  private:
   class HasBitSetters;
 
   ::PROTOBUF_NAMESPACE_ID::internal::InternalMetadataWithArena _internal_metadata_;
-  ::Likelib::Money* amount_;
-  ::Likelib::Address* from_address_;
-  ::Likelib::Address* to_address_;
+  ::likelib::Money* amount_;
+  ::likelib::Address* from_address_;
+  ::likelib::Address* to_address_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_public_5frpc_2eproto;
 };
 // -------------------------------------------------------------------
 
 class Address :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Likelib.Address) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:likelib.Address) */ {
  public:
   Address();
   virtual ~Address();
@@ -312,7 +312,7 @@ class Address :
   void InternalSwap(Address* other);
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Likelib.Address";
+    return "likelib.Address";
   }
   private:
   inline ::PROTOBUF_NAMESPACE_ID::Arena* GetArenaNoVirtual() const {
@@ -348,7 +348,7 @@ class Address :
   std::string* release_address();
   void set_allocated_address(std::string* address);
 
-  // @@protoc_insertion_point(class_scope:Likelib.Address)
+  // @@protoc_insertion_point(class_scope:likelib.Address)
  private:
   class HasBitSetters;
 
@@ -360,7 +360,7 @@ class Address :
 // -------------------------------------------------------------------
 
 class Hash :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Likelib.Hash) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:likelib.Hash) */ {
  public:
   Hash();
   virtual ~Hash();
@@ -444,7 +444,7 @@ class Hash :
   void InternalSwap(Hash* other);
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Likelib.Hash";
+    return "likelib.Hash";
   }
   private:
   inline ::PROTOBUF_NAMESPACE_ID::Arena* GetArenaNoVirtual() const {
@@ -480,7 +480,7 @@ class Hash :
   std::string* release_hash_string();
   void set_allocated_hash_string(std::string* hash_string);
 
-  // @@protoc_insertion_point(class_scope:Likelib.Hash)
+  // @@protoc_insertion_point(class_scope:likelib.Hash)
  private:
   class HasBitSetters;
 
@@ -492,7 +492,7 @@ class Hash :
 // -------------------------------------------------------------------
 
 class Money :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Likelib.Money) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:likelib.Money) */ {
  public:
   Money();
   virtual ~Money();
@@ -576,7 +576,7 @@ class Money :
   void InternalSwap(Money* other);
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Likelib.Money";
+    return "likelib.Money";
   }
   private:
   inline ::PROTOBUF_NAMESPACE_ID::Arena* GetArenaNoVirtual() const {
@@ -606,7 +606,7 @@ class Money :
   ::PROTOBUF_NAMESPACE_ID::uint64 money() const;
   void set_money(::PROTOBUF_NAMESPACE_ID::uint64 value);
 
-  // @@protoc_insertion_point(class_scope:Likelib.Money)
+  // @@protoc_insertion_point(class_scope:likelib.Money)
  private:
   class HasBitSetters;
 
@@ -626,7 +626,7 @@ class Money :
 #endif  // __GNUC__
 // Transaction
 
-// .Likelib.Money amount = 1;
+// .likelib.Money amount = 1;
 inline bool Transaction::has_amount() const {
   return this != internal_default_instance() && amount_ != nullptr;
 }
@@ -636,29 +636,29 @@ inline void Transaction::clear_amount() {
   }
   amount_ = nullptr;
 }
-inline const ::Likelib::Money& Transaction::amount() const {
-  const ::Likelib::Money* p = amount_;
-  // @@protoc_insertion_point(field_get:Likelib.Transaction.amount)
-  return p != nullptr ? *p : *reinterpret_cast<const ::Likelib::Money*>(
-      &::Likelib::_Money_default_instance_);
+inline const ::likelib::Money& Transaction::amount() const {
+  const ::likelib::Money* p = amount_;
+  // @@protoc_insertion_point(field_get:likelib.Transaction.amount)
+  return p != nullptr ? *p : *reinterpret_cast<const ::likelib::Money*>(
+      &::likelib::_Money_default_instance_);
 }
-inline ::Likelib::Money* Transaction::release_amount() {
-  // @@protoc_insertion_point(field_release:Likelib.Transaction.amount)
+inline ::likelib::Money* Transaction::release_amount() {
+  // @@protoc_insertion_point(field_release:likelib.Transaction.amount)
   
-  ::Likelib::Money* temp = amount_;
+  ::likelib::Money* temp = amount_;
   amount_ = nullptr;
   return temp;
 }
-inline ::Likelib::Money* Transaction::mutable_amount() {
+inline ::likelib::Money* Transaction::mutable_amount() {
   
   if (amount_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Likelib::Money>(GetArenaNoVirtual());
+    auto* p = CreateMaybeMessage<::likelib::Money>(GetArenaNoVirtual());
     amount_ = p;
   }
-  // @@protoc_insertion_point(field_mutable:Likelib.Transaction.amount)
+  // @@protoc_insertion_point(field_mutable:likelib.Transaction.amount)
   return amount_;
 }
-inline void Transaction::set_allocated_amount(::Likelib::Money* amount) {
+inline void Transaction::set_allocated_amount(::likelib::Money* amount) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaNoVirtual();
   if (message_arena == nullptr) {
     delete amount_;
@@ -674,10 +674,10 @@ inline void Transaction::set_allocated_amount(::Likelib::Money* amount) {
     
   }
   amount_ = amount;
-  // @@protoc_insertion_point(field_set_allocated:Likelib.Transaction.amount)
+  // @@protoc_insertion_point(field_set_allocated:likelib.Transaction.amount)
 }
 
-// .Likelib.Address from_address = 2;
+// .likelib.Address from_address = 2;
 inline bool Transaction::has_from_address() const {
   return this != internal_default_instance() && from_address_ != nullptr;
 }
@@ -687,29 +687,29 @@ inline void Transaction::clear_from_address() {
   }
   from_address_ = nullptr;
 }
-inline const ::Likelib::Address& Transaction::from_address() const {
-  const ::Likelib::Address* p = from_address_;
-  // @@protoc_insertion_point(field_get:Likelib.Transaction.from_address)
-  return p != nullptr ? *p : *reinterpret_cast<const ::Likelib::Address*>(
-      &::Likelib::_Address_default_instance_);
+inline const ::likelib::Address& Transaction::from_address() const {
+  const ::likelib::Address* p = from_address_;
+  // @@protoc_insertion_point(field_get:likelib.Transaction.from_address)
+  return p != nullptr ? *p : *reinterpret_cast<const ::likelib::Address*>(
+      &::likelib::_Address_default_instance_);
 }
-inline ::Likelib::Address* Transaction::release_from_address() {
-  // @@protoc_insertion_point(field_release:Likelib.Transaction.from_address)
+inline ::likelib::Address* Transaction::release_from_address() {
+  // @@protoc_insertion_point(field_release:likelib.Transaction.from_address)
   
-  ::Likelib::Address* temp = from_address_;
+  ::likelib::Address* temp = from_address_;
   from_address_ = nullptr;
   return temp;
 }
-inline ::Likelib::Address* Transaction::mutable_from_address() {
+inline ::likelib::Address* Transaction::mutable_from_address() {
   
   if (from_address_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Likelib::Address>(GetArenaNoVirtual());
+    auto* p = CreateMaybeMessage<::likelib::Address>(GetArenaNoVirtual());
     from_address_ = p;
   }
-  // @@protoc_insertion_point(field_mutable:Likelib.Transaction.from_address)
+  // @@protoc_insertion_point(field_mutable:likelib.Transaction.from_address)
   return from_address_;
 }
-inline void Transaction::set_allocated_from_address(::Likelib::Address* from_address) {
+inline void Transaction::set_allocated_from_address(::likelib::Address* from_address) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaNoVirtual();
   if (message_arena == nullptr) {
     delete from_address_;
@@ -725,10 +725,10 @@ inline void Transaction::set_allocated_from_address(::Likelib::Address* from_add
     
   }
   from_address_ = from_address;
-  // @@protoc_insertion_point(field_set_allocated:Likelib.Transaction.from_address)
+  // @@protoc_insertion_point(field_set_allocated:likelib.Transaction.from_address)
 }
 
-// .Likelib.Address to_address = 3;
+// .likelib.Address to_address = 3;
 inline bool Transaction::has_to_address() const {
   return this != internal_default_instance() && to_address_ != nullptr;
 }
@@ -738,29 +738,29 @@ inline void Transaction::clear_to_address() {
   }
   to_address_ = nullptr;
 }
-inline const ::Likelib::Address& Transaction::to_address() const {
-  const ::Likelib::Address* p = to_address_;
-  // @@protoc_insertion_point(field_get:Likelib.Transaction.to_address)
-  return p != nullptr ? *p : *reinterpret_cast<const ::Likelib::Address*>(
-      &::Likelib::_Address_default_instance_);
+inline const ::likelib::Address& Transaction::to_address() const {
+  const ::likelib::Address* p = to_address_;
+  // @@protoc_insertion_point(field_get:likelib.Transaction.to_address)
+  return p != nullptr ? *p : *reinterpret_cast<const ::likelib::Address*>(
+      &::likelib::_Address_default_instance_);
 }
-inline ::Likelib::Address* Transaction::release_to_address() {
-  // @@protoc_insertion_point(field_release:Likelib.Transaction.to_address)
+inline ::likelib::Address* Transaction::release_to_address() {
+  // @@protoc_insertion_point(field_release:likelib.Transaction.to_address)
   
-  ::Likelib::Address* temp = to_address_;
+  ::likelib::Address* temp = to_address_;
   to_address_ = nullptr;
   return temp;
 }
-inline ::Likelib::Address* Transaction::mutable_to_address() {
+inline ::likelib::Address* Transaction::mutable_to_address() {
   
   if (to_address_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Likelib::Address>(GetArenaNoVirtual());
+    auto* p = CreateMaybeMessage<::likelib::Address>(GetArenaNoVirtual());
     to_address_ = p;
   }
-  // @@protoc_insertion_point(field_mutable:Likelib.Transaction.to_address)
+  // @@protoc_insertion_point(field_mutable:likelib.Transaction.to_address)
   return to_address_;
 }
-inline void Transaction::set_allocated_to_address(::Likelib::Address* to_address) {
+inline void Transaction::set_allocated_to_address(::likelib::Address* to_address) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaNoVirtual();
   if (message_arena == nullptr) {
     delete to_address_;
@@ -776,7 +776,7 @@ inline void Transaction::set_allocated_to_address(::Likelib::Address* to_address
     
   }
   to_address_ = to_address;
-  // @@protoc_insertion_point(field_set_allocated:Likelib.Transaction.to_address)
+  // @@protoc_insertion_point(field_set_allocated:likelib.Transaction.to_address)
 }
 
 // -------------------------------------------------------------------
@@ -788,39 +788,39 @@ inline void Address::clear_address() {
   address_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 inline const std::string& Address::address() const {
-  // @@protoc_insertion_point(field_get:Likelib.Address.address)
+  // @@protoc_insertion_point(field_get:likelib.Address.address)
   return address_.GetNoArena();
 }
 inline void Address::set_address(const std::string& value) {
   
   address_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:Likelib.Address.address)
+  // @@protoc_insertion_point(field_set:likelib.Address.address)
 }
 inline void Address::set_address(std::string&& value) {
   
   address_.SetNoArena(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:Likelib.Address.address)
+  // @@protoc_insertion_point(field_set_rvalue:likelib.Address.address)
 }
 inline void Address::set_address(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   address_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:Likelib.Address.address)
+  // @@protoc_insertion_point(field_set_char:likelib.Address.address)
 }
 inline void Address::set_address(const char* value, size_t size) {
   
   address_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:Likelib.Address.address)
+  // @@protoc_insertion_point(field_set_pointer:likelib.Address.address)
 }
 inline std::string* Address::mutable_address() {
   
-  // @@protoc_insertion_point(field_mutable:Likelib.Address.address)
+  // @@protoc_insertion_point(field_mutable:likelib.Address.address)
   return address_.MutableNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 inline std::string* Address::release_address() {
-  // @@protoc_insertion_point(field_release:Likelib.Address.address)
+  // @@protoc_insertion_point(field_release:likelib.Address.address)
   
   return address_.ReleaseNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
@@ -831,7 +831,7 @@ inline void Address::set_allocated_address(std::string* address) {
     
   }
   address_.SetAllocatedNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), address);
-  // @@protoc_insertion_point(field_set_allocated:Likelib.Address.address)
+  // @@protoc_insertion_point(field_set_allocated:likelib.Address.address)
 }
 
 // -------------------------------------------------------------------
@@ -843,39 +843,39 @@ inline void Hash::clear_hash_string() {
   hash_string_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 inline const std::string& Hash::hash_string() const {
-  // @@protoc_insertion_point(field_get:Likelib.Hash.hash_string)
+  // @@protoc_insertion_point(field_get:likelib.Hash.hash_string)
   return hash_string_.GetNoArena();
 }
 inline void Hash::set_hash_string(const std::string& value) {
   
   hash_string_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:Likelib.Hash.hash_string)
+  // @@protoc_insertion_point(field_set:likelib.Hash.hash_string)
 }
 inline void Hash::set_hash_string(std::string&& value) {
   
   hash_string_.SetNoArena(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:Likelib.Hash.hash_string)
+  // @@protoc_insertion_point(field_set_rvalue:likelib.Hash.hash_string)
 }
 inline void Hash::set_hash_string(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   hash_string_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:Likelib.Hash.hash_string)
+  // @@protoc_insertion_point(field_set_char:likelib.Hash.hash_string)
 }
 inline void Hash::set_hash_string(const char* value, size_t size) {
   
   hash_string_.SetNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:Likelib.Hash.hash_string)
+  // @@protoc_insertion_point(field_set_pointer:likelib.Hash.hash_string)
 }
 inline std::string* Hash::mutable_hash_string() {
   
-  // @@protoc_insertion_point(field_mutable:Likelib.Hash.hash_string)
+  // @@protoc_insertion_point(field_mutable:likelib.Hash.hash_string)
   return hash_string_.MutableNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 inline std::string* Hash::release_hash_string() {
-  // @@protoc_insertion_point(field_release:Likelib.Hash.hash_string)
+  // @@protoc_insertion_point(field_release:likelib.Hash.hash_string)
   
   return hash_string_.ReleaseNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
@@ -886,7 +886,7 @@ inline void Hash::set_allocated_hash_string(std::string* hash_string) {
     
   }
   hash_string_.SetAllocatedNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), hash_string);
-  // @@protoc_insertion_point(field_set_allocated:Likelib.Hash.hash_string)
+  // @@protoc_insertion_point(field_set_allocated:likelib.Hash.hash_string)
 }
 
 // -------------------------------------------------------------------
@@ -898,13 +898,13 @@ inline void Money::clear_money() {
   money_ = PROTOBUF_ULONGLONG(0);
 }
 inline ::PROTOBUF_NAMESPACE_ID::uint64 Money::money() const {
-  // @@protoc_insertion_point(field_get:Likelib.Money.money)
+  // @@protoc_insertion_point(field_get:likelib.Money.money)
   return money_;
 }
 inline void Money::set_money(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
   money_ = value;
-  // @@protoc_insertion_point(field_set:Likelib.Money.money)
+  // @@protoc_insertion_point(field_set:likelib.Money.money)
 }
 
 #ifdef __GNUC__
@@ -919,7 +919,7 @@ inline void Money::set_money(::PROTOBUF_NAMESPACE_ID::uint64 value) {
 
 // @@protoc_insertion_point(namespace_scope)
 
-}  // namespace Likelib
+}  // namespace likelib
 
 // @@protoc_insertion_point(global_scope)
 

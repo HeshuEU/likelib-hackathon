@@ -17,10 +17,10 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='public_rpc.proto',
-  package='Likelib',
+  package='likelib',
   syntax='proto3',
   serialized_options=_b('\n\025by.heshu.likelib.nodeB\020LikelibNodeProtoP\001\242\002\003HLW'),
-  serialized_pb=_b('\n\x10public_rpc.proto\x12\x07Likelib\"{\n\x0bTransaction\x12\x1e\n\x06\x61mount\x18\x01 \x01(\x0b\x32\x0e.Likelib.Money\x12&\n\x0c\x66rom_address\x18\x02 \x01(\x0b\x32\x10.Likelib.Address\x12$\n\nto_address\x18\x03 \x01(\x0b\x32\x10.Likelib.Address\"\x1a\n\x07\x41\x64\x64ress\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\t\"\x1b\n\x04Hash\x12\x13\n\x0bhash_string\x18\x01 \x01(\t\"\x16\n\x05Money\x12\r\n\x05money\x18\x01 \x01(\x04\x32k\n\x04Node\x12-\n\x07\x62\x61lance\x12\x10.Likelib.Address\x1a\x0e.Likelib.Money\"\x00\x12\x34\n\x0btransaction\x12\x14.Likelib.Transaction\x1a\r.Likelib.Hash\"\x00\x42\x31\n\x15\x62y.heshu.likelib.nodeB\x10LikelibNodeProtoP\x01\xa2\x02\x03HLWb\x06proto3')
+  serialized_pb=_b('\n\x10public_rpc.proto\x12\x07likelib\"{\n\x0bTransaction\x12\x1e\n\x06\x61mount\x18\x01 \x01(\x0b\x32\x0e.likelib.Money\x12&\n\x0c\x66rom_address\x18\x02 \x01(\x0b\x32\x10.likelib.Address\x12$\n\nto_address\x18\x03 \x01(\x0b\x32\x10.likelib.Address\"\x1a\n\x07\x41\x64\x64ress\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\t\"\x1b\n\x04Hash\x12\x13\n\x0bhash_string\x18\x01 \x01(\t\"\x16\n\x05Money\x12\r\n\x05money\x18\x01 \x01(\x04\x32k\n\x04Node\x12-\n\x07\x62\x61lance\x12\x10.likelib.Address\x1a\x0e.likelib.Money\"\x00\x12\x34\n\x0btransaction\x12\x14.likelib.Transaction\x1a\r.likelib.Hash\"\x00\x42\x31\n\x15\x62y.heshu.likelib.nodeB\x10LikelibNodeProtoP\x01\xa2\x02\x03HLWb\x06proto3')
 )
 
 
@@ -28,27 +28,27 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 
 _TRANSACTION = _descriptor.Descriptor(
   name='Transaction',
-  full_name='Likelib.Transaction',
+  full_name='likelib.Transaction',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='amount', full_name='Likelib.Transaction.amount', index=0,
+      name='amount', full_name='likelib.Transaction.amount', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='from_address', full_name='Likelib.Transaction.from_address', index=1,
+      name='from_address', full_name='likelib.Transaction.from_address', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='to_address', full_name='Likelib.Transaction.to_address', index=2,
+      name='to_address', full_name='likelib.Transaction.to_address', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -73,13 +73,13 @@ _TRANSACTION = _descriptor.Descriptor(
 
 _ADDRESS = _descriptor.Descriptor(
   name='Address',
-  full_name='Likelib.Address',
+  full_name='likelib.Address',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='address', full_name='Likelib.Address.address', index=0,
+      name='address', full_name='likelib.Address.address', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -104,13 +104,13 @@ _ADDRESS = _descriptor.Descriptor(
 
 _HASH = _descriptor.Descriptor(
   name='Hash',
-  full_name='Likelib.Hash',
+  full_name='likelib.Hash',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='hash_string', full_name='Likelib.Hash.hash_string', index=0,
+      name='hash_string', full_name='likelib.Hash.hash_string', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -135,13 +135,13 @@ _HASH = _descriptor.Descriptor(
 
 _MONEY = _descriptor.Descriptor(
   name='Money',
-  full_name='Likelib.Money',
+  full_name='likelib.Money',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='money', full_name='Likelib.Money.money', index=0,
+      name='money', full_name='likelib.Money.money', index=0,
       number=1, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -175,28 +175,28 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 Transaction = _reflection.GeneratedProtocolMessageType('Transaction', (_message.Message,), {
   'DESCRIPTOR' : _TRANSACTION,
   '__module__' : 'public_rpc_pb2'
-  # @@protoc_insertion_point(class_scope:Likelib.Transaction)
+  # @@protoc_insertion_point(class_scope:likelib.Transaction)
   })
 _sym_db.RegisterMessage(Transaction)
 
 Address = _reflection.GeneratedProtocolMessageType('Address', (_message.Message,), {
   'DESCRIPTOR' : _ADDRESS,
   '__module__' : 'public_rpc_pb2'
-  # @@protoc_insertion_point(class_scope:Likelib.Address)
+  # @@protoc_insertion_point(class_scope:likelib.Address)
   })
 _sym_db.RegisterMessage(Address)
 
 Hash = _reflection.GeneratedProtocolMessageType('Hash', (_message.Message,), {
   'DESCRIPTOR' : _HASH,
   '__module__' : 'public_rpc_pb2'
-  # @@protoc_insertion_point(class_scope:Likelib.Hash)
+  # @@protoc_insertion_point(class_scope:likelib.Hash)
   })
 _sym_db.RegisterMessage(Hash)
 
 Money = _reflection.GeneratedProtocolMessageType('Money', (_message.Message,), {
   'DESCRIPTOR' : _MONEY,
   '__module__' : 'public_rpc_pb2'
-  # @@protoc_insertion_point(class_scope:Likelib.Money)
+  # @@protoc_insertion_point(class_scope:likelib.Money)
   })
 _sym_db.RegisterMessage(Money)
 
@@ -205,7 +205,7 @@ DESCRIPTOR._options = None
 
 _NODE = _descriptor.ServiceDescriptor(
   name='Node',
-  full_name='Likelib.Node',
+  full_name='likelib.Node',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
@@ -214,7 +214,7 @@ _NODE = _descriptor.ServiceDescriptor(
   methods=[
   _descriptor.MethodDescriptor(
     name='balance',
-    full_name='Likelib.Node.balance',
+    full_name='likelib.Node.balance',
     index=0,
     containing_service=None,
     input_type=_ADDRESS,
@@ -223,7 +223,7 @@ _NODE = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='transaction',
-    full_name='Likelib.Node.transaction',
+    full_name='likelib.Node.transaction',
     index=1,
     containing_service=None,
     input_type=_TRANSACTION,

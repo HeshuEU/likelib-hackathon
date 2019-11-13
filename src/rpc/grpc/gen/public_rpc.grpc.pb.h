@@ -36,77 +36,77 @@ class MessageAllocator;
 }  // namespace experimental
 }  // namespace grpc
 
-namespace Likelib {
+namespace likelib {
 
 class Node final {
  public:
   static constexpr char const* service_full_name() {
-    return "Likelib.Node";
+    return "likelib.Node";
   }
   class StubInterface {
    public:
     virtual ~StubInterface() {}
-    virtual ::grpc::Status balance(::grpc::ClientContext* context, const ::Likelib::Address& request, ::Likelib::Money* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Money>> Asyncbalance(::grpc::ClientContext* context, const ::Likelib::Address& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Money>>(AsyncbalanceRaw(context, request, cq));
+    virtual ::grpc::Status balance(::grpc::ClientContext* context, const ::likelib::Address& request, ::likelib::Money* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Money>> Asyncbalance(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Money>>(AsyncbalanceRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Money>> PrepareAsyncbalance(::grpc::ClientContext* context, const ::Likelib::Address& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Money>>(PrepareAsyncbalanceRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Money>> PrepareAsyncbalance(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Money>>(PrepareAsyncbalanceRaw(context, request, cq));
     }
-    virtual ::grpc::Status transaction(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::Likelib::Hash* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Hash>> Asynctransaction(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Hash>>(AsynctransactionRaw(context, request, cq));
+    virtual ::grpc::Status transaction(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::likelib::Hash* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Hash>> Asynctransaction(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Hash>>(AsynctransactionRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Hash>> PrepareAsynctransaction(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Hash>>(PrepareAsynctransactionRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Hash>> PrepareAsynctransaction(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Hash>>(PrepareAsynctransactionRaw(context, request, cq));
     }
     class experimental_async_interface {
      public:
       virtual ~experimental_async_interface() {}
-      virtual void balance(::grpc::ClientContext* context, const ::Likelib::Address* request, ::Likelib::Money* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Likelib::Money* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void balance(::grpc::ClientContext* context, const ::Likelib::Address* request, ::Likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      virtual void balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      virtual void transaction(::grpc::ClientContext* context, const ::Likelib::Transaction* request, ::Likelib::Hash* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Likelib::Hash* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void transaction(::grpc::ClientContext* context, const ::Likelib::Transaction* request, ::Likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      virtual void transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void balance(::grpc::ClientContext* context, const ::likelib::Address* request, ::likelib::Money* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Money* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void balance(::grpc::ClientContext* context, const ::likelib::Address* request, ::likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void transaction(::grpc::ClientContext* context, const ::likelib::Transaction* request, ::likelib::Hash* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Hash* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void transaction(::grpc::ClientContext* context, const ::likelib::Transaction* request, ::likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
     };
     virtual class experimental_async_interface* experimental_async() { return nullptr; }
   private:
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Money>* AsyncbalanceRaw(::grpc::ClientContext* context, const ::Likelib::Address& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Money>* PrepareAsyncbalanceRaw(::grpc::ClientContext* context, const ::Likelib::Address& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Hash>* AsynctransactionRaw(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Likelib::Hash>* PrepareAsynctransactionRaw(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Money>* AsyncbalanceRaw(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Money>* PrepareAsyncbalanceRaw(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Hash>* AsynctransactionRaw(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::likelib::Hash>* PrepareAsynctransactionRaw(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
     Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
-    ::grpc::Status balance(::grpc::ClientContext* context, const ::Likelib::Address& request, ::Likelib::Money* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Likelib::Money>> Asyncbalance(::grpc::ClientContext* context, const ::Likelib::Address& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Likelib::Money>>(AsyncbalanceRaw(context, request, cq));
+    ::grpc::Status balance(::grpc::ClientContext* context, const ::likelib::Address& request, ::likelib::Money* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::likelib::Money>> Asyncbalance(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::likelib::Money>>(AsyncbalanceRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Likelib::Money>> PrepareAsyncbalance(::grpc::ClientContext* context, const ::Likelib::Address& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Likelib::Money>>(PrepareAsyncbalanceRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::likelib::Money>> PrepareAsyncbalance(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::likelib::Money>>(PrepareAsyncbalanceRaw(context, request, cq));
     }
-    ::grpc::Status transaction(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::Likelib::Hash* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Likelib::Hash>> Asynctransaction(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Likelib::Hash>>(AsynctransactionRaw(context, request, cq));
+    ::grpc::Status transaction(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::likelib::Hash* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::likelib::Hash>> Asynctransaction(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::likelib::Hash>>(AsynctransactionRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Likelib::Hash>> PrepareAsynctransaction(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Likelib::Hash>>(PrepareAsynctransactionRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::likelib::Hash>> PrepareAsynctransaction(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::likelib::Hash>>(PrepareAsynctransactionRaw(context, request, cq));
     }
     class experimental_async final :
       public StubInterface::experimental_async_interface {
      public:
-      void balance(::grpc::ClientContext* context, const ::Likelib::Address* request, ::Likelib::Money* response, std::function<void(::grpc::Status)>) override;
-      void balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Likelib::Money* response, std::function<void(::grpc::Status)>) override;
-      void balance(::grpc::ClientContext* context, const ::Likelib::Address* request, ::Likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      void balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      void transaction(::grpc::ClientContext* context, const ::Likelib::Transaction* request, ::Likelib::Hash* response, std::function<void(::grpc::Status)>) override;
-      void transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Likelib::Hash* response, std::function<void(::grpc::Status)>) override;
-      void transaction(::grpc::ClientContext* context, const ::Likelib::Transaction* request, ::Likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      void transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void balance(::grpc::ClientContext* context, const ::likelib::Address* request, ::likelib::Money* response, std::function<void(::grpc::Status)>) override;
+      void balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Money* response, std::function<void(::grpc::Status)>) override;
+      void balance(::grpc::ClientContext* context, const ::likelib::Address* request, ::likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void transaction(::grpc::ClientContext* context, const ::likelib::Transaction* request, ::likelib::Hash* response, std::function<void(::grpc::Status)>) override;
+      void transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Hash* response, std::function<void(::grpc::Status)>) override;
+      void transaction(::grpc::ClientContext* context, const ::likelib::Transaction* request, ::likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
      private:
       friend class Stub;
       explicit experimental_async(Stub* stub): stub_(stub) { }
@@ -118,10 +118,10 @@ class Node final {
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
     class experimental_async async_stub_{this};
-    ::grpc::ClientAsyncResponseReader< ::Likelib::Money>* AsyncbalanceRaw(::grpc::ClientContext* context, const ::Likelib::Address& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::Likelib::Money>* PrepareAsyncbalanceRaw(::grpc::ClientContext* context, const ::Likelib::Address& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::Likelib::Hash>* AsynctransactionRaw(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::Likelib::Hash>* PrepareAsynctransactionRaw(::grpc::ClientContext* context, const ::Likelib::Transaction& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::likelib::Money>* AsyncbalanceRaw(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::likelib::Money>* PrepareAsyncbalanceRaw(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::likelib::Hash>* AsynctransactionRaw(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::likelib::Hash>* PrepareAsynctransactionRaw(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_balance_;
     const ::grpc::internal::RpcMethod rpcmethod_transaction_;
   };
@@ -131,8 +131,8 @@ class Node final {
    public:
     Service();
     virtual ~Service();
-    virtual ::grpc::Status balance(::grpc::ServerContext* context, const ::Likelib::Address* request, ::Likelib::Money* response);
-    virtual ::grpc::Status transaction(::grpc::ServerContext* context, const ::Likelib::Transaction* request, ::Likelib::Hash* response);
+    virtual ::grpc::Status balance(::grpc::ServerContext* context, const ::likelib::Address* request, ::likelib::Money* response);
+    virtual ::grpc::Status transaction(::grpc::ServerContext* context, const ::likelib::Transaction* request, ::likelib::Hash* response);
   };
   template <class BaseClass>
   class WithAsyncMethod_balance : public BaseClass {
@@ -146,11 +146,11 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::Likelib::Address* /*request*/, ::Likelib::Money* /*response*/) override {
+    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::likelib::Address* /*request*/, ::likelib::Money* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void Requestbalance(::grpc::ServerContext* context, ::Likelib::Address* request, ::grpc::ServerAsyncResponseWriter< ::Likelib::Money>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requestbalance(::grpc::ServerContext* context, ::likelib::Address* request, ::grpc::ServerAsyncResponseWriter< ::likelib::Money>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
@@ -166,11 +166,11 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::Likelib::Transaction* /*request*/, ::Likelib::Hash* /*response*/) override {
+    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::likelib::Transaction* /*request*/, ::likelib::Hash* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void Requesttransaction(::grpc::ServerContext* context, ::Likelib::Transaction* request, ::grpc::ServerAsyncResponseWriter< ::Likelib::Hash>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void Requesttransaction(::grpc::ServerContext* context, ::likelib::Transaction* request, ::grpc::ServerAsyncResponseWriter< ::likelib::Hash>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
@@ -182,17 +182,17 @@ class Node final {
    public:
     ExperimentalWithCallbackMethod_balance() {
       ::grpc::Service::experimental().MarkMethodCallback(0,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::Likelib::Address, ::Likelib::Money>(
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::likelib::Address, ::likelib::Money>(
           [this](::grpc::ServerContext* context,
-                 const ::Likelib::Address* request,
-                 ::Likelib::Money* response,
+                 const ::likelib::Address* request,
+                 ::likelib::Money* response,
                  ::grpc::experimental::ServerCallbackRpcController* controller) {
                    return this->balance(context, request, response, controller);
                  }));
     }
     void SetMessageAllocatorFor_balance(
-        ::grpc::experimental::MessageAllocator< ::Likelib::Address, ::Likelib::Money>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::Likelib::Address, ::Likelib::Money>*>(
+        ::grpc::experimental::MessageAllocator< ::likelib::Address, ::likelib::Money>* allocator) {
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::likelib::Address, ::likelib::Money>*>(
           ::grpc::Service::experimental().GetHandler(0))
               ->SetMessageAllocator(allocator);
     }
@@ -200,11 +200,11 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::Likelib::Address* /*request*/, ::Likelib::Money* /*response*/) override {
+    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::likelib::Address* /*request*/, ::likelib::Money* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void balance(::grpc::ServerContext* /*context*/, const ::Likelib::Address* /*request*/, ::Likelib::Money* /*response*/, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    virtual void balance(::grpc::ServerContext* /*context*/, const ::likelib::Address* /*request*/, ::likelib::Money* /*response*/, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_transaction : public BaseClass {
@@ -213,17 +213,17 @@ class Node final {
    public:
     ExperimentalWithCallbackMethod_transaction() {
       ::grpc::Service::experimental().MarkMethodCallback(1,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::Likelib::Transaction, ::Likelib::Hash>(
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::likelib::Transaction, ::likelib::Hash>(
           [this](::grpc::ServerContext* context,
-                 const ::Likelib::Transaction* request,
-                 ::Likelib::Hash* response,
+                 const ::likelib::Transaction* request,
+                 ::likelib::Hash* response,
                  ::grpc::experimental::ServerCallbackRpcController* controller) {
                    return this->transaction(context, request, response, controller);
                  }));
     }
     void SetMessageAllocatorFor_transaction(
-        ::grpc::experimental::MessageAllocator< ::Likelib::Transaction, ::Likelib::Hash>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::Likelib::Transaction, ::Likelib::Hash>*>(
+        ::grpc::experimental::MessageAllocator< ::likelib::Transaction, ::likelib::Hash>* allocator) {
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::likelib::Transaction, ::likelib::Hash>*>(
           ::grpc::Service::experimental().GetHandler(1))
               ->SetMessageAllocator(allocator);
     }
@@ -231,11 +231,11 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::Likelib::Transaction* /*request*/, ::Likelib::Hash* /*response*/) override {
+    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::likelib::Transaction* /*request*/, ::likelib::Hash* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void transaction(::grpc::ServerContext* /*context*/, const ::Likelib::Transaction* /*request*/, ::Likelib::Hash* /*response*/, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    virtual void transaction(::grpc::ServerContext* /*context*/, const ::likelib::Transaction* /*request*/, ::likelib::Hash* /*response*/, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
   };
   typedef ExperimentalWithCallbackMethod_balance<ExperimentalWithCallbackMethod_transaction<Service > > ExperimentalCallbackService;
   template <class BaseClass>
@@ -250,7 +250,7 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::Likelib::Address* /*request*/, ::Likelib::Money* /*response*/) override {
+    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::likelib::Address* /*request*/, ::likelib::Money* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -267,7 +267,7 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::Likelib::Transaction* /*request*/, ::Likelib::Hash* /*response*/) override {
+    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::likelib::Transaction* /*request*/, ::likelib::Hash* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -284,7 +284,7 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::Likelib::Address* /*request*/, ::Likelib::Money* /*response*/) override {
+    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::likelib::Address* /*request*/, ::likelib::Money* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -304,7 +304,7 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::Likelib::Transaction* /*request*/, ::Likelib::Hash* /*response*/) override {
+    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::likelib::Transaction* /*request*/, ::likelib::Hash* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -331,7 +331,7 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::Likelib::Address* /*request*/, ::Likelib::Money* /*response*/) override {
+    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::likelib::Address* /*request*/, ::likelib::Money* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -356,7 +356,7 @@ class Node final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::Likelib::Transaction* /*request*/, ::Likelib::Hash* /*response*/) override {
+    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::likelib::Transaction* /*request*/, ::likelib::Hash* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -369,18 +369,18 @@ class Node final {
    public:
     WithStreamedUnaryMethod_balance() {
       ::grpc::Service::MarkMethodStreamed(0,
-        new ::grpc::internal::StreamedUnaryHandler< ::Likelib::Address, ::Likelib::Money>(std::bind(&WithStreamedUnaryMethod_balance<BaseClass>::Streamedbalance, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler< ::likelib::Address, ::likelib::Money>(std::bind(&WithStreamedUnaryMethod_balance<BaseClass>::Streamedbalance, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_balance() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::Likelib::Address* /*request*/, ::Likelib::Money* /*response*/) override {
+    ::grpc::Status balance(::grpc::ServerContext* /*context*/, const ::likelib::Address* /*request*/, ::likelib::Money* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status Streamedbalance(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::Likelib::Address,::Likelib::Money>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedbalance(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::likelib::Address,::likelib::Money>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
   class WithStreamedUnaryMethod_transaction : public BaseClass {
@@ -389,25 +389,25 @@ class Node final {
    public:
     WithStreamedUnaryMethod_transaction() {
       ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::StreamedUnaryHandler< ::Likelib::Transaction, ::Likelib::Hash>(std::bind(&WithStreamedUnaryMethod_transaction<BaseClass>::Streamedtransaction, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler< ::likelib::Transaction, ::likelib::Hash>(std::bind(&WithStreamedUnaryMethod_transaction<BaseClass>::Streamedtransaction, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_transaction() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::Likelib::Transaction* /*request*/, ::Likelib::Hash* /*response*/) override {
+    ::grpc::Status transaction(::grpc::ServerContext* /*context*/, const ::likelib::Transaction* /*request*/, ::likelib::Hash* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status Streamedtransaction(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::Likelib::Transaction,::Likelib::Hash>* server_unary_streamer) = 0;
+    virtual ::grpc::Status Streamedtransaction(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::likelib::Transaction,::likelib::Hash>* server_unary_streamer) = 0;
   };
   typedef WithStreamedUnaryMethod_balance<WithStreamedUnaryMethod_transaction<Service > > StreamedUnaryService;
   typedef Service SplitStreamedService;
   typedef WithStreamedUnaryMethod_balance<WithStreamedUnaryMethod_transaction<Service > > StreamedService;
 };
 
-}  // namespace Likelib
+}  // namespace likelib
 
 
 #endif  // GRPC_public_5frpc_2eproto__INCLUDED
