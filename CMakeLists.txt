@@ -17,6 +17,9 @@ if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
 endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 
+# adding cmake modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 #==========================
 
 # setting up common include directories

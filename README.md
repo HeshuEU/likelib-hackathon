@@ -4,6 +4,7 @@ By default it is config.json file of the following format:
 
 ```
 {
-    "listen_address": "0.0.0.0:20203"
+  "listen_address": "0.0.0.0:20203",
+  "rpc_interface_address": "0.0.0.0:50051"
 }
 ```
