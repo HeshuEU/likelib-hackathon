@@ -48,34 +48,32 @@ class Connection
     //====================
     using ReadHandler = std::function<void(const base::Bytes&)>;
 
-    void send(base::Bytes&& data);
-
-    void setOnReceive(ReadHandler handler);
-
-    void startReceivingMessages();
-    void stopReceivingMessages();
 
     void startSession();
 
     const NetworkAddress& getRemoteNetworkAddress() const;
 
   private:
+    //====================
     boost::asio::io_context& _io_context;
     boost::asio::ip::tcp::socket _socket;
     std::unique_ptr<NetworkAddress> _network_address;
-
-    std::unique_ptr<ReadHandler> _on_receive;
-    void _sendHandler(const boost::system::error_code& error, std::size_t bytes_sent);
-
+    //====================
+    static base::Bytes _read_buffer;
     std::atomic<bool> _is_receiving_enabled{false};
+    std::unique_ptr<ReadHandler> _on_receive;
     void _receiveOne();
     void _receiveHandler(const boost::system::error_code& error, std::size_t bytes_received);
+    void _setOnReceive(ReadHandler handler);
 
+    void _startReceivingMessages();
+    void _stopReceivingMessages();
+    //====================
     std::queue<base::Bytes> _pending_send_messages;
-
     void _sendPendingMessages();
-
-    static base::Bytes _read_buffer;
+    void _sendHandler(const boost::system::error_code& error, std::size_t bytes_sent);
+    void _send(base::Bytes&& data);
+    //====================
 };
 
 
