@@ -13,7 +13,8 @@ rpc::GrpcNodeClient::GrpcNodeClient(const std::string& connect_address)
 /// method call remote server method(specified ip address in constructor) with similar params
 /// \param address of account
 /// \return result of balance by specific address
-/// \throw base::Error if call was with any error
+/// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
+/// exception during processing on server instance)
 bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
 {
     // convert data for request
@@ -40,7 +41,8 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
 /// \param from_address
 /// \param to_address
 /// \return hash of transaction
-/// \throw base::Error if call was with any error
+/// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
+/// exception during processing on server instance)
 std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address& from_address,
                                              const bc::Address& to_address)
 {
