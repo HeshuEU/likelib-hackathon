@@ -15,1385 +15,1518 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-extern PROTOBUF_INTERNAL_EXPORT_public_5frpc_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Address_public_5frpc_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_public_5frpc_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Money_public_5frpc_2eproto;
-namespace likelib {
-class TransactionDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Transaction> _instance;
+extern PROTOBUF_INTERNAL_EXPORT_public_5frpc_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0>
+    scc_info_Address_public_5frpc_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_public_5frpc_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0>
+    scc_info_Money_public_5frpc_2eproto;
+namespace likelib
+{
+class TransactionDefaultTypeInternal
+{
+  public:
+    ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Transaction> _instance;
 } _Transaction_default_instance_;
-class AddressDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Address> _instance;
+class AddressDefaultTypeInternal
+{
+  public:
+    ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Address> _instance;
 } _Address_default_instance_;
-class HashDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Hash> _instance;
+class HashDefaultTypeInternal
+{
+  public:
+    ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Hash> _instance;
 } _Hash_default_instance_;
-class MoneyDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Money> _instance;
+class MoneyDefaultTypeInternal
+{
+  public:
+    ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Money> _instance;
 } _Money_default_instance_;
-}  // namespace likelib
-static void InitDefaultsscc_info_Address_public_5frpc_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
+} // namespace likelib
+static void InitDefaultsscc_info_Address_public_5frpc_2eproto()
+{
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  {
-    void* ptr = &::likelib::_Address_default_instance_;
-    new (ptr) ::likelib::Address();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::likelib::Address::InitAsDefaultInstance();
+    {
+        void* ptr = &::likelib::_Address_default_instance_;
+        new(ptr)::likelib::Address();
+        ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+    }
+    ::likelib::Address::InitAsDefaultInstance();
 }
 
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Address_public_5frpc_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_Address_public_5frpc_2eproto}, {}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Address_public_5frpc_2eproto = {
+    {ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0,
+     InitDefaultsscc_info_Address_public_5frpc_2eproto},
+    {}};
 
-static void InitDefaultsscc_info_Hash_public_5frpc_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
+static void InitDefaultsscc_info_Hash_public_5frpc_2eproto()
+{
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  {
-    void* ptr = &::likelib::_Hash_default_instance_;
-    new (ptr) ::likelib::Hash();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::likelib::Hash::InitAsDefaultInstance();
+    {
+        void* ptr = &::likelib::_Hash_default_instance_;
+        new(ptr)::likelib::Hash();
+        ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+    }
+    ::likelib::Hash::InitAsDefaultInstance();
 }
 
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Hash_public_5frpc_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_Hash_public_5frpc_2eproto}, {}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Hash_public_5frpc_2eproto = {
+    {ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0,
+     InitDefaultsscc_info_Hash_public_5frpc_2eproto},
+    {}};
 
-static void InitDefaultsscc_info_Money_public_5frpc_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
+static void InitDefaultsscc_info_Money_public_5frpc_2eproto()
+{
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  {
-    void* ptr = &::likelib::_Money_default_instance_;
-    new (ptr) ::likelib::Money();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::likelib::Money::InitAsDefaultInstance();
+    {
+        void* ptr = &::likelib::_Money_default_instance_;
+        new(ptr)::likelib::Money();
+        ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+    }
+    ::likelib::Money::InitAsDefaultInstance();
 }
 
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Money_public_5frpc_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_Money_public_5frpc_2eproto}, {}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Money_public_5frpc_2eproto = {
+    {ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0,
+     InitDefaultsscc_info_Money_public_5frpc_2eproto},
+    {}};
 
-static void InitDefaultsscc_info_Transaction_public_5frpc_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
+static void InitDefaultsscc_info_Transaction_public_5frpc_2eproto()
+{
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  {
-    void* ptr = &::likelib::_Transaction_default_instance_;
-    new (ptr) ::likelib::Transaction();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::likelib::Transaction::InitAsDefaultInstance();
+    {
+        void* ptr = &::likelib::_Transaction_default_instance_;
+        new(ptr)::likelib::Transaction();
+        ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+    }
+    ::likelib::Transaction::InitAsDefaultInstance();
 }
 
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<2> scc_info_Transaction_public_5frpc_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsscc_info_Transaction_public_5frpc_2eproto}, {
-      &scc_info_Money_public_5frpc_2eproto.base,
-      &scc_info_Address_public_5frpc_2eproto.base,}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<2> scc_info_Transaction_public_5frpc_2eproto = {
+    {ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 2,
+     InitDefaultsscc_info_Transaction_public_5frpc_2eproto},
+    {
+        &scc_info_Money_public_5frpc_2eproto.base,
+        &scc_info_Address_public_5frpc_2eproto.base,
+    }};
 
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_public_5frpc_2eproto[4];
-static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_public_5frpc_2eproto = nullptr;
-static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_public_5frpc_2eproto = nullptr;
+static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_public_5frpc_2eproto =
+    nullptr;
+static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const**
+    file_level_service_descriptors_public_5frpc_2eproto = nullptr;
 
-const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_public_5frpc_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
-  ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::likelib::Transaction, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::likelib::Transaction, amount_),
-  PROTOBUF_FIELD_OFFSET(::likelib::Transaction, from_address_),
-  PROTOBUF_FIELD_OFFSET(::likelib::Transaction, to_address_),
-  ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::likelib::Address, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::likelib::Address, address_),
-  ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::likelib::Hash, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::likelib::Hash, hash_string_),
-  ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::likelib::Money, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::likelib::Money, money_),
+const ::PROTOBUF_NAMESPACE_ID::uint32
+    TableStruct_public_5frpc_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
+        ~0u, // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::likelib::Transaction, _internal_metadata_),
+        ~0u, // no _extensions_
+        ~0u, // no _oneof_case_
+        ~0u, // no _weak_field_map_
+        PROTOBUF_FIELD_OFFSET(::likelib::Transaction, amount_),
+        PROTOBUF_FIELD_OFFSET(::likelib::Transaction, from_address_),
+        PROTOBUF_FIELD_OFFSET(::likelib::Transaction, to_address_),
+        ~0u, // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::likelib::Address, _internal_metadata_),
+        ~0u, // no _extensions_
+        ~0u, // no _oneof_case_
+        ~0u, // no _weak_field_map_
+        PROTOBUF_FIELD_OFFSET(::likelib::Address, address_),
+        ~0u, // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::likelib::Hash, _internal_metadata_),
+        ~0u, // no _extensions_
+        ~0u, // no _oneof_case_
+        ~0u, // no _weak_field_map_
+        PROTOBUF_FIELD_OFFSET(::likelib::Hash, hash_string_),
+        ~0u, // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::likelib::Money, _internal_metadata_),
+        ~0u, // no _extensions_
+        ~0u, // no _oneof_case_
+        ~0u, // no _weak_field_map_
+        PROTOBUF_FIELD_OFFSET(::likelib::Money, money_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::likelib::Transaction)},
-  { 8, -1, sizeof(::likelib::Address)},
-  { 14, -1, sizeof(::likelib::Hash)},
-  { 20, -1, sizeof(::likelib::Money)},
+    {0, -1, sizeof(::likelib::Transaction)},
+    {8, -1, sizeof(::likelib::Address)},
+    {14, -1, sizeof(::likelib::Hash)},
+    {20, -1, sizeof(::likelib::Money)},
 };
 
-static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
-  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::likelib::_Transaction_default_instance_),
-  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::likelib::_Address_default_instance_),
-  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::likelib::_Hash_default_instance_),
-  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::likelib::_Money_default_instance_),
+static ::PROTOBUF_NAMESPACE_ID::Message const* const file_default_instances[] = {
+    reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::likelib::_Transaction_default_instance_),
+    reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::likelib::_Address_default_instance_),
+    reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::likelib::_Hash_default_instance_),
+    reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::likelib::_Money_default_instance_),
 };
 
 const char descriptor_table_protodef_public_5frpc_2eproto[] =
-  "\n\020public_rpc.proto\022\007likelib\"{\n\013Transacti"
-  "on\022\036\n\006amount\030\001 \001(\0132\016.likelib.Money\022&\n\014fr"
-  "om_address\030\002 \001(\0132\020.likelib.Address\022$\n\nto"
-  "_address\030\003 \001(\0132\020.likelib.Address\"\032\n\007Addr"
-  "ess\022\017\n\007address\030\001 \001(\t\"\033\n\004Hash\022\023\n\013hash_str"
-  "ing\030\001 \001(\t\"\026\n\005Money\022\r\n\005money\030\001 \001(\0042k\n\004Nod"
-  "e\022-\n\007balance\022\020.likelib.Address\032\016.likelib"
-  ".Money\"\000\0224\n\013transaction\022\024.likelib.Transa"
-  "ction\032\r.likelib.Hash\"\000B1\n\025by.heshu.likel"
-  "ib.nodeB\020LikelibNodeProtoP\001\242\002\003HLWb\006proto"
-  "3"
-  ;
-static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_public_5frpc_2eproto_deps[1] = {
-};
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_public_5frpc_2eproto_sccs[4] = {
-  &scc_info_Address_public_5frpc_2eproto.base,
-  &scc_info_Hash_public_5frpc_2eproto.base,
-  &scc_info_Money_public_5frpc_2eproto.base,
-  &scc_info_Transaction_public_5frpc_2eproto.base,
+    "\n\020public_rpc.proto\022\007likelib\"{\n\013Transacti"
+    "on\022\036\n\006amount\030\001 \001(\0132\016.likelib.Money\022&\n\014fr"
+    "om_address\030\002 \001(\0132\020.likelib.Address\022$\n\nto"
+    "_address\030\003 \001(\0132\020.likelib.Address\"\032\n\007Addr"
+    "ess\022\017\n\007address\030\001 \001(\t\"\033\n\004Hash\022\023\n\013hash_str"
+    "ing\030\001 \001(\t\"\026\n\005Money\022\r\n\005money\030\001 \001(\0042k\n\004Nod"
+    "e\022-\n\007balance\022\020.likelib.Address\032\016.likelib"
+    ".Money\"\000\0224\n\013transaction\022\024.likelib.Transa"
+    "ction\032\r.likelib.Hash\"\000B1\n\025by.heshu.likel"
+    "ib.nodeB\020LikelibNodeProtoP\001\242\002\003HLWb\006proto"
+    "3";
+static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable* const descriptor_table_public_5frpc_2eproto_deps[1] =
+    {};
+static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase* const descriptor_table_public_5frpc_2eproto_sccs[4] = {
+    &scc_info_Address_public_5frpc_2eproto.base,
+    &scc_info_Hash_public_5frpc_2eproto.base,
+    &scc_info_Money_public_5frpc_2eproto.base,
+    &scc_info_Transaction_public_5frpc_2eproto.base,
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_public_5frpc_2eproto_once;
 static bool descriptor_table_public_5frpc_2eproto_initialized = false;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_public_5frpc_2eproto = {
-  &descriptor_table_public_5frpc_2eproto_initialized, descriptor_table_protodef_public_5frpc_2eproto, "public_rpc.proto", 401,
-  &descriptor_table_public_5frpc_2eproto_once, descriptor_table_public_5frpc_2eproto_sccs, descriptor_table_public_5frpc_2eproto_deps, 4, 0,
-  schemas, file_default_instances, TableStruct_public_5frpc_2eproto::offsets,
-  file_level_metadata_public_5frpc_2eproto, 4, file_level_enum_descriptors_public_5frpc_2eproto, file_level_service_descriptors_public_5frpc_2eproto,
+    &descriptor_table_public_5frpc_2eproto_initialized,
+    descriptor_table_protodef_public_5frpc_2eproto,
+    "public_rpc.proto",
+    401,
+    &descriptor_table_public_5frpc_2eproto_once,
+    descriptor_table_public_5frpc_2eproto_sccs,
+    descriptor_table_public_5frpc_2eproto_deps,
+    4,
+    0,
+    schemas,
+    file_default_instances,
+    TableStruct_public_5frpc_2eproto::offsets,
+    file_level_metadata_public_5frpc_2eproto,
+    4,
+    file_level_enum_descriptors_public_5frpc_2eproto,
+    file_level_service_descriptors_public_5frpc_2eproto,
 };
 
 // Force running AddDescriptors() at dynamic initialization time.
-static bool dynamic_init_dummy_public_5frpc_2eproto = (  ::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_public_5frpc_2eproto), true);
-namespace likelib {
+static bool dynamic_init_dummy_public_5frpc_2eproto =
+    (::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_public_5frpc_2eproto), true);
+namespace likelib
+{
 
 // ===================================================================
 
-void Transaction::InitAsDefaultInstance() {
-  ::likelib::_Transaction_default_instance_._instance.get_mutable()->amount_ = const_cast< ::likelib::Money*>(
-      ::likelib::Money::internal_default_instance());
-  ::likelib::_Transaction_default_instance_._instance.get_mutable()->from_address_ = const_cast< ::likelib::Address*>(
-      ::likelib::Address::internal_default_instance());
-  ::likelib::_Transaction_default_instance_._instance.get_mutable()->to_address_ = const_cast< ::likelib::Address*>(
-      ::likelib::Address::internal_default_instance());
+void Transaction::InitAsDefaultInstance()
+{
+    ::likelib::_Transaction_default_instance_._instance.get_mutable()->amount_ =
+        const_cast<::likelib::Money*>(::likelib::Money::internal_default_instance());
+    ::likelib::_Transaction_default_instance_._instance.get_mutable()->from_address_ =
+        const_cast<::likelib::Address*>(::likelib::Address::internal_default_instance());
+    ::likelib::_Transaction_default_instance_._instance.get_mutable()->to_address_ =
+        const_cast<::likelib::Address*>(::likelib::Address::internal_default_instance());
 }
-class Transaction::HasBitSetters {
- public:
-  static const ::likelib::Money& amount(const Transaction* msg);
-  static const ::likelib::Address& from_address(const Transaction* msg);
-  static const ::likelib::Address& to_address(const Transaction* msg);
+class Transaction::HasBitSetters
+{
+  public:
+    static const ::likelib::Money& amount(const Transaction* msg);
+    static const ::likelib::Address& from_address(const Transaction* msg);
+    static const ::likelib::Address& to_address(const Transaction* msg);
 };
 
-const ::likelib::Money&
-Transaction::HasBitSetters::amount(const Transaction* msg) {
-  return *msg->amount_;
+const ::likelib::Money& Transaction::HasBitSetters::amount(const Transaction* msg)
+{
+    return *msg->amount_;
 }
-const ::likelib::Address&
-Transaction::HasBitSetters::from_address(const Transaction* msg) {
-  return *msg->from_address_;
+const ::likelib::Address& Transaction::HasBitSetters::from_address(const Transaction* msg)
+{
+    return *msg->from_address_;
 }
-const ::likelib::Address&
-Transaction::HasBitSetters::to_address(const Transaction* msg) {
-  return *msg->to_address_;
+const ::likelib::Address& Transaction::HasBitSetters::to_address(const Transaction* msg)
+{
+    return *msg->to_address_;
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Transaction::kAmountFieldNumber;
 const int Transaction::kFromAddressFieldNumber;
 const int Transaction::kToAddressFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-Transaction::Transaction()
-  : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr) {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:likelib.Transaction)
+Transaction::Transaction() : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr)
+{
+    SharedCtor();
+    // @@protoc_insertion_point(constructor:likelib.Transaction)
 }
-Transaction::Transaction(const Transaction& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message(),
-      _internal_metadata_(nullptr) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  if (from.has_amount()) {
-    amount_ = new ::likelib::Money(*from.amount_);
-  } else {
+Transaction::Transaction(const Transaction& from) : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr)
+{
+    _internal_metadata_.MergeFrom(from._internal_metadata_);
+    if(from.has_amount()) {
+        amount_ = new ::likelib::Money(*from.amount_);
+    }
+    else {
+        amount_ = nullptr;
+    }
+    if(from.has_from_address()) {
+        from_address_ = new ::likelib::Address(*from.from_address_);
+    }
+    else {
+        from_address_ = nullptr;
+    }
+    if(from.has_to_address()) {
+        to_address_ = new ::likelib::Address(*from.to_address_);
+    }
+    else {
+        to_address_ = nullptr;
+    }
+    // @@protoc_insertion_point(copy_constructor:likelib.Transaction)
+}
+
+void Transaction::SharedCtor()
+{
+    ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Transaction_public_5frpc_2eproto.base);
+    ::memset(&amount_, 0,
+             static_cast<size_t>(reinterpret_cast<char*>(&to_address_) - reinterpret_cast<char*>(&amount_)) +
+                 sizeof(to_address_));
+}
+
+Transaction::~Transaction()
+{
+    // @@protoc_insertion_point(destructor:likelib.Transaction)
+    SharedDtor();
+}
+
+void Transaction::SharedDtor()
+{
+    if(this != internal_default_instance())
+        delete amount_;
+    if(this != internal_default_instance())
+        delete from_address_;
+    if(this != internal_default_instance())
+        delete to_address_;
+}
+
+void Transaction::SetCachedSize(int size) const
+{
+    _cached_size_.Set(size);
+}
+const Transaction& Transaction::default_instance()
+{
+    ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Transaction_public_5frpc_2eproto.base);
+    return *internal_default_instance();
+}
+
+
+void Transaction::Clear()
+{
+    // @@protoc_insertion_point(message_clear_start:likelib.Transaction)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    // Prevent compiler warnings about cached_has_bits being unused
+    (void)cached_has_bits;
+
+    if(GetArenaNoVirtual() == nullptr && amount_ != nullptr) {
+        delete amount_;
+    }
     amount_ = nullptr;
-  }
-  if (from.has_from_address()) {
-    from_address_ = new ::likelib::Address(*from.from_address_);
-  } else {
+    if(GetArenaNoVirtual() == nullptr && from_address_ != nullptr) {
+        delete from_address_;
+    }
     from_address_ = nullptr;
-  }
-  if (from.has_to_address()) {
-    to_address_ = new ::likelib::Address(*from.to_address_);
-  } else {
+    if(GetArenaNoVirtual() == nullptr && to_address_ != nullptr) {
+        delete to_address_;
+    }
     to_address_ = nullptr;
-  }
-  // @@protoc_insertion_point(copy_constructor:likelib.Transaction)
-}
-
-void Transaction::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Transaction_public_5frpc_2eproto.base);
-  ::memset(&amount_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&to_address_) -
-      reinterpret_cast<char*>(&amount_)) + sizeof(to_address_));
-}
-
-Transaction::~Transaction() {
-  // @@protoc_insertion_point(destructor:likelib.Transaction)
-  SharedDtor();
-}
-
-void Transaction::SharedDtor() {
-  if (this != internal_default_instance()) delete amount_;
-  if (this != internal_default_instance()) delete from_address_;
-  if (this != internal_default_instance()) delete to_address_;
-}
-
-void Transaction::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const Transaction& Transaction::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Transaction_public_5frpc_2eproto.base);
-  return *internal_default_instance();
-}
-
-
-void Transaction::Clear() {
-// @@protoc_insertion_point(message_clear_start:likelib.Transaction)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  if (GetArenaNoVirtual() == nullptr && amount_ != nullptr) {
-    delete amount_;
-  }
-  amount_ = nullptr;
-  if (GetArenaNoVirtual() == nullptr && from_address_ != nullptr) {
-    delete from_address_;
-  }
-  from_address_ = nullptr;
-  if (GetArenaNoVirtual() == nullptr && to_address_ != nullptr) {
-    delete to_address_;
-  }
-  to_address_ = nullptr;
-  _internal_metadata_.Clear();
+    _internal_metadata_.Clear();
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* Transaction::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
-#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  while (!ctx->Done(&ptr)) {
-    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
-    switch (tag >> 3) {
-      // .likelib.Money amount = 1;
-      case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
-          ptr = ctx->ParseMessage(mutable_amount(), ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // .likelib.Address from_address = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
-          ptr = ctx->ParseMessage(mutable_from_address(), ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // .likelib.Address to_address = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
-          ptr = ctx->ParseMessage(mutable_to_address(), ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
-    }  // switch
-  }  // while
+const char* Transaction::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx)
+{
+#define CHK_(x) \
+    if(PROTOBUF_PREDICT_FALSE(!(x))) \
+    goto failure
+    while(!ctx->Done(&ptr)) {
+        ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+        ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+        CHK_(ptr);
+        switch(tag >> 3) {
+            // .likelib.Money amount = 1;
+            case 1:
+                if(PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+                    ptr = ctx->ParseMessage(mutable_amount(), ptr);
+                    CHK_(ptr);
+                }
+                else
+                    goto handle_unusual;
+                continue;
+            // .likelib.Address from_address = 2;
+            case 2:
+                if(PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+                    ptr = ctx->ParseMessage(mutable_from_address(), ptr);
+                    CHK_(ptr);
+                }
+                else
+                    goto handle_unusual;
+                continue;
+            // .likelib.Address to_address = 3;
+            case 3:
+                if(PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+                    ptr = ctx->ParseMessage(mutable_to_address(), ptr);
+                    CHK_(ptr);
+                }
+                else
+                    goto handle_unusual;
+                continue;
+            default: {
+            handle_unusual:
+                if((tag & 7) == 4 || tag == 0) {
+                    ctx->SetLastTag(tag);
+                    goto success;
+                }
+                ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
+                CHK_(ptr != nullptr);
+                continue;
+            }
+        } // switch
+    } // while
 success:
-  return ptr;
+    return ptr;
 failure:
-  ptr = nullptr;
-  goto success;
+    ptr = nullptr;
+    goto success;
 #undef CHK_
 }
-#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool Transaction::MergePartialFromCodedStream(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-  // @@protoc_insertion_point(parse_start:likelib.Transaction)
-  for (;;) {
-    ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .likelib.Money amount = 1;
-      case 1: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(
-               input, mutable_amount()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
+#else // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool Transaction::MergePartialFromCodedStream(::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input)
+{
+#define DO_(EXPRESSION) \
+    if(!PROTOBUF_PREDICT_TRUE(EXPRESSION)) \
+    goto failure
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    // @@protoc_insertion_point(parse_start:likelib.Transaction)
+    for(;;) {
+        ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+        tag = p.first;
+        if(!p.second)
+            goto handle_unusual;
+        switch(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+            // .likelib.Money amount = 1;
+            case 1: {
+                if(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
+                    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(input, mutable_amount()));
+                }
+                else {
+                    goto handle_unusual;
+                }
+                break;
+            }
 
-      // .likelib.Address from_address = 2;
-      case 2: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (18 & 0xFF)) {
-          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(
-               input, mutable_from_address()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
+            // .likelib.Address from_address = 2;
+            case 2: {
+                if(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (18 & 0xFF)) {
+                    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(input, mutable_from_address()));
+                }
+                else {
+                    goto handle_unusual;
+                }
+                break;
+            }
 
-      // .likelib.Address to_address = 3;
-      case 3: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (26 & 0xFF)) {
-          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(
-               input, mutable_to_address()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
+            // .likelib.Address to_address = 3;
+            case 3: {
+                if(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (26 & 0xFF)) {
+                    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(input, mutable_to_address()));
+                }
+                else {
+                    goto handle_unusual;
+                }
+                break;
+            }
 
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
+            default: {
+            handle_unusual:
+                if(tag == 0) {
+                    goto success;
+                }
+                DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
+                    input, tag, _internal_metadata_.mutable_unknown_fields()));
+                break;
+            }
         }
-        DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
     }
-  }
 success:
-  // @@protoc_insertion_point(parse_success:likelib.Transaction)
-  return true;
+    // @@protoc_insertion_point(parse_success:likelib.Transaction)
+    return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:likelib.Transaction)
-  return false;
+    // @@protoc_insertion_point(parse_failure:likelib.Transaction)
+    return false;
 #undef DO_
 }
-#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+#endif // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void Transaction::SerializeWithCachedSizes(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:likelib.Transaction)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+void Transaction::SerializeWithCachedSizes(::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const
+{
+    // @@protoc_insertion_point(serialize_start:likelib.Transaction)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  // .likelib.Money amount = 1;
-  if (this->has_amount()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, HasBitSetters::amount(this), output);
-  }
+    // .likelib.Money amount = 1;
+    if(this->has_amount()) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(1, HasBitSetters::amount(this),
+                                                                                    output);
+    }
 
-  // .likelib.Address from_address = 2;
-  if (this->has_from_address()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, HasBitSetters::from_address(this), output);
-  }
+    // .likelib.Address from_address = 2;
+    if(this->has_from_address()) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(
+            2, HasBitSetters::from_address(this), output);
+    }
 
-  // .likelib.Address to_address = 3;
-  if (this->has_to_address()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, HasBitSetters::to_address(this), output);
-  }
+    // .likelib.Address to_address = 3;
+    if(this->has_to_address()) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(3, HasBitSetters::to_address(this),
+                                                                                    output);
+    }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:likelib.Transaction)
+    if(_internal_metadata_.have_unknown_fields()) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(_internal_metadata_.unknown_fields(),
+                                                                              output);
+    }
+    // @@protoc_insertion_point(serialize_end:likelib.Transaction)
 }
 
-::PROTOBUF_NAMESPACE_ID::uint8* Transaction::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:likelib.Transaction)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+::PROTOBUF_NAMESPACE_ID::uint8*
+Transaction::InternalSerializeWithCachedSizesToArray(::PROTOBUF_NAMESPACE_ID::uint8* target) const
+{
+    // @@protoc_insertion_point(serialize_to_array_start:likelib.Transaction)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  // .likelib.Money amount = 1;
-  if (this->has_amount()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        1, HasBitSetters::amount(this), target);
-  }
+    // .likelib.Money amount = 1;
+    if(this->has_amount()) {
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::InternalWriteMessageToArray(
+            1, HasBitSetters::amount(this), target);
+    }
 
-  // .likelib.Address from_address = 2;
-  if (this->has_from_address()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        2, HasBitSetters::from_address(this), target);
-  }
+    // .likelib.Address from_address = 2;
+    if(this->has_from_address()) {
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::InternalWriteMessageToArray(
+            2, HasBitSetters::from_address(this), target);
+    }
 
-  // .likelib.Address to_address = 3;
-  if (this->has_to_address()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        3, HasBitSetters::to_address(this), target);
-  }
+    // .likelib.Address to_address = 3;
+    if(this->has_to_address()) {
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::InternalWriteMessageToArray(
+            3, HasBitSetters::to_address(this), target);
+    }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:likelib.Transaction)
-  return target;
+    if(_internal_metadata_.have_unknown_fields()) {
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
+            _internal_metadata_.unknown_fields(), target);
+    }
+    // @@protoc_insertion_point(serialize_to_array_end:likelib.Transaction)
+    return target;
 }
 
-size_t Transaction::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:likelib.Transaction)
-  size_t total_size = 0;
+size_t Transaction::ByteSizeLong() const
+{
+    // @@protoc_insertion_point(message_byte_size_start:likelib.Transaction)
+    size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
+    if(_internal_metadata_.have_unknown_fields()) {
+        total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
+            _internal_metadata_.unknown_fields());
+    }
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    // Prevent compiler warnings about cached_has_bits being unused
+    (void)cached_has_bits;
 
-  // .likelib.Money amount = 1;
-  if (this->has_amount()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *amount_);
-  }
+    // .likelib.Money amount = 1;
+    if(this->has_amount()) {
+        total_size += 1 + ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(*amount_);
+    }
 
-  // .likelib.Address from_address = 2;
-  if (this->has_from_address()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *from_address_);
-  }
+    // .likelib.Address from_address = 2;
+    if(this->has_from_address()) {
+        total_size += 1 + ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(*from_address_);
+    }
 
-  // .likelib.Address to_address = 3;
-  if (this->has_to_address()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *to_address_);
-  }
+    // .likelib.Address to_address = 3;
+    if(this->has_to_address()) {
+        total_size += 1 + ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(*to_address_);
+    }
 
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+    SetCachedSize(cached_size);
+    return total_size;
 }
 
-void Transaction::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:likelib.Transaction)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Transaction* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Transaction>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:likelib.Transaction)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:likelib.Transaction)
-    MergeFrom(*source);
-  }
+void Transaction::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from)
+{
+    // @@protoc_insertion_point(generalized_merge_from_start:likelib.Transaction)
+    GOOGLE_DCHECK_NE(&from, this);
+    const Transaction* source = ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Transaction>(&from);
+    if(source == nullptr) {
+        // @@protoc_insertion_point(generalized_merge_from_cast_fail:likelib.Transaction)
+        ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+    }
+    else {
+        // @@protoc_insertion_point(generalized_merge_from_cast_success:likelib.Transaction)
+        MergeFrom(*source);
+    }
 }
 
-void Transaction::MergeFrom(const Transaction& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:likelib.Transaction)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+void Transaction::MergeFrom(const Transaction& from)
+{
+    // @@protoc_insertion_point(class_specific_merge_from_start:likelib.Transaction)
+    GOOGLE_DCHECK_NE(&from, this);
+    _internal_metadata_.MergeFrom(from._internal_metadata_);
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  if (from.has_amount()) {
-    mutable_amount()->::likelib::Money::MergeFrom(from.amount());
-  }
-  if (from.has_from_address()) {
-    mutable_from_address()->::likelib::Address::MergeFrom(from.from_address());
-  }
-  if (from.has_to_address()) {
-    mutable_to_address()->::likelib::Address::MergeFrom(from.to_address());
-  }
+    if(from.has_amount()) {
+        mutable_amount()->::likelib::Money::MergeFrom(from.amount());
+    }
+    if(from.has_from_address()) {
+        mutable_from_address()->::likelib::Address::MergeFrom(from.from_address());
+    }
+    if(from.has_to_address()) {
+        mutable_to_address()->::likelib::Address::MergeFrom(from.to_address());
+    }
 }
 
-void Transaction::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:likelib.Transaction)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+void Transaction::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from)
+{
+    // @@protoc_insertion_point(generalized_copy_from_start:likelib.Transaction)
+    if(&from == this)
+        return;
+    Clear();
+    MergeFrom(from);
 }
 
-void Transaction::CopyFrom(const Transaction& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:likelib.Transaction)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+void Transaction::CopyFrom(const Transaction& from)
+{
+    // @@protoc_insertion_point(class_specific_copy_from_start:likelib.Transaction)
+    if(&from == this)
+        return;
+    Clear();
+    MergeFrom(from);
 }
 
-bool Transaction::IsInitialized() const {
-  return true;
+bool Transaction::IsInitialized() const
+{
+    return true;
 }
 
-void Transaction::Swap(Transaction* other) {
-  if (other == this) return;
-  InternalSwap(other);
+void Transaction::Swap(Transaction* other)
+{
+    if(other == this)
+        return;
+    InternalSwap(other);
 }
-void Transaction::InternalSwap(Transaction* other) {
-  using std::swap;
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  swap(amount_, other->amount_);
-  swap(from_address_, other->from_address_);
-  swap(to_address_, other->to_address_);
+void Transaction::InternalSwap(Transaction* other)
+{
+    using std::swap;
+    _internal_metadata_.Swap(&other->_internal_metadata_);
+    swap(amount_, other->amount_);
+    swap(from_address_, other->from_address_);
+    swap(to_address_, other->to_address_);
 }
 
-::PROTOBUF_NAMESPACE_ID::Metadata Transaction::GetMetadata() const {
-  return GetMetadataStatic();
+::PROTOBUF_NAMESPACE_ID::Metadata Transaction::GetMetadata() const
+{
+    return GetMetadataStatic();
 }
 
 
 // ===================================================================
 
-void Address::InitAsDefaultInstance() {
-}
-class Address::HasBitSetters {
- public:
+void Address::InitAsDefaultInstance()
+{}
+class Address::HasBitSetters
+{
+  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Address::kAddressFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-Address::Address()
-  : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr) {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:likelib.Address)
+Address::Address() : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr)
+{
+    SharedCtor();
+    // @@protoc_insertion_point(constructor:likelib.Address)
 }
-Address::Address(const Address& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message(),
-      _internal_metadata_(nullptr) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  address_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (from.address().size() > 0) {
-    address_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.address_);
-  }
-  // @@protoc_insertion_point(copy_constructor:likelib.Address)
-}
-
-void Address::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Address_public_5frpc_2eproto.base);
-  address_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+Address::Address(const Address& from) : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr)
+{
+    _internal_metadata_.MergeFrom(from._internal_metadata_);
+    address_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+    if(from.address().size() > 0) {
+        address_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.address_);
+    }
+    // @@protoc_insertion_point(copy_constructor:likelib.Address)
 }
 
-Address::~Address() {
-  // @@protoc_insertion_point(destructor:likelib.Address)
-  SharedDtor();
+void Address::SharedCtor()
+{
+    ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Address_public_5frpc_2eproto.base);
+    address_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
-void Address::SharedDtor() {
-  address_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+Address::~Address()
+{
+    // @@protoc_insertion_point(destructor:likelib.Address)
+    SharedDtor();
 }
 
-void Address::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const Address& Address::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Address_public_5frpc_2eproto.base);
-  return *internal_default_instance();
+void Address::SharedDtor()
+{
+    address_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
+void Address::SetCachedSize(int size) const
+{
+    _cached_size_.Set(size);
+}
+const Address& Address::default_instance()
+{
+    ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Address_public_5frpc_2eproto.base);
+    return *internal_default_instance();
+}
 
-void Address::Clear() {
-// @@protoc_insertion_point(message_clear_start:likelib.Address)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
 
-  address_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  _internal_metadata_.Clear();
+void Address::Clear()
+{
+    // @@protoc_insertion_point(message_clear_start:likelib.Address)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    // Prevent compiler warnings about cached_has_bits being unused
+    (void)cached_has_bits;
+
+    address_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+    _internal_metadata_.Clear();
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* Address::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
-#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  while (!ctx->Done(&ptr)) {
-    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
-    switch (tag >> 3) {
-      // string address = 1;
-      case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_address(), ptr, ctx, "likelib.Address.address");
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
-    }  // switch
-  }  // while
+const char* Address::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx)
+{
+#define CHK_(x) \
+    if(PROTOBUF_PREDICT_FALSE(!(x))) \
+    goto failure
+    while(!ctx->Done(&ptr)) {
+        ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+        ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+        CHK_(ptr);
+        switch(tag >> 3) {
+            // string address = 1;
+            case 1:
+                if(PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+                    ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_address(), ptr, ctx,
+                                                                                          "likelib.Address.address");
+                    CHK_(ptr);
+                }
+                else
+                    goto handle_unusual;
+                continue;
+            default: {
+            handle_unusual:
+                if((tag & 7) == 4 || tag == 0) {
+                    ctx->SetLastTag(tag);
+                    goto success;
+                }
+                ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
+                CHK_(ptr != nullptr);
+                continue;
+            }
+        } // switch
+    } // while
 success:
-  return ptr;
+    return ptr;
 failure:
-  ptr = nullptr;
-  goto success;
+    ptr = nullptr;
+    goto success;
 #undef CHK_
 }
-#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool Address::MergePartialFromCodedStream(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-  // @@protoc_insertion_point(parse_start:likelib.Address)
-  for (;;) {
-    ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string address = 1;
-      case 1: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
-                input, this->mutable_address()));
-          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-            this->address().data(), static_cast<int>(this->address().length()),
-            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
-            "likelib.Address.address"));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
+#else // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool Address::MergePartialFromCodedStream(::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input)
+{
+#define DO_(EXPRESSION) \
+    if(!PROTOBUF_PREDICT_TRUE(EXPRESSION)) \
+    goto failure
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    // @@protoc_insertion_point(parse_start:likelib.Address)
+    for(;;) {
+        ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+        tag = p.first;
+        if(!p.second)
+            goto handle_unusual;
+        switch(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+            // string address = 1;
+            case 1: {
+                if(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
+                    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(input, this->mutable_address()));
+                    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+                        this->address().data(), static_cast<int>(this->address().length()),
+                        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE, "likelib.Address.address"));
+                }
+                else {
+                    goto handle_unusual;
+                }
+                break;
+            }
 
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
+            default: {
+            handle_unusual:
+                if(tag == 0) {
+                    goto success;
+                }
+                DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
+                    input, tag, _internal_metadata_.mutable_unknown_fields()));
+                break;
+            }
         }
-        DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
     }
-  }
 success:
-  // @@protoc_insertion_point(parse_success:likelib.Address)
-  return true;
+    // @@protoc_insertion_point(parse_success:likelib.Address)
+    return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:likelib.Address)
-  return false;
+    // @@protoc_insertion_point(parse_failure:likelib.Address)
+    return false;
 #undef DO_
 }
-#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+#endif // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void Address::SerializeWithCachedSizes(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:likelib.Address)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+void Address::SerializeWithCachedSizes(::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const
+{
+    // @@protoc_insertion_point(serialize_start:likelib.Address)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  // string address = 1;
-  if (this->address().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->address().data(), static_cast<int>(this->address().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "likelib.Address.address");
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->address(), output);
-  }
+    // string address = 1;
+    if(this->address().size() > 0) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->address().data(), static_cast<int>(this->address().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE, "likelib.Address.address");
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(1, this->address(), output);
+    }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:likelib.Address)
+    if(_internal_metadata_.have_unknown_fields()) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(_internal_metadata_.unknown_fields(),
+                                                                              output);
+    }
+    // @@protoc_insertion_point(serialize_end:likelib.Address)
 }
 
-::PROTOBUF_NAMESPACE_ID::uint8* Address::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:likelib.Address)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+::PROTOBUF_NAMESPACE_ID::uint8*
+Address::InternalSerializeWithCachedSizesToArray(::PROTOBUF_NAMESPACE_ID::uint8* target) const
+{
+    // @@protoc_insertion_point(serialize_to_array_start:likelib.Address)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  // string address = 1;
-  if (this->address().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->address().data(), static_cast<int>(this->address().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "likelib.Address.address");
-    target =
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringToArray(
-        1, this->address(), target);
-  }
+    // string address = 1;
+    if(this->address().size() > 0) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->address().data(), static_cast<int>(this->address().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE, "likelib.Address.address");
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringToArray(1, this->address(), target);
+    }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:likelib.Address)
-  return target;
+    if(_internal_metadata_.have_unknown_fields()) {
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
+            _internal_metadata_.unknown_fields(), target);
+    }
+    // @@protoc_insertion_point(serialize_to_array_end:likelib.Address)
+    return target;
 }
 
-size_t Address::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:likelib.Address)
-  size_t total_size = 0;
+size_t Address::ByteSizeLong() const
+{
+    // @@protoc_insertion_point(message_byte_size_start:likelib.Address)
+    size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
+    if(_internal_metadata_.have_unknown_fields()) {
+        total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
+            _internal_metadata_.unknown_fields());
+    }
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    // Prevent compiler warnings about cached_has_bits being unused
+    (void)cached_has_bits;
 
-  // string address = 1;
-  if (this->address().size() > 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->address());
-  }
+    // string address = 1;
+    if(this->address().size() > 0) {
+        total_size += 1 + ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(this->address());
+    }
 
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+    SetCachedSize(cached_size);
+    return total_size;
 }
 
-void Address::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:likelib.Address)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Address* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Address>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:likelib.Address)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:likelib.Address)
-    MergeFrom(*source);
-  }
+void Address::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from)
+{
+    // @@protoc_insertion_point(generalized_merge_from_start:likelib.Address)
+    GOOGLE_DCHECK_NE(&from, this);
+    const Address* source = ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Address>(&from);
+    if(source == nullptr) {
+        // @@protoc_insertion_point(generalized_merge_from_cast_fail:likelib.Address)
+        ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+    }
+    else {
+        // @@protoc_insertion_point(generalized_merge_from_cast_success:likelib.Address)
+        MergeFrom(*source);
+    }
 }
 
-void Address::MergeFrom(const Address& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:likelib.Address)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+void Address::MergeFrom(const Address& from)
+{
+    // @@protoc_insertion_point(class_specific_merge_from_start:likelib.Address)
+    GOOGLE_DCHECK_NE(&from, this);
+    _internal_metadata_.MergeFrom(from._internal_metadata_);
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  if (from.address().size() > 0) {
+    if(from.address().size() > 0) {
 
-    address_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.address_);
-  }
+        address_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.address_);
+    }
 }
 
-void Address::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:likelib.Address)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+void Address::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from)
+{
+    // @@protoc_insertion_point(generalized_copy_from_start:likelib.Address)
+    if(&from == this)
+        return;
+    Clear();
+    MergeFrom(from);
 }
 
-void Address::CopyFrom(const Address& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:likelib.Address)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+void Address::CopyFrom(const Address& from)
+{
+    // @@protoc_insertion_point(class_specific_copy_from_start:likelib.Address)
+    if(&from == this)
+        return;
+    Clear();
+    MergeFrom(from);
 }
 
-bool Address::IsInitialized() const {
-  return true;
+bool Address::IsInitialized() const
+{
+    return true;
 }
 
-void Address::Swap(Address* other) {
-  if (other == this) return;
-  InternalSwap(other);
+void Address::Swap(Address* other)
+{
+    if(other == this)
+        return;
+    InternalSwap(other);
 }
-void Address::InternalSwap(Address* other) {
-  using std::swap;
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  address_.Swap(&other->address_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
+void Address::InternalSwap(Address* other)
+{
+    using std::swap;
+    _internal_metadata_.Swap(&other->_internal_metadata_);
+    address_.Swap(&other->address_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+                  GetArenaNoVirtual());
 }
 
-::PROTOBUF_NAMESPACE_ID::Metadata Address::GetMetadata() const {
-  return GetMetadataStatic();
+::PROTOBUF_NAMESPACE_ID::Metadata Address::GetMetadata() const
+{
+    return GetMetadataStatic();
 }
 
 
 // ===================================================================
 
-void Hash::InitAsDefaultInstance() {
-}
-class Hash::HasBitSetters {
- public:
+void Hash::InitAsDefaultInstance()
+{}
+class Hash::HasBitSetters
+{
+  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Hash::kHashStringFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-Hash::Hash()
-  : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr) {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:likelib.Hash)
+Hash::Hash() : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr)
+{
+    SharedCtor();
+    // @@protoc_insertion_point(constructor:likelib.Hash)
 }
-Hash::Hash(const Hash& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message(),
-      _internal_metadata_(nullptr) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  hash_string_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (from.hash_string().size() > 0) {
-    hash_string_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.hash_string_);
-  }
-  // @@protoc_insertion_point(copy_constructor:likelib.Hash)
-}
-
-void Hash::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Hash_public_5frpc_2eproto.base);
-  hash_string_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+Hash::Hash(const Hash& from) : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr)
+{
+    _internal_metadata_.MergeFrom(from._internal_metadata_);
+    hash_string_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+    if(from.hash_string().size() > 0) {
+        hash_string_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+                                       from.hash_string_);
+    }
+    // @@protoc_insertion_point(copy_constructor:likelib.Hash)
 }
 
-Hash::~Hash() {
-  // @@protoc_insertion_point(destructor:likelib.Hash)
-  SharedDtor();
+void Hash::SharedCtor()
+{
+    ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Hash_public_5frpc_2eproto.base);
+    hash_string_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
-void Hash::SharedDtor() {
-  hash_string_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+Hash::~Hash()
+{
+    // @@protoc_insertion_point(destructor:likelib.Hash)
+    SharedDtor();
 }
 
-void Hash::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const Hash& Hash::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Hash_public_5frpc_2eproto.base);
-  return *internal_default_instance();
+void Hash::SharedDtor()
+{
+    hash_string_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
+void Hash::SetCachedSize(int size) const
+{
+    _cached_size_.Set(size);
+}
+const Hash& Hash::default_instance()
+{
+    ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Hash_public_5frpc_2eproto.base);
+    return *internal_default_instance();
+}
 
-void Hash::Clear() {
-// @@protoc_insertion_point(message_clear_start:likelib.Hash)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
 
-  hash_string_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  _internal_metadata_.Clear();
+void Hash::Clear()
+{
+    // @@protoc_insertion_point(message_clear_start:likelib.Hash)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    // Prevent compiler warnings about cached_has_bits being unused
+    (void)cached_has_bits;
+
+    hash_string_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+    _internal_metadata_.Clear();
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* Hash::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
-#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  while (!ctx->Done(&ptr)) {
-    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
-    switch (tag >> 3) {
-      // string hash_string = 1;
-      case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_hash_string(), ptr, ctx, "likelib.Hash.hash_string");
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
-    }  // switch
-  }  // while
+const char* Hash::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx)
+{
+#define CHK_(x) \
+    if(PROTOBUF_PREDICT_FALSE(!(x))) \
+    goto failure
+    while(!ctx->Done(&ptr)) {
+        ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+        ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+        CHK_(ptr);
+        switch(tag >> 3) {
+            // string hash_string = 1;
+            case 1:
+                if(PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+                    ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(
+                        mutable_hash_string(), ptr, ctx, "likelib.Hash.hash_string");
+                    CHK_(ptr);
+                }
+                else
+                    goto handle_unusual;
+                continue;
+            default: {
+            handle_unusual:
+                if((tag & 7) == 4 || tag == 0) {
+                    ctx->SetLastTag(tag);
+                    goto success;
+                }
+                ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
+                CHK_(ptr != nullptr);
+                continue;
+            }
+        } // switch
+    } // while
 success:
-  return ptr;
+    return ptr;
 failure:
-  ptr = nullptr;
-  goto success;
+    ptr = nullptr;
+    goto success;
 #undef CHK_
 }
-#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool Hash::MergePartialFromCodedStream(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-  // @@protoc_insertion_point(parse_start:likelib.Hash)
-  for (;;) {
-    ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string hash_string = 1;
-      case 1: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
-                input, this->mutable_hash_string()));
-          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-            this->hash_string().data(), static_cast<int>(this->hash_string().length()),
-            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
-            "likelib.Hash.hash_string"));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
+#else // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool Hash::MergePartialFromCodedStream(::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input)
+{
+#define DO_(EXPRESSION) \
+    if(!PROTOBUF_PREDICT_TRUE(EXPRESSION)) \
+    goto failure
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    // @@protoc_insertion_point(parse_start:likelib.Hash)
+    for(;;) {
+        ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+        tag = p.first;
+        if(!p.second)
+            goto handle_unusual;
+        switch(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+            // string hash_string = 1;
+            case 1: {
+                if(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
+                    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(input,
+                                                                                      this->mutable_hash_string()));
+                    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+                        this->hash_string().data(), static_cast<int>(this->hash_string().length()),
+                        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE, "likelib.Hash.hash_string"));
+                }
+                else {
+                    goto handle_unusual;
+                }
+                break;
+            }
 
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
+            default: {
+            handle_unusual:
+                if(tag == 0) {
+                    goto success;
+                }
+                DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
+                    input, tag, _internal_metadata_.mutable_unknown_fields()));
+                break;
+            }
         }
-        DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
     }
-  }
 success:
-  // @@protoc_insertion_point(parse_success:likelib.Hash)
-  return true;
+    // @@protoc_insertion_point(parse_success:likelib.Hash)
+    return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:likelib.Hash)
-  return false;
+    // @@protoc_insertion_point(parse_failure:likelib.Hash)
+    return false;
 #undef DO_
 }
-#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+#endif // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void Hash::SerializeWithCachedSizes(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:likelib.Hash)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+void Hash::SerializeWithCachedSizes(::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const
+{
+    // @@protoc_insertion_point(serialize_start:likelib.Hash)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  // string hash_string = 1;
-  if (this->hash_string().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->hash_string().data(), static_cast<int>(this->hash_string().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "likelib.Hash.hash_string");
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->hash_string(), output);
-  }
+    // string hash_string = 1;
+    if(this->hash_string().size() > 0) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->hash_string().data(), static_cast<int>(this->hash_string().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE, "likelib.Hash.hash_string");
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(1, this->hash_string(), output);
+    }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:likelib.Hash)
+    if(_internal_metadata_.have_unknown_fields()) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(_internal_metadata_.unknown_fields(),
+                                                                              output);
+    }
+    // @@protoc_insertion_point(serialize_end:likelib.Hash)
 }
 
-::PROTOBUF_NAMESPACE_ID::uint8* Hash::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:likelib.Hash)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+::PROTOBUF_NAMESPACE_ID::uint8*
+Hash::InternalSerializeWithCachedSizesToArray(::PROTOBUF_NAMESPACE_ID::uint8* target) const
+{
+    // @@protoc_insertion_point(serialize_to_array_start:likelib.Hash)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  // string hash_string = 1;
-  if (this->hash_string().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->hash_string().data(), static_cast<int>(this->hash_string().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "likelib.Hash.hash_string");
-    target =
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringToArray(
-        1, this->hash_string(), target);
-  }
+    // string hash_string = 1;
+    if(this->hash_string().size() > 0) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->hash_string().data(), static_cast<int>(this->hash_string().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE, "likelib.Hash.hash_string");
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringToArray(1, this->hash_string(), target);
+    }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:likelib.Hash)
-  return target;
+    if(_internal_metadata_.have_unknown_fields()) {
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
+            _internal_metadata_.unknown_fields(), target);
+    }
+    // @@protoc_insertion_point(serialize_to_array_end:likelib.Hash)
+    return target;
 }
 
-size_t Hash::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:likelib.Hash)
-  size_t total_size = 0;
+size_t Hash::ByteSizeLong() const
+{
+    // @@protoc_insertion_point(message_byte_size_start:likelib.Hash)
+    size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
+    if(_internal_metadata_.have_unknown_fields()) {
+        total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
+            _internal_metadata_.unknown_fields());
+    }
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    // Prevent compiler warnings about cached_has_bits being unused
+    (void)cached_has_bits;
 
-  // string hash_string = 1;
-  if (this->hash_string().size() > 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->hash_string());
-  }
+    // string hash_string = 1;
+    if(this->hash_string().size() > 0) {
+        total_size += 1 + ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(this->hash_string());
+    }
 
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+    SetCachedSize(cached_size);
+    return total_size;
 }
 
-void Hash::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:likelib.Hash)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Hash* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Hash>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:likelib.Hash)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:likelib.Hash)
-    MergeFrom(*source);
-  }
+void Hash::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from)
+{
+    // @@protoc_insertion_point(generalized_merge_from_start:likelib.Hash)
+    GOOGLE_DCHECK_NE(&from, this);
+    const Hash* source = ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Hash>(&from);
+    if(source == nullptr) {
+        // @@protoc_insertion_point(generalized_merge_from_cast_fail:likelib.Hash)
+        ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+    }
+    else {
+        // @@protoc_insertion_point(generalized_merge_from_cast_success:likelib.Hash)
+        MergeFrom(*source);
+    }
 }
 
-void Hash::MergeFrom(const Hash& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:likelib.Hash)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+void Hash::MergeFrom(const Hash& from)
+{
+    // @@protoc_insertion_point(class_specific_merge_from_start:likelib.Hash)
+    GOOGLE_DCHECK_NE(&from, this);
+    _internal_metadata_.MergeFrom(from._internal_metadata_);
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  if (from.hash_string().size() > 0) {
+    if(from.hash_string().size() > 0) {
 
-    hash_string_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.hash_string_);
-  }
+        hash_string_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+                                       from.hash_string_);
+    }
 }
 
-void Hash::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:likelib.Hash)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+void Hash::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from)
+{
+    // @@protoc_insertion_point(generalized_copy_from_start:likelib.Hash)
+    if(&from == this)
+        return;
+    Clear();
+    MergeFrom(from);
 }
 
-void Hash::CopyFrom(const Hash& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:likelib.Hash)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+void Hash::CopyFrom(const Hash& from)
+{
+    // @@protoc_insertion_point(class_specific_copy_from_start:likelib.Hash)
+    if(&from == this)
+        return;
+    Clear();
+    MergeFrom(from);
 }
 
-bool Hash::IsInitialized() const {
-  return true;
+bool Hash::IsInitialized() const
+{
+    return true;
 }
 
-void Hash::Swap(Hash* other) {
-  if (other == this) return;
-  InternalSwap(other);
+void Hash::Swap(Hash* other)
+{
+    if(other == this)
+        return;
+    InternalSwap(other);
 }
-void Hash::InternalSwap(Hash* other) {
-  using std::swap;
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  hash_string_.Swap(&other->hash_string_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
+void Hash::InternalSwap(Hash* other)
+{
+    using std::swap;
+    _internal_metadata_.Swap(&other->_internal_metadata_);
+    hash_string_.Swap(&other->hash_string_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+                      GetArenaNoVirtual());
 }
 
-::PROTOBUF_NAMESPACE_ID::Metadata Hash::GetMetadata() const {
-  return GetMetadataStatic();
+::PROTOBUF_NAMESPACE_ID::Metadata Hash::GetMetadata() const
+{
+    return GetMetadataStatic();
 }
 
 
 // ===================================================================
 
-void Money::InitAsDefaultInstance() {
-}
-class Money::HasBitSetters {
- public:
+void Money::InitAsDefaultInstance()
+{}
+class Money::HasBitSetters
+{
+  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Money::kMoneyFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-Money::Money()
-  : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr) {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:likelib.Money)
+Money::Money() : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr)
+{
+    SharedCtor();
+    // @@protoc_insertion_point(constructor:likelib.Money)
 }
-Money::Money(const Money& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message(),
-      _internal_metadata_(nullptr) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  money_ = from.money_;
-  // @@protoc_insertion_point(copy_constructor:likelib.Money)
-}
-
-void Money::SharedCtor() {
-  money_ = PROTOBUF_ULONGLONG(0);
+Money::Money(const Money& from) : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr)
+{
+    _internal_metadata_.MergeFrom(from._internal_metadata_);
+    money_ = from.money_;
+    // @@protoc_insertion_point(copy_constructor:likelib.Money)
 }
 
-Money::~Money() {
-  // @@protoc_insertion_point(destructor:likelib.Money)
-  SharedDtor();
+void Money::SharedCtor()
+{
+    money_ = PROTOBUF_ULONGLONG(0);
 }
 
-void Money::SharedDtor() {
+Money::~Money()
+{
+    // @@protoc_insertion_point(destructor:likelib.Money)
+    SharedDtor();
 }
 
-void Money::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+void Money::SharedDtor()
+{}
+
+void Money::SetCachedSize(int size) const
+{
+    _cached_size_.Set(size);
 }
-const Money& Money::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Money_public_5frpc_2eproto.base);
-  return *internal_default_instance();
+const Money& Money::default_instance()
+{
+    ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Money_public_5frpc_2eproto.base);
+    return *internal_default_instance();
 }
 
 
-void Money::Clear() {
-// @@protoc_insertion_point(message_clear_start:likelib.Money)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
+void Money::Clear()
+{
+    // @@protoc_insertion_point(message_clear_start:likelib.Money)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    // Prevent compiler warnings about cached_has_bits being unused
+    (void)cached_has_bits;
 
-  money_ = PROTOBUF_ULONGLONG(0);
-  _internal_metadata_.Clear();
+    money_ = PROTOBUF_ULONGLONG(0);
+    _internal_metadata_.Clear();
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* Money::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
-#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  while (!ctx->Done(&ptr)) {
-    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
-    switch (tag >> 3) {
-      // uint64 money = 1;
-      case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
-          money_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
-    }  // switch
-  }  // while
+const char* Money::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx)
+{
+#define CHK_(x) \
+    if(PROTOBUF_PREDICT_FALSE(!(x))) \
+    goto failure
+    while(!ctx->Done(&ptr)) {
+        ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+        ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+        CHK_(ptr);
+        switch(tag >> 3) {
+            // uint64 money = 1;
+            case 1:
+                if(PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+                    money_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+                    CHK_(ptr);
+                }
+                else
+                    goto handle_unusual;
+                continue;
+            default: {
+            handle_unusual:
+                if((tag & 7) == 4 || tag == 0) {
+                    ctx->SetLastTag(tag);
+                    goto success;
+                }
+                ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
+                CHK_(ptr != nullptr);
+                continue;
+            }
+        } // switch
+    } // while
 success:
-  return ptr;
+    return ptr;
 failure:
-  ptr = nullptr;
-  goto success;
+    ptr = nullptr;
+    goto success;
 #undef CHK_
 }
-#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool Money::MergePartialFromCodedStream(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-  // @@protoc_insertion_point(parse_start:likelib.Money)
-  for (;;) {
-    ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // uint64 money = 1;
-      case 1: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (8 & 0xFF)) {
+#else // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool Money::MergePartialFromCodedStream(::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input)
+{
+#define DO_(EXPRESSION) \
+    if(!PROTOBUF_PREDICT_TRUE(EXPRESSION)) \
+    goto failure
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    // @@protoc_insertion_point(parse_start:likelib.Money)
+    for(;;) {
+        ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+        tag = p.first;
+        if(!p.second)
+            goto handle_unusual;
+        switch(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+            // uint64 money = 1;
+            case 1: {
+                if(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (8 & 0xFF)) {
 
-          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
-                   ::PROTOBUF_NAMESPACE_ID::uint64, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &money_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
+                    DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                         ::PROTOBUF_NAMESPACE_ID::uint64,
+                         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT64>(input, &money_)));
+                }
+                else {
+                    goto handle_unusual;
+                }
+                break;
+            }
 
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
+            default: {
+            handle_unusual:
+                if(tag == 0) {
+                    goto success;
+                }
+                DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
+                    input, tag, _internal_metadata_.mutable_unknown_fields()));
+                break;
+            }
         }
-        DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
     }
-  }
 success:
-  // @@protoc_insertion_point(parse_success:likelib.Money)
-  return true;
+    // @@protoc_insertion_point(parse_success:likelib.Money)
+    return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:likelib.Money)
-  return false;
+    // @@protoc_insertion_point(parse_failure:likelib.Money)
+    return false;
 #undef DO_
 }
-#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+#endif // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void Money::SerializeWithCachedSizes(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:likelib.Money)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+void Money::SerializeWithCachedSizes(::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const
+{
+    // @@protoc_insertion_point(serialize_start:likelib.Money)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  // uint64 money = 1;
-  if (this->money() != 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64(1, this->money(), output);
-  }
+    // uint64 money = 1;
+    if(this->money() != 0) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64(1, this->money(), output);
+    }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:likelib.Money)
+    if(_internal_metadata_.have_unknown_fields()) {
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(_internal_metadata_.unknown_fields(),
+                                                                              output);
+    }
+    // @@protoc_insertion_point(serialize_end:likelib.Money)
 }
 
-::PROTOBUF_NAMESPACE_ID::uint8* Money::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:likelib.Money)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+::PROTOBUF_NAMESPACE_ID::uint8*
+Money::InternalSerializeWithCachedSizesToArray(::PROTOBUF_NAMESPACE_ID::uint8* target) const
+{
+    // @@protoc_insertion_point(serialize_to_array_start:likelib.Money)
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  // uint64 money = 1;
-  if (this->money() != 0) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->money(), target);
-  }
+    // uint64 money = 1;
+    if(this->money() != 0) {
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->money(), target);
+    }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:likelib.Money)
-  return target;
+    if(_internal_metadata_.have_unknown_fields()) {
+        target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
+            _internal_metadata_.unknown_fields(), target);
+    }
+    // @@protoc_insertion_point(serialize_to_array_end:likelib.Money)
+    return target;
 }
 
-size_t Money::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:likelib.Money)
-  size_t total_size = 0;
+size_t Money::ByteSizeLong() const
+{
+    // @@protoc_insertion_point(message_byte_size_start:likelib.Money)
+    size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
+    if(_internal_metadata_.have_unknown_fields()) {
+        total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
+            _internal_metadata_.unknown_fields());
+    }
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    // Prevent compiler warnings about cached_has_bits being unused
+    (void)cached_has_bits;
 
-  // uint64 money = 1;
-  if (this->money() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
-        this->money());
-  }
+    // uint64 money = 1;
+    if(this->money() != 0) {
+        total_size += 1 + ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(this->money());
+    }
 
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+    SetCachedSize(cached_size);
+    return total_size;
 }
 
-void Money::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:likelib.Money)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Money* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Money>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:likelib.Money)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:likelib.Money)
-    MergeFrom(*source);
-  }
+void Money::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from)
+{
+    // @@protoc_insertion_point(generalized_merge_from_start:likelib.Money)
+    GOOGLE_DCHECK_NE(&from, this);
+    const Money* source = ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Money>(&from);
+    if(source == nullptr) {
+        // @@protoc_insertion_point(generalized_merge_from_cast_fail:likelib.Money)
+        ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+    }
+    else {
+        // @@protoc_insertion_point(generalized_merge_from_cast_success:likelib.Money)
+        MergeFrom(*source);
+    }
 }
 
-void Money::MergeFrom(const Money& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:likelib.Money)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
+void Money::MergeFrom(const Money& from)
+{
+    // @@protoc_insertion_point(class_specific_merge_from_start:likelib.Money)
+    GOOGLE_DCHECK_NE(&from, this);
+    _internal_metadata_.MergeFrom(from._internal_metadata_);
+    ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+    (void)cached_has_bits;
 
-  if (from.money() != 0) {
-    set_money(from.money());
-  }
+    if(from.money() != 0) {
+        set_money(from.money());
+    }
 }
 
-void Money::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:likelib.Money)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+void Money::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from)
+{
+    // @@protoc_insertion_point(generalized_copy_from_start:likelib.Money)
+    if(&from == this)
+        return;
+    Clear();
+    MergeFrom(from);
 }
 
-void Money::CopyFrom(const Money& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:likelib.Money)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+void Money::CopyFrom(const Money& from)
+{
+    // @@protoc_insertion_point(class_specific_copy_from_start:likelib.Money)
+    if(&from == this)
+        return;
+    Clear();
+    MergeFrom(from);
 }
 
-bool Money::IsInitialized() const {
-  return true;
+bool Money::IsInitialized() const
+{
+    return true;
 }
 
-void Money::Swap(Money* other) {
-  if (other == this) return;
-  InternalSwap(other);
+void Money::Swap(Money* other)
+{
+    if(other == this)
+        return;
+    InternalSwap(other);
 }
-void Money::InternalSwap(Money* other) {
-  using std::swap;
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  swap(money_, other->money_);
+void Money::InternalSwap(Money* other)
+{
+    using std::swap;
+    _internal_metadata_.Swap(&other->_internal_metadata_);
+    swap(money_, other->money_);
 }
 
-::PROTOBUF_NAMESPACE_ID::Metadata Money::GetMetadata() const {
-  return GetMetadataStatic();
+::PROTOBUF_NAMESPACE_ID::Metadata Money::GetMetadata() const
+{
+    return GetMetadataStatic();
 }
 
 
 // @@protoc_insertion_point(namespace_scope)
-}  // namespace likelib
+} // namespace likelib
 PROTOBUF_NAMESPACE_OPEN
-template<> PROTOBUF_NOINLINE ::likelib::Transaction* Arena::CreateMaybeMessage< ::likelib::Transaction >(Arena* arena) {
-  return Arena::CreateInternal< ::likelib::Transaction >(arena);
+template<>
+PROTOBUF_NOINLINE ::likelib::Transaction* Arena::CreateMaybeMessage<::likelib::Transaction>(Arena* arena)
+{
+    return Arena::CreateInternal<::likelib::Transaction>(arena);
 }
-template<> PROTOBUF_NOINLINE ::likelib::Address* Arena::CreateMaybeMessage< ::likelib::Address >(Arena* arena) {
-  return Arena::CreateInternal< ::likelib::Address >(arena);
+template<>
+PROTOBUF_NOINLINE ::likelib::Address* Arena::CreateMaybeMessage<::likelib::Address>(Arena* arena)
+{
+    return Arena::CreateInternal<::likelib::Address>(arena);
 }
-template<> PROTOBUF_NOINLINE ::likelib::Hash* Arena::CreateMaybeMessage< ::likelib::Hash >(Arena* arena) {
-  return Arena::CreateInternal< ::likelib::Hash >(arena);
+template<>
+PROTOBUF_NOINLINE ::likelib::Hash* Arena::CreateMaybeMessage<::likelib::Hash>(Arena* arena)
+{
+    return Arena::CreateInternal<::likelib::Hash>(arena);
 }
-template<> PROTOBUF_NOINLINE ::likelib::Money* Arena::CreateMaybeMessage< ::likelib::Money >(Arena* arena) {
-  return Arena::CreateInternal< ::likelib::Money >(arena);
+template<>
+PROTOBUF_NOINLINE ::likelib::Money* Arena::CreateMaybeMessage<::likelib::Money>(Arena* arena)
+{
+    return Arena::CreateInternal<::likelib::Money>(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

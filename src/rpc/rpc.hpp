@@ -5,9 +5,10 @@
 
 #include "bc/general_server_service.hpp"
 
-namespace rpc {
+namespace rpc
+{
 
-    using RpcServer = GrpcNodeServer<bc::GeneralServerService>;
-    using RpcClient = GrpcNodeClient;
+using RpcServer = GrpcNodeServer<bc::GeneralServerService>;
+using RpcClient = GrpcNodeClient;
 
-}
+} // namespace rpc

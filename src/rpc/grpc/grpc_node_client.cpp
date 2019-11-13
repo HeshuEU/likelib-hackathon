@@ -5,16 +5,18 @@
 
 /// Constructor that create lazy(connect will be established at call method) chanel to specified ip address
 /// \param connect_address ip:port
-rpc::GrpcNodeClient::GrpcNodeClient(const std::string &connect_address) {
-    _stub = std::make_unique<likelib::Node::Stub>(
-            grpc::CreateChannel(connect_address, grpc::InsecureChannelCredentials()));
+rpc::GrpcNodeClient::GrpcNodeClient(const std::string& connect_address)
+{
+    _stub =
+        std::make_unique<likelib::Node::Stub>(grpc::CreateChannel(connect_address, grpc::InsecureChannelCredentials()));
 }
 
 /// method call remote server method(specified ip address in constructor) with similar params
 /// \param address of account
 /// \return result of balance by specific address
 /// \throw base::Error if call was with any error
-bc::Balance rpc::GrpcNodeClient::balance(const bc::Address &address) {
+bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
+{
     // convert data for request
     likelib::Address request;
     request.set_address(address.toString());
@@ -25,10 +27,11 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address &address) {
     grpc::Status status = _stub->balance(&context, request, &reply);
 
     // return value if ok
-    if (status.ok()) {
+    if(status.ok()) {
         auto result = reply.money();
         return result;
-    } else {
+    }
+    else {
         throw base::Error{status.error_message()};
     }
 }
@@ -39,8 +42,9 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address &address) {
 /// \param to_address
 /// \return hash of transaction
 /// \throw base::Error if call was with any error
-std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address &from_address,
-                                             const bc::Address &to_address) {
+std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address& from_address,
+                                             const bc::Address& to_address)
+{
     // convert data for request
     auto request_amount = new likelib::Money();
     request_amount->set_money(static_cast<google::protobuf::uint64>(amount));
@@ -62,10 +66,11 @@ std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Addre
     grpc::Status status = _stub->transaction(&context, request, &reply);
 
     // return value if ok
-    if (status.ok()) {
+    if(status.ok()) {
         auto result = reply.hash_string();
         return result;
-    } else {
+    }
+    else {
         throw base::Error{status.error_message()};
     }
 }

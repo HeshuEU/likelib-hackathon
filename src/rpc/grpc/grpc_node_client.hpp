@@ -8,22 +8,24 @@
 
 #include <string>
 
-namespace rpc {
+namespace rpc
+{
 
-    /// Class implimenting connect to node by gRPC and call methods
-    class GrpcNodeClient final : bc::BaseClient {
-    public:
-        explicit GrpcNodeClient(const std::string &connect_address);
+/// Class implimenting connect to node by gRPC and call methods
+class GrpcNodeClient final : bc::BaseClient
+{
+  public:
+    explicit GrpcNodeClient(const std::string& connect_address);
 
-        ~GrpcNodeClient() override = default;
+    ~GrpcNodeClient() override = default;
 
-        bc::Balance balance(const bc::Address &address) override;
+    bc::Balance balance(const bc::Address& address) override;
 
-        std::string transaction(bc::Balance amount, const bc::Address &from_address,
-                                const bc::Address &to_address) override;
+    std::string transaction(bc::Balance amount, const bc::Address& from_address,
+                            const bc::Address& to_address) override;
 
-    private:
-        std::unique_ptr<likelib::Node::Stub> _stub;
-    };
+  private:
+    std::unique_ptr<likelib::Node::Stub> _stub;
+};
 
-}
+} // namespace rpc

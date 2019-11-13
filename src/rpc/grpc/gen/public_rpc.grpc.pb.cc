@@ -16,110 +16,163 @@
 #include <grpcpp/impl/codegen/server_callback.h>
 #include <grpcpp/impl/codegen/service_type.h>
 #include <grpcpp/impl/codegen/sync_stream.h>
-namespace likelib {
+namespace likelib
+{
 
 static const char* Node_method_names[] = {
-  "/likelib.Node/balance",
-  "/likelib.Node/transaction",
+    "/likelib.Node/balance",
+    "/likelib.Node/transaction",
 };
 
-std::unique_ptr< Node::Stub> Node::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
-  (void)options;
-  std::unique_ptr< Node::Stub> stub(new Node::Stub(channel));
-  return stub;
+std::unique_ptr<Node::Stub> Node::NewStub(const std::shared_ptr<::grpc::ChannelInterface>& channel,
+                                          const ::grpc::StubOptions& options)
+{
+    (void)options;
+    std::unique_ptr<Node::Stub> stub(new Node::Stub(channel));
+    return stub;
 }
 
-Node::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_balance_(Node_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_transaction_(Node_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  {}
+Node::Stub::Stub(const std::shared_ptr<::grpc::ChannelInterface>& channel)
+    : channel_(channel), rpcmethod_balance_(Node_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel),
+      rpcmethod_transaction_(Node_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+{}
 
-::grpc::Status Node::Stub::balance(::grpc::ClientContext* context, const ::likelib::Address& request, ::likelib::Money* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_balance_, context, request, response);
+::grpc::Status Node::Stub::balance(::grpc::ClientContext* context, const ::likelib::Address& request,
+                                   ::likelib::Money* response)
+{
+    return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_balance_, context, request, response);
 }
 
-void Node::Stub::experimental_async::balance(::grpc::ClientContext* context, const ::likelib::Address* request, ::likelib::Money* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_balance_, context, request, response, std::move(f));
+void Node::Stub::experimental_async::balance(::grpc::ClientContext* context, const ::likelib::Address* request,
+                                             ::likelib::Money* response, std::function<void(::grpc::Status)> f)
+{
+    ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_balance_, context, request,
+                                             response, std::move(f));
 }
 
-void Node::Stub::experimental_async::balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Money* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_balance_, context, request, response, std::move(f));
+void Node::Stub::experimental_async::balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request,
+                                             ::likelib::Money* response, std::function<void(::grpc::Status)> f)
+{
+    ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_balance_, context, request,
+                                             response, std::move(f));
 }
 
-void Node::Stub::experimental_async::balance(::grpc::ClientContext* context, const ::likelib::Address* request, ::likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_balance_, context, request, response, reactor);
+void Node::Stub::experimental_async::balance(::grpc::ClientContext* context, const ::likelib::Address* request,
+                                             ::likelib::Money* response,
+                                             ::grpc::experimental::ClientUnaryReactor* reactor)
+{
+    ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_balance_, context,
+                                                              request, response, reactor);
 }
 
-void Node::Stub::experimental_async::balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Money* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_balance_, context, request, response, reactor);
+void Node::Stub::experimental_async::balance(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request,
+                                             ::likelib::Money* response,
+                                             ::grpc::experimental::ClientUnaryReactor* reactor)
+{
+    ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_balance_, context,
+                                                              request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::likelib::Money>* Node::Stub::AsyncbalanceRaw(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::likelib::Money>::Create(channel_.get(), cq, rpcmethod_balance_, context, request, true);
+::grpc::ClientAsyncResponseReader<::likelib::Money>* Node::Stub::AsyncbalanceRaw(::grpc::ClientContext* context,
+                                                                                 const ::likelib::Address& request,
+                                                                                 ::grpc::CompletionQueue* cq)
+{
+    return ::grpc_impl::internal::ClientAsyncResponseReaderFactory<::likelib::Money>::Create(
+        channel_.get(), cq, rpcmethod_balance_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::likelib::Money>* Node::Stub::PrepareAsyncbalanceRaw(::grpc::ClientContext* context, const ::likelib::Address& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::likelib::Money>::Create(channel_.get(), cq, rpcmethod_balance_, context, request, false);
+::grpc::ClientAsyncResponseReader<::likelib::Money>*
+Node::Stub::PrepareAsyncbalanceRaw(::grpc::ClientContext* context, const ::likelib::Address& request,
+                                   ::grpc::CompletionQueue* cq)
+{
+    return ::grpc_impl::internal::ClientAsyncResponseReaderFactory<::likelib::Money>::Create(
+        channel_.get(), cq, rpcmethod_balance_, context, request, false);
 }
 
-::grpc::Status Node::Stub::transaction(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::likelib::Hash* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_transaction_, context, request, response);
+::grpc::Status Node::Stub::transaction(::grpc::ClientContext* context, const ::likelib::Transaction& request,
+                                       ::likelib::Hash* response)
+{
+    return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_transaction_, context, request, response);
 }
 
-void Node::Stub::experimental_async::transaction(::grpc::ClientContext* context, const ::likelib::Transaction* request, ::likelib::Hash* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_transaction_, context, request, response, std::move(f));
+void Node::Stub::experimental_async::transaction(::grpc::ClientContext* context, const ::likelib::Transaction* request,
+                                                 ::likelib::Hash* response, std::function<void(::grpc::Status)> f)
+{
+    ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_transaction_, context, request,
+                                             response, std::move(f));
 }
 
-void Node::Stub::experimental_async::transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Hash* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_transaction_, context, request, response, std::move(f));
+void Node::Stub::experimental_async::transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request,
+                                                 ::likelib::Hash* response, std::function<void(::grpc::Status)> f)
+{
+    ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_transaction_, context, request,
+                                             response, std::move(f));
 }
 
-void Node::Stub::experimental_async::transaction(::grpc::ClientContext* context, const ::likelib::Transaction* request, ::likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_transaction_, context, request, response, reactor);
+void Node::Stub::experimental_async::transaction(::grpc::ClientContext* context, const ::likelib::Transaction* request,
+                                                 ::likelib::Hash* response,
+                                                 ::grpc::experimental::ClientUnaryReactor* reactor)
+{
+    ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_transaction_,
+                                                              context, request, response, reactor);
 }
 
-void Node::Stub::experimental_async::transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::likelib::Hash* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_transaction_, context, request, response, reactor);
+void Node::Stub::experimental_async::transaction(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request,
+                                                 ::likelib::Hash* response,
+                                                 ::grpc::experimental::ClientUnaryReactor* reactor)
+{
+    ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_transaction_,
+                                                              context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::likelib::Hash>* Node::Stub::AsynctransactionRaw(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::likelib::Hash>::Create(channel_.get(), cq, rpcmethod_transaction_, context, request, true);
+::grpc::ClientAsyncResponseReader<::likelib::Hash>*
+Node::Stub::AsynctransactionRaw(::grpc::ClientContext* context, const ::likelib::Transaction& request,
+                                ::grpc::CompletionQueue* cq)
+{
+    return ::grpc_impl::internal::ClientAsyncResponseReaderFactory<::likelib::Hash>::Create(
+        channel_.get(), cq, rpcmethod_transaction_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::likelib::Hash>* Node::Stub::PrepareAsynctransactionRaw(::grpc::ClientContext* context, const ::likelib::Transaction& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::likelib::Hash>::Create(channel_.get(), cq, rpcmethod_transaction_, context, request, false);
+::grpc::ClientAsyncResponseReader<::likelib::Hash>*
+Node::Stub::PrepareAsynctransactionRaw(::grpc::ClientContext* context, const ::likelib::Transaction& request,
+                                       ::grpc::CompletionQueue* cq)
+{
+    return ::grpc_impl::internal::ClientAsyncResponseReaderFactory<::likelib::Hash>::Create(
+        channel_.get(), cq, rpcmethod_transaction_, context, request, false);
 }
 
-Node::Service::Service() {
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      Node_method_names[0],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< Node::Service, ::likelib::Address, ::likelib::Money>(
-          std::mem_fn(&Node::Service::balance), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      Node_method_names[1],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< Node::Service, ::likelib::Transaction, ::likelib::Hash>(
-          std::mem_fn(&Node::Service::transaction), this)));
+Node::Service::Service()
+{
+    AddMethod(new ::grpc::internal::RpcServiceMethod(
+        Node_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC,
+        new ::grpc::internal::RpcMethodHandler<Node::Service, ::likelib::Address, ::likelib::Money>(
+            std::mem_fn(&Node::Service::balance), this)));
+    AddMethod(new ::grpc::internal::RpcServiceMethod(
+        Node_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC,
+        new ::grpc::internal::RpcMethodHandler<Node::Service, ::likelib::Transaction, ::likelib::Hash>(
+            std::mem_fn(&Node::Service::transaction), this)));
 }
 
-Node::Service::~Service() {
+Node::Service::~Service()
+{}
+
+::grpc::Status Node::Service::balance(::grpc::ServerContext* context, const ::likelib::Address* request,
+                                      ::likelib::Money* response)
+{
+    (void)context;
+    (void)request;
+    (void)response;
+    return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status Node::Service::balance(::grpc::ServerContext* context, const ::likelib::Address* request, ::likelib::Money* response) {
-  (void) context;
-  (void) request;
-  (void) response;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-}
-
-::grpc::Status Node::Service::transaction(::grpc::ServerContext* context, const ::likelib::Transaction* request, ::likelib::Hash* response) {
-  (void) context;
-  (void) request;
-  (void) response;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+::grpc::Status Node::Service::transaction(::grpc::ServerContext* context, const ::likelib::Transaction* request,
+                                          ::likelib::Hash* response)
+{
+    (void)context;
+    (void)request;
+    (void)response;
+    return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
 
-}  // namespace likelib
-
+} // namespace likelib
