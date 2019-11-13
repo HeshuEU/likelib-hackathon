@@ -2,6 +2,7 @@
 
 #include <openssl/rsa.h>
 
+#include <filesystem>
 #include <memory>
 
 namespace base
@@ -10,8 +11,8 @@ class Rsa
 {
   public:
     //----------------------------------
-    // TODO: construct from any key?
     Rsa();
+    Rsa(const std::filesystem::path& public_path, const std::filesystem::path& private_path);
     Rsa(const Rsa&) = delete;
     Rsa(Rsa&& rsa);
     Rsa& operator=(const Rsa&) = delete;
@@ -20,15 +21,15 @@ class Rsa
 
     //----------------------------------
 
-    std::string private_encrypt(const std::string& message) const;
+    Bytes private_encrypt(const Bytes& message) const;
 
-    std::string public_encrypt(const std::string& message) const;
+    Bytes public_encrypt(const Bytes& message) const;
 
-    std::string private_decrypt(const std::string& encrypt_message) const;
+    Bytes private_decrypt(const Bytes& encrypt_message) const;
 
-    std::string public_decrypt(const std::string& encrypt_message) const;
+    Bytes public_decrypt(const Bytes& encrypt_message) const;
 
-    void save();
+    void save(const std::filesystem::path& public_path, const std::filesystem::path& private_path) const;
 
 
   private:

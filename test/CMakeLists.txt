@@ -1,5 +1,6 @@
 set(TEST_SOURCES
         main.cpp
+        base/crypto.cpp
         base/log.cpp
         base/property_tree.cpp
         base/bytes.cpp

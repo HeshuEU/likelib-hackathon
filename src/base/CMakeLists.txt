@@ -1,5 +1,6 @@
 set(BASE_HEADERS
         assert.hpp
+        crypto.hpp
         error.hpp
         stringifiable_enum_class.hpp
         assert.hpp
@@ -14,6 +15,7 @@ set(BASE_HEADERS
         )
 
 set(BASE_SOURCES
+        crypto.cpp
         error.cpp
         log.cpp
         directory.cpp
