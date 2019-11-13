@@ -14,6 +14,9 @@ class BigInteger
   public:
     BigInteger() = default;
 
+    template<typename N>
+    BigInteger(const N& big_int);
+
     BigInteger(const BigInteger&) = default;
 
     BigInteger& operator=(const BigInteger&) = default;
@@ -22,52 +25,49 @@ class BigInteger
 
     BigInteger& operator=(BigInteger&&) = default;
 
-    template<typename N>
-    BigInteger(const N& num);
-
     ~BigInteger() = default;
 
     //----------------------------------
 
-    BigInteger<T> operator+(const BigInteger<T>& big_num) const;
+    BigInteger<T> operator+(const BigInteger<T>& other) const;
 
-    BigInteger<T> operator-(const BigInteger<T>& big_num) const;
+    BigInteger<T> operator-(const BigInteger<T>& other) const;
 
-    BigInteger<T> operator*(const BigInteger<T>& big_num) const;
+    BigInteger<T> operator*(const BigInteger<T>& other) const;
 
-    BigInteger<T> operator/(const BigInteger<T>& big_num) const;
+    BigInteger<T> operator/(const BigInteger<T>& other) const;
 
-    BigInteger<T>& operator+=(const BigInteger<T>& big_num);
+    BigInteger<T>& operator+=(const BigInteger<T>& other);
 
-    BigInteger<T>& operator-=(const BigInteger<T>& big_num);
+    BigInteger<T>& operator-=(const BigInteger<T>& other);
 
-    BigInteger<T>& operator*=(const BigInteger<T>& big_num);
+    BigInteger<T>& operator*=(const BigInteger<T>& other);
 
-    BigInteger<T>& operator/=(const BigInteger<T>& big_num);
+    BigInteger<T>& operator/=(const BigInteger<T>& other);
 
     //----------------------------------
 
-    bool operator!=(const BigInteger<T>& big_num) const;
+    bool operator!=(const BigInteger<T>& other) const;
 
-    bool operator==(const BigInteger<T>& big_num) const;
+    bool operator==(const BigInteger<T>& other) const;
 
-    bool operator>(const BigInteger<T>& big_num) const;
+    bool operator>(const BigInteger<T>& other) const;
 
-    bool operator<(const BigInteger<T>& big_num) const;
+    bool operator<(const BigInteger<T>& other) const;
 
-    bool operator>=(const BigInteger<T>& big_num) const;
+    bool operator>=(const BigInteger<T>& other) const;
 
-    bool operator<=(const BigInteger<T>& big_num) const;
+    bool operator<=(const BigInteger<T>& other) const;
 
     //----------------------------------
 
     BigInteger<T>& operator++();
 
-    BigInteger<T>& operator++(int);
+    BigInteger<T> operator++(int);
 
     BigInteger<T>& operator--();
 
-    BigInteger<T>& operator--(int);
+    BigInteger<T> operator--(int);
 
     //----------------------------------
 
@@ -78,10 +78,10 @@ class BigInteger
 };
 
 template<typename T>
-std::ostream& operator<<(std::ostream& output, const BigInteger<T>& big_num);
+std::ostream& operator<<(std::ostream& output, const BigInteger<T>& big_int);
 
 template<typename T>
-std::istream& operator>>(std::istream& input, BigInteger<T>& big_num);
+std::istream& operator>>(std::istream& input, BigInteger<T>& big_int);
 
 using Uint256 =
     BigInteger<boost::multiprecision::backends::cpp_int_backend<256, 256,
