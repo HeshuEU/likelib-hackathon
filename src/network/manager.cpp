@@ -69,7 +69,7 @@ void Manager::_acceptLoop()
 
 void Manager::connect(const std::vector<network::NetworkAddress>& addresses)
 {
-    for(const auto& address : addresses) {
+    for(const auto& address: addresses) {
         connect(address);
     }
 }
@@ -80,6 +80,10 @@ void Manager::connect(const network::NetworkAddress& address)
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
     socket->async_connect(static_cast<ba::ip::tcp::endpoint>(address),
                           [this, socket = std::move(socket)](const boost::system::error_code& ec) mutable {
+                              if(ec) {
+                                  // TODO: do something
+                                  LOG_WARNING << "Error occurred during connect: " << ec;
+                              }
                               auto connection = std::make_unique<Connection>(_io_context, std::move(*socket.release()));
                               LOG_INFO << "Connection established: "
                                        << connection->getRemoteNetworkAddress().toString();
