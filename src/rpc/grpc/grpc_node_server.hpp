@@ -11,16 +11,19 @@ namespace rpc {
             _service.init();
         }
 
+        ~GrpcNodeServer(){
+            stop();
+        }
+
         void run() {
             grpc::ServerBuilder builder;
             builder.AddListeningPort(_server_address, grpc::InsecureServerCredentials());
             builder.RegisterService(&_service);
             _server = builder.BuildAndStart();
-            LOG_INFO << "RPC server listening on " << _server_address.c_str();
         }
 
-        void wait() {
-            _server->Wait();
+        void stop() {
+            _server->Shutdown();
         }
 
     private:

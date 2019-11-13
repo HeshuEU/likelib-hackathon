@@ -1,8 +1,8 @@
 #include "soft_config.hpp"
 #include "hard_config.hpp"
-#include "general_server_service.hpp"
+#include "bc/general_server_service.hpp"
 
-#include "rpc/factory.hpp"
+#include "rpc/rpc.hpp"
 
 #include "network/manager.hpp"
 #include "network/network_address.hpp"
@@ -67,12 +67,10 @@ int main(int argc, char **argv) {
         manager.acceptClients(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
 
-        auto server = rpc::createAndStartGrpcServerInstance<rpc::GeneralServerService>(
-                exe_config.get<std::string>("rpc_interface_address"));
+        rpc::RpcServer server(exe_config.get<std::string>("rpc_interface_address"));
+        server.run();
 
-        std::this_thread::sleep_for(std::chrono::seconds(45));
-
-        server->wait();
+        std::this_thread::sleep_for(std::chrono::seconds(100));
 
         return base::config::EXIT_OK;
     }

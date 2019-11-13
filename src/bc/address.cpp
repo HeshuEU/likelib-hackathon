@@ -7,6 +7,6 @@ namespace bc {
     }
 
     std::string Address::toString() const {
-        return "";
+        return _address;
     }
 }

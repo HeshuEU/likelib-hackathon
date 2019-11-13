@@ -2,7 +2,7 @@
 
 #include "gen/public_rpc.grpc.pb.h"
 
-#include "rpc/base_service.hpp"
+#include "bc/base_service.hpp"
 
 #include "base/log.hpp"
 

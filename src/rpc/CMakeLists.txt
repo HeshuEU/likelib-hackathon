@@ -12,17 +12,16 @@ set(GENERATED
 set(RPC_HEADERS
         grpc/grpc_service.hpp
         grpc/grpc_node_server.hpp
-        base_service.hpp
-        base_client.hpp
-        base_service.hpp
-        factory.hpp
+        grpc/grpc_node_client.hpp
+        rpc.hpp
         )
 
 set(RPC_SOURCES
         grpc/grpc_service.cpp
         grpc/grpc_node_server.cpp
-        factory.cpp)
+        grpc/grpc_node_client.cpp
+        )
 
 add_library(rpc ${RPC_HEADERS} ${RPC_SOURCES} ${GENERATED})
 
-target_link_libraries(rpc base gRPC::grpc++ gRPC::grpc protobuf::libprotobuf ZLIB::ZLIB)
+target_link_libraries(rpc base bc gRPC::grpc++ gRPC::grpc protobuf::libprotobuf ZLIB::ZLIB)

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "rpc/base_service.hpp"
+#include "base_service.hpp"
 
-namespace rpc {
+namespace bc {
 
     class GeneralServerService : public BaseService {
     public:
