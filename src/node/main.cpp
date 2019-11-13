@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         manager.acceptClients(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
 
-        rpc::RpcServer server(exe_config.get<std::string>("rpc_interface_address"));
+        rpc::RpcServer server(exe_config.get<std::string>("rpc_address"));
         server.run();
 
         std::this_thread::sleep_for(std::chrono::seconds(100));
