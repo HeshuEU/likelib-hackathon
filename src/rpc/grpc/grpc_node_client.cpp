@@ -1,7 +1,6 @@
 #include "grpc_node_client.hpp"
 
-#include "base/log.hpp"
-#include "base/error.hpp"
+#include "rpc/error.hpp"
 
 /// Constructor that create lazy(connect will be established at call method) chanel to specified ip address
 /// \param connect_address ip:port
@@ -32,7 +31,7 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
         return result;
     }
     else {
-        throw base::Error{status.error_message()};
+        RAISE_ERROR(::rpc::RpcError, status.error_message());
     }
 }
 
@@ -71,6 +70,6 @@ std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Addre
         return result;
     }
     else {
-        throw base::Error{status.error_message()};
+        RAISE_ERROR(::rpc::RpcError, status.error_message());
     }
 }

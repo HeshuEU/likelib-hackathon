@@ -13,6 +13,7 @@ set(RPC_HEADERS
         grpc/grpc_service.hpp
         grpc/grpc_node_server.hpp
         grpc/grpc_node_client.hpp
+        error.hpp
         rpc.hpp
         )
 
