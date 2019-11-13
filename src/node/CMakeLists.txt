@@ -12,7 +12,3 @@ set(NODE_SOURCES
 add_executable(node ${NODE_SOURCES} ${NODE_HEADERS})
 
 target_link_libraries(node base network bc rpc)
-
-add_executable(node-client node_client.cpp)
-
-target_link_libraries(node-client rpc)
