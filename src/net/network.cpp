@@ -139,7 +139,8 @@ void Network::dropConnectionByEndpoint(const net::Endpoint& endpoint)
 
 void Network::dropZombieConnections()
 {
-    for(const auto& ep : _not_responded_peers) {
+    // TODO: optimize
+    for(const auto& ep: _not_responded_peers) {
         dropConnectionByEndpoint(ep);
     }
     _not_responded_peers.clear();
