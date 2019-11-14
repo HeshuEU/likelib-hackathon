@@ -33,19 +33,8 @@ void Network::run()
 
 void Network::scheduleHeartBeat()
 {
-    for(auto it = _connections.begin(); it != _connections.end(); ) {
-        //if(_not_responded_peers.find((*it)->getRemoteNetworkAddress()) != _not_responded_peers.end()) {
-        //    it = _connections.erase(it);
-        //}
-        //else {
-            ++it;
-        //}
-    }
-
     for(const auto& connection : _connections) {
-        //connection->ping([this] {
-            // _not_responded_peers.erase(connection->getRemoteNetworkAddress());
-        //});
+        //connection->ping();
     }
 
     _heartbeatTimer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
@@ -87,7 +76,7 @@ void Network::acceptLoop()
             auto connection = std::make_unique<Connection>(_io_context, std::move(socket));
             LOG_INFO << "Connection accepted: " << connection->getRemoteNetworkAddress().toString();
             connection->startSession();
-            //_connections.push(std::move(connection));
+            _connections.push_back(std::move(connection));
         }
         acceptLoop();
     });
@@ -116,7 +105,7 @@ void Network::connect(const net::Endpoint& address)
                               LOG_INFO << "Connection established: "
                                        << connection->getRemoteNetworkAddress().toString();
                               connection->startSession();
-                              //_connections.push(std::move(connection));
+                              _connections.push_back(std::move(connection));
                           });
 }
 
@@ -127,6 +116,12 @@ void Network::waitForFinish()
         _network_thread->join();
         _network_thread.reset(nullptr);
     }
+}
+
+void Network::dropConnectionByEndpoint(const net::Endpoint& endpoint){
+    _connections.remove_if([&endpoint](const auto& connection) {
+        return connection->getRemoteNetworkAddress() == endpoint;
+    });
 }
 
 } // namespace net

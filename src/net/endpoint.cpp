@@ -61,4 +61,15 @@ Endpoint::operator boost::asio::ip::tcp::endpoint() const
 }
 
 
+bool Endpoint::operator==(const Endpoint& other) const
+{
+    return _address == other._address && _port == other._port;
+}
+
+
+bool Endpoint::operator!=(const Endpoint& other) const
+{
+    return !(*this == other);
+}
+
 } // namespace net

@@ -45,6 +45,7 @@ class Network
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
+    void dropConnectionByEndpoint(const net::Endpoint& endpoint);
 };
 
 } // namespace net
