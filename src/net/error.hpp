@@ -2,7 +2,7 @@
 
 #include "base/error.hpp"
 
-namespace network
+namespace net
 {
 
 struct Error : base::Error

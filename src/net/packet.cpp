@@ -6,7 +6,7 @@
 
 #include <sstream>
 
-namespace network
+namespace net
 {
 
 Packet::Packet(Type type) : _type{type}
@@ -58,4 +58,4 @@ bool Packet::operator!=(const Packet& another) const noexcept
     return !(*this == another);
 }
 
-} // namespace network
+} // namespace net

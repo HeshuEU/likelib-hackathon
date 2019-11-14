@@ -2,8 +2,8 @@
 
 #include "base/assert.hpp"
 #include "base/log.hpp"
-#include "network/error.hpp"
-#include "network/packet.hpp"
+#include "net/error.hpp"
+#include "net/packet.hpp"
 
 #include <boost/asio/read.hpp>
 #include <boost/asio/write.hpp>
@@ -12,11 +12,11 @@
 
 namespace ba = boost::asio;
 
-namespace network
+namespace net
 {
 
 
-base::Bytes Connection::_read_buffer(base::config::NETWORK_MESSAGE_BUFFER_SIZE);
+base::Bytes Connection::_read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE);
 
 
 Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket)
@@ -151,28 +151,28 @@ void Connection::startSession()
         LOG_DEBUG << "Received: " << message.takePart(0, bytes_received).toString();
 
         try {
-            network::Packet p = network::Packet::deserialize(message.takePart(0, bytes_received));
+            net::Packet p = net::Packet::deserialize(message.takePart(0, bytes_received));
             LOG_DEBUG << "Received packet type: " << static_cast<int>(p.getType());
 
             switch (p.getType()) {
-                case network::Packet::Type::HANDSHAKE: {
+                case net::Packet::Type::HANDSHAKE: {
                     LOG_DEBUG << "HANDSHAKE";
-                    network::Packet reply(network::Packet::Type::PING);
+                    net::Packet reply(net::Packet::Type::PING);
                     send(reply.serialize());
                     break;
                 }
-                case network::Packet::Type::PING: {
+                case net::Packet::Type::PING: {
                     LOG_DEBUG << "PING";
-                    network::Packet reply(network::Packet::Type::PONG);
+                    net::Packet reply(net::Packet::Type::PONG);
                     send(reply.serialize());
                     break;
                 }
-                case network::Packet::Type::PONG: {
+                case net::Packet::Type::PONG: {
                     LOG_DEBUG << "PONG";
                     break;
                 }
                 default: {
-                    RAISE_ERROR(network::Error, "invalid packet type");
+                    RAISE_ERROR(net::Error, "invalid packet type");
                     break;
                 }
             }
@@ -183,8 +183,8 @@ void Connection::startSession()
     });
 
     startReceivingMessages();
-    send(network::Packet{network::Packet::Type::HANDSHAKE}.serialize());
+    send(net::Packet{net::Packet::Type::HANDSHAKE}.serialize());
 }
 
 
-} // namespace network
+} // namespace net

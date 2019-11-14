@@ -2,7 +2,7 @@
 
 #include "base/bytes.hpp"
 
-namespace network
+namespace net
 {
 
 class Packet
@@ -43,4 +43,4 @@ class Packet
     Type _type;
 };
 
-} // namespace network
+} // namespace net

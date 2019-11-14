@@ -11,7 +11,7 @@
 #include <set>
 #include <thread>
 
-namespace network
+namespace net
 {
 
 class Manager
@@ -41,10 +41,10 @@ class Manager
     void acceptLoop();
     //===================
     boost::asio::steady_timer _heartbeatTimer;
-    std::set<NetworkAddress> _not_responded_peers;
+    //std::set<NetworkAddress> _not_responded_peers;
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
 };
 
-} // namespace network
+} // namespace net

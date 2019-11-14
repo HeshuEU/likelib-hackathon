@@ -9,10 +9,10 @@
 
 namespace ba = boost::asio;
 
-namespace network
+namespace net
 {
 
-Manager::Manager(const network::NetworkAddress& listen_ip) : _listen_ip{listen_ip}, _heartbeatTimer{_io_context}
+Manager::Manager(const net::NetworkAddress& listen_ip) : _listen_ip{listen_ip}, _heartbeatTimer{_io_context}
 {}
 
 
@@ -34,24 +34,22 @@ void Manager::run()
 void Manager::scheduleHeartBeat()
 {
     for(auto it = _connections.begin(); it != _connections.end(); ) {
-        if(_not_responded_peers.find((*it)->getRemoteNetworkAddress()) != _not_responded_peers.end()) {
-            it = _connections.erase(it);
-        }
-        else {
+        //if(_not_responded_peers.find((*it)->getRemoteNetworkAddress()) != _not_responded_peers.end()) {
+        //    it = _connections.erase(it);
+        //}
+        //else {
             ++it;
-        }
+        //}
     }
 
     for(const auto& connection : _connections) {
-        connection->ping([this] {
+        //connection->ping([this] {
             // _not_responded_peers.erase(connection->getRemoteNetworkAddress());
-        });
+        //});
     }
 
-    _heartbeatTimer.expires_after(std::chrono::seconds(base::config::NETWORK_PING_FREQUENCY));
-    _heartbeatTimer.async_wait([this]{
-
-    });
+    _heartbeatTimer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
+    //_heartbeatTimer.async_wait([this]{  });
 }
 
 
@@ -89,14 +87,14 @@ void Manager::acceptLoop()
             auto connection = std::make_unique<Connection>(_io_context, std::move(socket));
             LOG_INFO << "Connection accepted: " << connection->getRemoteNetworkAddress().toString();
             connection->startSession();
-            _connections.push(std::move(connection));
+            //_connections.push(std::move(connection));
         }
         acceptLoop();
     });
 }
 
 
-void Manager::connect(const std::vector<network::NetworkAddress>& addresses)
+void Manager::connect(const std::vector<net::NetworkAddress>& addresses)
 {
     for(const auto& address: addresses) {
         connect(address);
@@ -104,7 +102,7 @@ void Manager::connect(const std::vector<network::NetworkAddress>& addresses)
 }
 
 
-void Manager::connect(const network::NetworkAddress& address)
+void Manager::connect(const net::NetworkAddress& address)
 {
     LOG_DEBUG << "Connecting to " << address.toString();
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
@@ -118,7 +116,7 @@ void Manager::connect(const network::NetworkAddress& address)
                               LOG_INFO << "Connection established: "
                                        << connection->getRemoteNetworkAddress().toString();
                               connection->startSession();
-                              _connections.push(std::move(connection));
+                              //_connections.push(std::move(connection));
                           });
 }
 
@@ -131,4 +129,4 @@ void Manager::waitForFinish()
     }
 }
 
-} // namespace network
+} // namespace net

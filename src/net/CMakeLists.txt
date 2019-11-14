@@ -1,4 +1,4 @@
-set(NETWORK_HEADERS
+set(NET_HEADERS
         connection.hpp
         error.hpp
         manager.hpp
@@ -6,13 +6,13 @@ set(NETWORK_HEADERS
         packet.hpp
         )
 
-set(NETWORK_SOURCES
+set(NET_SOURCES
         connection.cpp
         manager.cpp
         network_address.cpp
         packet.cpp
         )
 
-add_library(network ${NETWORK_SOURCES} ${NETWORK_HEADERS})
+add_library(net ${NET_SOURCES} ${NET_HEADERS})
 
-target_link_libraries(network base Boost::serialization)
+target_link_libraries(net base Boost::serialization)

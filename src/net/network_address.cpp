@@ -6,7 +6,7 @@
 
 #include <iterator>
 
-namespace network
+namespace net
 {
 
 NetworkAddress::NetworkAddress(const std::string_view& address_with_port)
@@ -61,4 +61,4 @@ NetworkAddress::operator boost::asio::ip::tcp::endpoint() const
 }
 
 
-} // namespace network
+} // namespace net

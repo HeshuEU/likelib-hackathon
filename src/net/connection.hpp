@@ -11,7 +11,7 @@
 #include <memory>
 #include <queue>
 
-namespace network
+namespace net
 {
 
 class Connection
@@ -78,4 +78,4 @@ class Connection
 };
 
 
-} // namespace network
+} // namespace net
