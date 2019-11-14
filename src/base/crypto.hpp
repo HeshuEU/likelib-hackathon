@@ -21,21 +21,21 @@ class Rsa
 
     //----------------------------------
 
-    Bytes private_encrypt(const Bytes& message) const;
+    Bytes privateEncrypt(const Bytes& message) const;
 
-    Bytes public_encrypt(const Bytes& message) const;
+    Bytes publicEncrypt(const Bytes& message) const;
 
-    Bytes private_decrypt(const Bytes& encrypt_message) const;
+    Bytes privateDecrypt(const Bytes& encrypt_message) const;
 
-    Bytes public_decrypt(const Bytes& encrypt_message) const;
+    Bytes publicDecrypt(const Bytes& encrypt_message) const;
 
     void save(const std::filesystem::path& public_path, const std::filesystem::path& private_path) const;
 
     size_t size() const;
 
-    size_t max_private_encrypt_size() const;
+    size_t maxPrivateEncryptSize() const;
     
-    size_t max_public_encrypt_size() const;
+    size_t maxPublicEncryptSize() const;
 
 
   private:

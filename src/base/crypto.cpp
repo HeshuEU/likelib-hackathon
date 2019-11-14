@@ -57,9 +57,9 @@ Rsa& Rsa::operator=(Rsa&& object)
 }
 
 
-Bytes Rsa::private_encrypt(const Bytes& message) const
+Bytes Rsa::privateEncrypt(const Bytes& message) const
 {
-    ASSERT(message.size() <= max_private_encrypt_size());
+    ASSERT(message.size() <= maxPrivateEncryptSize());
     Bytes encrypt_message(RSA_size(_private_key.get()));
     RSA_private_encrypt(message.size(), reinterpret_cast<const unsigned char*>(message.toArray()),
                         reinterpret_cast<unsigned char*>(encrypt_message.toArray()), _private_key.get(),
@@ -68,9 +68,9 @@ Bytes Rsa::private_encrypt(const Bytes& message) const
 }
 
 
-Bytes Rsa::public_encrypt(const Bytes& message) const
+Bytes Rsa::publicEncrypt(const Bytes& message) const
 {
-    ASSERT(message.size() <= max_public_encrypt_size());
+    ASSERT(message.size() <= maxPublicEncryptSize());
     Bytes encrypt_message(RSA_size(_public_key.get()));
     RSA_public_encrypt(message.size(), reinterpret_cast<const unsigned char*>(message.toArray()),
                        reinterpret_cast<unsigned char*>(encrypt_message.toArray()), _public_key.get(),
@@ -79,7 +79,7 @@ Bytes Rsa::public_encrypt(const Bytes& message) const
 }
 
 
-Bytes Rsa::private_decrypt(const Bytes& encrypt_message) const
+Bytes Rsa::privateDecrypt(const Bytes& encrypt_message) const
 {
     ASSERT(encrypt_message.size() <= size());
     Bytes decrypt_message(RSA_size(_private_key.get()));
@@ -90,7 +90,7 @@ Bytes Rsa::private_decrypt(const Bytes& encrypt_message) const
 }
 
 
-Bytes Rsa::public_decrypt(const Bytes& encrypt_message) const
+Bytes Rsa::publicDecrypt(const Bytes& encrypt_message) const
 {
     ASSERT(encrypt_message.size() <= size());
     Bytes decrypt_message(RSA_size(_public_key.get()));
@@ -116,12 +116,12 @@ size_t Rsa::size() const
     return RSA_size(_public_key.get());
 }
 
-size_t Rsa::max_private_encrypt_size() const
+size_t Rsa::maxPrivateEncryptSize() const
 {
     return size() - 11;
 }
 
-size_t Rsa::max_public_encrypt_size() const
+size_t Rsa::maxPublicEncryptSize() const
 {
     return size() - 42;
 }
