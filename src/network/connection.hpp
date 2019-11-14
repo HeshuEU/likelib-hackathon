@@ -47,6 +47,8 @@ class Connection
 
     void startSession();
 
+    void ping(std::function<void()> on_pong);
+
     const NetworkAddress& getRemoteNetworkAddress() const;
     //====================
   private:

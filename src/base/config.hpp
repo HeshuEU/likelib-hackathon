@@ -73,6 +73,7 @@ constexpr int EXIT_ASSERT_FAILED = 2;
 
 // network
 constexpr std::size_t NETWORK_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
+constexpr std::size_t NETWORK_PING_FREQUENCY = 30; // seconds
 //------------------------
 
 } // namespace base::config

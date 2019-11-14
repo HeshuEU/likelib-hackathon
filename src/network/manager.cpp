@@ -5,12 +5,14 @@
 
 #include <boost/asio/connect.hpp>
 
+#include <chrono>
+
 namespace ba = boost::asio;
 
 namespace network
 {
 
-Manager::Manager(const network::NetworkAddress& listen_ip) : _listen_ip{listen_ip}
+Manager::Manager(const network::NetworkAddress& listen_ip) : _listen_ip{listen_ip}, _heartbeatTimer{_io_context}
 {}
 
 
@@ -24,7 +26,32 @@ Manager::~Manager()
 void Manager::run()
 {
     acceptClients();
+    scheduleHeartBeat();
     _network_thread = std::make_unique<std::thread>(&Manager::networkThreadWorkerFunction, this);
+}
+
+
+void Manager::scheduleHeartBeat()
+{
+    for(auto it = _connections.begin(); it != _connections.end(); ) {
+        if(_not_responded_peers.find((*it)->getRemoteNetworkAddress()) != _not_responded_peers.end()) {
+            it = _connections.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    for(const auto& connection : _connections) {
+        connection->ping([this] {
+            // _not_responded_peers.erase(connection->getRemoteNetworkAddress());
+        });
+    }
+
+    _heartbeatTimer.expires_after(std::chrono::seconds(base::config::NETWORK_PING_FREQUENCY));
+    _heartbeatTimer.async_wait([this]{
+
+    });
 }
 
 
