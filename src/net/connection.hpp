@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/bytes.hpp"
-#include "network_address.hpp"
+#include "endpoint.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -49,13 +49,13 @@ class Connection
 
     void ping(std::function<void()> on_pong);
 
-    const NetworkAddress& getRemoteNetworkAddress() const;
+    const Endpoint& getRemoteNetworkAddress() const;
     //====================
   private:
     //====================
     boost::asio::io_context& _io_context;
     boost::asio::ip::tcp::socket _socket;
-    std::unique_ptr<NetworkAddress> _network_address;
+    std::unique_ptr<Endpoint> _network_address;
     //====================
     using ReadHandler = std::function<void(const base::Bytes& message, std::size_t bytes_received)>;
     static base::Bytes _read_buffer;

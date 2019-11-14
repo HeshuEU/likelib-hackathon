@@ -12,7 +12,7 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Manager::Manager(const net::NetworkAddress& listen_ip) : _listen_ip{listen_ip}, _heartbeatTimer{_io_context}
+Manager::Manager(const net::Endpoint& listen_ip) : _listen_ip{listen_ip}, _heartbeatTimer{_io_context}
 {}
 
 
@@ -94,7 +94,7 @@ void Manager::acceptLoop()
 }
 
 
-void Manager::connect(const std::vector<net::NetworkAddress>& addresses)
+void Manager::connect(const std::vector<net::Endpoint>& addresses)
 {
     for(const auto& address: addresses) {
         connect(address);
@@ -102,7 +102,7 @@ void Manager::connect(const std::vector<net::NetworkAddress>& addresses)
 }
 
 
-void Manager::connect(const net::NetworkAddress& address)
+void Manager::connect(const net::Endpoint& address)
 {
     LOG_DEBUG << "Connecting to " << address.toString();
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);

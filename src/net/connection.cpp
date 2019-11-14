@@ -23,7 +23,7 @@ Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp
     : _io_context{io_context}, _socket{std::move(socket)}
 {
     ASSERT(_socket.is_open());
-    _network_address = std::make_unique<NetworkAddress>(_socket.remote_endpoint().address().to_string(),
+    _network_address = std::make_unique<Endpoint>(_socket.remote_endpoint().address().to_string(),
                                                         _socket.remote_endpoint().port());
 }
 
@@ -45,7 +45,7 @@ Connection::~Connection()
 }
 
 
-const NetworkAddress& Connection::getRemoteNetworkAddress() const
+const Endpoint& Connection::getRemoteNetworkAddress() const
 {
     return *_network_address;
 }

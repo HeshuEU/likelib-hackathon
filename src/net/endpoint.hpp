@@ -10,12 +10,11 @@
 namespace net
 {
 
-// TODO: think about naming of this class
-class NetworkAddress
+class Endpoint
 {
   public:
-    NetworkAddress(const std::string_view& address_with_port);
-    NetworkAddress(const std::string_view& address, std::size_t port);
+    Endpoint(const std::string_view& address_with_port);
+    Endpoint(const std::string_view& address, std::size_t port);
 
     std::string toString() const;
 

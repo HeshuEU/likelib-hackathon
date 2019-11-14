@@ -18,14 +18,14 @@ class Manager
 {
   public:
     //===================
-    Manager(const NetworkAddress& listen_ip);
+    Manager(const Endpoint& listen_ip);
     ~Manager();
     //===================
     void run();
     void waitForFinish();
     //===================
-    void connect(const NetworkAddress& address);
-    void connect(const std::vector<NetworkAddress>& nodes);
+    void connect(const Endpoint& address);
+    void connect(const std::vector<Endpoint>& nodes);
     //===================
   private:
     //===================
@@ -36,12 +36,12 @@ class Manager
     void networkThreadWorkerFunction() noexcept;
     //===================
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
-    const NetworkAddress& _listen_ip;
+    const Endpoint& _listen_ip;
     void acceptClients();
     void acceptLoop();
     //===================
     boost::asio::steady_timer _heartbeatTimer;
-    //std::set<NetworkAddress> _not_responded_peers;
+    //std::set<Endpoint> _not_responded_peers;
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================

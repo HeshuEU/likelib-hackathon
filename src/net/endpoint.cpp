@@ -1,4 +1,4 @@
-#include "network_address.hpp"
+#include "endpoint.hpp"
 
 #include "base/error.hpp"
 
@@ -9,7 +9,7 @@
 namespace net
 {
 
-NetworkAddress::NetworkAddress(const std::string_view& address_with_port)
+Endpoint::Endpoint(const std::string_view& address_with_port)
 {
     std::size_t i = address_with_port.find(':');
     if(i == std::string_view::npos) {
@@ -30,32 +30,32 @@ NetworkAddress::NetworkAddress(const std::string_view& address_with_port)
     }
 }
 
-NetworkAddress::NetworkAddress(const std::string_view& address, std::size_t port)
+Endpoint::Endpoint(const std::string_view& address, std::size_t port)
 {
     _address = boost::asio::ip::make_address_v4(address);
     _port = port;
 }
 
 
-std::string NetworkAddress::toString() const
+std::string Endpoint::toString() const
 {
     return _address.to_string() + ":" + std::to_string(_port);
 }
 
 
-NetworkAddress::operator boost::asio::ip::address_v4() const
+Endpoint::operator boost::asio::ip::address_v4() const
 {
     return _address;
 }
 
 
-unsigned short NetworkAddress::getPort() const noexcept
+unsigned short Endpoint::getPort() const noexcept
 {
     return _port;
 }
 
 
-NetworkAddress::operator boost::asio::ip::tcp::endpoint() const
+Endpoint::operator boost::asio::ip::tcp::endpoint() const
 {
     return {_address, _port};
 }
