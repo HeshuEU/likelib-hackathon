@@ -11,7 +11,7 @@ class Rsa
 {
   public:
     //----------------------------------
-    Rsa();
+    Rsa(const size_t count_bites);
     Rsa(const std::filesystem::path& public_path, const std::filesystem::path& private_path);
     Rsa(const Rsa&) = delete;
     Rsa(Rsa&& rsa);
@@ -30,6 +30,12 @@ class Rsa
     Bytes public_decrypt(const Bytes& encrypt_message) const;
 
     void save(const std::filesystem::path& public_path, const std::filesystem::path& private_path) const;
+
+    size_t size() const;
+
+    size_t max_private_encrypt_size() const;
+    
+    size_t max_public_encrypt_size() const;
 
 
   private:
