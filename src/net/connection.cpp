@@ -45,7 +45,7 @@ Connection::~Connection()
 }
 
 
-const Endpoint& Connection::getRemoteNetworkAddress() const
+const Endpoint& Connection::getEndpoint() const
 {
     return *_network_address;
 }

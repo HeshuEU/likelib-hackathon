@@ -49,7 +49,7 @@ class Connection
 
     void ping(std::function<void()> on_pong);
 
-    const Endpoint& getRemoteNetworkAddress() const;
+    const Endpoint& getEndpoint() const;
     //====================
   private:
     //====================

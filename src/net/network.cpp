@@ -74,7 +74,7 @@ void Network::acceptLoop()
         }
         else {
             auto connection = std::make_unique<Connection>(_io_context, std::move(socket));
-            LOG_INFO << "Connection accepted: " << connection->getRemoteNetworkAddress().toString();
+            LOG_INFO << "Connection accepted: " << connection->getEndpoint().toString();
             connection->startSession();
             _connections.push_back(std::move(connection));
         }
@@ -103,7 +103,7 @@ void Network::connect(const net::Endpoint& address)
                               }
                               auto connection = std::make_unique<Connection>(_io_context, std::move(*socket.release()));
                               LOG_INFO << "Connection established: "
-                                       << connection->getRemoteNetworkAddress().toString();
+                                       << connection->getEndpoint().toString();
                               connection->startSession();
                               _connections.push_back(std::move(connection));
                           });
@@ -120,7 +120,7 @@ void Network::waitForFinish()
 
 void Network::dropConnectionByEndpoint(const net::Endpoint& endpoint){
     _connections.remove_if([&endpoint](const auto& connection) {
-        return connection->getRemoteNetworkAddress() == endpoint;
+        return connection->getEndpoint() == endpoint;
     });
 }
 
