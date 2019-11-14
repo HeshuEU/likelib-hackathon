@@ -52,6 +52,8 @@ class ProgramOptionsParser
     /// \throw base::ExpectedClose if input options contains -h or --help option.
     void process(int argc, char** argv);
 
+    std::string getHelpMessage();
+
     /// Check if contain option
     /// \param flag_name option name. Example: if option set by .addUintOption("processors,p", ...) use
     /// hasOption("processors") , NOT hasOption("p")

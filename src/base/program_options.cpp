@@ -1,6 +1,6 @@
 #include "program_options.hpp"
 
-#include <iostream>
+#include <sstream>
 
 namespace base
 {
@@ -46,11 +46,13 @@ void ProgramOptionsParser::process(int argc, char** argv)
     }
 
     ::boost::program_options::notify(_options);
+}
 
-    if(hasOption("help")) {
-        std::cout << _options_description << std::endl;
-        RAISE_ERROR(base::ExpectedClose, "Expected close application caused by help option flag");
-    }
+std::string ProgramOptionsParser::getHelpMessage()
+{
+    std::stringstream ss;
+    ss << _options_description << std::endl;
+    return ss.str();
 }
 
 bool ProgramOptionsParser::hasOption(const std::string& flag_name) const
