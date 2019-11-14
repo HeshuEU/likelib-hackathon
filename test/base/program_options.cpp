@@ -53,6 +53,24 @@ BOOST_AUTO_TEST_CASE(program_options_int_test)
     BOOST_CHECK_EQUAL(-809900, parser.getInt("number"));
 }
 
+BOOST_AUTO_TEST_CASE(program_options_double_test)
+{
+    int argc = 3;
+    char test1[] = {"test.exe"};
+    char test2[] = {"--money"};
+    char test3[] = {"1.1"};
+    char* argv[] = {test1, test2, test3};
+
+    base::ProgramOptionsParser parser;
+    parser.addDoubleOption("money,m");
+
+    parser.process(argc, argv);
+
+    BOOST_CHECK(parser.hasOption("money"));
+
+    BOOST_CHECK_EQUAL(1.1, parser.getDouble("money"));
+}
+
 BOOST_AUTO_TEST_CASE(program_options_string_test)
 {
     std::string target = "GJSHDGI32mvdsjb12BFA";

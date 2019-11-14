@@ -2,6 +2,8 @@
 
 #include <boost/program_options.hpp>
 
+#include <cstdint>
+
 namespace base
 {
 
@@ -35,7 +37,7 @@ class ProgramOptionsParser
     /// Add option that will be interpreted only as float_t and need to get by ProgramOptionsParser::getFloat call.
     /// \param flag name. example: "money,m". Such option may be set by: -m or --money.
     /// \param help message to describe flag meaning. Will be show if set -h or --help options.
-    void addFloatOption(const std::string& flag, const std::string& help = "");
+    void addDoubleOption(const std::string& flag, const std::string& help = "");
 
     /// Add option that not may be get by any getter method. May will check by ProgramOptionsParser::hasOption call.
     /// \param flag name. example: "demonize,d". Such option may be set by: -d or --demonize.
@@ -70,7 +72,7 @@ class ProgramOptionsParser
     /// \return value of option
     /// \throw base::ParsingError if flag_name option was not found
     /// \throw base::InvalidArgument if option was not set by addIntOption(flag_name, ...)
-    int32_t getInt(const std::string& flag_name) const;
+    std::int32_t getInt(const std::string& flag_name) const;
 
     /// Find value of option that set by addUintOption(flag_name, ...) and return if found.
     /// \param flag_name option name. Example: if option set by .addUintOption("processors,p", ...) use
@@ -78,7 +80,7 @@ class ProgramOptionsParser
     /// \return value of option
     /// \throw base::ParsingError if flag_name option was not found
     /// \throw base::InvalidArgument if option was not set by addUintOption(flag_name, ...)
-    uint32_t getUint(const std::string& flag_name) const;
+    std::uint32_t getUint(const std::string& flag_name) const;
 
     /// Find value of option that set by addFloatOption(flag_name, ...) and return if found.
     /// \param flag_name flag_name option name. Example: if option set by .addFloatOption("money,m", ...) use
@@ -86,7 +88,7 @@ class ProgramOptionsParser
     /// \return value of option
     /// \throw base::ParsingError if flag_name option was not found
     /// \throw base::InvalidArgument if option was not set by addFloatOption(flag_name, ...)
-    float_t getFloat(const std::string& flag_name) const;
+    double getDouble(const std::string& flag_name) const;
 
   private:
     boost::program_options::options_description _options_description;

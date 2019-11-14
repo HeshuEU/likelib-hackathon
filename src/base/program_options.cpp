@@ -25,9 +25,9 @@ void ProgramOptionsParser::addUintOption(const std::string& flag, const std::str
     _options_description.add_options()(flag.c_str(), boost::program_options::value<uint32_t>(), help.c_str());
 }
 
-void ProgramOptionsParser::addFloatOption(const std::string& flag, const std::string& help)
+void ProgramOptionsParser::addDoubleOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag.c_str(), boost::program_options::value<float_t>(), help.c_str());
+    _options_description.add_options()(flag.c_str(), boost::program_options::value<double>(), help.c_str());
 }
 
 void ProgramOptionsParser::addFlagOption(const std::string& flag, const std::string& help)
@@ -63,19 +63,19 @@ std::string ProgramOptionsParser::getString(const std::string& flag_name) const
     return getValueByName<std::string>(flag_name);
 }
 
-int32_t ProgramOptionsParser::getInt(const std::string& flag_name) const
+std::int32_t ProgramOptionsParser::getInt(const std::string& flag_name) const
 {
-    return getValueByName<int32_t>(flag_name);
+    return getValueByName<std::int32_t>(flag_name);
 }
 
-uint32_t ProgramOptionsParser::getUint(const std::string& flag_name) const
+std::uint32_t ProgramOptionsParser::getUint(const std::string& flag_name) const
 {
-    return getValueByName<uint32_t>(flag_name);
+    return getValueByName<std::uint32_t>(flag_name);
 }
 
-float_t ProgramOptionsParser::getFloat(const std::string& flag_name) const
+double ProgramOptionsParser::getDouble(const std::string& flag_name) const
 {
-    return getValueByName<float_t>(flag_name);
+    return getValueByName<double>(flag_name);
 }
 
 } // namespace base
