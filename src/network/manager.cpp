@@ -23,12 +23,12 @@ Manager::~Manager()
 
 void Manager::run()
 {
-    _acceptClients();
-    _network_thread = std::make_unique<std::thread>(&Manager::_networkThreadWorkerFunction, this);
+    acceptClients();
+    _network_thread = std::make_unique<std::thread>(&Manager::networkThreadWorkerFunction, this);
 }
 
 
-void Manager::_acceptClients()
+void Manager::acceptClients()
 {
     ASSERT(!_acceptor);
 
@@ -36,11 +36,11 @@ void Manager::_acceptClients()
     LOG_INFO << "Listening on " << _listen_ip.toString();
     _acceptor = std::make_unique<tcp::acceptor>(_io_context, static_cast<ba::ip::tcp::endpoint>(_listen_ip));
     _acceptor->set_option(ba::socket_base::reuse_address(true));
-    _acceptLoop();
+    acceptLoop();
 }
 
 
-void Manager::_networkThreadWorkerFunction() noexcept
+void Manager::networkThreadWorkerFunction() noexcept
 {
     try {
         _io_context.run();
@@ -52,7 +52,7 @@ void Manager::_networkThreadWorkerFunction() noexcept
 }
 
 
-void Manager::_acceptLoop()
+void Manager::acceptLoop()
 {
     _acceptor->async_accept([this](const boost::system::error_code& ec, ba::ip::tcp::socket socket) {
         if(ec) {
@@ -64,7 +64,7 @@ void Manager::_acceptLoop()
             connection->startSession();
             _connections.push(std::move(connection));
         }
-        _acceptLoop();
+        acceptLoop();
     });
 }
 

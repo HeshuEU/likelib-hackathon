@@ -2,6 +2,7 @@
 
 #include "base/assert.hpp"
 #include "base/log.hpp"
+#include "network/error.hpp"
 #include "network/packet.hpp"
 
 #include <boost/asio/read.hpp>
@@ -50,41 +51,41 @@ const NetworkAddress& Connection::getRemoteNetworkAddress() const
 }
 
 
-void Connection::_startReceivingMessages()
+void Connection::startReceivingMessages()
 {
     ASSERT_SOFT(!_is_receiving_enabled);
     _is_receiving_enabled = true;
-    _receiveOne();
+    receiveOne();
 }
 
 
-void Connection::_stopReceivingMessages()
+void Connection::stopReceivingMessages()
 {
     ASSERT_SOFT(_is_receiving_enabled);
     _is_receiving_enabled = false;
 }
 
 
-void Connection::_receiveOne()
+void Connection::receiveOne()
 {
     // ba::transfer_at_least just for now for debugging purposes, of course will be changed later
     ba::async_read(_socket, ba::buffer(_read_buffer.toVector()), ba::transfer_at_least(5),
-                   std::bind(&Connection::_receiveHandler, this, std::placeholders::_1, std::placeholders::_2));
+                   std::bind(&Connection::receiveHandler, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 
-void Connection::_send(base::Bytes&& data)
+void Connection::send(base::Bytes&& data)
 {
     bool is_already_writing = !_pending_send_messages.empty();
     _pending_send_messages.push(std::move(data));
 
     if(!is_already_writing) {
-        _sendPendingMessages();
+        sendPendingMessages();
     }
 }
 
 
-void Connection::_sendPendingMessages()
+void Connection::sendPendingMessages()
 {
     ASSERT_SOFT(!_pending_send_messages.empty());
     if(_pending_send_messages.empty()) {
@@ -93,14 +94,14 @@ void Connection::_sendPendingMessages()
 
     base::Bytes& message = _pending_send_messages.front();
     ba::async_write(_socket, ba::buffer(message.toVector()),
-                    std::bind(&Connection::_sendHandler, this, std::placeholders::_1, std::placeholders::_2));
+                    std::bind(&Connection::sendHandler, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 
-void Connection::_sendHandler(const boost::system::error_code& ec, std::size_t bytes_sent)
+void Connection::sendHandler(const boost::system::error_code& error, std::size_t bytes_sent)
 {
-    if(ec) {
-        LOG_WARNING << "Error while sending message: " << ec;
+    if(error) {
+        LOG_WARNING << "Error while sending message: " << error;
         // TODO: do something
     }
     else {
@@ -109,15 +110,15 @@ void Connection::_sendHandler(const boost::system::error_code& ec, std::size_t b
     _pending_send_messages.pop();
 
     if(!_pending_send_messages.empty()) {
-        _sendPendingMessages();
+        sendPendingMessages();
     }
 }
 
 
-void Connection::_receiveHandler(const boost::system::error_code& ec, std::size_t bytes_received)
+void Connection::receiveHandler(const boost::system::error_code& error, std::size_t bytes_received)
 {
-    if(ec) {
-        LOG_WARNING << "Error occurred while receiving: " << ec;
+    if(error) {
+        LOG_WARNING << "Error occurred while receiving: " << error;
         // TODO: do something
     }
     else {
@@ -131,14 +132,14 @@ void Connection::_receiveHandler(const boost::system::error_code& ec, std::size_
 
             // double-check since the value may be changed - we don't know how long the handler was executing
             if(_is_receiving_enabled) {
-                _receiveOne();
+                receiveOne();
             }
         }
     }
 }
 
 
-void Connection::_setOnReceive(Connection::ReadHandler handler)
+void Connection::setOnReceive(Connection::ReadHandler handler)
 {
     _on_receive = std::make_unique<ReadHandler>(std::move(handler));
 }
@@ -146,23 +147,43 @@ void Connection::_setOnReceive(Connection::ReadHandler handler)
 
 void Connection::startSession()
 {
-    _setOnReceive([this](const base::Bytes& message, const std::size_t bytes_received) {
+    setOnReceive([this](const base::Bytes &message, const std::size_t bytes_received) {
         LOG_DEBUG << "Received: " << message.takePart(0, bytes_received).toString();
 
         try {
             network::Packet p = network::Packet::deserialize(message.takePart(0, bytes_received));
             LOG_DEBUG << "Received packet type: " << static_cast<int>(p.getType());
-        }
-        catch(const std::exception& error) {
-            LOG_WARNING << "Received an invalid packet";
-        }
 
-        _send(network::Packet{network::Packet::Type::PING}.serialize());
+            switch (p.getType()) {
+                case network::Packet::Type::HANDSHAKE: {
+                    LOG_DEBUG << "HANDSHAKE";
+                    network::Packet reply(network::Packet::Type::PING);
+                    send(reply.serialize());
+                    break;
+                }
+                case network::Packet::Type::PING: {
+                    LOG_DEBUG << "PING";
+                    network::Packet reply(network::Packet::Type::PONG);
+                    send(reply.serialize());
+                    break;
+                }
+                case network::Packet::Type::PONG: {
+                    LOG_DEBUG << "PONG";
+                    break;
+                }
+                default: {
+                    RAISE_ERROR(network::Error, "invalid packet type");
+                    break;
+                }
+            }
+        }
+        catch (const std::exception &error) {
+            LOG_WARNING << std::string{"Received an invalid packet: "} + error.what();
+        }
     });
-    _startReceivingMessages();
 
-
-    _send(network::Packet{network::Packet::Type::HANDSHAKE}.serialize());
+    startReceivingMessages();
+    send(network::Packet{network::Packet::Type::HANDSHAKE}.serialize());
 }
 
 

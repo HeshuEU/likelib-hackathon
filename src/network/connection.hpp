@@ -61,17 +61,17 @@ class Connection
 
     std::unique_ptr<ReadHandler> _on_receive;
 
-    void _receiveOne();
-    void _receiveHandler(const boost::system::error_code& error, std::size_t bytes_received);
-    void _setOnReceive(ReadHandler handler);
+    void receiveOne();
+    void receiveHandler(const boost::system::error_code& error, std::size_t bytes_received);
+    void setOnReceive(ReadHandler handler);
 
-    void _startReceivingMessages();
-    void _stopReceivingMessages();
+    void startReceivingMessages();
+    void stopReceivingMessages();
     //====================
     std::queue<base::Bytes> _pending_send_messages;
-    void _sendPendingMessages();
-    void _sendHandler(const boost::system::error_code& error, std::size_t bytes_sent);
-    void _send(base::Bytes&& data);
+    void sendPendingMessages();
+    void sendHandler(const boost::system::error_code& error, std::size_t bytes_sent);
+    void send(base::Bytes&& data);
     //====================
 };
 

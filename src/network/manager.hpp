@@ -28,17 +28,17 @@ class Manager
     void waitForFinish();
 
   private:
-    void _networkThreadWorkerFunction() noexcept;
+    void networkThreadWorkerFunction() noexcept;
     std::unique_ptr<std::thread> _network_thread;
 
-    void _acceptClients();
+    void acceptClients();
 
     boost::asio::io_context _io_context;
 
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
     const NetworkAddress& _listen_ip;
 
-    void _acceptLoop();
+    void acceptLoop();
 
     std::queue<std::unique_ptr<Connection>> _connections;
 };
