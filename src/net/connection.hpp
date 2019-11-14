@@ -47,7 +47,8 @@ class Connection
 
     void startSession();
 
-    void ping(std::function<void()> on_pong);
+    using PongHandler = std::function<void()>;
+    void ping(PongHandler on_pong);
 
     const Endpoint& getEndpoint() const;
     //====================
@@ -60,7 +61,6 @@ class Connection
     using ReadHandler = std::function<void(const base::Bytes& message, std::size_t bytes_received)>;
     static base::Bytes _read_buffer;
     std::atomic<bool> _is_receiving_enabled{false};
-
     std::unique_ptr<ReadHandler> _on_receive;
 
     void receiveOne();
@@ -74,6 +74,9 @@ class Connection
     void sendPendingMessages();
     void sendHandler(const boost::system::error_code& error, std::size_t bytes_sent);
     void send(base::Bytes&& data);
+    //====================
+    std::size_t _non_responded_pings{0};
+    std::unique_ptr<PongHandler> _on_pong;
     //====================
 };
 

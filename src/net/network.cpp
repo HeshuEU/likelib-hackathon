@@ -33,12 +33,23 @@ void Network::run()
 
 void Network::scheduleHeartBeat()
 {
+    ASSERT(_not_responded_peers.empty());
+
     for(const auto& connection: _connections) {
-        // connection->ping();
+        _not_responded_peers.push_back(connection->getEndpoint());
+    }
+
+    for(const auto& connection: _connections) {
+        connection->ping([this, ep = connection->getEndpoint()] {
+            _not_responded_peers.remove(ep);
+        });
     }
 
     _heartbeatTimer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
-    //_heartbeatTimer.async_wait([this]{  });
+    _heartbeatTimer.async_wait([this](const boost::system::error_code& ec) {
+        dropZombieConnections();
+        scheduleHeartBeat();
+    });
 }
 
 
@@ -117,11 +128,21 @@ void Network::waitForFinish()
     }
 }
 
+
 void Network::dropConnectionByEndpoint(const net::Endpoint& endpoint)
 {
     _connections.remove_if([&endpoint](const auto& connection) {
         return connection->getEndpoint() == endpoint;
     });
+}
+
+
+void Network::dropZombieConnections()
+{
+    for(const auto& ep : _not_responded_peers) {
+        dropConnectionByEndpoint(ep);
+    }
+    _not_responded_peers.clear();
 }
 
 } // namespace net

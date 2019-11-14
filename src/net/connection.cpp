@@ -157,8 +157,6 @@ void Connection::startSession()
             switch(p.getType()) {
                 case net::Packet::Type::HANDSHAKE: {
                     LOG_DEBUG << "HANDSHAKE";
-                    net::Packet reply(net::Packet::Type::PING);
-                    send(reply.serialize());
                     break;
                 }
                 case net::Packet::Type::PING: {
@@ -169,6 +167,14 @@ void Connection::startSession()
                 }
                 case net::Packet::Type::PONG: {
                     LOG_DEBUG << "PONG";
+                    if(_non_responded_pings) {
+                        _non_responded_pings--;
+                        PongHandler& ph = *_on_pong;
+                        ph();
+                    }
+                    else {
+                        LOG_WARNING << "Received an unexpected PONG from " << getEndpoint().toString();
+                    }
                     break;
                 }
                 default: {
@@ -183,7 +189,15 @@ void Connection::startSession()
     });
 
     startReceivingMessages();
-    send(net::Packet{net::Packet::Type::HANDSHAKE}.serialize());
+}
+
+
+void Connection::ping(std::function<void()> on_pong)
+{
+    _non_responded_pings++;
+    _on_pong = std::make_unique<PongHandler>(std::move(on_pong));
+
+    send(net::Packet{net::Packet::Type::PING}.serialize());
 }
 
 
