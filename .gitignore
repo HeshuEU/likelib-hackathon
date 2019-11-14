@@ -5,8 +5,5 @@
 .idea/*
 .vs/*
 
-# working
-logs/
-
 # documentation
 doc/html/
