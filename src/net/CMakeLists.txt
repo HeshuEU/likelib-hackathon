@@ -1,14 +1,14 @@
 set(NET_HEADERS
         connection.hpp
         error.hpp
-        manager.hpp
+        network.hpp
         endpoint.hpp
         packet.hpp
         )
 
 set(NET_SOURCES
         connection.cpp
-        manager.cpp
+        network.cpp
         endpoint.cpp
         packet.cpp
         )

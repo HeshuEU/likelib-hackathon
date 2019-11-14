@@ -4,7 +4,7 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
-#include "net/manager.hpp"
+#include "net/network.hpp"
 #include "net/endpoint.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
         SoftConfig exe_config(config::CONFIG_PATH);
 
-        net::Manager manager(net::Endpoint{exe_config.get<std::string>("listen_address")});
+        net::Network manager(net::Endpoint{exe_config.get<std::string>("listen_address")});
         manager.run();
 
         std::vector<net::Endpoint> nodes;

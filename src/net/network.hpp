@@ -14,12 +14,12 @@
 namespace net
 {
 
-class Manager
+class Network
 {
   public:
     //===================
-    Manager(const Endpoint& listen_ip);
-    ~Manager();
+    Network(const Endpoint& listen_ip);
+    ~Network();
     //===================
     void run();
     void waitForFinish();

@@ -1,4 +1,4 @@
-#include "manager.hpp"
+#include "network.hpp"
 
 #include "base/assert.hpp"
 #include "base/log.hpp"
@@ -12,26 +12,26 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Manager::Manager(const net::Endpoint& listen_ip) : _listen_ip{listen_ip}, _heartbeatTimer{_io_context}
+Network::Network(const net::Endpoint& listen_ip) : _listen_ip{listen_ip}, _heartbeatTimer{_io_context}
 {}
 
 
-Manager::~Manager()
+Network::~Network()
 {
     _io_context.stop();
     waitForFinish();
 }
 
 
-void Manager::run()
+void Network::run()
 {
     acceptClients();
     scheduleHeartBeat();
-    _network_thread = std::make_unique<std::thread>(&Manager::networkThreadWorkerFunction, this);
+    _network_thread = std::make_unique<std::thread>(&Network::networkThreadWorkerFunction, this);
 }
 
 
-void Manager::scheduleHeartBeat()
+void Network::scheduleHeartBeat()
 {
     for(auto it = _connections.begin(); it != _connections.end(); ) {
         //if(_not_responded_peers.find((*it)->getRemoteNetworkAddress()) != _not_responded_peers.end()) {
@@ -53,7 +53,7 @@ void Manager::scheduleHeartBeat()
 }
 
 
-void Manager::acceptClients()
+void Network::acceptClients()
 {
     ASSERT(!_acceptor);
 
@@ -65,7 +65,7 @@ void Manager::acceptClients()
 }
 
 
-void Manager::networkThreadWorkerFunction() noexcept
+void Network::networkThreadWorkerFunction() noexcept
 {
     try {
         _io_context.run();
@@ -77,7 +77,7 @@ void Manager::networkThreadWorkerFunction() noexcept
 }
 
 
-void Manager::acceptLoop()
+void Network::acceptLoop()
 {
     _acceptor->async_accept([this](const boost::system::error_code& ec, ba::ip::tcp::socket socket) {
         if(ec) {
@@ -94,7 +94,7 @@ void Manager::acceptLoop()
 }
 
 
-void Manager::connect(const std::vector<net::Endpoint>& addresses)
+void Network::connect(const std::vector<net::Endpoint>& addresses)
 {
     for(const auto& address: addresses) {
         connect(address);
@@ -102,7 +102,7 @@ void Manager::connect(const std::vector<net::Endpoint>& addresses)
 }
 
 
-void Manager::connect(const net::Endpoint& address)
+void Network::connect(const net::Endpoint& address)
 {
     LOG_DEBUG << "Connecting to " << address.toString();
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
@@ -121,7 +121,7 @@ void Manager::connect(const net::Endpoint& address)
 }
 
 
-void Manager::waitForFinish()
+void Network::waitForFinish()
 {
     if(_network_thread && _network_thread->joinable()) {
         _network_thread->join();
