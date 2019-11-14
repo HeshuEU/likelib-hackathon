@@ -12,6 +12,7 @@ set(BASE_HEADERS
         bytes.hpp
         hash.hpp
         program_options.hpp
+        program_options.tpp
         )
 
 set(BASE_SOURCES

@@ -54,20 +54,9 @@ class ProgramOptionsParser
     boost::program_options::variables_map _options;
 
     template<typename ValueType>
-    ValueType getValueByName(const char* flag_name) const
-    {
-        if(!hasOption(flag_name)) {
-            RAISE_ERROR(base::ParsingError, std::string("No option with name: ") + std::string(flag_name));
-        }
-
-        try {
-            auto option = _options[flag_name].as<ValueType>();
-            return option;
-        }
-        catch(const std::exception& e) {
-            RAISE_ERROR(base::InvalidArgument, std::string("Incorrect option type: String"));
-        }
-    }
+    ValueType getValueByName(const char* flag_name) const;
 };
 
 } // namespace base
+
+#include "program_options.tpp"
