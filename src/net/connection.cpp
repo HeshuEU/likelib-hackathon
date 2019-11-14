@@ -23,8 +23,8 @@ Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp
     : _io_context{io_context}, _socket{std::move(socket)}
 {
     ASSERT(_socket.is_open());
-    _network_address = std::make_unique<Endpoint>(_socket.remote_endpoint().address().to_string(),
-                                                        _socket.remote_endpoint().port());
+    _network_address =
+        std::make_unique<Endpoint>(_socket.remote_endpoint().address().to_string(), _socket.remote_endpoint().port());
 }
 
 
@@ -147,14 +147,14 @@ void Connection::setOnReceive(Connection::ReadHandler handler)
 
 void Connection::startSession()
 {
-    setOnReceive([this](const base::Bytes &message, const std::size_t bytes_received) {
+    setOnReceive([this](const base::Bytes& message, const std::size_t bytes_received) {
         LOG_DEBUG << "Received: " << message.takePart(0, bytes_received).toString();
 
         try {
             net::Packet p = net::Packet::deserialize(message.takePart(0, bytes_received));
             LOG_DEBUG << "Received packet type: " << static_cast<int>(p.getType());
 
-            switch (p.getType()) {
+            switch(p.getType()) {
                 case net::Packet::Type::HANDSHAKE: {
                     LOG_DEBUG << "HANDSHAKE";
                     net::Packet reply(net::Packet::Type::PING);
@@ -177,7 +177,7 @@ void Connection::startSession()
                 }
             }
         }
-        catch (const std::exception &error) {
+        catch(const std::exception& error) {
             LOG_WARNING << std::string{"Received an invalid packet: "} + error.what();
         }
     });

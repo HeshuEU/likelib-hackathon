@@ -10,4 +10,4 @@ struct Error : base::Error
     using base::Error::Error;
 };
 
-}
+} // namespace net

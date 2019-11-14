@@ -41,7 +41,7 @@ class Network
     void acceptLoop();
     //===================
     boost::asio::steady_timer _heartbeatTimer;
-    //std::set<Endpoint> _not_responded_peers;
+    // std::set<Endpoint> _not_responded_peers;
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================

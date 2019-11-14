@@ -33,7 +33,7 @@ class Endpoint
 
     // unsigned short is used in Boost to represent port number
     unsigned short _port;
-//=============
+    //=============
 };
 
 } // namespace net

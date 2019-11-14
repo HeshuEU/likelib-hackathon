@@ -33,8 +33,8 @@ void Network::run()
 
 void Network::scheduleHeartBeat()
 {
-    for(const auto& connection : _connections) {
-        //connection->ping();
+    for(const auto& connection: _connections) {
+        // connection->ping();
     }
 
     _heartbeatTimer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
@@ -102,8 +102,7 @@ void Network::connect(const net::Endpoint& address)
                                   LOG_WARNING << "Error occurred during connect: " << ec;
                               }
                               auto connection = std::make_unique<Connection>(_io_context, std::move(*socket.release()));
-                              LOG_INFO << "Connection established: "
-                                       << connection->getEndpoint().toString();
+                              LOG_INFO << "Connection established: " << connection->getEndpoint().toString();
                               connection->startSession();
                               _connections.push_back(std::move(connection));
                           });
@@ -118,7 +117,8 @@ void Network::waitForFinish()
     }
 }
 
-void Network::dropConnectionByEndpoint(const net::Endpoint& endpoint){
+void Network::dropConnectionByEndpoint(const net::Endpoint& endpoint)
+{
     _connections.remove_if([&endpoint](const auto& connection) {
         return connection->getEndpoint() == endpoint;
     });
