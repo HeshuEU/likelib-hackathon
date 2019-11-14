@@ -13,6 +13,7 @@
 #include <boost/log/expressions.hpp>
 
 #include <ctime>
+#include <filesystem>
 
 namespace
 {
@@ -64,13 +65,16 @@ void setFileSink()
 {
     using TextFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
 
+    std::filesystem::path file_path(base::config::LOG_FOLDER);
+    file_path += std::filesystem::path::preferred_separator;
+    file_path += std::filesystem::path(base::config::LOG_FILE_FORMAT);
+
     boost::shared_ptr<TextFileSink> sink(
-        new TextFileSink(boost::log::keywords::file_name = base::config::LOG_FILE_FORMAT));
+        new TextFileSink(boost::log::keywords::file_name = file_path.string().c_str()));
 
     sink->locked_backend()->set_file_collector(
         boost::log::sinks::file::make_collector(boost::log::keywords::target = base::config::LOG_FOLDER,
                                                 boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
-                                                boost::log::keywords::min_free_space = base::config::LOG_FILE_MIN_SPACE,
                                                 boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT));
 
     sink->set_formatter(&formatter);
