@@ -10,29 +10,29 @@ ProgramOptionsParser::ProgramOptionsParser() : _options_description("Allowed opt
     _options_description.add_options()("help,h", "Print help message");
 }
 
-void ProgramOptionsParser::addStringOption(const char* flag, const char* help)
+void ProgramOptionsParser::addStringOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag, boost::program_options::value<std::string>(), help);
+    _options_description.add_options()(flag.c_str(), boost::program_options::value<std::string>(), help.c_str());
 }
 
-void ProgramOptionsParser::addIntOption(const char* flag, const char* help)
+void ProgramOptionsParser::addIntOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag, boost::program_options::value<int32_t>(), help);
+    _options_description.add_options()(flag.c_str(), boost::program_options::value<int32_t>(), help.c_str());
 }
 
-void ProgramOptionsParser::addUintOption(const char* flag, const char* help)
+void ProgramOptionsParser::addUintOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag, boost::program_options::value<uint32_t>(), help);
+    _options_description.add_options()(flag.c_str(), boost::program_options::value<uint32_t>(), help.c_str());
 }
 
-void ProgramOptionsParser::addFloatOption(const char* flag, const char* help)
+void ProgramOptionsParser::addFloatOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag, boost::program_options::value<float_t>(), help);
+    _options_description.add_options()(flag.c_str(), boost::program_options::value<float_t>(), help.c_str());
 }
 
-void ProgramOptionsParser::addFlagOption(const char* flag, const char* help)
+void ProgramOptionsParser::addFlagOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag, help);
+    _options_description.add_options()(flag.c_str(), help.c_str());
 }
 
 void ProgramOptionsParser::process(int argc, char** argv)
@@ -55,50 +55,25 @@ void ProgramOptionsParser::process(int argc, char** argv)
 
 bool ProgramOptionsParser::hasOption(const std::string& flag_name) const
 {
-    return hasOption(flag_name.c_str());
-}
-
-bool ProgramOptionsParser::hasOption(const char* flag_name) const
-{
     return _options.find(flag_name) != _options.end();
 }
 
 std::string ProgramOptionsParser::getString(const std::string& flag_name) const
-{
-    return getString(flag_name.c_str());
-}
-
-std::string ProgramOptionsParser::getString(const char* flag_name) const
 {
     return getValueByName<std::string>(flag_name);
 }
 
 int32_t ProgramOptionsParser::getInt(const std::string& flag_name) const
 {
-    return getInt(flag_name.c_str());
-}
-
-int32_t ProgramOptionsParser::getInt(const char* flag_name) const
-{
     return getValueByName<int32_t>(flag_name);
 }
 
 uint32_t ProgramOptionsParser::getUint(const std::string& flag_name) const
 {
-    return getUint(flag_name.c_str());
-}
-
-uint32_t ProgramOptionsParser::getUint(const char* flag_name) const
-{
     return getValueByName<uint32_t>(flag_name);
 }
 
 float_t ProgramOptionsParser::getFloat(const std::string& flag_name) const
-{
-    return getFloat(flag_name.c_str());
-}
-
-float_t ProgramOptionsParser::getFloat(const char* flag_name) const
 {
     return getValueByName<float_t>(flag_name);
 }

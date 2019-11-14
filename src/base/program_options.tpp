@@ -8,10 +8,10 @@ namespace base
 {
 
 template<typename ValueType>
-ValueType ProgramOptionsParser::getValueByName(const char* flag_name) const
+ValueType ProgramOptionsParser::getValueByName(const std::string& flag_name) const
 {
     if(!hasOption(flag_name)) {
-        RAISE_ERROR(base::ParsingError, std::string("No option with name: ") + std::string(flag_name));
+        RAISE_ERROR(base::ParsingError, std::string("No option with name: ") + flag_name);
     }
 
     try {
