@@ -5,8 +5,8 @@
 BOOST_AUTO_TEST_CASE(program_options_flag_test)
 {
     int argc = 2;
-    char* test1 = const_cast<char*>("test.exe");
-    char* test2 = const_cast<char*>("-d");
+    char test1[] = {"test.exe"};
+    char test2[] = {"-d"};
     char* argv[] = {test1, test2};
 
     base::ProgramOptionsParser parser;
@@ -20,9 +20,9 @@ BOOST_AUTO_TEST_CASE(program_options_flag_test)
 BOOST_AUTO_TEST_CASE(program_options_uint_test)
 {
     int argc = 3;
-    char* test1 = const_cast<char*>("test.exe");
-    char* test2 = const_cast<char*>("-p");
-    char* test3 = const_cast<char*>("900");
+    char test1[] = {"test.exe"};
+    char test2[] = {"-p"};
+    char test3[] = {"900"};
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
@@ -38,9 +38,9 @@ BOOST_AUTO_TEST_CASE(program_options_uint_test)
 BOOST_AUTO_TEST_CASE(program_options_int_test)
 {
     int argc = 3;
-    char* test1 = const_cast<char*>("test.exe");
-    char* test2 = const_cast<char*>("--number");
-    char* test3 = const_cast<char*>("-809900");
+    char test1[] = {"test.exe"};
+    char test2[] = {"--number"};
+    char test3[] = {"-809900"};
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
@@ -55,29 +55,28 @@ BOOST_AUTO_TEST_CASE(program_options_int_test)
 
 BOOST_AUTO_TEST_CASE(program_options_string_test)
 {
-    auto target = "GJSHDGI32mvdsjb12BFA";
+    std::string target = "GJSHDGI32mvdsjb12BFA";
     int argc = 3;
-    char* test1 = const_cast<char*>("test.exe");
-    char* test2 = const_cast<char*>("-h");
-    char* test3 = const_cast<char*>(target);
-    char* argv[] = {test1, test2, test3};
+    char test1[] = {"test.exe"};
+    char test2[] = {"--hash"};
+    char* argv[] = {test1, test2, target.data()};
 
     base::ProgramOptionsParser parser;
-    parser.addStringOption("hash,h", "Hash string");
+    parser.addStringOption("hash", "Hash string");
 
     parser.process(argc, argv);
 
     BOOST_CHECK(parser.hasOption("hash"));
 
-    BOOST_CHECK_EQUAL(std::string(target), parser.getString("hash"));
+    BOOST_CHECK_EQUAL(target, parser.getString("hash"));
 }
 
 BOOST_AUTO_TEST_CASE(program_options_incorrect_input_params)
 {
-    int argc = 4;
-    char* test1 = const_cast<char*>("test.exe");
-    char* test2 = const_cast<char*>("--number");
-    char* test3 = const_cast<char*>("-809900");
+    int argc = 3;
+    char test1[] = {"test.exe"};
+    char test2[] = {"--temp"};
+    char test3[] = {"-809900"};
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
@@ -89,9 +88,9 @@ BOOST_AUTO_TEST_CASE(program_options_incorrect_input_params)
 BOOST_AUTO_TEST_CASE(program_options_incorrect_type_exception)
 {
     int argc = 3;
-    char* test1 = const_cast<char*>("test.exe");
-    char* test2 = const_cast<char*>("--number");
-    char* test3 = const_cast<char*>("-809900");
+    char test1[] = {"test.exe"};
+    char test2[] = {"--number"};
+    char test3[] = {"-809900"};
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
