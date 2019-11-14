@@ -13,7 +13,7 @@ NetworkAddress::NetworkAddress(const std::string_view& address_with_port)
 {
     std::size_t i = address_with_port.find(':');
     if(i == std::string_view::npos) {
-        RAISE_ERROR(InvalidArgument, "port is not specified");
+        RAISE_ERROR(base::InvalidArgument, "port is not specified");
     }
 
     std::string_view ip_address_part = address_with_port.substr(0, i);
@@ -26,7 +26,7 @@ NetworkAddress::NetworkAddress(const std::string_view& address_with_port)
         }
     }
     catch(const std::exception& e) {
-        RAISE_ERROR(InvalidArgument, std::string{"invalid address "} + std::string{address_with_port});
+        RAISE_ERROR(base::InvalidArgument, std::string{"invalid address "} + std::string{address_with_port});
     }
 }
 
