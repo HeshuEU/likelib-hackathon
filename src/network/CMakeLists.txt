@@ -1,5 +1,6 @@
 set(NETWORK_HEADERS
         connection.hpp
+        error.hpp
         manager.hpp
         network_address.hpp
         packet.hpp
