@@ -1,11 +1,11 @@
 #pragma once
 
-#include "bc/address.hpp"
-#include "bc/types.hpp"
+#include "address.hpp"
+#include "types.hpp"
 
 #include <string>
 
-namespace rpc
+namespace bc
 {
 
 class BaseClient
@@ -19,4 +19,4 @@ class BaseClient
                                     const bc::Address& to_address) = 0;
 };
 
-} // namespace rpc
+} // namespace bc

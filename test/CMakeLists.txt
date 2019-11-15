@@ -1,6 +1,7 @@
 set(TEST_SOURCES
         main.cpp
         base/big_integer.cpp
+        base/log.hpp
         base/property_tree.cpp
         base/bytes.cpp
         base/hash.cpp

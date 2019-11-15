@@ -1,17 +1,19 @@
 #pragma once
 
-#include "bc/address.hpp"
-#include "bc/types.hpp"
+#include "address.hpp"
+#include "types.hpp"
 
 #include <string>
 
-namespace rpc
+namespace bc
 {
 
-class BaseServer
+class BaseService
 {
   public:
-    virtual ~BaseServer() = default;
+    virtual ~BaseService() = default;
+
+    virtual void init() = 0;
 
     virtual bc::Balance balance(const bc::Address& address) = 0;
 
@@ -19,4 +21,4 @@ class BaseServer
                                     const bc::Address& to_address) = 0;
 };
 
-} // namespace rpc
+} // namespace bc

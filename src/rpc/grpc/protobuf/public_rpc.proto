@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+// Cross platform definitions
+option java_multiple_files = true;
+option java_package = "by.heshu.likelib.node";
+option java_outer_classname = "LikelibNodeProto";
+option objc_class_prefix = "HLW";
+
+package likelib;
+
+service Node {
+    rpc balance (Address) returns (Money) {
+    }
+    rpc transaction (Transaction) returns (Hash) {
+    }
+}
+
+message Transaction {
+    Money amount = 1;
+    Address from_address = 2;
+    Address to_address = 3;
+}
+
+message Address {
+    string address = 1;
+}
+
+message Hash {
+    string hash_string = 1;
+}
+
+message Money {
+    uint64 money = 1;
+}
