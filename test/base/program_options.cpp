@@ -5,8 +5,8 @@
 BOOST_AUTO_TEST_CASE(program_options_flag_test)
 {
     int argc = 2;
-    char test1[] = {"test.exe"};
-    char test2[] = {"-d"};
+    char test1[] = "test.exe";
+    char test2[] = "-d";
     char* argv[] = {test1, test2};
 
     base::ProgramOptionsParser parser;
@@ -20,9 +20,9 @@ BOOST_AUTO_TEST_CASE(program_options_flag_test)
 BOOST_AUTO_TEST_CASE(program_options_uint_test)
 {
     int argc = 3;
-    char test1[] = {"test.exe"};
-    char test2[] = {"-p"};
-    char test3[] = {"900"};
+    char test1[] = "test.exe";
+    char test2[] = "-p";
+    char test3[] = "900";
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
@@ -38,9 +38,9 @@ BOOST_AUTO_TEST_CASE(program_options_uint_test)
 BOOST_AUTO_TEST_CASE(program_options_int_test)
 {
     int argc = 3;
-    char test1[] = {"test.exe"};
-    char test2[] = {"--number"};
-    char test3[] = {"-809900"};
+    char test1[] = "test.exe";
+    char test2[] = "--number";
+    char test3[] = "-809900";
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
@@ -56,9 +56,9 @@ BOOST_AUTO_TEST_CASE(program_options_int_test)
 BOOST_AUTO_TEST_CASE(program_options_double_test)
 {
     int argc = 3;
-    char test1[] = {"test.exe"};
-    char test2[] = {"--money"};
-    char test3[] = {"1.1"};
+    char test1[] = "test.exe";
+    char test2[] = "--money";
+    char test3[] = "1.1";
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(program_options_string_test)
 {
     std::string target = "GJSHDGI32mvdsjb12BFA";
     int argc = 3;
-    char test1[] = {"test.exe"};
-    char test2[] = {"--hash"};
+    char test1[] = "test.exe";
+    char test2[] = "--hash";
     char* argv[] = {test1, test2, target.data()};
 
     base::ProgramOptionsParser parser;
@@ -92,9 +92,9 @@ BOOST_AUTO_TEST_CASE(program_options_string_test)
 BOOST_AUTO_TEST_CASE(program_options_incorrect_input_params)
 {
     int argc = 3;
-    char test1[] = {"test.exe"};
-    char test2[] = {"--temp"};
-    char test3[] = {"-809900"};
+    char test1[] = "test.exe";
+    char test2[] = "--temp";
+    char test3[] = "-809900";
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
@@ -106,9 +106,9 @@ BOOST_AUTO_TEST_CASE(program_options_incorrect_input_params)
 BOOST_AUTO_TEST_CASE(program_options_incorrect_type_exception)
 {
     int argc = 3;
-    char test1[] = {"test.exe"};
-    char test2[] = {"--number"};
-    char test3[] = {"-809900"};
+    char test1[] = "test.exe";
+    char test2[] = "--number";
+    char test3[] = "-809900";
     char* argv[] = {test1, test2, test3};
 
     base::ProgramOptionsParser parser;
