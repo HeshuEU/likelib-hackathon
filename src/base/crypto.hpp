@@ -12,6 +12,7 @@ class Rsa
   public:
     //----------------------------------
     Rsa(const size_t count_bites);
+    Rsa(const std::shared_ptr<RSA>& public_key);
     Rsa(const std::filesystem::path& public_path, const std::filesystem::path& private_path);
     Rsa(const Rsa&) = delete;
     Rsa(Rsa&& rsa);
@@ -29,7 +30,11 @@ class Rsa
 
     Bytes publicDecrypt(const Bytes& encrypt_message) const;
 
-    void save(const std::filesystem::path& public_path, const std::filesystem::path& private_path) const;
+    //----------------------------------
+
+    void save(const std::filesystem::path& public_path, const std::filesystem::path& private_path = "-1") const;  //TODO: change it
+
+    //----------------------------------
 
     size_t size() const;
 
@@ -37,9 +42,12 @@ class Rsa
 
     size_t maxPublicEncryptSize() const;
 
+    //----------------------------------
+
+    std::shared_ptr<RSA> getPublicKey() const;
 
   private:
-    std::unique_ptr<RSA, decltype(&::RSA_free)> _private_key;
-    std::unique_ptr<RSA, decltype(&::RSA_free)> _public_key;
+    std::shared_ptr<RSA> _private_key;  //TODO: maybe store Bytes?
+    std::shared_ptr<RSA> _public_key;
 };
 } // namespace base

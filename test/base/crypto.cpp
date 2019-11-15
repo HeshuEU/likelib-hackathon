@@ -53,3 +53,14 @@ BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_and_save_in_file)
     BOOST_CHECK((dec_msg1 == dec_msg2) && (dec_msg1 == msg));
     BOOST_CHECK(enc_msg1 == enc_msg2);
 }
+
+BOOST_AUTO_TEST_CASE(Rsa_constructor_from_public_key_and_get_public_key)
+{
+    base::Rsa rsa1(3100);
+    base::Bytes msg("Tes!_rsa Ge1");
+
+    base::Rsa rsa2(rsa1.getPublicKey());
+    auto enc_msg = rsa2.publicEncrypt(msg);
+    auto dec_msg = rsa1.privateDecrypt(enc_msg);
+    BOOST_CHECK(msg == dec_msg);
+}

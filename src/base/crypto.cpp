@@ -8,19 +8,22 @@
 namespace base
 {
 
-Rsa::Rsa(const size_t count_bites) : _private_key(RSA_new(), ::RSA_free), _public_key(RSA_new(), ::RSA_free)
+Rsa::Rsa(const size_t count_bites)
 {
-    std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
-    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa(RSA_new(), ::RSA_free);
+    std::shared_ptr<BIGNUM> bn(BN_new(), ::BN_free);
+    std::shared_ptr<RSA> rsa(RSA_new(), ::RSA_free);
     BN_set_word(bn.get(), RSA_F4);
     RSA_generate_key_ex(rsa.get(), count_bites, bn.get(), NULL);
-    _private_key = std::unique_ptr<RSA, decltype(&::RSA_free)>(RSAPrivateKey_dup(rsa.get()), ::RSA_free);
-    _public_key = std::unique_ptr<RSA, decltype(&::RSA_free)>(RSAPublicKey_dup(rsa.get()), ::RSA_free);
+    _private_key = std::shared_ptr<RSA>(RSAPrivateKey_dup(rsa.get()), ::RSA_free);
+    _public_key = std::shared_ptr<RSA>(RSAPublicKey_dup(rsa.get()), ::RSA_free);
 }
 
 
+Rsa::Rsa(const std::shared_ptr<RSA>& public_key) : _private_key(nullptr), _public_key(public_key)
+{}
+
+
 Rsa::Rsa(const std::filesystem::path& public_path, const std::filesystem::path& private_path)
-    : _private_key(RSA_new(), ::RSA_free), _public_key(RSA_new(), ::RSA_free)
 {
     if(!std::filesystem::exists(public_path)) {
         throw std::runtime_error("Public_file_not_exist");
@@ -34,8 +37,8 @@ Rsa::Rsa(const std::filesystem::path& public_path, const std::filesystem::path& 
     RSA* public_temp = RSA_new();
     PEM_read_RSAPrivateKey(private_file, &private_temp, NULL, NULL);
     PEM_read_RSAPublicKey(public_file, &public_temp, NULL, NULL);
-    _private_key = std::unique_ptr<RSA, decltype(&::RSA_free)>(private_temp, ::RSA_free);
-    _public_key = std::unique_ptr<RSA, decltype(&::RSA_free)>(public_temp, ::RSA_free);
+    _private_key = std::shared_ptr<RSA>(private_temp, ::RSA_free);
+    _public_key = std::shared_ptr<RSA>(public_temp, ::RSA_free);
     fclose(public_file);
     fclose(private_file);
 }
@@ -103,13 +106,15 @@ Bytes Rsa::publicDecrypt(const Bytes& encrypt_message) const
 
 void Rsa::save(const std::filesystem::path& public_path, const std::filesystem::path& private_path) const
 {
-
     FILE* public_file = fopen(public_path.c_str(), "w");
-    FILE* private_file = fopen(private_path.c_str(), "w");
     PEM_write_RSAPublicKey(public_file, _public_key.get());
-    PEM_write_RSAPrivateKey(private_file, _private_key.get(), NULL, NULL, 0, NULL, NULL);
     fclose(public_file);
-    fclose(private_file);
+
+    if(private_path.string() != std::filesystem::path("-1")) {
+        FILE* private_file = fopen(private_path.c_str(), "w");
+        PEM_write_RSAPrivateKey(private_file, _private_key.get(), NULL, NULL, 0, NULL, NULL);
+        fclose(private_file);
+    }
 }
 
 
@@ -128,6 +133,11 @@ size_t Rsa::maxPrivateEncryptSize() const
 size_t Rsa::maxPublicEncryptSize() const
 {
     return size() - 42;
+}
+
+std::shared_ptr<RSA> Rsa::getPublicKey() const
+{
+    return _public_key;
 }
 
 } // namespace base
