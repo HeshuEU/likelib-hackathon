@@ -12,12 +12,13 @@ void Timer::start()
 unsigned long long Timer::elapsedMillis() const
 {
     auto now = std::chrono::high_resolution_clock::now();
-    return (now - _start_time).count();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(now - _start_time).count();
 }
 
-unsigned long long Timer::elapsedSeconds() const
+
+double Timer::elapsedSeconds() const
 {
-    return (now - _start_time).count();
+    return elapsedMillis() / 1000.0;
 }
 
 } // namespace base

@@ -16,10 +16,10 @@ class Timer
     void start();
 
     unsigned long long elapsedMillis() const;
-    unsigned long long elapsedSeconds() const;
+    double elapsedSeconds() const;
     //=================
   private:
-    std::chrono::time_point<std::chrono::high_resolution_clock>_start_time;
+    std::chrono::time_point<std::chrono::high_resolution_clock> _start_time;
 };
 
 } // namespace base
