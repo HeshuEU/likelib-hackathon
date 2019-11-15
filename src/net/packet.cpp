@@ -4,26 +4,24 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include <boost/serialization/binary_object.hpp>
-
 #include <sstream>
 
-namespace network
+namespace net
 {
 
-Packet::Packet(std::size_t version) : _version{version}
+Packet::Packet(Type type) : _type{type}
 {}
 
 
-std::size_t Packet::getVersion()
+Packet::Type Packet::getType()
 {
-    return _version;
+    return _type;
 }
 
 
-void Packet::setVersion(std::size_t version)
+void Packet::setType(Type type)
 {
-    _version = version;
+    _type = type;
 }
 
 
@@ -31,7 +29,7 @@ base::Bytes Packet::serialize() const
 {
     std::ostringstream oss;
     boost::archive::text_oarchive to(oss);
-    to << _version;
+    to << _type;
 
     return base::Bytes(oss.str());
 }
@@ -43,7 +41,7 @@ Packet Packet::deserialize(const base::Bytes& raw)
     boost::archive::text_iarchive ti(iss);
 
     Packet ret;
-    ti >> ret._version;
+    ti >> ret._type;
 
     return ret;
 }
@@ -51,7 +49,7 @@ Packet Packet::deserialize(const base::Bytes& raw)
 
 bool Packet::operator==(const Packet& another) const noexcept
 {
-    return _version == another._version;
+    return _type == another._type;
 }
 
 
@@ -60,4 +58,4 @@ bool Packet::operator!=(const Packet& another) const noexcept
     return !(*this == another);
 }
 
-} // namespace network
+} // namespace net

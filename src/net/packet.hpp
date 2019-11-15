@@ -2,19 +2,31 @@
 
 #include "base/bytes.hpp"
 
-namespace network
+namespace net
 {
 
 class Packet
 {
   public:
     //===================
-    Packet(std::size_t version);
+
+    enum class Type : unsigned char
+    {
+        HANDSHAKE = 0,
+        PING = 1,
+        PONG = 2,
+        DISCOVER = 3,
+        DATA = 4,
+        DISCONNECT = 5
+    };
+
+    //===================
+    Packet(Type type);
 
     //===================
 
-    std::size_t getVersion();
-    void setVersion(std::size_t version);
+    Type getType();
+    void setType(Type type);
 
     //===================
     base::Bytes serialize() const;
@@ -29,7 +41,7 @@ class Packet
   private:
     Packet() = default;
 
-    std::size_t _version;
+    Type _type;
 };
 
-} // namespace network
+} // namespace net

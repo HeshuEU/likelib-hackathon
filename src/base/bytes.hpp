@@ -33,7 +33,7 @@ class Bytes
     Byte& operator[](std::size_t index);
     const Byte& operator[](std::size_t index) const;
 
-    Bytes takePart(std::size_t begin_index, std::size_t one_past_end_index);
+    Bytes takePart(std::size_t begin_index, std::size_t one_past_end_index) const;
 
     Bytes& append(Byte byte);
 

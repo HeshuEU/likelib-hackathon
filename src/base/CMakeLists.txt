@@ -13,6 +13,7 @@ set(BASE_HEADERS
         property_tree.tpp
         bytes.hpp
         hash.hpp
+        timer.hpp
         )
 
 set(BASE_SOURCES
@@ -22,6 +23,7 @@ set(BASE_SOURCES
         property_tree.cpp
         bytes.cpp
         hash.cpp
+        timer.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
