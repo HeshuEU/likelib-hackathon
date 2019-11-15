@@ -30,6 +30,21 @@ Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp
 
 Connection::~Connection()
 {
+    if(!_is_closed) {
+        try {
+            close();
+        }
+        catch(const std::exception& e) {
+            LOG_WARNING << "Error while closing connection: " << e.what();
+        }
+    }
+}
+
+
+void Connection::close()
+{
+    ASSERT_SOFT(!_is_closed);
+    _is_closed = true;
     if(_socket.is_open()) {
         LOG_INFO << "Shutting down connection to " << _network_address->toString();
         boost::system::error_code ec;
@@ -69,8 +84,49 @@ void Connection::stopReceivingMessages()
 void Connection::receiveOne()
 {
     // ba::transfer_at_least just for now for debugging purposes, of course will be changed later
-    ba::async_read(_socket, ba::buffer(_read_buffer.toVector()), ba::transfer_at_least(5),
-                   std::bind(&Connection::receiveHandler, this, std::placeholders::_1, std::placeholders::_2));
+    ba::async_read(
+        _socket, ba::buffer(_read_buffer.toVector()), ba::transfer_at_least(5),
+        [this, cp = shared_from_this()](const boost::system::error_code& ec, const std::size_t bytes_received) {
+            if(_is_closed) {
+                LOG_DEBUG << "Received on closed connection";
+                return;
+            }
+            else if(ec) {
+                switch(ec.value()) {
+                    case ba::error::eof: {
+                        LOG_WARNING << "Connection to " << getEndpoint().toString() << " closed";
+                        close();
+                        break;
+                    }
+                    default: {
+                        LOG_WARNING << "Error occurred while receiving: " << ec << ' ' << ec.message();
+                        break;
+                    }
+                }
+                // TODO: do something
+            }
+            else {
+                LOG_DEBUG << "Received " << bytes_received << " bytes from " << _network_address->toString();
+
+                if(_is_receiving_enabled) {
+                    if(_on_receive) {
+                        ReadHandler& user_handler = *_on_receive;
+                        user_handler(_read_buffer, bytes_received);
+                    }
+
+                    // double-check since the value may be changed - we don't know how long the handler was executing
+                    if(_is_receiving_enabled) {
+                        receiveOne();
+                    }
+                }
+            }
+        });
+}
+
+
+void Connection::setOnReceive(Connection::ReadHandler handler)
+{
+    _on_receive = std::make_unique<ReadHandler>(std::move(handler));
 }
 
 
@@ -94,54 +150,23 @@ void Connection::sendPendingMessages()
 
     base::Bytes& message = _pending_send_messages.front();
     ba::async_write(_socket, ba::buffer(message.toVector()),
-                    std::bind(&Connection::sendHandler, this, std::placeholders::_1, std::placeholders::_2));
-}
+                    [this, cp = shared_from_this()](const boost::system::error_code& ec, const std::size_t bytes_sent) {
+                        if(_is_closed) {
+                            return;
+                        }
+                        else if(ec) {
+                            LOG_WARNING << "Error while sending message: " << ec << ' ' << ec.message();
+                            // TODO: do something
+                        }
+                        else {
+                            LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
+                        }
+                        _pending_send_messages.pop();
 
-
-void Connection::sendHandler(const boost::system::error_code& error, std::size_t bytes_sent)
-{
-    if(error) {
-        LOG_WARNING << "Error while sending message: " << error;
-        // TODO: do something
-    }
-    else {
-        LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
-    }
-    _pending_send_messages.pop();
-
-    if(!_pending_send_messages.empty()) {
-        sendPendingMessages();
-    }
-}
-
-
-void Connection::receiveHandler(const boost::system::error_code& error, std::size_t bytes_received)
-{
-    if(error) {
-        LOG_WARNING << "Error occurred while receiving: " << error;
-        // TODO: do something
-    }
-    else {
-        LOG_DEBUG << "Received " << bytes_received << " bytes from " << _network_address->toString();
-
-        if(_is_receiving_enabled) {
-            if(_on_receive) {
-                ReadHandler& user_handler = *_on_receive;
-                user_handler(_read_buffer, bytes_received);
-            }
-
-            // double-check since the value may be changed - we don't know how long the handler was executing
-            if(_is_receiving_enabled) {
-                receiveOne();
-            }
-        }
-    }
-}
-
-
-void Connection::setOnReceive(Connection::ReadHandler handler)
-{
-    _on_receive = std::make_unique<ReadHandler>(std::move(handler));
+                        if(!_pending_send_messages.empty()) {
+                            sendPendingMessages();
+                        }
+                    });
 }
 
 
@@ -156,18 +181,19 @@ void Connection::startSession()
 
             switch(p.getType()) {
                 case net::Packet::Type::HANDSHAKE: {
-                    LOG_DEBUG << "HANDSHAKE";
+                    LOG_DEBUG << "--- RECEIVED HANDSHAKE ---";
                     break;
                 }
                 case net::Packet::Type::PING: {
-                    LOG_DEBUG << "PING";
+                    LOG_DEBUG << "--- RECEIVED PING ---";
                     net::Packet reply(net::Packet::Type::PONG);
                     send(reply.serialize());
                     break;
                 }
                 case net::Packet::Type::PONG: {
-                    LOG_DEBUG << "PONG";
+                    LOG_DEBUG << "--- RECEIVED PONG ---";
                     if(_non_responded_pings) {
+                        ASSERT(_on_pong);
                         _non_responded_pings--;
                         PongHandler& ph = *_on_pong;
                         ph();
@@ -175,6 +201,10 @@ void Connection::startSession()
                     else {
                         LOG_WARNING << "Received an unexpected PONG from " << getEndpoint().toString();
                     }
+                    break;
+                }
+                case net::Packet::Type::DATA: {
+
                     break;
                 }
                 default: {
@@ -192,13 +222,35 @@ void Connection::startSession()
 }
 
 
-void Connection::ping(std::function<void()> on_pong)
+void Connection::ping()
 {
+    ASSERT(_on_pong);
     _non_responded_pings++;
-    _on_pong = std::make_unique<PongHandler>(std::move(on_pong));
-
     send(net::Packet{net::Packet::Type::PING}.serialize());
 }
 
+
+void Connection::onPong(const PongHandler& on_pong)
+{
+    _on_pong = std::make_unique<PongHandler>(on_pong);
+}
+
+
+void Connection::onPong(PongHandler&& on_pong)
+{
+    _on_pong = std::make_unique<PongHandler>(std::move(on_pong));
+}
+
+
+void Connection::onData(const DataHandler& on_data)
+{
+    _on_data = std::make_unique<DataHandler>(on_data);
+}
+
+
+void Connection::onData(DataHandler&& on_data)
+{
+    _on_data = std::make_unique<DataHandler>(std::move(on_data));
+}
 
 } // namespace net

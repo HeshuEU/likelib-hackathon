@@ -30,7 +30,8 @@ class Network
   private:
     //===================
     boost::asio::io_context _io_context;
-    std::list<std::unique_ptr<Connection>> _connections;
+    std::list<std::shared_ptr<Connection>> _connections;
+    std::vector<Endpoint> _endpoints_to_connect_to;
     //===================
     std::unique_ptr<std::thread> _network_thread;
     void networkThreadWorkerFunction() noexcept;

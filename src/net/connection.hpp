@@ -14,7 +14,7 @@
 namespace net
 {
 
-class Connection
+class Connection : public std::enable_shared_from_this<Connection>
 {
   public:
     //====================
@@ -44,19 +44,31 @@ class Connection
 
     ~Connection();
     //====================
-
     void startSession();
-
+    void close();
+    //====================
+    void ping();
+    //====================
     using PongHandler = std::function<void()>;
-    void ping(PongHandler on_pong);
+    void onPong(const PongHandler& handler);
+    void onPong(PongHandler&& handler);
+
+    using DataHandler = std::function<void(const base::Bytes& buffer, std::size_t bytes_received)>;
+    void onData(const DataHandler& handler);
+    void onData(DataHandler&& handler);
+    //====================
 
     const Endpoint& getEndpoint() const;
     //====================
   private:
     //====================
+    using SharedPointer = std::shared_ptr<Connection>;
+    //====================
     boost::asio::io_context& _io_context;
     boost::asio::ip::tcp::socket _socket;
     std::unique_ptr<Endpoint> _network_address;
+
+    bool _is_closed{false};
     //====================
     using ReadHandler = std::function<void(const base::Bytes& message, std::size_t bytes_received)>;
     static base::Bytes _read_buffer;
@@ -64,7 +76,6 @@ class Connection
     std::unique_ptr<ReadHandler> _on_receive;
 
     void receiveOne();
-    void receiveHandler(const boost::system::error_code& error, std::size_t bytes_received);
     void setOnReceive(ReadHandler handler);
 
     void startReceivingMessages();
@@ -72,11 +83,12 @@ class Connection
     //====================
     std::queue<base::Bytes> _pending_send_messages;
     void sendPendingMessages();
-    void sendHandler(const boost::system::error_code& error, std::size_t bytes_sent);
     void send(base::Bytes&& data);
     //====================
     std::size_t _non_responded_pings{0};
+    //====================
     std::unique_ptr<PongHandler> _on_pong;
+    std::unique_ptr<DataHandler> _on_data;
     //====================
 };
 

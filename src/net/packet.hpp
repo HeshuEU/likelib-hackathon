@@ -15,8 +15,9 @@ class Packet
         HANDSHAKE = 0,
         PING = 1,
         PONG = 2,
-        DATA = 3,
-        DISCONNECT = 4
+        DISCOVER = 3,
+        DATA = 4,
+        DISCONNECT = 5
     };
 
     //===================
