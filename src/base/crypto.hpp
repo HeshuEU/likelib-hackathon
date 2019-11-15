@@ -34,7 +34,7 @@ class Rsa
     size_t size() const;
 
     size_t maxPrivateEncryptSize() const;
-    
+
     size_t maxPublicEncryptSize() const;
 
 

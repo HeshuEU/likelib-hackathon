@@ -22,10 +22,10 @@ Rsa::Rsa(const size_t count_bites) : _private_key(RSA_new(), ::RSA_free), _publi
 Rsa::Rsa(const std::filesystem::path& public_path, const std::filesystem::path& private_path)
     : _private_key(RSA_new(), ::RSA_free), _public_key(RSA_new(), ::RSA_free)
 {
-    if(!std::filesystem::exists(public_path)){
+    if(!std::filesystem::exists(public_path)) {
         throw std::runtime_error("Public_file_not_exist");
     }
-    if(!std::filesystem::exists(private_path)){
+    if(!std::filesystem::exists(private_path)) {
         throw std::runtime_error("Private_file_not_exist");
     }
     FILE* public_file = fopen(public_path.c_str(), "rb");
@@ -111,15 +111,19 @@ void Rsa::save(const std::filesystem::path& public_path, const std::filesystem::
     fclose(public_file);
     fclose(private_file);
 }
+
+
 size_t Rsa::size() const
 {
     return RSA_size(_public_key.get());
 }
 
+
 size_t Rsa::maxPrivateEncryptSize() const
 {
     return size() - 11;
 }
+
 
 size_t Rsa::maxPublicEncryptSize() const
 {
