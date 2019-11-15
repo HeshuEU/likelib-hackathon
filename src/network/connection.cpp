@@ -21,8 +21,8 @@ Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp
     : _io_context{io_context}, _socket{std::move(socket)}
 {
     ASSERT(_socket.is_open());
-    _network_address = std::make_unique<NetworkAddress>(_socket.remote_endpoint().address().to_string(),
-                                                        _socket.remote_endpoint().port());
+    _network_address = std::make_unique<NetworkAddress>(
+        _socket.remote_endpoint().address().to_string(), _socket.remote_endpoint().port());
 }
 
 
@@ -68,7 +68,7 @@ void Connection::_receiveOne()
 {
     // ba::transfer_at_least just for now for debugging purposes, of course will be changed later
     ba::async_read(_socket, ba::buffer(_read_buffer.toVector()), ba::transfer_at_least(5),
-                   std::bind(&Connection::_receiveHandler, this, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&Connection::_receiveHandler, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 
@@ -92,7 +92,7 @@ void Connection::_sendPendingMessages()
 
     base::Bytes& message = _pending_send_messages.front();
     ba::async_write(_socket, ba::buffer(message.toVector()),
-                    std::bind(&Connection::_sendHandler, this, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&Connection::_sendHandler, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 

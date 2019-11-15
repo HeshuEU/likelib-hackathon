@@ -350,7 +350,6 @@ BOOST_AUTO_TEST_CASE(BigNum_plus_plus_and_minus_minus_operator)
 
     BOOST_CHECK(--num + 877 == 1000);
     BOOST_CHECK(num == 123);
-
 }
 
 BOOST_AUTO_TEST_CASE(BigNum_all_bool_operator)
