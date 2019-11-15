@@ -41,9 +41,7 @@ void Network::scheduleHeartBeat()
     }
 
     for(const auto& connection: _connections) {
-        connection->ping([this, ep = connection->getEndpoint()] {
-            _not_responded_peers.remove(ep);
-        });
+        connection->ping();
     }
 
     _heartbeatTimer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
@@ -63,6 +61,18 @@ void Network::acceptClients()
     _acceptor = std::make_unique<tcp::acceptor>(_io_context, static_cast<ba::ip::tcp::endpoint>(_listen_ip));
     _acceptor->set_option(ba::socket_base::reuse_address(true));
     acceptLoop();
+}
+
+
+void Network::setupConnection(Connection& connection)
+{
+    connection.onPong([this, ep = connection.getEndpoint()] {
+        _not_responded_peers.remove(ep);
+        });
+
+    connection.onData([](const base::Bytes& buffer, std::size_t bytes_received) {
+        // TODO: implement. temporarily does nothing
+    });
 }
 
 

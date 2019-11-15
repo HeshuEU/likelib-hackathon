@@ -40,6 +40,7 @@ class Network
     const Endpoint& _listen_ip;
     void acceptClients();
     void acceptLoop();
+    void setupConnection(Connection& connection); // TODO: do a better implementationvim 
     //===================
     boost::asio::steady_timer _heartbeatTimer;
     std::list<Endpoint> _not_responded_peers;
