@@ -5,7 +5,6 @@ set(TEST_SOURCES
         base/bytes.cpp
         base/hash.cpp
         network/packet.cpp
-        rpc/base_rpc.cpp
         base/program_options.cpp
         )
 
