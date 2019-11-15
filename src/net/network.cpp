@@ -68,7 +68,7 @@ void Network::setupConnection(Connection& connection)
 {
     connection.onPong([this, ep = connection.getEndpoint()] {
         _not_responded_peers.remove(ep);
-        });
+    });
 
     connection.onData([](const base::Bytes& buffer, std::size_t bytes_received) {
         // TODO: implement. temporarily does nothing
@@ -118,31 +118,30 @@ void Network::connect(const net::Endpoint& address)
     LOG_DEBUG << "Connecting to " << address.toString();
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
     socket->async_connect(static_cast<ba::ip::tcp::endpoint>(address),
-                          [this, socket = std::move(socket), address](const boost::system::error_code& ec) mutable {
-                              if(ec) {
-                                  switch(ec.value()) {
-                                      case ba::error::connection_refused: {
-                                          LOG_WARNING << "Connection error: host " << address.toString();
-                                          break;
-                                      }
-                                      case ba::error::fault: {
-                                          LOG_WARNING << "Connection error: invalid address";
-                                          break;
-                                      }
-                                      default: {
-                                          LOG_WARNING << "Connection error: " << ec << ' ' << ec.message();
-                                          break;
-                                      }
-                                  }
-                              }
-                              else {
-                                  auto connection =
-                                      std::make_shared<Connection>(_io_context, std::move(*socket.release()));
-                                  LOG_INFO << "Connection established: " << connection->getEndpoint().toString();
-                                  connection->startSession();
-                                  _connections.push_back(std::move(connection));
-                              }
-                          });
+        [this, socket = std::move(socket), address](const boost::system::error_code& ec) mutable {
+            if(ec) {
+                switch(ec.value()) {
+                    case ba::error::connection_refused: {
+                        LOG_WARNING << "Connection error: host " << address.toString();
+                        break;
+                    }
+                    case ba::error::fault: {
+                        LOG_WARNING << "Connection error: invalid address";
+                        break;
+                    }
+                    default: {
+                        LOG_WARNING << "Connection error: " << ec << ' ' << ec.message();
+                        break;
+                    }
+                }
+            }
+            else {
+                auto connection = std::make_shared<Connection>(_io_context, std::move(*socket.release()));
+                LOG_INFO << "Connection established: " << connection->getEndpoint().toString();
+                connection->startSession();
+                _connections.push_back(std::move(connection));
+            }
+        });
 }
 
 

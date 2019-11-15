@@ -71,8 +71,8 @@ void setFileSink()
 
     sink->locked_backend()->set_file_collector(
         boost::log::sinks::file::make_collector(boost::log::keywords::target = base::config::LOG_FOLDER,
-                                                boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
-                                                boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT));
+            boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
+            boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT));
     sink->locked_backend()->auto_flush(true);
 
     sink->set_formatter(&formatter);

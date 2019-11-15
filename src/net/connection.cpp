@@ -84,8 +84,7 @@ void Connection::stopReceivingMessages()
 void Connection::receiveOne()
 {
     // ba::transfer_at_least just for now for debugging purposes, of course will be changed later
-    ba::async_read(
-        _socket, ba::buffer(_read_buffer.toVector()), ba::transfer_at_least(5),
+    ba::async_read(_socket, ba::buffer(_read_buffer.toVector()), ba::transfer_at_least(5),
         [this, cp = shared_from_this()](const boost::system::error_code& ec, const std::size_t bytes_received) {
             if(_is_closed) {
                 LOG_DEBUG << "Received on closed connection";
@@ -150,23 +149,23 @@ void Connection::sendPendingMessages()
 
     base::Bytes& message = _pending_send_messages.front();
     ba::async_write(_socket, ba::buffer(message.toVector()),
-                    [this, cp = shared_from_this()](const boost::system::error_code& ec, const std::size_t bytes_sent) {
-                        if(_is_closed) {
-                            return;
-                        }
-                        else if(ec) {
-                            LOG_WARNING << "Error while sending message: " << ec << ' ' << ec.message();
-                            // TODO: do something
-                        }
-                        else {
-                            LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
-                        }
-                        _pending_send_messages.pop();
+        [this, cp = shared_from_this()](const boost::system::error_code& ec, const std::size_t bytes_sent) {
+            if(_is_closed) {
+                return;
+            }
+            else if(ec) {
+                LOG_WARNING << "Error while sending message: " << ec << ' ' << ec.message();
+                // TODO: do something
+            }
+            else {
+                LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
+            }
+            _pending_send_messages.pop();
 
-                        if(!_pending_send_messages.empty()) {
-                            sendPendingMessages();
-                        }
-                    });
+            if(!_pending_send_messages.empty()) {
+                sendPendingMessages();
+            }
+        });
 }
 
 

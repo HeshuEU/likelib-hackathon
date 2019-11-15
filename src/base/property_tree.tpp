@@ -31,7 +31,7 @@ std::vector<R> PropertyTree::getVector(const std::string& path) const
     }
     catch(const std::exception& e) {
         RAISE_ERROR(base::InvalidArgument,
-                    std::string{"Cannot get given value from configuration. Additional info = "} + e.what());
+            std::string{"Cannot get given value from configuration. Additional info = "} + e.what());
     }
 }
 
