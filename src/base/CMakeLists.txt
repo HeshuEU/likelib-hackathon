@@ -13,6 +13,8 @@ set(BASE_HEADERS
         property_tree.tpp
         bytes.hpp
         hash.hpp
+        program_options.hpp
+        program_options.tpp
         )
 
 set(BASE_SOURCES
@@ -22,8 +24,9 @@ set(BASE_SOURCES
         property_tree.cpp
         bytes.cpp
         hash.cpp
+        program_options.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
 
-target_link_libraries(base Boost::log dl backtrace)
+target_link_libraries(base Boost::log Boost::program_options dl backtrace)
