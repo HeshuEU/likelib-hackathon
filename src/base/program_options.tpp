@@ -8,6 +8,20 @@ namespace base
 {
 
 template<typename ValueType>
+void ProgramOptionsParser::addOption(const std::string& flag, const std::string& help)
+{
+    _options_description.add_options()(flag.c_str(), boost::program_options::value<ValueType>()->required(),
+                                       help.c_str());
+}
+
+template<typename ValueType>
+void ProgramOptionsParser::addRequiredOption(const std::string& flag, const std::string& help)
+{
+    _options_description.add_options()(flag.c_str(), boost::program_options::value<ValueType>()->required(),
+                                       help.c_str());
+}
+
+template<typename ValueType>
 ValueType ProgramOptionsParser::getValueByName(const std::string& flag_name) const
 {
     if(!hasOption(flag_name)) {

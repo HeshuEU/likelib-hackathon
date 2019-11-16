@@ -9,35 +9,54 @@ namespace base
 
 /// \brief Option parser and storage
 /// \details Class can set up program options by add... methods, parse and store in inner vault. NOTE: Option help,h
-/// reserved by default and auto process by default(see ProgramOptionsParser::process).
+/// reserved by default.
 class ProgramOptionsParser
 {
   public:
-    /// Constructor add help option as default, and this option will be automatic processed in
-    /// ProgramOptionsParser::process.
+    /// Constructor add help option as default.
     explicit ProgramOptionsParser();
 
     ~ProgramOptionsParser() = default;
 
-    /// Add option that will be interpreted only as std::string and need to get by ProgramOptionsParser::getString call.
+    /// Add optional option that will be interpreted only as std::string and need to get by ProgramOptionsParser::getString call.
     /// \param flag name. example: "hash,hs". Such option may be set by: -hs or --hash.
     /// \param help message to describe flag meaning. Will be show if set -h or --help options.
     void addStringOption(const std::string& flag, const std::string& help = "");
 
-    /// Add option that will be interpreted only as int32_t and need to get by ProgramOptionsParser::getInt call.
+    /// Add required option that will be interpreted only as std::string and need to get by ProgramOptionsParser::getString call.
+    /// \param flag name. example: "hash,hs". Such option may be set by: -hs or --hash.
+    /// \param help message to describe flag meaning. Will be show if set -h or --help options.
+    void addRequiredStringOption(const std::string& flag, const std::string& help = "");
+
+    /// Add optional option that will be interpreted only as int32_t and need to get by ProgramOptionsParser::getInt call.
     /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
     /// \param help message to describe flag meaning. Will be show if set -h or --help options.
     void addIntOption(const std::string& flag, const std::string& help = "");
 
-    /// Add option that will be interpreted only as uint32_t and need to get by ProgramOptionsParser::getUint call.
+    /// Add required option that will be interpreted only as int32_t and need to get by ProgramOptionsParser::getInt call.
+    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
+    /// \param help message to describe flag meaning. Will be show if set -h or --help options.
+    void addRequiredIntOption(const std::string& flag, const std::string& help = "");
+
+    /// Add optional option that will be interpreted only as uint32_t and need to get by ProgramOptionsParser::getUint call.
     /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
     /// \param help message to describe flag meaning. Will be show if set -h or --help options.
     void addUintOption(const std::string& flag, const std::string& help = "");
 
-    /// Add option that will be interpreted only as float_t and need to get by ProgramOptionsParser::getFloat call.
+    /// Add required option that will be interpreted only as uint32_t and need to get by ProgramOptionsParser::getUint call.
+    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
+    /// \param help message to describe flag meaning. Will be show if set -h or --help options.
+    void addRequiredUintOption(const std::string& flag, const std::string& help = "");
+
+    /// Add optional option that will be interpreted only as float_t and need to get by ProgramOptionsParser::getFloat call.
     /// \param flag name. example: "money,m". Such option may be set by: -m or --money.
     /// \param help message to describe flag meaning. Will be show if set -h or --help options.
     void addDoubleOption(const std::string& flag, const std::string& help = "");
+
+    /// Add required option that will be interpreted only as float_t and need to get by ProgramOptionsParser::getFloat call.
+    /// \param flag name. example: "money,m". Such option may be set by: -m or --money.
+    /// \param help message to describe flag meaning. Will be show if set -h or --help options.
+    void addRequiredDoubleOption(const std::string& flag, const std::string& help = "");
 
     /// Add option that not may be get by any getter method. May will check by ProgramOptionsParser::hasOption call.
     /// \param flag name. example: "demonize,d". Such option may be set by: -d or --demonize.
@@ -95,6 +114,12 @@ class ProgramOptionsParser
   private:
     boost::program_options::options_description _options_description;
     boost::program_options::variables_map _options;
+
+    template<typename ValueType>
+    void addOption(const std::string& flag, const std::string& help);
+
+    template<typename ValueType>
+    void addRequiredOption(const std::string& flag, const std::string& help);
 
     template<typename ValueType>
     ValueType getValueByName(const std::string& flag_name) const;

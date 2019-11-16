@@ -4,30 +4,51 @@
 
 namespace base
 {
+namespace po = boost::program_options;
 
 ProgramOptionsParser::ProgramOptionsParser() : _options_description("Allowed options")
 {
-    _options_description.add_options()("help,h", "Print help message");
+   addFlagOption("help,h", "Print help message");
 }
 
 void ProgramOptionsParser::addStringOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag.c_str(), boost::program_options::value<std::string>(), help.c_str());
+    addOption<std::string>(flag, help);
+}
+
+void ProgramOptionsParser::addRequiredStringOption(const std::string& flag, const std::string& help = "")
+{
+    addRequiredOption<std::string>(flag, help);
 }
 
 void ProgramOptionsParser::addIntOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag.c_str(), boost::program_options::value<int32_t>(), help.c_str());
+    addOption<int32_t>(flag, help);
+}
+
+void ProgramOptionsParser::addRequiredIntOption(const std::string& flag, const std::string& help = "")
+{
+    addRequiredOption<int32_t>(flag, help);
 }
 
 void ProgramOptionsParser::addUintOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag.c_str(), boost::program_options::value<uint32_t>(), help.c_str());
+    addOption<uint32_t>(flag, help);
+}
+
+void ProgramOptionsParser::addRequiredUintOption(const std::string& flag, const std::string& help = "")
+{
+    addRequiredOption<uint32_t>(flag, help);
 }
 
 void ProgramOptionsParser::addDoubleOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag.c_str(), boost::program_options::value<double>(), help.c_str());
+    addOption<double>(flag, help);
+}
+
+void ProgramOptionsParser::addRequiredDoubleOption(const std::string& flag, const std::string& help)
+{
+    addRequiredOption<double>(flag, help);
 }
 
 void ProgramOptionsParser::addFlagOption(const std::string& flag, const std::string& help)
