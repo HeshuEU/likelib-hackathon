@@ -11,11 +11,11 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
+#include "network/manager.hpp"
+#include "network/network_address.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
-
 #include <cstring>
-
 #endif
 
 #include <iostream>
@@ -57,11 +57,9 @@ int main(int argc, char** argv)
         base::initLog(base::LogLevel::ALL, base::Sink::STDOUT | base::Sink::FILE);
         LOG_INFO << "Node startup";
 
-        std::string config_file_path;
-
         // set up options parser
         base::ProgramOptionsParser parser;
-        parser.addStringOption("config,c", "Path to config file");
+        parser.addDefaultStringOption("config,c", config::CONFIG_PATH,"Path to config file");
 
         // process options
         parser.process(argc, argv);
@@ -70,16 +68,13 @@ int main(int argc, char** argv)
             return base::config::EXIT_OK;
         }
 
-        if(parser.hasOption("config")) {
-            config_file_path = parser.getString("config");
-        }
-        else {
-            config_file_path = config::CONFIG_PATH;
-        }
+        auto config_file_path = parser.getString("config");
 
         if(!std::filesystem::exists(config_file_path)) {
             LOG_ERROR << "[config file is not exists] input file path: " << parser.getString("config");
             return base::config::EXIT_FAIL;
+        } else{
+            LOG_INFO << "Found config file by path: " << config_file_path;
         }
 
         // handlers initialization

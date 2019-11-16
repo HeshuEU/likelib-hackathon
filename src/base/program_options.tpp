@@ -10,8 +10,7 @@ namespace base
 template<typename ValueType>
 void ProgramOptionsParser::addOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag.c_str(), boost::program_options::value<ValueType>()->required(),
-                                       help.c_str());
+    _options_description.add_options()(flag.c_str(), boost::program_options::value<ValueType>(), help.c_str());
 }
 
 template<typename ValueType>
@@ -20,6 +19,15 @@ void ProgramOptionsParser::addRequiredOption(const std::string& flag, const std:
     _options_description.add_options()(flag.c_str(), boost::program_options::value<ValueType>()->required(),
                                        help.c_str());
 }
+
+
+template<typename ValueType>
+void ProgramOptionsParser::addDefaultOption(const std::string& flag, const std::string& help, ValueType defaultValue)
+{
+    _options_description.add_options()(
+        flag.c_str(), boost::program_options::value<ValueType>()->default_value(defaultValue), help.c_str());
+}
+
 
 template<typename ValueType>
 ValueType ProgramOptionsParser::getValueByName(const std::string& flag_name) const
@@ -32,8 +40,11 @@ ValueType ProgramOptionsParser::getValueByName(const std::string& flag_name) con
         auto option = _options[flag_name].as<ValueType>();
         return option;
     }
-    catch(const std::exception& e) {
+    catch(const boost::program_options::error& e) {
         RAISE_ERROR(base::InvalidArgument, std::string("Incorrect option type: String"));
+    }
+    catch(...) {
+        RAISE_ERROR(base::InvalidArgument, "[unexpected error]");
     }
 }
 
