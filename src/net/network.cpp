@@ -174,6 +174,7 @@ void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connec
             }
             else {
                 _not_ponged_peer_ids.erase(it);
+                connection->send(net::PacketType::DISCOVERY);
             }
             break;
         }
@@ -181,6 +182,23 @@ void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connec
             break;
         }
         case PacketType::DISCOVERY: {
+            if(packet.getKnownEndpoints().size() == 0) {
+                // then we gotta send those node our endpoints
+                std::vector<std::string> endpoints;
+                for(const auto& connection : _connections) {
+                    endpoints.push_back(connection->getEndpoint().toString());
+                }
+
+                Packet ret{net::PacketType::DISCOVERY};
+                ret.setKnownEndpoints(std::move(endpoints));
+                connection->send(ret);
+            }
+            else {
+                LOG_DEBUG << "Received endpoints:";
+                for(const auto& endpoint : packet.getKnownEndpoints()) {
+                    LOG_DEBUG << endpoint;
+                }
+            }
             break;
         }
         default: {

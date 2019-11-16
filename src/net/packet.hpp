@@ -3,6 +3,9 @@
 #include "base/bytes.hpp"
 #include "base/stringifiable_enum_class.hpp"
 
+#include <string>
+#include <vector>
+
 namespace net
 {
 
@@ -15,10 +18,11 @@ class Packet
     //===================
     Packet(PacketType type);
     //===================
-
     PacketType getType() const;
     void setType(PacketType type);
 
+    const std::vector<std::string> getKnownEndpoints() const;
+    void setKnownEndpoints(std::vector<std::string>&& endpoints);
     //===================
     base::Bytes serialize() const;
     static Packet deserialize(const base::Bytes& raw);
@@ -33,6 +37,7 @@ class Packet
     Packet() = default;
 
     PacketType _type;
+    std::vector<std::string> _known_endpoints;
 };
 
 } // namespace net

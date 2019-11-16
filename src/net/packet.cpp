@@ -5,6 +5,8 @@
 // portable archives
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/string.hpp>
 
 #include <sstream>
 
@@ -31,7 +33,7 @@ base::Bytes Packet::serialize() const
 {
     std::ostringstream oss;
     boost::archive::text_oarchive to(oss);
-    to << _type;
+    to << _type << _known_endpoints;
 
     return base::Bytes(oss.str());
 }
@@ -49,6 +51,8 @@ Packet Packet::deserialize(const base::Bytes& raw)
         RAISE_ERROR(net::Error, "received an invalid packet");
     }
 
+    ti >> ret._known_endpoints;
+
     return ret;
 }
 
@@ -62,6 +66,18 @@ bool Packet::operator==(const Packet& another) const noexcept
 bool Packet::operator!=(const Packet& another) const noexcept
 {
     return !(*this == another);
+}
+
+
+const std::vector<std::string> Packet::getKnownEndpoints() const
+{
+    return _known_endpoints;
+}
+
+
+void Packet::setKnownEndpoints(std::vector<std::string>&& endpoints)
+{
+    _known_endpoints = std::move(endpoints);
 }
 
 } // namespace net
