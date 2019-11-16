@@ -1,5 +1,7 @@
 #include "packet.hpp"
 
+#include "net/error.hpp"
+
 // portable archives
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -42,6 +44,10 @@ Packet Packet::deserialize(const base::Bytes& raw)
 
     Packet ret;
     ti >> ret._type;
+
+    if(!enumToString(ret._type)) { // enumToString returns nullptr if enum doesn't have given value
+        RAISE_ERROR(net::Error, "received an invalid packet");
+    }
 
     return ret;
 }
