@@ -162,14 +162,13 @@ void Network::dropZombieConnections()
 
 void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const net::Packet& packet)
 {
+    LOG_DEBUG << "RECEIVED [" << enumToString(packet.getType()) << ']';
     switch(packet.getType()) {
         case PacketType::PING: {
-            LOG_DEBUG << "RECEIVED [PING]";
             connection->send(Packet{PacketType::PONG});
             break;
         }
         case PacketType::PONG: {
-            LOG_DEBUG << "RECEIVED [PONG]";
             if(auto it = _not_ponged_peer_ids.find(connection->getId()); it == _not_ponged_peer_ids.end()) {
                 LOG_WARNING << "Connection " << connection->getEndpoint() << " sent an unexpected PONG";
             }
@@ -179,7 +178,9 @@ void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connec
             break;
         }
         case PacketType::DATA: {
-            LOG_DEBUG << "RECEIVED [DATA]";
+            break;
+        }
+        case PacketType::DISCOVERY: {
             break;
         }
         default: {

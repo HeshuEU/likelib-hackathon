@@ -7,7 +7,7 @@ namespace net
 {
 
 DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
-    PacketType, unsigned char, (HANDSHAKE)(PING)(PONG)(DISCOVER)(DATA)(DISCONNECT));
+    PacketType, unsigned char, (HANDSHAKE)(PING)(PONG)(DISCOVERY)(DATA)(DISCONNECT));
 
 class Packet
 {
