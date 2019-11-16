@@ -13,7 +13,7 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Network::Network(const net::Endpoint& listen_ip) : _listen_ip{listen_ip}, _heartbeatTimer{_io_context}
+Network::Network(const net::Endpoint& listen_ip) : _listen_ip{listen_ip}, _heartbeat_timer{_io_context}
 {}
 
 
@@ -34,18 +34,15 @@ void Network::run()
 
 void Network::scheduleHeartBeat()
 {
-    ASSERT(_not_responded_peers.empty());
+    ASSERT(_not_ponged_peer_ids.empty());
 
-    for(const auto& connection: _connections) {
-        _not_responded_peers.push_back(connection->getEndpoint());
-    }
-
-    for(const auto& connection: _connections) {
+    for(const auto& connection : _connections) {
+        _not_ponged_peer_ids.insert(connection->getId());
         connection->ping();
     }
 
-    _heartbeatTimer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
-    _heartbeatTimer.async_wait([this](const boost::system::error_code& ec) {
+    _heartbeat_timer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
+    _heartbeat_timer.async_wait([this](const boost::system::error_code& ec) {
         dropZombieConnections();
         scheduleHeartBeat();
     });
@@ -61,18 +58,6 @@ void Network::acceptClients()
     _acceptor = std::make_unique<tcp::acceptor>(_io_context, static_cast<ba::ip::tcp::endpoint>(_listen_ip));
     _acceptor->set_option(ba::socket_base::reuse_address(true));
     acceptLoop();
-}
-
-
-void Network::setupConnection(Connection& connection)
-{
-    connection.onPong([this, ep = connection.getEndpoint()] {
-        _not_responded_peers.remove(ep);
-        });
-
-    connection.onData([](const base::Bytes& buffer, std::size_t bytes_received) {
-        // TODO: implement. temporarily does nothing
-    });
 }
 
 
@@ -95,8 +80,8 @@ void Network::acceptLoop()
             LOG_WARNING << "Connection accept failed: " << ec;
         }
         else {
-            auto connection = std::make_shared<Connection>(_io_context, std::move(socket));
-            LOG_INFO << "Connection accepted: " << connection->getEndpoint().toString();
+            auto connection = std::make_shared<Connection>(_io_context, std::move(socket), std::bind(&Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
+            LOG_INFO << "Connection accepted: " << connection->getEndpoint();
             connection->startSession();
             _connections.push_back(std::move(connection));
         }
@@ -137,13 +122,14 @@ void Network::connect(const net::Endpoint& address)
                               }
                               else {
                                   auto connection =
-                                      std::make_shared<Connection>(_io_context, std::move(*socket.release()));
-                                  LOG_INFO << "Connection established: " << connection->getEndpoint().toString();
+                                      std::make_shared<Connection>(_io_context, std::move(*socket.release()), std::bind(&Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
+                                  LOG_INFO << "Connection established: " << connection->getEndpoint();
                                   connection->startSession();
                                   _connections.push_back(std::move(connection));
                               }
                           });
 }
+
 
 
 void Network::waitForFinish()
@@ -155,25 +141,37 @@ void Network::waitForFinish()
 }
 
 
-void Network::dropConnectionByEndpoint(const net::Endpoint& endpoint)
+void Network::dropZombieConnections()
 {
-    _connections.remove_if([&endpoint](auto& connection) {
-        bool gonna_delete = connection->getEndpoint() == endpoint;
-        if(gonna_delete) {
+    for(const auto& connection : _connections) {
+        if(_not_ponged_peer_ids.find(connection->getId()) != _not_ponged_peer_ids.end()) {
             connection->close();
         }
-        return gonna_delete;
-    });
+    }
+    _not_ponged_peer_ids.clear();
 }
 
 
-void Network::dropZombieConnections()
+void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const net::Packet& packet)
 {
-    // TODO: optimize
-    for(const auto& ep: _not_responded_peers) {
-        dropConnectionByEndpoint(ep);
+    switch(packet.getType()) {
+        case Packet::Type::PING: {
+            connection->send(Packet{Packet::Type::PONG});
+            break;
+        }
+        case Packet::Type::PONG: {
+            if(_not_ponged_peer_ids.find(connection->getId()) == _not_ponged_peer_ids.end()) {
+                LOG_WARNING << "Connection " << connection->getEndpoint() << " sent an unexpected PONG";
+            }
+            break;
+        }
+        case Packet::Type::DATA: {
+            break;
+        }
+        default: {
+            LOG_WARNING << "Received an invalid packet from " << connection->getEndpoint();
+        }
     }
-    _not_responded_peers.clear();
 }
 
 } // namespace net

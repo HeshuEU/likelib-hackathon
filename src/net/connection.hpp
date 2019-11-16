@@ -1,7 +1,8 @@
 #pragma once
 
 #include "base/bytes.hpp"
-#include "endpoint.hpp"
+#include "net/endpoint.hpp"
+#include "net/packet.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -28,8 +29,10 @@ class Connection : public std::enable_shared_from_this<Connection>
 
         WAITING_FOR_PONG
     };
+
+    using ReceiveHandler = std::function<void(std::shared_ptr<Connection>, const Packet&)>;
     //====================
-    Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket);
+    Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler&& receive_handler);
 
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection& other) = delete;
@@ -48,21 +51,16 @@ class Connection : public std::enable_shared_from_this<Connection>
     void close();
     //====================
     void ping();
+    void send(const Packet& packet);
     //====================
-    using PongHandler = std::function<void()>;
-    void onPong(const PongHandler& handler);
-    void onPong(PongHandler&& handler);
-
-    using DataHandler = std::function<void(const base::Bytes& buffer, std::size_t bytes_received)>;
-    void onData(const DataHandler& handler);
-    void onData(DataHandler&& handler);
-    //====================
-
+    std::size_t getId() const noexcept;
     const Endpoint& getEndpoint() const;
-    //====================
   private:
     //====================
     using SharedPointer = std::shared_ptr<Connection>;
+    //====================
+    const std::size_t _id;
+    static std::size_t getNextId();
     //====================
     boost::asio::io_context& _io_context;
     boost::asio::ip::tcp::socket _socket;
@@ -70,25 +68,19 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     bool _is_closed{false};
     //====================
-    using ReadHandler = std::function<void(const base::Bytes& message, std::size_t bytes_received)>;
     static base::Bytes _read_buffer;
     std::atomic<bool> _is_receiving_enabled{false};
-    std::unique_ptr<ReadHandler> _on_receive;
-
+    ReceiveHandler _receive_handler;
     void receiveOne();
-    void setOnReceive(ReadHandler handler);
 
     void startReceivingMessages();
     void stopReceivingMessages();
     //====================
     std::queue<base::Bytes> _pending_send_messages;
-    void sendPendingMessages();
     void send(base::Bytes&& data);
+    void sendPendingMessages();
     //====================
     std::size_t _non_responded_pings{0};
-    //====================
-    std::unique_ptr<PongHandler> _on_pong;
-    std::unique_ptr<DataHandler> _on_data;
     //====================
 };
 

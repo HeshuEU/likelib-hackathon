@@ -31,7 +31,6 @@ class Network
     //===================
     boost::asio::io_context _io_context;
     std::list<std::shared_ptr<Connection>> _connections;
-    std::vector<Endpoint> _endpoints_to_connect_to;
     //===================
     std::unique_ptr<std::thread> _network_thread;
     void networkThreadWorkerFunction() noexcept;
@@ -40,14 +39,13 @@ class Network
     const Endpoint& _listen_ip;
     void acceptClients();
     void acceptLoop();
-    void setupConnection(Connection& connection); // TODO: do a better implementationvim 
     //===================
-    boost::asio::steady_timer _heartbeatTimer;
-    std::list<Endpoint> _not_responded_peers;
+    boost::asio::steady_timer _heartbeat_timer;
+    std::set<std::size_t> _not_ponged_peer_ids;
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
-    void dropConnectionByEndpoint(const net::Endpoint& endpoint);
+    void connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const Packet& packet);
 };
 
 } // namespace net

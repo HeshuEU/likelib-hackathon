@@ -5,6 +5,7 @@
 #include <boost/spirit/include/qi.hpp>
 
 #include <iterator>
+#include <ostream>
 
 namespace net
 {
@@ -70,6 +71,36 @@ bool Endpoint::operator==(const Endpoint& other) const
 bool Endpoint::operator!=(const Endpoint& other) const
 {
     return !(*this == other);
+}
+
+
+bool Endpoint::operator<(const Endpoint& other) const
+{
+    return _address < other._address || (_address == other._address && _port < other._port);
+}
+
+
+bool Endpoint::operator>(const Endpoint& other) const
+{
+    return _address > other._address || (_address == other._address && _port > other._port);
+}
+
+
+bool Endpoint::operator<=(const Endpoint& other) const
+{
+    return !(*this > other);
+}
+
+
+bool Endpoint::operator>=(const Endpoint& other) const
+{
+    return !(*this < other);
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Endpoint& endpoint)
+{
+    return os << endpoint.toString();
 }
 
 } // namespace net

@@ -4,6 +4,7 @@
 #include <boost/asio/ip/tcp.hpp>
 
 #include <cstddef>
+#include <iosfwd>
 #include <string_view>
 
 
@@ -26,6 +27,12 @@ class Endpoint
     //=============
     bool operator==(const Endpoint& other) const;
     bool operator!=(const Endpoint& other) const;
+
+    bool operator<(const Endpoint& other) const;
+    bool operator>(const Endpoint& other) const;
+
+    bool operator<=(const Endpoint& other) const;
+    bool operator>=(const Endpoint& other) const;
     //=============
   private:
     //=============
@@ -35,5 +42,9 @@ class Endpoint
     unsigned short _port;
     //=============
 };
+
+
+std::ostream& operator<<(std::ostream& os, const Endpoint& endpoint);
+
 
 } // namespace net

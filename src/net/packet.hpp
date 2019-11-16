@@ -25,7 +25,7 @@ class Packet
 
     //===================
 
-    Type getType();
+    Type getType() const;
     void setType(Type type);
 
     //===================

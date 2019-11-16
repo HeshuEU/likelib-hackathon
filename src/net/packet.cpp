@@ -13,7 +13,7 @@ Packet::Packet(Type type) : _type{type}
 {}
 
 
-Packet::Type Packet::getType()
+Packet::Type Packet::getType() const
 {
     return _type;
 }
