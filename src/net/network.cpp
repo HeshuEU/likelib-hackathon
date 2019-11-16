@@ -36,7 +36,7 @@ void Network::scheduleHeartBeat()
 {
     ASSERT(_not_ponged_peer_ids.empty());
 
-    for(const auto& connection : _connections) {
+    for(const auto& connection: _connections) {
         _not_ponged_peer_ids.insert(connection->getId());
         connection->send({PacketType::PING});
     }
@@ -80,7 +80,9 @@ void Network::acceptLoop()
             LOG_WARNING << "Connection accept failed: " << ec;
         }
         else {
-            auto connection = std::make_shared<Connection>(_io_context, std::move(socket), std::bind(&Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
+            auto connection = std::make_shared<Connection>(_io_context, std::move(socket),
+                std::bind(
+                    &Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
             LOG_INFO << "Connection accepted: " << connection->getEndpoint();
             connection->startSession();
             _connections.push_back(std::move(connection));
@@ -103,31 +105,32 @@ void Network::connect(const net::Endpoint& address)
     LOG_DEBUG << "Connecting to " << address.toString();
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
     socket->async_connect(static_cast<ba::ip::tcp::endpoint>(address),
-                          [this, socket = std::move(socket), address](const boost::system::error_code& ec) mutable {
-                              if(ec) {
-                                  switch(ec.value()) {
-                                      case ba::error::connection_refused: {
-                                          LOG_WARNING << "Connection error: host " << address.toString();
-                                          break;
-                                      }
-                                      case ba::error::fault: {
-                                          LOG_WARNING << "Connection error: invalid address";
-                                          break;
-                                      }
-                                      default: {
-                                          LOG_WARNING << "Connection error: " << ec << ' ' << ec.message();
-                                          break;
-                                      }
-                                  }
-                              }
-                              else {
-                                  auto connection =
-                                      std::make_shared<Connection>(_io_context, std::move(*socket.release()), std::bind(&Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
-                                  LOG_INFO << "Connection established: " << connection->getEndpoint();
-                                  connection->startSession();
-                                  _connections.push_back(std::move(connection));
-                              }
-                          });
+        [this, socket = std::move(socket), address](const boost::system::error_code& ec) mutable {
+            if(ec) {
+                switch(ec.value()) {
+                    case ba::error::connection_refused: {
+                        LOG_WARNING << "Connection error: host " << address.toString();
+                        break;
+                    }
+                    case ba::error::fault: {
+                        LOG_WARNING << "Connection error: invalid address";
+                        break;
+                    }
+                    default: {
+                        LOG_WARNING << "Connection error: " << ec << ' ' << ec.message();
+                        break;
+                    }
+                }
+            }
+            else {
+                auto connection = std::make_shared<Connection>(_io_context, std::move(*socket.release()),
+                    std::bind(
+                        &Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
+                LOG_INFO << "Connection established: " << connection->getEndpoint();
+                connection->startSession();
+                _connections.push_back(std::move(connection));
+            }
+        });
 }
 
 
@@ -143,7 +146,7 @@ void Network::waitForFinish()
 
 void Network::dropZombieConnections()
 {
-    for(auto it = _connections.begin(); it != _connections.end(); ) {
+    for(auto it = _connections.begin(); it != _connections.end();) {
         auto& connection = *it;
         if(_not_ponged_peer_ids.find(connection->getId()) != _not_ponged_peer_ids.end()) {
             connection->close();

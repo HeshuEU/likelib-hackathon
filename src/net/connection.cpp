@@ -20,8 +20,10 @@ namespace net
 base::Bytes Connection::_read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE);
 
 
-Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler&& receive_handler)
-    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)}, _receive_handler{std::move(receive_handler)}
+Connection::Connection(
+    boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler&& receive_handler)
+    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)}, _receive_handler{
+                                                                                 std::move(receive_handler)}
 {
     ASSERT(_socket.is_open());
     _network_address =

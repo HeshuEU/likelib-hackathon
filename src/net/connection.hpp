@@ -33,7 +33,8 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     using ReceiveHandler = std::function<void(std::shared_ptr<Connection>, const Packet&)>;
     //====================
-    Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler&& receive_handler);
+    Connection(
+        boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler&& receive_handler);
 
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection& other) = delete;
@@ -55,6 +56,7 @@ class Connection : public std::enable_shared_from_this<Connection>
     //====================
     std::size_t getId() const noexcept;
     const Endpoint& getEndpoint() const;
+
   private:
     //====================
     using SharedPointer = std::shared_ptr<Connection>;
