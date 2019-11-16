@@ -19,6 +19,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 {
   public:
     //====================
+
     enum class Status
     {
         ACCEPTED,
@@ -50,7 +51,6 @@ class Connection : public std::enable_shared_from_this<Connection>
     void startSession();
     void close();
     //====================
-    void ping();
     void send(const Packet& packet);
     //====================
     std::size_t getId() const noexcept;
@@ -79,8 +79,6 @@ class Connection : public std::enable_shared_from_this<Connection>
     std::queue<base::Bytes> _pending_send_messages;
     void send(base::Bytes&& data);
     void sendPendingMessages();
-    //====================
-    std::size_t _non_responded_pings{0};
     //====================
 };
 

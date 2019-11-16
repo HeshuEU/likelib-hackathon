@@ -38,7 +38,7 @@ void Network::scheduleHeartBeat()
 
     for(const auto& connection : _connections) {
         _not_ponged_peer_ids.insert(connection->getId());
-        connection->ping();
+        connection->send({PacketType::PING});
     }
 
     _heartbeat_timer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
@@ -143,9 +143,14 @@ void Network::waitForFinish()
 
 void Network::dropZombieConnections()
 {
-    for(const auto& connection : _connections) {
+    for(auto it = _connections.begin(); it != _connections.end(); ) {
+        auto& connection = *it;
         if(_not_ponged_peer_ids.find(connection->getId()) != _not_ponged_peer_ids.end()) {
             connection->close();
+            it = _connections.erase(it);
+        }
+        else {
+            ++it;
         }
     }
     _not_ponged_peer_ids.clear();
@@ -155,17 +160,23 @@ void Network::dropZombieConnections()
 void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const net::Packet& packet)
 {
     switch(packet.getType()) {
-        case Packet::Type::PING: {
-            connection->send(Packet{Packet::Type::PONG});
+        case PacketType::PING: {
+            LOG_DEBUG << "RECEIVED [PING]";
+            connection->send(Packet{PacketType::PONG});
             break;
         }
-        case Packet::Type::PONG: {
-            if(_not_ponged_peer_ids.find(connection->getId()) == _not_ponged_peer_ids.end()) {
+        case PacketType::PONG: {
+            LOG_DEBUG << "RECEIVED [PONG]";
+            if(auto it = _not_ponged_peer_ids.find(connection->getId()); it == _not_ponged_peer_ids.end()) {
                 LOG_WARNING << "Connection " << connection->getEndpoint() << " sent an unexpected PONG";
+            }
+            else {
+                _not_ponged_peer_ids.erase(it);
             }
             break;
         }
-        case Packet::Type::DATA: {
+        case PacketType::DATA: {
+            LOG_DEBUG << "RECEIVED [DATA]";
             break;
         }
         default: {

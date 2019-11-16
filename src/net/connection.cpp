@@ -119,7 +119,7 @@ void Connection::receiveOne()
                 // TODO: do something
             }
             else {
-                LOG_DEBUG << "Received " << bytes_received << " bytes from " << _network_address->toString();
+                // LOG_DEBUG << "Received " << bytes_received << " bytes from " << _network_address;
 
                 if(_is_receiving_enabled) {
                     try {
@@ -142,6 +142,7 @@ void Connection::receiveOne()
 
 void Connection::send(const Packet& packet)
 {
+    LOG_DEBUG << "SEND [" << enumToString(packet.getType()) << ']';
     send(packet.serialize());
 }
 
@@ -175,7 +176,7 @@ void Connection::sendPendingMessages()
                 // TODO: do something
             }
             else {
-                LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
+                // LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
             }
             _pending_send_messages.pop();
 
@@ -191,11 +192,5 @@ void Connection::startSession()
     startReceivingMessages();
 }
 
-
-void Connection::ping()
-{
-    _non_responded_pings++;
-    send(net::Packet{net::Packet::Type::PING}.serialize());
-}
 
 } // namespace net

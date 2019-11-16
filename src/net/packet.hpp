@@ -1,32 +1,23 @@
 #pragma once
 
 #include "base/bytes.hpp"
+#include "base/stringifiable_enum_class.hpp"
 
 namespace net
 {
+
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
+    PacketType, unsigned char, (HANDSHAKE)(PING)(PONG)(DISCOVER)(DATA)(DISCONNECT));
 
 class Packet
 {
   public:
     //===================
-
-    enum class Type : unsigned char
-    {
-        HANDSHAKE = 0,
-        PING = 1,
-        PONG = 2,
-        DISCOVER = 3,
-        DATA = 4,
-        DISCONNECT = 5
-    };
-
-    //===================
-    Packet(Type type);
-
+    Packet(PacketType type);
     //===================
 
-    Type getType() const;
-    void setType(Type type);
+    PacketType getType() const;
+    void setType(PacketType type);
 
     //===================
     base::Bytes serialize() const;
@@ -41,7 +32,7 @@ class Packet
   private:
     Packet() = default;
 
-    Type _type;
+    PacketType _type;
 };
 
 } // namespace net

@@ -9,17 +9,17 @@
 namespace net
 {
 
-Packet::Packet(Type type) : _type{type}
+Packet::Packet(PacketType type) : _type{type}
 {}
 
 
-Packet::Type Packet::getType() const
+PacketType Packet::getType() const
 {
     return _type;
 }
 
 
-void Packet::setType(Type type)
+void Packet::setType(PacketType type)
 {
     _type = type;
 }
