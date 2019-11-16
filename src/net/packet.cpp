@@ -33,7 +33,7 @@ base::Bytes Packet::serialize() const
 {
     std::ostringstream oss;
     boost::archive::text_oarchive to(oss);
-    to << _type << _known_endpoints;
+    to << _type << _known_endpoints << _server_endpoint;
 
     return base::Bytes(oss.str());
 }
@@ -51,7 +51,7 @@ Packet Packet::deserialize(const base::Bytes& raw)
         RAISE_ERROR(net::Error, "received an invalid packet");
     }
 
-    ti >> ret._known_endpoints;
+    ti >> ret._known_endpoints >> ret._server_endpoint;
 
     return ret;
 }
@@ -78,6 +78,18 @@ const std::vector<std::string> Packet::getKnownEndpoints() const
 void Packet::setKnownEndpoints(std::vector<std::string>&& endpoints)
 {
     _known_endpoints = std::move(endpoints);
+}
+
+
+const std::string& Packet::getServerEndpoint() const noexcept
+{
+    return _server_endpoint;
+}
+
+
+void Packet::setServerEndpoint(const std::string& endpoint)
+{
+    _server_endpoint = endpoint;
 }
 
 } // namespace net

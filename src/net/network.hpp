@@ -36,7 +36,7 @@ class Network
     void networkThreadWorkerFunction() noexcept;
     //===================
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
-    const Endpoint& _listen_ip;
+    Endpoint _listen_ip;
     void acceptClients();
     void acceptLoop();
     //===================

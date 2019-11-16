@@ -2,6 +2,7 @@
 
 #include "base/bytes.hpp"
 #include "base/stringifiable_enum_class.hpp"
+#include "net/endpoint.hpp"
 
 #include <string>
 #include <vector>
@@ -20,9 +21,12 @@ class Packet
     //===================
     PacketType getType() const;
     void setType(PacketType type);
-
+    //===================
     const std::vector<std::string> getKnownEndpoints() const;
     void setKnownEndpoints(std::vector<std::string>&& endpoints);
+    //===================
+    const std::string& getServerEndpoint() const noexcept;
+    void setServerEndpoint(const std::string& endpoint);
     //===================
     base::Bytes serialize() const;
     static Packet deserialize(const base::Bytes& raw);
@@ -38,6 +42,7 @@ class Packet
 
     PacketType _type;
     std::vector<std::string> _known_endpoints;
+    std::string _server_endpoint;
 };
 
 } // namespace net

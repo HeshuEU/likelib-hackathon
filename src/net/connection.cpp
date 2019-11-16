@@ -26,7 +26,7 @@ Connection::Connection(
                                                                                  std::move(receive_handler)}
 {
     ASSERT(_socket.is_open());
-    _network_address =
+    _connect_endpoint =
         std::make_unique<Endpoint>(_socket.remote_endpoint().address().to_string(), _socket.remote_endpoint().port());
 }
 
@@ -62,7 +62,7 @@ void Connection::close()
     ASSERT_SOFT(!_is_closed);
     _is_closed = true;
     if(_socket.is_open()) {
-        LOG_INFO << "Shutting down connection to " << _network_address->toString();
+        LOG_INFO << "Shutting down connection to " << _connect_endpoint->toString();
         boost::system::error_code ec;
         _socket.shutdown(ba::ip::tcp::socket::shutdown_both, ec);
         if(ec) {
@@ -78,7 +78,31 @@ void Connection::close()
 
 const Endpoint& Connection::getEndpoint() const
 {
-    return *_network_address;
+    return *_connect_endpoint;
+}
+
+
+bool Connection::hasServerEndpoint() const noexcept
+{
+    return _server_endpoint.get() != nullptr;
+}
+
+
+const Endpoint& Connection::getServerEndpoint() const
+{
+    if(_server_endpoint) {
+        return *_server_endpoint;
+    }
+    else {
+        RAISE_ERROR(net::Error, "connection doesn't have server endpoint");
+    }
+}
+
+
+void Connection::setServerEndpoint(const Endpoint& server_endpoint)
+{
+    ASSERT(!_server_endpoint);
+    _server_endpoint = std::make_unique<Endpoint>(server_endpoint);
 }
 
 
@@ -121,7 +145,7 @@ void Connection::receiveOne()
                 // TODO: do something
             }
             else {
-                // LOG_DEBUG << "Received " << bytes_received << " bytes from " << _network_address;
+                // LOG_DEBUG << "Received " << bytes_received << " bytes from " << _connect_endpoint;
 
                 if(_is_receiving_enabled) {
                     try {
@@ -178,7 +202,7 @@ void Connection::sendPendingMessages()
                 // TODO: do something
             }
             else {
-                // LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
+                // LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();
             }
             _pending_send_messages.pop();
 

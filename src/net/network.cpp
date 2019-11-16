@@ -84,7 +84,7 @@ void Network::acceptLoop()
                 std::bind(
                     &Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
             LOG_INFO << "Connection accepted: " << connection->getEndpoint();
-            connection->startSession();
+            connection->startReceivingMessages();
             _connections.push_back(std::move(connection));
         }
         acceptLoop();
@@ -127,7 +127,12 @@ void Network::connect(const net::Endpoint& address)
                     std::bind(
                         &Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
                 LOG_INFO << "Connection established: " << connection->getEndpoint();
-                connection->startSession();
+
+                connection->setServerEndpoint(address);
+                connection->startReceivingMessages();
+                net::Packet packet{net::PacketType::HANDSHAKE};
+                packet.setServerEndpoint(_listen_ip.toString());
+                connection->send(packet);
                 _connections.push_back(std::move(connection));
             }
         });
@@ -164,6 +169,11 @@ void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connec
 {
     LOG_DEBUG << "RECEIVED [" << enumToString(packet.getType()) << ']';
     switch(packet.getType()) {
+        case PacketType::HANDSHAKE: {
+            LOG_DEBUG << "Received server endpoint: " << packet.getServerEndpoint();
+            connection->setServerEndpoint({packet.getServerEndpoint()});
+            break;
+        }
         case PacketType::PING: {
             connection->send(Packet{PacketType::PONG});
             break;
@@ -186,7 +196,13 @@ void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connec
                 // then we gotta send those node our endpoints
                 std::vector<std::string> endpoints;
                 for(const auto& connection : _connections) {
-                    endpoints.push_back(connection->getEndpoint().toString());
+                    if(connection->hasServerEndpoint()) {
+                        std::string a = connection->getServerEndpoint().toString();
+                        std::string b = connection->getEndpoint().toString();
+                        std::size_t p = a.find(':');
+                        std::string c = b.substr(0, b.rfind(':')) + a.substr(p, a.length() - p);
+                        endpoints.push_back(c);
+                    }
                 }
 
                 Packet ret{net::PacketType::DISCOVERY};
