@@ -59,19 +59,19 @@ int main(int argc, char** argv)
 
         // set up options parser
         base::ProgramOptionsParser parser;
-        parser.addDefaultStringOption("config,c", config::CONFIG_PATH,"Path to config file");
+        parser.addOption<std::string>("config,c", config::CONFIG_PATH,"Path to config file");
 
         // process options
         parser.process(argc, argv);
         if(parser.hasOption("help")) {
-            std::cout << parser.getHelpMessage() << std::endl;
+            std::cout << parser.helpMessage() << std::endl;
             return base::config::EXIT_OK;
         }
 
-        auto config_file_path = parser.getString("config");
+        auto config_file_path = parser.getValue<std::string>("config");
 
         if(!std::filesystem::exists(config_file_path)) {
-            LOG_ERROR << "[config file is not exists] input file path: " << parser.getString("config");
+            LOG_ERROR << "[config file is not exists] input file path: " << parser.getValue<std::string>("config");
             return base::config::EXIT_FAIL;
         } else{
             LOG_INFO << "Found config file by path: " << config_file_path;

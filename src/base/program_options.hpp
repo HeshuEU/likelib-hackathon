@@ -3,8 +3,6 @@
 #include <boost/program_options.hpp>
 
 #include <cstdint>
-#include <memory>
-#include <vector>
 
 namespace base
 {
@@ -20,82 +18,27 @@ class ProgramOptionsParser
 
     ~ProgramOptionsParser() = default;
 
+    void addFlag(const std::string& flag, const std::string& help);
+
     /// Add optional option that will be interpreted only as std::string and need to get by
     /// ProgramOptionsParser::getString call. \param flag name. example: "hash,h". Such option may be set by: -h or
     /// --hash. \param help message to describe flag meaning. Will be show if set --help options.
-    void addStringOption(const std::string& flag, const std::string& help = "");
+    template<typename ValueType>
+    void addOption(const std::string& flag, const std::string& help);
 
-    /// Add option that have default value if was now set other in input data(see ProgramOptionsParser::process).
+    /// Add option that has default value in case if it was not set in input data.
     /// Other such as ProgramOptionsParser::addStringOption
     /// \param flag name. example: "hash,h". Such option may be set by: -h or --hash.
     /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addDefaultStringOption(const std::string& flag, const std::string& default_value,
-                                const std::string& help = "");
-
-    /// Add required option that will be interpreted only as std::string and need to get by
-    /// ProgramOptionsParser::getString call.
-    /// \param flag name. example: "hash,h". Such option may be set by: -h or --hash.
-    /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addRequiredStringOption(const std::string& flag, const std::string& help = "");
-
-    /// Add optional option that will be interpreted only as int32_t and need to get by ProgramOptionsParser::getInt
-    /// call.
-    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
-    /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addIntOption(const std::string& flag, const std::string& help = "");
-
-    /// Add option that have default value if was now set other in input data(see ProgramOptionsParser::process).
-    /// Other such as ProgramOptionsParser::addIntOption
-    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
-    /// \param help message to describe flag meaning. Will be show if set -help options.
-    void addDefaultIntOption(const std::string& flag, int32_t default_value, const std::string& help = "");
-
-    /// Add required option that will be interpreted only as int32_t and need to get by ProgramOptionsParser::getInt
-    /// call.
-    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
-    /// \param help  message to describe flag meaning. Will be show if set --help options.
-    void addRequiredIntOption(const std::string& flag, const std::string& help = "");
-
-    /// Add optional option that will be interpreted only as uint32_t and need to get by ProgramOptionsParser::getUint
-    /// call.
-    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
-    /// \param help  message to describe flag meaning. Will be show if set --help options.
-    void addUintOption(const std::string& flag, const std::string& help = "");
-
-    /// Add option that have default value if was now set other in input data(see ProgramOptionsParser::process).
-    /// Other such as ProgramOptionsParser::addUintOption
-    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
-    /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addDefaultUintOption(const std::string& flag, uint32_t default_value, const std::string& help = "");
-
-    /// Add required option that will be interpreted only as uint32_t and need to get by ProgramOptionsParser::getUint
-    /// call.
-    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
-    /// \param help  message to describe flag meaning. Will be show if set --help options.
-    void addRequiredUintOption(const std::string& flag, const std::string& help = "");
-
-    /// Add optional option that will be interpreted only as float_t and need to get by ProgramOptionsParser::getFloat
-    /// call.
-    /// \param flag name. example: "money,m". Such option may be set by: -m or --money.
-    /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addDoubleOption(const std::string& flag, const std::string& help = "");
-
-    /// Add option that have default value if was now set other in input data(see ProgramOptionsParser::process).
-    /// Other such as ProgramOptionsParser::addDoubleOption
-    /// \param flag name. example: "processors,p". Such option may be set by: -p or --processors.
-    /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addDefaultDoubleOption(const std::string& flag, double default_value, const std::string& help = "");
+    template<typename ValueType>
+    void addOption(const std::string& flag, ValueType defaultValue, const std::string& help);
 
     /// Add required option that will be interpreted only as float_t and need to get by ProgramOptionsParser::getFloat
     /// call.
     /// \param flag name. example: "money,m". Such option may be set by: -m or --money.
     /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addRequiredDoubleOption(const std::string& flag, const std::string& help = "");
-
-    /// Add option that not may be get by any getter method. May will check by ProgramOptionsParser::hasOption call.
-    /// \param flag name. example: "demonize,d". Such option may be set by: -d or --demonize.
-    /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addFlagOption(const std::string& flag, const std::string& help = "");
+    template<typename ValueType>
+    void addRequiredOption(const std::string& flag, const std::string& help);
 
     /// Process input program options received by application and store to inner vault. Value of options can be got by
     /// get methods.
@@ -106,7 +49,7 @@ class ProgramOptionsParser
 
     /// generate help message for options defined previously
     /// \return help message
-    std::string getHelpMessage();
+    std::string helpMessage();
 
     /// Check if contain option
     /// \param flag_name option name. Example: if option set by .addUintOption("processors,p", ...) use
@@ -114,53 +57,18 @@ class ProgramOptionsParser
     /// \return true if option was be found
     bool hasOption(const std::string& flag_name) const;
 
-    /// find value of option that set by addStringOption(flag_name, ...) and return if found.
-    /// \param flag_name option name. Example: if option set by .addStringOption("hash,h", ...) use getString("hash") ,
-    /// NOT getString("h")
-    /// \return value of option
-    /// \throw base::ParsingError if flag_name option was not found
-    /// \throw base::InvalidArgument if option was not set by addStringOption(flag_name, ...)
-    std::string getString(const std::string& flag_name) const;
-
-    /// Find value of option that set by addIntOption(flag_name, ...) and return if found.
-    /// \param flag_name option name. Example: if option set by .addIntOption("processors,p", "...) use
-    /// getInt("processors"), NOT getInt("p")
-    /// \return value of option
-    /// \throw base::ParsingError if flag_name option was not found
-    /// \throw base::InvalidArgument if option was not set by addIntOption(flag_name, ...)
-    std::int32_t getInt(const std::string& flag_name) const;
-
-    /// Find value of option that set by addUintOption(flag_name, ...) and return if found.
-    /// \param flag_name option name. Example: if option set by .addUintOption("processors,p", ...) use
-    /// getInt("processors") , NOT getInt("p")
-    /// \return value of option
-    /// \throw base::ParsingError if flag_name option was not found
-    /// \throw base::InvalidArgument if option was not set by addUintOption(flag_name, ...)
-    std::uint32_t getUint(const std::string& flag_name) const;
-
     /// Find value of option that set by addFloatOption(flag_name, ...) and return if found.
     /// \param flag_name flag_name option name. Example: if option set by .addFloatOption("money,m", ...) use
     /// getFloat("money") , NOT getFloat("m")
     /// \return value of option
     /// \throw base::ParsingError if flag_name option was not found
     /// \throw base::InvalidArgument if option was not set by addFloatOption(flag_name, ...)
-    double getDouble(const std::string& flag_name) const;
+    template<typename ValueType>
+    ValueType getValue(const std::string& flag_name) const;
 
   private:
     boost::program_options::options_description _options_description;
     boost::program_options::variables_map _options;
-
-    template<typename ValueType>
-    void addOption(const std::string& flag, const std::string& help);
-
-    template<typename ValueType>
-    void addRequiredOption(const std::string& flag, const std::string& help);
-
-    template<typename ValueType>
-    void addDefaultOption(const std::string& flag, const std::string& help, ValueType defaultValue);
-
-    template<typename ValueType>
-    ValueType getValueByName(const std::string& flag_name) const;
 };
 
 } // namespace base
