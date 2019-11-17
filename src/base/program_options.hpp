@@ -2,7 +2,10 @@
 
 #include <boost/program_options.hpp>
 
-#include <cstdint>
+#include <string>
+#include <memory>
+#include <map>
+#include <functional>
 
 namespace base
 {
@@ -13,11 +16,32 @@ namespace base
 class ProgramOptionsParser
 {
   public:
-    /// Constructor add help option as default.
+    /// As default constructor.
     explicit ProgramOptionsParser();
+
+    /// Constructor use for input root name to sub parser help.
+    /// \param name of parser
+    explicit ProgramOptionsParser(const std::string& name);
+
+    /// Constructor use for input root name to sub parser help. Call process if found sub parser name.
+    /// \param name of parser
+    /// \param processor function that called if found name of subprocess
+    explicit ProgramOptionsParser(const std::string& name, std::function<void(const ProgramOptionsParser&)> processor);
 
     ~ProgramOptionsParser() = default;
 
+    /// Create sub parser that called if found name of subprocess
+    /// \param name of sub parser
+    /// \param descendant_description
+    /// \param processor function that called if found name of subprocess
+    /// \return pointer of sub parser
+    std::shared_ptr<ProgramOptionsParser>
+    createSubParser(const std::string& name, const std::string& descendant_description,
+                    const std::function<void(const ProgramOptionsParser&)>& processor);
+
+    /// Add optional option that will as flag check by hasOption
+    /// \param flag name. example: "useGpu,g". Such option may be set by: -g or --useGpu.
+    /// \param help message to describe flag meaning. Will be show if set --help options.
     void addFlag(const std::string& flag, const std::string& help);
 
     /// Add optional option that will be interpreted only as std::string and need to get by
@@ -67,8 +91,14 @@ class ProgramOptionsParser
     ValueType getValue(const std::string& flag_name) const;
 
   private:
+    const std::string _name;
+    const std::function<void(const ProgramOptionsParser&)> _processor;
+
     boost::program_options::options_description _options_description;
     boost::program_options::variables_map _options;
+
+    std::map<std::string, std::shared_ptr<ProgramOptionsParser>> _descendants;
+    std::map<std::string, std::string> _descendant_descriptions;
 };
 
 } // namespace base
