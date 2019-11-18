@@ -55,6 +55,39 @@ BOOST_AUTO_TEST_CASE(bytes_take_part)
     BOOST_CHECK(!(part != answer));
 }
 
+BOOST_AUTO_TEST_CASE(bytes_append)
+{
+    base::Bytes bytes1(234);
+    for(int i = 0; i < bytes1.size(); ++i) {
+        bytes1[i] = static_cast<base::Byte>(i ^ 11);
+    }
+
+    base::Bytes bytes2(175);
+    for(int i = 0; i < bytes2.size(); ++i) {
+        bytes2[i] = static_cast<base::Byte>(i ^ 13);
+    }
+
+    base::Bytes bytes_concat;
+    bytes_concat.append(bytes1);
+    BOOST_CHECK(bytes_concat.size() == bytes1.size());
+
+    bool res = true;
+    for(int i = 0; i < bytes1.size(); ++i) {
+        res = res && (bytes_concat[i] == bytes1[i]);
+    }
+    BOOST_CHECK(res);
+
+    bytes_concat.append(bytes2);
+    BOOST_CHECK(bytes_concat.size() == bytes1.size() + bytes2.size());
+    
+    res = true;
+    for(int i = 0; i < bytes2.size(); ++i) {
+        res = res && (bytes_concat[bytes1.size() + i] == bytes2[i]);
+    }
+    BOOST_CHECK(res);
+
+}
+
 
 BOOST_AUTO_TEST_CASE(bytes_intializer_list_constructor)
 {

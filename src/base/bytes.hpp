@@ -37,6 +37,8 @@ class Bytes
 
     Bytes& append(Byte byte);
 
+    Bytes& append(const Bytes& bytes);
+
     std::size_t size() const noexcept;
 
     //==============
