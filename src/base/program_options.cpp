@@ -71,7 +71,7 @@ void ProgramOptionsParser::process(int argc, char** argv)
     }
 }
 
-std::string ProgramOptionsParser::helpMessage()
+std::string ProgramOptionsParser::helpMessage() const
 {
     std::stringstream ss;
     ss << _options_description << std::endl;

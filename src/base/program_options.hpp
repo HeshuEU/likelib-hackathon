@@ -73,7 +73,7 @@ class ProgramOptionsParser
 
     /// generate help message for options defined previously
     /// \return help message
-    std::string helpMessage();
+    std::string helpMessage() const;
 
     /// Check if contain option
     /// \param flag_name option name. Example: if option set by .addUintOption("processors,p", ...) use
