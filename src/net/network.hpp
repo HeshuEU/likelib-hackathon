@@ -18,7 +18,7 @@ class Network
 {
   public:
     //===================
-    Network(const Endpoint& listen_ip);
+    Network(const Endpoint& listen_ip, unsigned short server_public_port);
     ~Network();
     //===================
     void run();
@@ -37,6 +37,7 @@ class Network
     //===================
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
     Endpoint _listen_ip;
+    unsigned short _server_public_port;
     void acceptClients();
     void acceptLoop();
     //===================
@@ -45,7 +46,7 @@ class Network
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
-    void connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const Packet& packet);
+    void connectionReceivedPacketHandler(Connection& connection, const Packet& packet);
 };
 
 } // namespace net

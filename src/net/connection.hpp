@@ -31,7 +31,7 @@ class Connection : public std::enable_shared_from_this<Connection>
         WAITING_FOR_PONG
     };
 
-    using ReceiveHandler = std::function<void(std::shared_ptr<Connection>, const Packet&)>;
+    using ReceiveHandler = std::function<void(Connection&, const Packet&)>;
     //====================
     Connection(
         boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler&& receive_handler);
@@ -63,6 +63,7 @@ class Connection : public std::enable_shared_from_this<Connection>
     bool hasServerEndpoint() const noexcept;
     const Endpoint& getServerEndpoint() const;
     void setServerEndpoint(const Endpoint& server_endpoint);
+
   private:
     //====================
     using SharedPointer = std::shared_ptr<Connection>;

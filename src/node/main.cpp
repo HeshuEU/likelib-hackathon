@@ -61,14 +61,15 @@ int main(int argc, char** argv)
 
         SoftConfig exe_config(config::CONFIG_PATH);
 
-        net::Network manager(net::Endpoint{exe_config.get<std::string>("listen_address")});
-        manager.run();
+        net::Network network(net::Endpoint{exe_config.get<std::string>("listen_address")},
+            exe_config.get<unsigned short>("public_server_port"));
+        network.run();
 
         std::vector<net::Endpoint> nodes;
         for(const auto& node_ip_string: exe_config.getVector<std::string>("nodes")) {
             nodes.emplace_back(node_ip_string);
         }
-        manager.connect(nodes);
+        network.connect(nodes);
 
         std::this_thread::sleep_for(std::chrono::seconds(45));
 

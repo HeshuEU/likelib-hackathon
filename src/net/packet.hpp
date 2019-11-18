@@ -11,7 +11,7 @@ namespace net
 {
 
 DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
-    PacketType, unsigned char, (HANDSHAKE)(PING)(PONG)(DISCOVERY)(DATA)(DISCONNECT));
+    PacketType, unsigned char, (HANDSHAKE)(PING)(PONG)(DISCOVERY_REQ)(DISCOVERY_RES)(DATA)(DISCONNECT));
 
 class Packet
 {
@@ -25,8 +25,8 @@ class Packet
     const std::vector<std::string> getKnownEndpoints() const;
     void setKnownEndpoints(std::vector<std::string>&& endpoints);
     //===================
-    const std::string& getServerEndpoint() const noexcept;
-    void setServerEndpoint(const std::string& endpoint);
+    unsigned short getPublicServerPort() const noexcept;
+    void setPublicServerPort(unsigned short endpoint);
     //===================
     base::Bytes serialize() const;
     static Packet deserialize(const base::Bytes& raw);
@@ -40,9 +40,9 @@ class Packet
   private:
     Packet() = default;
 
-    PacketType _type;
+    PacketType _type{PacketType::DISCONNECT};
     std::vector<std::string> _known_endpoints;
-    std::string _server_endpoint;
+    unsigned short _server_public_port{0};
 };
 
 } // namespace net

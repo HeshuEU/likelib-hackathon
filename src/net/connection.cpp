@@ -148,12 +148,16 @@ void Connection::receiveOne()
                 // LOG_DEBUG << "Received " << bytes_received << " bytes from " << _connect_endpoint;
 
                 if(_is_receiving_enabled) {
+                    std::unique_ptr<Packet> packet;
                     try {
-                        Packet packet = Packet::deserialize(_read_buffer); // works without bytes::takePart?
-                        _receive_handler(shared_from_this(), packet);
+                        packet = std::make_unique<Packet>(Packet::deserialize(_read_buffer)); // works without bytes::takePart?
                     }
                     catch(const std::exception& e) {
-                        LOG_WARNING << "Error during packet handling: " << e.what();
+                        LOG_WARNING << "Error during packet deserialization: " << e.what();
+                    }
+
+                    if(packet) {
+                        _receive_handler(*this, *packet);
                     }
 
                     // double-check since the value may be changed - we don't know how long the handler was executing

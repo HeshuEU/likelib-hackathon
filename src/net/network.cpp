@@ -13,7 +13,8 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Network::Network(const net::Endpoint& listen_ip) : _listen_ip{listen_ip}, _heartbeat_timer{_io_context}
+Network::Network(const net::Endpoint& listen_ip, unsigned short server_public_port)
+    : _listen_ip{listen_ip}, _server_public_port{server_public_port}, _heartbeat_timer{_io_context}
 {}
 
 
@@ -131,7 +132,7 @@ void Network::connect(const net::Endpoint& address)
                 connection->setServerEndpoint(address);
                 connection->startReceivingMessages();
                 net::Packet packet{net::PacketType::HANDSHAKE};
-                packet.setServerEndpoint(_listen_ip.toString());
+                packet.setPublicServerPort(_server_public_port);
                 connection->send(packet);
                 _connections.push_back(std::move(connection));
             }
@@ -165,60 +166,73 @@ void Network::dropZombieConnections()
 }
 
 
-void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const net::Packet& packet)
+void Network::connectionReceivedPacketHandler(Connection& connection, const net::Packet& packet)
 {
     LOG_DEBUG << "RECEIVED [" << enumToString(packet.getType()) << ']';
     switch(packet.getType()) {
         case PacketType::HANDSHAKE: {
-            LOG_DEBUG << "Received server endpoint: " << packet.getServerEndpoint();
-            connection->setServerEndpoint({packet.getServerEndpoint()});
+            LOG_DEBUG << "Received server endpoint: " << packet.getPublicServerPort();
+
+            std::string public_ip_with_port = connection.getEndpoint().toString();
+            std::string public_ip = public_ip_with_port.substr(0, public_ip_with_port.find(':'));
+            connection.setServerEndpoint({public_ip, packet.getPublicServerPort()});
             break;
         }
         case PacketType::PING: {
-            connection->send(Packet{PacketType::PONG});
+            connection.send(Packet{PacketType::PONG});
             break;
         }
         case PacketType::PONG: {
-            if(auto it = _not_ponged_peer_ids.find(connection->getId()); it == _not_ponged_peer_ids.end()) {
-                LOG_WARNING << "Connection " << connection->getEndpoint() << " sent an unexpected PONG";
+            if(auto it = _not_ponged_peer_ids.find(connection.getId()); it == _not_ponged_peer_ids.end()) {
+                LOG_WARNING << "Connection " << connection.getEndpoint() << " sent an unexpected PONG";
             }
             else {
                 _not_ponged_peer_ids.erase(it);
-                connection->send(net::PacketType::DISCOVERY);
+                connection.send(net::PacketType::DISCOVERY_REQ);
             }
             break;
         }
         case PacketType::DATA: {
             break;
         }
-        case PacketType::DISCOVERY: {
-            if(packet.getKnownEndpoints().size() == 0) {
-                // then we gotta send those node our endpoints
-                std::vector<std::string> endpoints;
+        case PacketType::DISCOVERY_REQ: {
+            // then we gotta send those node our endpoints
+            std::vector<std::string> endpoints;
+            for(const auto& c: _connections) {
+                if(c->hasServerEndpoint() && c->getEndpoint() != connection.getEndpoint()) {
+                    std::string a = c->getServerEndpoint().toString();
+                    endpoints.push_back(a);
+                }
+            }
+
+            Packet ret{net::PacketType::DISCOVERY_RES};
+            ret.setKnownEndpoints(std::move(endpoints));
+            connection.send(ret);
+
+            break;
+        }
+        case PacketType::DISCOVERY_RES: {
+            LOG_DEBUG << "Received endpoints:";
+            for(const auto& endpoint: packet.getKnownEndpoints()) {
+                LOG_DEBUG << endpoint;
+                net::Endpoint received_endpoint{endpoint};
+                // of course this will be changed later
+                bool is_found = false;
                 for(const auto& connection : _connections) {
-                    if(connection->hasServerEndpoint()) {
-                        std::string a = connection->getServerEndpoint().toString();
-                        std::string b = connection->getEndpoint().toString();
-                        std::size_t p = a.find(':');
-                        std::string c = b.substr(0, b.rfind(':')) + a.substr(p, a.length() - p);
-                        endpoints.push_back(c);
+                    if(connection->getServerEndpoint() == received_endpoint) {
+                        is_found = true;
+                        break;
                     }
                 }
-
-                Packet ret{net::PacketType::DISCOVERY};
-                ret.setKnownEndpoints(std::move(endpoints));
-                connection->send(ret);
-            }
-            else {
-                LOG_DEBUG << "Received endpoints:";
-                for(const auto& endpoint : packet.getKnownEndpoints()) {
-                    LOG_DEBUG << endpoint;
+                if(!is_found) {
+                    LOG_DEBUG << "Going to connect to a new node: " << received_endpoint;
+                    connect(received_endpoint);
                 }
             }
             break;
         }
         default: {
-            LOG_WARNING << "Received an invalid packet from " << connection->getEndpoint();
+            LOG_WARNING << "Received an invalid packet from " << connection.getEndpoint();
         }
     }
 }
