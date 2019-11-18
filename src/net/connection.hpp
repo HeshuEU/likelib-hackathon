@@ -50,7 +50,9 @@ class Connection : public std::enable_shared_from_this<Connection>
     ~Connection();
     //====================
     void startSession();
+
     void close();
+    bool isClosed() const noexcept;
     //====================
     void send(const Packet& packet);
     //====================

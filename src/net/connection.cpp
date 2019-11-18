@@ -59,6 +59,7 @@ std::size_t Connection::getId() const noexcept
 
 void Connection::close()
 {
+    // we could have just return if the connection is already closed, but it helps a lot to catch bugs during debug
     ASSERT_SOFT(!_is_closed);
     _is_closed = true;
     if(_socket.is_open()) {
@@ -73,6 +74,12 @@ void Connection::close()
             LOG_WARNING << "Error occurred while closing connection: " << ec.message();
         }
     }
+}
+
+
+bool Connection::isClosed() const noexcept
+{
+    return _is_closed;
 }
 
 
@@ -150,7 +157,8 @@ void Connection::receiveOne()
                 if(_is_receiving_enabled) {
                     std::unique_ptr<Packet> packet;
                     try {
-                        packet = std::make_unique<Packet>(Packet::deserialize(_read_buffer)); // works without bytes::takePart?
+                        packet = std::make_unique<Packet>(
+                            Packet::deserialize(_read_buffer)); // works without bytes::takePart?
                     }
                     catch(const std::exception& e) {
                         LOG_WARNING << "Error during packet deserialization: " << e.what();

@@ -155,7 +155,9 @@ void Network::dropZombieConnections()
     for(auto it = _connections.begin(); it != _connections.end();) {
         auto& connection = *it;
         if(_not_ponged_peer_ids.find(connection->getId()) != _not_ponged_peer_ids.end()) {
-            connection->close();
+            if(!connection->isClosed()) {
+                connection->close();
+            }
             it = _connections.erase(it);
         }
         else {
@@ -218,7 +220,7 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
                 net::Endpoint received_endpoint{endpoint};
                 // of course this will be changed later
                 bool is_found = false;
-                for(const auto& connection : _connections) {
+                for(const auto& connection: _connections) {
                     if(connection->getServerEndpoint() == received_endpoint) {
                         is_found = true;
                         break;
