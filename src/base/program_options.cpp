@@ -52,7 +52,7 @@ void ProgramOptionsParser::process(int argc, char** argv)
 {
     try {
         static constexpr size_t START_POSITION = 1; // first after executable
-        if(argc >= START_POSITION) {
+        if(argc > START_POSITION) {
             std::string sub_program(argv[START_POSITION]);
             if(_descendants.count(sub_program)) {
                 _descendants.find(sub_program)->second->process(argc - START_POSITION, argv + START_POSITION);
@@ -83,7 +83,7 @@ std::string ProgramOptionsParser::helpMessage()
             prefix.append(" ");
         }
         for(auto& child: _descendant_descriptions) {
-            static constexpr const char* SPACE = "       ";
+            static constexpr const char* SPACE = "   [ --help ]    ";
             ss << prefix << child.first << SPACE << child.second << std::endl; // TODO: add formatting later
         }
     }

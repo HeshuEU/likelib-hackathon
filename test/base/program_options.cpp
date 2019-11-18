@@ -2,6 +2,20 @@
 
 #include "base/program_options.hpp"
 
+BOOST_AUTO_TEST_CASE(program_options_empty_test_1)
+{
+    int argc = 1;
+    char test1[] = "test.exe";
+    char* argv[] = {test1};
+
+    base::ProgramOptionsParser parser;
+    parser.addFlag("demonize,d", "demonize application start");
+
+    BOOST_CHECK_NO_THROW(parser.process(argc, argv));
+
+    BOOST_CHECK(!parser.hasOption("demonize"));
+}
+
 BOOST_AUTO_TEST_CASE(program_options_flag_test)
 {
     int argc = 2;
@@ -384,6 +398,27 @@ BOOST_AUTO_TEST_CASE(program_options_sub_parser_2)
 
     auto sub_program_2 = parser.createSubParser("miner", "Submodule to control miner", minerProcessForTestSubParser2);
     sub_program_2->addOption<std::string>("create_key", "Test flag for sub program 2");
+
+    BOOST_CHECK_NO_THROW(parser.process(argc, argv));
+}
+
+
+void minerProcessForTestSubParser3(const base::ProgramOptionsParser& parser)
+{
+    BOOST_CHECK(false);
+}
+
+BOOST_AUTO_TEST_CASE(program_options_sub_parser_3)
+{
+    int argc = 1;
+    char test1[] = "test.exe";
+    char* argv[] = {test1};
+
+    base::ProgramOptionsParser parser;
+    parser.addFlag("version,v", "Print version");
+
+    auto sub_program = parser.createSubParser("miner", "Submodule to control miner", minerProcessForTestSubParser3);
+    sub_program->addOption<std::string>("create_key", "Test flag for sub program");
 
     BOOST_CHECK_NO_THROW(parser.process(argc, argv));
 }
