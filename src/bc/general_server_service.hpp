@@ -18,5 +18,7 @@ class GeneralServerService : public BaseService
 
     std::string transaction(bc::Balance amount, const bc::Address& from_address,
                             const bc::Address& to_address) override;
+
+    std::string test(const std::string& test_request) override;
 };
 } // namespace bc

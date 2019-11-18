@@ -11,7 +11,7 @@
 namespace rpc
 {
 
-/// Class implimenting connect to node by gRPC and call methods
+/// Class implementing connect to node by gRPC and call methods
 class GrpcNodeClient final : bc::BaseClient
 {
   public:
@@ -23,6 +23,8 @@ class GrpcNodeClient final : bc::BaseClient
 
     std::string transaction(bc::Balance amount, const bc::Address& from_address,
                             const bc::Address& to_address) override;
+
+    std::string test(const std::string& test_request) override;
 
   private:
     std::unique_ptr<likelib::Node::Stub> _stub;

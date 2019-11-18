@@ -26,7 +26,7 @@ class ProgramOptionsParser
     /// Constructor use for input root name to sub parser help. Call process if found sub parser name.
     /// \param name of parser
     /// \param processor function that called if found name of subprocess
-    explicit ProgramOptionsParser(const std::string& name, std::function<void(const ProgramOptionsParser&)> processor);
+    explicit ProgramOptionsParser(const std::string& name, std::function<int(const ProgramOptionsParser&)> processor);
 
     ~ProgramOptionsParser() = default;
 
@@ -37,7 +37,7 @@ class ProgramOptionsParser
     /// \return pointer of sub parser
     std::shared_ptr<ProgramOptionsParser>
     createSubParser(const std::string& name, const std::string& descendant_description,
-                    const std::function<void(const ProgramOptionsParser&)>& processor);
+                    const std::function<int(const ProgramOptionsParser&)>& processor);
 
     /// Add optional option that will as flag check by hasOption
     /// \param flag name. example: "useGpu,g". Such option may be set by: -g or --useGpu.
@@ -68,8 +68,10 @@ class ProgramOptionsParser
     /// get methods.
     /// \param argc number of input options strings.
     /// \param argv array of input options strings world by world.
+    /// \return exit code of sub process defined by createSubParser or ok.
     /// \throw base::ParsingError if options has now valid format or has options/value that was not be set to parser.
-    void process(int argc, char** argv);
+    /// \throw base::InvalidArgument if argument is not an option and sub command not found
+    int process(int argc, char** argv);
 
     /// generate help message for options defined previously
     /// \return help message
@@ -92,7 +94,7 @@ class ProgramOptionsParser
 
   private:
     const std::string _name;
-    const std::function<void(const ProgramOptionsParser&)> _processor;
+    const std::function<int(const ProgramOptionsParser&)> _processor;
 
     boost::program_options::options_description _options_description;
     boost::program_options::variables_map _options;

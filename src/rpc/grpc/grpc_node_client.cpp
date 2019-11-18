@@ -2,19 +2,12 @@
 
 #include "rpc/error.hpp"
 
-/// Constructor that create lazy(connect will be established at call method) chanel to specified ip address
-/// \param connect_address ip:port
 rpc::GrpcNodeClient::GrpcNodeClient(const std::string& connect_address)
 {
-    _stub =
-        std::make_unique<likelib::Node::Stub>(grpc::CreateChannel(connect_address, grpc::InsecureChannelCredentials()));
+    auto channel_credentials = grpc::InsecureChannelCredentials();
+    _stub = std::make_unique<likelib::Node::Stub>(grpc::CreateChannel(connect_address, channel_credentials));
 }
 
-/// method call remote server method(specified ip address in constructor) with similar params
-/// \param address of account
-/// \return result of balance by specific address
-/// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
-/// exception during processing on server instance)
 bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
 {
     // convert data for request
@@ -36,13 +29,6 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
     }
 }
 
-/// method call remote server method(specified ip address in constructor) with similar params
-/// \param amount money
-/// \param from_address
-/// \param to_address
-/// \return hash of transaction
-/// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
-/// exception during processing on server instance)
 std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address& from_address,
                                              const bc::Address& to_address)
 {
@@ -69,6 +55,27 @@ std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Addre
     // return value if ok
     if(status.ok()) {
         auto result = reply.hash_string();
+        return result;
+    }
+    else {
+        RAISE_ERROR(::rpc::RpcError, status.error_message());
+    }
+}
+
+std::string rpc::GrpcNodeClient::test(const std::string& test_request)
+{
+    // convert data for request
+    likelib::TestRequest request;
+    request.set_message(test_request);
+
+    // call remote host
+    likelib::TestResponse reply;
+    grpc::ClientContext context;
+    grpc::Status status = _stub->test(&context, request, &reply);
+
+    // return value if ok
+    if(status.ok()) {
+        auto result = reply.message();
         return result;
     }
     else {

@@ -13,31 +13,16 @@ class GrpcNodeServer
   public:
     /// Constructor that initialize instance of LogicService
     /// \param server_address listening ip:port
-    explicit GrpcNodeServer(const std::string& server_address) : _service{}, _server_address(server_address)
-    {
-        _service.init();
-    }
+    explicit GrpcNodeServer(const std::string& server_address);
 
     /// plain destructor that call GrpcNodeServer::stop()
-    ~GrpcNodeServer()
-    {
-        stop();
-    }
+    ~GrpcNodeServer();
 
     /// Register LogicService and start listening port defined in constructor
-    void run()
-    {
-        grpc::ServerBuilder builder;
-        builder.AddListeningPort(_server_address, grpc::InsecureServerCredentials());
-        builder.RegisterService(&_service);
-        _server = builder.BuildAndStart();
-    }
+    void run();
 
     /// stop listening port defined in constructor and started by GrpcNodeServer::run()
-    void stop()
-    {
-        _server->Shutdown();
-    }
+    void stop();
 
   private:
     const std::string _server_address;
@@ -46,3 +31,5 @@ class GrpcNodeServer
 };
 
 } // namespace rpc
+
+#include "grpc_node_server.tpp"

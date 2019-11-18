@@ -75,4 +75,9 @@ constexpr int EXIT_ASSERT_FAILED = 2;
 constexpr std::size_t NETWORK_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
 //------------------------
 
+// rpc
+constexpr const char* RPC_CURRENT_SECRET_TEST_REQUEST = "Valar morghulis";
+constexpr const char* RPC_CURRENT_SECRET_TEST_RESPONSE = "Valar dohaeris";
+//--------------------
+
 } // namespace base::config

@@ -6,12 +6,17 @@ option java_package = "by.heshu.likelib.node";
 option java_outer_classname = "LikelibNodeProto";
 option objc_class_prefix = "HLW";
 
+// Service and messages definitions
 package likelib;
 
 service Node {
     rpc balance (Address) returns (Money) {
     }
+
     rpc transaction (Transaction) returns (Hash) {
+    }
+
+    rpc test (TestRequest) returns (TestResponse) {
     }
 }
 
@@ -23,6 +28,14 @@ message Transaction {
 
 message Address {
     string address = 1;
+}
+
+message TestRequest {
+    string message = 1;
+}
+
+message TestResponse {
+    string message = 1;
 }
 
 message Hash {

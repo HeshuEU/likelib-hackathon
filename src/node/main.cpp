@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 
         // set up options parser
         base::ProgramOptionsParser parser;
-        parser.addOption<std::string>("config,c", config::CONFIG_PATH,"Path to config file");
+        parser.addOption<std::string>("config,c", config::CONFIG_PATH, "Path to config file");
 
         // process options
         parser.process(argc, argv);
@@ -73,7 +73,8 @@ int main(int argc, char** argv)
         if(!std::filesystem::exists(config_file_path)) {
             LOG_ERROR << "[config file is not exists] input file path: " << parser.getValue<std::string>("config");
             return base::config::EXIT_FAIL;
-        } else{
+        }
+        else {
             LOG_INFO << "Found config file by path: " << config_file_path;
         }
 
@@ -93,11 +94,13 @@ int main(int argc, char** argv)
         network::Manager manager;
         manager.acceptClients(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
+        LOG_INFO << "Network manager started: " << exe_config.get<std::string>("listen_address");
 
         rpc::RpcServer server(exe_config.get<std::string>("rpc_address"));
         server.run();
+        LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc_address");
 
-        std::this_thread::sleep_for(std::chrono::seconds(100));
+        std::this_thread::sleep_for(std::chrono::seconds(150));
 
         return base::config::EXIT_OK;
     }
