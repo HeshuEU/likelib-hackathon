@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gen/public_rpc.grpc.pb.h"
+#include <public_rpc.grpc.pb.h>
 
 #include "bc/base_service.hpp"
 

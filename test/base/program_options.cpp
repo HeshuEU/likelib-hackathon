@@ -336,7 +336,7 @@ BOOST_AUTO_TEST_CASE(program_options_incorrect_type_exception)
     BOOST_CHECK_THROW(BOOST_CHECK_EQUAL(-809900, parser.getValue<std::uint32_t>("number")), base::InvalidArgument);
 }
 
-void walletProcessForTestSubParser1(const base::ProgramOptionsParser& parser)
+int walletProcessForTestSubParser1(const base::ProgramOptionsParser& parser)
 {
     if(parser.hasOption("help")) {
         BOOST_CHECK(true);
@@ -344,6 +344,7 @@ void walletProcessForTestSubParser1(const base::ProgramOptionsParser& parser)
     else {
         BOOST_CHECK(false);
     }
+    return 0;
 }
 
 BOOST_AUTO_TEST_CASE(program_options_sub_parser_1)
@@ -363,7 +364,7 @@ BOOST_AUTO_TEST_CASE(program_options_sub_parser_1)
     BOOST_CHECK_NO_THROW(parser.process(argc, argv));
 }
 
-void walletProcessForTestSubParser2(const base::ProgramOptionsParser& parser)
+int walletProcessForTestSubParser2(const base::ProgramOptionsParser& parser)
 {
     if(parser.hasOption("help")) {
         BOOST_CHECK(false);
@@ -374,11 +375,13 @@ void walletProcessForTestSubParser2(const base::ProgramOptionsParser& parser)
     else {
         BOOST_CHECK(false);
     }
+    return 0;
 }
 
-void minerProcessForTestSubParser2(const base::ProgramOptionsParser& parser)
+int minerProcessForTestSubParser2(const base::ProgramOptionsParser& parser)
 {
     BOOST_CHECK(false);
+    return 0;
 }
 
 BOOST_AUTO_TEST_CASE(program_options_sub_parser_2)
@@ -403,9 +406,10 @@ BOOST_AUTO_TEST_CASE(program_options_sub_parser_2)
 }
 
 
-void minerProcessForTestSubParser3(const base::ProgramOptionsParser& parser)
+int minerProcessForTestSubParser3(const base::ProgramOptionsParser& parser)
 {
     BOOST_CHECK(false);
+    return 0;
 }
 
 BOOST_AUTO_TEST_CASE(program_options_sub_parser_3)
@@ -423,8 +427,10 @@ BOOST_AUTO_TEST_CASE(program_options_sub_parser_3)
     BOOST_CHECK_NO_THROW(parser.process(argc, argv));
 }
 
-void walletProcessForTestSubParserThrowName(const base::ProgramOptionsParser& parser)
-{}
+int walletProcessForTestSubParserThrowName(const base::ProgramOptionsParser& parser)
+{
+    return 0;
+}
 
 BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_name)
 {
@@ -437,11 +443,15 @@ BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_name)
 
     base::ProgramOptionsParser parser;
     parser.addFlag("version,v", "Print version");
-    BOOST_CHECK_THROW(auto sub_program_1 = parser.createSubParser("", "Test description 1", walletProcessForTestSubParserThrowName), base::InvalidArgument);
+    BOOST_CHECK_THROW(auto sub_program_1 =
+                          parser.createSubParser("", "Test description 1", walletProcessForTestSubParserThrowName),
+                      base::InvalidArgument);
 }
 
-void walletProcessForTestSubParserThrowDuplicate(const base::ProgramOptionsParser& parser)
-{}
+int walletProcessForTestSubParserThrowDuplicate(const base::ProgramOptionsParser& parser)
+{
+    return 0;
+}
 
 BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_duplicate)
 {
@@ -454,33 +464,9 @@ BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_duplicate)
 
     base::ProgramOptionsParser parser;
     parser.addFlag("version,v", "Print version");
-    BOOST_CHECK_NO_THROW(auto sub_program_1 = parser.createSubParser("test", "Test description 1", walletProcessForTestSubParserThrowName));
-    BOOST_CHECK_THROW(auto sub_program_2 = parser.createSubParser("test", "Test description 1", walletProcessForTestSubParserThrowName), base::InvalidArgument);
+    BOOST_CHECK_NO_THROW(auto sub_program_1 = parser.createSubParser("test", "Test description 1",
+                                                                     walletProcessForTestSubParserThrowName));
+    BOOST_CHECK_THROW(auto sub_program_2 =
+                          parser.createSubParser("test", "Test description 1", walletProcessForTestSubParserThrowName),
+                      base::InvalidArgument);
 }
-
-/// ========== MANUAL TESTS ============
-//#include <iostream>
-
-//void walletProcessForTestSubParser3(const base::ProgramOptionsParser& parser)
-//{}
-//
-//BOOST_AUTO_TEST_CASE(program_options_sub_parser_manual_test_1)
-//{
-//    std::cout << "WARNING: Manual test start" << std::endl;
-//
-//    int argc = 3;
-//    char test1[] = "test.exe";
-//    char test2[] = "wallet";
-//    char test3[] = "--help";
-//    char* argv[] = {test1, test2, test3};
-//
-//    base::ProgramOptionsParser parser("rpc-client");
-//    parser.addFlag("version,v", "Print version");
-//    auto sub_program_1 =
-//        parser.createSubParser("wallet", "Submodule to control wallet operations", walletProcessForTestSubParser3);
-//    sub_program_1->addFlag("temp,t", "Test flag for sub program 1");
-//
-//    std::cout << parser.helpMessage();
-//
-//    std::cout << "WARNING: Manual test end" << std::endl;
-//}

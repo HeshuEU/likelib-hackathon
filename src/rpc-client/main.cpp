@@ -212,17 +212,18 @@ int main(int argc, char** argv)
         test_sub_parser->addOption<std::string>(HOST_ADDRESS_OPTION,
                                                 "address of remote host in format: \"<ip>:<port>\"");
 
-        try{
+        try {
             auto exit_code = parser.process(argc, argv);
             if(exit_code != base::config::EXIT_OK) {
                 return exit_code;
             }
         }
-        catch (const base::InvalidArgument& error){
+        catch(const base::InvalidArgument& error) {
             std::cout << "Command is now exist. Run pc-client --help to see allowed commands and options" << std::endl;
         }
-        catch (const base::ParsingError& error){
-            std::cout << "Failed to parse command options. Run " << PROGRAM_NAME << " --help to see allowed commands and options" << std::endl;
+        catch(const base::ParsingError& error) {
+            std::cout << "Failed to parse command options. Run " << PROGRAM_NAME
+                      << " --help to see allowed commands and options" << std::endl;
         }
 
         if(parser.hasOption("help")) {
