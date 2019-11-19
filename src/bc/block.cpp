@@ -1,5 +1,11 @@
 #include "block.hpp"
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+
+#include <sstream>
 #include <utility>
 
 namespace bc
@@ -29,8 +35,16 @@ const std::vector<bc::Transaction>& Block::getTransactions() const
 
 base::Bytes Block::serialize() const
 {
-    // TODO: implement
-    return {0x42};
+    std::ostringstream oss;
+    boost::archive::text_oarchive to(oss);
+    to << _prev_block_hash << _txs.size();
+
+    std::size_t index = 0;
+    for(const auto& tx : _txs) {
+        to << tx.serialize().toVector();
+    }
+
+    return base::Bytes(oss.str());
 }
 
 
