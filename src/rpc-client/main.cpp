@@ -9,22 +9,13 @@
 namespace
 {
 
-static constexpr const char* HOST_ADDRESS_OPTION = "host";
-static constexpr const char* HOST_ADDRESS_FLAG = "host";
+constexpr const char* HOST_ADDRESS_OPTION = "host";
+constexpr const char* MONEY_OPTION = "money";
+constexpr const char* ACCOUNT_ADDRESS_OPTION = "address";
+constexpr const char* FROM_ACCOUNT_ADDRESS_OPTION = "from_address";
+constexpr const char* TO_ACCOUNT_ADDRESS_OPTION = "to_address";
 
-static constexpr const char* MONEY_OPTION = "money,m";
-static constexpr const char* MONEY_FLAG = "money";
-
-static constexpr const char* ACCOUNT_ADDRESS_OPTION = "address,a";
-static constexpr const char* ACCOUNT_ADDRESS_FLAG = "address";
-
-static constexpr const char* FROM_ACCOUNT_ADDRESS_OPTION = "from_address,f";
-static constexpr const char* FROM_ACCOUNT_ADDRESS_FLAG = "from_address";
-
-static constexpr const char* TO_ACCOUNT_ADDRESS_OPTION = "to_address,t";
-static constexpr const char* TO_ACCOUNT_ADDRESS_FLAG = "to_address";
-
-static constexpr const char* PROGRAM_NAME = "rpc-client";
+constexpr const char* PROGRAM_NAME = "rpc-client";
 
 
 void createKey(const base::ProgramOptionsParser& parser)
@@ -38,18 +29,18 @@ int getBalance(const base::ProgramOptionsParser& parser)
         std::cout << parser.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
-    if(!parser.hasOption(HOST_ADDRESS_FLAG)) {
+    if(!parser.hasOption(HOST_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << HOST_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    if(!parser.hasOption(ACCOUNT_ADDRESS_FLAG)) {
+    if(!parser.hasOption(ACCOUNT_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << ACCOUNT_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
 
     try {
-        auto host = parser.getValue<std::string>(HOST_ADDRESS_FLAG);
-        auto address = parser.getValue<std::string>(ACCOUNT_ADDRESS_FLAG);
+        auto host = parser.getValue<std::string>(HOST_ADDRESS_OPTION);
+        auto address = parser.getValue<std::string>(ACCOUNT_ADDRESS_OPTION);
 
         LOG_INFO << "Try to connect to rpc server by: " << host;
         rpc::RpcClient client(host);
@@ -58,12 +49,12 @@ int getBalance(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cout << "Bad input arguments" << std::endl;
+        std::cerr << "Bad input arguments.\n";
         LOG_ERROR << "[exception in getBalance]" << er.what();
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cout << "RPC error" << std::endl;
+        std::cerr << "RPC error.\n";;
         LOG_ERROR << "[exception in getBalance]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -83,28 +74,28 @@ int transaction(const base::ProgramOptionsParser& parser)
         std::cout << parser.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
-    if(!parser.hasOption(HOST_ADDRESS_FLAG)) {
+    if(!parser.hasOption(HOST_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << HOST_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    if(!parser.hasOption(FROM_ACCOUNT_ADDRESS_FLAG)) {
+    if(!parser.hasOption(FROM_ACCOUNT_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << FROM_ACCOUNT_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    if(!parser.hasOption(TO_ACCOUNT_ADDRESS_FLAG)) {
+    if(!parser.hasOption(TO_ACCOUNT_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << TO_ACCOUNT_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    if(!parser.hasOption(MONEY_FLAG)) {
+    if(!parser.hasOption(MONEY_OPTION)) {
         std::cout << "No option required option[" << MONEY_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
 
     try {
-        auto host = parser.getValue<std::string>(HOST_ADDRESS_FLAG);
-        auto from_address = parser.getValue<std::string>(FROM_ACCOUNT_ADDRESS_FLAG);
-        auto to_address = parser.getValue<std::string>(TO_ACCOUNT_ADDRESS_FLAG);
-        auto amount = parser.getValue<std::uint32_t>(MONEY_FLAG);
+        auto host = parser.getValue<std::string>(HOST_ADDRESS_OPTION);
+        auto from_address = parser.getValue<std::string>(FROM_ACCOUNT_ADDRESS_OPTION);
+        auto to_address = parser.getValue<std::string>(TO_ACCOUNT_ADDRESS_OPTION);
+        auto amount = parser.getValue<std::uint32_t>(MONEY_OPTION);
 
         rpc::RpcClient client(host);
         LOG_INFO << "Try to connect to rpc server by: " << host;
@@ -113,12 +104,12 @@ int transaction(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cout << "Bad input arguments" << std::endl;
+        std::cerr << "Bad input arguments.\n";
         LOG_ERROR << "[exception in transaction]" << er.what();
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cout << "RPC error" << std::endl;
+        std::cerr << "RPC error.\n";
         LOG_ERROR << "[exception in transaction]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -138,7 +129,7 @@ int test(const base::ProgramOptionsParser& parser)
         std::cout << parser.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
-    if(!parser.hasOption(HOST_ADDRESS_FLAG)) {
+    if(!parser.hasOption(HOST_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << HOST_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
@@ -165,12 +156,12 @@ int test(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cout << "Bad input arguments" << std::endl;
+        std::cerr << "Bad input arguments\n";
         LOG_ERROR << "[exception in test]" << er.what();
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cout << "RPC error" << std::endl;
+        std::cerr << "RPC error.\n";
         LOG_ERROR << "[exception in test]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -219,11 +210,12 @@ int main(int argc, char** argv)
             }
         }
         catch(const base::InvalidArgument& error) {
-            std::cout << "Command is now exist. Run pc-client --help to see allowed commands and options" << std::endl;
+            std::cerr << "Command is now exist. Run pc-client --help to see allowed commands and options.\n";
         }
         catch(const base::ParsingError& error) {
-            std::cout << "Failed to parse command options. Run " << PROGRAM_NAME
-                      << " --help to see allowed commands and options" << std::endl;
+            std::cerr << "Failed to parse command options. Run " << PROGRAM_NAME
+                      << " --help to see allowed commands and options.\n";
+            LOG_DEBUG << error.what();
         }
 
         if(parser.hasOption("help")) {
@@ -237,7 +229,6 @@ int main(int argc, char** argv)
             return base::config::EXIT_OK;
         }
     }
-
     catch(const std::exception& error) {
         LOG_ERROR << "[exception caught] " << error.what();
         return base::config::EXIT_FAIL;
