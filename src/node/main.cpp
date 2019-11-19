@@ -4,9 +4,6 @@
 
 #include "rpc/rpc.hpp"
 
-#include "network/manager.hpp"
-#include "network/network_address.hpp"
-
 #include "base/program_options.hpp"
 #include "base/config.hpp"
 #include "base/log.hpp"

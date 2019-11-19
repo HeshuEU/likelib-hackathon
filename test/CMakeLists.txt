@@ -4,9 +4,8 @@ set(TEST_SOURCES
         base/property_tree.cpp
         base/bytes.cpp
         base/hash.cpp
-        net/packet.cpp
-        rpc/base_rpc.cpp
         base/program_options.cpp
+        net/packet.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})
