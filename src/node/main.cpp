@@ -11,8 +11,8 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
-#include "network/manager.hpp"
-#include "network/network_address.hpp"
+#include "net/network.hpp"
+#include "net/endpoint.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
@@ -29,7 +29,6 @@
 namespace
 {
 
-
 extern "C" void signalHandler(int signal)
 {
     LOG_INFO << "Signal caught: " << signal
@@ -43,6 +42,7 @@ extern "C" void signalHandler(int signal)
         ;
     std::abort();
 }
+
 
 void atExitHandler()
 {
@@ -91,16 +91,21 @@ int main(int argc, char** argv)
 
         SoftConfig exe_config(config_file_path);
 
-        network::Manager manager;
-        manager.acceptClients(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
+        net::Network manager(net::Endpoint{exe_config.get<std::string>("listen_address")});
         manager.run();
         LOG_INFO << "Network manager started: " << exe_config.get<std::string>("listen_address");
+
+        std::vector<net::Endpoint> nodes;
+        for(const auto& node_ip_string: exe_config.getVector<std::string>("nodes")) {
+            nodes.emplace_back(node_ip_string);
+        }
+        manager.connect(nodes);
 
         rpc::RpcServer server(exe_config.get<std::string>("rpc_address"));
         server.run();
         LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc_address");
 
-        std::this_thread::sleep_for(std::chrono::seconds(150));
+        std::this_thread::sleep_for(std::chrono::seconds(45));
 
         return base::config::EXIT_OK;
     }

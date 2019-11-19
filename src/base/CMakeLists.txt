@@ -15,6 +15,7 @@ set(BASE_HEADERS
         hash.hpp
         program_options.hpp
         program_options.tpp
+        timer.hpp
         )
 
 set(BASE_SOURCES
@@ -24,6 +25,7 @@ set(BASE_SOURCES
         property_tree.cpp
         bytes.cpp
         hash.cpp
+        timer.cpp
         program_options.cpp
         )
 
