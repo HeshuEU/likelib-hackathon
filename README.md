@@ -15,7 +15,9 @@ By default it is config.json file of the following format:
 
 ### Build
 1. Go to ./doc folder: right now it is a staring point for scripts.
-2. Run ./prepare_build.sh. It will install vcpkg packet manager to /opt folder. It may
-require sudo permissions.
-3. Run ./build.sh. It will execute CMake, that will generate makefiles in ./build folder.
+2. Run ./prepare_build.sh. It will install vcpkg packet manager to user home folder. Note: run
+this script without sudo permissions. This script also creates "zmake" function in ~/.bashrc file.
+To find more detailed information about the usage of this script, use ./prepare_build.sh --help. 
+3. Run ./build.sh. It executes CMake, that will generate makefiles in ../build folder. Or use
+ zmake in build folder without options.
 4. Go to ./build folder and run make. 
