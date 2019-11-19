@@ -141,7 +141,9 @@ void Connection::receiveOne()
                 switch(ec.value()) {
                     case ba::error::eof: {
                         LOG_WARNING << "Connection to " << getEndpoint() << " closed";
-                        close();
+                        if(!_is_closed) {
+                            close();
+                        }
                         break;
                     }
                     default: {
