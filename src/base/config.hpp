@@ -57,7 +57,7 @@ constexpr const char* const OS_NAME =
 
 
 // logging configuration
-constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H:%M.log";
+constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H-%M.log";
 constexpr const char* LOG_FOLDER = "logs";
 constexpr const std::size_t LOG_FILE_MAX_SIZE = 6 * 1024 * 1024;
 constexpr const std::size_t LOG_FILE_MIN_SPACE = 100 * 1024 * 1024;

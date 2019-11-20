@@ -1,6 +1,8 @@
 set(BASE_HEADERS
         assert.hpp
-        crypto.hpp
+	crypto.hpp
+        big_integer.hpp
+        big_integer.tpp
         error.hpp
         stringifiable_enum_class.hpp
         assert.hpp

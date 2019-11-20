@@ -17,8 +17,8 @@ namespace network
 base::Bytes Connection::_read_buffer(base::config::NETWORK_MESSAGE_BUFFER_SIZE);
 
 
-Connection::Connection(boost::asio::ip::tcp::socket&& socket)
-    : _io_context{socket.get_io_context()}, _socket{std::move(socket)}
+Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket)
+    : _io_context{io_context}, _socket{std::move(socket)}
 {
     ASSERT(_socket.is_open());
     _network_address = std::make_unique<NetworkAddress>(_socket.remote_endpoint().address().to_string(),

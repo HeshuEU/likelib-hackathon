@@ -58,7 +58,7 @@ class ParsingError : public Error
 std::ostream& operator<<(std::ostream& os, const Error& error);
 
 #define RAISE_ERROR(error_type, message) \
-    throw base::error_type(std::string{__FILE__} + std::string{":"} + std::to_string(__LINE__) + std::string{" :: "} + \
+    throw error_type(std::string{__FILE__} + std::string{":"} + std::to_string(__LINE__) + std::string{" :: "} + \
                            std::string{BOOST_CURRENT_FUNCTION} + std::string{" :: "} + (message))
 
 

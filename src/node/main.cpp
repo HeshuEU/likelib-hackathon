@@ -32,12 +32,12 @@ extern "C" void signalHandler(int signal)
              << boost::stacktrace::stacktrace()
 #endif
         ;
-    std::exit(base::config::EXIT_FAIL);
+    std::abort();
 }
 
 void atExitHandler()
 {
-    LOG_INFO << "atExitHandler called";
+    LOG_INFO << "Node shutdown";
 }
 
 } // namespace
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
         // handlers initialization
 
         // setup handler for all signal types defined in Standard. Not all POSIX signals
-        for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGABRT, SIGFPE}) {
+        for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE}) {
             ASSERT_SOFT(std::signal(signal_code, signalHandler) != SIG_ERR);
         }
 
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
         manager.acceptClients(network::NetworkAddress{exe_config.get<std::string>("listen_address")});
         manager.run();
 
-        std::this_thread::sleep_for(std::chrono::seconds(15));
+        std::this_thread::sleep_for(std::chrono::seconds(45));
 
         return base::config::EXIT_OK;
     }
