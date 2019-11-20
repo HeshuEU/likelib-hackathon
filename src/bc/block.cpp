@@ -33,6 +33,18 @@ const std::vector<bc::Transaction>& Block::getTransactions() const
 }
 
 
+NonceInt Block::getNonce() const noexcept
+{
+    return _nonce;
+}
+
+
+void Block::setNonce(NonceInt nonce) noexcept
+{
+    _nonce = nonce;
+}
+
+
 base::Bytes Block::serialize() const
 {
     std::ostringstream oss;
@@ -40,7 +52,7 @@ base::Bytes Block::serialize() const
     to << _prev_block_hash << _txs.size();
 
     std::size_t index = 0;
-    for(const auto& tx : _txs) {
+    for(const auto& tx: _txs) {
         to << tx.serialize().toVector();
     }
 

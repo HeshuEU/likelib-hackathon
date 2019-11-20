@@ -82,6 +82,30 @@ bool Bytes::operator!=(const Bytes& another) const
 }
 
 
+bool Bytes::operator<(const Bytes& another) const
+{
+    return _raw < another._raw;
+}
+
+
+bool Bytes::operator>(const Bytes& another) const
+{
+    return _raw > another._raw;
+}
+
+
+bool Bytes::operator<=(const Bytes& another) const
+{
+    return !(*this > another);
+}
+
+
+bool Bytes::operator>=(const Bytes& another) const
+{
+    return !(*this < another);
+}
+
+
 const Byte* Bytes::toArray() const
 {
     return _raw.data();

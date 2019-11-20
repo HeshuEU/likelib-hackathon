@@ -1,6 +1,8 @@
 set(BC_HEADERS
         address.hpp
         block.hpp
+        blockchain.hpp
+        miner.hpp
         transaction.hpp
         types.hpp
         )
@@ -8,6 +10,8 @@ set(BC_HEADERS
 set(BC_SOURCES
         address.cpp
         block.cpp
+        blockchain.cpp
+        miner.cpp
         transaction.cpp
         )
 

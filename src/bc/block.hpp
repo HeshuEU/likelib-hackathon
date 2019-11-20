@@ -2,6 +2,7 @@
 
 #include "base/bytes.hpp"
 #include "bc/transaction.hpp"
+#include "bc/types.hpp"
 
 #include <vector>
 
@@ -27,9 +28,18 @@ class Block
     const base::Bytes& getPrevBlockHash() const;
     const std::vector<bc::Transaction>& getTransactions() const;
 
+    //=================
+
+    NonceInt getNonce() const noexcept;
+    void setNonce(NonceInt nonce) noexcept;
+
+    //=================
+
     base::Bytes serialize() const;
 
   private:
+    NonceInt _nonce;
+
     base::Bytes _prev_block_hash;
     std::vector<bc::Transaction> _txs;
 };
