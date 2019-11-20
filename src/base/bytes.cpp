@@ -64,6 +64,13 @@ Bytes& Bytes::append(Byte byte)
 }
 
 
+Bytes& Bytes::append(const Bytes& bytes)
+{
+    _raw.insert(_raw.end(), bytes._raw.begin(), bytes._raw.end());
+    return *this;
+}
+
+
 std::size_t Bytes::size() const noexcept
 {
     return _raw.size();
