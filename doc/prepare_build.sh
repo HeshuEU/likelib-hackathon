@@ -116,16 +116,21 @@ if "${INSTALL_SOFTWARE}"; then
     cd ${INSTALL_DIR} || exit 1
 
     CMAKE_TARGET_VERSION=3.15.5
-    wget "https://github.com/Kitware/CMake/releases/download/v${CMAKE_TARGET_VERSION}/cmake-${CMAKE_TARGET_VERSION}.tar.gz"  || exit 1
-    tar -xvf "cmake-${CMAKE_TARGET_VERSION}.tar.gz"  || exit 1
-    rm "cmake-${CMAKE_TARGET_VERSION}.tar.gz"
-    echo "Try to cd cmake-${CMAKE_TARGET_VERSION}"
-    cd "cmake-${CMAKE_TARGET_VERSION}" || exit 1
-    echo "Try to build cmake"
+#    wget "https://github.com/Kitware/CMake/releases/download/v${CMAKE_TARGET_VERSION}/cmake-${CMAKE_TARGET_VERSION}.tar.gz"  || exit 1
+#    tar -xvf "cmake-${CMAKE_TARGET_VERSION}.tar.gz"  || exit 1
+#    rm "cmake-${CMAKE_TARGET_VERSION}.tar.gz"
+#    echo "Try to cd cmake-${CMAKE_TARGET_VERSION}"
+#    cd "cmake-${CMAKE_TARGET_VERSION}" || exit 1
+#    echo "Try to build cmake"
 
-    ./bootstrap || exit 1
-    make -j ${PROCESSORS} || exit 1
-    sudo make install || exit 1
+#    ./bootstrap || exit 1
+#    make -j ${PROCESSORS} || exit 1
+#    sudo make install || exit 1
+
+    cd /tmp
+    wget https://github.com/Kitware/CMake/releases/download/v3.16.0-rc4/cmake-3.16.0-rc4-Linux-x86_64.sh
+    . ./cmake-3.16.0-rc4-Linux-x86_64.sh --skip-license --prefix=$INSTALL_DIR
+    rm ./cmake-3.16.0-rc4-Linux-x86_64.sh
     cmake --version || exit 1
   fi
 
