@@ -26,34 +26,36 @@ const bc::Balance& Transaction::getAmount() const noexcept
 }
 
 
-base::Bytes Transaction::serialize() const
-{
-    // TODO: implement
-    return {0x43};
-}
-
-
-void TransactionBuilder::setFrom(const bc::Address& from)
+void Transaction::setFrom(const bc::Address& from)
 {
     _from = from;
 }
 
 
-void TransactionBuilder::setTo(const bc::Address& to)
+void Transaction::setTo(const bc::Address& to)
 {
     _to = to;
 }
 
 
-void TransactionBuilder::setAmount(const bc::Balance& amount)
+void Transaction::setAmount(const bc::Balance& amount)
 {
     _amount = amount;
 }
 
 
-Transaction TransactionBuilder::build()
+base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Transaction& tx)
 {
-    return {_from, _to, _amount};
+    bc::Balance balance;
+    ia >> balance;
+    tx.setAmount(balance);
+    return ia;
+}
+
+
+base::SerializationOArchive operator<<(base::SerializationOArchive& oa, const Transaction& tx)
+{
+    return oa << tx.getAmount(); //tx.getFrom() << tx.getTo();
 }
 
 } // namespace bc

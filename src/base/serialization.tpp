@@ -9,7 +9,7 @@ namespace impl
 {
 
     template<typename T>
-    class TrickFalse : std::false_type {
+    struct TrickFalse : std::false_type {
     };
 
 }
@@ -19,7 +19,7 @@ namespace base
 {
 
 template<typename T>
-SerializationIArchive& SerializationIArchive::operator<<(const T& v)
+SerializationOArchive& SerializationOArchive::operator<<(const T& v)
 {
     if constexpr(std::is_integral<T>::value) {
         static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16, "this integral type is not serializable");
@@ -46,13 +46,6 @@ SerializationIArchive& SerializationIArchive::operator<<(const T& v)
             *this << a << b;
         }
     }
-    else if constexpr (std::is_same<T, Bytes>::value) {
-        *this << v.size();
-        _bytes.reserve(_bytes.size() + v.size());
-        for(const auto& x : v) {
-            _bytes.append(x);
-        }
-    }
     else {
         static_assert(impl::TrickFalse<T>::value, "type is not serializable");
     }
@@ -62,7 +55,7 @@ SerializationIArchive& SerializationIArchive::operator<<(const T& v)
 
 
 template<typename T>
-SerializationOArchive& SerializationOArchive::operator>>(T& v)
+SerializationIArchive& SerializationIArchive::operator>>(T& v)
 {
     if constexpr(std::is_integral<T>::value) {
         static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16, "this integral type is not serializable");
@@ -89,16 +82,35 @@ SerializationOArchive& SerializationOArchive::operator>>(T& v)
 
         _index += sizeof(v);
     }
-    else if constexpr (std::is_same<T, Bytes>::value) {
-        std::size_t size;
-        *this >> size;
-        v.clear();
-        v.reserve(size);
-        for(std::size_t i = 0; i < size; ++i) {
-            v.append(_bytes[_index++]);
-        }
+    else {
+        static_assert(impl::TrickFalse<T>::value, "type is not deserializable");
     }
     return *this;
 }
+
+
+template<typename T>
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::vector<T>& v)
+{
+    std::size_t size;
+    v.resize(size);
+    for(auto it = v.begin(); it != v.end(); ++it) {
+        ia >> *it;
+    }
+    return ia;
+}
+
+
+template<typename T>
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v)
+{
+    oa << v.size();
+    for(const auto& x : v) {
+        oa << x;
+    }
+    return oa;
+}
+
+
 
 }

@@ -4,10 +4,10 @@
 
 BOOST_AUTO_TEST_CASE(serialization_sanity_check)
 {
-    base::SerializationIArchive ia;
+    base::SerializationOArchive ia;
     ia << base::Byte{0x12} << -35 << -7ll;
 
-    base::SerializationOArchive oa(ia.getBytes());
+    base::SerializationIArchive oa(ia.getBytes());
     base::Byte a;
     int b;
     long long c;

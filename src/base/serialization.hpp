@@ -4,18 +4,36 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <vector>
 
 namespace base
 {
 
 class SerializationIArchive
 {
-  public:
+public:
     //=================
-    SerializationIArchive() = default;
+    // it doesn't copy, so the client must be sure that passed bytes are not removed while this class is used
+    SerializationIArchive(const Bytes& raw);
     //=================
     template<typename T>
-    SerializationIArchive& operator<<(const T& v);
+    SerializationIArchive& operator>>(T& v);
+    // TODO: work if some of this types is not defined
+    //=================
+private:
+    base::Bytes _bytes;
+    std::size_t _index;
+};
+
+
+class SerializationOArchive
+{
+public:
+    //=================
+    SerializationOArchive() = default;
+    //=================
+    template<typename T>
+    SerializationOArchive& operator<<(const T& v);
     // TODO: work if some of this types is not defined
     //=================
     void clear();
@@ -24,26 +42,20 @@ class SerializationIArchive
     base::Bytes&& getBytes() && noexcept;
     //=================
 
-  private:
-    base::Bytes _bytes;
-};
-
-
-class SerializationOArchive
-{
-public:
-    //=================
-    // it doesn't copy, so the client must be sure that passed bytes are not removed while this class is used
-    SerializationOArchive(const base::Bytes& raw);
-    //=================
-    template<typename T>
-    SerializationOArchive& operator>>(T& v);
-    // TODO: work if some of this types is not defined
-    //=================
 private:
     base::Bytes _bytes;
-    std::size_t _index;
 };
+
+
+SerializationOArchive& operator<<(SerializationOArchive& ia, const base::Bytes& v);
+SerializationIArchive& operator>>(SerializationIArchive& oa, base::Bytes& v);
+
+template<typename T>
+SerializationIArchive& operator<<(SerializationIArchive& ia, std::vector<T>& v);
+
+template<typename T>
+SerializationOArchive& operator<<(SerializationOArchive& ia, const std::vector<T>& v);
+
 
 } // namespace base
 

@@ -1,11 +1,5 @@
 #include "block.hpp"
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
-
-#include <sstream>
 #include <utility>
 
 namespace bc
@@ -45,21 +39,6 @@ void Block::setNonce(NonceInt nonce) noexcept
 }
 
 
-base::Bytes Block::serialize() const
-{
-    std::ostringstream oss;
-    boost::archive::text_oarchive to(oss, boost::archive::no_header);
-    to << _prev_block_hash << _txs.size();
-
-    std::size_t index = 0;
-    for(const auto& tx: _txs) {
-        to << tx.serialize().toVector();
-    }
-
-    return base::Bytes(oss.str());
-}
-
-
 bool Block::checkValidness() const
 {
     static const base::Bytes MAX_HASH_VALUE{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -68,22 +47,39 @@ bool Block::checkValidness() const
 }
 
 
-void BlockBuilder::setTransactions(std::vector<bc::Transaction>&& txs)
+void Block::setPrevBlockHash(const base::Bytes& prev_block_hash)
+{
+    _prev_block_hash = prev_block_hash;
+}
+
+
+void Block::setTransactions(std::vector<Transaction>&& txs)
 {
     _txs = std::move(txs);
 }
 
 
-void BlockBuilder::addTransaction(bc::Transaction&& tx)
+base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Block& block)
 {
-    _txs.push_back(std::move(tx));
+    NonceInt nonce;
+    ia >> nonce;
+    block.setNonce(nonce);
+
+    base::Bytes prev_block_hash;
+    ia >> prev_block_hash;
+    block.setPrevBlockHash(prev_block_hash);
+
+    std::vector<Transaction> txs;
+    ia >> txs;
+    block.setTransactions(std::move(txs));
+
+    return ia;
 }
 
 
-Block BlockBuilder::build() &&
+base::SerializationOArchive operator<<(base::SerializationOArchive& oa, const Block& block)
 {
-    return Block(std::move(_prev_block_hash), std::move(_txs));
+    return oa << block.getNonce() << block.getPrevBlockHash() << block.getTransactions();
 }
-
 
 } // namespace bc
