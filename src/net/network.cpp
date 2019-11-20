@@ -233,8 +233,15 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
             }
             break;
         }
+        case PacketType::BLOCK: {
+            break;
+        }
+        case PacketType::TRANSACTION: {
+            break;
+        }
         default: {
             LOG_WARNING << "Received an invalid packet from " << connection.getEndpoint();
+            break;
         }
     }
 }

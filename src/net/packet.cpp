@@ -32,7 +32,7 @@ void Packet::setType(PacketType type)
 base::Bytes Packet::serialize() const
 {
     std::ostringstream oss;
-    boost::archive::text_oarchive to(oss);
+    boost::archive::text_oarchive to(oss, boost::archive::no_header);
     to << _type << _known_endpoints << _server_public_port;
 
     return base::Bytes(oss.str());
@@ -42,7 +42,7 @@ base::Bytes Packet::serialize() const
 Packet Packet::deserialize(const base::Bytes& raw)
 {
     std::istringstream iss(raw.toString());
-    boost::archive::text_iarchive ti(iss);
+    boost::archive::text_iarchive ti(iss, boost::archive::no_header);
 
     Packet ret;
     ti >> ret._type;
