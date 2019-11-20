@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## Default parametrs
-INSTALL_DIR="~"
+INSTALL_DIR="/home/user"
 TARGET_VCPKG_FOLDER="vcpkg"
 SCRIPT_DIR=${PWD}
 CHANGE_BASHRC=true
@@ -48,7 +48,7 @@ while [[ -n "${1}" ]]; do
 
 done
 
-if [ -f "${SCRIPT_DIR}/prepare_build.sh" ]; then
+if ! [ -f "${SCRIPT_DIR}/prepare_build.sh" ]; then
     echo "Please run script from his dir"
     exit 1
 fi
@@ -56,12 +56,61 @@ if [ $UID = 0 -a $INSTALL_FOR_DOCKER != true ]; then
     echo "Run scritp as non root user or with option --install-for-docker"
     exit 1
 fi
+if $INSTALL_FOR_DOCKER; then
+    echo "Install for docker"
+    INSTALL_DIR="/"
+    CHANGE_BASHRC=false
+    INSTALL_SOFTWARE=false
+else
+    read -p "Enter install path [$INSTALL_DIR]:"
+    NEW_INSTALL_PATH=$REPLY
+fi
+if [ -n "$NEW_INSTALL_PATH" ]; then
+  echo "NEW path $NEW_INSTALL_PATH"
+  mkdir -p $NEW_INSTALL_PATH || echo "Can't create $NEW_INSTALL_PATH" && exit 1
+else
+  echo "OLD path $INSTALL_DIR"
+fi
 
 ## run workflow
 ## run install software
 if "${INSTALL_SOFTWARE}"; then
   echo "runing install software script"
-
+  if ! command -v g++; then
+    echo "Please, for continue run"
+    echo "sudo apt install -y g++"
+    exit 1
+  fi
+  if ! command -v make; then
+    echo "Please, for continue run"
+    echo "sudo apt install -y make"
+    exit 1
+  fi
+  if ! command -v git; then
+    echo "Please, for continue run"
+    echo "sudo apt install -y git"
+    exit 1
+  fi
+  if ! command -v curl; then
+    echo "Please, for continue run"
+    echo "sudo apt install -y curl"
+    exit 1
+  fi
+  if ! command -v unzip; then
+    echo "Please, for continue run"
+    echo "sudo apt install -y unzip"
+    exit 1
+  fi
+  if ! command -v tar; then
+    echo "Please, for continue run"
+    echo "sudo apt install -y tar"
+    exit 1
+  fi
+  if ! command -v wget; then
+    echo "Please, for continue run"
+    echo "sudo apt install -y wget"
+    exit 1
+  fi
   if ! command -v cmake; then
     echo "Try to cd ${INSTALL_DIR}"
     cd ${INSTALL_DIR} || exit 1
@@ -69,14 +118,14 @@ if "${INSTALL_SOFTWARE}"; then
     CMAKE_TARGET_VERSION=3.15.5
     wget "https://github.com/Kitware/CMake/releases/download/v${CMAKE_TARGET_VERSION}/cmake-${CMAKE_TARGET_VERSION}.tar.gz"  || exit 1
     tar -xvf "cmake-${CMAKE_TARGET_VERSION}.tar.gz"  || exit 1
-
+    rm "cmake-${CMAKE_TARGET_VERSION}.tar.gz"
     echo "Try to cd cmake-${CMAKE_TARGET_VERSION}"
     cd "cmake-${CMAKE_TARGET_VERSION}" || exit 1
     echo "Try to build cmake"
 
     ./bootstrap || exit 1
     make -j ${PROCESSORS} || exit 1
-    make install || exit 1
+    sudo make install || exit 1
     cmake --version || exit 1
   fi
 
@@ -124,7 +173,7 @@ if "${CHANGE_BASHRC}"; then
     echo "#===========likelib=============" >> "${PATH_TO_BASH_RC}"
     echo "export likelib_SOURCE_DIR=${PWD}" >> "${PATH_TO_BASH_RC}"
     echo -e "zmake () {\n
-    cmake ${likelib_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/${TARGET_VCPKG_FOLDER}/scripts/buildsystems/vcpkg.cmake \n
+    cmake \${likelib_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/${TARGET_VCPKG_FOLDER}/scripts/buildsystems/vcpkg.cmake \n
     }" >> "${PATH_TO_BASH_RC}"
 
   fi
