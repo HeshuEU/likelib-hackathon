@@ -178,7 +178,7 @@ if "${CHANGE_BASHRC}"; then
     echo "#===========likelib=============" >> "${PATH_TO_BASH_RC}"
     echo "export likelib_SOURCE_DIR=${PWD}" >> "${PATH_TO_BASH_RC}"
     echo -e "zmake () {\n
-    cmake \${likelib_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/${TARGET_VCPKG_FOLDER}/scripts/buildsystems/vcpkg.cmake \n
+    $INSTALL_DIR/bin/cmake \${likelib_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/${TARGET_VCPKG_FOLDER}/scripts/buildsystems/vcpkg.cmake \n
     }" >> "${PATH_TO_BASH_RC}"
 
   fi
