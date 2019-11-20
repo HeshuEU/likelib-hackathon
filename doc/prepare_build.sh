@@ -129,7 +129,8 @@ if "${INSTALL_SOFTWARE}"; then
 
     cd /tmp
     wget https://github.com/Kitware/CMake/releases/download/v3.16.0-rc4/cmake-3.16.0-rc4-Linux-x86_64.sh
-    . ./cmake-3.16.0-rc4-Linux-x86_64.sh --skip-license --prefix=$INSTALL_DIR
+    chmod +x ./cmake-3.16.0-rc4-Linux-x86_64.sh
+    ./cmake-3.16.0-rc4-Linux-x86_64.sh --skip-license --prefix=$INSTALL_DIR
     rm ./cmake-3.16.0-rc4-Linux-x86_64.sh
     $INSTALL_DIR/bin/cmake --version || exit 1
   fi
