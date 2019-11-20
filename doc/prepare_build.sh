@@ -66,8 +66,9 @@ else
     NEW_INSTALL_PATH=$REPLY
 fi
 if [ -n "$NEW_INSTALL_PATH" ]; then
-  echo "NEW path $NEW_INSTALL_PATH"
-  mkdir -p $NEW_INSTALL_PATH || (echo "Can't create $NEW_INSTALL_PATH" && exit 1)
+  #echo "NEW path $NEW_INSTALL_PATH"
+  mkdir -p $NEW_INSTALL_PATH
+  [ -w $NEW_INSTALL_PATH ] && echo "NEW install path $NEW_INSTALL_PATH" ||  (echo "Can't create \"$NEW_INSTALL_PATH\" exit" && exit 1)
 else
   echo "OLD path $INSTALL_DIR"
 fi
