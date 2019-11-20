@@ -4,8 +4,6 @@
 
 #include <base/crypto.hpp>
 
-#include <iostream>
-
 BOOST_AUTO_TEST_CASE(Rsa_constructor_encrypt_decrypt_check)
 {
     auto rsa1 = base::generate(2048);
