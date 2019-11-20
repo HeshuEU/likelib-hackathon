@@ -5,139 +5,295 @@
 #include <openssl/bn.h>
 #include <openssl/pem.h>
 
+#include <fstream>
+#include <iostream>
+
 namespace base
 {
 
-Rsa::Rsa(const size_t count_bites)
+PublicRsaKey::PublicRsaKey(RSA* key) : _public_key(RSA_size(key))
 {
-    std::shared_ptr<BIGNUM> bn(BN_new(), ::BN_free);
-    std::shared_ptr<RSA> rsa(RSA_new(), ::RSA_free);
-    BN_set_word(bn.get(), RSA_F4);
-    RSA_generate_key_ex(rsa.get(), count_bites, bn.get(), NULL);
-    _private_key = std::shared_ptr<RSA>(RSAPrivateKey_dup(rsa.get()), ::RSA_free);
-    _public_key = std::shared_ptr<RSA>(RSAPublicKey_dup(rsa.get()), ::RSA_free);
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
+    ASSERT(PEM_write_bio_RSAPublicKey(bio.get(), key)); // check errors
+    _public_key = Bytes(BIO_pending(bio.get()));
+    _size = RSA_size(key);
+    ASSERT(BIO_read(bio.get(), _public_key.toArray(), _public_key.size()));
 }
 
 
-Rsa::Rsa(const std::shared_ptr<RSA>& public_key) : _private_key(nullptr), _public_key(public_key)
-{}
-
-
-Rsa::Rsa(const std::filesystem::path& public_path, const std::filesystem::path& private_path)
+PublicRsaKey::PublicRsaKey(EVP_PKEY* key) : _public_key(EVP_PKEY_size(key))
 {
-    if(!std::filesystem::exists(public_path)) {
-        throw std::runtime_error("Public_file_not_exist");
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
+    ASSERT(PEM_write_bio_PUBKEY(bio.get(), key)); // check errors
+    _public_key = Bytes(BIO_pending(bio.get()));
+    _size = EVP_PKEY_size(key);
+    ASSERT(BIO_read(bio.get(), _public_key.toArray(), _public_key.size()));
+}
+
+
+PublicRsaKey::PublicRsaKey(const std::filesystem::path& path)
+{
+    if(!std::filesystem::exists(path)) {
+        throw std::runtime_error("Path for PublicRsaKey not exist");
     }
-    if(!std::filesystem::exists(private_path)) {
-        throw std::runtime_error("Private_file_not_exist");
+    std::ifstream file(path);
+    std::string key;
+    std::getline(file, key, '\0'); // It's normat?
+    _public_key = Bytes(key);
+    _size = RSA_size(toRsaKey());
+}
+
+
+PublicRsaKey::PublicRsaKey(const Bytes& key) : _public_key(key)
+{
+    auto rsa_key = toRsaKey();
+    _size = RSA_size(rsa_key);
+}
+
+
+Bytes PublicRsaKey::encrypt(const Bytes& message) const
+{
+    ASSERT(message.size() <= maxEncryptSize());
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
+    Bytes encrypted_message(size());
+    ASSERT(RSA_public_encrypt(message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(),
+        RSA_PKCS1_OAEP_PADDING)); // check errors
+    return encrypted_message;
+}
+
+
+Bytes PublicRsaKey::encryptWithAes(const Bytes& message) const
+{
+    std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> rsa_ecnrypt_ctx(
+        EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
+    EVP_CIPHER_CTX_init(rsa_ecnrypt_ctx.get());
+    Bytes iv(EVP_MAX_IV_LENGTH);
+    Bytes ek(size());
+    auto ek_temp = ek.toArray();
+    auto evp_key = toEvpKey();
+    int ek_len = 0;
+    ASSERT(EVP_SealInit(rsa_ecnrypt_ctx.get(), EVP_aes_256_cbc(), &ek_temp, &ek_len, iv.toArray(), &evp_key,
+        1)); // check errors
+    Bytes encrypted_aes_message(message.size() + EVP_MAX_IV_LENGTH);
+    int encrypted_block_len = 0;
+    ASSERT(
+        EVP_SealUpdate(rsa_ecnrypt_ctx.get(), encrypted_aes_message.toArray(), &encrypted_block_len, message.toArray(),
+            message.size())); // check errors
+    int encrypted_message_len = encrypted_block_len;
+    ASSERT(EVP_SealFinal(rsa_ecnrypt_ctx.get(), encrypted_aes_message.toArray() + encrypted_block_len,
+        &encrypted_block_len)); // check errors
+    encrypted_message_len += encrypted_block_len;
+
+    Bytes encrypted_message;
+    std::string encrypted_message_len_str = std::to_string(encrypted_message_len);
+    while(encrypted_message_len_str.size() < 9) {
+        encrypted_message_len_str = '0' + encrypted_message_len_str;
     }
-    FILE* public_file = fopen(public_path.c_str(), "rb");
-    FILE* private_file = fopen(private_path.c_str(), "rb");
-    RSA* private_temp = RSA_new();
-    RSA* public_temp = RSA_new();
-    PEM_read_RSAPrivateKey(private_file, &private_temp, NULL, NULL);
-    PEM_read_RSAPublicKey(public_file, &public_temp, NULL, NULL);
-    _private_key = std::shared_ptr<RSA>(private_temp, ::RSA_free);
-    _public_key = std::shared_ptr<RSA>(public_temp, ::RSA_free);
-    fclose(public_file);
-    fclose(private_file);
-}
-
-
-Rsa::Rsa(Rsa&& object) : _private_key(std::move(object._private_key)), _public_key(std::move(object._public_key))
-{}
-
-
-Rsa& Rsa::operator=(Rsa&& object)
-{
-    if(this == &object) {
-        return *this;
+    std::string ek_len_str = std::to_string(ek_len);
+    while(ek_len_str.size() < 9) {
+        ek_len_str = '0' + ek_len_str;
     }
-    _private_key = std::move(object._private_key);
-    _public_key = std::move(object._public_key);
-
-    return *this;
+    encrypted_message.append(Bytes(encrypted_message_len_str));
+    encrypted_message.append(Bytes(ek_len_str));
+    encrypted_message.append(iv);
+    encrypted_message.append(ek);
+    encrypted_message.append(encrypted_aes_message);
+    return encrypted_message;
 }
 
 
-Bytes Rsa::privateEncrypt(const Bytes& message) const
+Bytes PublicRsaKey::decrypt(const Bytes& encrypted_message) const
 {
-    ASSERT(message.size() <= maxPrivateEncryptSize());
-    Bytes encrypt_message(RSA_size(_private_key.get()));
-    RSA_private_encrypt(message.size(), reinterpret_cast<const unsigned char*>(message.toArray()),
-                        reinterpret_cast<unsigned char*>(encrypt_message.toArray()), _private_key.get(),
-                        RSA_PKCS1_PADDING);
-    return encrypt_message;
+    ASSERT(encrypted_message.size() <= size());
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
+    Bytes decrypted_message(size());
+    auto message_size = RSA_public_decrypt(encrypted_message.size(), encrypted_message.toArray(), // check errors
+        decrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_PADDING);
+    ASSERT(message_size != -1);
+    return decrypted_message.takePart(0, message_size);
 }
 
 
-Bytes Rsa::publicEncrypt(const Bytes& message) const
+std::size_t PublicRsaKey::size() const noexcept
 {
-    ASSERT(message.size() <= maxPublicEncryptSize());
-    Bytes encrypt_message(RSA_size(_public_key.get()));
-    RSA_public_encrypt(message.size(), reinterpret_cast<const unsigned char*>(message.toArray()),
-                       reinterpret_cast<unsigned char*>(encrypt_message.toArray()), _public_key.get(),
-                       RSA_PKCS1_OAEP_PADDING);
-    return encrypt_message;
+    return _size;
 }
 
 
-Bytes Rsa::privateDecrypt(const Bytes& encrypt_message) const
+std::size_t PublicRsaKey::maxEncryptSize() const noexcept
 {
-    ASSERT(encrypt_message.size() <= size());
-    Bytes decrypt_message(RSA_size(_private_key.get()));
-    auto message_size = RSA_private_decrypt(
-        encrypt_message.size(), reinterpret_cast<const unsigned char*>(encrypt_message.toArray()),
-        reinterpret_cast<unsigned char*>(decrypt_message.toArray()), _private_key.get(), RSA_PKCS1_OAEP_PADDING);
+    return size() - 42;
+}
+
+
+Bytes PublicRsaKey::toBytes() const noexcept
+{
+    return _public_key;
+}
+
+void PublicRsaKey::save(const std::filesystem::path& path) const
+{
+    std::ofstream file(path);
+    file << _public_key.toString();
+}
+
+
+RSA* PublicRsaKey::toRsaKey() const
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(
+        BIO_new_mem_buf(_public_key.toArray(), _public_key.size()), ::BIO_free);
+    RSA* rsa_key = nullptr;
+    ASSERT(PEM_read_bio_RSAPublicKey(bio.get(), &rsa_key, NULL, NULL)); // check errors
+    return rsa_key;
+}
+
+
+EVP_PKEY* PublicRsaKey::toEvpKey() const
+{
+    EVP_PKEY* evp_rsa_key = EVP_PKEY_new();
+    auto rsa_key = toRsaKey();
+    ASSERT(EVP_PKEY_assign_RSA(evp_rsa_key, rsa_key)); // aspect on an existing element
+    return evp_rsa_key;
+}
+
+
+PrivateRsaKey::PrivateRsaKey(RSA* key)
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
+    ASSERT(PEM_write_bio_RSAPrivateKey(bio.get(), key, NULL, NULL, 0, 0, NULL)); // check errors
+    _private_key = Bytes(BIO_pending(bio.get()));
+    _size = RSA_size(key);
+    ASSERT(BIO_read(bio.get(), _private_key.toArray(), BIO_pending(bio.get()))); // check errors
+}
+
+
+PrivateRsaKey::PrivateRsaKey(EVP_PKEY* key)
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
+    ASSERT(PEM_write_bio_PrivateKey(bio.get(), key, NULL, NULL, 0, 0, NULL)); // check errors
+    _private_key = Bytes(BIO_pending(bio.get()));
+    _size = EVP_PKEY_size(key);
+    ASSERT(BIO_read(bio.get(), _private_key.toArray(), _private_key.size()));
+}
+
+
+PrivateRsaKey::PrivateRsaKey(const Bytes& key) : _private_key(key)
+{
+    auto rsa_key = toRsaKey();
+    _size = _private_key.size();
+}
+
+
+PrivateRsaKey::PrivateRsaKey(const std::filesystem::path& path)
+{
+    if(!std::filesystem::exists(path)) {
+        throw std::runtime_error("Path for PublicRsaKey not exist");
+    }
+    std::ifstream file(path);
+    std::string key;
+    std::getline(file, key, '\0'); // It's normat?
+    _private_key = Bytes(key);
+    _size = RSA_size(toRsaKey());
+}
+
+
+Bytes PrivateRsaKey::encrypt(const Bytes& message) const
+{
+    ASSERT(message.size() <= maxEncryptSize());
+    Bytes encrypted_message(size());
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
+    ASSERT(RSA_private_encrypt(message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(),
+        RSA_PKCS1_PADDING)); // check errors
+    return encrypted_message;
+}
+
+
+Bytes PrivateRsaKey::decrypt(const Bytes& encrypted_message) const
+{
+    ASSERT(encrypted_message.size() <= size());
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
+    Bytes decrypt_message(size());
+    auto message_size = RSA_private_decrypt(encrypted_message.size(), encrypted_message.toArray(), // check errors
+        decrypt_message.toArray(), rsa_key.get(), RSA_PKCS1_OAEP_PADDING);
     return decrypt_message.takePart(0, message_size);
 }
 
 
-Bytes Rsa::publicDecrypt(const Bytes& encrypt_message) const
+Bytes PrivateRsaKey::decryptWithAes(const Bytes& encrypted_message) const
 {
-    ASSERT(encrypt_message.size() <= size());
-    Bytes decrypt_message(RSA_size(_public_key.get()));
-    auto message_size = RSA_public_decrypt(
-        encrypt_message.size(), reinterpret_cast<const unsigned char*>(encrypt_message.toArray()),
-        reinterpret_cast<unsigned char*>(decrypt_message.toArray()), _public_key.get(), RSA_PKCS1_PADDING);
-    return decrypt_message.takePart(0, message_size);
+    ASSERT(encrypted_message.size() > EVP_MAX_IV_LENGTH + size());
+    int encrypted_message_len = stoi(encrypted_message.takePart(0, 9).toString());
+    int ek_len = stoi(encrypted_message.takePart(9, 18).toString());
+    Bytes iv(encrypted_message.takePart(18, 18 + EVP_MAX_IV_LENGTH));
+    Bytes ek(encrypted_message.takePart(18 + EVP_MAX_IV_LENGTH, 18 + EVP_MAX_IV_LENGTH + size()));
+    Bytes encrypted_aes_message(encrypted_message.takePart(18 + EVP_MAX_IV_LENGTH + size(), encrypted_message.size()));
+    std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> rsa_decrypt_ctx(
+        EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
+    std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)> evp_key(toEvpKey(), ::EVP_PKEY_free);
+    EVP_CIPHER_CTX_init(rsa_decrypt_ctx.get());
+    ASSERT(EVP_OpenInit(
+        rsa_decrypt_ctx.get(), EVP_aes_256_cbc(), ek.toArray(), ek_len, iv.toArray(), evp_key.get())); // check errors
+    Bytes decrypted_message(encrypted_message_len + EVP_MAX_IV_LENGTH);
+    int decrypted_block_len = 0;
+    ASSERT(EVP_OpenUpdate(rsa_decrypt_ctx.get(), decrypted_message.toArray(), &decrypted_block_len,
+        encrypted_aes_message.toArray(), encrypted_message_len)); // check errors
+    ASSERT(EVP_OpenFinal(rsa_decrypt_ctx.get(), decrypted_message.toArray() + decrypted_block_len,
+        &decrypted_block_len)); // check errors
+    return decrypted_message.takePart(0, encrypted_aes_message.size() - EVP_MAX_IV_LENGTH);
 }
 
 
-void Rsa::save(const std::filesystem::path& public_path, const std::filesystem::path& private_path) const
+std::size_t PrivateRsaKey::size() const noexcept
 {
-    FILE* public_file = fopen(public_path.c_str(), "w");
-    PEM_write_RSAPublicKey(public_file, _public_key.get());
-    fclose(public_file);
-
-    if(private_path.string() != std::filesystem::path("-1")) {
-        FILE* private_file = fopen(private_path.c_str(), "w");
-        PEM_write_RSAPrivateKey(private_file, _private_key.get(), NULL, NULL, 0, NULL, NULL);
-        fclose(private_file);
-    }
+    return _size;
 }
 
 
-size_t Rsa::size() const
-{
-    return RSA_size(_public_key.get());
-}
-
-
-size_t Rsa::maxPrivateEncryptSize() const
+std::size_t PrivateRsaKey::maxEncryptSize() const noexcept
 {
     return size() - 11;
 }
 
 
-size_t Rsa::maxPublicEncryptSize() const
+Bytes PrivateRsaKey::toBytes() const noexcept
 {
-    return size() - 42;
+    return _private_key;
 }
 
-std::shared_ptr<RSA> Rsa::getPublicKey() const
+
+void PrivateRsaKey::save(const std::filesystem::path& path) const
 {
-    return _public_key;
+    std::ofstream file(path);
+    file << _private_key.toArray();
+}
+
+
+RSA* PrivateRsaKey::toRsaKey() const
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(
+        BIO_new_mem_buf(_private_key.toArray(), _private_key.size()), ::BIO_free);
+    RSA* rsa_key = RSA_new();
+    ASSERT(PEM_read_bio_RSAPrivateKey(bio.get(), &rsa_key, NULL, NULL)); // check errors
+    return rsa_key;
+}
+
+
+EVP_PKEY* PrivateRsaKey::toEvpKey() const
+{
+    EVP_PKEY* evp_rsa_key = EVP_PKEY_new();
+    auto rsa_key = toRsaKey();
+    ASSERT(EVP_PKEY_assign_RSA(evp_rsa_key, rsa_key)); // aspect on an existing element
+    return evp_rsa_key;
+}
+
+
+std::pair<PrivateRsaKey, PublicRsaKey> generate(const std::size_t keys_size)
+{
+    std::shared_ptr<BIGNUM> bn(BN_new(), ::BN_free);
+    std::shared_ptr<RSA> rsa(RSA_new(), ::RSA_free);
+    ASSERT(BN_set_word(bn.get(), RSA_F4)); // check errors
+    ASSERT(RSA_generate_key_ex(rsa.get(), keys_size, bn.get(), NULL)); // check errors
+    return std::pair<PrivateRsaKey, PublicRsaKey>(RSAPrivateKey_dup(rsa.get()), RSAPublicKey_dup(rsa.get()));
 }
 
 } // namespace base

@@ -1,53 +1,113 @@
 #include "base/bytes.hpp"
 
 #include <openssl/rsa.h>
+#include <openssl/evp.h>
 
 #include <filesystem>
 #include <memory>
 
 namespace base
 {
-class Rsa
+
+class PublicRsaKey
 {
   public:
     //----------------------------------
-    Rsa(const size_t count_bites);
-    Rsa(const std::shared_ptr<RSA>& public_key);
-    Rsa(const std::filesystem::path& public_path, const std::filesystem::path& private_path);
-    Rsa(const Rsa&) = delete;
-    Rsa(Rsa&& rsa);
-    Rsa& operator=(const Rsa&) = delete;
-    Rsa& operator=(Rsa&& obj);
-    ~Rsa() = default;
+
+    PublicRsaKey() = delete;
+    PublicRsaKey(RSA* key);
+    PublicRsaKey(EVP_PKEY* key);
+    PublicRsaKey(const Bytes& key);
+    PublicRsaKey(const std::filesystem::path& path);
+    PublicRsaKey(const PublicRsaKey& another) = default;
+    PublicRsaKey(PublicRsaKey&& another) = default;
+    PublicRsaKey& operator=(const PublicRsaKey& another) = default;
+    PublicRsaKey& operator=(PublicRsaKey&& another) = default;
 
     //----------------------------------
 
-    Bytes privateEncrypt(const Bytes& message) const;
+    Bytes encrypt(const Bytes& message) const;
 
-    Bytes publicEncrypt(const Bytes& message) const;
+    Bytes encryptWithAes(const Bytes& message) const;
 
-    Bytes privateDecrypt(const Bytes& encrypt_message) const;
-
-    Bytes publicDecrypt(const Bytes& encrypt_message) const;
+    Bytes decrypt(const Bytes& encrypted_message) const;
 
     //----------------------------------
 
-    void save(const std::filesystem::path& public_path, const std::filesystem::path& private_path = "-1") const;  //TODO: change it
+    std::size_t size() const noexcept;
+
+    std::size_t maxEncryptSize() const noexcept;
 
     //----------------------------------
 
-    size_t size() const;
-
-    size_t maxPrivateEncryptSize() const;
-
-    size_t maxPublicEncryptSize() const;
+    Bytes toBytes() const noexcept;
 
     //----------------------------------
 
-    std::shared_ptr<RSA> getPublicKey() const;
+    void save(const std::filesystem::path& path) const;
 
   private:
-    std::shared_ptr<RSA> _private_key;  //TODO: maybe store Bytes?
-    std::shared_ptr<RSA> _public_key;
+    Bytes _public_key;
+
+    std::size_t _size;
+
+    //----------------------------------
+
+    RSA* toRsaKey() const;
+
+    EVP_PKEY* toEvpKey() const;
 };
+
+class PrivateRsaKey
+{
+  public:
+    //----------------------------------
+
+    PrivateRsaKey() = delete;
+    PrivateRsaKey(RSA* key);
+    PrivateRsaKey(EVP_PKEY* key);
+    PrivateRsaKey(const Bytes& key);
+    PrivateRsaKey(const std::filesystem::path& path);
+    PrivateRsaKey(const PrivateRsaKey& another) = default;
+    PrivateRsaKey(PrivateRsaKey&& another) = default;
+    PrivateRsaKey& operator=(const PrivateRsaKey& another) = default;
+    PrivateRsaKey& operator=(PrivateRsaKey&& another) = default;
+
+    //----------------------------------
+
+    Bytes encrypt(const Bytes& message) const;
+
+    Bytes decrypt(const Bytes& encrypted_message) const;
+
+    Bytes decryptWithAes(const Bytes& encrypted_message) const;
+
+    //----------------------------------
+
+    std::size_t size() const noexcept;
+
+    std::size_t maxEncryptSize() const noexcept;
+
+    //----------------------------------
+
+    Bytes toBytes() const noexcept;
+
+    //----------------------------------
+
+    void save(const std::filesystem::path& path) const;
+
+  private:
+    Bytes _private_key;
+
+    std::size_t _size;
+
+    //----------------------------------
+
+    RSA* toRsaKey() const;
+
+    EVP_PKEY* toEvpKey() const;
+};
+
+
+std::pair<PrivateRsaKey, PublicRsaKey> generate(const std::size_t keys_size);
+
 } // namespace base
