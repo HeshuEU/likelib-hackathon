@@ -37,6 +37,10 @@ class Block
 
     base::Bytes serialize() const;
 
+    //=================
+
+    bool checkValidness() const;
+
   private:
     NonceInt _nonce;
 

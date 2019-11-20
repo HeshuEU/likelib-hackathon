@@ -14,6 +14,8 @@ set(BASE_HEADERS
         bytes.hpp
         hash.hpp
         timer.hpp
+        serialization.hpp
+        serialization.tpp
         )
 
 set(BASE_SOURCES
@@ -24,6 +26,7 @@ set(BASE_SOURCES
         bytes.cpp
         hash.cpp
         timer.cpp
+        serialization.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})

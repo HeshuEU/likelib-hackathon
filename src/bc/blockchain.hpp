@@ -3,6 +3,7 @@
 #include "bc/block.hpp"
 #include "bc/transaction.hpp"
 
+#include <list>
 
 namespace bc
 {
@@ -15,6 +16,7 @@ class Blockchain
     void transactionReceived(Transaction&& transaction);
 
   private:
+    std::list<Block> _blocks;
 };
 
 } // namespace bc

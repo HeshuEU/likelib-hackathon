@@ -48,7 +48,7 @@ void Block::setNonce(NonceInt nonce) noexcept
 base::Bytes Block::serialize() const
 {
     std::ostringstream oss;
-    boost::archive::text_oarchive to(oss);
+    boost::archive::text_oarchive to(oss, boost::archive::no_header);
     to << _prev_block_hash << _txs.size();
 
     std::size_t index = 0;
@@ -57,6 +57,14 @@ base::Bytes Block::serialize() const
     }
 
     return base::Bytes(oss.str());
+}
+
+
+bool Block::checkValidness() const
+{
+    static const base::Bytes MAX_HASH_VALUE{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    return serialize() < MAX_HASH_VALUE;
 }
 
 
@@ -76,5 +84,6 @@ Block BlockBuilder::build() &&
 {
     return Block(std::move(_prev_block_hash), std::move(_txs));
 }
+
 
 } // namespace bc
