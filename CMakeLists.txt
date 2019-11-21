@@ -27,6 +27,11 @@ find_package(OpenSSL REQUIRED)
 
 #==========================
 
+# adding LevelDB to project
+find_package(leveldb CONFIG REQUIRED)
+
+#==========================
+
 # setting up common include directories
 include_directories(./src)
 #===========================
