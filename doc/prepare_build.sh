@@ -64,14 +64,18 @@ if $INSTALL_FOR_DOCKER; then
 else
     read -p "Enter install path [$INSTALL_DIR]:"
     NEW_INSTALL_PATH=$REPLY
+    mkdir -p $NEW_INSTALL_PATH
 fi
-if [ -n "$NEW_INSTALL_PATH" ]; then
-  #echo "NEW path $NEW_INSTALL_PATH"
-  mkdir -p $NEW_INSTALL_PATH
-  [ -w $NEW_INSTALL_PATH ] && echo "NEW install path $NEW_INSTALL_PATH" ||  (echo "Can't create \"$NEW_INSTALL_PATH\" exit" && exit 1)
+if [ -w $NEW_INSTALL_PATH ]; then
+  echo "NEW install path $NEW_INSTALL_PATH"
+  INSTALL_DIR=$NEW_INSTALL_PATH
 else
-  echo "OLD path $INSTALL_DIR"
+  echo "Can't write to $NEW_INSTALL_PATH"
+  echo "Exit..."
+  exit 1
 fi
+
+echo "INSTALL_DIR = $INSTALL_DIR"
 
 ## run workflow
 ## run install software
