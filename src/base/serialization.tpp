@@ -59,15 +59,20 @@ template<typename T>
 SerializationIArchive& SerializationIArchive::operator>>(T& v)
 {
     if constexpr(std::is_integral<T>::value) {
-        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16,
+        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8 || sizeof(v) == 16,
             "this integral type is not serializable");
 
         v = *reinterpret_cast<T*>(_bytes.toArray() + _index);
+        if(sizeof(v) == 1) {
+            _index++;
+        }
         if(sizeof(v) == 2) {
             v = ntohs(v);
+            _index += 2;
         }
         else if(sizeof(v) == 4) {
             v = ntohl(v);
+            _index += 4;
         }
         else if(sizeof(v) == 8) {
             std::uint32_t a, b;
@@ -81,8 +86,6 @@ SerializationIArchive& SerializationIArchive::operator>>(T& v)
             v = a;
             v = (v << 64) | b;
         }
-
-        _index += sizeof(v);
     }
     else {
         static_assert(impl::TrickFalse<T>::value, "type is not deserializable");
