@@ -7,39 +7,30 @@
 
 #include <fstream>
 
+namespace
+{
+std::string read_all_file(const std::filesystem::path& path)
+{
+    std::ifstream file(path);
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    std::string buffer(size, ' ');
+    file.seekg(0);
+    file.read(&buffer[0], size);
+    return buffer;
+}
+} // namespace
+
 
 namespace base
 {
-
-PublicRsaKey::PublicRsaKey(RSA* key) : _public_key(RSA_size(key))
-{
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
-    ASSERT(PEM_write_bio_RSAPublicKey(bio.get(), key)); // check errors
-    _public_key = Bytes(BIO_pending(bio.get()));
-    _size = RSA_size(key);
-    ASSERT(BIO_read(bio.get(), _public_key.toArray(), _public_key.size()));
-}
-
-
-PublicRsaKey::PublicRsaKey(EVP_PKEY* key) : _public_key(EVP_PKEY_size(key))
-{
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
-    ASSERT(PEM_write_bio_PUBKEY(bio.get(), key)); // check errors
-    _public_key = Bytes(BIO_pending(bio.get()));
-    _size = EVP_PKEY_size(key);
-    ASSERT(BIO_read(bio.get(), _public_key.toArray(), _public_key.size()));
-}
-
 
 PublicRsaKey::PublicRsaKey(const std::filesystem::path& path)
 {
     if(!std::filesystem::exists(path)) {
         throw std::runtime_error("Path for PublicRsaKey not exist");
     }
-    std::ifstream file(path);
-    std::string key;
-    std::getline(file, key, '\0'); // It's normat?
-    _public_key = Bytes(key);
+    _public_key = Bytes(read_all_file(path));
     _size = RSA_size(toRsaKey());
 }
 
@@ -53,11 +44,15 @@ PublicRsaKey::PublicRsaKey(const Bytes& key) : _public_key(key)
 
 Bytes PublicRsaKey::encrypt(const Bytes& message) const
 {
-    ASSERT(message.size() <= maxEncryptSize());
+    if(message.size() > maxEncryptSize()) {
+        throw std::runtime_error("Large message size for RSA encryption");
+    }
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
     Bytes encrypted_message(size());
-    ASSERT(RSA_public_encrypt(message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(),
-        RSA_PKCS1_OAEP_PADDING)); // check errors
+    if(!RSA_public_encrypt(
+           message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_OAEP_PADDING)) {
+        throw std::runtime_error("RSA public key encryption error");
+    } // check errors
     return encrypted_message;
 }
 
@@ -137,6 +132,25 @@ void PublicRsaKey::save(const std::filesystem::path& path) const
     file << _public_key.toString();
 }
 
+PublicRsaKey::PublicRsaKey(RSA* key) : _public_key(RSA_size(key))
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
+    ASSERT(PEM_write_bio_RSAPublicKey(bio.get(), key)); // check errors
+    _public_key = Bytes(BIO_pending(bio.get()));
+    _size = RSA_size(key);
+    ASSERT(BIO_read(bio.get(), _public_key.toArray(), _public_key.size()));
+}
+
+
+PublicRsaKey::PublicRsaKey(EVP_PKEY* key) : _public_key(EVP_PKEY_size(key))
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
+    ASSERT(PEM_write_bio_PUBKEY(bio.get(), key)); // check errors
+    _public_key = Bytes(BIO_pending(bio.get()));
+    _size = EVP_PKEY_size(key);
+    ASSERT(BIO_read(bio.get(), _public_key.toArray(), _public_key.size()));
+}
+
 
 RSA* PublicRsaKey::toRsaKey() const
 {
@@ -157,26 +171,6 @@ EVP_PKEY* PublicRsaKey::toEvpKey() const
 }
 
 
-PrivateRsaKey::PrivateRsaKey(RSA* key)
-{
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
-    ASSERT(PEM_write_bio_RSAPrivateKey(bio.get(), key, NULL, NULL, 0, 0, NULL)); // check errors
-    _private_key = Bytes(BIO_pending(bio.get()));
-    _size = RSA_size(key);
-    ASSERT(BIO_read(bio.get(), _private_key.toArray(), BIO_pending(bio.get()))); // check errors
-}
-
-
-PrivateRsaKey::PrivateRsaKey(EVP_PKEY* key)
-{
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
-    ASSERT(PEM_write_bio_PrivateKey(bio.get(), key, NULL, NULL, 0, 0, NULL)); // check errors
-    _private_key = Bytes(BIO_pending(bio.get()));
-    _size = EVP_PKEY_size(key);
-    ASSERT(BIO_read(bio.get(), _private_key.toArray(), _private_key.size()));
-}
-
-
 PrivateRsaKey::PrivateRsaKey(const Bytes& key) : _private_key(key)
 {
     auto rsa_key = toRsaKey();
@@ -189,17 +183,17 @@ PrivateRsaKey::PrivateRsaKey(const std::filesystem::path& path)
     if(!std::filesystem::exists(path)) {
         throw std::runtime_error("Path for PublicRsaKey not exist");
     }
-    std::ifstream file(path);
-    std::string key;
-    std::getline(file, key, '\0'); // It's normat?
-    _private_key = Bytes(key);
+
+    _private_key = Bytes(read_all_file(path));
     _size = RSA_size(toRsaKey());
 }
 
 
 Bytes PrivateRsaKey::encrypt(const Bytes& message) const
 {
-    ASSERT(message.size() <= maxEncryptSize());
+    if(message.size() > maxEncryptSize()) {
+        throw std::runtime_error("Large message size for RSA encryption");
+    }
     Bytes encrypted_message(size());
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
     ASSERT(RSA_private_encrypt(message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(),
@@ -268,6 +262,26 @@ void PrivateRsaKey::save(const std::filesystem::path& path) const
 }
 
 
+PrivateRsaKey::PrivateRsaKey(RSA* key)
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
+    ASSERT(PEM_write_bio_RSAPrivateKey(bio.get(), key, NULL, NULL, 0, 0, NULL)); // check errors
+    _private_key = Bytes(BIO_pending(bio.get()));
+    _size = RSA_size(key);
+    ASSERT(BIO_read(bio.get(), _private_key.toArray(), BIO_pending(bio.get()))); // check errors
+}
+
+
+PrivateRsaKey::PrivateRsaKey(EVP_PKEY* key)
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
+    ASSERT(PEM_write_bio_PrivateKey(bio.get(), key, NULL, NULL, 0, 0, NULL)); // check errors
+    _private_key = Bytes(BIO_pending(bio.get()));
+    _size = EVP_PKEY_size(key);
+    ASSERT(BIO_read(bio.get(), _private_key.toArray(), _private_key.size()));
+}
+
+
 RSA* PrivateRsaKey::toRsaKey() const
 {
     std::unique_ptr<BIO, decltype(&::BIO_free)> bio(
@@ -287,13 +301,13 @@ EVP_PKEY* PrivateRsaKey::toEvpKey() const
 }
 
 
-std::pair<PrivateRsaKey, PublicRsaKey> generate(const std::size_t keys_size)
+std::pair<PublicRsaKey, PrivateRsaKey> generate(const std::size_t keys_size)
 {
-    std::shared_ptr<BIGNUM> bn(BN_new(), ::BN_free);
-    std::shared_ptr<RSA> rsa(RSA_new(), ::RSA_free);
+    std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa(RSA_new(), ::RSA_free);
     ASSERT(BN_set_word(bn.get(), RSA_F4)); // check errors
     ASSERT(RSA_generate_key_ex(rsa.get(), keys_size, bn.get(), NULL)); // check errors
-    return std::pair<PrivateRsaKey, PublicRsaKey>(RSAPrivateKey_dup(rsa.get()), RSAPublicKey_dup(rsa.get()));
+    return std::pair<PublicRsaKey, PrivateRsaKey>(RSAPublicKey_dup(rsa.get()), RSAPrivateKey_dup(rsa.get()));
 }
 
 } // namespace base

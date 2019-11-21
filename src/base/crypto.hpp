@@ -9,14 +9,18 @@
 namespace base
 {
 
+class PublicRsaKey;
+class PrivateRsaKey;
+std::pair<PublicRsaKey, PrivateRsaKey> generate(const std::size_t keys_size);
+
 class PublicRsaKey
 {
   public:
     //----------------------------------
 
+    friend std::pair<PublicRsaKey, PrivateRsaKey> generate(const std::size_t key_size);
+
     PublicRsaKey() = delete;
-    PublicRsaKey(RSA* key);
-    PublicRsaKey(EVP_PKEY* key);
     PublicRsaKey(const Bytes& key);
     PublicRsaKey(const std::filesystem::path& path);
     PublicRsaKey(const PublicRsaKey& another) = default;
@@ -53,6 +57,11 @@ class PublicRsaKey
 
     //----------------------------------
 
+    PublicRsaKey(RSA* key);
+    PublicRsaKey(EVP_PKEY* key);
+
+    //----------------------------------
+
     RSA* toRsaKey() const;
 
     EVP_PKEY* toEvpKey() const;
@@ -63,9 +72,9 @@ class PrivateRsaKey
   public:
     //----------------------------------
 
+    friend std::pair<PublicRsaKey, PrivateRsaKey> generate(const std::size_t key_size);
+
     PrivateRsaKey() = delete;
-    PrivateRsaKey(RSA* key);
-    PrivateRsaKey(EVP_PKEY* key);
     PrivateRsaKey(const Bytes& key);
     PrivateRsaKey(const std::filesystem::path& path);
     PrivateRsaKey(const PrivateRsaKey& another) = default;
@@ -102,12 +111,14 @@ class PrivateRsaKey
 
     //----------------------------------
 
+    PrivateRsaKey(RSA* key);
+    PrivateRsaKey(EVP_PKEY* key);
+
+    //----------------------------------
+
     RSA* toRsaKey() const;
 
     EVP_PKEY* toEvpKey() const;
 };
-
-
-std::pair<PrivateRsaKey, PublicRsaKey> generate(const std::size_t keys_size);
 
 } // namespace base
