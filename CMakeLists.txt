@@ -19,6 +19,11 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 
 #==========================
 
+# adding OpenSSL to project
+find_package(OpenSSL REQUIRED)
+
+#==========================
+
 # setting up common include directories
 include_directories(./src)
 #===========================
