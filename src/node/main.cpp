@@ -4,6 +4,7 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
+#include "bc/blockchain.hpp"
 #include "net/network.hpp"
 #include "net/endpoint.hpp"
 
@@ -61,8 +62,14 @@ int main(int argc, char** argv)
 
         SoftConfig exe_config(config::CONFIG_PATH);
 
+        bc::Blockchain blockchain;
+
         net::Network network(net::Endpoint{exe_config.get<std::string>("listen_address")},
             exe_config.get<unsigned short>("public_server_port"));
+
+        blockchain.setNetwork(&network);
+        network.setBlockchain(&blockchain);
+
         network.run();
 
         std::vector<net::Endpoint> nodes;

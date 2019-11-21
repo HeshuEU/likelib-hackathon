@@ -36,7 +36,7 @@ class Block
     void setTransactions(std::vector<Transaction>&& txs);
     //=================
 
-    
+
 
     //=================
 

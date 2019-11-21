@@ -5,8 +5,7 @@
 
 #include <atomic>
 #include <cstddef>
-#include <future>
-#include <optional>
+#include <functional>
 #include <thread>
 
 
@@ -15,14 +14,22 @@ namespace bc
 class Miner
 {
   public:
+    using CallbackType = std::function<void(std::optional<Block>)>;
+
     Miner();
 
-    std::future<std::optional<NonceInt>> findNonce(const Block& block);
+    void findNonce(const Block& block, CallbackType&& callback);
 
   private:
     std::vector<std::thread> _miners_pool;
 
-    // Block _block_sample;
+    Block _block_sample;
+
+    CallbackType _callback;
+
+    std::atomic<bool> _is_starting;
+    std::atomic<bool> _is_stopping;
+    std::atomic<bool> _is_found;
 
     void miningWorker() noexcept;
 };

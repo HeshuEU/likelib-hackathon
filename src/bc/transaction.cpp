@@ -55,7 +55,7 @@ base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Transact
 
 base::SerializationOArchive operator<<(base::SerializationOArchive& oa, const Transaction& tx)
 {
-    return oa << tx.getAmount(); //tx.getFrom() << tx.getTo();
+    return oa << tx.getAmount(); // tx.getFrom() << tx.getTo();
 }
 
 } // namespace bc

@@ -8,11 +8,11 @@
 namespace impl
 {
 
-    template<typename T>
-    struct TrickFalse : std::false_type {
-    };
+template<typename T>
+struct TrickFalse : std::false_type
+{};
 
-}
+} // namespace impl
 
 
 namespace base
@@ -22,7 +22,8 @@ template<typename T>
 SerializationOArchive& SerializationOArchive::operator<<(const T& v)
 {
     if constexpr(std::is_integral<T>::value) {
-        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16, "this integral type is not serializable");
+        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16,
+            "this integral type is not serializable");
 
         if constexpr(sizeof(v) == 1) {
             _bytes.append(static_cast<Byte>(v));
@@ -58,7 +59,8 @@ template<typename T>
 SerializationIArchive& SerializationIArchive::operator>>(T& v)
 {
     if constexpr(std::is_integral<T>::value) {
-        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16, "this integral type is not serializable");
+        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16,
+            "this integral type is not serializable");
 
         v = *reinterpret_cast<T*>(_bytes.toArray() + _index);
         if(sizeof(v) == 2) {
@@ -93,6 +95,7 @@ template<typename T>
 SerializationIArchive& operator>>(SerializationIArchive& ia, std::vector<T>& v)
 {
     std::size_t size;
+    ia >> size;
     v.resize(size);
     for(auto it = v.begin(); it != v.end(); ++it) {
         ia >> *it;
@@ -105,12 +108,29 @@ template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v)
 {
     oa << v.size();
-    for(const auto& x : v) {
+    for(const auto& x: v) {
         oa << x;
     }
     return oa;
 }
 
 
-
+template<typename T>
+base::Bytes toBytes(const T& value)
+{
+    SerializationOArchive oa;
+    oa << value;
+    return std::move(std::move(oa).getBytes());
 }
+
+
+template<typename T>
+T fromBytes(const base::Bytes& bytes)
+{
+    SerializationIArchive ia(bytes);
+    T t;
+    ia >> t;
+    return std::move(t);
+}
+
+} // namespace base

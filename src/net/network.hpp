@@ -1,6 +1,7 @@
 #pragma once
 
-#include "connection.hpp"
+#include "bc/block.hpp"
+#include "net/connection.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -10,6 +11,11 @@
 #include <memory>
 #include <set>
 #include <thread>
+
+namespace bc
+{
+class Blockchain;
+}
 
 namespace net
 {
@@ -27,6 +33,11 @@ class Network
     void connect(const Endpoint& address);
     void connect(const std::vector<Endpoint>& nodes);
     //===================
+    void broadcastBlock(const bc::Block& block);
+    void broadcastTransaction(const bc::Transaction& tx);
+    //===================
+    void setBlockchain(bc::Blockchain* blockchain);
+
   private:
     //===================
     boost::asio::io_context _io_context;
@@ -47,6 +58,8 @@ class Network
     void dropZombieConnections();
     //===================
     void connectionReceivedPacketHandler(Connection& connection, const Packet& packet);
+    //===================
+    bc::Blockchain* _blockchain;
 };
 
 } // namespace net

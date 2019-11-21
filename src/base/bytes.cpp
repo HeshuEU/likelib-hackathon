@@ -111,24 +111,6 @@ std::size_t Bytes::size() const noexcept
 }
 
 
-std::size_t Bytes::size() const noexcept
-{
-    return _raw.size();
-}
-
-
-bool Bytes::operator==(const Bytes& another) const
-{
-    return _raw == another._raw;
-}
-
-
-bool Bytes::operator!=(const Bytes& another) const
-{
-    return !(*this == another);
-}
-
-
 const Byte* Bytes::toArray() const
 {
     return _raw.data();

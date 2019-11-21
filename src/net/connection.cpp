@@ -159,8 +159,7 @@ void Connection::receiveOne()
                 if(_is_receiving_enabled) {
                     std::unique_ptr<Packet> packet;
                     try {
-                        packet = std::make_unique<Packet>(
-                            Packet::deserialize(_read_buffer)); // works without bytes::takePart?
+                        packet = std::make_unique<Packet>(base::fromBytes<Packet>(_read_buffer));
                     }
                     catch(const std::exception& e) {
                         LOG_WARNING << "Error during packet deserialization: " << e.what();
@@ -183,7 +182,7 @@ void Connection::receiveOne()
 void Connection::send(const Packet& packet)
 {
     LOG_DEBUG << "SEND [" << enumToString(packet.getType()) << ']';
-    send(packet.serialize());
+    send(base::toBytes(packet));
 }
 
 

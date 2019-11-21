@@ -2,6 +2,7 @@
 
 #include "base/assert.hpp"
 #include "base/log.hpp"
+#include "bc/blockchain.hpp"
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/error.hpp>
@@ -182,6 +183,13 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
         }
         case PacketType::PING: {
             connection.send(Packet{PacketType::PONG});
+            if(rand() % 20 == 3) {
+                Packet packet(PacketType::TRANSACTION);
+                bc::Transaction tx;
+                tx.setAmount(12);
+                packet.setData(base::toBytes(tx));
+                connection.send(packet);
+            }
             break;
         }
         case PacketType::PONG: {
@@ -234,9 +242,12 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
             break;
         }
         case PacketType::BLOCK: {
+
             break;
         }
         case PacketType::TRANSACTION: {
+            bc::Transaction tx = base::fromBytes<bc::Transaction>(packet.getData());
+            _blockchain->transactionReceived(std::move(tx));
             break;
         }
         default: {
@@ -245,5 +256,27 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
         }
     }
 }
+
+
+void Network::broadcastBlock(const bc::Block& block)
+{
+    auto serialized_block = base::toBytes(block);
+    Packet packet(PacketType::BLOCK);
+    packet.setData(base::toBytes(block));
+    for(auto& connection: _connections) {
+        connection->send(packet);
+    }
+}
+
+
+void Network::broadcastTransaction(const bc::Transaction& tx)
+{}
+
+
+void Network::setBlockchain(bc::Blockchain* blockchain)
+{
+    _blockchain = blockchain;
+}
+
 
 } // namespace net

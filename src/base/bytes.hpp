@@ -68,7 +68,7 @@ class Bytes
     bool operator>=(const Bytes& another) const;
     //==============
 
-private:
+  private:
     std::vector<Byte> _raw;
 };
 
