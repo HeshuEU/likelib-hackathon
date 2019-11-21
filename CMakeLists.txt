@@ -22,6 +22,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 #==========================
 
+# adding OpenSSL to project
+find_package(OpenSSL REQUIRED)
+
+#==========================
+
 # setting up common include directories
 include_directories(./src)
 #===========================

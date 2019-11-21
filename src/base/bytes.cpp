@@ -45,7 +45,7 @@ const Byte& Bytes::operator[](std::size_t index) const
 Bytes Bytes::takePart(std::size_t begin_index, std::size_t one_past_end_index) const
 {
     ASSERT(begin_index < one_past_end_index);
-    ASSERT(one_past_end_index < _raw.size());
+    ASSERT(one_past_end_index <= _raw.size());
 
     auto begin = _raw.begin();
     std::advance(begin, begin_index);
@@ -60,6 +60,13 @@ Bytes Bytes::takePart(std::size_t begin_index, std::size_t one_past_end_index) c
 Bytes& Bytes::append(Byte byte)
 {
     _raw.push_back(byte);
+    return *this;
+}
+
+
+Bytes& Bytes::append(const Bytes& bytes)
+{
+    _raw.insert(_raw.end(), bytes._raw.begin(), bytes._raw.end());
     return *this;
 }
 
