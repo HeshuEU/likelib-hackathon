@@ -72,6 +72,9 @@ class Bytes
     std::vector<Byte> _raw;
 };
 
+
+Bytes getComplexity();
+
 } // namespace base
 
 #include "bytes.tpp"

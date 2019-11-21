@@ -135,6 +135,15 @@ void Network::connect(const net::Endpoint& address)
                 net::Packet packet{net::PacketType::HANDSHAKE};
                 packet.setPublicServerPort(_server_public_port);
                 connection->send(packet);
+
+                {
+                    Packet packet(PacketType::TRANSACTION);
+                    bc::Transaction tx;
+                    tx.setAmount(12);
+                    packet.setData(base::toBytes(tx));
+                    connection->send(packet);
+                }
+
                 _connections.push_back(std::move(connection));
             }
         });
@@ -183,13 +192,6 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
         }
         case PacketType::PING: {
             connection.send(Packet{PacketType::PONG});
-            if(rand() % 20 == 3) {
-                Packet packet(PacketType::TRANSACTION);
-                bc::Transaction tx;
-                tx.setAmount(12);
-                packet.setData(base::toBytes(tx));
-                connection.send(packet);
-            }
             break;
         }
         case PacketType::PONG: {
@@ -260,6 +262,7 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
 
 void Network::broadcastBlock(const bc::Block& block)
 {
+    LOG_DEBUG << "Broadcasting block. Its hash " << base::Sha256::calcSha256(base::toBytes(block)).getBytes().toHex();
     auto serialized_block = base::toBytes(block);
     Packet packet(PacketType::BLOCK);
     packet.setData(base::toBytes(block));

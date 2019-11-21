@@ -107,7 +107,7 @@ void Bytes::shrinkToFit()
 
 std::size_t Bytes::size() const noexcept
 {
-    return _raw.size();
+    return _raw.size(); 
 }
 
 
@@ -193,6 +193,14 @@ bool Bytes::operator<=(const Bytes& another) const
 bool Bytes::operator>=(const Bytes& another) const
 {
     return !(*this < another);
+}
+
+
+Bytes getComplexity()
+{
+    base::Bytes ret(32);
+    ret[1] = 0x7A;
+    return ret;
 }
 
 } // namespace base

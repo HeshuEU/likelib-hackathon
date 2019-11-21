@@ -9,6 +9,7 @@
 #include <boost/asio/write.hpp>
 
 #include <atomic>
+#include <thread>
 #include <utility>
 
 namespace ba = boost::asio;
@@ -193,6 +194,9 @@ void Connection::send(base::Bytes&& data)
 
     if(!is_already_writing) {
         sendPendingMessages();
+    }
+    else {
+        LOG_ERROR << "XYU0";
     }
 }
 

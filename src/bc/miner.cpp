@@ -2,6 +2,7 @@
 
 #include "base/config.hpp"
 #include "base/hash.hpp"
+#include "base/log.hpp"
 
 #include <limits>
 #include <random>
@@ -14,7 +15,8 @@ bool checkBlockNonce(const bc::Block& block, const base::Bytes& max_hash_value)
 {
     base::SerializationOArchive oa;
     oa << block;
-    return base::Sha256::calcSha256(oa.getBytes()).getBytes() < max_hash_value;
+    const base::Bytes& block_hash = base::Sha256::calcSha256(oa.getBytes()).getBytes();
+    return block_hash < max_hash_value;
 }
 
 } // namespace
@@ -49,14 +51,15 @@ void Miner::miningWorker() noexcept
 {
     Block block = _block_sample;
     static constexpr bc::NonceInt MAX_NONCE = std::numeric_limits<bc::NonceInt>::max();
-    static const base::Bytes MAX_HASH_VALUE{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    static const base::Bytes MAX_HASH_VALUE = base::getComplexity();
     for(bc::NonceInt nonce = 0; !_is_stopping && nonce < MAX_NONCE; ++nonce) {
         block.setNonce(nonce);
+        LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash " << base::Sha256::calcSha256(base::toBytes(block)).toHex();
         if(checkBlockNonce(block, MAX_HASH_VALUE)) {
-            _is_stopping = true;
             if(!_is_stopping) {
+                _is_stopping = true;
                 _callback(std::move(block));
+                return;
             }
         }
     }

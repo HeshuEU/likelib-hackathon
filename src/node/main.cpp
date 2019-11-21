@@ -78,7 +78,7 @@ int main(int argc, char** argv)
         }
         network.connect(nodes);
 
-        std::this_thread::sleep_for(std::chrono::seconds(45));
+        std::this_thread::sleep_for(std::chrono::seconds(4500));
 
         return base::config::EXIT_OK;
     }
