@@ -104,8 +104,8 @@ int main(int argc, char** argv)
         }
         network.connect(nodes);
 
-        rpc::RpcServer server(exe_config.get<std::string>("rpc_address"));
-        server.run();
+        rpc::RpcServer rpc(exe_config.get<std::string>("rpc_address"));
+        rpc.run();
         LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc_address");
 
         std::this_thread::sleep_for(std::chrono::seconds(4500));
