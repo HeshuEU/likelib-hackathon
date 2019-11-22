@@ -29,20 +29,21 @@ Miner::Miner()
 {}
 
 
+Miner::~Miner()
+{
+    stop();
+}
+
+
 void Miner::findNonce(const Block& block, Miner::CallbackType&& callback)
 {
-    _is_stopping = true;
-    for(auto& t: _miners_pool) {
-        if(t.joinable()) {
-            t.join();
-        }
-    }
-    _miners_pool.clear();
+    stop();
+    _thread_pool.clear();
     _block_sample = std::move(block);
     _callback = std::move(callback);
     _is_stopping = false;
     for(std::size_t i = 0; i < base::config::BC_MINING_THREADS; ++i) {
-        _miners_pool.emplace_back(&Miner::miningWorker, this);
+        _thread_pool.emplace_back(&Miner::miningWorker, this);
     }
 }
 
@@ -69,5 +70,15 @@ void Miner::miningWorker() noexcept
     }
 }
 
+
+void Miner::stop()
+{
+    _is_stopping = true;
+    for(auto& thread : _thread_pool) {
+        if(thread.joinable()) {
+            thread.join();
+        }
+    }
+}
 
 } // namespace bc

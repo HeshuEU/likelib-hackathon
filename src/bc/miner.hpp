@@ -14,24 +14,25 @@ namespace bc
 class Miner
 {
   public:
+    //================
+    Miner();
+    ~Miner();
+    //================
     using CallbackType = std::function<void(std::optional<Block>)>;
 
-    Miner();
-
     void findNonce(const Block& block, CallbackType&& callback);
-
+    //================
   private:
-    std::vector<std::thread> _miners_pool;
+    //================
+    std::vector<std::thread> _thread_pool;
 
     Block _block_sample;
-
     CallbackType _callback;
-
-    std::atomic<bool> _is_starting;
     std::atomic<bool> _is_stopping;
-    std::atomic<bool> _is_found;
-
+    //================
     void miningWorker() noexcept;
+    void stop();
+    //================
 };
 
 } // namespace bc
