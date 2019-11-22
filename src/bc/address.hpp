@@ -26,7 +26,7 @@ class Address
 
     ~Address() = default;
 
-    std::string toString();
+    std::string toString() const;
 
     bool operator==(Address& another);
 

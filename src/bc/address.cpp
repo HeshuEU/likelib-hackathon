@@ -15,7 +15,7 @@ Address::Address(const base::Sha256& hash) : _hash(hash)
 Address::Address(const std::string& data_string) : _hash(data_string)
 {}
 
-std::string Address::toString()
+std::string Address::toString() const
 {
     return _hash.toString();
 }

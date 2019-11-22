@@ -8,7 +8,6 @@ set(TEST_SOURCES
         base/database.cpp
 		base/serialization.cpp
         net/packet.cpp
-        rpc/base_rpc.cpp
         bc/address.cpp
         bc/balance_manager.cpp
         )
