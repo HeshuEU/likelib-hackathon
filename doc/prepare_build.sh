@@ -2,18 +2,18 @@
 
 INSTALL_DIR="/opt"
 
-read -p "Enter install path [${INSTALL_DIR}]:"
-NEW_INSTALL_PATH=$REPLY
-mkdir -p ${NEW_INSTALL_PATH}
+#read -p "Enter install path [${INSTALL_DIR}]:"
+#NEW_INSTALL_PATH=$REPLY
+#mkdir -p ${NEW_INSTALL_PATH}
 
-if [ -w $NEW_INSTALL_PATH ]; then
-  echo "NEW install path ${NEW_INSTALL_PATH}"
-  INSTALL_DIR=${NEW_INSTALL_PATH}
-else
-  echo "Can't write to ${NEW_INSTALL_PATH}"
-  echo "Exit..."
-  exit 1
-fi
+#if [ -w $NEW_INSTALL_PATH ]; then
+#  echo "NEW install path ${NEW_INSTALL_PATH}"
+#  INSTALL_DIR=${NEW_INSTALL_PATH}
+#else
+#  echo "Can't write to ${NEW_INSTALL_PATH}"
+#  echo "Exit..."
+#  exit 1
+#fi
 
 SCRIPT_DIR=${PWD}
 if [ ! -f "${SCRIPT_DIR}/prepare_build.sh" ]; then
