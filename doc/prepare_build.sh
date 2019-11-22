@@ -54,7 +54,7 @@ fi
 ./vcpkg install grpc
 ./vcpkg install leveldb
 
-chmod 1000:1000 -R ../vcpkg
+chown 1000:1000 -R ../vcpkg
 echo "runing change bachrc script"
 
 PATH_TO_BASH_RC="/home/${SUDO_USER}/.bashrc"
