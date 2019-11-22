@@ -104,7 +104,7 @@ int main(int argc, char** argv)
         }
         network.connect(nodes);
 
-        auto service = std::make_shared<node::GeneralServerService>();
+        auto service = std::make_shared<node::GeneralServerService>(&blockchain);
         rpc::RpcServer rpc(exe_config.get<std::string>("rpc_address"), service);
         rpc.run();
         LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc_address");

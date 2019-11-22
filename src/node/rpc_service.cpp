@@ -3,11 +3,12 @@
 #include "base/log.hpp"
 #include "base/hash.hpp"
 #include "base/config.hpp"
+#include "bc/transaction.hpp"
 
 namespace node
 {
 
-GeneralServerService::GeneralServerService()
+GeneralServerService::GeneralServerService(bc::Blockchain* bc) : _bc{bc}
 {
     LOG_TRACE << "Created GeneralServerService";
 }
@@ -20,7 +21,7 @@ GeneralServerService::~GeneralServerService()
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
-    return 0;
+    return _bc->getBalance(address);
 }
 
 std::string GeneralServerService::transaction(
@@ -28,6 +29,8 @@ std::string GeneralServerService::transaction(
 {
     LOG_TRACE << "Node received in {transaction}: from_address[" << from_address.toString() << "], to_address["
               << to_address.toString() << "], amount[" << amount << "]";
+
+    _bc->transactionReceived(bc::Transaction(from_address, to_address, amount));
     return "likelib";
 }
 
