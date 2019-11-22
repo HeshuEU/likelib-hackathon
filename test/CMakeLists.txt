@@ -6,9 +6,8 @@ set(TEST_SOURCES
         base/hash.cpp
         base/program_options.cpp
         base/database.cpp
-	base/serialization.cpp
+		base/serialization.cpp
         net/packet.cpp
-        rpc/base_rpc.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})
