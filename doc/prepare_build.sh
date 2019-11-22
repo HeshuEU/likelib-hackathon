@@ -54,6 +54,7 @@ fi
 ./vcpkg install grpc
 ./vcpkg install leveldb
 
+chmod 1000:1000 -R ../vcpkg
 echo "runing change bachrc script"
 
 PATH_TO_BASH_RC="/home/${SUDO_USER}/.bashrc"
@@ -62,7 +63,7 @@ if [[ "${EUID}" -ne 0 ]]; then
   PATH_TO_BASH_RC="/home/${USER}/.bashrc"
 fi
 
-if cat ${PATH_TO_BASH_RC} | grep likelib_SOURCE_DIR; then
+if cat ${PATH_TO_BASH_RC} | grep "#===========likelib============="; then
   echo "You have likelib $(cat ${PATH_TO_BASH_RC} | grep likelib_SOURCE_DIR)"
   echo "Exit..."
   exit
