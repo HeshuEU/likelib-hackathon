@@ -80,4 +80,9 @@ constexpr std::size_t BC_MAX_TRANSACTIONS_IN_BLOCK = 100;
 constexpr std::size_t BC_MINING_THREADS = 1;
 //------------------------
 
+// rpc
+constexpr const char* RPC_CURRENT_SECRET_TEST_REQUEST = "Valar morghulis";
+constexpr const char* RPC_CURRENT_SECRET_TEST_RESPONSE = "Valar dohaeris";
+//--------------------
+
 } // namespace base::config

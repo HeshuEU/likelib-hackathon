@@ -4,7 +4,9 @@ set(TEST_SOURCES
         base/property_tree.cpp
         base/bytes.cpp
         base/hash.cpp
-        base/serialization.cpp
+        base/program_options.cpp
+        base/database.cpp
+		base/serialization.cpp
         net/packet.cpp
         rpc/base_rpc.cpp
         bc/address.cpp

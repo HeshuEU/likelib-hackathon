@@ -10,6 +10,8 @@ class Address
   public:
     Address();
 
+    Address(const char* address);
+
     Address(const base::Sha256& hash);
 
     Address(const std::string& data_string);

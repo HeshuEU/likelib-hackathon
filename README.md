@@ -6,6 +6,7 @@ By default it is config.json file of the following format:
 {
     "listen_address": "0.0.0.0:20203",
     "public_server_port": 20203,
+    "rpc_address": "0.0.0.0:50051",
     "nodes": [
         "127.0.0.1:20204",
         "127.0.0.1:20205"

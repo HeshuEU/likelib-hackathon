@@ -6,6 +6,9 @@ set(BC_HEADERS
         transaction.hpp
         types.hpp
         balance_manager.hpp
+        base_client.hpp
+        base_service.hpp
+        general_server_service.hpp
         )
 
 set(BC_SOURCES
@@ -14,6 +17,7 @@ set(BC_SOURCES
         blockchain.cpp
         miner.cpp
         transaction.cpp
+        general_server_service.cpp
         balance_manager.cpp
         )
 
