@@ -57,11 +57,10 @@ constexpr const char* const OS_NAME =
 
 
 // logging configuration
-constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H-%M.log";
+constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H-%M-%S_%N.log";
 constexpr const char* LOG_FOLDER = "logs";
-constexpr const std::size_t LOG_FILE_MAX_SIZE = 6 * 1024 * 1024;
-constexpr const std::size_t LOG_FILE_MIN_SPACE = 100 * 1024 * 1024;
-constexpr const std::size_t LOG_MAX_FILE_COUNT = 512;
+constexpr const std::size_t LOG_FILE_MAX_SIZE = 5 * 1024 * 1024; // 5 mb max log file
+constexpr const std::size_t LOG_MAX_FILE_COUNT = 512; // max log files
 //------------------------
 
 // exit codes
@@ -71,8 +70,14 @@ constexpr int EXIT_FAIL = 1;
 constexpr int EXIT_ASSERT_FAILED = 2;
 //------------------------
 
-// network
-constexpr std::size_t NETWORK_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
+// net
+constexpr std::size_t NET_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
+constexpr std::size_t NET_PING_FREQUENCY = 7; // seconds
 //------------------------
+
+// rpc
+constexpr const char* RPC_CURRENT_SECRET_TEST_REQUEST = "Valar morghulis";
+constexpr const char* RPC_CURRENT_SECRET_TEST_RESPONSE = "Valar dohaeris";
+//--------------------
 
 } // namespace base::config

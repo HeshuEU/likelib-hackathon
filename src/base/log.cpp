@@ -13,6 +13,7 @@
 #include <boost/log/expressions.hpp>
 
 #include <ctime>
+#include <filesystem>
 
 namespace
 {
@@ -24,7 +25,7 @@ std::string dateAsString()
     char buffer[80];
     std::time(&raw_time);
     time_info = std::localtime(&raw_time);
-    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", time_info);
+    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H-%M-%S", time_info);
     return buffer;
 }
 
@@ -62,16 +63,17 @@ void formatter(boost::log::record_view const& rec, boost::log::formatting_ostrea
 
 void setFileSink()
 {
-    using TextFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
+    std::filesystem::path file_path(base::config::LOG_FOLDER);
+    file_path /= std::filesystem::path(base::config::LOG_FILE_FORMAT);
 
-    boost::shared_ptr<TextFileSink> sink(
-        new TextFileSink(boost::log::keywords::file_name = base::config::LOG_FILE_FORMAT));
+    using TextFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
+    auto sink = boost::make_shared<TextFileSink>(boost::log::keywords::file_name = file_path.string().c_str());
 
     sink->locked_backend()->set_file_collector(
         boost::log::sinks::file::make_collector(boost::log::keywords::target = base::config::LOG_FOLDER,
-                                                boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
-                                                boost::log::keywords::min_free_space = base::config::LOG_FILE_MIN_SPACE,
-                                                boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT));
+            boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
+            boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT));
+    sink->locked_backend()->auto_flush(true);
 
     sink->set_formatter(&formatter);
 
@@ -80,12 +82,12 @@ void setFileSink()
 
 void setStdoutSink()
 {
-    using TextSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_ostream_backend>;
-
-    boost::shared_ptr<TextSink> sink = boost::make_shared<TextSink>();
+    using TextOstreamSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_ostream_backend>;
+    auto sink = boost::make_shared<TextOstreamSink>();
 
     boost::shared_ptr<std::ostream> stream(&std::clog, boost::null_deleter());
     sink->locked_backend()->add_stream(stream);
+    sink->locked_backend()->auto_flush(true);
 
     sink->set_formatter(&formatter);
 

@@ -5,11 +5,11 @@ set(TEST_SOURCES
         base/property_tree.cpp
         base/bytes.cpp
         base/hash.cpp
-        base/symmetric_crypto.cpp
-        network/packet.cpp
-        rpc/base_rpc.cpp
+        base/program_options.cpp
+        base/database.cpp
+        net/packet.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})
 
-target_link_libraries(run_tests base network rpc Boost::unit_test_framework)
+target_link_libraries(run_tests base net rpc Boost::unit_test_framework)
