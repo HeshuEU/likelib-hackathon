@@ -34,6 +34,7 @@ class Block
     void setNonce(NonceInt nonce) noexcept;
     void setPrevBlockHash(const base::Bytes& prev_block_hash);
     void setTransactions(std::vector<Transaction>&& txs);
+    void addTransaction(const Transaction& tx);
     //=================
 
 

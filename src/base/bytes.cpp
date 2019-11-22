@@ -199,7 +199,7 @@ bool Bytes::operator>=(const Bytes& another) const
 Bytes getComplexity()
 {
     base::Bytes ret(32);
-    ret[1] = 0x7A;
+    ret[2] = 0x1A;
     return ret;
 }
 

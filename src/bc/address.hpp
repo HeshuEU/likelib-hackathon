@@ -28,9 +28,7 @@ class Address
 
     std::string toString() const;
 
-    bool operator==(Address& another);
-
-    bool operator==(const Address& another);
+    bool operator==(const Address& another) const;
 
     friend bool operator<(const Address& another_1, const Address& another_2);
 
@@ -39,5 +37,7 @@ class Address
 };
 
 bool operator<(const Address& another_1, const Address& another_2);
+
+extern const Address BASE_ADDRESS;
 
 } // namespace bc

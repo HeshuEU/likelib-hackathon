@@ -135,16 +135,7 @@ void Network::connect(const net::Endpoint& address)
                 net::Packet packet{net::PacketType::HANDSHAKE};
                 packet.setPublicServerPort(_server_public_port);
                 connection->send(packet);
-
-                {
-                    Packet packet(PacketType::TRANSACTION);
-                    bc::Transaction tx;
-                    tx.setAmount(12);
-                    packet.setData(base::toBytes(tx));
-                    connection->send(packet);
-                }
-
-                _connections.push_back(std::move(connection));
+               _connections.push_back(std::move(connection));
             }
         });
 }
@@ -244,7 +235,7 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
             break;
         }
         case PacketType::BLOCK: {
-
+            _blockchain->blockReceived(base::fromBytes<bc::Block>(packet.getData()));
             break;
         }
         case PacketType::TRANSACTION: {

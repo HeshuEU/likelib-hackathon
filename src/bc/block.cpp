@@ -62,6 +62,12 @@ void Block::setTransactions(std::vector<Transaction>&& txs)
 }
 
 
+void Block::addTransaction(const Transaction& tx)
+{
+    _txs.push_back(tx);
+}
+
+
 base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Block& block)
 {
     NonceInt nonce;

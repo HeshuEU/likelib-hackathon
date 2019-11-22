@@ -20,7 +20,10 @@ class Miner
     //================
     using CallbackType = std::function<void(std::optional<Block>)>;
 
-    void findNonce(const Block& block, CallbackType&& callback);
+    void setCallback(CallbackType&& callback);
+
+    void findNonce(const Block& block);
+    void stop();
     //================
   private:
     //================
@@ -31,7 +34,6 @@ class Miner
     std::atomic<bool> _is_stopping;
     //================
     void miningWorker() noexcept;
-    void stop();
     //================
 };
 

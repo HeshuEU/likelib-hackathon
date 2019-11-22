@@ -12,6 +12,10 @@ BalanceManager::BalanceManager(const std::map<Address, Balance>& initial_state) 
 
 Balance BalanceManager::getBalance(const Address& address) const
 {
+    if(address == bc::BASE_ADDRESS) {
+        return std::numeric_limits<Balance>::max();
+    }
+
     auto it = _storage.find(address);
     if(it == _storage.end()) {
         return Balance{0};
@@ -24,7 +28,7 @@ Balance BalanceManager::getBalance(const Address& address) const
 
 bool BalanceManager::checkTransaction(const Transaction& tx)
 {
-    return getBalance(tx.getFrom()) <= tx.getAmount();
+    return getBalance(tx.getFrom()) >= tx.getAmount();
 }
 
 
