@@ -26,6 +26,7 @@ apt-get install -y gcc g++ make build-essential wget git unzip tar curl
 
 if ! command -v cmake; then
   # install cmake
+  cd ${INSTALL_DIR}
   CMAKE_TARGET_VERSION=3.15.5
   wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_TARGET_VERSION}/cmake-${CMAKE_TARGET_VERSION}.tar.gz
   tar -xvf cmake-${CMAKE_TARGET_VERSION}.tar.gz
