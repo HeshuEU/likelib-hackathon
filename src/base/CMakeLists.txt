@@ -13,7 +13,10 @@ set(BASE_HEADERS
         property_tree.tpp
         bytes.hpp
         hash.hpp
+        program_options.hpp
+        program_options.tpp
         timer.hpp
+        database.hpp
         serialization.hpp
         serialization.tpp
         )
@@ -26,9 +29,11 @@ set(BASE_SOURCES
         bytes.cpp
         hash.cpp
         timer.cpp
+        program_options.cpp
+        database.cpp
         serialization.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
 
-target_link_libraries(base Boost::log dl backtrace OpenSSL::SSL)
+target_link_libraries(base Boost::log Boost::program_options OpenSSL::SSL dl backtrace leveldb::leveldb)
