@@ -1,12 +1,12 @@
 #include "soft_config.hpp"
 #include "hard_config.hpp"
+#include "rpc_service.hpp"
 
 #include "base/program_options.hpp"
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
 #include "bc/blockchain.hpp"
-#include "bc/general_server_service.hpp"
 #include "net/network.hpp"
 #include "net/endpoint.hpp"
 #include "rpc/rpc.hpp"
@@ -104,7 +104,8 @@ int main(int argc, char** argv)
         }
         network.connect(nodes);
 
-        rpc::RpcServer rpc(exe_config.get<std::string>("rpc_address"));
+        auto service = std::make_shared<node::GeneralServerService>();
+        rpc::RpcServer rpc(exe_config.get<std::string>("rpc_address"), service);
         rpc.run();
         LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc_address");
 

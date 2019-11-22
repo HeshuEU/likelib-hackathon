@@ -10,13 +10,13 @@
 
 #include <grpcpp/grpcpp.h>
 
+#include <memory>
+
 namespace rpc
 {
 
 /// Class implement receive gRPC messages and call similar method from LogicService instance and send answers or error
 /// messages
-/// \tparam LogicService blockchain logic interface class implimented from bc::BaseService
-template<typename LogicService>
 class GrpcNodeServiceImpl final : public likelib::Node::Service
 {
   public:
@@ -27,10 +27,10 @@ class GrpcNodeServiceImpl final : public likelib::Node::Service
     ~GrpcNodeServiceImpl() override = default;
 
     /// method that call init in LogicService instance was created by that
-    void init();
+    void init(std::shared_ptr<bc::BaseService> service);
 
   private:
-    LogicService _service;
+    std::shared_ptr<bc::BaseService> _service;
 
     static constexpr const char* LOG_ID = " |GRPC SERVICE| ";
 
@@ -45,5 +45,3 @@ class GrpcNodeServiceImpl final : public likelib::Node::Service
 };
 
 } // namespace rpc
-
-#include "grpc_service.tpp"
