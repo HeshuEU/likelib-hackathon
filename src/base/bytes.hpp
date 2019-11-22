@@ -18,6 +18,7 @@ class Bytes
     //==============
     Bytes();
     explicit Bytes(std::size_t size);
+    explicit Bytes(const std::vector<Byte>& bytes);
     explicit Bytes(const std::string& s);
     Bytes(std::initializer_list<Byte> l);
     Bytes(const Bytes&) = default;

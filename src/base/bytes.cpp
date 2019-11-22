@@ -14,6 +14,9 @@ Bytes::Bytes()
 Bytes::Bytes(std::size_t size) : _raw(size)
 {}
 
+Bytes::Bytes(const std::vector<Byte>& bytes) : _raw(bytes)
+{}
+
 
 Bytes::Bytes(const std::string& s) : _raw(s.length())
 {
