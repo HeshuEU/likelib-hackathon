@@ -35,9 +35,8 @@ class ProgramOptionsParser
     /// \param descendant_description
     /// \param processor function that called if found name of subprocess
     /// \return pointer of sub parser
-    std::shared_ptr<ProgramOptionsParser>
-    createSubParser(const std::string& name, const std::string& descendant_description,
-                    const std::function<int(const ProgramOptionsParser&)>& processor);
+    std::shared_ptr<ProgramOptionsParser> createSubParser(const std::string& name,
+        const std::string& descendant_description, const std::function<int(const ProgramOptionsParser&)>& processor);
 
     /// Add optional option that will as flag check by hasOption
     /// \param flag name. example: "useGpu,g". Such option may be set by: -g or --useGpu.

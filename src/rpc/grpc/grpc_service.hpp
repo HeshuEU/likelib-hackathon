@@ -34,14 +34,14 @@ class GrpcNodeServiceImpl final : public likelib::Node::Service
 
     static constexpr const char* LOG_ID = " |GRPC SERVICE| ";
 
-    ::grpc::Status balance(grpc::ServerContext* context, const likelib::Address* request,
-                           likelib::Money* response) override;
+    ::grpc::Status balance(
+        grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response) override;
 
-    ::grpc::Status transaction(grpc::ServerContext* context, const likelib::Transaction* request,
-                               likelib::Hash* response) override;
+    ::grpc::Status transaction(
+        grpc::ServerContext* context, const likelib::Transaction* request, likelib::Hash* response) override;
 
-    ::grpc::Status test(grpc::ServerContext* context, const likelib::TestRequest* request,
-                        likelib::TestResponse* response) override;
+    ::grpc::Status test(
+        grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response) override;
 };
 
 } // namespace rpc

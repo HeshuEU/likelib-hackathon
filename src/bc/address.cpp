@@ -3,8 +3,7 @@
 namespace bc
 {
 Address::Address(const char* data_string) : _hash(std::string(data_string))
-{
-}
+{}
 
 Address::Address() : _hash(base::Sha256::calcSha256(base::Bytes()))
 {}

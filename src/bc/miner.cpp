@@ -55,7 +55,8 @@ void Miner::miningWorker() noexcept
     static const base::Bytes MAX_HASH_VALUE = base::getComplexity();
     for(bc::NonceInt nonce = 0; !_is_stopping && nonce < MAX_NONCE; ++nonce) {
         block.setNonce(nonce);
-        LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash " << base::Sha256::calcSha256(base::toBytes(block)).toHex();
+        LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash "
+                  << base::Sha256::calcSha256(base::toBytes(block)).toHex();
         if(checkBlockNonce(block, MAX_HASH_VALUE)) {
             if(!_is_stopping) {
                 _is_stopping = true;
@@ -74,7 +75,7 @@ void Miner::miningWorker() noexcept
 void Miner::stop()
 {
     _is_stopping = true;
-    for(auto& thread : _thread_pool) {
+    for(auto& thread: _thread_pool) {
         if(thread.joinable()) {
             thread.join();
         }

@@ -80,13 +80,12 @@ BOOST_AUTO_TEST_CASE(bytes_append)
 
     bytes_concat.append(bytes2);
     BOOST_CHECK(bytes_concat.size() == bytes1.size() + bytes2.size());
-    
+
     res = true;
     for(int i = 0; i < bytes2.size(); ++i) {
         res = res && (bytes_concat[bytes1.size() + i] == bytes2[i]);
     }
     BOOST_CHECK(res);
-
 }
 
 

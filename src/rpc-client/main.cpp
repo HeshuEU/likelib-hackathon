@@ -54,7 +54,8 @@ int getBalance(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cerr << "RPC error.\n";;
+        std::cerr << "RPC error.\n";
+        ;
         LOG_ERROR << "[exception in getBalance]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -187,21 +188,21 @@ int main(int argc, char** argv)
 
         auto get_balance_sub_parser =
             parser.createSubParser("get_balance", "use for get balance from remote by account address", getBalance);
-        get_balance_sub_parser->addOption<std::string>(HOST_ADDRESS_OPTION,
-                                                       "address of remote host in format: \"<ip>:<port>\"");
+        get_balance_sub_parser->addOption<std::string>(
+            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
         get_balance_sub_parser->addOption<std::string>(ACCOUNT_ADDRESS_OPTION, "account address");
 
         auto transaction_sub_parser =
             parser.createSubParser("transaction", "use for get balance from remote by account address", transaction);
-        transaction_sub_parser->addOption<std::string>(HOST_ADDRESS_OPTION,
-                                                       "address of remote host in format: \"<ip>:<port>\"");
+        transaction_sub_parser->addOption<std::string>(
+            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
         transaction_sub_parser->addOption<std::string>(FROM_ACCOUNT_ADDRESS_OPTION, "from account address");
         transaction_sub_parser->addOption<std::string>(TO_ACCOUNT_ADDRESS_OPTION, "to account address");
         transaction_sub_parser->addOption<std::uint32_t>(MONEY_OPTION, "transaction money");
 
         auto test_sub_parser = parser.createSubParser("test", "use test functions", test);
-        test_sub_parser->addOption<std::string>(HOST_ADDRESS_OPTION,
-                                                "address of remote host in format: \"<ip>:<port>\"");
+        test_sub_parser->addOption<std::string>(
+            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
 
         try {
             auto exit_code = parser.process(argc, argv);

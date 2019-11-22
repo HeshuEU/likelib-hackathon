@@ -107,7 +107,7 @@ void Bytes::shrinkToFit()
 
 std::size_t Bytes::size() const noexcept
 {
-    return _raw.size(); 
+    return _raw.size();
 }
 
 

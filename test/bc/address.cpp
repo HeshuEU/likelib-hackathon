@@ -10,5 +10,4 @@ BOOST_AUTO_TEST_CASE(address_serialization_test)
     bc::Address deserialized_address(serialized_target);
     BOOST_CHECK_EQUAL(serialized_target, deserialized_address.toString());
     BOOST_CHECK(target_address == deserialized_address);
-
 }

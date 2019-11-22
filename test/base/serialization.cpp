@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check1)
     long long c;
     ia >> a >> b >> c;
     BOOST_CHECK_EQUAL(a, 0x12);
-    BOOST_CHECK_EQUAL(b,-35);
+    BOOST_CHECK_EQUAL(b, -35);
     BOOST_CHECK_EQUAL(c, -7);
 }
 

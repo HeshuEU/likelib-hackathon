@@ -11,8 +11,8 @@ void GrpcNodeServiceImpl::init(std::shared_ptr<bc::BaseService> service)
     _service = service;
 }
 
-::grpc::Status GrpcNodeServiceImpl::balance(grpc::ServerContext* context, const likelib::Address* request,
-                                                          likelib::Money* response)
+::grpc::Status GrpcNodeServiceImpl::balance(
+    grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response)
 {
     auto address = request->address().c_str();
 
@@ -26,9 +26,8 @@ void GrpcNodeServiceImpl::init(std::shared_ptr<bc::BaseService> service)
     return ::grpc::Status::OK;
 }
 
-::grpc::Status GrpcNodeServiceImpl::transaction(grpc::ServerContext* context,
-                                                              const likelib::Transaction* request,
-                                                              likelib::Hash* response)
+::grpc::Status GrpcNodeServiceImpl::transaction(
+    grpc::ServerContext* context, const likelib::Transaction* request, likelib::Hash* response)
 {
     auto from_address = request->from_address().address().c_str();
     auto to_address = request->to_address().address().c_str();
@@ -45,9 +44,8 @@ void GrpcNodeServiceImpl::init(std::shared_ptr<bc::BaseService> service)
     return ::grpc::Status::OK;
 }
 
-::grpc::Status GrpcNodeServiceImpl::test(grpc::ServerContext* context,
-                                                       const likelib::TestRequest* request,
-                                                       likelib::TestResponse* response)
+::grpc::Status GrpcNodeServiceImpl::test(
+    grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response)
 {
     auto data = request->message();
     try {

@@ -19,16 +19,15 @@ ProgramOptionsParser::ProgramOptionsParser(const std::string& name)
     addFlag("help", "Print help message");
 }
 
-ProgramOptionsParser::ProgramOptionsParser(const std::string& name,
-                                           std::function<int(const ProgramOptionsParser&)> processor)
+ProgramOptionsParser::ProgramOptionsParser(
+    const std::string& name, std::function<int(const ProgramOptionsParser&)> processor)
     : _name(name), _options_description(std::string("Allowed options for ") + name), _processor(processor)
 {
     addFlag("help", "Print help message");
 }
 
-std::shared_ptr<ProgramOptionsParser>
-ProgramOptionsParser::createSubParser(const std::string& name, const std::string& descendant_description,
-                                      const std::function<int(const ProgramOptionsParser&)>& processor)
+std::shared_ptr<ProgramOptionsParser> ProgramOptionsParser::createSubParser(const std::string& name,
+    const std::string& descendant_description, const std::function<int(const ProgramOptionsParser&)>& processor)
 {
     if(name.empty()) {
         RAISE_ERROR(base::InvalidArgument, "name for sub parser is empty");
@@ -58,7 +57,7 @@ int ProgramOptionsParser::process(int argc, char** argv)
             if(_descendants.count(sub_program)) {
                 return _descendants.find(sub_program)->second->process(argc - START_POSITION, argv + START_POSITION);
             }
-            if(sub_program.find('-') == std::string::npos){
+            if(sub_program.find('-') == std::string::npos) {
                 RAISE_ERROR(base::InvalidArgument, "sub command not found");
             }
         }
@@ -83,7 +82,7 @@ std::string ProgramOptionsParser::helpMessage() const
         ss << "Allowed commands:" << std::endl;
         static constexpr const char* PREFIX = "   ";
         std::string prefix(PREFIX);
-        if (!_name.empty()){
+        if(!_name.empty()) {
             prefix.append(_name);
             prefix.append(" ");
         }
