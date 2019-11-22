@@ -7,6 +7,8 @@ set(TEST_SOURCES
         base/serialization.cpp
         net/packet.cpp
         rpc/base_rpc.cpp
+        bc/address.cpp
+        bc/balance_manager.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})

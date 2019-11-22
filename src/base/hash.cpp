@@ -7,6 +7,16 @@
 namespace base
 {
 
+Sha256::Sha256(const std::string& data) : _bytes(data)
+{
+    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
+}
+
+Sha256::Sha256(const Bytes& data) : _bytes(data)
+{
+    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
+}
+
 std::string Sha256::toHex() const
 {
     return _bytes.toHex();
@@ -44,12 +54,6 @@ Sha256 Sha256::calcSha256(const base::Bytes& data)
         reinterpret_cast<unsigned char*>(ret.toArray())); // reinterpret_cast is necessary if base::Byte changes
     ASSERT(ret.size() == SHA256_DIGEST_LENGTH);
     return Sha256(ret);
-}
-
-
-Sha256::Sha256(const Bytes& another) : _bytes(another)
-{
-    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
 }
 
 
