@@ -2,7 +2,7 @@
 
 INSTALL_DIR="/opt"
 
-ead -p "Enter install path [${INSTALL_DIR}]:"
+read -p "Enter install path [${INSTALL_DIR}]:"
 NEW_INSTALL_PATH=$REPLY
 mkdir -p ${NEW_INSTALL_PATH}
 
