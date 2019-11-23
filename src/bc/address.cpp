@@ -6,37 +6,52 @@ namespace bc
 const Address BASE_ADDRESS{"00000000000000000000000000000000"};
 
 
-Address::Address(const char* data_string) : _hash(std::string(data_string))
+Address::Address(const char* data_string) : _address(std::string(data_string))
 {}
 
 
-Address::Address() : _hash(base::Sha256::calcSha256(base::Bytes()))
+Address::Address() : _address{}
 {}
 
 
-Address::Address(const base::Sha256& hash) : _hash(hash)
-{}
+// Address::Address(const base::Sha256& hash) : _hash(hash)
+// {}
 
 
-Address::Address(const std::string& data_string) : _hash(data_string)
+Address::Address(const std::string& data_string) : _address(data_string)
 {}
 
 
 std::string Address::toString() const
 {
-    return _hash.toString();
+    return _address.toString();
 }
 
 
 bool Address::operator==(const Address& another) const
 {
-    return _hash == another._hash;
+    return _address == another._address;
 }
 
 
-bool operator<(const Address& another_1, const Address& another_2)
+bool operator<(const Address& a, const Address& b)
 {
-    return another_1._hash.getBytes() < another_2._hash.getBytes();
+    return a.toString() < b.toString();
+}
+
+
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address& tx)
+{
+    std::string address;
+    ia >> address;
+    tx = Address(address);
+    return ia;
+}
+
+
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx)
+{
+    return oa << tx.toString();
 }
 
 } // namespace bc

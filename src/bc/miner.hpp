@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base/bytes.hpp"
 #include "bc/types.hpp"
 #include "bc/block.hpp"
 
@@ -36,5 +37,8 @@ class Miner
     void miningWorker() noexcept;
     //================
 };
+
+
+base::Bytes getComplexity();
 
 } // namespace bc

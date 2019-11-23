@@ -195,12 +195,4 @@ bool Bytes::operator>=(const Bytes& another) const
     return !(*this < another);
 }
 
-
-Bytes getComplexity()
-{
-    base::Bytes ret(32);
-    ret[2] = 0x1A;
-    return ret;
-}
-
 } // namespace base

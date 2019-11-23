@@ -29,15 +29,17 @@ class Transaction
     void setTo(const bc::Address& to);
     void setAmount(const bc::Balance& amount);
     //=================
+    bool operator==(const Transaction& other) const;
+    bool operator!=(const Transaction& other) const;
   private:
     bc::Address _from;
     bc::Address _to;
     bc::Balance _amount;
 };
 
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transaction& tx);
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Transaction& tx);
 
-base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Transaction& tx);
-base::SerializationOArchive operator<<(base::SerializationOArchive& oa, const Transaction& tx);
-
+void removeProcessedTransactions(std::vector<Transaction>& txs, const std::vector<Transaction>& processed);
 
 } // namespace bc

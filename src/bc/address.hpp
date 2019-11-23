@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/hash.hpp"
+#include "base/serialization.hpp"
 
 namespace bc
 {
@@ -12,7 +13,7 @@ class Address
 
     Address(const char* address);
 
-    Address(const base::Sha256& hash);
+    // Address(const base::Sha256& hash);
 
     Address(const std::string& data_string);
 
@@ -33,10 +34,13 @@ class Address
     friend bool operator<(const Address& another_1, const Address& another_2);
 
   private:
-    base::Sha256 _hash;
+    base::Bytes _address;
 };
 
-bool operator<(const Address& another_1, const Address& another_2);
+bool operator<(const Address& a, const Address& b);
+
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address& tx);
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx);
 
 extern const Address BASE_ADDRESS;
 

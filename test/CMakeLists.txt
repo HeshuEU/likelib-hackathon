@@ -10,6 +10,7 @@ set(TEST_SOURCES
         net/packet.cpp
         bc/address.cpp
         bc/balance_manager.cpp
+		bc/transaction.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})

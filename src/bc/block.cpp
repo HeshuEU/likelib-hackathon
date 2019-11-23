@@ -1,6 +1,7 @@
 #include "block.hpp"
 
 #include "base/hash.hpp"
+#include "bc/miner.hpp"
 
 #include <utility>
 
@@ -25,7 +26,7 @@ const base::Bytes& Block::getPrevBlockHash() const
 
 const std::vector<bc::Transaction>& Block::getTransactions() const
 {
-    return _txs;
+ко    return _txs;
 }
 
 
@@ -43,7 +44,7 @@ void Block::setNonce(NonceInt nonce) noexcept
 
 bool Block::checkValidness() const
 {
-    static const base::Bytes MAX_HASH_VALUE = base::getComplexity();
+    static const base::Bytes MAX_HASH_VALUE = bc::getComplexity();
     base::SerializationOArchive oa;
     oa << *this;
     return base::Sha256::calcSha256(oa.getBytes()).getBytes() < MAX_HASH_VALUE;

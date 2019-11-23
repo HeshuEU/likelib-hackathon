@@ -18,7 +18,7 @@ class SerializationIArchive
     SerializationIArchive(const Bytes& raw);
     //=================
     template<typename T>
-    SerializationIArchive& operator>>(T& v);
+    typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::type operator>>(T& v);
     // TODO: work if some of this types is not defined
     //=================
   private:
@@ -34,7 +34,7 @@ class SerializationOArchive
     SerializationOArchive() = default;
     //=================
     template<typename T>
-    SerializationOArchive& operator<<(const T& v);
+    typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::type operator<<(const T& v);
     // TODO: work if some of this types is not defined
     //=================
     void clear();

@@ -1,14 +1,11 @@
 #include "miner.hpp"
 
-#include "base/assert.hpp"
 #include "base/config.hpp"
 #include "base/hash.hpp"
-#include "base/log.hpp"
 
 #include <ctime>
 #include <cstdlib>
 #include <limits>
-#include <random>
 
 
 namespace
@@ -52,8 +49,8 @@ void Miner::miningWorker() noexcept
     std::srand(std::time(nullptr));
     Block block = _block_sample;
     static constexpr bc::NonceInt MAX_NONCE = std::numeric_limits<bc::NonceInt>::max();
-    static const base::Bytes MAX_HASH_VALUE = base::getComplexity();
-    for(bc::NonceInt nonce = 0; !_is_stopping && nonce < MAX_NONCE; nonce += std::rand() % 2 + 1) {
+    static const base::Bytes MAX_HASH_VALUE = getComplexity();
+    for(bc::NonceInt nonce = 0; !_is_stopping && nonce < MAX_NONCE; nonce += std::rand() % 5 + 1) {
         block.setNonce(nonce);
         // LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash "
         //        << base::Sha256::calcSha256(base::toBytes(block)).toHex() << ' ' << MAX_HASH_VALUE.toHex();
@@ -87,5 +84,14 @@ void Miner::stop()
         }
     }
 }
+
+
+base::Bytes getComplexity()
+{
+    base::Bytes ret(32);
+    ret[3] = 0x1A;
+    return ret;
+}
+
 
 } // namespace bc
