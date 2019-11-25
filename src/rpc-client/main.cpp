@@ -5,6 +5,7 @@
 #include "base/program_options.hpp"
 #include "base/error.hpp"
 #include "base/hash.hpp"
+#include "base/time.hpp"
 
 namespace
 {
@@ -94,7 +95,7 @@ int transaction(const base::ProgramOptionsParser& parser)
 
         rpc::RpcClient client(host);
         LOG_INFO << "Try to connect to rpc server by: " << host;
-        auto result = client.transaction(amount, from_address.c_str(), to_address.c_str());
+        auto result = client.transaction(amount, from_address.c_str(), to_address.c_str(), base::Time::now());
         std::cout << "Remote call of transaction -> [" << result << "]" << std::endl;
         return base::config::EXIT_OK;
     }

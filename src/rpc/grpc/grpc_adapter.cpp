@@ -1,17 +1,17 @@
-#include "grpc_service.hpp"
+#include "grpc_adapter.hpp"
 
 namespace rpc
 {
 
-GrpcNodeServiceImpl::GrpcNodeServiceImpl()
+GrpcAdapter::GrpcAdapter()
 {}
 
-void GrpcNodeServiceImpl::init(std::shared_ptr<BaseService> service)
+void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 {
     _service = service;
 }
 
-::grpc::Status GrpcNodeServiceImpl::balance(
+::grpc::Status GrpcAdapter::balance(
     grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response)
 {
     auto address = request->address().c_str();
@@ -26,15 +26,17 @@ void GrpcNodeServiceImpl::init(std::shared_ptr<BaseService> service)
     return ::grpc::Status::OK;
 }
 
-::grpc::Status GrpcNodeServiceImpl::transaction(
+::grpc::Status GrpcAdapter::transaction(
     grpc::ServerContext* context, const likelib::Transaction* request, likelib::Hash* response)
 {
     auto from_address = request->from_address().address().c_str();
     auto to_address = request->to_address().address().c_str();
     auto amount = request->amount().money();
+    auto creation_time = std::stol(request->creation_time().milliseconds_from_epoch());
 
     try {
-        response->set_hash_string(_service->transaction(amount, from_address, to_address));
+        response->set_hash_string(
+            _service->transaction(amount, from_address, to_address, base::Time::fromMilliseconds(creation_time)));
     }
     catch(const base::Error& e) {
         LOG_ERROR << LOG_ID << e.what();
@@ -44,7 +46,7 @@ void GrpcNodeServiceImpl::init(std::shared_ptr<BaseService> service)
     return ::grpc::Status::OK;
 }
 
-::grpc::Status GrpcNodeServiceImpl::test(
+::grpc::Status GrpcAdapter::test(
     grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response)
 {
     auto data = request->message();

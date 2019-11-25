@@ -2,7 +2,7 @@
 
 #include <public_rpc.grpc.pb.h>
 
-#include "rpc/base_service.hpp"
+#include "rpc/base_rpc.hpp"
 
 #include "base/log.hpp"
 #include "base/error.hpp"
@@ -17,20 +17,20 @@ namespace rpc
 
 /// Class implement receive gRPC messages and call similar method from LogicService instance and send answers or error
 /// messages
-class GrpcNodeServiceImpl final : public likelib::Node::Service
+class GrpcAdapter final : public likelib::Node::Service
 {
   public:
     /// default constructor
-    explicit GrpcNodeServiceImpl();
+    explicit GrpcAdapter();
 
     /// default destructor
-    ~GrpcNodeServiceImpl() override = default;
+    ~GrpcAdapter() override = default;
 
     /// method that call init in LogicService instance was created by that
-    void init(std::shared_ptr<BaseService> service);
+    void init(std::shared_ptr<BaseRpc> service);
 
   private:
-    std::shared_ptr<BaseService> _service;
+    std::shared_ptr<BaseRpc> _service;
 
     static constexpr const char* LOG_ID = " |GRPC SERVICE| ";
 
