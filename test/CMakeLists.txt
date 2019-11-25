@@ -7,6 +7,8 @@ set(TEST_SOURCES
         base/hash.cpp
         base/program_options.cpp
         base/database.cpp
+        base/symmetric_crypto.cpp
+        base/asymmetric_crypto.cpp
         net/packet.cpp
         )
 

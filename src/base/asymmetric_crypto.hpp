@@ -18,15 +18,15 @@ class PublicKey
 
     PublicKey& operator=(PublicKey&& another) = default;
 
-    Bytes encrypt(const Bytes& message) const;
-
-    Bytes decrypt(const Bytes& encrypted_message) const;
-
-    std::size_t maxEncryptSize() const noexcept;
-
-    std::size_t size() const;
-
-    Bytes toBytes() const noexcept;
+//    Bytes encrypt(const Bytes& message) const;
+//
+//    Bytes decrypt(const Bytes& encrypted_message) const;
+//
+//    std::size_t maxEncryptSize() const noexcept;
+//
+//    std::size_t size() const;
+//
+//    Bytes toBytes() const noexcept;
 
   private:
     Bytes _public_key;
@@ -46,15 +46,15 @@ class PrivateKey
 
     PrivateKey& operator=(PrivateKey&& another) = default;
 
-    Bytes encrypt(const Bytes& message) const;
-
-    Bytes decrypt(const Bytes& encrypted_message) const;
-
-    std::size_t maxEncryptSize() const noexcept;
-
-    std::size_t size() const;
-
-    Bytes toBytes() const noexcept;
+//    Bytes encrypt(const Bytes& message) const;
+//
+//    Bytes decrypt(const Bytes& encrypted_message) const;
+//
+//    std::size_t maxEncryptSize() const noexcept;
+//
+//    std::size_t size() const;
+//
+//    Bytes toBytes() const noexcept;
 
   private:
     Bytes _private_key;
