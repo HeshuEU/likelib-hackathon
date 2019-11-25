@@ -3,17 +3,19 @@
 #include "bc/address.hpp"
 #include "bc/types.hpp"
 
+#include "base/time.hpp"
+
 #include <string>
 
 namespace rpc
 {
 
-class BaseClient
+class BaseRpc
 {
   public:
     /// Constructor that create lazy(connect will be established at call method) chanel to specified ip address
     /// \param connect_address ip:port
-    virtual ~BaseClient() = default;
+    virtual ~BaseRpc() = default;
 
     /// method call remote server method(specified ip address in constructor) with similar params
     /// \param address of account
@@ -26,11 +28,12 @@ class BaseClient
     /// \param amount money
     /// \param from_address
     /// \param to_address
+    /// \param transaction_time time of transaction creation
     /// \return hash of transaction
     /// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
     /// exception during processing on server instance)
-    virtual std::string transaction(
-        bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address) = 0;
+    virtual std::string transaction(bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
+        const base::Time& transaction_time) = 0;
 
     /// method call remote server method(specified ip address in constructor) with similar params
     /// \param test_request sha256 from secret data request

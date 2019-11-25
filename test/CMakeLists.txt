@@ -7,6 +7,7 @@ set(TEST_SOURCES
         base/program_options.cpp
         base/database.cpp
 		base/serialization.cpp
+		base/time.cpp
         net/packet.cpp
         bc/address.cpp
         bc/balance_manager.cpp
