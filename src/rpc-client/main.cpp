@@ -17,12 +17,6 @@ constexpr const char* TO_ACCOUNT_ADDRESS_OPTION = "to_address";
 
 constexpr const char* PROGRAM_NAME = "rpc-client";
 
-
-void createKey(const base::ProgramOptionsParser& parser)
-{
-    // local processing
-}
-
 int getBalance(const base::ProgramOptionsParser& parser)
 {
     if(parser.hasOption("help")) {
@@ -138,12 +132,13 @@ int test(const base::ProgramOptionsParser& parser)
     try {
         auto host = parser.getValue<std::string>("host");
 
-        //    auto data = base::sha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST));
-        //    auto answer = client.test(data.toString());
-        //    auto our_answer = base::sha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toString();
-
         LOG_INFO << "Try to connect to rpc server by: " << host;
         rpc::RpcClient client(host);
+
+        //        auto data = base::Sha256::calcSha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST));
+        //        auto answer = client.test(data.toString());
+        //        auto our_answer =
+        //        base::Sha256::calcSha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toString();
 
         auto answer = client.test(base::config::RPC_CURRENT_SECRET_TEST_REQUEST);
         auto our_answer = std::string(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE);
@@ -212,21 +207,23 @@ int main(int argc, char** argv)
         }
         catch(const base::InvalidArgument& error) {
             std::cerr << "Command is now exist. Run pc-client --help to see allowed commands and options.\n";
+            return base::config::EXIT_FAIL;
         }
         catch(const base::ParsingError& error) {
             std::cerr << "Failed to parse command options. Run " << PROGRAM_NAME
                       << " --help to see allowed commands and options.\n";
             LOG_DEBUG << error.what();
-        }
-
-        if(parser.hasOption("help")) {
-            std::cout << parser.helpMessage() << std::endl;
-            return base::config::EXIT_OK;
+            return base::config::EXIT_FAIL;
         }
 
         if(parser.hasOption("version")) {
             std::cout << "application version: 0.1 - alpha" << std::endl;
             std::cout << "rpc protocol version: 0.1 - alpha" << std::endl;
+            return base::config::EXIT_OK;
+        }
+
+        if(parser.hasOption("help") || parser.empty()) {
+            std::cout << parser.helpMessage() << std::endl;
             return base::config::EXIT_OK;
         }
     }

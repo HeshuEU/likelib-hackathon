@@ -38,12 +38,13 @@ std::string GeneralServerService::transaction(
 std::string GeneralServerService::test(const std::string& test_request)
 {
     LOG_TRACE << "Node received in {test}: test_request[" << test_request << "]";
-    //    auto our_request = base::sha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST)).toString();
-
+    //    auto our_request =
+    //    base::Sha256::calcSha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST)).toString();
     auto our_request = std::string(base::config::RPC_CURRENT_SECRET_TEST_REQUEST);
 
     if(our_request == test_request) {
-        //        return base::sha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toString();
+        //        return
+        //        base::Sha256::calcSha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toString();
         return std::string(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE);
     }
     else {

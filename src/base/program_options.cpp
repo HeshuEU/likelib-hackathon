@@ -55,6 +55,7 @@ int ProgramOptionsParser::process(int argc, char** argv)
         if(argc > START_POSITION) {
             std::string sub_program(argv[START_POSITION]);
             if(_descendants.count(sub_program)) {
+            _empty = false;
                 return _descendants.find(sub_program)->second->process(argc - START_POSITION, argv + START_POSITION);
             }
             if(sub_program.find('-') == std::string::npos) {
@@ -67,6 +68,7 @@ int ProgramOptionsParser::process(int argc, char** argv)
         if(_processor != nullptr) {
             return _processor(*this);
         }
+        _empty = _options.empty();
         return base::config::EXIT_OK;
     }
     catch(const boost::program_options::error& e) {
@@ -99,6 +101,9 @@ bool ProgramOptionsParser::hasOption(const std::string& flag_name) const
     return _options.find(flag_name) != _options.end();
 }
 
-
+bool ProgramOptionsParser::empty() const
+{
+    return _empty;
+}
 
 } // namespace base
