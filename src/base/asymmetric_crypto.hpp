@@ -8,7 +8,9 @@ namespace base
 class PublicKey
 {
   public:
-    PublicKey(const Bytes& key);
+    PublicKey() = default;
+
+    PublicKey(const Bytes& key_word, std::size_t key_size);
 
     PublicKey(const PublicKey& another) = default;
 
@@ -18,25 +20,27 @@ class PublicKey
 
     PublicKey& operator=(PublicKey&& another) = default;
 
-//    Bytes encrypt(const Bytes& message) const;
-//
-//    Bytes decrypt(const Bytes& encrypted_message) const;
-//
-//    std::size_t maxEncryptSize() const noexcept;
-//
-//    std::size_t size() const;
-//
-//    Bytes toBytes() const noexcept;
+    //    Bytes encrypt(const Bytes& message) const;
+    //
+    //    Bytes decrypt(const Bytes& encrypted_message) const;
+    //
+    //    std::size_t maxEncryptSize() const noexcept;
+    //
+    //    std::size_t size() const;
+    //
+    //    Bytes toBytes() const noexcept;
 
   private:
     Bytes _public_key;
-
+    std::size_t _key_size;
 };
 
 class PrivateKey
 {
   public:
-    PrivateKey(const Bytes& key);
+    PrivateKey() = default;
+
+    PrivateKey(const Bytes& key_word, std::size_t key_size);
 
     PrivateKey(const PrivateKey& another) = default;
 
@@ -46,21 +50,21 @@ class PrivateKey
 
     PrivateKey& operator=(PrivateKey&& another) = default;
 
-//    Bytes encrypt(const Bytes& message) const;
-//
-//    Bytes decrypt(const Bytes& encrypted_message) const;
-//
-//    std::size_t maxEncryptSize() const noexcept;
-//
-//    std::size_t size() const;
-//
-//    Bytes toBytes() const noexcept;
+    //    Bytes encrypt(const Bytes& message) const;
+    //
+    //    Bytes decrypt(const Bytes& encrypted_message) const;
+    //
+    //    std::size_t maxEncryptSize() const noexcept;
+    //
+    //    std::size_t size() const;
+    //
+    //    Bytes toBytes() const noexcept;
 
   private:
     Bytes _private_key;
+    std::size_t _key_size;
 };
 
 std::pair<PublicKey, PrivateKey> generate(std::size_t keys_size);
 
-}
-
+} // namespace base
