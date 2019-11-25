@@ -2,7 +2,7 @@
 
 #include <public_rpc.grpc.pb.h>
 
-#include "bc/base_client.hpp"
+#include "rpc/base_client.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -12,7 +12,7 @@ namespace rpc
 {
 
 /// Class implementing connect to node by gRPC and call methods
-class GrpcNodeClient final : bc::BaseClient
+class GrpcNodeClient final : BaseClient
 {
   public:
     explicit GrpcNodeClient(const std::string& connect_address);

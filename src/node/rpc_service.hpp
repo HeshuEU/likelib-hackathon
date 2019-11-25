@@ -1,12 +1,13 @@
 #pragma once
 
-#include "bc/base_service.hpp"
 #include "bc/blockchain.hpp"
+
+#include "rpc/base_service.hpp"
 
 namespace node
 {
 
-class GeneralServerService : public bc::BaseService
+class GeneralServerService : public rpc::BaseService
 {
   public:
     explicit GeneralServerService(bc::Blockchain* bc);

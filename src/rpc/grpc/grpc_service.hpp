@@ -2,7 +2,7 @@
 
 #include <public_rpc.grpc.pb.h>
 
-#include "bc/base_service.hpp"
+#include "rpc/base_service.hpp"
 
 #include "base/log.hpp"
 #include "base/error.hpp"
@@ -27,10 +27,10 @@ class GrpcNodeServiceImpl final : public likelib::Node::Service
     ~GrpcNodeServiceImpl() override = default;
 
     /// method that call init in LogicService instance was created by that
-    void init(std::shared_ptr<bc::BaseService> service);
+    void init(std::shared_ptr<BaseService> service);
 
   private:
-    std::shared_ptr<bc::BaseService> _service;
+    std::shared_ptr<BaseService> _service;
 
     static constexpr const char* LOG_ID = " |GRPC SERVICE| ";
 

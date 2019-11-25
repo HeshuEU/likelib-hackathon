@@ -6,8 +6,6 @@ set(BC_HEADERS
         transaction.hpp
         types.hpp
         balance_manager.hpp
-        base_client.hpp
-        base_service.hpp
         )
 
 set(BC_SOURCES

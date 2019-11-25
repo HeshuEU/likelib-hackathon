@@ -1,11 +1,11 @@
 #pragma once
 
-#include "address.hpp"
-#include "types.hpp"
+#include "bc/address.hpp"
+#include "bc/types.hpp"
 
 #include <string>
 
-namespace bc
+namespace rpc
 {
 
 class BaseClient

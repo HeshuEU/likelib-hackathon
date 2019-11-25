@@ -26,7 +26,7 @@ const base::Bytes& Block::getPrevBlockHash() const
 
 const std::vector<bc::Transaction>& Block::getTransactions() const
 {
-ко    return _txs;
+    return _txs;
 }
 
 

@@ -6,7 +6,7 @@ namespace rpc
 GrpcNodeServiceImpl::GrpcNodeServiceImpl()
 {}
 
-void GrpcNodeServiceImpl::init(std::shared_ptr<bc::BaseService> service)
+void GrpcNodeServiceImpl::init(std::shared_ptr<BaseService> service)
 {
     _service = service;
 }

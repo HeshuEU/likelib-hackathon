@@ -3,7 +3,7 @@
 namespace rpc
 {
 
-GrpcNodeServer::GrpcNodeServer(const std::string& server_address, std::shared_ptr<bc::BaseService> service)
+GrpcNodeServer::GrpcNodeServer(const std::string& server_address, std::shared_ptr<BaseService> service)
     : _service(), _server_address(server_address)
 {
     _service.init(service);

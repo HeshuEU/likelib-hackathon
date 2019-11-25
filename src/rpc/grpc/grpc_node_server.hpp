@@ -11,7 +11,7 @@ class GrpcNodeServer
   public:
     /// Constructor that initialize instance of LogicService
     /// \param server_address listening ip:port
-    explicit GrpcNodeServer(const std::string& server_address, std::shared_ptr<bc::BaseService> service);
+    explicit GrpcNodeServer(const std::string& server_address, std::shared_ptr<BaseService> service);
 
     /// plain destructor that call GrpcNodeServer::stop()
     ~GrpcNodeServer();
