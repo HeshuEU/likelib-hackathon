@@ -44,6 +44,7 @@ class Blockchain
     //===================
     void setupGenesis();
     //===================
+    base::Bytes getMiningComplexity() const;
     void onMinerFinished(const std::optional<Block>& block);
     //===================
     bool checkBlock(const Block& block) const;

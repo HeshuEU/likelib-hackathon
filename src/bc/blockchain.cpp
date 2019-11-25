@@ -28,7 +28,7 @@ void Blockchain::processReceivedBlock(Block&& block)
         pending_txs.remove(block.getTransactions());
         _pending_block.setTransactions(std::move(pending_txs));
         if(!_pending_block.getTransactions().isEmpty()) {
-            _miner.findNonce(_pending_block);
+            _miner.findNonce(_pending_block, getMiningComplexity());
         }
     }
 }
@@ -57,11 +57,11 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
     }
     else {
         if (!_pending_block.getTransactions().find(transaction)) {
-            _pending_block.addTransaction({std::move(transaction)});
+            _pending_block.addTransaction(transaction);
             _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
             _network->broadcastTransaction(transaction);
             _miner.stop();
-            _miner.findNonce(_pending_block);
+            _miner.findNonce(_pending_block, getMiningComplexity());
         }
     }
 }
@@ -79,6 +79,13 @@ void Blockchain::setupGenesis()
     genesis.setNonce(0);
     genesis.setPrevBlockHash(base::Bytes(32));
     _blocks.push_back(std::move(genesis));
+}
+
+
+base::Bytes Blockchain::getMiningComplexity() const {
+    base::Bytes ret(32);
+    ret[2] = 0x1A;
+    return ret;
 }
 
 

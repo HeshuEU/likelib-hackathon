@@ -1,30 +1,22 @@
 #include "miner.hpp"
 
+#include "base/assert.hpp"
 #include "base/config.hpp"
 #include "base/hash.hpp"
 #include "base/log.hpp"
 
-#include <ctime>
-#include <cstdlib>
 #include <limits>
-
-
-namespace
-{
-
-bool checkBlockNonce(const bc::Block& block, const base::Bytes& max_hash_value)
-{
-    return base::Sha256::compute(base::toBytes(block)).getBytes() < max_hash_value;
-}
-
-} // namespace
-
+#include <random>
 
 namespace bc
 {
 
 Miner::Miner()
-{}
+{
+    for(std::size_t i = 0; i < base::config::BC_MINING_THREADS; ++i) {
+        _thread_pool.emplace_back(&Miner::miningWorker, this);
+    }
+}
 
 
 Miner::~Miner()
@@ -33,43 +25,59 @@ Miner::~Miner()
 }
 
 
-void Miner::findNonce(const Block& block)
+void Miner::findNonce(const Block& block, const base::Bytes& complexity)
 {
-    stop();
-    _thread_pool.clear();
+    stop(); // TODO: need to wait for all to stop
     _block_sample = std::move(block);
+    _complexity = std::move(complexity);
     _is_stopping = false;
-    for(std::size_t i = 0; i < base::config::BC_MINING_THREADS; ++i) {
-        _thread_pool.emplace_back(&Miner::miningWorker, this);
-    }
+    _notification = THREAD_MESSAGE::FIND_NONCE;
+    _notification_cv.notify_all();
 }
 
 
 void Miner::miningWorker() noexcept
 {
-    std::srand(std::time(nullptr));
-    Block block = _block_sample;
-    static constexpr bc::NonceInt MAX_NONCE = std::numeric_limits<bc::NonceInt>::max();
-    static const base::Bytes MAX_HASH_VALUE = getComplexity();
+    std::mt19937_64 mt(std::random_device{}());
+    std::uniform_int_distribution<bc::NonceInt> dist(0, std::numeric_limits<bc::NonceInt>::max());
 
-    unsigned long long iteration_counter = 0;
-    for(bc::NonceInt nonce = 0; !_is_stopping && nonce < MAX_NONCE; nonce += std::rand() % 5 + 1) {
-        block.setNonce(nonce);
-        if(++iteration_counter % 100000 == 0) {
-            LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash "
-                      << base::Sha256::compute(base::toBytes(block)).toHex() << ' ' << MAX_HASH_VALUE.toHex();
+    while(true) {
+        std::unique_lock lk(_notification_mutex);
+        _notification_cv.wait(lk, [this] {
+            return _notification != THREAD_MESSAGE::NONE;
+        });
+
+        if(_notification == THREAD_MESSAGE::EXIT) {
+            break;
         }
-        if(checkBlockNonce(block, MAX_HASH_VALUE)) {
-            if(!_is_stopping) {
-                _is_stopping = true;
-                _callback(std::move(block));
-                return;
+
+        Block block = _block_sample;
+        const base::Bytes MAX_HASH_VALUE = _complexity;
+
+        unsigned long long iteration_counter = 0;
+        while (!_is_stopping) {
+            bc::NonceInt nonce = dist(mt);
+            block.setNonce(nonce);
+
+            if (++iteration_counter % 100000 == 0) {
+                LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash "
+                          << base::Sha256::compute(base::toBytes(block)).toHex() << ' ' << MAX_HASH_VALUE.toHex();
+            }
+
+            if (base::Sha256::compute(base::toBytes(block)).getBytes() < MAX_HASH_VALUE) {
+                if (!_is_stopping) {
+                    _is_stopping = true;
+                    ASSERT(_callback);
+                    _callback(std::move(block));
+                    return;
+                }
             }
         }
-    }
 
-    if(!_is_stopping) {
-        _callback({});
+        if (!_is_stopping) {
+            ASSERT(_callback);
+            _callback({});
+        }
     }
 }
 
@@ -83,19 +91,15 @@ void Miner::setCallback(CallbackType&& callback)
 void Miner::stop()
 {
     _is_stopping = true;
-    for(auto& thread: _thread_pool) {
-        if(thread.joinable()) {
-            thread.join();
+
+    _notification = THREAD_MESSAGE::EXIT;
+    _notification_cv.notify_all();
+
+    for(auto& t: _thread_pool) {
+        if(t.joinable()) {
+            t.join();
         }
     }
-}
-
-
-base::Bytes getComplexity()
-{
-    base::Bytes ret(32);
-    ret[2] = 0x1A;
-    return ret;
 }
 
 

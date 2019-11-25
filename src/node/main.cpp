@@ -87,6 +87,7 @@ int main(int argc, char** argv)
         //=====================
         SoftConfig exe_config(config_file_path);
         bc::Blockchain blockchain(exe_config);
+        blockchain.run();
         //=====================
         auto service = std::make_shared<node::GeneralServerService>(&blockchain);
         rpc::RpcServer rpc(exe_config.get<std::string>("rpc_address"), service);
