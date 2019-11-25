@@ -8,24 +8,17 @@ namespace bc
 {
 
 
-Blockchain::Blockchain()
+Blockchain::Blockchain(const base::PropertyTree& config)
+    : _config(config)
 {
-    Block genesis;
-    genesis.setNonce(0);
-    genesis.setPrevBlockHash(base::Bytes(32));
-    genesis.addTransaction({"00000000000000000000000000000000", "11111111111111111111111111111111", 150});
-    _blocks.push_back(genesis);
-
-    _miner.setCallback([this](std::optional<Block> block) {
-        if(block) {
-            addBlock(*block);
-            _network->broadcastBlock(*block);
-        }
-    });
+    setupGenesis();
+    _miner.setCallback(std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1));
+    _network = std::make_unique<net::Network>(net::Endpoint{config.get<std::string>("listen_address")},
+                                              config.get<unsigned short>("public_server_port"));
 }
 
 
-void Blockchain::blockReceived(Block&& block)
+void Blockchain::processReceivedBlock(Block&& block)
 {
     LOG_DEBUG << "Block received. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
     ASSERT(!_blocks.empty());
@@ -55,7 +48,7 @@ void Blockchain::addBlock(const Block& block)
 }
 
 
-void Blockchain::transactionReceived(Transaction&& transaction)
+void Blockchain::processReceivedTransaction(Transaction&& transaction)
 {
     LOG_DEBUG << "Received transaction. From = " << transaction.getFrom().toString() << ' '
               << transaction.getTo().toString() << ' ' << transaction.getAmount();
@@ -75,9 +68,34 @@ bc::Balance Blockchain::getBalance(const bc::Address& address) const
 }
 
 
-void Blockchain::setNetwork(net::Network* network)
+void Blockchain::setupGenesis()
 {
-    _network = network;
+    Block genesis;
+    genesis.setNonce(0);
+    genesis.setPrevBlockHash(base::Bytes(32));
+    _blocks.push_back(std::move(genesis));
 }
+
+
+void Blockchain::onMinerFinished(const std::optional<Block>& block)
+{
+    if(block) {
+        addBlock(*block);
+        _network->broadcastBlock(*block);
+    }
+}
+
+
+void Blockchain::run()
+{
+    // run network processing loop
+    _network->run();
+
+    // connect to all nodes, given in configuration file
+    for(const auto& node_ip_string: _config.getVector<std::string>("nodes")) {
+        _network->connect(net::Endpoint{node_ip_string});
+    }
+}
+
 
 } // namespace bc

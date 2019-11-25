@@ -85,30 +85,14 @@ int main(int argc, char** argv)
         ASSERT_SOFT(std::atexit(atExitHandler) == 0);
 
         //=====================
-
         SoftConfig exe_config(config_file_path);
-
-        bc::Blockchain blockchain;
-
-        net::Network network(net::Endpoint{exe_config.get<std::string>("listen_address")},
-            exe_config.get<unsigned short>("public_server_port"));
-
-        blockchain.setNetwork(&network);
-        network.setBlockchain(&blockchain);
-
-        network.run();
-
-        std::vector<net::Endpoint> nodes;
-        for(const auto& node_ip_string: exe_config.getVector<std::string>("nodes")) {
-            nodes.emplace_back(node_ip_string);
-        }
-        network.connect(nodes);
-
+        bc::Blockchain blockchain(exe_config);
+        //=====================
         auto service = std::make_shared<node::GeneralServerService>(&blockchain);
         rpc::RpcServer rpc(exe_config.get<std::string>("rpc_address"), service);
         rpc.run();
         LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc_address");
-
+        //=====================
         std::this_thread::sleep_for(std::chrono::seconds(4500));
 
         return base::config::EXIT_OK;

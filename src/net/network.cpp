@@ -235,12 +235,12 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
             break;
         }
         case PacketType::BLOCK: {
-            _blockchain->blockReceived(base::fromBytes<bc::Block>(packet.getData()));
+            _blockchain->processReceivedBlock(base::fromBytes<bc::Block>(packet.getData()));
             break;
         }
         case PacketType::TRANSACTION: {
             bc::Transaction tx = base::fromBytes<bc::Transaction>(packet.getData());
-            _blockchain->transactionReceived(std::move(tx));
+            _blockchain->processReceivedTransaction(std::move(tx));
             break;
         }
         default: {
