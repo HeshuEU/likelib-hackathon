@@ -32,7 +32,7 @@ class Sha256
 
     //----------------------------------
 
-    static Sha256 calcSha256(const base::Bytes& data);
+    static Sha256 compute(const base::Bytes& data);
 
   private:
     base::Bytes _bytes;
@@ -63,7 +63,7 @@ class Sha1
 
     //----------------------------------
 
-    static Sha1 calcSha1(const base::Bytes& data);
+    static Sha1 compute(const base::Bytes& data);
 
   private:
     Sha1(const Bytes& another);

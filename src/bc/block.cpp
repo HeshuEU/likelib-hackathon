@@ -47,7 +47,7 @@ bool Block::checkValidness() const
     static const base::Bytes MAX_HASH_VALUE = bc::getComplexity();
     base::SerializationOArchive oa;
     oa << *this;
-    return base::Sha256::calcSha256(oa.getBytes()).getBytes() < MAX_HASH_VALUE;
+    return base::Sha256::compute(oa.getBytes()).getBytes() < MAX_HASH_VALUE;
 }
 
 

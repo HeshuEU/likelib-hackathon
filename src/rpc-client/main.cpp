@@ -135,10 +135,10 @@ int test(const base::ProgramOptionsParser& parser)
         LOG_INFO << "Try to connect to rpc server by: " << host;
         rpc::RpcClient client(host);
 
-        //        auto data = base::Sha256::calcSha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST));
+        //        auto data = base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST));
         //        auto answer = client.test(data.toString());
         //        auto our_answer =
-        //        base::Sha256::calcSha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toString();
+        //        base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toString();
 
         auto answer = client.test(base::config::RPC_CURRENT_SECRET_TEST_REQUEST);
         auto our_answer = std::string(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE);

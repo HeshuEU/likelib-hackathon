@@ -116,10 +116,10 @@ BOOST_AUTO_TEST_CASE(bytes_to_string)
 
 BOOST_AUTO_TEST_CASE(bytes_relation_check)
 {
-    base::Bytes b1 = base::Sha256::calcSha256(base::Bytes("0123")).getBytes();
-    base::Bytes b2 = base::Sha256::calcSha256(base::Bytes("123")).getBytes();
-    base::Bytes b3 = base::Sha256::calcSha256(base::Bytes("1234")).getBytes();
-    base::Bytes b4 = base::Sha256::calcSha256(base::Bytes("1235")).getBytes();
+    base::Bytes b1 = base::Sha256::compute(base::Bytes("0123")).getBytes();
+    base::Bytes b2 = base::Sha256::compute(base::Bytes("123")).getBytes();
+    base::Bytes b3 = base::Sha256::compute(base::Bytes("1234")).getBytes();
+    base::Bytes b4 = base::Sha256::compute(base::Bytes("1235")).getBytes();
     BOOST_CHECK(b1 < b2);
     BOOST_CHECK(b1 > b3);
     BOOST_CHECK(b1 < b4);

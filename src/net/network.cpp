@@ -253,7 +253,7 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
 
 void Network::broadcastBlock(const bc::Block& block)
 {
-    LOG_DEBUG << "Broadcasting block. Its hash " << base::Sha256::calcSha256(base::toBytes(block)).getBytes().toHex();
+    LOG_DEBUG << "Broadcasting block. Its hash " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
     auto serialized_block = base::toBytes(block);
     Packet packet(PacketType::BLOCK);
     packet.setData(base::toBytes(block));

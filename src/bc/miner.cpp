@@ -13,7 +13,7 @@ namespace
 
 bool checkBlockNonce(const bc::Block& block, const base::Bytes& max_hash_value)
 {
-    return base::Sha256::calcSha256(base::toBytes(block)).getBytes() < max_hash_value;
+    return base::Sha256::compute(base::toBytes(block)).getBytes() < max_hash_value;
 }
 
 } // namespace
@@ -53,7 +53,7 @@ void Miner::miningWorker() noexcept
     for(bc::NonceInt nonce = 0; !_is_stopping && nonce < MAX_NONCE; nonce += std::rand() % 5 + 1) {
         block.setNonce(nonce);
         // LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash "
-        //        << base::Sha256::calcSha256(base::toBytes(block)).toHex() << ' ' << MAX_HASH_VALUE.toHex();
+        //        << base::Sha256::compute(base::toBytes(block)).toHex() << ' ' << MAX_HASH_VALUE.toHex();
         if(checkBlockNonce(block, MAX_HASH_VALUE)) {
             if(!_is_stopping) {
                 _is_stopping = true;

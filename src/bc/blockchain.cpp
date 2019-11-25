@@ -27,16 +27,16 @@ Blockchain::Blockchain()
 
 void Blockchain::blockReceived(Block&& block)
 {
-    LOG_DEBUG << "Block received. Block hash = " << base::Sha256::calcSha256(base::toBytes(block)).getBytes().toHex();
+    LOG_DEBUG << "Block received. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
     ASSERT(!_blocks.empty());
     if(block.checkValidness() &&
-        base::Sha256::calcSha256(base::toBytes(_blocks.back())).getBytes() == block.getPrevBlockHash()) {
+        base::Sha256::compute(base::toBytes(_blocks.back())).getBytes() == block.getPrevBlockHash()) {
         _miner.stop();
         addBlock(block);
         std::vector<Transaction> new_txs;
         for(const auto& tx : _pending_block.getTransactions()) {
             if(std::find_if(block.getTransactions().begin(), block.getTransactions().end(), [&tx](const Transaction& tx1) {
-                return base::Sha256::calcSha256(base::toBytes(tx)) == base::Sha256::calcSha256(base::toBytes(tx1));
+                return base::Sha256::compute(base::toBytes(tx)) == base::Sha256::compute(base::toBytes(tx1));
             }) == block.getTransactions().end()) {
                 new_txs.push_back(tx);
             }
@@ -49,7 +49,7 @@ void Blockchain::blockReceived(Block&& block)
 
 void Blockchain::addBlock(const Block& block)
 {
-    LOG_DEBUG << "Adding block. Block hash = " << base::Sha256::calcSha256(base::toBytes(block)).getBytes().toHex();
+    LOG_DEBUG << "Adding block. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
     _blocks.push_back(std::move(block));
     for(const auto& tx: block.getTransactions()) {
         if(_balance_manager.checkTransaction(tx)) {
@@ -62,7 +62,7 @@ void Blockchain::addBlock(const Block& block)
 void Blockchain::transactionReceived(Transaction&& transaction)
 {
     LOG_DEBUG << "Received transaction. From = " << transaction.getFrom().toString() << ' ' << transaction.getTo().toString() << ' ' << transaction.getAmount();
-    _pending_block.setPrevBlockHash(base::Sha256::calcSha256(base::toBytes(_blocks.back())).getBytes());
+    _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
     _pending_block.setTransactions({std::move(transaction)});
     _miner.stop();
     _miner.findNonce(_pending_block);
