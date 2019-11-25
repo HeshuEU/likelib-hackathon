@@ -39,7 +39,7 @@ class Miner
         FIND_NONCE,
         EXIT
     };
-    std::atomic<THREAD_MESSAGE> _notification;
+    std::atomic<THREAD_MESSAGE> _notification{THREAD_MESSAGE::NONE};
     //================
     Block _block_sample;
     CallbackType _callback;

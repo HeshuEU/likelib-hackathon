@@ -27,7 +27,7 @@ Miner::~Miner()
 
 void Miner::findNonce(const Block& block, const base::Bytes& complexity)
 {
-    stop(); // TODO: need to wait for all to stop
+    // stop(); // TODO: need to wait for all to stop
     _block_sample = std::move(block);
     _complexity = std::move(complexity);
     _is_stopping = false;
