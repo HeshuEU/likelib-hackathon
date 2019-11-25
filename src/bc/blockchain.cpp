@@ -7,7 +7,6 @@
 namespace bc
 {
 
-
 Blockchain::Blockchain(const base::PropertyTree& config)
     : _config(config)
 {
@@ -22,8 +21,7 @@ void Blockchain::processReceivedBlock(Block&& block)
 {
     LOG_DEBUG << "Block received. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
     ASSERT(!_blocks.empty());
-    if(block.checkValidness() &&
-        base::Sha256::compute(base::toBytes(_blocks.back())).getBytes() == block.getPrevBlockHash()) {
+    if(checkBlock(block)) {
         _miner.stop();
         addBlock(block);
         auto pending_txs = _pending_block.getTransactions();
@@ -52,12 +50,19 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
 {
     LOG_DEBUG << "Received transaction. From = " << transaction.getFrom().toString() << ' '
               << transaction.getTo().toString() << ' ' << transaction.getAmount();
-    _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
-    if(!_pending_block.getTransactions().find(transaction)) {
-        _pending_block.addTransaction({std::move(transaction)});
-        _network->broadcastTransaction(transaction);
-        _miner.stop();
-        _miner.findNonce(_pending_block);
+
+    if(!checkTransaction(transaction)) {
+        LOG_INFO << "Received an invalid transaction";
+        return;
+    }
+    else {
+        if (!_pending_block.getTransactions().find(transaction)) {
+            _pending_block.addTransaction({std::move(transaction)});
+            _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
+            _network->broadcastTransaction(transaction);
+            _miner.stop();
+            _miner.findNonce(_pending_block);
+        }
     }
 }
 
@@ -86,6 +91,23 @@ void Blockchain::onMinerFinished(const std::optional<Block>& block)
 }
 
 
+bool Blockchain::checkTransaction(const Transaction& tx) const
+{
+    return true; // TODO: implement transaction verification (having same transaction and etc.)
+}
+
+
+bool Blockchain::checkBlock(const Block& block) const
+{
+    const base::Sha256 block_hash = base::Sha256::compute(base::toBytes(block));
+    if(base::Sha256::compute(base::toBytes(_blocks.back())) != block.getPrevBlockHash()) {
+        // received block doesn't match our last
+        return false;
+    }
+    return true;
+}
+
+
 void Blockchain::run()
 {
     // run network processing loop
@@ -96,6 +118,5 @@ void Blockchain::run()
         _network->connect(net::Endpoint{node_ip_string});
     }
 }
-
 
 } // namespace bc

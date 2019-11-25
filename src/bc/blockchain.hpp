@@ -20,6 +20,7 @@ class Blockchain
   public:
     //===================
     explicit Blockchain(const base::PropertyTree& config);
+    ~Blockchain() = default;
     //===================
     void run();
     //===================
@@ -32,6 +33,7 @@ class Blockchain
     //===================
   private:
     //===================
+    bool _is_running{false};
     std::list<Block> _blocks;
     TransactionsSet _pending_txs;
     Block _pending_block;
@@ -41,7 +43,11 @@ class Blockchain
     const base::PropertyTree& _config;
     //===================
     void setupGenesis();
+    //===================
     void onMinerFinished(const std::optional<Block>& block);
+    //===================
+    bool checkBlock(const Block& block) const;
+    bool checkTransaction(const Transaction& tx) const;
 };
 
 } // namespace bc
