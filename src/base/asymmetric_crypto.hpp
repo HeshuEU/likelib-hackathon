@@ -10,7 +10,7 @@ class PublicKey
   public:
     PublicKey() = default;
 
-    PublicKey(const Bytes& key_word, std::size_t key_size);
+    PublicKey(const Bytes& key_word);
 
     PublicKey(const PublicKey& another) = default;
 
@@ -26,13 +26,14 @@ class PublicKey
 
     std::size_t maxEncryptSize() const noexcept;
 
-    std::size_t size() const noexcept;
+    std::size_t encryptedMessageSize() const noexcept;
 
-    //    Bytes toBytes() const noexcept;
+    Bytes toBytes() const noexcept;
 
   private:
+    static constexpr std::size_t ASYMMETRIC_DIFFERENCE = 42;
     Bytes _public_key;
-    std::size_t _key_size;
+    std::size_t _encrypted_message_size;
 };
 
 class PrivateKey
@@ -40,7 +41,7 @@ class PrivateKey
   public:
     PrivateKey() = default;
 
-    PrivateKey(const Bytes& key_word, std::size_t key_size);
+    PrivateKey(const Bytes& key_word);
 
     PrivateKey(const PrivateKey& another) = default;
 
@@ -54,15 +55,17 @@ class PrivateKey
 
     Bytes decrypt(const Bytes& encrypted_message) const;
 
-    std::size_t maxEncryptSize() const noexcept;
+    std::size_t maxMessageSizeForEncrypt() const noexcept;
 
-    std::size_t size() const noexcept;
+    std::size_t encryptedMessageSize() const noexcept;
 
-    //    Bytes toBytes() const noexcept;
+    Bytes toBytes() const noexcept;
 
   private:
+    static constexpr std::size_t ASYMMETRIC_DIFFERENCE = 11;
+
     Bytes _private_key;
-    std::size_t _key_size;
+    std::size_t _encrypted_message_size;
 };
 
 std::pair<PublicKey, PrivateKey> generateRsaKeys(std::size_t keys_size);

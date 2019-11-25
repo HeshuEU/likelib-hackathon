@@ -34,90 +34,133 @@ RSA* loadPrivateRsaKey(const base::Bytes& key)
     return rsa_key;
 }
 
-}
+} // namespace
 
 namespace base
 {
 
-PrivateKey::PrivateKey(const base::Bytes& key_word, std::size_t key_size) : _private_key(key_word), _key_size(key_size)
-{}
+PublicKey::PublicKey(const base::Bytes& key_word) : _public_key(key_word)
+{
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(loadPublicRsaKey(_public_key), ::RSA_free);
+    _encrypted_message_size = RSA_size(rsa_key.get());
+}
+
+Bytes PublicKey::encrypt(const Bytes& message) const
+{
+    // check for max message size
+    if(message.size() > maxEncryptSize()) {
+        RAISE_ERROR(InvalidArgument, "Large message size for RSA encryption");
+    }
+
+    // load rsa public key
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(loadPublicRsaKey(_public_key), ::RSA_free);
+
+    // encrypt
+    Bytes encrypted_message(encryptedMessageSize());
+    if(!RSA_public_encrypt(
+           message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_OAEP_PADDING)) {
+        RAISE_ERROR(Error, "Error in RSA encryption");
+    }
+
+    return encrypted_message;
+}
+
+Bytes PublicKey::decrypt(const Bytes& encrypted_message) const
+{
+    if(encrypted_message.size() != encryptedMessageSize()) {
+        RAISE_ERROR(InvalidArgument, "Large message size for RSA encryption");
+    }
+    // load rsa public key
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(loadPublicRsaKey(_public_key), ::RSA_free);
+
+    // decrypt
+    Bytes decrypted_message(encryptedMessageSize());
+    auto message_size = RSA_public_decrypt(encrypted_message.size(), encrypted_message.toArray(),
+        decrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_PADDING);
+    if(message_size == -1) {
+        RAISE_ERROR(Error, "Error in RSA decryption");
+    }
+
+    return decrypted_message.takePart(0, message_size);
+}
+
+std::size_t PublicKey::encryptedMessageSize() const noexcept
+{
+    return _encrypted_message_size;
+}
+
+std::size_t PublicKey::maxEncryptSize() const noexcept
+{
+    return encryptedMessageSize() - ASYMMETRIC_DIFFERENCE;
+}
+
+
+Bytes PublicKey::toBytes() const noexcept
+{
+    return _public_key;
+}
+
+
+PrivateKey::PrivateKey(const base::Bytes& key_word) : _private_key(key_word)
+{
+    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(loadPrivateRsaKey(_private_key), ::RSA_free);
+    _encrypted_message_size = RSA_size(rsa_key.get());
+}
 
 Bytes PrivateKey::encrypt(const Bytes& message) const
 {
-    if(message.size() > maxEncryptSize()) {
-        throw std::runtime_error("Large message size for RSA encryption");
+    // check for max message size
+    if(message.size() > maxMessageSizeForEncrypt()) {
+        RAISE_ERROR(InvalidArgument, "Large message size for RSA encryption");
     }
-    Bytes encrypted_message(size());
+
+    // load rsa private key
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(loadPrivateRsaKey(_private_key), ::RSA_free);
-    ASSERT(RSA_private_encrypt(message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(),
-        RSA_PKCS1_PADDING)); // check errors
+
+    // encrypt
+    Bytes encrypted_message(encryptedMessageSize());
+    if(!RSA_private_encrypt(
+           message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_PADDING)) {
+        RAISE_ERROR(Error, "Error in RSA encryption");
+    }
+
     return encrypted_message;
 }
 
 Bytes PrivateKey::decrypt(const Bytes& encrypted_message) const
 {
-    ASSERT(encrypted_message.size() <= size());
+    // check for max message size
+    if(encrypted_message.size() != encryptedMessageSize()) {
+        RAISE_ERROR(InvalidArgument, "Large message size for RSA decryption");
+    }
+
+    // load rsa private key
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(loadPrivateRsaKey(_private_key), ::RSA_free);
-    Bytes decrypt_message(size());
-    auto message_size = RSA_private_decrypt(encrypted_message.size(), encrypted_message.toArray(), // check errors
+
+    // decrypting
+    Bytes decrypt_message(encryptedMessageSize());
+    auto message_size = RSA_private_decrypt(encrypted_message.size(), encrypted_message.toArray(),
         decrypt_message.toArray(), rsa_key.get(), RSA_PKCS1_OAEP_PADDING);
+    if(message_size == -1) {
+        RAISE_ERROR(Error, "Error in RSA decryption");
+    }
     return decrypt_message.takePart(0, message_size);
 }
 
-
-std::size_t PrivateKey::size() const noexcept
+std::size_t PrivateKey::encryptedMessageSize() const noexcept
 {
-    return _key_size;
+    return _encrypted_message_size;
 }
 
-
-std::size_t PrivateKey::maxEncryptSize() const noexcept
+std::size_t PrivateKey::maxMessageSizeForEncrypt() const noexcept
 {
-    return size() - 11;
+    return encryptedMessageSize() - ASYMMETRIC_DIFFERENCE;
 }
 
-
-PublicKey::PublicKey(const base::Bytes& key_word, std::size_t key_size) : _public_key(key_word), _key_size(key_size)
-{}
-
-Bytes PublicKey::encrypt(const Bytes& message) const
+Bytes PrivateKey::toBytes() const noexcept
 {
-    if(message.size() > maxEncryptSize()) {
-        throw std::runtime_error("Large message size for RSA encryption");
-    }
-    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(loadPublicRsaKey(_public_key), ::RSA_free);
-    Bytes encrypted_message(size());
-    if(!RSA_public_encrypt(
-           message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_OAEP_PADDING)) {
-        throw std::runtime_error("RSA public key encryption error");
-    } // check errors
-    return encrypted_message;
+    return _private_key;
 }
-
-
-Bytes PublicKey::decrypt(const Bytes& encrypted_message) const
-{
-    ASSERT(encrypted_message.size() <= size());
-    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(loadPublicRsaKey(_public_key), ::RSA_free);
-    Bytes decrypted_message(size());
-    auto message_size = RSA_public_decrypt(encrypted_message.size(), encrypted_message.toArray(), // check errors
-        decrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_PADDING);
-    ASSERT(message_size != -1);
-    return decrypted_message.takePart(0, message_size);
-}
-
-
-std::size_t PublicKey::size() const noexcept
-{
-    return _key_size;
-}
-
-
-std::size_t PublicKey::maxEncryptSize() const noexcept
-{
-    return size() - 42;
-}
-
 
 std::pair<PublicKey, PrivateKey> generateRsaKeys(std::size_t keys_size)
 {
@@ -145,14 +188,11 @@ std::pair<PublicKey, PrivateKey> generateRsaKeys(std::size_t keys_size)
 
     // write rsa data
     Bytes public_key_bytes(BIO_pending(public_bio.get()));
-    std::size_t public_key_size = RSA_size(public_rsa_key);
 
     // check errors in generation
     if(!BIO_read(public_bio.get(), public_key_bytes.toArray(), public_key_bytes.size())) {
         RAISE_ERROR(Error, "Fail to check public RSA key");
     }
-
-    PublicKey public_key(public_key_bytes, public_key_size);
     // =============
 
     // create bio for private key
@@ -168,15 +208,14 @@ std::pair<PublicKey, PrivateKey> generateRsaKeys(std::size_t keys_size)
 
     // write rsa data
     Bytes private_key_bytes(BIO_pending(private_bio.get()));
-    std::size_t private_key_size = RSA_size(private_rsa_key);
 
     // check errors in generation
     if(!BIO_read(private_bio.get(), private_key_bytes.toArray(), BIO_pending(private_bio.get()))) {
         RAISE_ERROR(Error, "Fail to check private RSA key");
     }
-    PrivateKey privateKey(private_key_bytes, private_key_size);
     // =============
-    return std::pair<PublicKey, PrivateKey>(public_key, privateKey);
+
+    return std::pair<PublicKey, PrivateKey>(public_key_bytes, private_key_bytes);
 }
 
 
