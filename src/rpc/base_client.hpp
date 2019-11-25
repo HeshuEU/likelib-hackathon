@@ -1,11 +1,11 @@
 #pragma once
 
-#include "address.hpp"
-#include "types.hpp"
+#include "bc/address.hpp"
+#include "bc/types.hpp"
 
 #include <string>
 
-namespace bc
+namespace rpc
 {
 
 class BaseClient
@@ -29,8 +29,8 @@ class BaseClient
     /// \return hash of transaction
     /// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
     /// exception during processing on server instance)
-    virtual std::string transaction(bc::Balance amount, const bc::Address& from_address,
-                                    const bc::Address& to_address) = 0;
+    virtual std::string transaction(
+        bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address) = 0;
 
     /// method call remote server method(specified ip address in constructor) with similar params
     /// \param test_request sha256 from secret data request

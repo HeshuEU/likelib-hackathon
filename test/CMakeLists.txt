@@ -7,9 +7,13 @@ set(TEST_SOURCES
         base/hash.cpp
         base/program_options.cpp
         base/database.cpp
+		base/serialization.cpp
         base/symmetric_crypto.cpp
         base/asymmetric_crypto.cpp
         net/packet.cpp
+        bc/address.cpp
+        bc/balance_manager.cpp
+		bc/transaction.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})

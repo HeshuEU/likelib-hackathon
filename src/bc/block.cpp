@@ -1,5 +1,8 @@
 #include "block.hpp"
 
+#include "base/hash.hpp"
+#include "bc/miner.hpp"
+
 #include <utility>
 
 namespace bc
@@ -27,28 +30,66 @@ const std::vector<bc::Transaction>& Block::getTransactions() const
 }
 
 
-base::Bytes Block::serialize() const
+NonceInt Block::getNonce() const noexcept
 {
-    // TODO: implement
-    return {0x42};
+    return _nonce;
 }
 
 
-void BlockBuilder::setTransactions(std::vector<bc::Transaction>&& txs)
+void Block::setNonce(NonceInt nonce) noexcept
+{
+    _nonce = nonce;
+}
+
+
+bool Block::checkValidness() const
+{
+    static const base::Bytes MAX_HASH_VALUE = bc::getComplexity();
+    base::SerializationOArchive oa;
+    oa << *this;
+    return base::Sha256::compute(oa.getBytes()).getBytes() < MAX_HASH_VALUE;
+}
+
+
+void Block::setPrevBlockHash(const base::Bytes& prev_block_hash)
+{
+    _prev_block_hash = prev_block_hash;
+}
+
+
+void Block::setTransactions(std::vector<Transaction>&& txs)
 {
     _txs = std::move(txs);
 }
 
 
-void BlockBuilder::addTransaction(bc::Transaction&& tx)
+void Block::addTransaction(const Transaction& tx)
 {
-    _txs.push_back(std::move(tx));
+    _txs.push_back(tx);
 }
 
 
-Block BlockBuilder::build() &&
+base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Block& block)
 {
-    return Block(std::move(_prev_block_hash), std::move(_txs));
+    NonceInt nonce;
+    ia >> nonce;
+    block.setNonce(nonce);
+
+    base::Bytes prev_block_hash;
+    ia >> prev_block_hash;
+    block.setPrevBlockHash(prev_block_hash);
+
+    std::vector<Transaction> txs;
+    ia >> txs;
+    block.setTransactions(std::move(txs));
+
+    return ia;
+}
+
+
+base::SerializationOArchive operator<<(base::SerializationOArchive& oa, const Block& block)
+{
+    return oa << block.getNonce() << block.getPrevBlockHash() << block.getTransactions();
 }
 
 } // namespace bc

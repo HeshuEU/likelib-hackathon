@@ -17,12 +17,6 @@ constexpr const char* TO_ACCOUNT_ADDRESS_OPTION = "to_address";
 
 constexpr const char* PROGRAM_NAME = "rpc-client";
 
-
-void createKey(const base::ProgramOptionsParser& parser)
-{
-    // local processing
-}
-
 int getBalance(const base::ProgramOptionsParser& parser)
 {
     if(parser.hasOption("help")) {
@@ -54,7 +48,8 @@ int getBalance(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cerr << "RPC error.\n";;
+        std::cerr << "RPC error.\n";
+        ;
         LOG_ERROR << "[exception in getBalance]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -137,15 +132,12 @@ int test(const base::ProgramOptionsParser& parser)
     try {
         auto host = parser.getValue<std::string>("host");
 
-        //    auto data = base::sha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST));
-        //    auto answer = client.test(data.toString());
-        //    auto our_answer = base::sha256(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toString();
-
         LOG_INFO << "Try to connect to rpc server by: " << host;
         rpc::RpcClient client(host);
 
-        auto answer = client.test(base::config::RPC_CURRENT_SECRET_TEST_REQUEST);
-        auto our_answer = std::string(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE);
+        auto data = base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST)).toHex();
+        auto answer = client.test(data);
+        auto our_answer = base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toHex();
 
         if(answer == our_answer) {
             std::cout << "Test passed" << std::endl;
@@ -187,21 +179,21 @@ int main(int argc, char** argv)
 
         auto get_balance_sub_parser =
             parser.createSubParser("get_balance", "use for get balance from remote by account address", getBalance);
-        get_balance_sub_parser->addOption<std::string>(HOST_ADDRESS_OPTION,
-                                                       "address of remote host in format: \"<ip>:<port>\"");
+        get_balance_sub_parser->addOption<std::string>(
+            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
         get_balance_sub_parser->addOption<std::string>(ACCOUNT_ADDRESS_OPTION, "account address");
 
         auto transaction_sub_parser =
             parser.createSubParser("transaction", "use for get balance from remote by account address", transaction);
-        transaction_sub_parser->addOption<std::string>(HOST_ADDRESS_OPTION,
-                                                       "address of remote host in format: \"<ip>:<port>\"");
+        transaction_sub_parser->addOption<std::string>(
+            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
         transaction_sub_parser->addOption<std::string>(FROM_ACCOUNT_ADDRESS_OPTION, "from account address");
         transaction_sub_parser->addOption<std::string>(TO_ACCOUNT_ADDRESS_OPTION, "to account address");
         transaction_sub_parser->addOption<std::uint32_t>(MONEY_OPTION, "transaction money");
 
         auto test_sub_parser = parser.createSubParser("test", "use test functions", test);
-        test_sub_parser->addOption<std::string>(HOST_ADDRESS_OPTION,
-                                                "address of remote host in format: \"<ip>:<port>\"");
+        test_sub_parser->addOption<std::string>(
+            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
 
         try {
             auto exit_code = parser.process(argc, argv);
@@ -211,21 +203,23 @@ int main(int argc, char** argv)
         }
         catch(const base::InvalidArgument& error) {
             std::cerr << "Command is now exist. Run pc-client --help to see allowed commands and options.\n";
+            return base::config::EXIT_FAIL;
         }
         catch(const base::ParsingError& error) {
             std::cerr << "Failed to parse command options. Run " << PROGRAM_NAME
                       << " --help to see allowed commands and options.\n";
             LOG_DEBUG << error.what();
-        }
-
-        if(parser.hasOption("help")) {
-            std::cout << parser.helpMessage() << std::endl;
-            return base::config::EXIT_OK;
+            return base::config::EXIT_FAIL;
         }
 
         if(parser.hasOption("version")) {
             std::cout << "application version: 0.1 - alpha" << std::endl;
             std::cout << "rpc protocol version: 0.1 - alpha" << std::endl;
+            return base::config::EXIT_OK;
+        }
+
+        if(parser.hasOption("help") || parser.empty()) {
+            std::cout << parser.helpMessage() << std::endl;
             return base::config::EXIT_OK;
         }
     }

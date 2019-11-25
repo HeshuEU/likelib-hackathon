@@ -29,8 +29,8 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
     }
 }
 
-std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address& from_address,
-                                             const bc::Address& to_address)
+std::string rpc::GrpcNodeClient::transaction(
+    bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address)
 {
     // convert data for request
     auto request_amount = new likelib::Money();

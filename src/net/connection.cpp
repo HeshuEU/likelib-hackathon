@@ -9,6 +9,7 @@
 #include <boost/asio/write.hpp>
 
 #include <atomic>
+#include <thread>
 #include <utility>
 
 namespace ba = boost::asio;
@@ -20,11 +21,13 @@ namespace net
 base::Bytes Connection::_read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE);
 
 
-Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler&& receive_handler)
-    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)}, _receive_handler{std::move(receive_handler)}
+Connection::Connection(
+    boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler&& receive_handler)
+    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)}, _receive_handler{
+                                                                                 std::move(receive_handler)}
 {
     ASSERT(_socket.is_open());
-    _network_address =
+    _connect_endpoint =
         std::make_unique<Endpoint>(_socket.remote_endpoint().address().to_string(), _socket.remote_endpoint().port());
 }
 
@@ -57,10 +60,11 @@ std::size_t Connection::getId() const noexcept
 
 void Connection::close()
 {
+    // we could have just return if the connection is already closed, but it helps a lot to catch bugs during debug
     ASSERT_SOFT(!_is_closed);
     _is_closed = true;
     if(_socket.is_open()) {
-        LOG_INFO << "Shutting down connection to " << _network_address->toString();
+        LOG_INFO << "Shutting down connection to " << _connect_endpoint->toString();
         boost::system::error_code ec;
         _socket.shutdown(ba::ip::tcp::socket::shutdown_both, ec);
         if(ec) {
@@ -74,9 +78,39 @@ void Connection::close()
 }
 
 
+bool Connection::isClosed() const noexcept
+{
+    return _is_closed;
+}
+
+
 const Endpoint& Connection::getEndpoint() const
 {
-    return *_network_address;
+    return *_connect_endpoint;
+}
+
+
+bool Connection::hasServerEndpoint() const noexcept
+{
+    return _server_endpoint.get() != nullptr;
+}
+
+
+const Endpoint& Connection::getServerEndpoint() const
+{
+    if(_server_endpoint) {
+        return *_server_endpoint;
+    }
+    else {
+        RAISE_ERROR(net::Error, "connection doesn't have server endpoint");
+    }
+}
+
+
+void Connection::setServerEndpoint(const Endpoint& server_endpoint)
+{
+    ASSERT(!_server_endpoint);
+    _server_endpoint = std::make_unique<Endpoint>(server_endpoint);
 }
 
 
@@ -108,7 +142,9 @@ void Connection::receiveOne()
                 switch(ec.value()) {
                     case ba::error::eof: {
                         LOG_WARNING << "Connection to " << getEndpoint() << " closed";
-                        close();
+                        if(!_is_closed) {
+                            close();
+                        }
                         break;
                     }
                     default: {
@@ -119,15 +155,19 @@ void Connection::receiveOne()
                 // TODO: do something
             }
             else {
-                // LOG_DEBUG << "Received " << bytes_received << " bytes from " << _network_address;
+                // LOG_DEBUG << "Received " << bytes_received << " bytes from " << _connect_endpoint;
 
                 if(_is_receiving_enabled) {
+                    std::unique_ptr<Packet> packet;
                     try {
-                        Packet packet = Packet::deserialize(_read_buffer); // works without bytes::takePart?
-                        _receive_handler(shared_from_this(), packet);
+                        packet = std::make_unique<Packet>(base::fromBytes<Packet>(_read_buffer));
                     }
                     catch(const std::exception& e) {
-                        LOG_WARNING << "Error during packet handling: " << e.what();
+                        LOG_WARNING << "Error during packet deserialization: " << e.what();
+                    }
+
+                    if(packet) {
+                        _receive_handler(*this, *packet);
                     }
 
                     // double-check since the value may be changed - we don't know how long the handler was executing
@@ -143,7 +183,7 @@ void Connection::receiveOne()
 void Connection::send(const Packet& packet)
 {
     LOG_DEBUG << "SEND [" << enumToString(packet.getType()) << ']';
-    send(packet.serialize());
+    send(base::toBytes(packet));
 }
 
 
@@ -154,6 +194,9 @@ void Connection::send(base::Bytes&& data)
 
     if(!is_already_writing) {
         sendPendingMessages();
+    }
+    else {
+        LOG_ERROR << "XYU0";
     }
 }
 
@@ -176,7 +219,7 @@ void Connection::sendPendingMessages()
                 // TODO: do something
             }
             else {
-                // LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _network_address->toString();
+                // LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();
             }
             _pending_send_messages.pop();
 

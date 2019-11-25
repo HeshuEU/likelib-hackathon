@@ -1,6 +1,7 @@
 #pragma once
 
-#include "connection.hpp"
+#include "bc/block.hpp"
+#include "net/connection.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -11,6 +12,11 @@
 #include <set>
 #include <thread>
 
+namespace bc
+{
+class Blockchain;
+}
+
 namespace net
 {
 
@@ -18,7 +24,7 @@ class Network
 {
   public:
     //===================
-    Network(const Endpoint& listen_ip);
+    Network(const Endpoint& listen_ip, unsigned short server_public_port);
     ~Network();
     //===================
     void run();
@@ -27,6 +33,11 @@ class Network
     void connect(const Endpoint& address);
     void connect(const std::vector<Endpoint>& nodes);
     //===================
+    void broadcastBlock(const bc::Block& block);
+    void broadcastTransaction(const bc::Transaction& tx);
+    //===================
+    void setBlockchain(bc::Blockchain* blockchain);
+
   private:
     //===================
     boost::asio::io_context _io_context;
@@ -36,7 +47,8 @@ class Network
     void networkThreadWorkerFunction() noexcept;
     //===================
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
-    const Endpoint& _listen_ip;
+    Endpoint _listen_ip;
+    unsigned short _server_public_port;
     void acceptClients();
     void acceptLoop();
     //===================
@@ -45,7 +57,9 @@ class Network
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
-    void connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const Packet& packet);
+    void connectionReceivedPacketHandler(Connection& connection, const Packet& packet);
+    //===================
+    bc::Blockchain* _blockchain;
 };
 
 } // namespace net

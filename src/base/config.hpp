@@ -75,6 +75,11 @@ constexpr std::size_t NET_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
 constexpr std::size_t NET_PING_FREQUENCY = 7; // seconds
 //------------------------
 
+// blockchain
+constexpr std::size_t BC_MAX_TRANSACTIONS_IN_BLOCK = 100;
+constexpr std::size_t BC_MINING_THREADS = 1;
+//------------------------
+
 // rpc
 constexpr const char* RPC_CURRENT_SECRET_TEST_REQUEST = "Valar morghulis";
 constexpr const char* RPC_CURRENT_SECRET_TEST_RESPONSE = "Valar dohaeris";

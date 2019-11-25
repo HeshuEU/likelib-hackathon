@@ -2,6 +2,7 @@
 
 #include "base/assert.hpp"
 #include "base/log.hpp"
+#include "bc/blockchain.hpp"
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/error.hpp>
@@ -13,7 +14,8 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Network::Network(const net::Endpoint& listen_ip) : _listen_ip{listen_ip}, _heartbeat_timer{_io_context}
+Network::Network(const net::Endpoint& listen_ip, unsigned short server_public_port)
+    : _listen_ip{listen_ip}, _server_public_port{server_public_port}, _heartbeat_timer{_io_context}
 {}
 
 
@@ -36,7 +38,7 @@ void Network::scheduleHeartBeat()
 {
     ASSERT(_not_ponged_peer_ids.empty());
 
-    for(const auto& connection : _connections) {
+    for(const auto& connection: _connections) {
         _not_ponged_peer_ids.insert(connection->getId());
         connection->send({PacketType::PING});
     }
@@ -80,9 +82,11 @@ void Network::acceptLoop()
             LOG_WARNING << "Connection accept failed: " << ec;
         }
         else {
-            auto connection = std::make_shared<Connection>(_io_context, std::move(socket), std::bind(&Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
+            auto connection = std::make_shared<Connection>(_io_context, std::move(socket),
+                std::bind(
+                    &Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
             LOG_INFO << "Connection accepted: " << connection->getEndpoint();
-            connection->startSession();
+            connection->startReceivingMessages();
             _connections.push_back(std::move(connection));
         }
         acceptLoop();
@@ -103,31 +107,37 @@ void Network::connect(const net::Endpoint& address)
     LOG_DEBUG << "Connecting to " << address.toString();
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
     socket->async_connect(static_cast<ba::ip::tcp::endpoint>(address),
-                          [this, socket = std::move(socket), address](const boost::system::error_code& ec) mutable {
-                              if(ec) {
-                                  switch(ec.value()) {
-                                      case ba::error::connection_refused: {
-                                          LOG_WARNING << "Connection error: host " << address.toString();
-                                          break;
-                                      }
-                                      case ba::error::fault: {
-                                          LOG_WARNING << "Connection error: invalid address";
-                                          break;
-                                      }
-                                      default: {
-                                          LOG_WARNING << "Connection error: " << ec << ' ' << ec.message();
-                                          break;
-                                      }
-                                  }
-                              }
-                              else {
-                                  auto connection =
-                                      std::make_shared<Connection>(_io_context, std::move(*socket.release()), std::bind(&Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
-                                  LOG_INFO << "Connection established: " << connection->getEndpoint();
-                                  connection->startSession();
-                                  _connections.push_back(std::move(connection));
-                              }
-                          });
+        [this, socket = std::move(socket), address](const boost::system::error_code& ec) mutable {
+            if(ec) {
+                switch(ec.value()) {
+                    case ba::error::connection_refused: {
+                        LOG_WARNING << "Connection error: host " << address.toString();
+                        break;
+                    }
+                    case ba::error::fault: {
+                        LOG_WARNING << "Connection error: invalid address";
+                        break;
+                    }
+                    default: {
+                        LOG_WARNING << "Connection error: " << ec << ' ' << ec.message();
+                        break;
+                    }
+                }
+            }
+            else {
+                auto connection = std::make_shared<Connection>(_io_context, std::move(*socket.release()),
+                    std::bind(
+                        &Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
+                LOG_INFO << "Connection established: " << connection->getEndpoint();
+
+                connection->setServerEndpoint(address);
+                connection->startReceivingMessages();
+                net::Packet packet{net::PacketType::HANDSHAKE};
+                packet.setPublicServerPort(_server_public_port);
+                connection->send(packet);
+               _connections.push_back(std::move(connection));
+            }
+        });
 }
 
 
@@ -143,10 +153,12 @@ void Network::waitForFinish()
 
 void Network::dropZombieConnections()
 {
-    for(auto it = _connections.begin(); it != _connections.end(); ) {
+    for(auto it = _connections.begin(); it != _connections.end();) {
         auto& connection = *it;
         if(_not_ponged_peer_ids.find(connection->getId()) != _not_ponged_peer_ids.end()) {
-            connection->close();
+            if(!connection->isClosed()) {
+                connection->close();
+            }
             it = _connections.erase(it);
         }
         else {
@@ -157,32 +169,108 @@ void Network::dropZombieConnections()
 }
 
 
-void Network::connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const net::Packet& packet)
+void Network::connectionReceivedPacketHandler(Connection& connection, const net::Packet& packet)
 {
+    LOG_DEBUG << "RECEIVED [" << enumToString(packet.getType()) << ']';
     switch(packet.getType()) {
+        case PacketType::HANDSHAKE: {
+            LOG_DEBUG << "Received server endpoint: " << packet.getPublicServerPort();
+
+            std::string public_ip_with_port = connection.getEndpoint().toString();
+            std::string public_ip = public_ip_with_port.substr(0, public_ip_with_port.find(':'));
+            connection.setServerEndpoint({public_ip, packet.getPublicServerPort()});
+            break;
+        }
         case PacketType::PING: {
-            LOG_DEBUG << "RECEIVED [PING]";
-            connection->send(Packet{PacketType::PONG});
+            connection.send(Packet{PacketType::PONG});
             break;
         }
         case PacketType::PONG: {
-            LOG_DEBUG << "RECEIVED [PONG]";
-            if(auto it = _not_ponged_peer_ids.find(connection->getId()); it == _not_ponged_peer_ids.end()) {
-                LOG_WARNING << "Connection " << connection->getEndpoint() << " sent an unexpected PONG";
+            if(auto it = _not_ponged_peer_ids.find(connection.getId()); it == _not_ponged_peer_ids.end()) {
+                LOG_WARNING << "Connection " << connection.getEndpoint() << " sent an unexpected PONG";
             }
             else {
                 _not_ponged_peer_ids.erase(it);
+                connection.send(net::PacketType::DISCOVERY_REQ);
             }
             break;
         }
         case PacketType::DATA: {
-            LOG_DEBUG << "RECEIVED [DATA]";
+            break;
+        }
+        case PacketType::DISCOVERY_REQ: {
+            // then we gotta send those node our endpoints
+            std::vector<std::string> endpoints;
+            for(const auto& c: _connections) {
+                if(c->hasServerEndpoint() && c->getEndpoint() != connection.getEndpoint()) {
+                    std::string a = c->getServerEndpoint().toString();
+                    endpoints.push_back(a);
+                }
+            }
+
+            Packet ret{net::PacketType::DISCOVERY_RES};
+            ret.setKnownEndpoints(std::move(endpoints));
+            connection.send(ret);
+
+            break;
+        }
+        case PacketType::DISCOVERY_RES: {
+            LOG_DEBUG << "Received endpoints:";
+            for(const auto& endpoint: packet.getKnownEndpoints()) {
+                LOG_DEBUG << endpoint;
+                net::Endpoint received_endpoint{endpoint};
+                // of course this will be changed later
+                bool is_found = false;
+                for(const auto& connection: _connections) {
+                    if(connection->getServerEndpoint() == received_endpoint) {
+                        is_found = true;
+                        break;
+                    }
+                }
+                if(!is_found) {
+                    LOG_DEBUG << "Going to connect to a new node: " << received_endpoint;
+                    connect(received_endpoint);
+                }
+            }
+            break;
+        }
+        case PacketType::BLOCK: {
+            _blockchain->blockReceived(base::fromBytes<bc::Block>(packet.getData()));
+            break;
+        }
+        case PacketType::TRANSACTION: {
+            bc::Transaction tx = base::fromBytes<bc::Transaction>(packet.getData());
+            _blockchain->transactionReceived(std::move(tx));
             break;
         }
         default: {
-            LOG_WARNING << "Received an invalid packet from " << connection->getEndpoint();
+            LOG_WARNING << "Received an invalid packet from " << connection.getEndpoint();
+            break;
         }
     }
 }
+
+
+void Network::broadcastBlock(const bc::Block& block)
+{
+    LOG_DEBUG << "Broadcasting block. Its hash " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
+    auto serialized_block = base::toBytes(block);
+    Packet packet(PacketType::BLOCK);
+    packet.setData(base::toBytes(block));
+    for(auto& connection: _connections) {
+        connection->send(packet);
+    }
+}
+
+
+void Network::broadcastTransaction(const bc::Transaction& tx)
+{}
+
+
+void Network::setBlockchain(bc::Blockchain* blockchain)
+{
+    _blockchain = blockchain;
+}
+
 
 } // namespace net
