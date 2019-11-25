@@ -20,14 +20,14 @@ class PublicKey
 
     PublicKey& operator=(PublicKey&& another) = default;
 
-    //    Bytes encrypt(const Bytes& message) const;
-    //
-    //    Bytes decrypt(const Bytes& encrypted_message) const;
-    //
-    //    std::size_t maxEncryptSize() const noexcept;
-    //
-    //    std::size_t size() const;
-    //
+    Bytes encrypt(const Bytes& message) const;
+
+    Bytes decrypt(const Bytes& encrypted_message) const;
+
+    std::size_t maxEncryptSize() const noexcept;
+
+    std::size_t size() const noexcept;
+
     //    Bytes toBytes() const noexcept;
 
   private:
@@ -50,14 +50,14 @@ class PrivateKey
 
     PrivateKey& operator=(PrivateKey&& another) = default;
 
-    //    Bytes encrypt(const Bytes& message) const;
-    //
-    //    Bytes decrypt(const Bytes& encrypted_message) const;
-    //
-    //    std::size_t maxEncryptSize() const noexcept;
-    //
-    //    std::size_t size() const;
-    //
+    Bytes encrypt(const Bytes& message) const;
+
+    Bytes decrypt(const Bytes& encrypted_message) const;
+
+    std::size_t maxEncryptSize() const noexcept;
+
+    std::size_t size() const noexcept;
+
     //    Bytes toBytes() const noexcept;
 
   private:
@@ -65,6 +65,6 @@ class PrivateKey
     std::size_t _key_size;
 };
 
-std::pair<PublicKey, PrivateKey> generate(std::size_t keys_size);
+std::pair<PublicKey, PrivateKey> generateRsaKeys(std::size_t keys_size);
 
 } // namespace base
