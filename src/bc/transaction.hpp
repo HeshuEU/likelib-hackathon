@@ -31,6 +31,7 @@ class Transaction
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;
+
   private:
     bc::Address _from;
     bc::Address _to;
@@ -39,7 +40,5 @@ class Transaction
 
 base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transaction& tx);
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Transaction& tx);
-
-void removeProcessedTransactions(std::vector<Transaction>& txs, const std::vector<Transaction>& processed);
 
 } // namespace bc

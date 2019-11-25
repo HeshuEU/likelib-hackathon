@@ -19,7 +19,8 @@ namespace base
 {
 
 template<typename T>
-typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::type SerializationOArchive::operator<<(const T& v)
+typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::type SerializationOArchive::operator<<(
+    const T& v)
 {
     if constexpr(std::is_integral<T>::value) {
         static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16,
@@ -56,7 +57,8 @@ typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::typ
 
 
 template<typename T>
-typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::type SerializationIArchive::operator>>(T& v)
+typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::type SerializationIArchive::operator>>(
+    T& v)
 {
     if constexpr(std::is_integral<T>::value) {
         static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8 || sizeof(v) == 16,

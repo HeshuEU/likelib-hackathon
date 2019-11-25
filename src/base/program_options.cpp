@@ -55,7 +55,7 @@ int ProgramOptionsParser::process(int argc, char** argv)
         if(argc > START_POSITION) {
             std::string sub_program(argv[START_POSITION]);
             if(_descendants.count(sub_program)) {
-            _empty = false;
+                _empty = false;
                 return _descendants.find(sub_program)->second->process(argc - START_POSITION, argv + START_POSITION);
             }
             if(sub_program.find('-') == std::string::npos) {

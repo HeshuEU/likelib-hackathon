@@ -4,6 +4,7 @@
 #include "bc/block.hpp"
 #include "bc/miner.hpp"
 #include "bc/transaction.hpp"
+#include "bc/transactions_set.hpp"
 
 #include <list>
 
@@ -33,6 +34,7 @@ class Blockchain
 
   private:
     std::list<Block> _blocks;
+    TransactionsSet _pending_txs;
     Block _pending_block;
     Miner _miner;
     net::Network* _network{nullptr};

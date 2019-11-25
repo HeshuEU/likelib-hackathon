@@ -2,6 +2,7 @@
 
 #include "base/config.hpp"
 #include "base/hash.hpp"
+#include "base/log.hpp"
 
 #include <ctime>
 #include <cstdlib>
@@ -50,10 +51,14 @@ void Miner::miningWorker() noexcept
     Block block = _block_sample;
     static constexpr bc::NonceInt MAX_NONCE = std::numeric_limits<bc::NonceInt>::max();
     static const base::Bytes MAX_HASH_VALUE = getComplexity();
+
+    unsigned long long iteration_counter = 0;
     for(bc::NonceInt nonce = 0; !_is_stopping && nonce < MAX_NONCE; nonce += std::rand() % 5 + 1) {
         block.setNonce(nonce);
-        // LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash "
-        //        << base::Sha256::compute(base::toBytes(block)).toHex() << ' ' << MAX_HASH_VALUE.toHex();
+        if(++iteration_counter % 100000 == 0) {
+            LOG_DEBUG << "Trying nonce " << nonce << ". Resulting hash "
+                      << base::Sha256::compute(base::toBytes(block)).toHex() << ' ' << MAX_HASH_VALUE.toHex();
+        }
         if(checkBlockNonce(block, MAX_HASH_VALUE)) {
             if(!_is_stopping) {
                 _is_stopping = true;
@@ -89,7 +94,7 @@ void Miner::stop()
 base::Bytes getComplexity()
 {
     base::Bytes ret(32);
-    ret[3] = 0x1A;
+    ret[2] = 0x1A;
     return ret;
 }
 

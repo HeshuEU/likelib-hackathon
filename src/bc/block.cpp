@@ -8,12 +8,12 @@
 namespace bc
 {
 
-Block::Block(const base::Bytes& prev_block_hash, std::vector<bc::Transaction>&& txs)
+Block::Block(const base::Bytes& prev_block_hash, TransactionsSet&& txs)
     : _prev_block_hash{prev_block_hash}, _txs(std::move(txs))
 {}
 
 
-Block::Block(base::Bytes&& prev_block_hash, std::vector<bc::Transaction>&& txs)
+Block::Block(base::Bytes&& prev_block_hash, TransactionsSet&& txs)
     : _prev_block_hash{std::move(prev_block_hash)}, _txs(std::move(txs))
 {}
 
@@ -24,7 +24,7 @@ const base::Bytes& Block::getPrevBlockHash() const
 }
 
 
-const std::vector<bc::Transaction>& Block::getTransactions() const
+const TransactionsSet& Block::getTransactions() const
 {
     return _txs;
 }
@@ -57,7 +57,7 @@ void Block::setPrevBlockHash(const base::Bytes& prev_block_hash)
 }
 
 
-void Block::setTransactions(std::vector<Transaction>&& txs)
+void Block::setTransactions(TransactionsSet&& txs)
 {
     _txs = std::move(txs);
 }
@@ -65,11 +65,11 @@ void Block::setTransactions(std::vector<Transaction>&& txs)
 
 void Block::addTransaction(const Transaction& tx)
 {
-    _txs.push_back(tx);
+    _txs.add(tx);
 }
 
 
-base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Block& block)
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block)
 {
     NonceInt nonce;
     ia >> nonce;
@@ -79,7 +79,7 @@ base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Block& b
     ia >> prev_block_hash;
     block.setPrevBlockHash(prev_block_hash);
 
-    std::vector<Transaction> txs;
+    TransactionsSet txs;
     ia >> txs;
     block.setTransactions(std::move(txs));
 
@@ -87,7 +87,7 @@ base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Block& b
 }
 
 
-base::SerializationOArchive operator<<(base::SerializationOArchive& oa, const Block& block)
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block)
 {
     return oa << block.getNonce() << block.getPrevBlockHash() << block.getTransactions();
 }

@@ -135,7 +135,7 @@ void Network::connect(const net::Endpoint& address)
                 net::Packet packet{net::PacketType::HANDSHAKE};
                 packet.setPublicServerPort(_server_public_port);
                 connection->send(packet);
-               _connections.push_back(std::move(connection));
+                _connections.push_back(std::move(connection));
             }
         });
 }
@@ -264,7 +264,13 @@ void Network::broadcastBlock(const bc::Block& block)
 
 
 void Network::broadcastTransaction(const bc::Transaction& tx)
-{}
+{
+    Packet p(PacketType::TRANSACTION);
+    p.setData(base::toBytes(tx));
+    for(auto& connection: _connections) {
+        connection->send(p);
+    }
+}
 
 
 void Network::setBlockchain(bc::Blockchain* blockchain)

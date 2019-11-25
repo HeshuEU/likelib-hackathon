@@ -33,16 +33,12 @@ void Blockchain::blockReceived(Block&& block)
         base::Sha256::compute(base::toBytes(_blocks.back())).getBytes() == block.getPrevBlockHash()) {
         _miner.stop();
         addBlock(block);
-        std::vector<Transaction> new_txs;
-        for(const auto& tx : _pending_block.getTransactions()) {
-            if(std::find_if(block.getTransactions().begin(), block.getTransactions().end(), [&tx](const Transaction& tx1) {
-                return base::Sha256::compute(base::toBytes(tx)) == base::Sha256::compute(base::toBytes(tx1));
-            }) == block.getTransactions().end()) {
-                new_txs.push_back(tx);
-            }
+        auto pending_txs = _pending_block.getTransactions();
+        pending_txs.remove(block.getTransactions());
+        _pending_block.setTransactions(std::move(pending_txs));
+        if(!_pending_block.getTransactions().isEmpty()) {
+            _miner.findNonce(_pending_block);
         }
-        _pending_block.setTransactions(std::move(new_txs));
-        _miner.findNonce(_pending_block);
     }
 }
 
@@ -61,11 +57,15 @@ void Blockchain::addBlock(const Block& block)
 
 void Blockchain::transactionReceived(Transaction&& transaction)
 {
-    LOG_DEBUG << "Received transaction. From = " << transaction.getFrom().toString() << ' ' << transaction.getTo().toString() << ' ' << transaction.getAmount();
+    LOG_DEBUG << "Received transaction. From = " << transaction.getFrom().toString() << ' '
+              << transaction.getTo().toString() << ' ' << transaction.getAmount();
     _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
-    _pending_block.setTransactions({std::move(transaction)});
-    _miner.stop();
-    _miner.findNonce(_pending_block);
+    if(!_pending_block.getTransactions().find(transaction)) {
+        _pending_block.addTransaction({std::move(transaction)});
+        _network->broadcastTransaction(transaction);
+        _miner.stop();
+        _miner.findNonce(_pending_block);
+    }
 }
 
 

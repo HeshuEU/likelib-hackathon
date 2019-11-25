@@ -21,4 +21,4 @@ class BaseService
     virtual std::string test(const std::string& test_request) = 0;
 };
 
-} // namespace bc
+} // namespace rpc
