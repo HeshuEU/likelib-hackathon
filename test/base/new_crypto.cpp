@@ -11,18 +11,7 @@ namespace base
 
 Bytes encryptMessage(const Bytes& message, const rsa::PrivateKey& key)
 {
-    base::aes::KeyType symmetric_key_type;
-    if(key.maxMessageSizeForEncrypt() >= 32) {
-        symmetric_key_type = base::aes::KeyType::Aes256BitKey;
-    }
-    else if(key.maxMessageSizeForEncrypt() >= 16) {
-        symmetric_key_type = base::aes::KeyType::Aes128BitKey;
-    }
-    else {
-        RAISE_ERROR(InvalidArgument, "RSA key length too short");
-    }
-
-    base::aes::Key symmetric_key(symmetric_key_type);
+    base::aes::Key symmetric_key(base::aes::KeyType::Aes256BitKey);
     auto encrypted_message = symmetric_key.encrypt(message);
     auto serialized_symmetric_key = symmetric_key.toBytes();
     auto encrypted_serialized_symmetric_key = key.encrypt(serialized_symmetric_key);
