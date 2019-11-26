@@ -2,6 +2,10 @@
 
 #include "base/bytes.hpp"
 
+#include <openssl/pem.h>
+
+#include <memory>
+
 namespace base
 {
 
@@ -11,8 +15,6 @@ namespace rsa
     class PublicKey
     {
       public:
-        PublicKey() = default;
-
         PublicKey(const Bytes& key_word);
 
         PublicKey(const PublicKey& another) = default;
@@ -29,14 +31,17 @@ namespace rsa
 
         std::size_t maxEncryptSize() const noexcept;
 
-        std::size_t encryptedMessageSize() const noexcept;
-
-        Bytes toBytes() const noexcept;
+        Bytes toBytes() const;
 
       private:
         static constexpr std::size_t ASYMMETRIC_DIFFERENCE = 42;
-        Bytes _public_key;
+
+        std::unique_ptr<RSA, decltype(&::RSA_free)> _rsa_key;
         std::size_t _encrypted_message_size;
+
+        std::size_t encryptedMessageSize() const noexcept;
+
+        static std::unique_ptr<RSA, decltype(&::RSA_free)> loadKey(const Bytes& key_word);
     };
 
     class PrivateKey
@@ -60,15 +65,17 @@ namespace rsa
 
         std::size_t maxMessageSizeForEncrypt() const noexcept;
 
-        std::size_t encryptedMessageSize() const noexcept;
-
-        Bytes toBytes() const noexcept;
+        Bytes toBytes() const;
 
       private:
         static constexpr std::size_t ASYMMETRIC_DIFFERENCE = 11;
 
-        Bytes _private_key;
+        std::unique_ptr<RSA, decltype(&::RSA_free)> _rsa_key;
         std::size_t _encrypted_message_size;
+
+        std::size_t encryptedMessageSize() const noexcept;
+
+        static std::unique_ptr<RSA, decltype(&::RSA_free)> loadKey(const Bytes& key_word);
     };
 
     std::pair<PublicKey, PrivateKey> generateKeys(std::size_t keys_size);

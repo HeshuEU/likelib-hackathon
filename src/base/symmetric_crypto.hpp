@@ -39,6 +39,14 @@ namespace aes
         static Bytes generateKey(KeyType type);
 
         static Bytes generateIv(KeyType type);
+
+        Bytes encrypt256Aes(const Bytes& data) const;
+
+        Bytes decrypt256Aes(const Bytes& data) const;
+
+        Bytes encrypt128Aes(const Bytes& data) const;
+
+        Bytes decrypt128Aes(const Bytes& data) const;
     };
 
 } // namespace aes
