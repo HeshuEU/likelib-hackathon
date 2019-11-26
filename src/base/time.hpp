@@ -25,7 +25,6 @@ class Time
 
   private:
     std::chrono::time_point<std::chrono::system_clock> _time;
-
 };
 
 } // namespace base

@@ -15,9 +15,10 @@ long Time::millisecondsInEpoch() const
 }
 
 
-    long Time::secondsInEpoch() const{
-        return std::chrono::duration_cast<std::chrono::seconds>(_time.time_since_epoch()).count();
-    }
+long Time::secondsInEpoch() const
+{
+    return std::chrono::duration_cast<std::chrono::seconds>(_time.time_since_epoch()).count();
+}
 
 Time Time::now()
 {

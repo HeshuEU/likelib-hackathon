@@ -9,11 +9,19 @@
 #include <cstddef>
 #include <functional>
 #include <mutex>
+#include <random>
 #include <thread>
 
 
 namespace bc
 {
+
+namespace impl
+{
+    class MinerWorker;
+}
+
+
 class Miner
 {
   public:
@@ -30,24 +38,56 @@ class Miner
     //================
   private:
     //================
-    std::vector<std::thread> _thread_pool;
-    std::condition_variable _notification_cv;
-    std::mutex _notification_mutex;
-
-    enum class THREAD_MESSAGE {
-        NONE,
-        FIND_NONCE,
-        EXIT
-    };
-    std::atomic<THREAD_MESSAGE> _notification{THREAD_MESSAGE::NONE};
+    std::vector<impl::MinerWorker> _workers_pool;
     //================
     Block _block_sample;
     CallbackType _callback;
-    std::atomic<bool> _is_stopping;
     base::Bytes _complexity;
     //================
     void miningWorker() noexcept;
     //================
 };
+
+
+namespace impl
+{
+    class MinerWorker
+    {
+      public:
+        //==================
+        MinerWorker(const base::Bytes& complexity, Miner::CallbackType& callback);
+        ~MinerWorker();
+        //==================
+        void run();
+        void stop();
+        //==================
+        void assignJob(const Block& block);
+        void assignJob(Block&& block);
+        //==================
+      private:
+        //==================
+        std::thread _thread;
+        Block _block;
+        Miner::CallbackType& _callback;
+        const base::Bytes& _complexity;
+        //==================
+        std::atomic<bool> _has_unread_message;
+        std::condition_variable _notification_cv;
+        std::mutex _notification_mutex;
+
+        enum class THREAD_MESSAGE
+        {
+            NONE,
+            FIND_NONCE,
+            EXIT
+        };
+        std::atomic<THREAD_MESSAGE> _notification{THREAD_MESSAGE::NONE};
+
+        void threadWorker() noexcept;
+        //==================
+        std::mt19937_64 _generator{ std::random_device{}() };
+        //==================
+    };
+} // namespace impl
 
 } // namespace bc

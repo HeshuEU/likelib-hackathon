@@ -7,13 +7,12 @@
 namespace bc
 {
 
-Blockchain::Blockchain(const base::PropertyTree& config)
-    : _config(config)
+Blockchain::Blockchain(const base::PropertyTree& config) : _config(config)
 {
     setupGenesis();
     _miner.setCallback(std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1));
-    _network = std::make_unique<net::Network>(net::Endpoint{config.get<std::string>("listen_address")},
-                                              config.get<unsigned short>("public_server_port"));
+    _network = std::make_unique<net::Network>(
+        net::Endpoint{config.get<std::string>("listen_address")}, config.get<unsigned short>("public_server_port"));
 }
 
 
@@ -56,7 +55,7 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
         return;
     }
     else {
-        if (!_pending_block.getTransactions().find(transaction)) {
+        if(!_pending_block.getTransactions().find(transaction)) {
             _pending_block.addTransaction(transaction);
             _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
             _network->broadcastTransaction(transaction);
@@ -82,7 +81,8 @@ void Blockchain::setupGenesis()
 }
 
 
-base::Bytes Blockchain::getMiningComplexity() const {
+base::Bytes Blockchain::getMiningComplexity() const
+{
     base::Bytes ret(32);
     ret[2] = 0x1A;
     return ret;
