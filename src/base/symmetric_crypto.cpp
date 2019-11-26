@@ -207,86 +207,91 @@ base::Bytes decrypt128Aes(const base::Bytes& data, const base::Bytes& iv, const 
 namespace base
 {
 
-AesKey::AesKey()
-    : _type(KeyType::Aes256BitKey), _key(generateKey(KeyType::Aes256BitKey)), _iv(generateIv(KeyType::Aes256BitKey))
-{}
-
-AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
-{}
-
-AesKey::AesKey(const Bytes& bytes_key)
+namespace aes
 {
-    if((bytes_key.size() % 8 != 0) ||
-        (bytes_key.size() % 3) != 0) { // multiple bit and concatenate size = iv.size() * 3
-        RAISE_ERROR(InvalidArgument, "key data are not valid");
-    }
-    switch(bytes_key.size() / 3) {
-        case 16:
-            _type = KeyType::Aes256BitKey;
-            _key = bytes_key.takePart(0, 16 * 2);
-            _iv = bytes_key.takePart(16 * 2, bytes_key.size());
-            break;
-        case 8:
-            _type = KeyType::Aes128BitKey;
-            _key = bytes_key.takePart(0, 8 * 2);
-            _iv = bytes_key.takePart(8 * 2, bytes_key.size());
-            break;
-        default:
+
+    Key::Key()
+        : _type(KeyType::Aes256BitKey), _key(generateKey(KeyType::Aes256BitKey)), _iv(generateIv(KeyType::Aes256BitKey))
+    {}
+
+    Key::Key(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
+    {}
+
+    Key::Key(const Bytes& bytes_key)
+    {
+        if((bytes_key.size() % 8 != 0) ||
+            (bytes_key.size() % 3) != 0) { // multiple bit and concatenate size = iv.size() * 3
             RAISE_ERROR(InvalidArgument, "key data are not valid");
+        }
+        switch(bytes_key.size() / 3) {
+            case 16:
+                _type = KeyType::Aes256BitKey;
+                _key = bytes_key.takePart(0, 16 * 2);
+                _iv = bytes_key.takePart(16 * 2, bytes_key.size());
+                break;
+            case 8:
+                _type = KeyType::Aes128BitKey;
+                _key = bytes_key.takePart(0, 8 * 2);
+                _iv = bytes_key.takePart(8 * 2, bytes_key.size());
+                break;
+            default:
+                RAISE_ERROR(InvalidArgument, "key data are not valid");
+        }
     }
-}
 
-Bytes AesKey::toBytes() const
-{
-    return Bytes(_key.toString() + _iv.toString()); // concatenate size = iv.size() * 3
-}
-
-Bytes AesKey::encrypt(const Bytes& data) const
-{
-    switch(_type) {
-        case KeyType::Aes256BitKey:
-            return encrypt256Aes(data, _iv, _key);
-        case KeyType::Aes128BitKey:
-            return encrypt128Aes(data, _iv, _key);
-        default:
-            RAISE_ERROR(Error, "Unexpected key type");
+    Bytes Key::toBytes() const
+    {
+        return Bytes(_key.toString() + _iv.toString()); // concatenate size = iv.size() * 3
     }
-}
 
-Bytes AesKey::decrypt(const Bytes& data) const
-{
-    switch(_type) {
-        case KeyType::Aes256BitKey:
-            return decrypt256Aes(data, _iv, _key);
-        case KeyType::Aes128BitKey:
-            return decrypt128Aes(data, _iv, _key);
-        default:
-            RAISE_ERROR(Error, "Unexpected key type");
+    Bytes Key::encrypt(const Bytes& data) const
+    {
+        switch(_type) {
+            case KeyType::Aes256BitKey:
+                return encrypt256Aes(data, _iv, _key);
+            case KeyType::Aes128BitKey:
+                return encrypt128Aes(data, _iv, _key);
+            default:
+                RAISE_ERROR(Error, "Unexpected key type");
+        }
     }
-}
 
-Bytes AesKey::generateKey(KeyType type)
-{
-    switch(type) {
-        case KeyType::Aes256BitKey:
-            return generate_bytes(16 * 2); // 32(bytes) * 8(bit in byte) = 256(bit)
-        case KeyType::Aes128BitKey:
-            return generate_bytes(8 * 2); // 16(bytes) * 8(bit in byte) = 128(bit)
-        default:
-            RAISE_ERROR(Error, "Unexpected key type");
+    Bytes Key::decrypt(const Bytes& data) const
+    {
+        switch(_type) {
+            case KeyType::Aes256BitKey:
+                return decrypt256Aes(data, _iv, _key);
+            case KeyType::Aes128BitKey:
+                return decrypt128Aes(data, _iv, _key);
+            default:
+                RAISE_ERROR(Error, "Unexpected key type");
+        }
     }
-}
 
-Bytes AesKey::generateIv(KeyType type)
-{
-    switch(type) {
-        case KeyType::Aes256BitKey:
-            return generate_bytes(16); // 16(bytes) * 8(bit in byte) = 128(bit)
-        case KeyType::Aes128BitKey:
-            return generate_bytes(8); // 8(bytes) * 8(bit in byte) = 64(bit)
-        default:
-            RAISE_ERROR(Error, "Unexpected key type");
+    Bytes Key::generateKey(KeyType type)
+    {
+        switch(type) {
+            case KeyType::Aes256BitKey:
+                return generate_bytes(16 * 2); // 32(bytes) * 8(bit in byte) = 256(bit)
+            case KeyType::Aes128BitKey:
+                return generate_bytes(8 * 2); // 16(bytes) * 8(bit in byte) = 128(bit)
+            default:
+                RAISE_ERROR(Error, "Unexpected key type");
+        }
     }
-}
+
+    Bytes Key::generateIv(KeyType type)
+    {
+        switch(type) {
+            case KeyType::Aes256BitKey:
+                return generate_bytes(16); // 16(bytes) * 8(bit in byte) = 128(bit)
+            case KeyType::Aes128BitKey:
+                return generate_bytes(8); // 8(bytes) * 8(bit in byte) = 64(bit)
+            default:
+                RAISE_ERROR(Error, "Unexpected key type");
+        }
+    }
+
+} // namespace aes
 
 } // namespace base

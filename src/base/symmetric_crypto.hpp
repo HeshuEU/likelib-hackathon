@@ -5,37 +5,42 @@
 namespace base
 {
 
-enum class KeyType
+namespace aes
 {
-    Aes256BitKey,
-    Aes128BitKey
-};
 
-class AesKey
-{
-  public:
-    AesKey();
+    enum class KeyType
+    {
+        Aes256BitKey,
+        Aes128BitKey
+    };
 
-    AesKey(KeyType type);
+    class Key
+    {
+      public:
+        Key();
 
-    AesKey(const Bytes& bytes_key);
+        Key(KeyType type);
 
-    ~AesKey() = default;
+        Key(const Bytes& bytes_key);
 
-    Bytes toBytes() const;
+        ~Key() = default;
 
-    Bytes encrypt(const Bytes& data) const;
+        Bytes toBytes() const;
 
-    Bytes decrypt(const Bytes& data) const;
+        Bytes encrypt(const Bytes& data) const;
 
-  private:
-    KeyType _type;
-    Bytes _key;
-    Bytes _iv;
+        Bytes decrypt(const Bytes& data) const;
 
-    static Bytes generateKey(KeyType type);
+      private:
+        KeyType _type;
+        Bytes _key;
+        Bytes _iv;
 
-    static Bytes generateIv(KeyType type);
-};
+        static Bytes generateKey(KeyType type);
+
+        static Bytes generateIv(KeyType type);
+    };
+
+} // namespace aes
 
 }; // namespace base

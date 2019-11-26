@@ -5,69 +5,74 @@
 namespace base
 {
 
-class PublicKey
+namespace rsa
 {
-  public:
-    PublicKey() = default;
 
-    PublicKey(const Bytes& key_word);
+    class PublicKey
+    {
+      public:
+        PublicKey() = default;
 
-    PublicKey(const PublicKey& another) = default;
+        PublicKey(const Bytes& key_word);
 
-    PublicKey(PublicKey&& another) = default;
+        PublicKey(const PublicKey& another) = default;
 
-    PublicKey& operator=(const PublicKey& another) = default;
+        PublicKey(PublicKey&& another) = default;
 
-    PublicKey& operator=(PublicKey&& another) = default;
+        PublicKey& operator=(const PublicKey& another) = default;
 
-    Bytes encrypt(const Bytes& message) const;
+        PublicKey& operator=(PublicKey&& another) = default;
 
-    Bytes decrypt(const Bytes& encrypted_message) const;
+        Bytes encrypt(const Bytes& message) const;
 
-    std::size_t maxEncryptSize() const noexcept;
+        Bytes decrypt(const Bytes& encrypted_message) const;
 
-    std::size_t encryptedMessageSize() const noexcept;
+        std::size_t maxEncryptSize() const noexcept;
 
-    Bytes toBytes() const noexcept;
+        std::size_t encryptedMessageSize() const noexcept;
 
-  private:
-    static constexpr std::size_t ASYMMETRIC_DIFFERENCE = 42;
-    Bytes _public_key;
-    std::size_t _encrypted_message_size;
-};
+        Bytes toBytes() const noexcept;
 
-class PrivateKey
-{
-  public:
-    PrivateKey() = default;
+      private:
+        static constexpr std::size_t ASYMMETRIC_DIFFERENCE = 42;
+        Bytes _public_key;
+        std::size_t _encrypted_message_size;
+    };
 
-    PrivateKey(const Bytes& key_word);
+    class PrivateKey
+    {
+      public:
+        PrivateKey() = default;
 
-    PrivateKey(const PrivateKey& another) = default;
+        PrivateKey(const Bytes& key_word);
 
-    PrivateKey(PrivateKey&& another) = default;
+        PrivateKey(const PrivateKey& another) = default;
 
-    PrivateKey& operator=(const PrivateKey& another) = default;
+        PrivateKey(PrivateKey&& another) = default;
 
-    PrivateKey& operator=(PrivateKey&& another) = default;
+        PrivateKey& operator=(const PrivateKey& another) = default;
 
-    Bytes encrypt(const Bytes& message) const;
+        PrivateKey& operator=(PrivateKey&& another) = default;
 
-    Bytes decrypt(const Bytes& encrypted_message) const;
+        Bytes encrypt(const Bytes& message) const;
 
-    std::size_t maxMessageSizeForEncrypt() const noexcept;
+        Bytes decrypt(const Bytes& encrypted_message) const;
 
-    std::size_t encryptedMessageSize() const noexcept;
+        std::size_t maxMessageSizeForEncrypt() const noexcept;
 
-    Bytes toBytes() const noexcept;
+        std::size_t encryptedMessageSize() const noexcept;
 
-  private:
-    static constexpr std::size_t ASYMMETRIC_DIFFERENCE = 11;
+        Bytes toBytes() const noexcept;
 
-    Bytes _private_key;
-    std::size_t _encrypted_message_size;
-};
+      private:
+        static constexpr std::size_t ASYMMETRIC_DIFFERENCE = 11;
 
-std::pair<PublicKey, PrivateKey> generateRsaKeys(std::size_t keys_size);
+        Bytes _private_key;
+        std::size_t _encrypted_message_size;
+    };
+
+    std::pair<PublicKey, PrivateKey> generateKeys(std::size_t keys_size);
+
+} // namespace rsa
 
 } // namespace base
