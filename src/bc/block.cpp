@@ -1,7 +1,6 @@
 #include "block.hpp"
 
 #include "base/hash.hpp"
-#include "bc/miner.hpp"
 
 #include <utility>
 

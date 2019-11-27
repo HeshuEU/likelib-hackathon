@@ -7,12 +7,12 @@
 namespace bc
 {
 
-Blockchain::Blockchain(const base::PropertyTree& config) : _config(config)
+Blockchain::Blockchain(const base::PropertyTree& config) : _config(config), _miner(config), _network_handler(*this)
 {
     setupGenesis();
     _miner.setCallback(std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1));
-    _network = std::make_unique<net::Network>(
-        net::Endpoint{config.get<std::string>("listen_address")}, config.get<unsigned short>("public_server_port"));
+    _network = std::make_unique<net::Network>(net::Endpoint{config.get<std::string>("listen_address")},
+        config.get<unsigned short>("public_server_port"), _network_handler);
 }
 
 
@@ -21,7 +21,7 @@ void Blockchain::processReceivedBlock(Block&& block)
     LOG_DEBUG << "Block received. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
     ASSERT(!_blocks.empty());
     if(checkBlock(block)) {
-        _miner.stop();
+        _miner.dropJob();
         addBlock(block);
         auto pending_txs = _pending_block.getTransactions();
         pending_txs.remove(block.getTransactions());
@@ -59,7 +59,7 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
             _pending_block.addTransaction(transaction);
             _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
             _network->broadcastTransaction(transaction);
-            _miner.stop();
+            _miner.dropJob();
             _miner.findNonce(_pending_block, getMiningComplexity());
         }
     }
@@ -84,7 +84,7 @@ void Blockchain::setupGenesis()
 base::Bytes Blockchain::getMiningComplexity() const
 {
     base::Bytes ret(32);
-    ret[2] = 0x1A;
+    ret[3] = 0x9F;
     return ret;
 }
 
@@ -125,5 +125,25 @@ void Blockchain::run()
         _network->connect(net::Endpoint{node_ip_string});
     }
 }
+
+
+//=======================================
+
+Blockchain::NetworkHandler::NetworkHandler(Blockchain& bc) : _bc{bc}
+{}
+
+
+void Blockchain::NetworkHandler::onBlockReceived(Block&& block)
+{
+    _bc.processReceivedBlock(std::move(block));
+}
+
+
+void Blockchain::NetworkHandler::onTransactionReceived(Transaction&& transaction)
+{
+    _bc.processReceivedTransaction(std::move(transaction));
+}
+
+//=======================================
 
 } // namespace bc

@@ -68,8 +68,8 @@ void setFileSink()
 
     using TextFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
     auto sink = boost::make_shared<TextFileSink>(boost::log::keywords::file_name = file_path,
-            boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
-            boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT);
+        boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
+        boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT);
 
     sink->locked_backend()->auto_flush(true);
 

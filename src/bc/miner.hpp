@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/bytes.hpp"
+#include "base/property_tree.hpp"
 #include "bc/types.hpp"
 #include "bc/block.hpp"
 
@@ -11,6 +12,7 @@
 #include <mutex>
 #include <random>
 #include <thread>
+#include <forward_list>
 
 
 namespace bc
@@ -26,25 +28,26 @@ class Miner
 {
   public:
     //================
-    Miner();
+    Miner(const base::PropertyTree& ptree);
     ~Miner();
     //================
-    using CallbackType = std::function<void(std::optional<Block>)>;
+    using CallbackType = std::function<void(Block&&)>;
 
     void setCallback(CallbackType&& callback);
 
     void findNonce(const Block& block, const base::Bytes& mining_complexity);
-    void stop();
+    void dropJob();
     //================
   private:
     //================
-    std::vector<impl::MinerWorker> _workers_pool;
+    std::forward_list<impl::MinerWorker> _workers_pool;
     //================
-    Block _block_sample;
     CallbackType _callback;
     base::Bytes _complexity;
     //================
     void miningWorker() noexcept;
+    //================
+    void stop();
     //================
 };
 
@@ -63,6 +66,7 @@ namespace impl
         //==================
         void assignJob(const Block& block);
         void assignJob(Block&& block);
+        void dropJob();
         //==================
       private:
         //==================
@@ -71,7 +75,7 @@ namespace impl
         Miner::CallbackType& _callback;
         const base::Bytes& _complexity;
         //==================
-        std::atomic<bool> _has_unread_message;
+        std::atomic<bool> _has_unread_message{false};
         std::condition_variable _notification_cv;
         std::mutex _notification_mutex;
 
@@ -85,7 +89,7 @@ namespace impl
 
         void threadWorker() noexcept;
         //==================
-        std::mt19937_64 _generator{ std::random_device{}() };
+        std::mt19937_64 _generator{std::random_device{}()};
         //==================
     };
 } // namespace impl
