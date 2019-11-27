@@ -2,12 +2,12 @@
 #include "rpc/error.hpp"
 
 #include "base/log.hpp"
-#include "base/program_options.hpp"
+#include "base/subprogram_router.hpp"
 #include "base/error.hpp"
 #include "base/hash.hpp"
 #include "base/time.hpp"
 
-namespace
+namespace rpc_client
 {
 
 constexpr const char* HOST_ADDRESS_OPTION = "host";
@@ -16,26 +16,28 @@ constexpr const char* ACCOUNT_ADDRESS_OPTION = "address";
 constexpr const char* FROM_ACCOUNT_ADDRESS_OPTION = "from_address";
 constexpr const char* TO_ACCOUNT_ADDRESS_OPTION = "to_address";
 
-constexpr const char* PROGRAM_NAME = "rpc-client";
-
-int getBalance(const base::ProgramOptionsParser& parser)
+int getBalance(base::SubprogramRouter& router)
 {
-    if(parser.hasOption("help")) {
-        std::cout << parser.helpMessage() << std::endl;
+    router.optionsParser().addOption<std::string>(HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
+    router.optionsParser().addOption<std::string>(ACCOUNT_ADDRESS_OPTION, "account address");
+    router.update();
+
+    if(router.optionsParser().hasOption("help")) {
+        std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
-    if(!parser.hasOption(HOST_ADDRESS_OPTION)) {
+    if(!router.optionsParser().hasOption(HOST_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << HOST_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    if(!parser.hasOption(ACCOUNT_ADDRESS_OPTION)) {
+    if(!router.optionsParser().hasOption(ACCOUNT_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << ACCOUNT_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
 
     try {
-        auto host = parser.getValue<std::string>(HOST_ADDRESS_OPTION);
-        auto address = parser.getValue<std::string>(ACCOUNT_ADDRESS_OPTION);
+        auto host = router.optionsParser().getValue<std::string>(HOST_ADDRESS_OPTION);
+        auto address = router.optionsParser().getValue<std::string>(ACCOUNT_ADDRESS_OPTION);
 
         LOG_INFO << "Try to connect to rpc server by: " << host;
         rpc::RpcClient client(host);
@@ -49,7 +51,7 @@ int getBalance(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cerr << "RPC error.\n";
+        std::cerr << "RPC error. " << er.what() << "\n";
         ;
         LOG_ERROR << "[exception in getBalance]" << er.what();
         return base::config::EXIT_FAIL;
@@ -64,34 +66,41 @@ int getBalance(const base::ProgramOptionsParser& parser)
     }
 }
 
-int transaction(const base::ProgramOptionsParser& parser)
+int transfer(base::SubprogramRouter& router)
 {
-    if(parser.hasOption("help")) {
-        std::cout << parser.helpMessage() << std::endl;
+    router.optionsParser().addOption<std::string>(
+        HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
+    router.optionsParser().addOption<std::string>(FROM_ACCOUNT_ADDRESS_OPTION, "from account address");
+    router.optionsParser().addOption<std::string>(TO_ACCOUNT_ADDRESS_OPTION, "to account address");
+    router.optionsParser().addOption<std::uint32_t>(MONEY_OPTION, "transfer money");
+        router.update();
+
+    if(router.optionsParser().hasOption("help")) {
+        std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
-    if(!parser.hasOption(HOST_ADDRESS_OPTION)) {
+    if(!router.optionsParser().hasOption(HOST_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << HOST_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    if(!parser.hasOption(FROM_ACCOUNT_ADDRESS_OPTION)) {
+    if(!router.optionsParser().hasOption(FROM_ACCOUNT_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << FROM_ACCOUNT_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    if(!parser.hasOption(TO_ACCOUNT_ADDRESS_OPTION)) {
+    if(!router.optionsParser().hasOption(TO_ACCOUNT_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << TO_ACCOUNT_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    if(!parser.hasOption(MONEY_OPTION)) {
+    if(!router.optionsParser().hasOption(MONEY_OPTION)) {
         std::cout << "No option required option[" << MONEY_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
 
     try {
-        auto host = parser.getValue<std::string>(HOST_ADDRESS_OPTION);
-        auto from_address = parser.getValue<std::string>(FROM_ACCOUNT_ADDRESS_OPTION);
-        auto to_address = parser.getValue<std::string>(TO_ACCOUNT_ADDRESS_OPTION);
-        auto amount = parser.getValue<std::uint32_t>(MONEY_OPTION);
+        auto host = router.optionsParser().getValue<std::string>(HOST_ADDRESS_OPTION);
+        auto from_address = router.optionsParser().getValue<std::string>(FROM_ACCOUNT_ADDRESS_OPTION);
+        auto to_address = router.optionsParser().getValue<std::string>(TO_ACCOUNT_ADDRESS_OPTION);
+        auto amount = router.optionsParser().getValue<std::uint32_t>(MONEY_OPTION);
 
         rpc::RpcClient client(host);
         LOG_INFO << "Try to connect to rpc server by: " << host;
@@ -105,7 +114,7 @@ int transaction(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cerr << "RPC error.\n";
+        std::cerr << "RPC error. " << er.what() << "\n";
         LOG_ERROR << "[exception in transaction]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -119,19 +128,24 @@ int transaction(const base::ProgramOptionsParser& parser)
     }
 }
 
-int test(const base::ProgramOptionsParser& parser)
+int test(base::SubprogramRouter& router)
 {
-    if(parser.hasOption("help")) {
-        std::cout << parser.helpMessage() << std::endl;
+    constexpr const char* HOST_ADDRESS_OPTION = "host";
+    router.optionsParser().addOption<std::string>(HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
+    router.update();
+
+    if(router.optionsParser().hasOption("help")) {
+        std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
-    if(!parser.hasOption(HOST_ADDRESS_OPTION)) {
+
+    if(!router.optionsParser().hasOption(HOST_ADDRESS_OPTION)) {
         std::cout << "No option required option[" << HOST_ADDRESS_OPTION << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
 
     try {
-        auto host = parser.getValue<std::string>("host");
+        auto host = router.optionsParser().getValue<std::string>("host");
 
         LOG_INFO << "Try to connect to rpc server by: " << host;
         rpc::RpcClient client(host);
@@ -154,7 +168,7 @@ int test(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cerr << "RPC error.\n";
+        std::cerr << "RPC error. " << er.what() << "\n";
         LOG_ERROR << "[exception in test]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -168,61 +182,35 @@ int test(const base::ProgramOptionsParser& parser)
     }
 }
 
+int mainProcess(base::SubprogramRouter& router)
+{
+    router.optionsParser().addFlag("version,v", "Print version of program");
+    router.update();
+
+    if(router.optionsParser().hasOption("help") || router.optionsParser().empty()) {
+        std::cout << router.helpMessage() << std::endl;
+        return base::config::EXIT_OK;
+    }
+
+    if(router.optionsParser().hasOption("version")) {
+        std::cout << "Likelib2 rpc client 0.1" << std::endl;
+        return base::config::EXIT_OK;
+    }
+
+    return base::config::EXIT_OK;
+}
+
 } // namespace
 
 int main(int argc, char** argv)
 {
     try {
         base::initLog(base::LogLevel::ALL, base::Sink::FILE);
-
-        base::ProgramOptionsParser parser(PROGRAM_NAME);
-        parser.addFlag("version,v", "Print version of program and version of rpc protocol");
-
-        auto get_balance_sub_parser =
-            parser.createSubParser("get_balance", "use for get balance from remote by account address", getBalance);
-        get_balance_sub_parser->addOption<std::string>(
-            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
-        get_balance_sub_parser->addOption<std::string>(ACCOUNT_ADDRESS_OPTION, "account address");
-
-        auto transaction_sub_parser =
-            parser.createSubParser("transaction", "use for get balance from remote by account address", transaction);
-        transaction_sub_parser->addOption<std::string>(
-            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
-        transaction_sub_parser->addOption<std::string>(FROM_ACCOUNT_ADDRESS_OPTION, "from account address");
-        transaction_sub_parser->addOption<std::string>(TO_ACCOUNT_ADDRESS_OPTION, "to account address");
-        transaction_sub_parser->addOption<std::uint32_t>(MONEY_OPTION, "transaction money");
-
-        auto test_sub_parser = parser.createSubParser("test", "use test functions", test);
-        test_sub_parser->addOption<std::string>(
-            HOST_ADDRESS_OPTION, "address of remote host in format: \"<ip>:<port>\"");
-
-        try {
-            auto exit_code = parser.process(argc, argv);
-            if(exit_code != base::config::EXIT_OK) {
-                return exit_code;
-            }
-        }
-        catch(const base::InvalidArgument& error) {
-            std::cerr << "Command is now exist. Run pc-client --help to see allowed commands and options.\n";
-            return base::config::EXIT_FAIL;
-        }
-        catch(const base::ParsingError& error) {
-            std::cerr << "Failed to parse command options. Run " << PROGRAM_NAME
-                      << " --help to see allowed commands and options.\n";
-            LOG_DEBUG << error.what();
-            return base::config::EXIT_FAIL;
-        }
-
-        if(parser.hasOption("version")) {
-            std::cout << "application version: 0.1 - alpha" << std::endl;
-            std::cout << "rpc protocol version: 0.1 - alpha" << std::endl;
-            return base::config::EXIT_OK;
-        }
-
-        if(parser.hasOption("help") || parser.empty()) {
-            std::cout << parser.helpMessage() << std::endl;
-            return base::config::EXIT_OK;
-        }
+        base::SubprogramRouter router("rpc-client", rpc_client::mainProcess);
+        router.addSubprogram("get_balance", "use for get balance from remote by account address", rpc_client::getBalance);
+        router.addSubprogram("transfer", "use transfer balance from one address to another address", rpc_client::transfer);
+        router.addSubprogram("test", "use test functions", rpc_client::test);
+        return router.process(argc, argv);
     }
     catch(const std::exception& error) {
         LOG_ERROR << "[exception caught] " << error.what();
