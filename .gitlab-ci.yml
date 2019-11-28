@@ -4,12 +4,12 @@
 build_image:
   tags:
     - docker
-#  image:
-#    dockerfile: Dockerfile.ci
+  image:
+    dockerfile: Dockerfile.ci
 
-  script:
-    - mkdir -p ../build
-    - cd ../build
-    - cmake ../likelib
-    - make -j 4
+#  script:
+#    - mkdir -p ../build
+#    - cd ../build
+#    - cmake ../likelib
+#    - make -j 4
 
