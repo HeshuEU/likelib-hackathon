@@ -2,6 +2,8 @@
 
 #include "serialization.hpp"
 
+#include "base/assert.hpp"
+
 #include <boost/asio.hpp>
 
 
@@ -63,6 +65,8 @@ typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::typ
     if constexpr(std::is_integral<T>::value) {
         static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8 || sizeof(v) == 16,
             "this integral type is not serializable");
+
+        ASSERT(_index + sizeof(T) <= _bytes.size());
 
         v = *reinterpret_cast<T*>(_bytes.toArray() + _index);
         if(sizeof(v) == 1) {
