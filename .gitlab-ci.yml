@@ -1,0 +1,12 @@
+image:
+  dockerfile: Dockerfile
+
+#build_image:
+#  tags:
+#    - docker
+#  script:
+#    - mkdir -p ../build
+#    - cd ../build
+#    - cmake ../likelib
+#    - make -j 4
+
