@@ -1,4 +1,5 @@
 ## LikeLib 2.0
+
 To run the node, a configuration file must be specified for it.
 By default it is config.json file of the following format:
 
@@ -19,6 +20,26 @@ Notes on parameters:
 * `public_server_port` - when node is connected to a remote machine over Internet, its 
 public IP gets known, but port - doesn't. We only know the client-socket IP address.
 Such things as port-forwarding with NAT, may change the port we need to connect to
+* `nodes` - list of known nodes
+
+---
+
+Client json config file format:
+
+```
+{
+    "nodes": [
+        "localhost:50051"
+    ],
+    "addresses": [
+        "11111111111111111",
+        "1010101010101010010"
+    ]
+}
+```
+
+Notes on parameters:
+* `addresses` - list of known addresses
 * `nodes` - list of known nodes
 
 ### Build

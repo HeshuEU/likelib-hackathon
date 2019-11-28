@@ -3,7 +3,7 @@
 namespace base
 {
 SubprogramRouter::SubprogramRouter(const std::string& name, std::function<int(SubprogramRouter&)> processor)
-    : _name(name), _processor(processor)
+    : _name(name), _processor(processor), _program_options(std::make_shared<ProgramOptionsParser>())
 {}
 
 std::shared_ptr<SubprogramRouter> SubprogramRouter::addSubprogram(const std::string& name,
@@ -23,7 +23,7 @@ std::shared_ptr<SubprogramRouter> SubprogramRouter::addSubprogram(const std::str
     return parser;
 }
 
-ProgramOptionsParser& SubprogramRouter::optionsParser()
+std::shared_ptr<ProgramOptionsParser> SubprogramRouter::optionsParser()
 {
     return _program_options;
 }
@@ -31,7 +31,7 @@ ProgramOptionsParser& SubprogramRouter::optionsParser()
 std::string SubprogramRouter::helpMessage() const
 {
     std::stringstream ss;
-    ss << _program_options.helpMessage() << std::endl;
+    ss << _program_options->helpMessage() << std::endl;
     if(!_descendant_descriptions.empty()) {
         ss << "Allowed commands:" << std::endl;
         static constexpr const char* PREFIX = "   ";
@@ -55,7 +55,7 @@ void SubprogramRouter::update()
     for(int i = 0; i < _stored_options.size(); i++) {
         option[i] = _stored_options[i].data();
     }
-    _program_options.process(_stored_options.size(), option);
+    _program_options->process(_stored_options.size(), option);
 }
 
 int SubprogramRouter::process(int argc, char** argv)

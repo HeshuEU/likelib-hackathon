@@ -9,6 +9,9 @@
 namespace base
 {
 
+PropertyTree::PropertyTree() : _ptree{}
+{}
+
 PropertyTree::PropertyTree(const boost::property_tree::ptree& ptree) : _ptree{ptree}
 {}
 

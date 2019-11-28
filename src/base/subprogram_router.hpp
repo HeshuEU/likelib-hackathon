@@ -13,7 +13,7 @@ class SubprogramRouter
     std::shared_ptr<SubprogramRouter> addSubprogram(const std::string& name, const std::string& descendant_description,
         const std::function<int(SubprogramRouter&)>& processor);
 
-    ProgramOptionsParser& optionsParser();
+    std::shared_ptr<ProgramOptionsParser> optionsParser();
 
     int process(int argc, char** argv);
 
@@ -24,7 +24,7 @@ class SubprogramRouter
   private:
     const std::string _name;
     std::vector<std::string> _stored_options;
-    ProgramOptionsParser _program_options;
+    std::shared_ptr<ProgramOptionsParser> _program_options;
 
     const std::function<int(SubprogramRouter&)> _processor;
     std::map<std::string, std::shared_ptr<SubprogramRouter>> _descendants;
