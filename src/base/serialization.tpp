@@ -25,7 +25,7 @@ typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::typ
     const T& v)
 {
     if constexpr(std::is_integral<T>::value) {
-        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16,
+        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8 || sizeof(v) == 16,
             "this integral type is not serializable");
 
         if constexpr(sizeof(v) == 1) {
