@@ -1,7 +1,6 @@
 #include "block.hpp"
 
 #include "base/hash.hpp"
-#include "bc/miner.hpp"
 
 #include <utility>
 
@@ -44,10 +43,10 @@ void Block::setNonce(NonceInt nonce) noexcept
 
 bool Block::checkValidness() const
 {
-//    static const base::Bytes MAX_HASH_VALUE = getComplexity();
-//    base::SerializationOArchive oa;
-//    oa << *this;
-//    return base::Sha256::compute(oa.getBytes()).getBytes() < MAX_HASH_VALUE;
+    //    static const base::Bytes MAX_HASH_VALUE = getComplexity();
+    //    base::SerializationOArchive oa;
+    //    oa << *this;
+    //    return base::Sha256::compute(oa.getBytes()).getBytes() < MAX_HASH_VALUE;
     // TODO: implement
     return true;
 }

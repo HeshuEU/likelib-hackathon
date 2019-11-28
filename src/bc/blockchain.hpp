@@ -35,12 +35,25 @@ class Blockchain
     //===================
     bool _is_running{false};
     std::list<Block> _blocks;
-    TransactionsSet _pending_txs;
     Block _pending_block;
     Miner _miner;
-    std::unique_ptr<net::Network> _network;
     bc::BalanceManager _balance_manager;
     const base::PropertyTree& _config;
+    //===================
+    std::unique_ptr<net::Network> _network;
+
+    class NetworkHandler : public net::NetworkHandler
+    {
+      public:
+        NetworkHandler(Blockchain&);
+        void onBlockReceived(Block&& block) override;
+        void onTransactionReceived(Transaction&& tx) override;
+
+      private:
+        Blockchain& _bc;
+    };
+
+    NetworkHandler _network_handler;
     //===================
     void setupGenesis();
     //===================
@@ -49,6 +62,7 @@ class Blockchain
     //===================
     bool checkBlock(const Block& block) const;
     bool checkTransaction(const Transaction& tx) const;
+    //===================
 };
 
 } // namespace bc

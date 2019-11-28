@@ -21,6 +21,7 @@ Notes on parameters:
 public IP gets known, but port - doesn't. We only know the client-socket IP address.
 Such things as port-forwarding with NAT, may change the port we need to connect to
 * `nodes` - list of known nodes
+* `miner.threads` - optional parameter, sets the number of threads that miner is using.
 
 ---
 

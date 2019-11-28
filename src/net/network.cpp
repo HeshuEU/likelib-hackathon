@@ -14,8 +14,8 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Network::Network(const net::Endpoint& listen_ip, unsigned short server_public_port)
-    : _listen_ip{listen_ip}, _server_public_port{server_public_port}, _heartbeat_timer{_io_context}
+Network::Network(const net::Endpoint& listen_ip, unsigned short server_public_port, NetworkHandler& handler)
+    : _listen_ip{listen_ip}, _server_public_port{server_public_port}, _heartbeat_timer{_io_context}, _handler{handler}
 {}
 
 
@@ -235,12 +235,11 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
             break;
         }
         case PacketType::BLOCK: {
-            _blockchain->processReceivedBlock(base::fromBytes<bc::Block>(packet.getData()));
+            _handler.onBlockReceived(base::fromBytes<bc::Block>(packet.getData()));
             break;
         }
         case PacketType::TRANSACTION: {
-            bc::Transaction tx = base::fromBytes<bc::Transaction>(packet.getData());
-            _blockchain->processReceivedTransaction(std::move(tx));
+            _handler.onTransactionReceived(base::fromBytes<bc::Transaction>(packet.getData()));
             break;
         }
         default: {
@@ -271,12 +270,5 @@ void Network::broadcastTransaction(const bc::Transaction& tx)
         connection->send(p);
     }
 }
-
-
-void Network::setBlockchain(bc::Blockchain* blockchain)
-{
-    _blockchain = blockchain;
-}
-
 
 } // namespace net

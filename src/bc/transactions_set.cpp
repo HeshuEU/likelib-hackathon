@@ -20,7 +20,10 @@ void TransactionsSet::add(const bc::Transaction& tx)
 
 bool TransactionsSet::find(const bc::Transaction& tx) const
 {
-    return std::find(_txs.begin(), _txs.end(), tx) != _txs.end();
+    auto a = _txs.begin();
+    auto b = _txs.end();
+    auto it = std::find(a, b, tx);
+    return it != b;
 }
 
 
