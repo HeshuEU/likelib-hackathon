@@ -6,8 +6,8 @@ SubprogramRouter::SubprogramRouter(const std::string& name, std::function<int(Su
     : _name(name), _processor(processor), _program_options(std::make_shared<ProgramOptionsParser>())
 {}
 
-std::shared_ptr<SubprogramRouter> SubprogramRouter::addSubprogram(const std::string& name,
-    const std::string& descendant_description, const std::function<int(SubprogramRouter&)>& processor)
+void SubprogramRouter::addSubprogram(const std::string& name, const std::string& descendant_description,
+    const std::function<int(SubprogramRouter&)>& processor)
 {
     if(name.empty()) {
         RAISE_ERROR(base::InvalidArgument, "name of subprogram is empty");
@@ -16,11 +16,9 @@ std::shared_ptr<SubprogramRouter> SubprogramRouter::addSubprogram(const std::str
         RAISE_ERROR(base::InvalidArgument, "this subprogram already exists");
     }
 
-    auto parser = std::make_shared<SubprogramRouter>(name, processor);
-    _descendants.insert(std::pair<std::string, std::shared_ptr<SubprogramRouter>>(name, parser));
+    _descendants.insert(std::pair<std::string, std::shared_ptr<SubprogramRouter>>(
+        name, std::make_shared<SubprogramRouter>(name, processor)));
     _descendant_descriptions.insert(std::pair<std::string, std::string>(name, descendant_description));
-
-    return parser;
 }
 
 std::shared_ptr<ProgramOptionsParser> SubprogramRouter::optionsParser()
@@ -51,11 +49,11 @@ std::string SubprogramRouter::helpMessage() const
 
 void SubprogramRouter::update()
 {
-    char* option[_stored_options.size()];
+    char* options[_stored_options.size()];
     for(int i = 0; i < _stored_options.size(); i++) {
-        option[i] = _stored_options[i].data();
+        options[i] = _stored_options[i].data();
     }
-    _program_options->process(_stored_options.size(), option);
+    _program_options->process(_stored_options.size(), options);
 }
 
 int SubprogramRouter::process(int argc, char** argv)

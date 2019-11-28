@@ -36,7 +36,7 @@ constexpr bool IS_DEBUG =
 #else
 static_assert(false, "cannot determine OS")
 #endif
-;
+
 //------------------------
 
 // constexpr OS_NAME definition
