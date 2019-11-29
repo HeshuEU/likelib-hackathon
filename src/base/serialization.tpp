@@ -139,7 +139,7 @@ T fromBytes(const base::Bytes& bytes)
     SerializationIArchive ia(bytes);
     T t;
     ia >> t;
-    return std::move(t);
+    return t;
 }
 
 } // namespace base
