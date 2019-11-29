@@ -125,6 +125,8 @@ namespace
 
     std::size_t calcMiningThreadsNum(const base::PropertyTree& ptree)
     {
+        return 1; // for debugging
+
         if(ptree.hasKey("miner.threads")) {
             return ptree.get<std::size_t>("miner.threads");
         }
