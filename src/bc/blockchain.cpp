@@ -84,7 +84,7 @@ void Blockchain::setupGenesis()
 base::Bytes Blockchain::getMiningComplexity() const
 {
     base::Bytes ret(32);
-    ret[3] = 0x9F;
+    ret[2] = 0x6F;
     return ret;
 }
 
