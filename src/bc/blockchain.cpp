@@ -8,8 +8,8 @@ namespace bc
 {
 
 Blockchain::Blockchain(const base::PropertyTree& config)
-    : _config(config), _network_handler(*this),
-      _miner(std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1))
+    : _config(config), _miner(std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1)),
+      _network_handler(*this)
 {
     setupGenesis();
     _network = std::make_unique<net::Network>(net::Endpoint{config.get<std::string>("listen_address")},
