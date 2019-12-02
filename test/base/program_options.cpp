@@ -443,9 +443,9 @@ BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_name)
 
     base::ProgramOptionsParser parser;
     parser.addFlag("version,v", "Print version");
-    BOOST_CHECK_THROW(auto sub_program_1 =
-                          parser.createSubParser("", "Test description 1", walletProcessForTestSubParserThrowName),
-                      base::InvalidArgument);
+    BOOST_CHECK_THROW(
+        auto sub_program_1 = parser.createSubParser("", "Test description 1", walletProcessForTestSubParserThrowName),
+        base::InvalidArgument);
 }
 
 int walletProcessForTestSubParserThrowDuplicate(const base::ProgramOptionsParser& parser)
@@ -464,9 +464,9 @@ BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_duplicate)
 
     base::ProgramOptionsParser parser;
     parser.addFlag("version,v", "Print version");
-    BOOST_CHECK_NO_THROW(auto sub_program_1 = parser.createSubParser("test", "Test description 1",
-                                                                     walletProcessForTestSubParserThrowName));
+    BOOST_CHECK_NO_THROW(auto sub_program_1 = parser.createSubParser(
+                             "test", "Test description 1", walletProcessForTestSubParserThrowName));
     BOOST_CHECK_THROW(auto sub_program_2 =
                           parser.createSubParser("test", "Test description 1", walletProcessForTestSubParserThrowName),
-                      base::InvalidArgument);
+        base::InvalidArgument);
 }

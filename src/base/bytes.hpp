@@ -36,11 +36,16 @@ class Bytes
     Bytes takePart(std::size_t begin_index, std::size_t one_past_end_index) const;
 
     Bytes& append(Byte byte);
+    Bytes& append(const Byte* byte, std::size_t length);
 
     Bytes& append(const Bytes& bytes);
 
     std::size_t size() const noexcept;
 
+    void clear();
+    void resize(std::size_t new_size);
+    void reserve(std::size_t reserve_size);
+    void shrinkToFit();
     //==============
     const Byte* toArray() const;
     Byte* toArray();
@@ -52,11 +57,17 @@ class Bytes
     std::string toHex() const;
 
     std::string toString() const;
-
-    //=============
+    //==============
     bool operator==(const Bytes& another) const;
     bool operator!=(const Bytes& another) const;
-    //=============
+
+    // lexicographical compare
+    bool operator<(const Bytes& another) const;
+    bool operator>(const Bytes& another) const;
+    bool operator<=(const Bytes& another) const;
+    bool operator>=(const Bytes& another) const;
+    //==============
+
   private:
     std::vector<Byte> _raw;
 };

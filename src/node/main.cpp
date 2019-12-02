@@ -1,15 +1,15 @@
 #include "soft_config.hpp"
 #include "hard_config.hpp"
-#include "bc/general_server_service.hpp"
-
-#include "rpc/rpc.hpp"
+#include "rpc_service.hpp"
 
 #include "base/program_options.hpp"
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
+#include "bc/blockchain.hpp"
 #include "net/network.hpp"
 #include "net/endpoint.hpp"
+#include "rpc/rpc.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
@@ -22,6 +22,7 @@
 #include <thread>
 #include <filesystem>
 
+#include <sys/resource.h>
 
 namespace
 {
@@ -50,6 +51,13 @@ void atExitHandler()
 
 int main(int argc, char** argv)
 {
+    const rlim_t kStackSize = 512L * 1024L * 1024L; // 512 MB stack size
+    struct rlimit rl;
+    int result;
+    result = getrlimit(RLIMIT_STACK, &rl);
+    rl.rlim_cur = rl.rlim_max = kStackSize;
+    setrlimit(RLIMIT_STACK, &rl);
+
     try {
         base::initLog(base::LogLevel::ALL, base::Sink::STDOUT | base::Sink::FILE);
         LOG_INFO << "Node startup";
@@ -77,7 +85,7 @@ int main(int argc, char** argv)
 
         // handlers initialization
 
-        // setup handler for all signal types defined in Standard. Not all POSIX signals
+        // setup handler for all signal types defined in Standard, expect SIGABRT. Not all POSIX signals
         for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE}) {
             ASSERT_SOFT(std::signal(signal_code, signalHandler) != SIG_ERR);
         }
@@ -85,24 +93,16 @@ int main(int argc, char** argv)
         ASSERT_SOFT(std::atexit(atExitHandler) == 0);
 
         //=====================
-
         SoftConfig exe_config(config_file_path);
-
-        net::Network manager(net::Endpoint{exe_config.get<std::string>("listen_address")});
-        manager.run();
-        LOG_INFO << "Network manager started: " << exe_config.get<std::string>("listen_address");
-
-        std::vector<net::Endpoint> nodes;
-        for(const auto& node_ip_string: exe_config.getVector<std::string>("nodes")) {
-            nodes.emplace_back(node_ip_string);
-        }
-        manager.connect(nodes);
-
-        rpc::RpcServer server(exe_config.get<std::string>("rpc_address"));
-        server.run();
+        bc::Blockchain blockchain(exe_config);
+        blockchain.run();
+        //=====================
+        auto service = std::make_shared<node::GeneralServerService>(&blockchain);
+        rpc::RpcServer rpc(exe_config.get<std::string>("rpc_address"), service);
+        rpc.run();
         LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc_address");
-
-        std::this_thread::sleep_for(std::chrono::seconds(45));
+        //=====================
+        std::this_thread::sleep_for(std::chrono::seconds(4500));
 
         return base::config::EXIT_OK;
     }

@@ -23,8 +23,8 @@ void ProgramOptionsParser::addOption(const std::string& flag, ValueType defaultV
 template<typename ValueType>
 void ProgramOptionsParser::addRequiredOption(const std::string& flag, const std::string& help)
 {
-    _options_description.add_options()(flag.c_str(), boost::program_options::value<ValueType>()->required(),
-                                       help.c_str());
+    _options_description.add_options()(
+        flag.c_str(), boost::program_options::value<ValueType>()->required(), help.c_str());
 }
 
 template<typename ValueType>

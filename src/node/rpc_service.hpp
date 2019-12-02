@@ -1,23 +1,18 @@
 #pragma once
 
-#include <public_rpc.grpc.pb.h>
+#include "bc/blockchain.hpp"
 
 #include "rpc/base_rpc.hpp"
 
-#include <grpcpp/grpcpp.h>
-
-#include <string>
-
-namespace rpc
+namespace node
 {
 
-/// Class implementing connect to node by gRPC and call methods
-class GrpcNodeClient final : BaseRpc
+class GeneralServerService : public rpc::BaseRpc
 {
   public:
-    explicit GrpcNodeClient(const std::string& connect_address);
+    explicit GeneralServerService(bc::Blockchain* bc);
 
-    ~GrpcNodeClient() override = default;
+    ~GeneralServerService() override;
 
     bc::Balance balance(const bc::Address& address) override;
 
@@ -27,7 +22,6 @@ class GrpcNodeClient final : BaseRpc
     std::string test(const std::string& test_request) override;
 
   private:
-    std::unique_ptr<likelib::Node::Stub> _stub;
+    bc::Blockchain* _bc;
 };
-
-} // namespace rpc
+} // namespace node

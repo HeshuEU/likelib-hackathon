@@ -7,6 +7,16 @@
 namespace base
 {
 
+Sha256::Sha256(const std::string& data) : _bytes(data)
+{
+    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
+}
+
+Sha256::Sha256(const Bytes& data) : _bytes(data)
+{
+    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
+}
+
 std::string Sha256::toHex() const
 {
     return _bytes.toHex();
@@ -37,19 +47,13 @@ bool Sha256::operator!=(const Sha256& another) const
 }
 
 
-Sha256 Sha256::calcSha256(const base::Bytes& data)
+Sha256 Sha256::compute(const base::Bytes& data)
 {
     base::Bytes ret(SHA256_DIGEST_LENGTH);
     SHA256(data.toArray(), data.size(),
         reinterpret_cast<unsigned char*>(ret.toArray())); // reinterpret_cast is necessary if base::Byte changes
     ASSERT(ret.size() == SHA256_DIGEST_LENGTH);
     return Sha256(ret);
-}
-
-
-Sha256::Sha256(const Bytes& another) : _bytes(another)
-{
-    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
 }
 
 
@@ -83,7 +87,7 @@ bool Sha1::operator!=(const Sha1& another) const
 }
 
 
-Sha1 Sha1::calcSha1(const base::Bytes& data)
+Sha1 Sha1::compute(const base::Bytes& data)
 {
     base::Bytes ret(SHA_DIGEST_LENGTH);
     SHA1(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray()));
