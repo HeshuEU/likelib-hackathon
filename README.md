@@ -17,4 +17,4 @@ By default it is config.json file of the following format:
 1. Go to ./doc folder.
 2. Run: sudo ./prepare_build.sh . It will install vcpkg packet manager to /opt folder.
 3. Restart terminal session
-4. Run: zmake
+4. Run: lkgen

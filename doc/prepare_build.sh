@@ -74,7 +74,7 @@ else
   cd "${SCRIPT_DIR}/../" || exit 1
 
   echo "#===========likelib=============" >>"${PATH_TO_BASH_RC}"
-  echo -e "zmake () {\n
+  echo -e "lkgen () {\n
     SOURCE_DIR=${PWD}\n
     if [[ -f ./CMakeLists.txt ]]; then\n
       SOURCE_DIR=\${PWD}\n
