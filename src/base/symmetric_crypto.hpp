@@ -32,6 +32,9 @@ namespace aes
         Bytes decrypt(const Bytes& data) const;
 
       private:
+        static constexpr std::size_t _256_aes_size = 48;
+        static constexpr std::size_t _128_aes_size = 24;
+
         KeyType _type;
         Bytes _key;
         Bytes _iv;

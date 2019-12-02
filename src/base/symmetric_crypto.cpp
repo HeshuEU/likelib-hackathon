@@ -34,17 +34,13 @@ namespace aes
 
     Key::Key(const Bytes& bytes_key)
     {
-        if((bytes_key.size() % 8 != 0) ||
-            (bytes_key.size() % 3) != 0) { // multiple bit and concatenate size = iv.size() * 3
-            RAISE_ERROR(InvalidArgument, "bytes_key are not valid. They must be obtained by Key::toBytes");
-        }
-        switch(bytes_key.size() / 3) {
-            case 16:
+        switch(bytes_key.size()) {
+            case _256_aes_size:
                 _type = KeyType::Aes256BitKey;
                 _key = bytes_key.takePart(0, 16 * 2);
                 _iv = bytes_key.takePart(16 * 2, bytes_key.size());
                 break;
-            case 8:
+            case _128_aes_size:
                 _type = KeyType::Aes128BitKey;
                 _key = bytes_key.takePart(0, 8 * 2);
                 _iv = bytes_key.takePart(8 * 2, bytes_key.size());

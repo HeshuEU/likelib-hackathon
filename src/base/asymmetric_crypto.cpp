@@ -174,10 +174,11 @@ namespace rsa
         std::unique_ptr<BIO, decltype(&::BIO_free)> public_bio(BIO_new(BIO_s_mem()), ::BIO_free);
 
         // get public key spec
-        auto public_rsa_key = RSAPublicKey_dup(rsa.get());
+        std::unique_ptr<RSA, decltype(&::RSA_free)> public_rsa_key(RSAPublicKey_dup(rsa.get()), ::RSA_free);
+
 
         // fill bio by public key spec
-        if(!PEM_write_bio_RSAPublicKey(public_bio.get(), public_rsa_key)) {
+        if(!PEM_write_bio_RSAPublicKey(public_bio.get(), public_rsa_key.get())) {
             RAISE_ERROR(Error, "Fail to generate public RSA key");
         }
 
@@ -194,10 +195,10 @@ namespace rsa
         std::unique_ptr<BIO, decltype(&::BIO_free)> private_bio(BIO_new(BIO_s_mem()), ::BIO_free);
 
         // get private key spec
-        auto private_rsa_key = RSAPrivateKey_dup(rsa.get());
+        std::unique_ptr<RSA, decltype(&::RSA_free)> private_rsa_key(RSAPrivateKey_dup(rsa.get()), ::RSA_free);
 
         // fill bio by private key spec
-        if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), private_rsa_key, NULL, NULL, 0, 0, NULL)) {
+        if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), private_rsa_key.get(), NULL, NULL, 0, 0, NULL)) {
             RAISE_ERROR(Error, "Fail to generate private RSA key");
         }
 
