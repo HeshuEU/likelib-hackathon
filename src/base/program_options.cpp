@@ -8,7 +8,7 @@ namespace base
 
 namespace po = boost::program_options;
 
-ProgramOptionsParser::ProgramOptionsParser() : _name(), _options_description("Allowed options"), _processor(nullptr)
+ProgramOptionsParser::ProgramOptionsParser() : _name(), _processor(nullptr), _options_description("Allowed options")
 {
     addFlag("help", "Print help message");
 }
