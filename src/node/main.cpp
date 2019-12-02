@@ -51,13 +51,6 @@ void atExitHandler()
 
 int main(int argc, char** argv)
 {
-    const rlim_t kStackSize = 512L * 1024L * 1024L; // 512 MB stack size
-    struct rlimit rl;
-    int result;
-    result = getrlimit(RLIMIT_STACK, &rl);
-    rl.rlim_cur = rl.rlim_max = kStackSize;
-    setrlimit(RLIMIT_STACK, &rl);
-
     try {
         base::initLog(base::LogLevel::ALL, base::Sink::STDOUT | base::Sink::FILE);
         LOG_INFO << "Node startup";
