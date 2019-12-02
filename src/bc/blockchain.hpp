@@ -33,6 +33,8 @@ class Blockchain
     //===================
   private:
     //===================
+    const base::PropertyTree& _config;
+    //===================
     bool _is_running{false};
     //===================
     std::list<Block> _blocks;
@@ -45,8 +47,6 @@ class Blockchain
     //===================
     bc::BalanceManager _balance_manager;
     mutable std::recursive_mutex _balance_manager_mutex;
-    //===================
-    const base::PropertyTree& _config;
     //===================
     std::unique_ptr<net::Network> _network;
 

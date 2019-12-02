@@ -434,13 +434,6 @@ int walletProcessForTestSubParserThrowName(const base::ProgramOptionsParser& par
 
 BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_name)
 {
-    int argc = 4;
-    char test1[] = "test.exe";
-    char test2[] = "wallet";
-    char test3[] = "--create_key";
-    char test4[] = "custom_seed";
-    char* argv[] = {test1, test2, test3, test4};
-
     base::ProgramOptionsParser parser;
     parser.addFlag("version,v", "Print version");
     BOOST_CHECK_THROW(
