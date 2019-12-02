@@ -66,9 +66,12 @@ Miner::Miner(const base::PropertyTree& config, Miner::HandlerType handler) : _ha
 
     // setting up threads
     std::size_t num_threads = calcThreadsNum(config);
+
     for(std::size_t i = 0; i < num_threads; ++i) {
         _workers.emplace_front(_job_version, _task, _block_to_mine, _state_mutex, _state_changed_cv, _handler);
     }
+
+    LOG_INFO << "Miner is running on " << num_threads << " threads";
 }
 
 
