@@ -27,6 +27,8 @@ namespace rsa
 
         Bytes encrypt(const Bytes& message) const;
 
+        Bytes encryptWithtAes(const Bytes& message) const;
+
         Bytes decrypt(const Bytes& encrypted_message) const;
 
         std::size_t maxEncryptSize() const noexcept;
@@ -62,6 +64,8 @@ namespace rsa
         Bytes encrypt(const Bytes& message) const;
 
         Bytes decrypt(const Bytes& encrypted_message) const;
+
+        Bytes dectyptWithAes(const Bytes& message) const;
 
         std::size_t maxMessageSizeForEncrypt() const noexcept;
 

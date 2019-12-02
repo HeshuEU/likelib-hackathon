@@ -35,12 +35,12 @@ namespace aes
     Key::Key(const Bytes& bytes_key)
     {
         switch(bytes_key.size()) {
-            case _256_aes_size:
+            case _aes_256_size:
                 _type = KeyType::Aes256BitKey;
                 _key = bytes_key.takePart(0, 16 * 2);
                 _iv = bytes_key.takePart(16 * 2, bytes_key.size());
                 break;
-            case _128_aes_size:
+            case _aes_128_size:
                 _type = KeyType::Aes128BitKey;
                 _key = bytes_key.takePart(0, 8 * 2);
                 _iv = bytes_key.takePart(8 * 2, bytes_key.size());

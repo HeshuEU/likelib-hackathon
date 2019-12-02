@@ -2,6 +2,7 @@
 
 #include "base/assert.hpp"
 #include "base/error.hpp"
+#include "base/symmetric_crypto.hpp"
 
 #include <openssl/bn.h>
 #include <openssl/pem.h>
@@ -31,6 +32,20 @@ namespace rsa
         }
 
         return encrypted_message;
+    }
+
+    Bytes PublicKey::encryptWithtAes(const Bytes& message) const
+    {
+        base::aes::Key symmetric_key(base::aes::KeyType::Aes256BitKey);
+        auto encrypted_message = symmetric_key.encrypt(message);
+        auto serialized_symmetric_key = symmetric_key.toBytes();
+        auto encrypted_serialized_symmetric_key = encrypt(serialized_symmetric_key);
+
+        Bytes encrypted_serialized_key_size(sizeof(std::uint_least32_t));
+        std::uint_least32_t key_size = encrypted_serialized_symmetric_key.size();
+        std::memcpy(encrypted_serialized_key_size.toArray(), &key_size, encrypted_serialized_key_size.size());
+
+        return encrypted_serialized_key_size.append(encrypted_serialized_symmetric_key).append(encrypted_message);
     }
 
     Bytes PublicKey::decrypt(const Bytes& encrypted_message) const
@@ -118,6 +133,22 @@ namespace rsa
             RAISE_ERROR(CryptoError, "rsa decryption failed");
         }
         return decrypt_message.takePart(0, message_size);
+    }
+
+    Bytes PrivateKey::dectyptWithAes(const Bytes& message) const
+    {
+        Bytes encrypted_serialized_key_size = message.takePart(0, sizeof(std::uint_least32_t));
+        std::uint_least32_t key_size = 0;
+        std::memcpy(&key_size, encrypted_serialized_key_size.toArray(), encrypted_serialized_key_size.size());
+
+        auto encrypted_serialized_symmetric_key =
+            message.takePart(sizeof(std::uint_least32_t), key_size + sizeof(std::uint_least32_t));
+        auto encrypted_message = message.takePart(key_size + sizeof(std::uint_least32_t), message.size());
+
+        auto serialized_symmetric_key = decrypt(encrypted_serialized_symmetric_key);
+        base::aes::Key symmetric_key(serialized_symmetric_key);
+
+        return symmetric_key.decrypt(encrypted_message);
     }
 
     std::size_t PrivateKey::maxMessageSizeForEncrypt() const noexcept
