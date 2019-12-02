@@ -12,18 +12,18 @@ namespace base
 namespace rsa
 {
 
-    class PublicKey
+    class RsaPublicKey
     {
       public:
-        PublicKey(const Bytes& key_word);
+        RsaPublicKey(const Bytes& key_word);
 
-        PublicKey(const PublicKey& another) = default;
+        RsaPublicKey(const RsaPublicKey& another) = default;
 
-        PublicKey(PublicKey&& another) = default;
+        RsaPublicKey(RsaPublicKey&& another) = default;
 
-        PublicKey& operator=(const PublicKey& another) = default;
+        RsaPublicKey& operator=(const RsaPublicKey& another) = default;
 
-        PublicKey& operator=(PublicKey&& another) = default;
+        RsaPublicKey& operator=(RsaPublicKey&& another) = default;
 
         Bytes encrypt(const Bytes& message) const;
 
@@ -46,20 +46,20 @@ namespace rsa
         static std::unique_ptr<RSA, decltype(&::RSA_free)> loadKey(const Bytes& key_word);
     };
 
-    class PrivateKey
+    class RsaPrivateKey
     {
       public:
-        PrivateKey() = default;
+        RsaPrivateKey() = default;
 
-        PrivateKey(const Bytes& key_word);
+        RsaPrivateKey(const Bytes& key_word);
 
-        PrivateKey(const PrivateKey& another) = default;
+        RsaPrivateKey(const RsaPrivateKey& another) = default;
 
-        PrivateKey(PrivateKey&& another) = default;
+        RsaPrivateKey(RsaPrivateKey&& another) = default;
 
-        PrivateKey& operator=(const PrivateKey& another) = default;
+        RsaPrivateKey& operator=(const RsaPrivateKey& another) = default;
 
-        PrivateKey& operator=(PrivateKey&& another) = default;
+        RsaPrivateKey& operator=(RsaPrivateKey&& another) = default;
 
         Bytes encrypt(const Bytes& message) const;
 
@@ -82,7 +82,7 @@ namespace rsa
         static std::unique_ptr<RSA, decltype(&::RSA_free)> loadKey(const Bytes& key_word);
     };
 
-    std::pair<PublicKey, PrivateKey> generateKeys(std::size_t keys_size);
+    std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size);
 
 } // namespace rsa
 

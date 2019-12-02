@@ -14,16 +14,16 @@ namespace aes
         Aes128BitKey
     };
 
-    class Key
+    class AesKey
     {
       public:
-        Key();
+        AesKey();
 
-        Key(KeyType type);
+        AesKey(KeyType type);
 
-        Key(const Bytes& bytes_key);
+        AesKey(const Bytes& bytes_key);
 
-        ~Key() = default;
+        ~AesKey() = default;
 
         Bytes toBytes() const;
 

@@ -15,11 +15,11 @@ namespace base
 namespace rsa
 {
 
-    PublicKey::PublicKey(const base::Bytes& key_word)
+    RsaPublicKey::RsaPublicKey(const base::Bytes& key_word)
         : _rsa_key(loadKey(key_word)), _encrypted_message_size(RSA_size(_rsa_key.get()))
     {}
 
-    Bytes PublicKey::encrypt(const Bytes& message) const
+    Bytes RsaPublicKey::encrypt(const Bytes& message) const
     {
         if(message.size() > maxEncryptSize()) {
             RAISE_ERROR(InvalidArgument, "large message size for RSA encryption");
@@ -34,9 +34,9 @@ namespace rsa
         return encrypted_message;
     }
 
-    Bytes PublicKey::encryptWithtAes(const Bytes& message) const
+    Bytes RsaPublicKey::encryptWithtAes(const Bytes& message) const
     {
-        base::aes::Key symmetric_key(base::aes::KeyType::Aes256BitKey);
+        base::aes::AesKey symmetric_key(base::aes::KeyType::Aes256BitKey);
         auto encrypted_message = symmetric_key.encrypt(message);
         auto serialized_symmetric_key = symmetric_key.toBytes();
         auto encrypted_serialized_symmetric_key = encrypt(serialized_symmetric_key);
@@ -48,7 +48,7 @@ namespace rsa
         return encrypted_serialized_key_size.append(encrypted_serialized_symmetric_key).append(encrypted_message);
     }
 
-    Bytes PublicKey::decrypt(const Bytes& encrypted_message) const
+    Bytes RsaPublicKey::decrypt(const Bytes& encrypted_message) const
     {
         if(encrypted_message.size() != encryptedMessageSize()) {
             RAISE_ERROR(InvalidArgument, "large message size for RSA encryption");
@@ -64,12 +64,12 @@ namespace rsa
         return decrypted_message.takePart(0, message_size);
     }
 
-    std::size_t PublicKey::maxEncryptSize() const noexcept
+    std::size_t RsaPublicKey::maxEncryptSize() const noexcept
     {
         return encryptedMessageSize() - ASYMMETRIC_DIFFERENCE;
     }
 
-    Bytes PublicKey::toBytes() const
+    Bytes RsaPublicKey::toBytes() const
     {
         std::unique_ptr<BIO, decltype(&::BIO_free)> public_bio(BIO_new(BIO_s_mem()), ::BIO_free);
 
@@ -85,12 +85,12 @@ namespace rsa
         return public_key_bytes;
     }
 
-    std::size_t PublicKey::encryptedMessageSize() const noexcept
+    std::size_t RsaPublicKey::encryptedMessageSize() const noexcept
     {
         return _encrypted_message_size;
     }
 
-    std::unique_ptr<RSA, decltype(&::RSA_free)> PublicKey::loadKey(const Bytes& key_word)
+    std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPublicKey::loadKey(const Bytes& key_word)
     {
         std::unique_ptr<BIO, decltype(&::BIO_free)> bio(
             BIO_new_mem_buf(key_word.toArray(), key_word.size()), ::BIO_free);
@@ -101,11 +101,11 @@ namespace rsa
         return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
     }
 
-    PrivateKey::PrivateKey(const base::Bytes& key_word)
+    RsaPrivateKey::RsaPrivateKey(const base::Bytes& key_word)
         : _rsa_key(loadKey(key_word)), _encrypted_message_size(RSA_size(_rsa_key.get()))
     {}
 
-    Bytes PrivateKey::encrypt(const Bytes& message) const
+    Bytes RsaPrivateKey::encrypt(const Bytes& message) const
     {
         if(message.size() > maxMessageSizeForEncrypt()) {
             RAISE_ERROR(InvalidArgument, "large message size for RSA encryption");
@@ -120,7 +120,7 @@ namespace rsa
         return encrypted_message;
     }
 
-    Bytes PrivateKey::decrypt(const Bytes& encrypted_message) const
+    Bytes RsaPrivateKey::decrypt(const Bytes& encrypted_message) const
     {
         if(encrypted_message.size() != encryptedMessageSize()) {
             RAISE_ERROR(InvalidArgument, "large message size for RSA encryption");
@@ -135,7 +135,7 @@ namespace rsa
         return decrypt_message.takePart(0, message_size);
     }
 
-    Bytes PrivateKey::dectyptWithAes(const Bytes& message) const
+    Bytes RsaPrivateKey::dectyptWithAes(const Bytes& message) const
     {
         Bytes encrypted_serialized_key_size = message.takePart(0, sizeof(std::uint_least32_t));
         std::uint_least32_t key_size = 0;
@@ -146,17 +146,17 @@ namespace rsa
         auto encrypted_message = message.takePart(key_size + sizeof(std::uint_least32_t), message.size());
 
         auto serialized_symmetric_key = decrypt(encrypted_serialized_symmetric_key);
-        base::aes::Key symmetric_key(serialized_symmetric_key);
+        base::aes::AesKey symmetric_key(serialized_symmetric_key);
 
         return symmetric_key.decrypt(encrypted_message);
     }
 
-    std::size_t PrivateKey::maxMessageSizeForEncrypt() const noexcept
+    std::size_t RsaPrivateKey::maxMessageSizeForEncrypt() const noexcept
     {
         return encryptedMessageSize() - ASYMMETRIC_DIFFERENCE;
     }
 
-    Bytes PrivateKey::toBytes() const
+    Bytes RsaPrivateKey::toBytes() const
     {
         std::unique_ptr<BIO, decltype(&::BIO_free)> private_bio(BIO_new(BIO_s_mem()), ::BIO_free);
 
@@ -172,12 +172,12 @@ namespace rsa
         return private_key_bytes;
     }
 
-    std::size_t PrivateKey::encryptedMessageSize() const noexcept
+    std::size_t RsaPrivateKey::encryptedMessageSize() const noexcept
     {
         return _encrypted_message_size;
     }
 
-    std::unique_ptr<RSA, decltype(&::RSA_free)> PrivateKey::loadKey(const Bytes& key_word)
+    std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& key_word)
     {
         std::unique_ptr<BIO, decltype(&::BIO_free)> bio(
             BIO_new_mem_buf(key_word.toArray(), key_word.size()), ::BIO_free);
@@ -188,7 +188,7 @@ namespace rsa
         return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
     }
 
-    std::pair<PublicKey, PrivateKey> generateKeys(std::size_t keys_size)
+    std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
     {
         // create big number for random generation
         std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
@@ -242,7 +242,7 @@ namespace rsa
         }
         // =============
 
-        return std::pair<PublicKey, PrivateKey>(public_key_bytes, private_key_bytes);
+        return std::pair<RsaPublicKey, RsaPrivateKey>(public_key_bytes, private_key_bytes);
     }
 
 } // namespace rsa

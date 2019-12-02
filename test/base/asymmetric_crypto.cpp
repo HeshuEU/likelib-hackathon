@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(asymmetric_private_encrypt_public_decrypt_with_serializatio
     auto enc_msg = key_pair.second.encrypt(msg);
 
     auto public_key_bytes = key_pair.first.toBytes();
-    base::rsa::PublicKey deserialized_public_key(public_key_bytes);
+    base::rsa::RsaPublicKey deserialized_public_key(public_key_bytes);
 
     auto dec_msg = deserialized_public_key.decrypt(enc_msg);
     BOOST_CHECK(msg == dec_msg);

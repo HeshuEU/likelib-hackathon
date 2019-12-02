@@ -25,14 +25,14 @@ namespace base
 namespace aes
 {
 
-    Key::Key()
+    AesKey::AesKey()
         : _type(KeyType::Aes256BitKey), _key(generateKey(KeyType::Aes256BitKey)), _iv(generateIv(KeyType::Aes256BitKey))
     {}
 
-    Key::Key(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
+    AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
     {}
 
-    Key::Key(const Bytes& bytes_key)
+    AesKey::AesKey(const Bytes& bytes_key)
     {
         switch(bytes_key.size()) {
             case _aes_256_size:
@@ -50,12 +50,12 @@ namespace aes
         }
     }
 
-    Bytes Key::toBytes() const
+    Bytes AesKey::toBytes() const
     {
         return Bytes(_key.toString() + _iv.toString()); // concatenate size = iv.size() * 3
     }
 
-    Bytes Key::encrypt(const Bytes& data) const
+    Bytes AesKey::encrypt(const Bytes& data) const
     {
         switch(_type) {
             case KeyType::Aes256BitKey:
@@ -67,7 +67,7 @@ namespace aes
         }
     }
 
-    Bytes Key::decrypt(const Bytes& data) const
+    Bytes AesKey::decrypt(const Bytes& data) const
     {
         switch(_type) {
             case KeyType::Aes256BitKey:
@@ -79,7 +79,7 @@ namespace aes
         }
     }
 
-    Bytes Key::generateKey(KeyType type)
+    Bytes AesKey::generateKey(KeyType type)
     {
         switch(type) {
             case KeyType::Aes256BitKey:
@@ -91,7 +91,7 @@ namespace aes
         }
     }
 
-    Bytes Key::generateIv(KeyType type)
+    Bytes AesKey::generateIv(KeyType type)
     {
         switch(type) {
             case KeyType::Aes256BitKey:
@@ -103,7 +103,7 @@ namespace aes
         }
     }
 
-    Bytes Key::encrypt256Aes(const Bytes& data) const
+    Bytes AesKey::encrypt256Aes(const Bytes& data) const
     {
         std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(
             EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
@@ -129,7 +129,7 @@ namespace aes
         return output_data.takePart(0, encrypted_message_len_in_buffer);
     }
 
-    base::Bytes Key::decrypt256Aes(const base::Bytes& data) const
+    base::Bytes AesKey::decrypt256Aes(const base::Bytes& data) const
     {
         std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(
             EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
@@ -155,7 +155,7 @@ namespace aes
         return output_data.takePart(0, decrypted_message_len_in_buffer);
     }
 
-    base::Bytes Key::encrypt128Aes(const base::Bytes& data) const
+    base::Bytes AesKey::encrypt128Aes(const base::Bytes& data) const
     {
         std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(
             EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
@@ -181,7 +181,7 @@ namespace aes
         return output_data.takePart(0, encrypted_message_len_in_buffer);
     }
 
-    base::Bytes Key::decrypt128Aes(const base::Bytes& data) const
+    base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
     {
         std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(
             EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);

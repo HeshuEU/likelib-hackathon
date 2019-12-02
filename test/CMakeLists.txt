@@ -10,7 +10,6 @@ set(TEST_SOURCES
 		base/serialization.cpp
         base/symmetric_crypto.cpp
         base/asymmetric_crypto.cpp
-		base/new_crypto.cpp
         net/packet.cpp
         bc/address.cpp
         bc/balance_manager.cpp
