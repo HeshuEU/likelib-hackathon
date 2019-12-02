@@ -14,14 +14,14 @@ ProgramOptionsParser::ProgramOptionsParser() : _name(), _processor(nullptr), _op
 }
 
 ProgramOptionsParser::ProgramOptionsParser(const std::string& name)
-    : _name(name), _options_description("Allowed options"), _processor(nullptr)
+    : _name(name), _processor(nullptr), _options_description("Allowed options")
 {
     addFlag("help", "Print help message");
 }
 
 ProgramOptionsParser::ProgramOptionsParser(
     const std::string& name, std::function<int(const ProgramOptionsParser&)> processor)
-    : _name(name), _options_description(std::string("Allowed options for ") + name), _processor(processor)
+    : _name(name), _processor(processor), _options_description(std::string("Allowed options for ") + name)
 {
     addFlag("help", "Print help message");
 }
