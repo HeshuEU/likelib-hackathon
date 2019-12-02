@@ -55,8 +55,8 @@ void Blockchain::addBlock(const Block& block)
 
 void Blockchain::processReceivedTransaction(Transaction&& transaction)
 {
-    LOG_DEBUG << "Received transaction. From = " << transaction.getFrom().toString() << ' '
-              << transaction.getTo().toString() << ' ' << transaction.getAmount();
+    LOG_DEBUG << "Received transaction. From: " << transaction.getFrom().toString() << " To: "
+              << transaction.getTo().toString() << " Amount:" << transaction.getAmount();
 
     if(!checkTransaction(transaction)) {
         LOG_INFO << "Received an invalid transaction";
@@ -107,8 +107,6 @@ base::Bytes Blockchain::getMiningComplexity() const
 
 void Blockchain::onMinerFinished(Block block)
 {
-    LOG_FATAL << "onMinerFinished";
-    LOG_DEBUG << &_miner << " " << &_blocks_mutex << " " << this;
     addBlock(block);
     _network->broadcastBlock(block);
 }
