@@ -20,4 +20,6 @@
             default: \
                 return nullptr; \
         } \
-    }
+    } \
+    enum {}
+// enum above requires ; after it
