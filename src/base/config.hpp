@@ -35,9 +35,9 @@ constexpr bool IS_DEBUG =
 #elif defined(__unix) || defined(__unix__)
 #define CONFIG_OS_FAMILY_UNIX
 #else
-static_assert(false, "cannot determine OS")
+static_assert(false, "cannot determine OS");
 #endif
-;
+
 //------------------------
 
 // constexpr OS_NAME definition
