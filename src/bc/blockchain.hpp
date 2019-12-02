@@ -9,7 +9,6 @@
 #include "net/network.hpp"
 
 #include <list>
-#include <optional>
 
 namespace bc
 {
@@ -18,9 +17,15 @@ namespace bc
 class Blockchain
 {
   public:
+    void onMinerFinished(Block block);
     //===================
     explicit Blockchain(const base::PropertyTree& config);
-    ~Blockchain() = default;
+    Blockchain(const Blockchain&) = delete;
+    Blockchain(Blockchain&&) = delete;
+    ~Blockchain()
+    {
+        LOG_DEBUG << "BLOCKCHAIN descturctor";
+    }
     //===================
     void run();
     //===================
@@ -34,10 +39,18 @@ class Blockchain
   private:
     //===================
     bool _is_running{false};
+    //===================
     std::list<Block> _blocks;
+    mutable std::recursive_mutex _blocks_mutex;
+    //===================
     Block _pending_block;
-    Miner _miner;
+    mutable std::recursive_mutex _pending_block_mutex;
+    //===================
+    Miner<std::function<void(const Block&)>> _miner;
+    //===================
     bc::BalanceManager _balance_manager;
+    mutable std::recursive_mutex _balance_manager_mutex;
+    //===================
     const base::PropertyTree& _config;
     //===================
     std::unique_ptr<net::Network> _network;
@@ -58,7 +71,7 @@ class Blockchain
     void setupGenesis();
     //===================
     base::Bytes getMiningComplexity() const;
-    void onMinerFinished(const std::optional<Block>& block);
+
     //===================
     bool checkBlock(const Block& block) const;
     bool checkTransaction(const Transaction& tx) const;

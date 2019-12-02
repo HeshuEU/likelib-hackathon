@@ -8,11 +8,11 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstddef>
-#include <functional>
-#include <mutex>
-#include <random>
-#include <thread>
 #include <forward_list>
+#include <mutex>
+#include <optional>
+#include <shared_mutex>
+#include <thread>
 
 
 namespace bc
@@ -20,78 +20,81 @@ namespace bc
 
 namespace impl
 {
-    class MinerWorker;
-}
+    enum class Task
+    {
+        NONE,
+        DROP_JOB,
+        FIND_NONCE,
+        EXIT
+    };
 
-
-class Miner
-{
-  public:
-    //================
-    Miner(const base::PropertyTree& ptree);
-    ~Miner();
-    //================
-    using CallbackType = std::function<void(Block&&)>;
-
-    void setCallback(CallbackType&& callback);
-
-    void findNonce(const Block& block, const base::Bytes& mining_complexity);
-    void dropJob();
-    //================
-  private:
-    //================
-    std::forward_list<impl::MinerWorker> _workers_pool;
-    //================
-    CallbackType _callback;
-    base::Bytes _complexity;
-    //================
-    void miningWorker() noexcept;
-    //================
-    void stop();
-    //================
-};
-
-
-namespace impl
-{
+    template<typename Handler>
     class MinerWorker
     {
       public:
-        //==================
-        MinerWorker(const base::Bytes& complexity, Miner::CallbackType& callback);
+        //===================
+        MinerWorker(std::atomic<std::size_t>& version, Task& task, std::optional<Block>& block_to_mine,
+            std::shared_mutex& state_mutex, std::condition_variable_any& state_changed_cv, Handler handler);
+
         ~MinerWorker();
-        //==================
-        void run();
-        void stop();
-        //==================
-        void assignJob(const Block& block);
-        void assignJob(Block&& block);
-        void dropJob();
-        //==================
+        //===================
       private:
-        //==================
-        std::thread _thread;
-        Block _block;
-        Miner::CallbackType& _callback;
-        const base::Bytes& _complexity;
-        //==================
-        std::atomic<bool> _has_unread_message{false};
-        std::condition_variable _notification_cv;
-        std::mutex _notification_mutex;
-
-        enum class THREAD_MESSAGE
-        {
-            NONE,
-            FIND_NONCE,
-            EXIT
-        };
-        std::atomic<THREAD_MESSAGE> _notification{THREAD_MESSAGE::NONE};
-
-        void threadWorker() noexcept;
-        //==================
-        std::mt19937_64 _generator{std::random_device{}()};
-        //==================
+        //===================
+        std::thread _worker_thread;
+        std::size_t _last_read_version;
+        Task _last_read_task;
+        std::optional<Block> _last_read_block_to_mine;
+        //===================
+        std::atomic<std::size_t>& _version;
+        Task& _task;
+        std::optional<Block>& _block_to_mine;
+        std::shared_mutex& _state_mutex;
+        std::condition_variable_any& _state_changed_cv;
+        Handler _handler;
+        //===================
+        void worker() noexcept;
+        //===================
     };
+
+    template<typename Handler>
+    MinerWorker(std::atomic<std::size_t>, impl::Task&, std::optional<Block>&, std::shared_mutex&,
+        std::condition_variable_any&, Handler&)
+        ->MinerWorker<Handler>;
+
 } // namespace impl
 
+template<typename H>
+class Miner
+{
+  public:
+    //===================
+    Miner(H handler);
+
+    ~Miner();
+    //===================
+    void findNonce(const Block& block_without_nonce);
+    void dropJob();
+    //===================
+  private:
+    //===================
+    H _handler;
+    //===================
+    std::forward_list<impl::MinerWorker<H>> _workers;
+    //===================
+    impl::Task _task;
+    std::optional<Block> _block_to_mine;
+    std::atomic<std::size_t> _job_version;
+    mutable std::shared_mutex _state_mutex;
+    std::condition_variable_any _state_changed_cv;
+    //===================
+    static std::size_t getThreadsNumber();
+    void stop();
+    //===================
+};
+
+template<typename H>
+Miner(H &&)->Miner<H>;
+
 } // namespace bc
+
+#include "miner.tpp"
