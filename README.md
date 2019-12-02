@@ -15,5 +15,6 @@ By default it is config.json file of the following format:
 
 ### Build
 1. Go to ./doc folder.
-1. Run: sudo ./prepare_build.sh . It will install vcpkg packet manager to /opt folder. 
-2. Run: ./build.sh .
+2. Run: sudo ./prepare_build.sh . It will install vcpkg packet manager to /opt folder.
+3. Restart terminal session
+4. Run: zmake
