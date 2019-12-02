@@ -15,6 +15,10 @@ By default it is config.json file of the following format:
 
 ### Build
 1. Go to ./doc folder.
-2. Run: sudo ./prepare_build.sh . It will install vcpkg packet manager to /opt folder.
-3. Restart terminal session
-4. Run: lkgen
+2. Run: sudo ./prepare_build.sh . It will install vcpkg package manager to /opt folder.
+3. Restart terminal.
+4. To generate CMake files in current directory simply run `lkgen` command. It will
+search for CMakeLists in current directory and its parent, and will generate CMake
+files. If current and parent folders don't contain CMakeLists.txt, then the path to
+the root of the project, from which ./prepare_build.sh was run, will be used to
+get CMakeLists.
