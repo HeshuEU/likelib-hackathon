@@ -119,7 +119,7 @@ namespace impl
     {
         // TODO: rewrite
         base::Bytes b(32);
-        b[2] = 0x7f;
+        b[3] = 0x7f;
         return b;
     }
 
@@ -175,7 +175,7 @@ namespace impl
                     while(_last_read_version == _version) {
                         auto attempting_nonce = mt();
                         b.setNonce(attempting_nonce);
-                        if(base::toBytes(b) < tempGetComplexity()) {
+                        if(base::Sha256::compute(base::toBytes(b)).getBytes() < tempGetComplexity()) {
                             std::unique_lock lk(_state_mutex);
                             _handler(std::move(b));
                             _version++;
