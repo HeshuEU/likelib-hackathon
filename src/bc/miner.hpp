@@ -38,7 +38,7 @@ class Miner
     //===================
     using HandlerType = std::function<void(Block&&)>;
     //===================
-    Miner(HandlerType handler);
+    Miner(const base::PropertyTree& config, HandlerType handler);
 
     ~Miner();
     //===================
@@ -57,7 +57,6 @@ class Miner
     mutable std::shared_mutex _state_mutex;
     std::condition_variable_any _state_changed_cv;
     //===================
-    static std::size_t getThreadsNumber();
     void stop();
     //===================
 };

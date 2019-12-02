@@ -14,8 +14,10 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Network::Network(const net::Endpoint& listen_ip, unsigned short server_public_port, NetworkHandler& handler)
-    : _listen_ip{listen_ip}, _server_public_port{server_public_port}, _heartbeat_timer{_io_context}, _handler{handler}
+Network::Network(const base::PropertyTree& config, NetworkHandler& handler)
+    : _listen_ip{config.get<std::string>("net.listen_addr")},
+      _server_public_port{config.get<unsigned short>("net.public_port")}, _heartbeat_timer{_io_context}, _handler{
+                                                                                                             handler}
 {}
 
 

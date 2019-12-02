@@ -3,6 +3,23 @@
 #include <random>
 #include <utility>
 
+
+namespace
+{
+
+    std::size_t calcThreadsNum(const base::PropertyTree& config) {
+        if(config.hasKey("miner.threads")) {
+            return config.get<std::size_t>("miner.threads");
+        }
+        else {
+            return std::thread::hardware_concurrency();
+        }
+    }
+
+}
+
+
+
 namespace bc
 {
 
@@ -41,14 +58,15 @@ namespace impl
 } // namespace impl
 
 
-Miner::Miner(Miner::HandlerType handler) : _handler{std::move(handler)}
+Miner::Miner(const base::PropertyTree& config, Miner::HandlerType handler) : _handler{std::move(handler)}
 {
     // setting up initial state
     _task = impl::Task::NONE;
     _job_version = 0;
 
     // setting up threads
-    for(std::size_t i = 0; i < getThreadsNumber(); ++i) {
+    std::size_t num_threads = calcThreadsNum(config);
+    for(std::size_t i = 0; i < num_threads; ++i) {
         _workers.emplace_front(_job_version, _task, _block_to_mine, _state_mutex, _state_changed_cv, _handler);
     }
 }
@@ -57,12 +75,6 @@ Miner::Miner(Miner::HandlerType handler) : _handler{std::move(handler)}
 Miner::~Miner()
 {
     stop();
-}
-
-
-std::size_t Miner::getThreadsNumber()
-{
-    return std::thread::hardware_concurrency();
 }
 
 

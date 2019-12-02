@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base/property_tree.hpp"
 #include "bc/block.hpp"
 #include "net/connection.hpp"
 
@@ -26,7 +27,7 @@ class Network
 {
   public:
     //===================
-    Network(const Endpoint& listen_ip, unsigned short server_public_port, NetworkHandler& handler);
+    Network(const base::PropertyTree& config, NetworkHandler& handler);
     ~Network();
     //===================
     void run();
@@ -40,6 +41,9 @@ class Network
     //===================
   private:
     //===================
+    const Endpoint _listen_ip;
+    const unsigned short _server_public_port;
+    //===================
     boost::asio::io_context _io_context;
     std::list<std::shared_ptr<Connection>> _connections;
     //===================
@@ -47,8 +51,6 @@ class Network
     void networkThreadWorkerFunction() noexcept;
     //===================
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
-    Endpoint _listen_ip;
-    unsigned short _server_public_port;
     void acceptClients();
     void acceptLoop();
     //===================
