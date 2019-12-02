@@ -3,7 +3,6 @@ set(BC_HEADERS
         block.hpp
         blockchain.hpp
         miner.hpp
-        miner.tpp
         transaction.hpp
         types.hpp
         balance_manager.hpp

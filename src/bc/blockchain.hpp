@@ -13,19 +13,14 @@
 namespace bc
 {
 
-
 class Blockchain
 {
   public:
-    void onMinerFinished(Block block);
     //===================
     explicit Blockchain(const base::PropertyTree& config);
     Blockchain(const Blockchain&) = delete;
     Blockchain(Blockchain&&) = delete;
-    ~Blockchain()
-    {
-        LOG_DEBUG << "BLOCKCHAIN descturctor";
-    }
+    ~Blockchain() = default;
     //===================
     void run();
     //===================
@@ -46,7 +41,7 @@ class Blockchain
     Block _pending_block;
     mutable std::recursive_mutex _pending_block_mutex;
     //===================
-    Miner<std::function<void(const Block&)>> _miner;
+    Miner _miner;
     //===================
     bc::BalanceManager _balance_manager;
     mutable std::recursive_mutex _balance_manager_mutex;
@@ -71,7 +66,7 @@ class Blockchain
     void setupGenesis();
     //===================
     base::Bytes getMiningComplexity() const;
-
+    void onMinerFinished(Block block);
     //===================
     bool checkBlock(const Block& block) const;
     bool checkTransaction(const Transaction& tx) const;

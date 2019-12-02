@@ -8,17 +8,12 @@ namespace bc
 {
 
 Blockchain::Blockchain(const base::PropertyTree& config)
-    : _config(config), _miner{std::function<void(const Block&)>([this](const Block& block) {
-          LOG_FATAL << this;
-          onMinerFinished(block);
-      })},
-      _network_handler(*this)
+    : _config(config), _network_handler(*this),
+      _miner(std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1))
 {
     setupGenesis();
     _network = std::make_unique<net::Network>(net::Endpoint{config.get<std::string>("listen_address")},
         config.get<unsigned short>("public_server_port"), _network_handler);
-
-    LOG_DEBUG << "blockchain this = " << this;
 }
 
 
