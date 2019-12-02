@@ -75,7 +75,15 @@ else
 
   echo "#===========likelib=============" >>"${PATH_TO_BASH_RC}"
   echo -e "zmake () {\n
-    cmake -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake -S ${PWD} -B \${PWD} \n
+    SOURCE_DIR=${PWD}\n
+    if [[ -f ./CMakeLists.txt ]]; then\n
+      SOURCE_DIR=\${PWD}\n
+    elif [[ -f ../CMakeLists.txt ]]; then\n
+      SOURCE_DIR=\${PWD}\/..\n
+    fi\n
+    echo Build to \${PWD}\n
+    echo From \${SOURCE_DIR}\n
+    cmake -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake -S \${SOURCE_DIR} -B \${PWD} \n
     }" >>"${PATH_TO_BASH_RC}"
 
 fi
