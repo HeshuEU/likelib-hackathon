@@ -23,8 +23,11 @@ Such things as port-forwarding with NAT, may change the port we need to connect 
 * `miner.threads` - optional parameter, sets the number of threads that miner is using.
 
 ### Build
-1. Go to ./doc folder: right now it is a staring point for scripts.
-2. Run ./prepare_build.sh. It will install vcpkg packet manager to /opt folder. It may
-require sudo permissions.
-3. Run ./build.sh. It will execute CMake, that will generate makefiles in ./build folder.
-4. Go to ./build folder and run make. 
+1. Go to ./doc folder.
+2. Run: sudo ./prepare_build.sh . It will install vcpkg package manager to /opt folder.
+3. Restart terminal.
+4. To generate CMake files in current directory simply run `lkgen` command. It will
+search for CMakeLists in current directory and its parent, and will generate CMake
+files. If current and parent folders don't contain CMakeLists.txt, then the path to
+the root of the project, from which ./prepare_build.sh was run, will be used to
+get CMakeLists.
