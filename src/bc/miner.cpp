@@ -1,5 +1,7 @@
 #include "miner.hpp"
 
+#include "base/log.hpp"
+
 #include <random>
 #include <utility>
 

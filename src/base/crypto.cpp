@@ -8,6 +8,7 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <memory>
