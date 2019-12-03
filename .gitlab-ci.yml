@@ -1,25 +1,8 @@
-#image: ubuntu:19.10
-#  dockerfile: Dockerfile.ci
-#build_image:
-#  tags:
-#    - docker
-#  image:
-#    dockerfile: Dockerfile.ci
-#test:
-#  tags: 
-#    - shell
-docker build:
+Build:
   tags: 
     - custom-tag
   script: 
-     - docker --version
-     - ls
      - echo "Start building docker container"
      - docker build .
-     - echo "Build success"
-#    - docker --version
-#    - mkdir -p ../build
-#    - cd ../build
-#    - cmake ../likelib
-#    - make -j 4
+     - echo "Docker container build successfully"
 
