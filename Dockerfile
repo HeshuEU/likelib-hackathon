@@ -27,4 +27,4 @@ RUN cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/builds
     make -j$(nproc)
 
 # run unit tests
-RUN ${PROJECT_BUILD_DIR}/test/run_tests --log_level=success --detect-memory-leaks=1
+RUN ${PROJECT_BUILD_DIR}/test/run_tests --log_level=success --detect_memory_leaks=1
