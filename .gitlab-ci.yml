@@ -10,6 +10,7 @@
 #    - shell
 test:
   script: cat ./README.md
+
 #    - mkdir -p ../build
 #    - ls
 #    - cd ../build
