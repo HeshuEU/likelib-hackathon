@@ -7,16 +7,17 @@
 namespace
 {
 
-    std::size_t calcThreadsNum(const base::PropertyTree& config) {
-        if(config.hasKey("miner.threads")) {
-            return config.get<std::size_t>("miner.threads");
-        }
-        else {
-            return std::thread::hardware_concurrency();
-        }
+std::size_t calcThreadsNum(const base::PropertyTree& config)
+{
+    if(config.hasKey("miner.threads")) {
+        return config.get<std::size_t>("miner.threads");
     }
-
+    else {
+        return std::thread::hardware_concurrency();
+    }
 }
+
+} // namespace
 
 
 
@@ -27,28 +28,66 @@ namespace bc
 namespace impl
 {
 
+    CommonState::CommonState(CommonData&& initial_state, MinerHandlerType handler)
+        : _version{0}, _common_data{std::move(initial_state)}, _handler{handler}
+    {}
+
+
+    std::size_t CommonState::getVersion() const
+    {
+        return _version.load(std::memory_order_consume);
+    }
+
+
+    [[maybe_unused]] std::size_t CommonState::getCommonData(CommonData& data) const
+    {
+        std::shared_lock lk(_state_mutex);
+        data = _common_data;
+        return getVersion();
+    }
+
+
+    void CommonState::setCommonData(const CommonData& data)
+    {
+        std::unique_lock lk(_state_mutex);
+        _version.fetch_add(1, std::memory_order_release);
+        _common_data = data;
+        _state_changed_cv.notify_all();
+    }
+
+
+    template<typename... Args>
+    void CommonState::callHandler(Args&&... args)
+    {
+        std::unique_lock lk(_state_mutex);
+        _handler(std::forward<Args>(args)...);
+    }
+
+
+    void CommonState::waitAndReadNewData(std::size_t& last_read_version, CommonData& data)
+    {
+        std::shared_lock lk(_state_mutex);
+        _state_changed_cv.wait(lk, [this, last_read_version] {
+            return getVersion() != last_read_version;
+        });
+        last_read_version = getVersion();
+        data = _common_data;
+    }
+
 
     class MinerWorker
     {
       public:
         //===================
-        MinerWorker(std::atomic<std::size_t>& version, Task& task, std::optional<Block>& block_to_mine,
-            std::shared_mutex& state_mutex, std::condition_variable_any& state_changed_cv, Miner::HandlerType handler);
-
+        MinerWorker(CommonState& common_state);
         ~MinerWorker();
         //===================
       private:
         //===================
         std::thread _worker_thread;
         std::size_t _last_read_version;
-        Task _last_read_task;
-        std::optional<Block> _last_read_block_to_mine;
         //===================
-        std::atomic<std::size_t>& _version;
-        Task& _task;
-        std::optional<Block>& _block_to_mine;
-        std::shared_mutex& _state_mutex;
-        std::condition_variable_any& _state_changed_cv;
+        CommonState& _common_state;
         Miner::HandlerType _handler;
         //===================
         void worker();
@@ -58,17 +97,14 @@ namespace impl
 } // namespace impl
 
 
-Miner::Miner(const base::PropertyTree& config, Miner::HandlerType handler) : _handler{std::move(handler)}
+Miner::Miner(const base::PropertyTree& config, Miner::HandlerType handler)
+    : _common_state{{impl::Task::NONE, std::nullopt, std::nullopt}, std::move(handler)}
 {
-    // setting up initial state
-    _task = impl::Task::NONE;
-    _job_version = 0;
-
     // setting up threads
     std::size_t num_threads = calcThreadsNum(config);
 
     for(std::size_t i = 0; i < num_threads; ++i) {
-        _workers.emplace_front(_job_version, _task, _block_to_mine, _state_mutex, _state_changed_cv, _handler);
+        _workers.emplace_front(_common_state);
     }
 
     LOG_INFO << "Miner is running on " << num_threads << " threads";
@@ -81,33 +117,21 @@ Miner::~Miner()
 }
 
 
-void Miner::findNonce(const Block& block_without_nonce)
+void Miner::findNonce(const Block& block_without_nonce, const base::Bytes& complexity)
 {
-    std::unique_lock lk(_state_mutex);
-    ++_job_version;
-    _task = impl::Task::FIND_NONCE;
-    _block_to_mine = block_without_nonce;
-    _state_changed_cv.notify_all();
+    _common_state.setCommonData({impl::Task::FIND_NONCE, block_without_nonce, complexity});
 }
 
 
 void Miner::dropJob()
 {
-    std::unique_lock lk(_state_mutex);
-    ++_job_version;
-    _task = impl::Task::NONE;
-    _block_to_mine.reset();
-    _state_changed_cv.notify_all();
+    _common_state.setCommonData({impl::Task::NONE, std::nullopt, std::nullopt});
 }
 
 
 void Miner::stop()
 {
-    std::unique_lock lk(_state_mutex);
-    ++_job_version;
-    _task = impl::Task::EXIT;
-    _block_to_mine.reset();
-    _state_changed_cv.notify_all();
+    _common_state.setCommonData({impl::Task::EXIT, std::nullopt, std::nullopt});
 }
 
 //=============================
@@ -115,18 +139,8 @@ void Miner::stop()
 namespace impl
 {
 
-    inline base::Bytes tempGetComplexity()
-    {
-        // TODO: rewrite
-        base::Bytes b(32);
-        b[3] = 0x7f;
-        return b;
-    }
-
-    MinerWorker::MinerWorker(std::atomic<std::size_t>& version, impl::Task& task, std::optional<Block>& block_to_mine,
-        std::shared_mutex& state_mutex, std::condition_variable_any& state_changed_cv, Miner::HandlerType handler)
-        : _last_read_version{0}, _version{version}, _task{task}, _block_to_mine{block_to_mine},
-          _state_mutex{state_mutex}, _state_changed_cv{state_changed_cv}, _handler{handler}
+    MinerWorker::MinerWorker(CommonState& common_state)
+        : _common_state{common_state}
     {
         _worker_thread = std::thread(&MinerWorker::worker, this);
     }
@@ -145,18 +159,13 @@ namespace impl
         bool is_stopping{false};
         std::mt19937_64 mt{std::random_device{}()};
 
-        while(!is_stopping) {
-            {
-                std::shared_lock lk(_state_mutex);
-                _state_changed_cv.wait(lk, [this] {
-                    return _last_read_version != _version;
-                });
-                _last_read_version = _version;
-                _last_read_task = _task;
-                _last_read_block_to_mine = _block_to_mine;
-            }
+        std::size_t last_read_version{0};
+        CommonData data;
 
-            switch(_last_read_task) {
+        while(!is_stopping) {
+            _common_state.waitAndReadNewData(last_read_version, data);
+
+            switch(data.task) {
                 case Task::NONE: {
                     // do nothing
                     break;
@@ -170,18 +179,19 @@ namespace impl
                     break;
                 }
                 case Task::FIND_NONCE: {
-                    ASSERT(_last_read_block_to_mine);
-                    Block& b = _last_read_block_to_mine.value();
-                    while(_last_read_version == _version) {
+                    ASSERT(data.block_to_mine);
+                    ASSERT(data.complexity);
+                    Block& b = data.block_to_mine.value();
+                    const base::Bytes& complexity = data.complexity.value();
+                    while(_last_read_version == _common_state.getVersion()) {
                         auto attempting_nonce = mt();
                         b.setNonce(attempting_nonce);
-                        if(base::Sha256::compute(base::toBytes(b)).getBytes() < tempGetComplexity()) {
-                            std::unique_lock lk(_state_mutex);
-                            _handler(std::move(b));
-                            _version++;
-                            _task = Task::DROP_JOB;
-                            _block_to_mine.reset();
-                            _state_changed_cv.notify_all();
+                        if(base::Sha256::compute(base::toBytes(b)).getBytes() < complexity) {
+                            data.task = Task::DROP_JOB;
+                            data.block_to_mine.reset();
+                            data.complexity.reset();
+                            _common_state.setCommonData(data);
+                            _common_state.callHandler(std::move(b));
                         }
                     }
                     break;

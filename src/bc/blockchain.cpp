@@ -31,7 +31,7 @@ void Blockchain::processReceivedBlock(Block&& block)
         pending_txs.remove(block.getTransactions());
         _pending_block.setTransactions(std::move(pending_txs));
         if(!_pending_block.getTransactions().isEmpty()) {
-            _miner.findNonce(_pending_block);
+            _miner.findNonce(_pending_block, getMiningComplexity());
         }
     }
 }
@@ -55,8 +55,8 @@ void Blockchain::addBlock(const Block& block)
 
 void Blockchain::processReceivedTransaction(Transaction&& transaction)
 {
-    LOG_DEBUG << "Received transaction. From: " << transaction.getFrom().toString() << " To: "
-              << transaction.getTo().toString() << " Amount:" << transaction.getAmount();
+    LOG_DEBUG << "Received transaction. From: " << transaction.getFrom().toString()
+              << " To: " << transaction.getTo().toString() << " Amount:" << transaction.getAmount();
 
     if(!checkTransaction(transaction)) {
         LOG_INFO << "Received an invalid transaction";
@@ -72,7 +72,7 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
             }
             _network->broadcastTransaction(transaction);
             _miner.dropJob();
-            _miner.findNonce(_pending_block);
+            _miner.findNonce(_pending_block, getMiningComplexity());
         }
     }
 }
@@ -99,6 +99,7 @@ void Blockchain::setupGenesis()
 
 base::Bytes Blockchain::getMiningComplexity() const
 {
+    // to be changed later to calculate complexity dynamically
     base::Bytes ret(32);
     ret[2] = 0x6F;
     return ret;
