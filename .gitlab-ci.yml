@@ -9,7 +9,8 @@
 #  tags: 
 #    - shell
 job:
-  tags: custom-tag
+  tags: 
+    - custom-tag
 #    script: cat ./README.md
 
 #    - mkdir -p ../build
