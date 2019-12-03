@@ -24,6 +24,7 @@ COPY . ${PROJECT_SOURCE_DIR}
 WORKDIR ${PROJECT_BUILD_DIR}
 
 RUN ls /opt/cmake-3.15.5
+RUN cmake --version
 RUN /opt/bin/cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
     make -j$(nproc)
 
