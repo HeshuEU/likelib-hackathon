@@ -11,7 +11,7 @@
 job:
   tags: 
     - custom-tag
-#    script: cat ./README.md
+  script: cat ./README.md
 
 #    - mkdir -p ../build
 #    - ls
