@@ -1,12 +1,11 @@
 #image:
 #  dockerfile: Dockerfile.ci
-
-build_image:
-  tags:
-    - docker
-  image:
-    dockerfile: Dockerfile.ci
-
+#build_image:
+#  tags:
+#    - docker
+#  image:
+#    dockerfile: Dockerfile.ci
+test:
   script:
     - mkdir -p ../build
     - ls
