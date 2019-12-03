@@ -56,18 +56,18 @@ SerializationIArchive& operator>>(SerializationIArchive& ia, base::Bytes& v)
 }
 
 
-SerializationOArchive& operator<<(SerializationOArchive& ia, const std::string& v)
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::string& v)
 {
-    return ia << base::Bytes(v);
+    return oa << base::Bytes(v);
 }
 
 
-SerializationIArchive& operator>>(SerializationIArchive& oa, std::string& v)
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::string& v)
 {
     base::Bytes b;
-    oa >> b;
+    ia >> b;
     v = b.toString();
-    return oa;
+    return ia;
 }
 
 
