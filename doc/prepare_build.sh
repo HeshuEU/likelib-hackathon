@@ -2,22 +2,9 @@
 
 INSTALL_DIR="/opt"
 
-#read -p "Enter install path [${INSTALL_DIR}]:"
-#NEW_INSTALL_PATH=$REPLY
-#mkdir -p ${NEW_INSTALL_PATH}
-
-#if [ -w $NEW_INSTALL_PATH ]; then
-#  echo "NEW install path ${NEW_INSTALL_PATH}"
-#  INSTALL_DIR=${NEW_INSTALL_PATH}
-#else
-#  echo "Can't write to ${NEW_INSTALL_PATH}"
-#  echo "Exit..."
-#  exit 1
-#fi
-
 SCRIPT_DIR=${PWD}
 if [ ! -f "${SCRIPT_DIR}/prepare_build.sh" ]; then
-  echo "Run script from doc folder"
+  echo "Run script from ./doc folder"
   exit 1
 fi
 
@@ -40,7 +27,7 @@ fi
 
 # install vcpkg
 if [ -d "${INSTALL_DIR}/vcpkg" ]; then
-  echo "You have vcpkg in ${INSTALL_DIR}"
+  echo "vcpkg is already installed ${INSTALL_DIR}"
   cd "${INSTALL_DIR}/vcpkg" || exit 1
 else
   cd ${INSTALL_DIR} || exit 1
@@ -56,7 +43,7 @@ fi
 ./vcpkg install leveldb
 
 chown 1000:1000 -R ../vcpkg
-echo "runing change bachrc script"
+echo "Installing lkgen to ~/.bashrc"
 
 PATH_TO_BASH_RC="/home/${SUDO_USER}/.bashrc"
 
@@ -65,7 +52,7 @@ if [[ "${EUID}" -ne 0 ]]; then
 fi
 
 if cat ${PATH_TO_BASH_RC} | grep "#===========likelib============="; then
-  echo "You have likelib $(cat ${PATH_TO_BASH_RC} | grep likelib_SOURCE_DIR)"
+  echo "You already have installed lkgen to ~/.bashrc $(cat ${PATH_TO_BASH_RC} | grep SOURCE_DIR)"
   echo "Exit..."
   exit
 else
@@ -73,9 +60,17 @@ else
 
   cd "${SCRIPT_DIR}/../" || exit 1
 
-  echo "#===========likelib=============" >>"${PATH_TO_BASH_RC}"
-  echo -e "zmake () {\n
-    cmake -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake -S ${PWD} -B \${PWD} \n
+  echo "#=========== LikeLib2.0 =============" >>"${PATH_TO_BASH_RC}"
+  echo -e "lkgen () {\n
+    SOURCE_DIR=${PWD}\n
+    if [[ -f ./CMakeLists.txt ]]; then\n
+      SOURCE_DIR=\${PWD}\n
+    elif [[ -f ../CMakeLists.txt ]]; then\n
+      SOURCE_DIR=\${PWD}\/..\n
+    fi\n
+    echo Build to \${PWD}\n
+    echo From \${SOURCE_DIR}\n
+    cmake -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake -S \${SOURCE_DIR} -B \${PWD} \n
     }" >>"${PATH_TO_BASH_RC}"
 
 fi

@@ -195,9 +195,6 @@ void Connection::send(base::Bytes&& data)
     if(!is_already_writing) {
         sendPendingMessages();
     }
-    else {
-        LOG_ERROR << "XYU0";
-    }
 }
 
 

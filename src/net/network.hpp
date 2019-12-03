@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base/property_tree.hpp"
 #include "bc/block.hpp"
 #include "net/connection.hpp"
 
@@ -12,19 +13,21 @@
 #include <set>
 #include <thread>
 
-namespace bc
-{
-class Blockchain;
-}
-
 namespace net
 {
+
+class NetworkHandler
+{
+  public:
+    virtual void onBlockReceived(bc::Block&&) = 0;
+    virtual void onTransactionReceived(bc::Transaction&&) = 0;
+};
 
 class Network
 {
   public:
     //===================
-    Network(const Endpoint& listen_ip, unsigned short server_public_port);
+    Network(const base::PropertyTree& config, NetworkHandler& handler);
     ~Network();
     //===================
     void run();
@@ -36,9 +39,10 @@ class Network
     void broadcastBlock(const bc::Block& block);
     void broadcastTransaction(const bc::Transaction& tx);
     //===================
-    void setBlockchain(bc::Blockchain* blockchain);
-
   private:
+    //===================
+    const Endpoint _listen_ip;
+    const unsigned short _server_public_port;
     //===================
     boost::asio::io_context _io_context;
     std::list<std::shared_ptr<Connection>> _connections;
@@ -47,8 +51,6 @@ class Network
     void networkThreadWorkerFunction() noexcept;
     //===================
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
-    Endpoint _listen_ip;
-    unsigned short _server_public_port;
     void acceptClients();
     void acceptLoop();
     //===================
@@ -59,7 +61,7 @@ class Network
     //===================
     void connectionReceivedPacketHandler(Connection& connection, const Packet& packet);
     //===================
-    bc::Blockchain* _blockchain;
+    NetworkHandler& _handler;
 };
 
 } // namespace net

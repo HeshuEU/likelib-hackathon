@@ -34,8 +34,14 @@ bool BalanceManager::checkTransaction(const Transaction& tx)
 
 void BalanceManager::update(const Transaction& tx)
 {
-    auto from_iter = _storage.find(tx.getFrom());
     ASSERT(getBalance(tx.getFrom()) >= tx.getAmount());
+
+    if(!_storage.count(tx.getFrom())) {
+        _storage[tx.getFrom()] = 0xffffffffffffffff;
+    }
+
+    auto from_iter = _storage.find(tx.getFrom());
+
     from_iter->second = from_iter->second - tx.getAmount();
 
     if(auto to_iter = _storage.find(tx.getTo()); to_iter != _storage.end()) {

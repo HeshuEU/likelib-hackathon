@@ -8,20 +8,20 @@ namespace base
 
 namespace po = boost::program_options;
 
-ProgramOptionsParser::ProgramOptionsParser() : _name(), _options_description("Allowed options"), _processor(nullptr)
+ProgramOptionsParser::ProgramOptionsParser() : _name(), _processor(nullptr), _options_description("Allowed options")
 {
     addFlag("help", "Print help message");
 }
 
 ProgramOptionsParser::ProgramOptionsParser(const std::string& name)
-    : _name(name), _options_description("Allowed options"), _processor(nullptr)
+    : _name(name), _processor(nullptr), _options_description("Allowed options")
 {
     addFlag("help", "Print help message");
 }
 
 ProgramOptionsParser::ProgramOptionsParser(
     const std::string& name, std::function<int(const ProgramOptionsParser&)> processor)
-    : _name(name), _options_description(std::string("Allowed options for ") + name), _processor(processor)
+    : _name(name), _processor(processor), _options_description(std::string("Allowed options for ") + name)
 {
     addFlag("help", "Print help message");
 }
@@ -55,7 +55,7 @@ int ProgramOptionsParser::process(int argc, char** argv)
         if(argc > START_POSITION) {
             std::string sub_program(argv[START_POSITION]);
             if(_descendants.count(sub_program)) {
-            _empty = false;
+                _empty = false;
                 return _descendants.find(sub_program)->second->process(argc - START_POSITION, argv + START_POSITION);
             }
             if(sub_program.find('-') == std::string::npos) {

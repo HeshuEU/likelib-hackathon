@@ -31,4 +31,4 @@ class BalanceManager
     //================
 };
 
-}; // namespace bc
+} // namespace bc

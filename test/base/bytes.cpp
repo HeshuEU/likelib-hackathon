@@ -6,12 +6,12 @@
 BOOST_AUTO_TEST_CASE(bytes_storage_check)
 {
     base::Bytes bytes(128);
-    for(int i = 0; i < bytes.size(); ++i) {
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
         bytes[i] = static_cast<base::Byte>(i ^ 3);
     }
 
     bool all_equal = true;
-    for(int i = 0; i < bytes.size(); ++i) {
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
         all_equal = all_equal && (static_cast<base::Byte>(i ^ 3) == bytes[i]);
     }
 
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(bytes_string_ctor)
 BOOST_AUTO_TEST_CASE(bytes_size_change)
 {
     base::Bytes bytes(128);
-    for(int i = 0; i < bytes.size(); ++i) {
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
         bytes[i] = static_cast<base::Byte>(i ^ 33);
     }
     bytes.append(0x15);
@@ -42,12 +42,12 @@ BOOST_AUTO_TEST_CASE(bytes_size_change)
 BOOST_AUTO_TEST_CASE(bytes_take_part)
 {
     base::Bytes bytes(128);
-    for(int i = 0; i < bytes.size(); ++i) {
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
         bytes[i] = static_cast<base::Byte>(i ^ 12);
     }
 
     base::Bytes answer;
-    for(int i = 20; i < 30; ++i) {
+    for(std::size_t i = 20; i < 30; ++i) {
         answer.append(static_cast<base::Byte>(i ^ 12));
     }
 
@@ -59,12 +59,12 @@ BOOST_AUTO_TEST_CASE(bytes_take_part)
 BOOST_AUTO_TEST_CASE(bytes_append)
 {
     base::Bytes bytes1(234);
-    for(int i = 0; i < bytes1.size(); ++i) {
+    for(std::size_t i = 0; i < bytes1.size(); ++i) {
         bytes1[i] = static_cast<base::Byte>(i ^ 11);
     }
 
     base::Bytes bytes2(175);
-    for(int i = 0; i < bytes2.size(); ++i) {
+    for(std::size_t i = 0; i < bytes2.size(); ++i) {
         bytes2[i] = static_cast<base::Byte>(i ^ 13);
     }
 
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(bytes_append)
     BOOST_CHECK(bytes_concat.size() == bytes1.size());
 
     bool res = true;
-    for(int i = 0; i < bytes1.size(); ++i) {
+    for(std::size_t i = 0; i < bytes1.size(); ++i) {
         res = res && (bytes_concat[i] == bytes1[i]);
     }
     BOOST_CHECK(res);
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(bytes_append)
     BOOST_CHECK(bytes_concat.size() == bytes1.size() + bytes2.size());
 
     res = true;
-    for(int i = 0; i < bytes2.size(); ++i) {
+    for(std::size_t i = 0; i < bytes2.size(); ++i) {
         res = res && (bytes_concat[bytes1.size() + i] == bytes2[i]);
     }
     BOOST_CHECK(res);

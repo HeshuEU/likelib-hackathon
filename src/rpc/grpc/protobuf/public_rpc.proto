@@ -2,9 +2,9 @@ syntax = "proto3";
 
 // Cross platform definitions
 option java_multiple_files = true;
-option java_package = "by.heshu.likelib.node";
+option java_package = "by.heshu.likelib.rpc";
 option java_outer_classname = "LikelibNodeProto";
-option objc_class_prefix = "HLW";
+option objc_class_prefix = "LKL";
 
 // Service and messages definitions
 package likelib;
@@ -24,6 +24,7 @@ message Transaction {
     Money amount = 1;
     Address from_address = 2;
     Address to_address = 3;
+    Time creation_time = 4;
 }
 
 message Address {
@@ -44,4 +45,8 @@ message Hash {
 
 message Money {
     uint64 money = 1;
+}
+
+message Time {
+    string milliseconds_from_epoch = 1;
 }

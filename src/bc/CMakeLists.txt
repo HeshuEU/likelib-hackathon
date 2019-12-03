@@ -6,6 +6,7 @@ set(BC_HEADERS
         transaction.hpp
         types.hpp
         balance_manager.hpp
+        transactions_set.hpp
         )
 
 set(BC_SOURCES
@@ -15,6 +16,7 @@ set(BC_SOURCES
         miner.cpp
         transaction.cpp
         balance_manager.cpp
+        transactions_set.cpp
         )
 
 add_library(bc ${BC_SOURCES} ${BC_HEADERS})

@@ -14,8 +14,10 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Network::Network(const net::Endpoint& listen_ip, unsigned short server_public_port)
-    : _listen_ip{listen_ip}, _server_public_port{server_public_port}, _heartbeat_timer{_io_context}
+Network::Network(const base::PropertyTree& config, NetworkHandler& handler)
+    : _listen_ip{config.get<std::string>("net.listen_addr")},
+      _server_public_port{config.get<unsigned short>("net.public_port")}, _heartbeat_timer{_io_context}, _handler{
+                                                                                                             handler}
 {}
 
 
@@ -135,7 +137,7 @@ void Network::connect(const net::Endpoint& address)
                 net::Packet packet{net::PacketType::HANDSHAKE};
                 packet.setPublicServerPort(_server_public_port);
                 connection->send(packet);
-               _connections.push_back(std::move(connection));
+                _connections.push_back(std::move(connection));
             }
         });
 }
@@ -235,12 +237,11 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
             break;
         }
         case PacketType::BLOCK: {
-            _blockchain->blockReceived(base::fromBytes<bc::Block>(packet.getData()));
+            _handler.onBlockReceived(base::fromBytes<bc::Block>(packet.getData()));
             break;
         }
         case PacketType::TRANSACTION: {
-            bc::Transaction tx = base::fromBytes<bc::Transaction>(packet.getData());
-            _blockchain->transactionReceived(std::move(tx));
+            _handler.onTransactionReceived(base::fromBytes<bc::Transaction>(packet.getData()));
             break;
         }
         default: {
@@ -264,13 +265,12 @@ void Network::broadcastBlock(const bc::Block& block)
 
 
 void Network::broadcastTransaction(const bc::Transaction& tx)
-{}
-
-
-void Network::setBlockchain(bc::Blockchain* blockchain)
 {
-    _blockchain = blockchain;
+    Packet p(PacketType::TRANSACTION);
+    p.setData(base::toBytes(tx));
+    for(auto& connection: _connections) {
+        connection->send(p);
+    }
 }
-
 
 } // namespace net

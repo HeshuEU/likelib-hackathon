@@ -2,6 +2,8 @@
 
 #include "serialization.hpp"
 
+#include "base/assert.hpp"
+
 #include <boost/asio.hpp>
 
 
@@ -19,10 +21,11 @@ namespace base
 {
 
 template<typename T>
-typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::type SerializationOArchive::operator<<(const T& v)
+typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::type SerializationOArchive::operator<<(
+    const T& v)
 {
     if constexpr(std::is_integral<T>::value) {
-        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) || 8 && sizeof(v) || 16,
+        static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8 || sizeof(v) == 16,
             "this integral type is not serializable");
 
         if constexpr(sizeof(v) == 1) {
@@ -56,11 +59,14 @@ typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::typ
 
 
 template<typename T>
-typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::type SerializationIArchive::operator>>(T& v)
+typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::type SerializationIArchive::operator>>(
+    T& v)
 {
     if constexpr(std::is_integral<T>::value) {
         static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8 || sizeof(v) == 16,
             "this integral type is not serializable");
+
+        ASSERT(_index + sizeof(T) <= _bytes.size());
 
         v = *reinterpret_cast<T*>(_bytes.toArray() + _index);
         if(sizeof(v) == 1) {
@@ -133,7 +139,7 @@ T fromBytes(const base::Bytes& bytes)
     SerializationIArchive ia(bytes);
     T t;
     ia >> t;
-    return std::move(t);
+    return t;
 }
 
 } // namespace base

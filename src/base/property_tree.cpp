@@ -25,7 +25,7 @@ PropertyTree readConfig(const std::filesystem::path& config_file)
 
 bool PropertyTree::hasKey(const std::string& path) const
 {
-    CLARIFY_ERROR(Error, return _ptree.find(std::string{path}) != _ptree.not_found(), "internal error");
+    return static_cast<bool>(_ptree.get_child_optional(path));
 }
 
 } // namespace base

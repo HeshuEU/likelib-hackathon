@@ -1,6 +1,6 @@
 #pragma once
 
-#include "grpc_service.hpp"
+#include "grpc_adapter.hpp"
 
 namespace rpc
 {
@@ -11,7 +11,7 @@ class GrpcNodeServer
   public:
     /// Constructor that initialize instance of LogicService
     /// \param server_address listening ip:port
-    explicit GrpcNodeServer(const std::string& server_address, std::shared_ptr<BaseService> service);
+    explicit GrpcNodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service);
 
     /// plain destructor that call GrpcNodeServer::stop()
     ~GrpcNodeServer();
@@ -23,9 +23,9 @@ class GrpcNodeServer
     void stop();
 
   private:
+    GrpcAdapter _service;
     const std::string _server_address;
     std::unique_ptr<grpc::Server> _server = nullptr;
-    GrpcNodeServiceImpl _service;
 };
 
 } // namespace rpc

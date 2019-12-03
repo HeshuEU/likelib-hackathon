@@ -4,9 +4,8 @@
 #include "base/hash.hpp"
 #include "base/serialization.hpp"
 #include "bc/transaction.hpp"
+#include "bc/transactions_set.hpp"
 #include "bc/types.hpp"
-
-#include <vector>
 
 namespace bc
 {
@@ -16,8 +15,8 @@ class Block
   public:
     //=================
     Block() = default;
-    Block(const base::Bytes& prev_block_hash, std::vector<bc::Transaction>&& txs);
-    Block(base::Bytes&& prev_block_hash, std::vector<bc::Transaction>&& txs);
+    Block(const base::Bytes& prev_block_hash, TransactionsSet&& txs);
+    Block(base::Bytes&& prev_block_hash, TransactionsSet&& txs);
 
     Block(const Block&) = default;
     Block(Block&&) = default;
@@ -28,12 +27,12 @@ class Block
     ~Block() = default;
     //=================
     const base::Bytes& getPrevBlockHash() const;
-    const std::vector<bc::Transaction>& getTransactions() const;
+    const TransactionsSet& getTransactions() const;
     NonceInt getNonce() const noexcept;
     //=================
     void setNonce(NonceInt nonce) noexcept;
     void setPrevBlockHash(const base::Bytes& prev_block_hash);
-    void setTransactions(std::vector<Transaction>&& txs);
+    void setTransactions(TransactionsSet&& txs);
     void addTransaction(const Transaction& tx);
     //=================
 
@@ -47,11 +46,11 @@ class Block
     NonceInt _nonce;
 
     base::Bytes _prev_block_hash;
-    std::vector<bc::Transaction> _txs;
+    TransactionsSet _txs;
 };
 
 
-base::SerializationIArchive operator>>(base::SerializationIArchive& ia, Block& block);
-base::SerializationOArchive operator<<(base::SerializationOArchive& oa, const Block& block);
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block);
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block);
 
 } // namespace bc

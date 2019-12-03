@@ -24,13 +24,14 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
     return _bc->getBalance(address);
 }
 
-std::string GeneralServerService::transaction(
-    bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address)
+std::string GeneralServerService::transaction(bc::Balance amount, const bc::Address& from_address,
+    const bc::Address& to_address, const base::Time& transaction_time)
 {
     LOG_TRACE << "Node received in {transaction}: from_address[" << from_address.toString() << "], to_address["
-              << to_address.toString() << "], amount[" << amount << "]";
+              << to_address.toString() << "], amount[" << amount << "], transaction_time["
+              << transaction_time.secondsInEpoch() << "]";
 
-    _bc->transactionReceived(bc::Transaction(from_address, to_address, amount));
+    _bc->processReceivedTransaction(bc::Transaction(from_address, to_address, amount));
     return "likelib";
 }
 
