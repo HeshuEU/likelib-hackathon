@@ -8,11 +8,11 @@
 #test:
 #  tags: 
 #    - shell
-job:
+docker build:
   tags: 
     - custom-tag
-  script: cat ./README.md
-
+  script: 
+    - docker --version
 #    - mkdir -p ../build
 #    - ls
 #    - cd ../build
