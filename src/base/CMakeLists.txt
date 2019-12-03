@@ -1,8 +1,6 @@
 set(BASE_HEADERS
         assert.hpp
-		crypto.hpp
-		asymmetric_crypto.hpp
-		symmetric_crypto.hpp
+	crypto.hpp
         big_integer.hpp
         big_integer.tpp
         error.hpp
@@ -26,8 +24,6 @@ set(BASE_HEADERS
 
 set(BASE_SOURCES
         crypto.cpp
-        asymmetric_crypto.cpp
-        symmetric_crypto.cpp
         error.cpp
         log.cpp
         directory.cpp
