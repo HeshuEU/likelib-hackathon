@@ -1,5 +1,6 @@
 set(TEST_SOURCES
         main.cpp
+		base/crypto.cpp
         base/big_integer.cpp
         base/property_tree.cpp
         base/bytes.cpp
@@ -12,7 +13,7 @@ set(TEST_SOURCES
         bc/address.cpp
         bc/balance_manager.cpp
 		bc/transaction.cpp
-        )
+		)
 
 add_executable(run_tests ${TEST_SOURCES})
 

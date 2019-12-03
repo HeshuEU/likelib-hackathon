@@ -1,6 +1,7 @@
 #include "blockchain.hpp"
 
 #include "base/assert.hpp"
+#include "base/log.hpp"
 #include "net/network.hpp"
 
 
