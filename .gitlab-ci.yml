@@ -12,7 +12,9 @@ docker build:
   tags: 
     - custom-tag
   script: 
-    - docker --version
+     - echo $UID
+
+#    - docker --version
 #    - mkdir -p ../build
 #    - ls
 #    - cd ../build
