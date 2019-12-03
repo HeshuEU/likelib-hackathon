@@ -20,20 +20,18 @@ execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${GLOBAL_PROT
 execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${GLOBAL_PROTOBUF_DIR} --cpp_out=${GLOBAL_OUTPUT_CODE_DIR} "${GLOBAL_PROTOBUF_FILE_PATH}")
 
 set(RPC_HEADERS
-        grpc/grpc_service.hpp
-        grpc/grpc_service.tpp
+        grpc/grpc_adapter.hpp
         grpc/grpc_node_server.hpp
-        grpc/grpc_node_server.tpp
         grpc/grpc_node_client.hpp
+        base_rpc.hpp
         error.hpp
         rpc.hpp
         )
 
 set(RPC_SOURCES
-        grpc/grpc_service.cpp
+        grpc/grpc_adapter.cpp
         grpc/grpc_node_server.cpp
-        grpc/grpc_node_client.cpp
-        )
+        grpc/grpc_node_client.cpp)
 
 include_directories(${GLOBAL_OUTPUT_CODE_DIR})
 

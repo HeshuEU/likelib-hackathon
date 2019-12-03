@@ -1,6 +1,8 @@
 #pragma once
 
-#include "connection.hpp"
+#include "base/property_tree.hpp"
+#include "bc/block.hpp"
+#include "net/connection.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -14,11 +16,18 @@
 namespace net
 {
 
+class NetworkHandler
+{
+  public:
+    virtual void onBlockReceived(bc::Block&&) = 0;
+    virtual void onTransactionReceived(bc::Transaction&&) = 0;
+};
+
 class Network
 {
   public:
     //===================
-    Network(const Endpoint& listen_ip);
+    Network(const base::PropertyTree& config, NetworkHandler& handler);
     ~Network();
     //===================
     void run();
@@ -27,7 +36,13 @@ class Network
     void connect(const Endpoint& address);
     void connect(const std::vector<Endpoint>& nodes);
     //===================
+    void broadcastBlock(const bc::Block& block);
+    void broadcastTransaction(const bc::Transaction& tx);
+    //===================
   private:
+    //===================
+    const Endpoint _listen_ip;
+    const unsigned short _server_public_port;
     //===================
     boost::asio::io_context _io_context;
     std::list<std::shared_ptr<Connection>> _connections;
@@ -36,7 +51,6 @@ class Network
     void networkThreadWorkerFunction() noexcept;
     //===================
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
-    const Endpoint& _listen_ip;
     void acceptClients();
     void acceptLoop();
     //===================
@@ -45,7 +59,9 @@ class Network
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
-    void connectionReceivedPacketHandler(std::shared_ptr<Connection> connection, const Packet& packet);
+    void connectionReceivedPacketHandler(Connection& connection, const Packet& packet);
+    //===================
+    NetworkHandler& _handler;
 };
 
 } // namespace net

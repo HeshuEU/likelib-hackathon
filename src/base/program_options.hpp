@@ -35,9 +35,8 @@ class ProgramOptionsParser
     /// \param descendant_description
     /// \param processor function that called if found name of subprocess
     /// \return pointer of sub parser
-    std::shared_ptr<ProgramOptionsParser>
-    createSubParser(const std::string& name, const std::string& descendant_description,
-                    const std::function<int(const ProgramOptionsParser&)>& processor);
+    std::shared_ptr<ProgramOptionsParser> createSubParser(const std::string& name,
+        const std::string& descendant_description, const std::function<int(const ProgramOptionsParser&)>& processor);
 
     /// Add optional option that will as flag check by hasOption
     /// \param flag name. example: "useGpu,g". Such option may be set by: -g or --useGpu.
@@ -83,6 +82,10 @@ class ProgramOptionsParser
     /// \return true if option was be found
     bool hasOption(const std::string& flag_name) const;
 
+    /// Check if no any options was not input
+    /// \return false if no one options was not input
+    bool empty() const;
+
     /// Find value of option that set by addFloatOption(flag_name, ...) and return if found.
     /// \param flag_name flag_name option name. Example: if option set by .addFloatOption("money,m", ...) use
     /// getFloat("money") , NOT getFloat("m")
@@ -95,6 +98,7 @@ class ProgramOptionsParser
   private:
     const std::string _name;
     const std::function<int(const ProgramOptionsParser&)> _processor;
+    bool _empty = true;
 
     boost::program_options::options_description _options_description;
     boost::program_options::variables_map _options;

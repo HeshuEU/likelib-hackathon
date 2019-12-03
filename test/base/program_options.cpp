@@ -434,18 +434,11 @@ int walletProcessForTestSubParserThrowName(const base::ProgramOptionsParser& par
 
 BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_name)
 {
-    int argc = 4;
-    char test1[] = "test.exe";
-    char test2[] = "wallet";
-    char test3[] = "--create_key";
-    char test4[] = "custom_seed";
-    char* argv[] = {test1, test2, test3, test4};
-
     base::ProgramOptionsParser parser;
     parser.addFlag("version,v", "Print version");
-    BOOST_CHECK_THROW(auto sub_program_1 =
-                          parser.createSubParser("", "Test description 1", walletProcessForTestSubParserThrowName),
-                      base::InvalidArgument);
+    BOOST_CHECK_THROW(
+        auto sub_program_1 = parser.createSubParser("", "Test description 1", walletProcessForTestSubParserThrowName),
+        base::InvalidArgument);
 }
 
 int walletProcessForTestSubParserThrowDuplicate(const base::ProgramOptionsParser& parser)
@@ -455,18 +448,11 @@ int walletProcessForTestSubParserThrowDuplicate(const base::ProgramOptionsParser
 
 BOOST_AUTO_TEST_CASE(program_options_sub_parser_throw_duplicate)
 {
-    int argc = 4;
-    char test1[] = "test.exe";
-    char test2[] = "wallet";
-    char test3[] = "--create_key";
-    char test4[] = "custom_seed";
-    char* argv[] = {test1, test2, test3, test4};
-
     base::ProgramOptionsParser parser;
     parser.addFlag("version,v", "Print version");
-    BOOST_CHECK_NO_THROW(auto sub_program_1 = parser.createSubParser("test", "Test description 1",
-                                                                     walletProcessForTestSubParserThrowName));
+    BOOST_CHECK_NO_THROW(auto sub_program_1 = parser.createSubParser(
+                             "test", "Test description 1", walletProcessForTestSubParserThrowName));
     BOOST_CHECK_THROW(auto sub_program_2 =
                           parser.createSubParser("test", "Test description 1", walletProcessForTestSubParserThrowName),
-                      base::InvalidArgument);
+        base::InvalidArgument);
 }

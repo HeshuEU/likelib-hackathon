@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <thread>
 
 namespace base::config
 {
@@ -34,9 +35,9 @@ constexpr bool IS_DEBUG =
 #elif defined(__unix) || defined(__unix__)
 #define CONFIG_OS_FAMILY_UNIX
 #else
-static_assert(false, "cannot determine OS")
+static_assert(false, "cannot determine OS");
 #endif
-;
+
 //------------------------
 
 // constexpr OS_NAME definition
@@ -72,7 +73,11 @@ constexpr int EXIT_ASSERT_FAILED = 2;
 
 // net
 constexpr std::size_t NET_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
-constexpr std::size_t NET_PING_FREQUENCY = 7; // seconds
+constexpr std::size_t NET_PING_FREQUENCY = 7000; // seconds
+//------------------------
+
+// blockchain
+constexpr std::size_t BC_MAX_TRANSACTIONS_IN_BLOCK = 100;
 //------------------------
 
 // rpc

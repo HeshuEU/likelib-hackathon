@@ -25,7 +25,7 @@ std::string dateAsString()
     char buffer[80];
     std::time(&raw_time);
     time_info = std::localtime(&raw_time);
-    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H-%M-%S", time_info);
+    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", time_info);
     return buffer;
 }
 
@@ -67,12 +67,10 @@ void setFileSink()
     file_path /= std::filesystem::path(base::config::LOG_FILE_FORMAT);
 
     using TextFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
-    auto sink = boost::make_shared<TextFileSink>(boost::log::keywords::file_name = file_path.string().c_str());
+    auto sink = boost::make_shared<TextFileSink>(boost::log::keywords::file_name = file_path,
+        boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
+        boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT);
 
-    sink->locked_backend()->set_file_collector(
-        boost::log::sinks::file::make_collector(boost::log::keywords::target = base::config::LOG_FOLDER,
-            boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
-            boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT));
     sink->locked_backend()->auto_flush(true);
 
     sink->set_formatter(&formatter);

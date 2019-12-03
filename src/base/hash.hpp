@@ -10,6 +10,8 @@ class Sha256
   public:
     //----------------------------------
     Sha256(const Sha256&) = default;
+    Sha256(const std::string& data);
+    Sha256(const Bytes& data);
     Sha256(Sha256&&) = default;
     Sha256& operator=(const Sha256&) = default;
     Sha256& operator=(Sha256&&) = default;
@@ -30,11 +32,9 @@ class Sha256
 
     //----------------------------------
 
-    static Sha256 calcSha256(const base::Bytes& data);
+    static Sha256 compute(const base::Bytes& data);
 
   private:
-    Sha256(const Bytes& another);
-
     base::Bytes _bytes;
 };
 
@@ -63,7 +63,7 @@ class Sha1
 
     //----------------------------------
 
-    static Sha1 calcSha1(const base::Bytes& data);
+    static Sha1 compute(const base::Bytes& data);
 
   private:
     Sha1(const Bytes& another);

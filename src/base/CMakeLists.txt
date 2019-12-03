@@ -1,5 +1,6 @@
 set(BASE_HEADERS
         assert.hpp
+	crypto.hpp
         big_integer.hpp
         big_integer.tpp
         error.hpp
@@ -17,9 +18,13 @@ set(BASE_HEADERS
         program_options.tpp
         timer.hpp
         database.hpp
+        serialization.hpp
+        serialization.tpp
+        time.hpp
         )
 
 set(BASE_SOURCES
+        crypto.cpp
         error.cpp
         log.cpp
         directory.cpp
@@ -29,6 +34,8 @@ set(BASE_SOURCES
         timer.cpp
         program_options.cpp
         database.cpp
+        serialization.cpp
+        time.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})

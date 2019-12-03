@@ -2,7 +2,7 @@
 
 #include <public_rpc.grpc.pb.h>
 
-#include "bc/base_client.hpp"
+#include "rpc/base_rpc.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -12,7 +12,7 @@ namespace rpc
 {
 
 /// Class implementing connect to node by gRPC and call methods
-class GrpcNodeClient final : bc::BaseClient
+class GrpcNodeClient final : BaseRpc
 {
   public:
     explicit GrpcNodeClient(const std::string& connect_address);
@@ -21,8 +21,8 @@ class GrpcNodeClient final : bc::BaseClient
 
     bc::Balance balance(const bc::Address& address) override;
 
-    std::string transaction(bc::Balance amount, const bc::Address& from_address,
-                            const bc::Address& to_address) override;
+    std::string transaction(bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
+        const base::Time& transaction_time) override;
 
     std::string test(const std::string& test_request) override;
 

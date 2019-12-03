@@ -15,4 +15,4 @@ set(NET_SOURCES
 
 add_library(net ${NET_SOURCES} ${NET_HEADERS})
 
-target_link_libraries(net base Boost::serialization)
+target_link_libraries(net base bc Boost::serialization)

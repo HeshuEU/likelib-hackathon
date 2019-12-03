@@ -14,6 +14,9 @@ Bytes::Bytes()
 Bytes::Bytes(std::size_t size) : _raw(size)
 {}
 
+Bytes::Bytes(const std::vector<Byte>& bytes) : _raw(bytes)
+{}
+
 
 Bytes::Bytes(const std::string& s) : _raw(s.length())
 {
@@ -71,21 +74,43 @@ Bytes& Bytes::append(const Bytes& bytes)
 }
 
 
+Bytes& Bytes::append(const Byte* byte, std::size_t length)
+{
+    _raw.reserve(_raw.size() + length);
+    for(const Byte* ptr = byte; ptr < byte + length; ++ptr) {
+        _raw.push_back(*ptr);
+    }
+    return *this;
+}
+
+
+void Bytes::clear()
+{
+    _raw.clear();
+}
+
+
+void Bytes::resize(std::size_t new_size)
+{
+    _raw.resize(new_size);
+}
+
+
+void Bytes::reserve(std::size_t reserve_size)
+{
+    _raw.reserve(reserve_size);
+}
+
+
+void Bytes::shrinkToFit()
+{
+    _raw.shrink_to_fit();
+}
+
+
 std::size_t Bytes::size() const noexcept
 {
     return _raw.size();
-}
-
-
-bool Bytes::operator==(const Bytes& another) const
-{
-    return _raw == another._raw;
-}
-
-
-bool Bytes::operator!=(const Bytes& another) const
-{
-    return !(*this == another);
 }
 
 
@@ -135,6 +160,42 @@ std::string Bytes::toString() const
         ret[index++] = static_cast<char>(c);
     }
     return ret;
+}
+
+
+bool Bytes::operator==(const Bytes& another) const
+{
+    return _raw == another._raw;
+}
+
+
+bool Bytes::operator!=(const Bytes& another) const
+{
+    return !(*this == another);
+}
+
+
+bool Bytes::operator<(const Bytes& another) const
+{
+    return _raw < another._raw;
+}
+
+
+bool Bytes::operator>(const Bytes& another) const
+{
+    return _raw > another._raw;
+}
+
+
+bool Bytes::operator<=(const Bytes& another) const
+{
+    return !(*this > another);
+}
+
+
+bool Bytes::operator>=(const Bytes& another) const
+{
+    return !(*this < another);
 }
 
 } // namespace base

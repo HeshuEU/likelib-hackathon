@@ -1,16 +1,17 @@
 #include <boost/test/unit_test.hpp>
+#include <base/hash.hpp>
 
 #include "base/bytes.hpp"
 
 BOOST_AUTO_TEST_CASE(bytes_storage_check)
 {
     base::Bytes bytes(128);
-    for(int i = 0; i < bytes.size(); ++i) {
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
         bytes[i] = static_cast<base::Byte>(i ^ 3);
     }
 
     bool all_equal = true;
-    for(int i = 0; i < bytes.size(); ++i) {
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
         all_equal = all_equal && (static_cast<base::Byte>(i ^ 3) == bytes[i]);
     }
 
@@ -29,7 +30,7 @@ BOOST_AUTO_TEST_CASE(bytes_string_ctor)
 BOOST_AUTO_TEST_CASE(bytes_size_change)
 {
     base::Bytes bytes(128);
-    for(int i = 0; i < bytes.size(); ++i) {
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
         bytes[i] = static_cast<base::Byte>(i ^ 33);
     }
     bytes.append(0x15);
@@ -41,12 +42,12 @@ BOOST_AUTO_TEST_CASE(bytes_size_change)
 BOOST_AUTO_TEST_CASE(bytes_take_part)
 {
     base::Bytes bytes(128);
-    for(int i = 0; i < bytes.size(); ++i) {
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
         bytes[i] = static_cast<base::Byte>(i ^ 12);
     }
 
     base::Bytes answer;
-    for(int i = 20; i < 30; ++i) {
+    for(std::size_t i = 20; i < 30; ++i) {
         answer.append(static_cast<base::Byte>(i ^ 12));
     }
 
@@ -58,12 +59,12 @@ BOOST_AUTO_TEST_CASE(bytes_take_part)
 BOOST_AUTO_TEST_CASE(bytes_append)
 {
     base::Bytes bytes1(234);
-    for(int i = 0; i < bytes1.size(); ++i) {
+    for(std::size_t i = 0; i < bytes1.size(); ++i) {
         bytes1[i] = static_cast<base::Byte>(i ^ 11);
     }
 
     base::Bytes bytes2(175);
-    for(int i = 0; i < bytes2.size(); ++i) {
+    for(std::size_t i = 0; i < bytes2.size(); ++i) {
         bytes2[i] = static_cast<base::Byte>(i ^ 13);
     }
 
@@ -72,20 +73,19 @@ BOOST_AUTO_TEST_CASE(bytes_append)
     BOOST_CHECK(bytes_concat.size() == bytes1.size());
 
     bool res = true;
-    for(int i = 0; i < bytes1.size(); ++i) {
+    for(std::size_t i = 0; i < bytes1.size(); ++i) {
         res = res && (bytes_concat[i] == bytes1[i]);
     }
     BOOST_CHECK(res);
 
     bytes_concat.append(bytes2);
     BOOST_CHECK(bytes_concat.size() == bytes1.size() + bytes2.size());
-    
+
     res = true;
-    for(int i = 0; i < bytes2.size(); ++i) {
+    for(std::size_t i = 0; i < bytes2.size(); ++i) {
         res = res && (bytes_concat[bytes1.size() + i] == bytes2[i]);
     }
     BOOST_CHECK(res);
-
 }
 
 
@@ -111,4 +111,16 @@ BOOST_AUTO_TEST_CASE(bytes_to_string)
 {
     base::Bytes bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30, 0x02};
     BOOST_CHECK_EQUAL(bytes.toString(), "LIKELIB\t2.0\x02");
+}
+
+
+BOOST_AUTO_TEST_CASE(bytes_relation_check)
+{
+    base::Bytes b1 = base::Sha256::compute(base::Bytes("0123")).getBytes();
+    base::Bytes b2 = base::Sha256::compute(base::Bytes("123")).getBytes();
+    base::Bytes b3 = base::Sha256::compute(base::Bytes("1234")).getBytes();
+    base::Bytes b4 = base::Sha256::compute(base::Bytes("1235")).getBytes();
+    BOOST_CHECK(b1 < b2);
+    BOOST_CHECK(b1 > b3);
+    BOOST_CHECK(b1 < b4);
 }
