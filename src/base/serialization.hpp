@@ -22,7 +22,7 @@ class SerializationIArchive
     // TODO: work if some of this types is not defined
     //=================
   private:
-    base::Bytes _bytes;
+    const base::Bytes& _bytes;
     std::size_t _index;
 };
 
