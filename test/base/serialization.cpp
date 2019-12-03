@@ -41,3 +41,25 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
     ia >> c;
     BOOST_CHECK(c == cc);
 }
+
+
+BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
+{
+    base::SerializationOArchive oa;
+    std::vector<char> v1{'f', '!', '*', 'a'};
+    std::vector<int> v2{2200, -8001, 111, 77, -99976};
+    std::vector<long long> v3{20000000000};
+    std::vector<unsigned char> v4;
+    oa << v1 << v2 << v3 << v4;
+
+    base::SerializationIArchive ia(oa.getBytes());
+    std::vector<char> v11;
+    std::vector<int> v22;
+    std::vector<long long> v33;
+    std::vector<unsigned char> v44;
+    ia >> v11 >> v22 >> v33 >> v44;
+    BOOST_CHECK(v1 == v11);
+    BOOST_CHECK(v2 == v22);
+    BOOST_CHECK(v3 == v33);
+    BOOST_CHECK(v4 == v44);
+}

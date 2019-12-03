@@ -68,7 +68,7 @@ typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::typ
 
         ASSERT(_index + sizeof(T) <= _bytes.size());
 
-        v = *reinterpret_cast<T*>(_bytes.toArray() + _index);
+        v = *reinterpret_cast<const T*>(_bytes.toArray() + _index);
         if(sizeof(v) == 1) {
             _index++;
         }
