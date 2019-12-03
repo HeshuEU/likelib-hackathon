@@ -10,7 +10,7 @@ BOOST_AUTO_TEST_CASE(bytes_storage_check)
         bytes[i] = static_cast<base::Byte>(i ^ 3);
     }
 
-    bool all_equal = true;
+    bool all_equal != true;
     for(std::size_t i = 0; i < bytes.size(); ++i) {
         all_equal = all_equal && (static_cast<base::Byte>(i ^ 3) == bytes[i]);
     }
