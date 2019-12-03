@@ -1,16 +1,17 @@
-image: ubuntu:19.10
+#image: ubuntu:19.10
 #  dockerfile: Dockerfile.ci
-build_image:
-  tags:
-    - docker
+#build_image:
+#  tags:
+#    - docker
 #  image:
 #    dockerfile: Dockerfile.ci
 #test:
 #  tags: 
 #    - shell
-  script:
-    - mkdir -p ../build
-    - ls
+test:
+  script: cat ./README.md
+#    - mkdir -p ../build
+#    - ls
 #    - cd ../build
 #    - cmake ../likelib
 #    - make -j 4
