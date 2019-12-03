@@ -40,13 +40,16 @@ base::Bytes generate_bytes(std::size_t size)
 
 namespace base
 {
+
 RsaPublicKey::RsaPublicKey(const base::Bytes& key_word)
     : _rsa_key(loadKey(key_word)), _encrypted_message_size(RSA_size(_rsa_key.get()))
 {}
 
+
 RsaPublicKey::RsaPublicKey(const std::filesystem::path path)
     : _rsa_key(loadKey(read_all_file(path))), _encrypted_message_size(RSA_size(_rsa_key.get()))
 {}
+
 
 Bytes RsaPublicKey::encrypt(const Bytes& message) const
 {
@@ -63,8 +66,12 @@ Bytes RsaPublicKey::encrypt(const Bytes& message) const
     return encrypted_message;
 }
 
+
 Bytes RsaPublicKey::encryptWithtAes(const Bytes& message) const
 {
+    if(maxEncryptSize() < 256){
+        RAISE_ERROR(CryptoError, "small Rsa key size for RsaAes encryption");
+    }
     base::AesKey symmetric_key(base::KeyType::Aes256BitKey);
     auto encrypted_message = symmetric_key.encrypt(message);
     auto serialized_symmetric_key = symmetric_key.toBytes();
@@ -76,6 +83,7 @@ Bytes RsaPublicKey::encryptWithtAes(const Bytes& message) const
 
     return encrypted_serialized_key_size.append(encrypted_serialized_symmetric_key).append(encrypted_message);
 }
+
 
 Bytes RsaPublicKey::decrypt(const Bytes& encrypted_message) const
 {
@@ -93,16 +101,19 @@ Bytes RsaPublicKey::decrypt(const Bytes& encrypted_message) const
     return decrypted_message.takePart(0, message_size);
 }
 
+
 std::size_t RsaPublicKey::maxEncryptSize() const noexcept
 {
     return encryptedMessageSize() - ASYMMETRIC_DIFFERENCE;
 }
+
 
 void RsaPublicKey::save(const std::filesystem::path& path) const
 {
     std::ofstream file(path);
     file << toBytes().toString();
 }
+
 
 Bytes RsaPublicKey::toBytes() const
 {
@@ -120,10 +131,12 @@ Bytes RsaPublicKey::toBytes() const
     return public_key_bytes;
 }
 
+
 std::size_t RsaPublicKey::encryptedMessageSize() const noexcept
 {
     return _encrypted_message_size;
 }
+
 
 std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPublicKey::loadKey(const Bytes& key_word)
 {
@@ -135,13 +148,16 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPublicKey::loadKey(const Bytes& k
     return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
 }
 
+
 RsaPrivateKey::RsaPrivateKey(const base::Bytes& key_word)
     : _rsa_key(loadKey(key_word)), _encrypted_message_size(RSA_size(_rsa_key.get()))
 {}
 
+
 RsaPrivateKey::RsaPrivateKey(const std::filesystem::path path)
     : _rsa_key(loadKey(read_all_file(path))), _encrypted_message_size(RSA_size(_rsa_key.get()))
 {}
+
 
 Bytes RsaPrivateKey::encrypt(const Bytes& message) const
 {
@@ -158,6 +174,7 @@ Bytes RsaPrivateKey::encrypt(const Bytes& message) const
     return encrypted_message;
 }
 
+
 Bytes RsaPrivateKey::decrypt(const Bytes& encrypted_message) const
 {
     if(encrypted_message.size() != encryptedMessageSize()) {
@@ -172,6 +189,7 @@ Bytes RsaPrivateKey::decrypt(const Bytes& encrypted_message) const
     }
     return decrypt_message.takePart(0, message_size);
 }
+
 
 Bytes RsaPrivateKey::decryptWithAes(const Bytes& message) const
 {
@@ -189,16 +207,19 @@ Bytes RsaPrivateKey::decryptWithAes(const Bytes& message) const
     return symmetric_key.decrypt(encrypted_message);
 }
 
+
 std::size_t RsaPrivateKey::maxEncryptSize() const noexcept
 {
     return encryptedMessageSize() - ASYMMETRIC_DIFFERENCE;
 }
+
 
 void RsaPrivateKey::save(const std::filesystem::path& path) const
 {
     std::ofstream file(path);
     file << toBytes().toString();
 }
+
 
 Bytes RsaPrivateKey::toBytes() const
 {
@@ -216,10 +237,12 @@ Bytes RsaPrivateKey::toBytes() const
     return private_key_bytes;
 }
 
+
 std::size_t RsaPrivateKey::encryptedMessageSize() const noexcept
 {
     return _encrypted_message_size;
 }
+
 
 std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& key_word)
 {
@@ -230,6 +253,7 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& 
     }
     return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
 }
+
 
 std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 {
@@ -288,12 +312,15 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
     return std::pair<RsaPublicKey, RsaPrivateKey>(public_key_bytes, private_key_bytes);
 }
 
+
 AesKey::AesKey()
     : _type(KeyType::Aes256BitKey), _key(generateKey(KeyType::Aes256BitKey)), _iv(generateIv(KeyType::Aes256BitKey))
 {}
 
+
 AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
 {}
+
 
 AesKey::AesKey(const Bytes& bytes_key)
 {
@@ -313,10 +340,12 @@ AesKey::AesKey(const Bytes& bytes_key)
     }
 }
 
+
 Bytes AesKey::toBytes() const
 {
     return Bytes(_key.toString() + _iv.toString()); // concatenate size = iv.size() * 3
 }
+
 
 Bytes AesKey::encrypt(const Bytes& data) const
 {
@@ -330,6 +359,7 @@ Bytes AesKey::encrypt(const Bytes& data) const
     }
 }
 
+
 Bytes AesKey::decrypt(const Bytes& data) const
 {
     switch(_type) {
@@ -341,6 +371,7 @@ Bytes AesKey::decrypt(const Bytes& data) const
             RAISE_ERROR(CryptoError, "Unexpected key type");
     }
 }
+
 
 Bytes AesKey::generateKey(KeyType type)
 {
@@ -354,6 +385,7 @@ Bytes AesKey::generateKey(KeyType type)
     }
 }
 
+
 Bytes AesKey::generateIv(KeyType type)
 {
     switch(type) {
@@ -365,6 +397,7 @@ Bytes AesKey::generateIv(KeyType type)
             RAISE_ERROR(CryptoError, "Unexpected key type");
     }
 }
+
 
 Bytes AesKey::encrypt256Aes(const Bytes& data) const
 {
@@ -390,6 +423,7 @@ Bytes AesKey::encrypt256Aes(const Bytes& data) const
     return output_data.takePart(0, encrypted_message_len_in_buffer);
 }
 
+
 base::Bytes AesKey::decrypt256Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
@@ -414,6 +448,7 @@ base::Bytes AesKey::decrypt256Aes(const base::Bytes& data) const
     return output_data.takePart(0, decrypted_message_len_in_buffer);
 }
 
+
 base::Bytes AesKey::encrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
@@ -437,6 +472,7 @@ base::Bytes AesKey::encrypt128Aes(const base::Bytes& data) const
 
     return output_data.takePart(0, encrypted_message_len_in_buffer);
 }
+
 
 base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 {

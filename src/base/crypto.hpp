@@ -103,6 +103,14 @@ class AesKey
 
     AesKey(const Bytes& bytes_key);
 
+    AesKey(const AesKey&) = default;
+
+    AesKey(AesKey&&) = default;
+
+    AesKey& operator=(const AesKey&) = default;
+
+    AesKey& operator=(AesKey&&) = default;
+
     ~AesKey() = default;
 
     Bytes toBytes() const;
