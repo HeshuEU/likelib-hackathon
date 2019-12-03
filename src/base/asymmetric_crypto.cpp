@@ -7,6 +7,7 @@
 #include <openssl/bn.h>
 #include <openssl/pem.h>
 
+#include <filesystem>
 #include <memory>
 
 namespace base

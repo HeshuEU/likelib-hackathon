@@ -1,313 +1,464 @@
 #include "crypto.hpp"
 
 #include "base/assert.hpp"
+#include "base/error.hpp"
 
 #include <openssl/bn.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 
+#include <filesystem>
 #include <fstream>
+#include <memory>
 
 namespace
 {
-std::string read_all_file(const std::filesystem::path& path)
+base::Bytes read_all_file(const std::filesystem::path& path)
 {
+    if(!std::filesystem::exists(path)) {
+        throw std::runtime_error("the file with this path does not exist");
+    }
     std::ifstream file(path);
     file.seekg(0, std::ios::end);
     size_t size = file.tellg();
     std::string buffer(size, ' ');
     file.seekg(0);
     file.read(&buffer[0], size);
-    return buffer;
+    return base::Bytes(buffer);
 }
+
+base::Bytes generate_bytes(std::size_t size)
+{
+    std::vector<base::Byte> data(size);
+    RAND_bytes(data.data(), static_cast<int>(size));
+    return base::Bytes(data);
+}
+
 } // namespace
 
 
 namespace base
 {
+RsaPublicKey::RsaPublicKey(const base::Bytes& key_word)
+    : _rsa_key(loadKey(key_word)), _encrypted_message_size(RSA_size(_rsa_key.get()))
+{}
 
-PublicRsaKey::PublicRsaKey(const std::filesystem::path& path)
-{
-    if(!std::filesystem::exists(path)) {
-        throw std::runtime_error("Path for PublicRsaKey not exist");
-    }
-    _public_key = Bytes(read_all_file(path));
-    _size = RSA_size(toRsaKey());
-}
+RsaPublicKey::RsaPublicKey(const std::filesystem::path path)
+    : _rsa_key(loadKey(read_all_file(path))), _encrypted_message_size(RSA_size(_rsa_key.get()))
+{}
 
-
-PublicRsaKey::PublicRsaKey(const Bytes& key) : _public_key(key)
-{
-    auto rsa_key = toRsaKey();
-    _size = RSA_size(rsa_key);
-}
-
-
-Bytes PublicRsaKey::encrypt(const Bytes& message) const
+Bytes RsaPublicKey::encrypt(const Bytes& message) const
 {
     if(message.size() > maxEncryptSize()) {
-        throw std::runtime_error("Large message size for RSA encryption");
+        RAISE_ERROR(InvalidArgument, "large message size for RSA encryption");
     }
-    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
-    Bytes encrypted_message(size());
+
+    Bytes encrypted_message(encryptedMessageSize());
     if(!RSA_public_encrypt(
-           message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_OAEP_PADDING)) {
-        throw std::runtime_error("RSA public key encryption error");
-    } // check errors
+           message.size(), message.toArray(), encrypted_message.toArray(), _rsa_key.get(), RSA_PKCS1_OAEP_PADDING)) {
+        RAISE_ERROR(CryptoError, "rsa encryption failed");
+    }
+
     return encrypted_message;
 }
 
-
-Bytes PublicRsaKey::encryptWithAes(const Bytes& message) const
+Bytes RsaPublicKey::encryptWithtAes(const Bytes& message) const
 {
-    std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> rsa_ecnrypt_ctx(
-        EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
-    EVP_CIPHER_CTX_init(rsa_ecnrypt_ctx.get());
-    Bytes iv(EVP_MAX_IV_LENGTH);
-    Bytes ek(size());
-    auto ek_temp = ek.toArray();
-    auto evp_key = toEvpKey();
-    int ek_len = 0;
-    ASSERT(EVP_SealInit(rsa_ecnrypt_ctx.get(), EVP_aes_256_cbc(), &ek_temp, &ek_len, iv.toArray(), &evp_key,
-        1)); // check errors
-    Bytes encrypted_aes_message(message.size() + EVP_MAX_IV_LENGTH);
-    int encrypted_block_len = 0;
-    ASSERT(
-        EVP_SealUpdate(rsa_ecnrypt_ctx.get(), encrypted_aes_message.toArray(), &encrypted_block_len, message.toArray(),
-            message.size())); // check errors
-    int encrypted_message_len = encrypted_block_len;
-    ASSERT(EVP_SealFinal(rsa_ecnrypt_ctx.get(), encrypted_aes_message.toArray() + encrypted_block_len,
-        &encrypted_block_len)); // check errors
-    encrypted_message_len += encrypted_block_len;
+    base::AesKey symmetric_key(base::KeyType::Aes256BitKey);
+    auto encrypted_message = symmetric_key.encrypt(message);
+    auto serialized_symmetric_key = symmetric_key.toBytes();
+    auto encrypted_serialized_symmetric_key = encrypt(serialized_symmetric_key);
 
-    Bytes encrypted_message;
-    std::string encrypted_message_len_str = std::to_string(encrypted_message_len);
-    while(encrypted_message_len_str.size() < 9) {
-        encrypted_message_len_str = '0' + encrypted_message_len_str;
-    }
-    std::string ek_len_str = std::to_string(ek_len);
-    while(ek_len_str.size() < 9) {
-        ek_len_str = '0' + ek_len_str;
-    }
-    encrypted_message.append(Bytes(encrypted_message_len_str));
-    encrypted_message.append(Bytes(ek_len_str));
-    encrypted_message.append(iv);
-    encrypted_message.append(ek);
-    encrypted_message.append(encrypted_aes_message);
-    return encrypted_message;
+    Bytes encrypted_serialized_key_size(sizeof(std::uint_least32_t));
+    std::uint_least32_t key_size = encrypted_serialized_symmetric_key.size();
+    std::memcpy(encrypted_serialized_key_size.toArray(), &key_size, encrypted_serialized_key_size.size());
+
+    return encrypted_serialized_key_size.append(encrypted_serialized_symmetric_key).append(encrypted_message);
 }
 
-
-Bytes PublicRsaKey::decrypt(const Bytes& encrypted_message) const
+Bytes RsaPublicKey::decrypt(const Bytes& encrypted_message) const
 {
-    ASSERT(encrypted_message.size() <= size());
-    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
-    Bytes decrypted_message(size());
-    auto message_size = RSA_public_decrypt(encrypted_message.size(), encrypted_message.toArray(), // check errors
-        decrypted_message.toArray(), rsa_key.get(), RSA_PKCS1_PADDING);
-    ASSERT(message_size != -1);
+    if(encrypted_message.size() != encryptedMessageSize()) {
+        RAISE_ERROR(InvalidArgument, "large message size for RSA encryption");
+    }
+
+    Bytes decrypted_message(encryptedMessageSize());
+    auto message_size = RSA_public_decrypt(encrypted_message.size(), encrypted_message.toArray(),
+        decrypted_message.toArray(), _rsa_key.get(), RSA_PKCS1_PADDING);
+    if(message_size == -1) {
+        RAISE_ERROR(CryptoError, "rsa decryption failed");
+    }
+
     return decrypted_message.takePart(0, message_size);
 }
 
-
-std::size_t PublicRsaKey::size() const noexcept
+std::size_t RsaPublicKey::maxEncryptSize() const noexcept
 {
-    return _size;
+    return encryptedMessageSize() - ASYMMETRIC_DIFFERENCE;
 }
 
-
-std::size_t PublicRsaKey::maxEncryptSize() const noexcept
-{
-    return size() - 42;
-}
-
-
-Bytes PublicRsaKey::toBytes() const noexcept
-{
-    return _public_key;
-}
-
-void PublicRsaKey::save(const std::filesystem::path& path) const
+void RsaPublicKey::save(const std::filesystem::path& path) const
 {
     std::ofstream file(path);
-    file << _public_key.toString();
+    file << toBytes().toString();
 }
 
-PublicRsaKey::PublicRsaKey(RSA* key) : _public_key(RSA_size(key))
+Bytes RsaPublicKey::toBytes() const
 {
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
-    ASSERT(PEM_write_bio_RSAPublicKey(bio.get(), key)); // check errors
-    _public_key = Bytes(BIO_pending(bio.get()));
-    _size = RSA_size(key);
-    ASSERT(BIO_read(bio.get(), _public_key.toArray(), _public_key.size()));
-}
+    std::unique_ptr<BIO, decltype(&::BIO_free)> public_bio(BIO_new(BIO_s_mem()), ::BIO_free);
 
-
-PublicRsaKey::PublicRsaKey(EVP_PKEY* key) : _public_key(EVP_PKEY_size(key))
-{
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
-    ASSERT(PEM_write_bio_PUBKEY(bio.get(), key)); // check errors
-    _public_key = Bytes(BIO_pending(bio.get()));
-    _size = EVP_PKEY_size(key);
-    ASSERT(BIO_read(bio.get(), _public_key.toArray(), _public_key.size()));
-}
-
-
-RSA* PublicRsaKey::toRsaKey() const
-{
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(
-        BIO_new_mem_buf(_public_key.toArray(), _public_key.size()), ::BIO_free);
-    RSA* rsa_key = nullptr;
-    ASSERT(PEM_read_bio_RSAPublicKey(bio.get(), &rsa_key, NULL, NULL)); // check errors
-    return rsa_key;
-}
-
-
-EVP_PKEY* PublicRsaKey::toEvpKey() const
-{
-    EVP_PKEY* evp_rsa_key = EVP_PKEY_new();
-    auto rsa_key = toRsaKey();
-    ASSERT(EVP_PKEY_assign_RSA(evp_rsa_key, rsa_key)); // aspect on an existing element
-    return evp_rsa_key;
-}
-
-
-PrivateRsaKey::PrivateRsaKey(const Bytes& key) : _private_key(key)
-{
-    auto rsa_key = toRsaKey();
-    _size = _private_key.size();
-}
-
-
-PrivateRsaKey::PrivateRsaKey(const std::filesystem::path& path)
-{
-    if(!std::filesystem::exists(path)) {
-        throw std::runtime_error("Path for PublicRsaKey not exist");
+    if(!PEM_write_bio_RSAPublicKey(public_bio.get(), _rsa_key.get())) {
+        RAISE_ERROR(CryptoError, "failed to write public RSA key to big num");
     }
 
-    _private_key = Bytes(read_all_file(path));
-    _size = RSA_size(toRsaKey());
+    Bytes public_key_bytes(BIO_pending(public_bio.get()));
+    if(!BIO_read(public_bio.get(), public_key_bytes.toArray(), public_key_bytes.size())) {
+        RAISE_ERROR(CryptoError, "failed to write big num with public RSA to bytes");
+    }
+
+    return public_key_bytes;
 }
 
+std::size_t RsaPublicKey::encryptedMessageSize() const noexcept
+{
+    return _encrypted_message_size;
+}
 
-Bytes PrivateRsaKey::encrypt(const Bytes& message) const
+std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPublicKey::loadKey(const Bytes& key_word)
+{
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new_mem_buf(key_word.toArray(), key_word.size()), ::BIO_free);
+    RSA* rsa_key = nullptr;
+    if(!PEM_read_bio_RSAPublicKey(bio.get(), &rsa_key, NULL, NULL)) {
+        RAISE_ERROR(CryptoError, "Fail to read public RSA key");
+    }
+    return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
+}
+
+RsaPrivateKey::RsaPrivateKey(const base::Bytes& key_word)
+    : _rsa_key(loadKey(key_word)), _encrypted_message_size(RSA_size(_rsa_key.get()))
+{}
+
+RsaPrivateKey::RsaPrivateKey(const std::filesystem::path path)
+    : _rsa_key(loadKey(read_all_file(path))), _encrypted_message_size(RSA_size(_rsa_key.get()))
+{}
+
+Bytes RsaPrivateKey::encrypt(const Bytes& message) const
 {
     if(message.size() > maxEncryptSize()) {
-        throw std::runtime_error("Large message size for RSA encryption");
+        RAISE_ERROR(InvalidArgument, "large message size for RSA encryption");
     }
-    Bytes encrypted_message(size());
-    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
-    ASSERT(RSA_private_encrypt(message.size(), message.toArray(), encrypted_message.toArray(), rsa_key.get(),
-        RSA_PKCS1_PADDING)); // check errors
+
+    Bytes encrypted_message(encryptedMessageSize());
+    if(!RSA_private_encrypt(
+           message.size(), message.toArray(), encrypted_message.toArray(), _rsa_key.get(), RSA_PKCS1_PADDING)) {
+        RAISE_ERROR(CryptoError, "rsa encryption failed");
+    }
+
     return encrypted_message;
 }
 
-
-Bytes PrivateRsaKey::decrypt(const Bytes& encrypted_message) const
+Bytes RsaPrivateKey::decrypt(const Bytes& encrypted_message) const
 {
-    ASSERT(encrypted_message.size() <= size());
-    std::unique_ptr<RSA, decltype(&::RSA_free)> rsa_key(toRsaKey(), ::RSA_free);
-    Bytes decrypt_message(size());
-    auto message_size = RSA_private_decrypt(encrypted_message.size(), encrypted_message.toArray(), // check errors
-        decrypt_message.toArray(), rsa_key.get(), RSA_PKCS1_OAEP_PADDING);
+    if(encrypted_message.size() != encryptedMessageSize()) {
+        RAISE_ERROR(InvalidArgument, "large message size for RSA encryption");
+    }
+
+    Bytes decrypt_message(encryptedMessageSize());
+    auto message_size = RSA_private_decrypt(encrypted_message.size(), encrypted_message.toArray(),
+        decrypt_message.toArray(), _rsa_key.get(), RSA_PKCS1_OAEP_PADDING);
+    if(message_size == -1) {
+        RAISE_ERROR(CryptoError, "rsa decryption failed");
+    }
     return decrypt_message.takePart(0, message_size);
 }
 
-
-Bytes PrivateRsaKey::decryptWithAes(const Bytes& encrypted_message) const
+Bytes RsaPrivateKey::decryptWithAes(const Bytes& message) const
 {
-    ASSERT(encrypted_message.size() > EVP_MAX_IV_LENGTH + size());
-    int encrypted_message_len = stoi(encrypted_message.takePart(0, 9).toString());
-    int ek_len = stoi(encrypted_message.takePart(9, 18).toString());
-    Bytes iv(encrypted_message.takePart(18, 18 + EVP_MAX_IV_LENGTH));
-    Bytes ek(encrypted_message.takePart(18 + EVP_MAX_IV_LENGTH, 18 + EVP_MAX_IV_LENGTH + size()));
-    Bytes encrypted_aes_message(encrypted_message.takePart(18 + EVP_MAX_IV_LENGTH + size(), encrypted_message.size()));
-    std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> rsa_decrypt_ctx(
-        EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
-    std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)> evp_key(toEvpKey(), ::EVP_PKEY_free);
-    EVP_CIPHER_CTX_init(rsa_decrypt_ctx.get());
-    ASSERT(EVP_OpenInit(
-        rsa_decrypt_ctx.get(), EVP_aes_256_cbc(), ek.toArray(), ek_len, iv.toArray(), evp_key.get())); // check errors
-    Bytes decrypted_message(encrypted_message_len + EVP_MAX_IV_LENGTH);
-    int decrypted_block_len = 0;
-    ASSERT(EVP_OpenUpdate(rsa_decrypt_ctx.get(), decrypted_message.toArray(), &decrypted_block_len,
-        encrypted_aes_message.toArray(), encrypted_message_len)); // check errors
-    ASSERT(EVP_OpenFinal(rsa_decrypt_ctx.get(), decrypted_message.toArray() + decrypted_block_len,
-        &decrypted_block_len)); // check errors
-    return decrypted_message.takePart(0, encrypted_aes_message.size() - EVP_MAX_IV_LENGTH);
+    Bytes encrypted_serialized_key_size = message.takePart(0, sizeof(std::uint_least32_t));
+    std::uint_least32_t key_size = 0;
+    std::memcpy(&key_size, encrypted_serialized_key_size.toArray(), encrypted_serialized_key_size.size());
+
+    auto encrypted_serialized_symmetric_key =
+        message.takePart(sizeof(std::uint_least32_t), key_size + sizeof(std::uint_least32_t));
+    auto encrypted_message = message.takePart(key_size + sizeof(std::uint_least32_t), message.size());
+
+    auto serialized_symmetric_key = decrypt(encrypted_serialized_symmetric_key);
+    AesKey symmetric_key(serialized_symmetric_key);
+
+    return symmetric_key.decrypt(encrypted_message);
 }
 
-
-std::size_t PrivateRsaKey::size() const noexcept
+std::size_t RsaPrivateKey::maxEncryptSize() const noexcept
 {
-    return _size;
+    return encryptedMessageSize() - ASYMMETRIC_DIFFERENCE;
 }
 
-
-std::size_t PrivateRsaKey::maxEncryptSize() const noexcept
-{
-    return size() - 11;
-}
-
-
-Bytes PrivateRsaKey::toBytes() const noexcept
-{
-    return _private_key;
-}
-
-
-void PrivateRsaKey::save(const std::filesystem::path& path) const
+void RsaPrivateKey::save(const std::filesystem::path& path) const
 {
     std::ofstream file(path);
-    file << _private_key.toArray();
+    file << toBytes().toString();
 }
 
-
-PrivateRsaKey::PrivateRsaKey(RSA* key)
+Bytes RsaPrivateKey::toBytes() const
 {
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
-    ASSERT(PEM_write_bio_RSAPrivateKey(bio.get(), key, NULL, NULL, 0, 0, NULL)); // check errors
-    _private_key = Bytes(BIO_pending(bio.get()));
-    _size = RSA_size(key);
-    ASSERT(BIO_read(bio.get(), _private_key.toArray(), BIO_pending(bio.get()))); // check errors
+    std::unique_ptr<BIO, decltype(&::BIO_free)> private_bio(BIO_new(BIO_s_mem()), ::BIO_free);
+
+    if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), _rsa_key.get(), NULL, NULL, 0, 0, NULL)) {
+        RAISE_ERROR(CryptoError, "failed to write private RSA key to big num");
+    }
+
+    Bytes private_key_bytes(BIO_pending(private_bio.get()));
+    if(!BIO_read(private_bio.get(), private_key_bytes.toArray(), BIO_pending(private_bio.get()))) {
+        RAISE_ERROR(CryptoError, "failed to write big num with private RSA to bytes");
+    }
+
+    return private_key_bytes;
 }
 
-
-PrivateRsaKey::PrivateRsaKey(EVP_PKEY* key)
+std::size_t RsaPrivateKey::encryptedMessageSize() const noexcept
 {
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new(BIO_s_mem()), ::BIO_free);
-    ASSERT(PEM_write_bio_PrivateKey(bio.get(), key, NULL, NULL, 0, 0, NULL)); // check errors
-    _private_key = Bytes(BIO_pending(bio.get()));
-    _size = EVP_PKEY_size(key);
-    ASSERT(BIO_read(bio.get(), _private_key.toArray(), _private_key.size()));
+    return _encrypted_message_size;
 }
 
-
-RSA* PrivateRsaKey::toRsaKey() const
+std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& key_word)
 {
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(
-        BIO_new_mem_buf(_private_key.toArray(), _private_key.size()), ::BIO_free);
-    RSA* rsa_key = RSA_new();
-    ASSERT(PEM_read_bio_RSAPrivateKey(bio.get(), &rsa_key, NULL, NULL)); // check errors
-    return rsa_key;
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new_mem_buf(key_word.toArray(), key_word.size()), ::BIO_free);
+    RSA* rsa_key = nullptr;
+    if(!PEM_read_bio_RSAPrivateKey(bio.get(), &rsa_key, NULL, NULL)) {
+        RAISE_ERROR(CryptoError, "Fail to read private RSA key");
+    }
+    return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
 }
 
-
-EVP_PKEY* PrivateRsaKey::toEvpKey() const
+std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 {
-    EVP_PKEY* evp_rsa_key = EVP_PKEY_new();
-    auto rsa_key = toRsaKey();
-    ASSERT(EVP_PKEY_assign_RSA(evp_rsa_key, rsa_key)); // aspect on an existing element
-    return evp_rsa_key;
-}
-
-
-std::pair<PublicRsaKey, PrivateRsaKey> generate(const std::size_t keys_size)
-{
+    // create big number for random generation
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
+    if(!BN_set_word(bn.get(), RSA_F4)) {
+        RAISE_ERROR(Error, "Fail to create big number for RSA generation");
+    }
+    // create rsa and fill by created big number
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa(RSA_new(), ::RSA_free);
-    ASSERT(BN_set_word(bn.get(), RSA_F4)); // check errors
-    ASSERT(RSA_generate_key_ex(rsa.get(), keys_size, bn.get(), NULL)); // check errors
-    return std::pair<PublicRsaKey, PrivateRsaKey>(RSAPublicKey_dup(rsa.get()), RSAPrivateKey_dup(rsa.get()));
+    if(!RSA_generate_key_ex(rsa.get(), keys_size, bn.get(), NULL)) {
+        RAISE_ERROR(Error, "Fail to generate RSA key");
+    }
+    // ==================
+    // create bio for public key
+    std::unique_ptr<BIO, decltype(&::BIO_free)> public_bio(BIO_new(BIO_s_mem()), ::BIO_free);
+
+    // get public key spec
+    std::unique_ptr<RSA, decltype(&::RSA_free)> public_rsa_key(RSAPublicKey_dup(rsa.get()), ::RSA_free);
+
+
+    // fill bio by public key spec
+    if(!PEM_write_bio_RSAPublicKey(public_bio.get(), public_rsa_key.get())) {
+        RAISE_ERROR(Error, "Fail to generate public RSA key");
+    }
+
+    // write rsa data
+    Bytes public_key_bytes(BIO_pending(public_bio.get()));
+
+    // check errors in generation
+    if(!BIO_read(public_bio.get(), public_key_bytes.toArray(), public_key_bytes.size())) {
+        RAISE_ERROR(Error, "Fail to check public RSA key");
+    }
+    // =============
+
+    // create bio for private key
+    std::unique_ptr<BIO, decltype(&::BIO_free)> private_bio(BIO_new(BIO_s_mem()), ::BIO_free);
+
+    // get private key spec
+    std::unique_ptr<RSA, decltype(&::RSA_free)> private_rsa_key(RSAPrivateKey_dup(rsa.get()), ::RSA_free);
+
+    // fill bio by private key spec
+    if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), private_rsa_key.get(), NULL, NULL, 0, 0, NULL)) {
+        RAISE_ERROR(Error, "Fail to generate private RSA key");
+    }
+
+    // write rsa data
+    Bytes private_key_bytes(BIO_pending(private_bio.get()));
+
+    // check errors in generation
+    if(!BIO_read(private_bio.get(), private_key_bytes.toArray(), BIO_pending(private_bio.get()))) {
+        RAISE_ERROR(Error, "Fail to check private RSA key");
+    }
+    // =============
+
+    return std::pair<RsaPublicKey, RsaPrivateKey>(public_key_bytes, private_key_bytes);
 }
+
+AesKey::AesKey()
+    : _type(KeyType::Aes256BitKey), _key(generateKey(KeyType::Aes256BitKey)), _iv(generateIv(KeyType::Aes256BitKey))
+{}
+
+AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
+{}
+
+AesKey::AesKey(const Bytes& bytes_key)
+{
+    switch(bytes_key.size()) {
+        case _aes_256_size:
+            _type = KeyType::Aes256BitKey;
+            _key = bytes_key.takePart(0, 16 * 2);
+            _iv = bytes_key.takePart(16 * 2, bytes_key.size());
+            break;
+        case _aes_128_size:
+            _type = KeyType::Aes128BitKey;
+            _key = bytes_key.takePart(0, 8 * 2);
+            _iv = bytes_key.takePart(8 * 2, bytes_key.size());
+            break;
+        default:
+            RAISE_ERROR(InvalidArgument, "bytes_key are not valid. They must be obtained by Key::toBytes");
+    }
+}
+
+Bytes AesKey::toBytes() const
+{
+    return Bytes(_key.toString() + _iv.toString()); // concatenate size = iv.size() * 3
+}
+
+Bytes AesKey::encrypt(const Bytes& data) const
+{
+    switch(_type) {
+        case KeyType::Aes256BitKey:
+            return encrypt256Aes(data);
+        case KeyType::Aes128BitKey:
+            return encrypt128Aes(data);
+        default:
+            RAISE_ERROR(CryptoError, "Unexpected key type");
+    }
+}
+
+Bytes AesKey::decrypt(const Bytes& data) const
+{
+    switch(_type) {
+        case KeyType::Aes256BitKey:
+            return decrypt256Aes(data);
+        case KeyType::Aes128BitKey:
+            return decrypt128Aes(data);
+        default:
+            RAISE_ERROR(CryptoError, "Unexpected key type");
+    }
+}
+
+Bytes AesKey::generateKey(KeyType type)
+{
+    switch(type) {
+        case KeyType::Aes256BitKey:
+            return generate_bytes(16 * 2); // 32(bytes) * 8(bit in byte) = 256(bit)
+        case KeyType::Aes128BitKey:
+            return generate_bytes(8 * 2); // 16(bytes) * 8(bit in byte) = 128(bit)
+        default:
+            RAISE_ERROR(CryptoError, "Unexpected key type");
+    }
+}
+
+Bytes AesKey::generateIv(KeyType type)
+{
+    switch(type) {
+        case KeyType::Aes256BitKey:
+            return generate_bytes(16); // 16(bytes) * 8(bit in byte) = 128(bit)
+        case KeyType::Aes128BitKey:
+            return generate_bytes(8); // 8(bytes) * 8(bit in byte) = 64(bit)
+        default:
+            RAISE_ERROR(CryptoError, "Unexpected key type");
+    }
+}
+
+Bytes AesKey::encrypt256Aes(const Bytes& data) const
+{
+    std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
+
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), NULL, _key.toArray(), _iv.toArray())) {
+        RAISE_ERROR(CryptoError, "failed to initialize context");
+    }
+
+    Bytes output_data(data.size() * 2);
+
+    int current_data_len = 0;
+    if(1 != EVP_EncryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size())) {
+        RAISE_ERROR(CryptoError, "failed to encrypt message");
+    }
+    int encrypted_message_len_in_buffer = current_data_len;
+
+    if(1 != EVP_EncryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len)) {
+        RAISE_ERROR(CryptoError, "unable to finalize encrypt");
+    }
+    encrypted_message_len_in_buffer += current_data_len;
+
+    return output_data.takePart(0, encrypted_message_len_in_buffer);
+}
+
+base::Bytes AesKey::decrypt256Aes(const base::Bytes& data) const
+{
+    std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
+
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), NULL, _key.toArray(), _iv.toArray())) {
+        RAISE_ERROR(CryptoError, "failed to initialize context");
+    }
+
+    Bytes output_data(data.size() * 2);
+
+    int current_data_len = 0;
+    if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size())) {
+        RAISE_ERROR(CryptoError, "failed to decrypt message");
+    }
+    int decrypted_message_len_in_buffer = current_data_len;
+
+    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len)) {
+        RAISE_ERROR(CryptoError, "unable to finalize decrypt");
+    }
+    decrypted_message_len_in_buffer += current_data_len;
+
+    return output_data.takePart(0, decrypted_message_len_in_buffer);
+}
+
+base::Bytes AesKey::encrypt128Aes(const base::Bytes& data) const
+{
+    std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
+
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), NULL, _key.toArray(), _iv.toArray())) {
+        RAISE_ERROR(CryptoError, "failed to initialize context");
+    }
+
+    Bytes output_data(data.size() * 2);
+
+    int current_data_len = 0;
+    if(1 != EVP_EncryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size())) {
+        RAISE_ERROR(CryptoError, "failed to encrypt message");
+    }
+    int encrypted_message_len_in_buffer = current_data_len;
+
+    if(1 != EVP_EncryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len)) {
+        RAISE_ERROR(CryptoError, "unable to finalize encrypt");
+    }
+    encrypted_message_len_in_buffer += current_data_len;
+
+    return output_data.takePart(0, encrypted_message_len_in_buffer);
+}
+
+base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
+{
+    std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
+
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), NULL, _key.toArray(), _iv.toArray())) {
+        RAISE_ERROR(CryptoError, "failed to initialize context");
+    }
+
+    Bytes output_data(data.size() * 2);
+
+    int current_data_len = 0;
+    if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size()))
+        RAISE_ERROR(CryptoError, "failed to decrypt message");
+    int decrypted_message_len_in_buffer = current_data_len;
+
+    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len))
+        RAISE_ERROR(CryptoError, "unable to finalize decrypt");
+    decrypted_message_len_in_buffer += current_data_len;
+
+    return output_data.takePart(0, decrypted_message_len_in_buffer);
+}
+
 
 } // namespace base

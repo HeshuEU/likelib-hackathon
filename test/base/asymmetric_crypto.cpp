@@ -3,7 +3,7 @@
 #include "base/asymmetric_crypto.hpp"
 #include "base/error.hpp"
 
-BOOST_AUTO_TEST_CASE(asymmetric_public_encrypt_private_decrypt)
+/*BOOST_AUTO_TEST_CASE(asymmetric_public_encrypt_private_decrypt)
 {
     auto key_pair = base::rsa::generateKeys(2048);
 
@@ -62,4 +62,4 @@ BOOST_AUTO_TEST_CASE(asimmetric_encrypt_decrypt_with_aes)
     auto enc_msg = pub_key.encryptWithtAes(msg);
     auto dec_msg = priv_key.dectyptWithAes(enc_msg);
     BOOST_CHECK(msg == dec_msg);
-}
+}*/

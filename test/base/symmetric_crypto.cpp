@@ -4,7 +4,7 @@
 #include "base/symmetric_crypto.hpp"
 
 
-BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit)
+/*BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit)
 {
     base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
     base::aes::AesKey key;
@@ -58,3 +58,4 @@ BOOST_AUTO_TEST_CASE(aes_deserialization_failed)
     base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidvsdvytnwucgfim2yx139sv7yx");
     BOOST_CHECK_THROW(base::aes::AesKey key(target_bytes), base::InvalidArgument);
 }
+*/

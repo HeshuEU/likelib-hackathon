@@ -6,8 +6,8 @@
 
 BOOST_AUTO_TEST_CASE(Rsa_constructor_encrypt_decrypt_check)
 {
-    auto rsa1 = base::generate(2048);
-    auto rsa2 = base::generate(1675);
+    auto rsa1 = base::generateKeys(2048);
+    auto rsa2 = base::generateKeys(1675);
 
     base::Bytes msg{"RSA_CONSTRUCTOR_TEST"};
     auto enc_msg = rsa1.first.encrypt(msg);
@@ -42,11 +42,11 @@ BOOST_AUTO_TEST_CASE(Rsa_constructor_encrypt_decrypt_check)
 
 BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_and_save_in_file)
 {
-    auto[pub_rsa, priv_rsa] = base::generate(3738);
+    auto[pub_rsa, priv_rsa] = base::generateKeys(3738);
     priv_rsa.save("private");
     pub_rsa.save("public");
-    base::PrivateRsaKey priv_rsa2("private");
-    base::PublicRsaKey pub_rsa2("public");
+    base::RsaPrivateKey priv_rsa2("private");
+    base::RsaPublicKey pub_rsa2("public");
 
     base::Bytes msg("RSa_FI1E_TES!");
     auto enc_msg1 = priv_rsa.encrypt(msg);
@@ -66,9 +66,9 @@ BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_and_save_in_file)
 
 BOOST_AUTO_TEST_CASE(RsaAes_constructor_encrypt_decrypt)
 {
-    auto rsa = base::generate(2894);
+    auto rsa = base::generateKeys(2894);
     base::Bytes msg("f1rst RsaAes_tes!");
-    auto enc_msg = rsa.first.encryptWithAes(msg);
+    auto enc_msg = rsa.first.encryptWithtAes(msg);
     auto dec_msg = rsa.second.decryptWithAes(enc_msg);
     BOOST_CHECK(msg == dec_msg);
 }
