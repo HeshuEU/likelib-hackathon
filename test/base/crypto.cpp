@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(RsaAes_constructor_encrypt_decrypt)
 {
     auto rsa = base::generateKeys(2894);
     base::Bytes msg("f1rst RsaAes_tes!");
-    auto enc_msg = rsa.first.encryptWithtAes(msg);
+    auto enc_msg = rsa.first.encryptWithAes(msg);
     auto dec_msg = rsa.second.decryptWithAes(enc_msg);
     BOOST_CHECK(msg == dec_msg);
 }
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit_by_serialized_key)
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit)
 {
     base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
-    base::AesKey key(base::KeyType::Aes128BitKey);
+    base::AesKey key(base::AesKey::KeyType::K128BIT);
     auto encrypted_data = key.encrypt(target_bytes);
     auto decrypt_target = key.decrypt(encrypted_data);
     BOOST_CHECK_EQUAL(target_bytes.toString(), decrypt_target.toString());
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit)
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit_by_serialized_key)
 {
     base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
-    base::AesKey key(base::KeyType::Aes128BitKey);
+    base::AesKey key(base::AesKey::KeyType::K128BIT);
     auto encrypted_data = key.encrypt(target_bytes);
     auto serialised_key = key.toBytes();
     base::AesKey deserialized_key(serialised_key);
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit_by_serialized_key)
 BOOST_AUTO_TEST_CASE(aes_double_encrypt_128bit)
 {
     base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
-    base::AesKey key(base::KeyType::Aes128BitKey);
+    base::AesKey key(base::AesKey::KeyType ::K128BIT);
     auto encrypted_data_1 = key.encrypt(target_bytes);
     auto encrypted_data_2 = key.encrypt(target_bytes);
     BOOST_CHECK_EQUAL(encrypted_data_1.toString(), encrypted_data_2.toString());

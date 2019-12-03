@@ -46,7 +46,7 @@ RsaPublicKey::RsaPublicKey(const base::Bytes& key_word)
 {}
 
 
-RsaPublicKey::RsaPublicKey(const std::filesystem::path path)
+RsaPublicKey::RsaPublicKey(const std::filesystem::path& path)
     : _rsa_key(loadKey(read_all_file(path))), _encrypted_message_size(RSA_size(_rsa_key.get()))
 {}
 
@@ -67,12 +67,12 @@ Bytes RsaPublicKey::encrypt(const Bytes& message) const
 }
 
 
-Bytes RsaPublicKey::encryptWithtAes(const Bytes& message) const
+Bytes RsaPublicKey::encryptWithAes(const Bytes& message) const
 {
-    if(maxEncryptSize() < 256){
+    if(maxEncryptSize() < 256) {
         RAISE_ERROR(CryptoError, "small Rsa key size for RsaAes encryption");
     }
-    base::AesKey symmetric_key(base::KeyType::Aes256BitKey);
+    base::AesKey symmetric_key(base::AesKey::KeyType::K256BIT);
     auto encrypted_message = symmetric_key.encrypt(message);
     auto serialized_symmetric_key = symmetric_key.toBytes();
     auto encrypted_serialized_symmetric_key = encrypt(serialized_symmetric_key);
@@ -142,7 +142,7 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPublicKey::loadKey(const Bytes& k
 {
     std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new_mem_buf(key_word.toArray(), key_word.size()), ::BIO_free);
     RSA* rsa_key = nullptr;
-    if(!PEM_read_bio_RSAPublicKey(bio.get(), &rsa_key, NULL, NULL)) {
+    if(!PEM_read_bio_RSAPublicKey(bio.get(), &rsa_key, nullptr, nullptr)) {
         RAISE_ERROR(CryptoError, "Fail to read public RSA key");
     }
     return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
@@ -154,7 +154,7 @@ RsaPrivateKey::RsaPrivateKey(const base::Bytes& key_word)
 {}
 
 
-RsaPrivateKey::RsaPrivateKey(const std::filesystem::path path)
+RsaPrivateKey::RsaPrivateKey(const std::filesystem::path& path)
     : _rsa_key(loadKey(read_all_file(path))), _encrypted_message_size(RSA_size(_rsa_key.get()))
 {}
 
@@ -225,7 +225,7 @@ Bytes RsaPrivateKey::toBytes() const
 {
     std::unique_ptr<BIO, decltype(&::BIO_free)> private_bio(BIO_new(BIO_s_mem()), ::BIO_free);
 
-    if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), _rsa_key.get(), NULL, NULL, 0, 0, NULL)) {
+    if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), _rsa_key.get(), nullptr, nullptr, 0, nullptr, nullptr)) {
         RAISE_ERROR(CryptoError, "failed to write private RSA key to big num");
     }
 
@@ -248,7 +248,7 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& 
 {
     std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new_mem_buf(key_word.toArray(), key_word.size()), ::BIO_free);
     RSA* rsa_key = nullptr;
-    if(!PEM_read_bio_RSAPrivateKey(bio.get(), &rsa_key, NULL, NULL)) {
+    if(!PEM_read_bio_RSAPrivateKey(bio.get(), &rsa_key, nullptr, nullptr)) {
         RAISE_ERROR(CryptoError, "Fail to read private RSA key");
     }
     return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
@@ -264,7 +264,7 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
     }
     // create rsa and fill by created big number
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa(RSA_new(), ::RSA_free);
-    if(!RSA_generate_key_ex(rsa.get(), keys_size, bn.get(), NULL)) {
+    if(!RSA_generate_key_ex(rsa.get(), keys_size, bn.get(), nullptr)) {
         RAISE_ERROR(Error, "Fail to generate RSA key");
     }
     // ==================
@@ -296,7 +296,7 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
     std::unique_ptr<RSA, decltype(&::RSA_free)> private_rsa_key(RSAPrivateKey_dup(rsa.get()), ::RSA_free);
 
     // fill bio by private key spec
-    if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), private_rsa_key.get(), NULL, NULL, 0, 0, NULL)) {
+    if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), private_rsa_key.get(), nullptr, nullptr, 0, nullptr, nullptr)) {
         RAISE_ERROR(Error, "Fail to generate private RSA key");
     }
 
@@ -313,8 +313,7 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 }
 
 
-AesKey::AesKey()
-    : _type(KeyType::Aes256BitKey), _key(generateKey(KeyType::Aes256BitKey)), _iv(generateIv(KeyType::Aes256BitKey))
+AesKey::AesKey() : _type(KeyType::K256BIT), _key(generateKey(KeyType::K256BIT)), _iv(generateIv(KeyType::K256BIT))
 {}
 
 
@@ -326,12 +325,12 @@ AesKey::AesKey(const Bytes& bytes_key)
 {
     switch(bytes_key.size()) {
         case _aes_256_size:
-            _type = KeyType::Aes256BitKey;
+            _type = KeyType::K256BIT;
             _key = bytes_key.takePart(0, 16 * 2);
             _iv = bytes_key.takePart(16 * 2, bytes_key.size());
             break;
         case _aes_128_size:
-            _type = KeyType::Aes128BitKey;
+            _type = KeyType::K128BIT;
             _key = bytes_key.takePart(0, 8 * 2);
             _iv = bytes_key.takePart(8 * 2, bytes_key.size());
             break;
@@ -350,9 +349,9 @@ Bytes AesKey::toBytes() const
 Bytes AesKey::encrypt(const Bytes& data) const
 {
     switch(_type) {
-        case KeyType::Aes256BitKey:
+        case KeyType::K256BIT:
             return encrypt256Aes(data);
-        case KeyType::Aes128BitKey:
+        case KeyType::K128BIT:
             return encrypt128Aes(data);
         default:
             RAISE_ERROR(CryptoError, "Unexpected key type");
@@ -363,9 +362,9 @@ Bytes AesKey::encrypt(const Bytes& data) const
 Bytes AesKey::decrypt(const Bytes& data) const
 {
     switch(_type) {
-        case KeyType::Aes256BitKey:
+        case KeyType::K256BIT:
             return decrypt256Aes(data);
-        case KeyType::Aes128BitKey:
+        case KeyType::K128BIT:
             return decrypt128Aes(data);
         default:
             RAISE_ERROR(CryptoError, "Unexpected key type");
@@ -376,9 +375,9 @@ Bytes AesKey::decrypt(const Bytes& data) const
 Bytes AesKey::generateKey(KeyType type)
 {
     switch(type) {
-        case KeyType::Aes256BitKey:
+        case KeyType::K256BIT:
             return generate_bytes(16 * 2); // 32(bytes) * 8(bit in byte) = 256(bit)
-        case KeyType::Aes128BitKey:
+        case KeyType::K128BIT:
             return generate_bytes(8 * 2); // 16(bytes) * 8(bit in byte) = 128(bit)
         default:
             RAISE_ERROR(CryptoError, "Unexpected key type");
@@ -389,9 +388,9 @@ Bytes AesKey::generateKey(KeyType type)
 Bytes AesKey::generateIv(KeyType type)
 {
     switch(type) {
-        case KeyType::Aes256BitKey:
+        case KeyType::K256BIT:
             return generate_bytes(16); // 16(bytes) * 8(bit in byte) = 128(bit)
-        case KeyType::Aes128BitKey:
+        case KeyType::K128BIT:
             return generate_bytes(8); // 8(bytes) * 8(bit in byte) = 64(bit)
         default:
             RAISE_ERROR(CryptoError, "Unexpected key type");
@@ -403,7 +402,7 @@ Bytes AesKey::encrypt256Aes(const Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), NULL, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -428,7 +427,7 @@ base::Bytes AesKey::decrypt256Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), NULL, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -453,7 +452,7 @@ base::Bytes AesKey::encrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), NULL, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -478,7 +477,7 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), NULL, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
