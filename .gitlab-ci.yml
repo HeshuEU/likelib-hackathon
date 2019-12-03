@@ -16,7 +16,7 @@ docker build:
 
 #    - docker --version
 #    - mkdir -p ../build
-#    - ls
+    - ls
 #    - cd ../build
 #    - cmake ../likelib
 #    - make -j 4
