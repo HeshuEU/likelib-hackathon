@@ -13,10 +13,9 @@ docker build:
     - custom-tag
   script: 
      - docker --version
-
+     - ls
 #    - docker --version
 #    - mkdir -p ../build
-    - ls
 #    - cd ../build
 #    - cmake ../likelib
 #    - make -j 4
