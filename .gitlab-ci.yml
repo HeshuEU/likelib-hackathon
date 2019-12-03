@@ -9,6 +9,7 @@
 #  tags: 
 #    - shell
 test:
+  tags: custom-tag
   script: cat ./README.md
 
 #    - mkdir -p ../build
