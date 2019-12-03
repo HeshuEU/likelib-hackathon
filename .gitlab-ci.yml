@@ -7,8 +7,9 @@ build_image:
   image:
     dockerfile: Dockerfile.ci
 
-#  script:
-#    - mkdir -p ../build
+  script:
+    - mkdir -p ../build
+    - ls
 #    - cd ../build
 #    - cmake ../likelib
 #    - make -j 4
