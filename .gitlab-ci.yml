@@ -8,9 +8,9 @@
 #test:
 #  tags: 
 #    - shell
-tags: custom-tag
-test:
-  script: cat ./README.md
+job:
+  tags: custom-tag
+    script: cat ./README.md
 
 #    - mkdir -p ../build
 #    - ls
