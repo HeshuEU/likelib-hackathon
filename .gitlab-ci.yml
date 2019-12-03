@@ -6,6 +6,7 @@
 #  image:
 #    dockerfile: Dockerfile.ci
 test:
+  tags: shell
   script:
     - mkdir -p ../build
     - ls
