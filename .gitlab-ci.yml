@@ -1,7 +1,6 @@
 #image:
 #  dockerfile: Dockerfile.ci
 
-
 build_image:
   tags:
     - docker
