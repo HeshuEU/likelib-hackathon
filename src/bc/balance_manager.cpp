@@ -6,16 +6,22 @@
 namespace bc
 {
 
-BalanceManager::BalanceManager(const std::map<Address, Balance>& initial_state) : _storage(initial_state)
-{}
+BalanceManager::BalanceManager(const TransactionsSet& tx_set)
+{
+    for(auto tx: tx_set) {
+        auto it = _storage.find(tx.getFrom());
+        if(it == _storage.end()) {
+            _storage[tx.getTo()] += tx.getAmount();
+        }
+        else {
+            _storage[tx.getTo()] = tx.getAmount();
+        }
+    }
+}
 
 
 Balance BalanceManager::getBalance(const Address& address) const
 {
-    if(address == bc::BASE_ADDRESS) {
-        return std::numeric_limits<Balance>::max();
-    }
-
     auto it = _storage.find(address);
     if(it == _storage.end()) {
         return Balance{0};
@@ -35,10 +41,6 @@ bool BalanceManager::checkTransaction(const Transaction& tx)
 void BalanceManager::update(const Transaction& tx)
 {
     ASSERT(getBalance(tx.getFrom()) >= tx.getAmount());
-
-    if(!_storage.count(tx.getFrom())) {
-        _storage[tx.getFrom()] = 0xffffffffffffffff;
-    }
 
     auto from_iter = _storage.find(tx.getFrom());
 

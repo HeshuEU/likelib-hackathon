@@ -57,6 +57,13 @@ Sha256 Sha256::compute(const base::Bytes& data)
 }
 
 
+const Sha256& getNullSha256()
+{
+    static const Sha256 null_hash(Bytes(32));
+    return null_hash;
+}
+
+
 std::string Sha1::toHex() const
 {
     return _bytes.toHex();

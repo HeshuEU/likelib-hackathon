@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bc/transaction.hpp"
+#include "bc/transactions_set.hpp"
 
 #include <map>
 
@@ -13,7 +13,7 @@ class BalanceManager
   public:
     //================
     explicit BalanceManager() = default;
-    explicit BalanceManager(const std::map<Address, Balance>& initial_state);
+    explicit BalanceManager(const TransactionsSet& tx);
     BalanceManager(const BalanceManager& hash) = delete;
     BalanceManager(BalanceManager&& hash) = default;
 

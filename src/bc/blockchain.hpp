@@ -7,6 +7,7 @@
 #include "bc/transaction.hpp"
 #include "bc/transactions_set.hpp"
 #include "net/network.hpp"
+#include "bc/database_manager.hpp"
 
 #include <list>
 
@@ -38,6 +39,7 @@ class Blockchain
     bool _is_running{false};
     //===================
     std::list<Block> _blocks;
+    std::unique_ptr<DatabaseManager> _database;
     mutable std::recursive_mutex _blocks_mutex;
     //===================
     Block _pending_block;
@@ -64,6 +66,7 @@ class Blockchain
     NetworkHandler _network_handler;
     //===================
     void setupGenesis();
+    void setupBalanceManager();
     //===================
     base::Bytes getMiningComplexity() const;
     void onMinerFinished(Block block);
