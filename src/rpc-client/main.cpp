@@ -16,6 +16,10 @@ int getBalance(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
+    constexpr const char* HOST_OPTION = "host";
+    router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
+    constexpr const char* ADDRESS_OPTION = "address";
+    router.optionsParser()->addOption<std::string>(ADDRESS_OPTION, "address of target account");
     router.update();
 
     if(router.optionsParser()->hasOption("help")) {
@@ -24,7 +28,7 @@ int getBalance(base::SubprogramRouter& router)
     }
 
     if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
-        std::cout << "Config was not found." << std::endl;
+        std::cout << "Warning. Config was not found." << std::endl;
     }
 
     try {
@@ -35,8 +39,21 @@ int getBalance(base::SubprogramRouter& router)
         else {
             helper = std::make_unique<ParametersHelper>();
         }
-        auto host_address = helper->getValue<std::string>("nodes", "host address");
-        auto account_address = helper->getValue<std::string>("addresses", "account address");
+        //====================================
+        std::string host_address;
+        if(router.optionsParser()->hasOption(HOST_OPTION)){
+            host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
+        } else {
+            host_address = helper->getValue<std::string>("nodes", "host address");
+        }
+        //====================================
+        std::string account_address;
+        if(router.optionsParser()->hasOption(ADDRESS_OPTION)){
+            account_address = router.optionsParser()->getValue<std::string>(ADDRESS_OPTION);
+        } else {
+            account_address = helper->getValue<std::string>("addresses", "account address");
+        }
+        //====================================
 
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
@@ -70,6 +87,14 @@ int transfer(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
+    constexpr const char* HOST_OPTION = "host";
+    router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
+    constexpr const char* FROM_ADDRESS_OPTION = "from";
+    router.optionsParser()->addOption<std::string>(FROM_ADDRESS_OPTION, "address of \"from\" account");
+    constexpr const char* TO_ADDRESS_OPTION = "to";
+    router.optionsParser()->addOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" account");
+    constexpr const char* AMOUNT_OPTION = "amount";
+    router.optionsParser()->addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
     router.update();
 
     if(router.optionsParser()->hasOption("help")) {
@@ -78,7 +103,7 @@ int transfer(base::SubprogramRouter& router)
     }
 
     if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
-        std::cout << "Config was not found." << std::endl;
+        std::cout << "Warning. Config was not found." << std::endl;
     }
 
     try {
@@ -89,13 +114,38 @@ int transfer(base::SubprogramRouter& router)
         else {
             helper = std::make_unique<ParametersHelper>();
         }
-        auto host = helper->getValue<std::string>("nodes", "host address");
-        auto from_address = helper->getValue<std::string>("addresses", "from account address");
-        auto to_address = helper->getValue<std::string>("addresses", "to account address");
-        auto amount = helper->getValue<std::uint32_t>("amount", "transfer amount");
 
-        rpc::RpcClient client(host);
-        LOG_INFO << "Try to connect to rpc server by: " << host;
+        //====================================
+        std::string host_address;
+        if(router.optionsParser()->hasOption(HOST_OPTION)){
+            host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
+        } else {
+            host_address = helper->getValue<std::string>("nodes", "host address");
+        }
+        //====================================
+        std::string from_address;
+        if(router.optionsParser()->hasOption(FROM_ADDRESS_OPTION)){
+            from_address = router.optionsParser()->getValue<std::string>(FROM_ADDRESS_OPTION);
+        } else {
+            from_address = helper->getValue<std::string>("addresses", "from account address");
+        }
+        //====================================
+        std::string to_address;
+        if(router.optionsParser()->hasOption(TO_ADDRESS_OPTION)){
+            to_address = router.optionsParser()->getValue<std::string>(TO_ADDRESS_OPTION);
+        } else {
+            to_address = helper->getValue<std::string>("addresses", "to account address");
+        }
+        //====================================
+        bc::Balance amount;
+        if(router.optionsParser()->hasOption(AMOUNT_OPTION)){
+            amount = router.optionsParser()->getValue<bc::Balance>(AMOUNT_OPTION);
+        } else {
+            amount = helper->getValue<bc::Balance>("amount", "transfer amount");
+        }
+        //====================================
+        rpc::RpcClient client(host_address);
+        LOG_INFO << "Try to connect to rpc server by: " << host_address;
         auto result = client.transaction(amount, from_address.c_str(), to_address.c_str(), base::Time::now());
         std::cout << "Remote call of transaction -> [" << result << "]" << std::endl;
         return base::config::EXIT_OK;
@@ -126,6 +176,8 @@ int test(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
+    constexpr const char* HOST_OPTION = "host";
+    router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
     router.update();
 
     if(router.optionsParser()->hasOption("help")) {
@@ -134,7 +186,7 @@ int test(base::SubprogramRouter& router)
     }
 
     if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
-        std::cout << "Config was not found." << std::endl;
+        std::cout << "Warning. Config was not found." << std::endl;
     }
 
     try {
@@ -145,8 +197,14 @@ int test(base::SubprogramRouter& router)
         else {
             helper = std::make_unique<ParametersHelper>();
         }
-        auto host_address = helper->getValue<std::string>("nodes", "host address");
-
+        //====================================
+        std::string host_address;
+        if(router.optionsParser()->hasOption(HOST_OPTION)){
+            host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
+        } else {
+            host_address = helper->getValue<std::string>("nodes", "host address");
+        }
+        //====================================
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
 
