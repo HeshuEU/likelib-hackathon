@@ -1,17 +1,5 @@
 #include "directory.hpp"
 
-#include "base/error.hpp"
-#include "base/log.hpp"
-
-namespace
-{
-bool checkIfExistingDirectory(const std::filesystem::path& path)
-{
-    return std::filesystem::exists(path) && std::filesystem::is_directory(path);
-}
-} // namespace
-
-
 namespace base
 {
 

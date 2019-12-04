@@ -1,12 +1,26 @@
 #include "miner.hpp"
 
-#include "base/assert.hpp"
-#include "base/config.hpp"
-#include "base/hash.hpp"
 #include "base/log.hpp"
 
-#include <limits>
+#include <random>
 #include <utility>
+
+
+namespace
+{
+
+    std::size_t calcThreadsNum(const base::PropertyTree& config) {
+        if(config.hasKey("miner.threads")) {
+            return config.get<std::size_t>("miner.threads");
+        }
+        else {
+            return std::thread::hardware_concurrency();
+        }
+    }
+
+}
+
+
 
 namespace bc
 {
@@ -15,139 +29,51 @@ namespace bc
 namespace impl
 {
 
-    MinerWorker::MinerWorker(const base::Bytes& complexity, Miner::CallbackType& callback)
-        : _complexity(complexity), _callback(callback)
-    {}
 
-
-    MinerWorker::~MinerWorker()
+    class MinerWorker
     {
-        stop();
-    }
+      public:
+        //===================
+        MinerWorker(std::atomic<std::size_t>& version, Task& task, std::optional<Block>& block_to_mine,
+            std::shared_mutex& state_mutex, std::condition_variable_any& state_changed_cv, Miner::HandlerType handler);
 
-
-    void MinerWorker::run()
-    {
-        _thread = std::move(std::thread(&MinerWorker::threadWorker, this));
-    }
-
-
-    void MinerWorker::stop()
-    {
-        {
-            std::lock_guard lk(_notification_mutex);
-            _has_unread_message = true;
-            _notification = THREAD_MESSAGE::EXIT;
-            _notification_cv.notify_one();
-        }
-        if(_thread.joinable()) {
-            _thread.join();
-        }
-    }
-
-
-    void MinerWorker::assignJob(const Block& block)
-    {
-        {
-            std::lock_guard lk(_notification_mutex);
-            _has_unread_message = true;
-            _notification = THREAD_MESSAGE::FIND_NONCE;
-            _block = block;
-            _notification_cv.notify_one();
-        }
-    }
-
-
-    void MinerWorker::assignJob(Block&& block)
-    {
-        {
-            std::lock_guard lk(_notification_mutex);
-            _has_unread_message = true;
-            _notification = THREAD_MESSAGE::FIND_NONCE;
-            _block = std::move(block);
-            _notification_cv.notify_one();
-        }
-    }
-
-
-    void MinerWorker::dropJob()
-    {
-        {
-            std::lock_guard lk(_notification_mutex);
-            _notification = THREAD_MESSAGE::NONE;
-            _has_unread_message = true;
-            _notification_cv.notify_one();
-        }
-    }
-
-
-    void MinerWorker::threadWorker() noexcept
-    {
-        Block block;
-        while(true) {
-            THREAD_MESSAGE notification;
-            {
-                std::unique_lock<std::mutex> lk(_notification_mutex);
-                _notification_cv.wait(lk, [this]() -> bool {
-                    return _has_unread_message && _notification != THREAD_MESSAGE::NONE;
-                });
-
-                notification = _notification;
-                if(notification == THREAD_MESSAGE::FIND_NONCE) {
-                    block = std::move(_block);
-                }
-                _has_unread_message = false;
-            }
-
-            if(notification == THREAD_MESSAGE::EXIT) {
-                break;
-            }
-            else {
-                ASSERT(notification == THREAD_MESSAGE::FIND_NONCE);
-                while(!_has_unread_message) {
-                    NonceInt nonce = _generator();
-                    block.setNonce(nonce);
-                    if(base::Sha256::compute(base::toBytes(block)).getBytes() < _complexity) {
-                        _callback(std::move(block));
-                        break;
-                    }
-                }
-            }
-        }
-    }
+        ~MinerWorker();
+        //===================
+      private:
+        //===================
+        std::thread _worker_thread;
+        std::size_t _last_read_version;
+        Task _last_read_task;
+        std::optional<Block> _last_read_block_to_mine;
+        //===================
+        std::atomic<std::size_t>& _version;
+        Task& _task;
+        std::optional<Block>& _block_to_mine;
+        std::shared_mutex& _state_mutex;
+        std::condition_variable_any& _state_changed_cv;
+        Miner::HandlerType _handler;
+        //===================
+        void worker();
+        //===================
+    };
 
 } // namespace impl
 
 
-
-namespace
+Miner::Miner(const base::PropertyTree& config, Miner::HandlerType handler) : _handler{std::move(handler)}
 {
+    // setting up initial state
+    _task = impl::Task::NONE;
+    _job_version = 0;
 
-    std::size_t calcMiningThreadsNum(const base::PropertyTree& ptree)
-    {
-        if(ptree.hasKey("miner.threads")) {
-            return ptree.get<std::size_t>("miner.threads");
-        }
-        else {
-            std::size_t ret = std::thread::hardware_concurrency();
-            if(ret <= 2) {
-                ret = 2;
-            }
-            return ret;
-        }
+    // setting up threads
+    std::size_t num_threads = calcThreadsNum(config);
+
+    for(std::size_t i = 0; i < num_threads; ++i) {
+        _workers.emplace_front(_job_version, _task, _block_to_mine, _state_mutex, _state_changed_cv, _handler);
     }
 
-} // namespace
-
-
-Miner::Miner(const base::PropertyTree& ptree)
-{
-    const std::size_t numThreads = calcMiningThreadsNum(ptree);
-    for(std::size_t i = 0; i < numThreads; ++i) {
-        _workers_pool.emplace_front(_complexity, _callback); // here callback is not set yet
-        _workers_pool.front().run();
-    }
-    LOG_INFO << "Miner is running on " << numThreads << " threads";
+    LOG_INFO << "Miner is running on " << num_threads << " threads";
 }
 
 
@@ -157,39 +83,119 @@ Miner::~Miner()
 }
 
 
-void Miner::findNonce(const Block& block, const base::Bytes& complexity)
+void Miner::findNonce(const Block& block_without_nonce)
 {
-    ASSERT(_callback);
-    _complexity = complexity;
-    for(auto& w: _workers_pool) {
-        w.assignJob(block);
-    }
-}
-
-
-void Miner::setCallback(CallbackType&& callback)
-{
-    _callback = [callback = std::move(callback), this](Block&& block) {
-        dropJob();
-        callback(std::move(block));
-    };
+    std::unique_lock lk(_state_mutex);
+    ++_job_version;
+    _task = impl::Task::FIND_NONCE;
+    _block_to_mine = block_without_nonce;
+    _state_changed_cv.notify_all();
 }
 
 
 void Miner::dropJob()
 {
-    for(auto& w: _workers_pool) {
-        w.dropJob();
-    }
+    std::unique_lock lk(_state_mutex);
+    ++_job_version;
+    _task = impl::Task::NONE;
+    _block_to_mine.reset();
+    _state_changed_cv.notify_all();
 }
 
 
 void Miner::stop()
 {
-    for(auto& w: _workers_pool) {
-        w.stop();
-    }
+    std::unique_lock lk(_state_mutex);
+    ++_job_version;
+    _task = impl::Task::EXIT;
+    _block_to_mine.reset();
+    _state_changed_cv.notify_all();
 }
 
+//=============================
+
+namespace impl
+{
+
+    inline base::Bytes tempGetComplexity()
+    {
+        // TODO: rewrite
+        base::Bytes b(32);
+        b[3] = 0x7f;
+        return b;
+    }
+
+    MinerWorker::MinerWorker(std::atomic<std::size_t>& version, impl::Task& task, std::optional<Block>& block_to_mine,
+        std::shared_mutex& state_mutex, std::condition_variable_any& state_changed_cv, Miner::HandlerType handler)
+        : _last_read_version{0}, _version{version}, _task{task}, _block_to_mine{block_to_mine},
+          _state_mutex{state_mutex}, _state_changed_cv{state_changed_cv}, _handler{handler}
+    {
+        _worker_thread = std::thread(&MinerWorker::worker, this);
+    }
+
+
+    MinerWorker::~MinerWorker()
+    {
+        if(_worker_thread.joinable()) {
+            _worker_thread.join();
+        }
+    }
+
+
+    void MinerWorker::worker()
+    {
+        bool is_stopping{false};
+        std::mt19937_64 mt{std::random_device{}()};
+
+        while(!is_stopping) {
+            {
+                std::shared_lock lk(_state_mutex);
+                _state_changed_cv.wait(lk, [this] {
+                    return _last_read_version != _version;
+                });
+                _last_read_version = _version;
+                _last_read_task = _task;
+                _last_read_block_to_mine = _block_to_mine;
+            }
+
+            switch(_last_read_task) {
+                case Task::NONE: {
+                    // do nothing
+                    break;
+                }
+                case Task::EXIT: {
+                    is_stopping = true;
+                    break;
+                }
+                case Task::DROP_JOB: {
+                    // do nothing, the job is already dropped
+                    break;
+                }
+                case Task::FIND_NONCE: {
+                    ASSERT(_last_read_block_to_mine);
+                    Block& b = _last_read_block_to_mine.value();
+                    while(_last_read_version == _version) {
+                        auto attempting_nonce = mt();
+                        b.setNonce(attempting_nonce);
+                        if(base::Sha256::compute(base::toBytes(b)).getBytes() < tempGetComplexity()) {
+                            std::unique_lock lk(_state_mutex);
+                            _handler(std::move(b));
+                            _version++;
+                            _task = Task::DROP_JOB;
+                            _block_to_mine.reset();
+                            _state_changed_cv.notify_all();
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    ASSERT(false);
+                    break;
+                }
+            }
+        }
+    }
+
+} // namespace impl
 
 } // namespace bc

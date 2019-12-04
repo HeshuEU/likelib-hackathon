@@ -12,7 +12,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 }
 
 ::grpc::Status GrpcAdapter::balance(
-    grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response)
+    grpc::ServerContext*, const likelib::Address* request, likelib::Money* response)
 {
     auto address = request->address().c_str();
 
@@ -27,7 +27,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 }
 
 ::grpc::Status GrpcAdapter::transaction(
-    grpc::ServerContext* context, const likelib::Transaction* request, likelib::Hash* response)
+    grpc::ServerContext*, const likelib::Transaction* request, likelib::Hash* response)
 {
     auto from_address = request->from_address().address().c_str();
     auto to_address = request->to_address().address().c_str();
@@ -47,7 +47,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 }
 
 ::grpc::Status GrpcAdapter::test(
-    grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response)
+    grpc::ServerContext*, const likelib::TestRequest* request, likelib::TestResponse* response)
 {
     auto data = request->message();
     try {

@@ -22,7 +22,7 @@ class SerializationIArchive
     // TODO: work if some of this types is not defined
     //=================
   private:
-    base::Bytes _bytes;
+    const base::Bytes& _bytes;
     std::size_t _index;
 };
 
@@ -48,19 +48,19 @@ class SerializationOArchive
 };
 
 
-SerializationOArchive& operator<<(SerializationOArchive& ia, const base::Bytes& v);
-SerializationIArchive& operator>>(SerializationIArchive& oa, base::Bytes& v);
+SerializationOArchive& operator<<(SerializationOArchive& oa, const base::Bytes& v);
+SerializationIArchive& operator>>(SerializationIArchive& ia, base::Bytes& v);
 
 
-SerializationOArchive& operator<<(SerializationOArchive& ia, const std::string& v);
-SerializationIArchive& operator>>(SerializationIArchive& oa, std::string& v);
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::string& v);
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::string& v);
 
 
 template<typename T>
-SerializationIArchive& operator<<(SerializationIArchive& ia, std::vector<T>& v);
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::vector<T>& v);
 
 template<typename T>
-SerializationOArchive& operator<<(SerializationOArchive& ia, const std::vector<T>& v);
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
 
 
 template<typename T>

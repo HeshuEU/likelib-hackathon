@@ -23,9 +23,9 @@ class GrpcNodeServer
     void stop();
 
   private:
+    GrpcAdapter _service;
     const std::string _server_address;
     std::unique_ptr<grpc::Server> _server = nullptr;
-    GrpcAdapter _service;
 };
 
 } // namespace rpc

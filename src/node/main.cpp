@@ -22,6 +22,7 @@
 #include <thread>
 #include <filesystem>
 
+#include <sys/resource.h>
 
 namespace
 {
@@ -90,9 +91,9 @@ int main(int argc, char** argv)
         blockchain.run();
         //=====================
         auto service = std::make_shared<node::GeneralServerService>(&blockchain);
-        rpc::RpcServer rpc(exe_config.get<std::string>("rpc_address"), service);
+        rpc::RpcServer rpc(exe_config.get<std::string>("rpc.address"), service);
         rpc.run();
-        LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc_address");
+        LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc.address");
         //=====================
         std::this_thread::sleep_for(std::chrono::seconds(4500));
 

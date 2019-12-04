@@ -1,5 +1,6 @@
 set(BASE_HEADERS
         assert.hpp
+	crypto.hpp
         big_integer.hpp
         big_integer.tpp
         error.hpp
@@ -24,6 +25,7 @@ set(BASE_HEADERS
         )
 
 set(BASE_SOURCES
+        crypto.cpp
         error.cpp
         log.cpp
         directory.cpp
