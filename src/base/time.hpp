@@ -9,6 +9,10 @@ namespace base
 
 class Time
 {
+    //=======================
+    friend ::base::SerializationIArchive& operator>>(::base::SerializationIArchive& ia, Time& tx);
+    friend ::base::SerializationOArchive& operator<<(::base::SerializationOArchive& oa, const Time& tx);
+    //==========================
   public:
     Time() = default;
     Time(std::chrono::time_point<std::chrono::system_clock> time_point);
@@ -20,14 +24,12 @@ class Time
     //====================
     ~Time() = default;
     //====================
-    std::uint_least32_t millisecondsInEpoch() const;
     std::uint_least32_t secondsInEpoch() const;
     //====================
     bool operator==(const Time& other) const;
     bool operator!=(const Time& other) const;
     //====================
     static Time now();
-    static Time fromMilliseconds(std::uint_least32_t milliseconds_from_epoch);
     static Time fromSeconds(std::uint_least32_t seconds_from_epoch);
     //====================
   private:

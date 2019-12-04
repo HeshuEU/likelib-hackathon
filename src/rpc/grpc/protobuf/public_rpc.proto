@@ -48,5 +48,5 @@ message Money {
 }
 
 message Time {
-    string milliseconds_from_epoch = 1;
+    string seconds_from_epoch = 1;
 }
