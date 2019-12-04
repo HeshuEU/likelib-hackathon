@@ -21,6 +21,7 @@ set(BASE_HEADERS
         serialization.hpp
         serialization.tpp
         time.hpp
+        subprogram_router.hpp
         )
 
 set(BASE_SOURCES
@@ -36,6 +37,7 @@ set(BASE_SOURCES
         database.cpp
         serialization.cpp
         time.cpp
+        subprogram_router.cpp
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})

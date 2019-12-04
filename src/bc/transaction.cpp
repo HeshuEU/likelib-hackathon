@@ -3,8 +3,9 @@
 namespace bc
 {
 
-Transaction::Transaction(const bc::Address& from, const bc::Address& to, const bc::Balance& amount)
-    : _from{from}, _to{to}, _amount{amount}
+Transaction::Transaction(
+    const bc::Address& from, const bc::Address& to, const bc::Balance& amount, const base::Time timestamp)
+    : _from{from}, _to{to}, _amount{amount}, _timestamp(timestamp)
 {}
 
 
@@ -26,6 +27,12 @@ const bc::Balance& Transaction::getAmount() const noexcept
 }
 
 
+const base::Time& Transaction::getTimestamp() const noexcept
+{
+    return _timestamp;
+}
+
+
 void Transaction::setFrom(const bc::Address& from)
 {
     _from = from;
@@ -44,9 +51,15 @@ void Transaction::setAmount(const bc::Balance& amount)
 }
 
 
+void Transaction::setTimestamp(const base::Time& timestamp)
+{
+    _timestamp = timestamp;
+}
+
+
 bool Transaction::operator==(const Transaction& other) const
 {
-    return _amount == other._amount && _from == other._from && _to == other._to;
+    return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp;
 }
 
 
@@ -65,13 +78,16 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transac
     bc::Balance balance;
     ia >> balance;
     tx.setAmount(balance);
+    ::base::Time timestamp;
+    ia >> timestamp;
+    tx.setTimestamp(timestamp);
     return ia;
 }
 
 
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Transaction& tx)
 {
-    return oa << tx.getFrom() << tx.getTo() << tx.getAmount();
+    return oa << tx.getFrom() << tx.getTo() << tx.getAmount() << tx.getTimestamp();
 }
 
 
