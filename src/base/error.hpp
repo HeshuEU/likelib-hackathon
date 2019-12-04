@@ -65,6 +65,11 @@ class CryptoError : public Error
     using Error::Error;
 };
 
+class LogicError : public Error
+{
+    using Error::Error;
+};
+
 std::ostream& operator<<(std::ostream& os, const Error& error);
 
 #define RAISE_ERROR(error_type, message) \

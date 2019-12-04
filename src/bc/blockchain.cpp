@@ -32,7 +32,7 @@ void Blockchain::processReceivedBlock(Block&& block)
         pending_txs.remove(block.getTransactions());
         _pending_block.setTransactions(std::move(pending_txs));
         if(!_pending_block.getTransactions().isEmpty()) {
-            _miner.findNonce(_pending_block);
+            _miner.findNonce(_pending_block, getMiningComplexity());
         }
     }
 }
@@ -45,7 +45,6 @@ void Blockchain::addBlock(const Block& block)
         std::lock_guard lk(_blocks_mutex);
         _blocks.push_back(block);
     }
-    std::lock_guard lk(_balance_manager_mutex);
     for(const auto& tx: block.getTransactions()) {
         if(_balance_manager.checkTransaction(tx)) {
             _balance_manager.update(tx);
@@ -56,8 +55,8 @@ void Blockchain::addBlock(const Block& block)
 
 void Blockchain::processReceivedTransaction(Transaction&& transaction)
 {
-    LOG_DEBUG << "Received transaction. From: " << transaction.getFrom().toString() << " To: "
-              << transaction.getTo().toString() << " Amount:" << transaction.getAmount();
+    LOG_DEBUG << "Received transaction. From: " << transaction.getFrom().toString()
+              << " To: " << transaction.getTo().toString() << " Amount:" << transaction.getAmount();
 
     if(!checkTransaction(transaction)) {
         LOG_INFO << "Received an invalid transaction";
@@ -73,7 +72,7 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
             }
             _network->broadcastTransaction(transaction);
             _miner.dropJob();
-            _miner.findNonce(_pending_block);
+            _miner.findNonce(_pending_block, getMiningComplexity());
         }
     }
 }
@@ -81,7 +80,6 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
 
 bc::Balance Blockchain::getBalance(const bc::Address& address) const
 {
-    std::lock_guard lk(_balance_manager_mutex);
     return _balance_manager.getBalance(address);
 }
 
@@ -91,6 +89,12 @@ void Blockchain::setupGenesis()
     Block genesis;
     genesis.setNonce(0);
     genesis.setPrevBlockHash(base::Bytes(32));
+
+    static const bc::Address BASE_ADDRESS{std::string(32, '0')};
+    static const bc::Balance BASE_MONEY_AMOUNT = 0xffffffff;
+    genesis.addTransaction({BASE_ADDRESS, BASE_ADDRESS, BASE_MONEY_AMOUNT, base::Time()});
+
+    _balance_manager.updateFromGenesis(genesis);
     {
         std::lock_guard lk(_blocks_mutex);
         _blocks.push_back(std::move(genesis));
@@ -100,13 +104,14 @@ void Blockchain::setupGenesis()
 
 base::Bytes Blockchain::getMiningComplexity() const
 {
+    // to be changed later to calculate complexity dynamically
     base::Bytes ret(32);
     ret[2] = 0x6F;
     return ret;
 }
 
 
-void Blockchain::onMinerFinished(Block block)
+void Blockchain::onMinerFinished(Block&& block)
 {
     addBlock(block);
     _network->broadcastBlock(block);
@@ -115,7 +120,21 @@ void Blockchain::onMinerFinished(Block block)
 
 bool Blockchain::checkTransaction(const Transaction& tx) const
 {
-    return true; // TODO: implement transaction verification (having same transaction and etc.)
+    if(!_balance_manager.checkTransaction(tx)) {
+        return false;
+    }
+    {
+        // TODO: optimize it of course
+        std::lock_guard lk(_blocks_mutex);
+        for(const auto& block : _blocks) {
+            for(const auto& transaction : block.getTransactions()) {
+                if(tx == transaction) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 
@@ -127,6 +146,13 @@ bool Blockchain::checkBlock(const Block& block) const
         // received block doesn't match our last
         return false;
     }
+
+    for(const auto& tx : block.getTransactions()) {
+        if(!_balance_manager.checkTransaction(tx)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
