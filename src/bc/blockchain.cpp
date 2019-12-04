@@ -107,7 +107,7 @@ base::Bytes Blockchain::getMiningComplexity() const
 }
 
 
-void Blockchain::onMinerFinished(Block block)
+void Blockchain::onMinerFinished(Block&& block)
 {
     addBlock(block);
     _network->broadcastBlock(block);

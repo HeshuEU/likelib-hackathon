@@ -66,7 +66,7 @@ class Blockchain
     void setupGenesis();
     //===================
     base::Bytes getMiningComplexity() const;
-    void onMinerFinished(Block block);
+    void onMinerFinished(Block&& block);
     //===================
     bool checkBlock(const Block& block) const;
     bool checkTransaction(const Transaction& tx) const;

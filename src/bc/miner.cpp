@@ -59,9 +59,15 @@ namespace impl
 
 
     template<typename... Args>
-    void CommonState::callHandler(Args&&... args)
+    void CommonState::callHandlerAndDrop(Args&&... args)
     {
         std::unique_lock lk(_state_mutex);
+        _version.fetch_add(1, std::memory_order_release);
+        _common_data.task = Task::DROP_JOB;
+        _common_data.block_to_mine.reset();
+        _common_data.complexity.reset();
+        _state_changed_cv.notify_all();
+
         _handler(std::forward<Args>(args)...);
     }
 
@@ -87,10 +93,8 @@ namespace impl
       private:
         //===================
         std::thread _worker_thread;
-        std::size_t _last_read_version;
         //===================
         CommonState& _common_state;
-        Miner::HandlerType _handler;
         //===================
         void worker();
         //===================
@@ -185,15 +189,11 @@ namespace impl
                     ASSERT(data.complexity);
                     Block& b = data.block_to_mine.value();
                     const base::Bytes& complexity = data.complexity.value();
-                    while(_last_read_version == _common_state.getVersion()) {
+                    while(last_read_version == _common_state.getVersion()) {
                         auto attempting_nonce = mt();
                         b.setNonce(attempting_nonce);
                         if(base::Sha256::compute(base::toBytes(b)).getBytes() < complexity) {
-                            data.task = Task::DROP_JOB;
-                            data.block_to_mine.reset();
-                            data.complexity.reset();
-                            _common_state.setCommonData(data);
-                            _common_state.callHandler(std::move(b));
+                            _common_state.callHandlerAndDrop(std::move(data.block_to_mine).value());
                         }
                     }
                     break;

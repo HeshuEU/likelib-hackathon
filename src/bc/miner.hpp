@@ -53,7 +53,7 @@ namespace impl
         void setCommonData(const CommonData& data);
         //===================
         template<typename... Args>
-        void callHandler(Args&&... args);
+        void callHandlerAndDrop(Args&&... args);
         //===================
         void waitAndReadNewData(std::size_t& last_read_version, CommonData& data);
         //===================
