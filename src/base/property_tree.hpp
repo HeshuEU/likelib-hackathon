@@ -11,6 +11,8 @@ namespace base
 class PropertyTree
 {
   public:
+    PropertyTree();
+
     PropertyTree(const boost::property_tree::ptree& ptree);
 
     bool hasKey(const std::string& path) const;
