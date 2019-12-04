@@ -46,7 +46,6 @@ class Blockchain
     Miner _miner;
     //===================
     bc::BalanceManager _balance_manager;
-    mutable std::recursive_mutex _balance_manager_mutex;
     //===================
     std::unique_ptr<net::Network> _network;
 

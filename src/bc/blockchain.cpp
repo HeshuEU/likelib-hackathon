@@ -45,7 +45,6 @@ void Blockchain::addBlock(const Block& block)
         std::lock_guard lk(_blocks_mutex);
         _blocks.push_back(block);
     }
-    std::lock_guard lk(_balance_manager_mutex);
     for(const auto& tx: block.getTransactions()) {
         if(_balance_manager.checkTransaction(tx)) {
             _balance_manager.update(tx);
@@ -81,7 +80,6 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
 
 bc::Balance Blockchain::getBalance(const bc::Address& address) const
 {
-    std::lock_guard lk(_balance_manager_mutex);
     return _balance_manager.getBalance(address);
 }
 
@@ -91,6 +89,12 @@ void Blockchain::setupGenesis()
     Block genesis;
     genesis.setNonce(0);
     genesis.setPrevBlockHash(base::Bytes(32));
+
+    static const bc::Address BASE_ADDRESS{std::string(32, '0')};
+    static const bc::Balance BASE_MONEY_AMOUNT = 0xffffffff;
+    genesis.addTransaction({BASE_ADDRESS, BASE_ADDRESS, BASE_MONEY_AMOUNT});
+
+    _balance_manager.updateFromGenesis(genesis);
     {
         std::lock_guard lk(_blocks_mutex);
         _blocks.push_back(std::move(genesis));
@@ -128,6 +132,13 @@ bool Blockchain::checkBlock(const Block& block) const
         // received block doesn't match our last
         return false;
     }
+
+    for(const auto& tx : block.getTransactions()) {
+        if(!_balance_manager.checkTransaction(tx)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
