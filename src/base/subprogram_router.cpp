@@ -1,10 +1,14 @@
 #include "subprogram_router.hpp"
 
+#include <vector>
+
 namespace base
 {
+
 SubprogramRouter::SubprogramRouter(const std::string& name, std::function<int(SubprogramRouter&)> processor)
     : _name(name), _processor(processor), _program_options(std::make_shared<ProgramOptionsParser>())
 {}
+
 
 void SubprogramRouter::addSubprogram(const std::string& name, const std::string& descendant_description,
     const std::function<int(SubprogramRouter&)>& processor)
@@ -21,10 +25,12 @@ void SubprogramRouter::addSubprogram(const std::string& name, const std::string&
     _descendant_descriptions.insert(std::pair<std::string, std::string>(name, descendant_description));
 }
 
+
 std::shared_ptr<ProgramOptionsParser> SubprogramRouter::optionsParser()
 {
     return _program_options;
 }
+
 
 std::string SubprogramRouter::helpMessage() const
 {
@@ -49,11 +55,11 @@ std::string SubprogramRouter::helpMessage() const
 
 void SubprogramRouter::update()
 {
-    char* options[_stored_options.size()];
-    for(int i = 0; i < _stored_options.size(); i++) {
+    std::vector<char*> options(_stored_options.size());
+    for(std::size_t i = 0; i < _stored_options.size(); i++) {
         options[i] = _stored_options[i].data();
     }
-    _program_options->process(_stored_options.size(), options);
+    _program_options->process(_stored_options.size(), options.data());
 }
 
 int SubprogramRouter::process(int argc, char** argv)

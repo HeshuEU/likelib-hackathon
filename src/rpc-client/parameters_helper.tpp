@@ -2,6 +2,8 @@
 
 #include "parameters_helper.hpp"
 
+#include <iostream>
+
 namespace rpc_client
 {
 
@@ -49,6 +51,7 @@ Type ParametersHelper::getValue(const std::string& value_name, const std::string
     }
 }
 
+
 template<typename Type>
 Type ParametersHelper::getValueFromStdInput(const std::string& tag)
 {
@@ -62,6 +65,5 @@ Type ParametersHelper::getValueFromStdInput(const std::string& tag)
         RAISE_ERROR(base::InvalidArgument, "invalid option input");
     }
 }
-
 
 } // namespace rpc_client

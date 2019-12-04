@@ -1,5 +1,4 @@
 #include "program_options.hpp"
-#include "config.hpp"
 
 #include <sstream>
 

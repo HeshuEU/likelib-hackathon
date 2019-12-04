@@ -15,19 +15,16 @@ namespace rpc_client
 int getBalance(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
-    constexpr const char* MANUAL_OPTION = "manual";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
-    router.optionsParser()->addFlag(MANUAL_OPTION, "use manual mode");
     router.update();
 
-    if(router.optionsParser()->hasOption("help") || router.optionsParser()->empty()) {
+    if(router.optionsParser()->hasOption("help")) {
         std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
 
-    if(!router.optionsParser()->hasOption(CONFIG_OPTION) && !router.optionsParser()->hasOption(MANUAL_OPTION)) {
-        std::cout << "Config was not found" << std::endl;
-        return base::config::EXIT_FAIL;
+    if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
+        std::cout << "Config was not found." << std::endl;
     }
 
     try {
@@ -48,7 +45,7 @@ int getBalance(base::SubprogramRouter& router)
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cerr << "Bad input arguments.\n";
+        std::cerr << "Bad input arguments.\n" << router.helpMessage();
         LOG_ERROR << "[exception in getBalance]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -72,19 +69,16 @@ int getBalance(base::SubprogramRouter& router)
 int transfer(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
-    constexpr const char* MANUAL_OPTION = "manual";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
-    router.optionsParser()->addFlag(MANUAL_OPTION, "use manual mode");
     router.update();
 
-    if(router.optionsParser()->hasOption("help") || router.optionsParser()->empty()) {
+    if(router.optionsParser()->hasOption("help")) {
         std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
 
-    if(!router.optionsParser()->hasOption(CONFIG_OPTION) && !router.optionsParser()->hasOption(MANUAL_OPTION)) {
-        std::cout << "Config was not found" << std::endl;
-        return base::config::EXIT_FAIL;
+    if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
+        std::cout << "Config was not found." << std::endl;
     }
 
     try {
@@ -107,7 +101,7 @@ int transfer(base::SubprogramRouter& router)
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cerr << "Bad input arguments.\n";
+        std::cerr << "Bad input arguments.\n" << router.helpMessage();
         LOG_ERROR << "[exception in getBalance]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -131,19 +125,16 @@ int transfer(base::SubprogramRouter& router)
 int test(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
-    constexpr const char* MANUAL_OPTION = "manual";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
-    router.optionsParser()->addFlag(MANUAL_OPTION, "use manual mode");
     router.update();
 
-    if(router.optionsParser()->hasOption("help") || router.optionsParser()->empty()) {
+    if(router.optionsParser()->hasOption("help")) {
         std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
 
-    if(!router.optionsParser()->hasOption(CONFIG_OPTION) && !router.optionsParser()->hasOption(MANUAL_OPTION)) {
-        std::cout << "Config was not found" << std::endl;
-        return base::config::EXIT_FAIL;
+    if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
+        std::cout << "Config was not found." << std::endl;
     }
 
     try {
@@ -172,7 +163,7 @@ int test(base::SubprogramRouter& router)
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cerr << "Bad input arguments\n";
+        std::cerr << "Bad input arguments\n" << router.helpMessage();
         LOG_ERROR << "[exception in test]" << er.what();
         return base::config::EXIT_FAIL;
     }
