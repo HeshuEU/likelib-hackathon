@@ -4,7 +4,7 @@ namespace bc
 {
 
 Transaction::Transaction(
-    const bc::Address& from, const bc::Address& to, const bc::Balance& amount, const base::Time timestamp)
+    const bc::Address& from, const bc::Address& to, const bc::Balance& amount, const base::Time& timestamp)
     : _from{from}, _to{to}, _amount{amount}, _timestamp(timestamp)
 {}
 

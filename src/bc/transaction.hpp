@@ -14,7 +14,7 @@ class Transaction
   public:
     //=================
     Transaction() = default;
-    Transaction(const bc::Address& from, const bc::Address& to, const bc::Balance& amount, const base::Time timestamp);
+    Transaction(const bc::Address& from, const bc::Address& to, const bc::Balance& amount, const base::Time& timestamp);
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
