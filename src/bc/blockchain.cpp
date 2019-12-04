@@ -27,7 +27,7 @@ void Blockchain::processReceivedBlock(Block&& block)
 {
     LOG_DEBUG << "Block received. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
     {
-        std::lock_guard lk(_blocks_mutex);
+        std::lock_guard lk(_database_mutex);
         ASSERT(_database->getLastBlockHash() != base::getNullSha256());
     }
 
@@ -48,7 +48,7 @@ void Blockchain::addBlock(const Block& block)
 {
     LOG_DEBUG << "Adding block. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
     {
-        std::lock_guard lk(_blocks_mutex);
+        std::lock_guard lk(_database_mutex);
         _database->addBlock(block);
     }
     std::lock_guard lk(_balance_manager_mutex);
@@ -75,7 +75,7 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
         if(!_pending_block.getTransactions().find(transaction)) {
             _pending_block.addTransaction(transaction);
             {
-                std::lock_guard lk1(_blocks_mutex);
+                std::lock_guard lk1(_database_mutex);
                 _pending_block.setPrevBlockHash(_database->getLastBlockHash().getBytes());
             }
             _network->broadcastTransaction(transaction);
@@ -95,7 +95,7 @@ bc::Balance Blockchain::getBalance(const bc::Address& address) const
 
 void Blockchain::setupGenesis()
 {
-    std::lock_guard lk(_blocks_mutex);
+    std::lock_guard lk(_database_mutex);
     if(_database->getLastBlockHash() == base::getNullSha256().getBytes()) {
         ::bc::Transaction init_tx;
         init_tx.setTo(DISTRIBUTOR_ADDRESS);
@@ -111,7 +111,7 @@ void Blockchain::setupGenesis()
 
 void Blockchain::setupBalanceManager()
 {
-    std::lock_guard block_lk(_blocks_mutex);
+    std::lock_guard block_lk(_database_mutex);
     std::lock_guard balance_manager_lk(_balance_manager_mutex);
 
     auto all_blocks_hashes = _database->createAllBlockHashesList();
@@ -119,7 +119,7 @@ void Blockchain::setupBalanceManager()
     auto genesis_block = _database->getBlock(all_blocks_hashes.back());
     all_blocks_hashes.pop_back();
     _balance_manager = ::bc::BalanceManager(genesis_block.getTransactions());
-
+    auto temp = all_blocks_hashes.size();
     while(!all_blocks_hashes.empty()) {
         auto current_block = _database->getBlock(all_blocks_hashes.back());
         all_blocks_hashes.pop_back();
@@ -154,7 +154,7 @@ bool Blockchain::checkTransaction(const Transaction& tx) const
 bool Blockchain::checkBlock(const Block& block) const
 {
     const base::Sha256 block_hash = base::Sha256::compute(base::toBytes(block));
-    std::lock_guard lk(_blocks_mutex);
+    std::lock_guard lk(_database_mutex);
     if(_database->getLastBlockHash().getBytes() != block.getPrevBlockHash()) {
         // received block doesn't match our last
         return false;

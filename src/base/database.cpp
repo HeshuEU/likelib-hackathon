@@ -145,6 +145,7 @@ void Database::remove(const DatabaseKey& key)
 
 std::unique_ptr<Database> createDefaultDatabaseInstance(Directory const& path)
 {
+    createIfNotExists(path);
     return std::make_unique<base::Database>(path);
 }
 

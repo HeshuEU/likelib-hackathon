@@ -9,8 +9,6 @@
 #include "net/network.hpp"
 #include "bc/database_manager.hpp"
 
-#include <list>
-
 namespace bc
 {
 
@@ -38,9 +36,8 @@ class Blockchain
     //===================
     bool _is_running{false};
     //===================
-    std::list<Block> _blocks;
     std::unique_ptr<DatabaseManager> _database;
-    mutable std::recursive_mutex _blocks_mutex;
+    mutable std::recursive_mutex _database_mutex;
     //===================
     Block _pending_block;
     mutable std::recursive_mutex _pending_block_mutex;
