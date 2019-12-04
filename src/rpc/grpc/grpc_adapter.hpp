@@ -32,8 +32,6 @@ class GrpcAdapter final : public likelib::Node::Service
   private:
     std::shared_ptr<BaseRpc> _service;
 
-    static constexpr const char* LOG_ID = " |GRPC SERVICE| ";
-
     ::grpc::Status balance(
         grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response) override;
 

@@ -25,7 +25,7 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
         return result;
     }
     else {
-        RAISE_ERROR(::rpc::RpcError, status.error_message());
+        throw RpcError(status.error_message());
     }
 }
 
@@ -62,7 +62,7 @@ std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Addre
         return result;
     }
     else {
-        RAISE_ERROR(::rpc::RpcError, status.error_message());
+        throw RpcError(status.error_message());
     }
 }
 
@@ -83,6 +83,6 @@ std::string rpc::GrpcNodeClient::test(const std::string& test_request)
         return result;
     }
     else {
-        RAISE_ERROR(::rpc::RpcError, status.error_message());
+        throw RpcError(status.error_message());
     }
 }

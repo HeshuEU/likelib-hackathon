@@ -20,7 +20,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
         response->set_money(_service->balance(address));
     }
     catch(const base::Error& e) {
-        LOG_ERROR << LOG_ID << e.what();
+        LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
     return ::grpc::Status::OK;
@@ -39,7 +39,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
             _service->transaction(amount, from_address, to_address, base::Time::fromSeconds(creation_time)));
     }
     catch(const base::Error& e) {
-        LOG_ERROR << LOG_ID << e.what();
+        LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
 
@@ -54,7 +54,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
         response->set_message(_service->test(data));
     }
     catch(const base::Error& e) {
-        LOG_ERROR << LOG_ID << e.what();
+        LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
 
