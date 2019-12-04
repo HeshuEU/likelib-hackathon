@@ -4,7 +4,7 @@
 
 BOOST_AUTO_TEST_CASE(data_base_interafce_type_check_convertion)
 {
-    base::BaseDataType target_type = base::BaseDataType::TRANSACTION;
+    auto target_type = base::DatabaseKey::DataType::TRANSACTION;
     base::Bytes target_bytes(std::string("hfsdagblsafghlw5q34tfgbsfnewafb*&R23gbv"));
 
     base::DatabaseKey key_1(target_type, target_bytes);
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(data_base_test_1)
     }
 
     base::Database data_base(path_to_data_base_folder);
-    base::DatabaseKey target_key(base::BaseDataType::BLOCK, base::Bytes("testBlockKey"));
+    base::DatabaseKey target_key(base::DatabaseKey::DataType::BLOCK, base::Bytes("testBlockKey"));
     base::Bytes target_bytes(
         "sgfabvduflalfgfdnjknv fvfdvdbgdyfuobv7359t4-79898^#$%@#%&^*(*)afua   lcjnajfhvbadg ksd weufib34g 8vb");
 
