@@ -120,7 +120,21 @@ void Blockchain::onMinerFinished(Block&& block)
 
 bool Blockchain::checkTransaction(const Transaction& tx) const
 {
-    return true; // TODO: implement transaction verification (having same transaction and etc.)
+    if(!_balance_manager.checkTransaction(tx)) {
+        return false;
+    }
+    {
+        // TODO: optimize it of course
+        std::lock_guard lk(_blocks_mutex);
+        for(const auto& block : _blocks) {
+            for(const auto& transaction : block.getTransactions()) {
+                if(tx == transaction) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 
