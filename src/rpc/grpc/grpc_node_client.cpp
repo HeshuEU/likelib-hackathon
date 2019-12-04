@@ -43,7 +43,7 @@ std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Addre
     request_to_address->set_address(to_address.toString());
 
     auto request_transaction_time = new likelib::Time;
-    request_transaction_time->set_milliseconds_from_epoch(std::to_string(transaction_time.millisecondsInEpoch()));
+    request_transaction_time->set_seconds_from_epoch(std::to_string(transaction_time.secondsInEpoch()));
 
     likelib::Transaction request;
     request.set_allocated_amount(request_amount);
