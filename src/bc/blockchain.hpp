@@ -46,7 +46,6 @@ class Blockchain
     Miner _miner;
     //===================
     bc::BalanceManager _balance_manager;
-    mutable std::recursive_mutex _balance_manager_mutex;
     //===================
     std::unique_ptr<net::Network> _network;
 
@@ -66,7 +65,7 @@ class Blockchain
     void setupGenesis();
     //===================
     base::Bytes getMiningComplexity() const;
-    void onMinerFinished(Block block);
+    void onMinerFinished(Block&& block);
     //===================
     bool checkBlock(const Block& block) const;
     bool checkTransaction(const Transaction& tx) const;
