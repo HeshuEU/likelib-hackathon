@@ -32,11 +32,11 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
     auto from_address = request->from_address().address().c_str();
     auto to_address = request->to_address().address().c_str();
     auto amount = request->amount().money();
-    auto creation_time = std::stoul(request->creation_time().milliseconds_from_epoch());
+    auto creation_time = std::stoul(request->creation_time().seconds_from_epoch());
 
     try {
         response->set_hash_string(
-            _service->transaction(amount, from_address, to_address, base::Time::fromMilliseconds(creation_time)));
+            _service->transaction(amount, from_address, to_address, base::Time::fromSeconds(creation_time)));
     }
     catch(const base::Error& e) {
         LOG_ERROR << e.what();
