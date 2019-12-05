@@ -90,14 +90,4 @@ base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const T
     return oa << tx.getFrom() << tx.getTo() << tx.getAmount() << tx.getTimestamp();
 }
 
-
-void removeProcessedTransactions(std::vector<Transaction>& txs, const std::vector<Transaction>& processed)
-{
-    txs.erase(std::remove_if(txs.begin(), txs.end(),
-                  [&processed](const Transaction& tx) {
-                      return std::find(processed.begin(), processed.end(), tx) != processed.end();
-                  }),
-        txs.end());
-}
-
 } // namespace bc
