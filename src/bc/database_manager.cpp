@@ -1,6 +1,6 @@
 #include "database_manager.hpp"
 
-#include <type_traits>
+#include <algorithm>
 
 namespace
 {
@@ -38,12 +38,12 @@ DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block
     else {
         _database = base::createDefaultDatabaseInstance(base::Directory(database_path));
         if(!_database.exists(LAST_BLOCK_HASH_KEY)) {
-            RAISE_ERROR(::base::InvalidArgument, "Database has no block data");
+            RAISE_ERROR(base::InvalidArgument, "Database has no block data");
         }
         else {
             base::Bytes hash_data;
             _database.get(LAST_BLOCK_HASH_KEY, hash_data);
-            _last_block_hash = ::base::Sha256(std::move(hash_data));
+            _last_block_hash = base::Sha256(std::move(hash_data));
         }
     }
 }
@@ -51,7 +51,7 @@ DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block
 
 base::Sha256 DatabaseManager::addBlock(const bc::Block& block)
 {
-    std::unique_lock lk(_rw_mutex);
+    std::lock_guard lk(_rw_mutex);
     auto block_data = base::toBytes(block);
     auto block_hash = base::Sha256::compute(block_data);
     _database.put(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
@@ -63,7 +63,7 @@ base::Sha256 DatabaseManager::addBlock(const bc::Block& block)
 
 bool DatabaseManager::isBlockExists(const base::Sha256& blockHash) const
 {
-    std::lock_guard lk(_rw_mutex);
+    std::shared_lock lk(_rw_mutex);
     return _database.exists(toBytes(DataType::BLOCK, blockHash.getBytes()));
 }
 
@@ -71,7 +71,7 @@ bool DatabaseManager::isBlockExists(const base::Sha256& blockHash) const
 bc::Block DatabaseManager::getBlock(const base::Sha256& blockHash) const
 {
     if(isBlockExists(blockHash)) {
-        std::lock_guard lk(_rw_mutex);
+        std::shared_lock lk(_rw_mutex);
         base::Bytes block_data;
         _database.get(toBytes(DataType::BLOCK, blockHash.getBytes()), block_data);
         return base::fromBytes<::bc::Block>(block_data);
@@ -88,18 +88,19 @@ const base::Sha256& DatabaseManager::getLastBlockHash() const noexcept
 }
 
 
-std::list<base::Sha256> DatabaseManager::createAllBlockHashesList()
+std::vector<base::Sha256> DatabaseManager::createAllBlockHashesList()
 {
     // TODO: replace for blocks iterator
-    std::lock_guard lk(_rw_mutex);
-    ::std::list<::base::Sha256> all_blocks_hashes{};
-    ::base::Sha256 current_block_hash = getLastBlockHash();
+    std::shared_lock lk(_rw_mutex);
+    std::vector<::base::Sha256> all_blocks_hashes{};
+    base::Sha256 current_block_hash = getLastBlockHash();
     while(current_block_hash != base::Bytes(32)) {
-        all_blocks_hashes.push_front(current_block_hash);
+        all_blocks_hashes.push_back(current_block_hash);
         base::Bytes block_data;
         _database.get(toBytes(DataType::BLOCK, current_block_hash.getBytes()), block_data);
         current_block_hash = base::fromBytes<::bc::Block>(block_data).getPrevBlockHash();
     }
+    std::reverse(std::begin(all_blocks_hashes), std::end(all_blocks_hashes));
     return all_blocks_hashes;
 }
 

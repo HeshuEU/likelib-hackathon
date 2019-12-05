@@ -108,11 +108,11 @@ void Blockchain::setupBalanceManager()
     auto all_blocks_hashes = _database->createAllBlockHashesList();
 
     _balance_manager.updateFromGenesis(_database->getBlock(all_blocks_hashes.front()));
-    all_blocks_hashes.pop_front();
 
-    while(!all_blocks_hashes.empty()) {
-        _balance_manager.update(_database->getBlock(all_blocks_hashes.front()));
-        all_blocks_hashes.pop_front();
+    if(all_blocks_hashes.size() > 1){
+        for(std::size_t i = 0; i < all_blocks_hashes.size() ; i++) {
+            _balance_manager.update(_database->getBlock(all_blocks_hashes[i]));
+        }
     }
 }
 
@@ -141,15 +141,13 @@ bool Blockchain::checkTransaction(const Transaction& tx) const
     {
         // TODO: optimize it of course
         auto all_blocks_hashes = _database->createAllBlockHashesList();
-
-        while(!all_blocks_hashes.empty()) {
-            auto block = _database->getBlock(all_blocks_hashes.front());
+        for(const auto& block_hash : all_blocks_hashes) {
+            auto block = _database->getBlock(block_hash);
             for(const auto& transaction: block.getTransactions()) {
                 if(tx == transaction) {
                     return false;
                 }
             }
-            all_blocks_hashes.pop_front();
         }
     }
     return true;

@@ -28,8 +28,8 @@ class Database
     //=====================
   private:
     //======================
-    bool inited{false};
-    std::unique_ptr<leveldb::DB> _data_base;
+    bool _inited{false};
+    std::unique_ptr<leveldb::DB> _database;
     leveldb::ReadOptions _read_options;
     leveldb::WriteOptions _write_options;
     //=====================
