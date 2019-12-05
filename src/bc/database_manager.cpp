@@ -37,10 +37,7 @@ DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block
     }
     else {
         _database = base::createDefaultDatabaseInstance(base::Directory(database_path));
-        if(!_database.exists(LAST_BLOCK_HASH_KEY)) {
-            RAISE_ERROR(base::InvalidArgument, "Database has no block data");
-        }
-        else {
+        if(_database.exists(LAST_BLOCK_HASH_KEY)) {
             base::Bytes hash_data;
             _database.get(LAST_BLOCK_HASH_KEY, hash_data);
             _last_block_hash = base::Sha256(std::move(hash_data));
