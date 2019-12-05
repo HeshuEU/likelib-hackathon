@@ -22,7 +22,7 @@ class DatabaseManager
     bool isBlockExists(const ::base::Sha256& blockHash) const;
     ::bc::Block getBlock(const ::base::Sha256& blockHash) const;
     //=====================
-    ::base::Sha256 getLastBlockHash() const noexcept;
+    const ::base::Sha256& getLastBlockHash() const noexcept;
     //=====================
     ::std::list<::base::Sha256> createAllBlockHashesList();
     //=====================

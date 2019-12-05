@@ -5,46 +5,21 @@
 
 #include <leveldb/db.h>
 
-#include <string>
 #include <memory>
 
 namespace base
 {
 
-class DatabaseKey
-{
-  public:
-    enum class DataType
-    {
-        UNDEFINED = 1,
-        BLOCK = 2,
-        TRANSACTION = 3
-    };
-    //====================
-    DatabaseKey(DataType type, const Bytes& key) noexcept;
-    DatabaseKey(const Bytes& from_bytes);
-    //====================
-    Bytes toBytes() const;
-    //====================
-    DataType type() const;
-    Bytes key() const;
-    //====================
-  private:
-    DataType _type;
-    Bytes _key;
-    //====================
-};
-
 class Database
 {
   public:
-    Database(Directory const& path);
+    explicit Database(Directory const& path);
     ~Database() = default;
     //=====================
-    Bytes get(const DatabaseKey& key) const;
-    bool exists(const DatabaseKey& key) const;
-    void put(const DatabaseKey& key, const Bytes& value);
-    void remove(const DatabaseKey& key);
+    void get(const Bytes& key, Bytes& res) const;
+    bool exists(const Bytes& key) const;
+    void put(const Bytes& key, const Bytes& value);
+    void remove(const Bytes& key);
     //=====================
   private:
     //======================
