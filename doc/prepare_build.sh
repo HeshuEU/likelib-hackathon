@@ -9,7 +9,7 @@ if [ ! -f "${SCRIPT_DIR}/prepare_build.sh" ]; then
 fi
 
 # install dependencies
-apt-get install -y gcc g++ make build-essential wget git unzip tar curl
+apt-get install -y gcc g++ make build-essential wget git unzip tar curl clang-tidy
 
 if ! command -v cmake; then
   # install cmake
