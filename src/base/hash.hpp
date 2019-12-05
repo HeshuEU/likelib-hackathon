@@ -39,9 +39,6 @@ class Sha256
 };
 
 
-const Sha256& getNullSha256();
-
-
 class Sha1
 {
   public:

@@ -22,7 +22,7 @@ Blockchain::Blockchain(const base::PropertyTree& config)
 void Blockchain::processReceivedBlock(Block&& block)
 {
     LOG_DEBUG << "Block received. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
-    ASSERT(_database->getLastBlockHash() != base::getNullSha256());
+    ASSERT(_database->getLastBlockHash() != base::Bytes(32));
 
     if(checkBlock(block)) {
         _miner.dropJob();
@@ -88,7 +88,7 @@ bc::Balance Blockchain::getBalance(const bc::Address& address) const
 
 void Blockchain::setupGenesis()
 {
-    if(_database->getLastBlockHash() == base::getNullSha256().getBytes()) {
+    if(_database->getLastBlockHash() == base::Bytes(32)) {
         Block genesis;
         genesis.setNonce(0);
         genesis.setPrevBlockHash(base::Bytes(32));
