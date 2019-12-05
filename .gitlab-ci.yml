@@ -7,6 +7,8 @@ Build:
      - echo "Docker container build successfully"
 
 Code quality:
+  tags:
+    - custom-tag
   script:
     - echo "Start checking code quality"
     - docker run -it ${docker ps -n 1 -q} clang-tidy --version
