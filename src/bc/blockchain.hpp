@@ -47,20 +47,10 @@ class Blockchain
     //===================
     bc::BalanceManager _balance_manager;
     //===================
-    std::unique_ptr<net::Network> _network;
-
-    class NetworkHandler : public net::NetworkHandler
-    {
-      public:
-        NetworkHandler(Blockchain&);
-        void onBlockReceived(Block&& block) override;
-        void onTransactionReceived(Transaction&& tx) override;
-
-      private:
-        Blockchain& _bc;
-    };
-
-    NetworkHandler _network_handler;
+    net::Network _network;
+    void onNetworkReceived(base::Bytes&& data);
+    void broadcastBlock(const bc::Block& block);
+    void broadcastTransaction(const bc::Transaction& tx);
     //===================
     void setupGenesis();
     //===================

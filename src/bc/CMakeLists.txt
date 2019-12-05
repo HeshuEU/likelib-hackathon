@@ -3,6 +3,7 @@ set(BC_HEADERS
         block.hpp
         blockchain.hpp
         miner.hpp
+        packet.hpp
         transaction.hpp
         types.hpp
         balance_manager.hpp
@@ -14,6 +15,7 @@ set(BC_SOURCES
         block.cpp
         blockchain.cpp
         miner.cpp
+        packet.cpp
         transaction.cpp
         balance_manager.cpp
         transactions_set.cpp

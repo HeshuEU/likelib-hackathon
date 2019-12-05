@@ -101,6 +101,24 @@ typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::typ
 
 
 template<typename T>
+typename std::enable_if<std::is_enum<T>::value, SerializationIArchive&>::type SerializationIArchive::operator>>(T& v)
+{
+    typename std::underlying_type<T>::type value;
+    *this >> value;
+    v = static_cast<T>(value);
+    return *this;
+}
+
+
+template<typename T>
+typename std::enable_if<std::is_enum<T>::value, SerializationOArchive&>::type SerializationOArchive::operator<<(
+    const T& v)
+{
+    return *this << static_cast<typename std::underlying_type<T>>(v);
+}
+
+
+template<typename T>
 SerializationIArchive& operator>>(SerializationIArchive& ia, std::vector<T>& v)
 {
     std::size_t size;

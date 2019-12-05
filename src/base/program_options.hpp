@@ -81,7 +81,6 @@ class ProgramOptionsParser
   private:
     boost::program_options::options_description _options_description;
     boost::program_options::variables_map _options;
-
 };
 
 } // namespace base

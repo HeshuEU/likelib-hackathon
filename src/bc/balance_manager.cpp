@@ -53,15 +53,16 @@ void BalanceManager::update(const Transaction& tx)
 
 void BalanceManager::update(const Block& block)
 {
-    for(const auto& tx : block.getTransactions()) {
+    for(const auto& tx: block.getTransactions()) {
         update(tx);
     }
 }
 
 
-void BalanceManager::updateFromGenesis(const bc::Block &block) {
+void BalanceManager::updateFromGenesis(const bc::Block& block)
+{
     std::unique_lock lk(_rw_mutex);
-    for(const auto& tx : block.getTransactions()) {
+    for(const auto& tx: block.getTransactions()) {
         _storage[tx.getTo()] = tx.getAmount();
     }
 }

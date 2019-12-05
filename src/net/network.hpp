@@ -16,18 +16,13 @@
 namespace net
 {
 
-class NetworkHandler
-{
-  public:
-    virtual void onBlockReceived(bc::Block&&) = 0;
-    virtual void onTransactionReceived(bc::Transaction&&) = 0;
-};
-
 class Network
 {
   public:
     //===================
-    Network(const base::PropertyTree& config, NetworkHandler& handler);
+    using DataHandler = std::function<void(base::Bytes&&)>;
+    //===================
+    Network(const base::PropertyTree& config, DataHandler handler);
     ~Network();
     //===================
     void run();
@@ -36,8 +31,7 @@ class Network
     void connect(const Endpoint& address);
     void connect(const std::vector<Endpoint>& nodes);
     //===================
-    void broadcastBlock(const bc::Block& block);
-    void broadcastTransaction(const bc::Transaction& tx);
+    void broadcast(const base::Bytes& data);
     //===================
   private:
     //===================
@@ -59,9 +53,9 @@ class Network
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
-    void connectionReceivedPacketHandler(Connection& connection, const Packet& packet);
+    void onConnectionReceivedPacketHandler(Connection& connection, Packet&& packet);
+    DataHandler _data_handler;
     //===================
-    NetworkHandler& _handler;
 };
 
 } // namespace net

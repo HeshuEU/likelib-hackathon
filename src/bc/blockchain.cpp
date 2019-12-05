@@ -10,10 +10,9 @@ namespace bc
 
 Blockchain::Blockchain(const base::PropertyTree& config)
     : _config(config), _miner(config, std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1)),
-      _network_handler(*this)
+      _network{config, std::bind(&Blockchain::onNetworkReceived, this, std::placeholders::_1)}
 {
     setupGenesis();
-    _network = std::make_unique<net::Network>(config, _network_handler);
 }
 
 
@@ -70,7 +69,7 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
                 std::lock_guard lk1(_blocks_mutex);
                 _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
             }
-            _network->broadcastTransaction(transaction);
+            _network.broadcastTransaction(transaction);
             _miner.dropJob();
             _miner.findNonce(_pending_block, getMiningComplexity());
         }
@@ -114,7 +113,23 @@ base::Bytes Blockchain::getMiningComplexity() const
 void Blockchain::onMinerFinished(Block&& block)
 {
     addBlock(block);
-    _network->broadcastBlock(block);
+    broadcastBlock(block);
+}
+
+
+void Blockchain::onNetworkReceived(base::Bytes&& bytes)
+{}
+
+
+void Blockchain::broadcastBlock(const bc::Block& block)
+{
+    _network.broadcast(base::toBytes(block));
+}
+
+
+void Blockchain::broadcastTransaction(const bc::Transaction& tx)
+{
+    _network.broadcast(base::toBytes(transaction));
 }
 
 
@@ -126,8 +141,8 @@ bool Blockchain::checkTransaction(const Transaction& tx) const
     {
         // TODO: optimize it of course
         std::lock_guard lk(_blocks_mutex);
-        for(const auto& block : _blocks) {
-            for(const auto& transaction : block.getTransactions()) {
+        for(const auto& block: _blocks) {
+            for(const auto& transaction: block.getTransactions()) {
                 if(tx == transaction) {
                     return false;
                 }
@@ -147,7 +162,7 @@ bool Blockchain::checkBlock(const Block& block) const
         return false;
     }
 
-    for(const auto& tx : block.getTransactions()) {
+    for(const auto& tx: block.getTransactions()) {
         if(!_balance_manager.checkTransaction(tx)) {
             return false;
         }
@@ -160,32 +175,12 @@ bool Blockchain::checkBlock(const Block& block) const
 void Blockchain::run()
 {
     // run network processing loop
-    _network->run();
+    _network.run();
 
     // connect to all nodes, given in configuration file
     for(const auto& node_ip_string: _config.getVector<std::string>("nodes")) {
-        _network->connect(net::Endpoint{node_ip_string});
+        _network.connect(net::Endpoint{node_ip_string});
     }
 }
-
-
-//=======================================
-
-Blockchain::NetworkHandler::NetworkHandler(Blockchain& bc) : _bc{bc}
-{}
-
-
-void Blockchain::NetworkHandler::onBlockReceived(Block&& block)
-{
-    _bc.processReceivedBlock(std::move(block));
-}
-
-
-void Blockchain::NetworkHandler::onTransactionReceived(Transaction&& transaction)
-{
-    _bc.processReceivedTransaction(std::move(transaction));
-}
-
-//=======================================
 
 } // namespace bc

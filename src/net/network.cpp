@@ -14,10 +14,10 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Network::Network(const base::PropertyTree& config, NetworkHandler& handler)
+Network::Network(const base::PropertyTree& config, DataHandler handler)
     : _listen_ip{config.get<std::string>("net.listen_addr")},
-      _server_public_port{config.get<unsigned short>("net.public_port")}, _heartbeat_timer{_io_context}, _handler{
-                                                                                                             handler}
+      _server_public_port{config.get<unsigned short>("net.public_port")}, _heartbeat_timer{_io_context},
+      _data_handler(handler)
 {}
 
 
@@ -86,7 +86,7 @@ void Network::acceptLoop()
         else {
             auto connection = std::make_shared<Connection>(_io_context, std::move(socket),
                 std::bind(
-                    &Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
+                    &Network::onConnectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
             LOG_INFO << "Connection accepted: " << connection->getEndpoint();
             connection->startReceivingMessages();
             _connections.push_back(std::move(connection));
@@ -128,8 +128,8 @@ void Network::connect(const net::Endpoint& address)
             }
             else {
                 auto connection = std::make_shared<Connection>(_io_context, std::move(*socket.release()),
-                    std::bind(
-                        &Network::connectionReceivedPacketHandler, this, std::placeholders::_1, std::placeholders::_2));
+                    std::bind(&Network::onConnectionReceivedPacketHandler, this, std::placeholders::_1,
+                        std::placeholders::_2));
                 LOG_INFO << "Connection established: " << connection->getEndpoint();
 
                 connection->setServerEndpoint(address);
@@ -171,7 +171,7 @@ void Network::dropZombieConnections()
 }
 
 
-void Network::connectionReceivedPacketHandler(Connection& connection, const net::Packet& packet)
+void Network::onConnectionReceivedPacketHandler(Connection& connection, net::Packet&& packet)
 {
     LOG_DEBUG << "RECEIVED [" << enumToString(packet.getType()) << ']';
     switch(packet.getType()) {
@@ -198,6 +198,7 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
             break;
         }
         case PacketType::DATA: {
+            _data_handler(std::move(packet).getData());
             break;
         }
         case PacketType::DISCOVERY_REQ: {
@@ -236,14 +237,6 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
             }
             break;
         }
-        case PacketType::BLOCK: {
-            _handler.onBlockReceived(base::fromBytes<bc::Block>(packet.getData()));
-            break;
-        }
-        case PacketType::TRANSACTION: {
-            _handler.onTransactionReceived(base::fromBytes<bc::Transaction>(packet.getData()));
-            break;
-        }
         default: {
             LOG_WARNING << "Received an invalid packet from " << connection.getEndpoint();
             break;
@@ -252,24 +245,14 @@ void Network::connectionReceivedPacketHandler(Connection& connection, const net:
 }
 
 
-void Network::broadcastBlock(const bc::Block& block)
+void Network::broadcast(const base::Bytes& data)
 {
-    LOG_DEBUG << "Broadcasting block. Its hash " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
-    auto serialized_block = base::toBytes(block);
-    Packet packet(PacketType::BLOCK);
-    packet.setData(base::toBytes(block));
-    for(auto& connection: _connections) {
-        connection->send(packet);
-    }
-}
+    Packet p;
+    p.setType(PacketType::DATA);
+    p.setData(data);
 
-
-void Network::broadcastTransaction(const bc::Transaction& tx)
-{
-    Packet p(PacketType::TRANSACTION);
-    p.setData(base::toBytes(tx));
-    for(auto& connection: _connections) {
-        connection->send(p);
+    for(auto& c: _connections) {
+        c->send(packet);
     }
 }
 

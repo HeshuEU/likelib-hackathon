@@ -145,8 +145,7 @@ void Miner::stop()
 namespace impl
 {
 
-    MinerWorker::MinerWorker(CommonState& common_state)
-        : _common_state{common_state}
+    MinerWorker::MinerWorker(CommonState& common_state) : _common_state{common_state}
     {
         _worker_thread = std::thread(&MinerWorker::worker, this);
     }

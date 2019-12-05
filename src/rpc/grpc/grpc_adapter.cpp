@@ -11,8 +11,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
     _service = service;
 }
 
-::grpc::Status GrpcAdapter::balance(
-    grpc::ServerContext*, const likelib::Address* request, likelib::Money* response)
+::grpc::Status GrpcAdapter::balance(grpc::ServerContext*, const likelib::Address* request, likelib::Money* response)
 {
     auto address = request->address().c_str();
 
