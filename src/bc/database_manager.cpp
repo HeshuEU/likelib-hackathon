@@ -64,13 +64,14 @@ base::Sha256 DatabaseManager::getLastBlockHash() const noexcept
 
 std::list<base::Sha256> DatabaseManager::createAllBlockHashesList()
 {
-    //TODO: replace for blocks iterator
+    // TODO: replace for blocks iterator
     std::shared_lock lk(_rw_mutex);
     ::std::list<::base::Sha256> all_blocks_hashes{};
     ::base::Sha256 current_block_hash = getLastBlockHash();
     while(current_block_hash != base::getNullSha256()) {
         all_blocks_hashes.push_front(current_block_hash);
-        auto block_data = _database->get(base::DatabaseKey{base::DatabaseKey::DataType::BLOCK, current_block_hash.getBytes()});
+        auto block_data =
+            _database->get(base::DatabaseKey{base::DatabaseKey::DataType::BLOCK, current_block_hash.getBytes()});
         current_block_hash = base::fromBytes<::bc::Block>(block_data).getPrevBlockHash();
     }
     return all_blocks_hashes;

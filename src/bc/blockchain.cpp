@@ -55,7 +55,7 @@ void Blockchain::addBlock(const Block& block)
 }
 
 
-void Blockchain::processReceivedTransaction(Transaction&& transaction)
+bool Blockchain::processReceivedTransaction(Transaction&& transaction)
 {
     LOG_DEBUG << "Received transaction. From: " << transaction.getFrom().toString()
               << " To: " << transaction.getTo().toString() << " Amount:" << transaction.getAmount()
@@ -63,7 +63,7 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
 
     if(!checkTransaction(transaction)) {
         LOG_INFO << "Received an invalid transaction";
-        return;
+        return false;
     }
     else {
         std::lock_guard lk(_pending_block_mutex);
@@ -73,7 +73,9 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
             _network->broadcastTransaction(transaction);
             _miner.dropJob();
             _miner.findNonce(_pending_block, getMiningComplexity());
+            return true;
         }
+        return false;
     }
 }
 

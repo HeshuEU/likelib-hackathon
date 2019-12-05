@@ -31,8 +31,12 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
               << to_address.toString() << "], amount[" << amount << "], transaction_time["
               << transaction_time.secondsInEpoch() << "]";
 
-    _bc->processReceivedTransaction(bc::Transaction(from_address, to_address, amount, transaction_time));
-    return "likelib";
+    if(_bc->processReceivedTransaction(bc::Transaction(from_address, to_address, amount, transaction_time))) {
+        return "Transaction was received and added to queue.";
+    }
+    else {
+        return "Transaction was not approved";
+    }
 }
 
 std::string GeneralServerService::test(const std::string& test_request)

@@ -24,7 +24,7 @@ class Blockchain
     void run();
     //===================
     void processReceivedBlock(Block&& block);
-    void processReceivedTransaction(Transaction&& transaction);
+    bool processReceivedTransaction(Transaction&& transaction);
     //===================
     void addBlock(const Block& block);
     //===================
