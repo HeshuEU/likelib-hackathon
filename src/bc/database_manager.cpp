@@ -34,8 +34,10 @@ DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block
     auto database_path = config.get<std::string>("database.path");
     if(config.get<bool>("database.clean")) {
         _database = base::createClearDatabaseInstance(base::Directory(database_path));
+        LOG_INFO << "Created clear database instance.";
     }
     else {
+        LOG_INFO << "Try to load database by path: " << database_path;
         _database = base::createDefaultDatabaseInstance(base::Directory(database_path));
         if(_database.exists(LAST_BLOCK_HASH_KEY)) {
             base::Bytes hash_data;
