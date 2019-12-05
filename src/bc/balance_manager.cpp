@@ -1,27 +1,14 @@
 #include "balance_manager.hpp"
 
-#include "base/assert.hpp"
 #include "base/error.hpp"
 
 namespace bc
 {
 
-BalanceManager::BalanceManager(const TransactionsSet& tx_set)
-{
-    for(auto tx: tx_set) {
-        auto it = _storage.find(tx.getFrom());
-        if(it == _storage.end()) {
-            _storage[tx.getTo()] += tx.getAmount();
-        }
-        else {
-            _storage[tx.getTo()] = tx.getAmount();
-        }
-    }
-}
-
 
 Balance BalanceManager::getBalance(const Address& address) const
 {
+    std::shared_lock lk(_rw_mutex);
     auto it = _storage.find(address);
     if(it == _storage.end()) {
         return Balance{0};
@@ -32,7 +19,7 @@ Balance BalanceManager::getBalance(const Address& address) const
 }
 
 
-bool BalanceManager::checkTransaction(const Transaction& tx)
+bool BalanceManager::checkTransaction(const Transaction& tx) const
 {
     return getBalance(tx.getFrom()) >= tx.getAmount();
 }
@@ -40,16 +27,37 @@ bool BalanceManager::checkTransaction(const Transaction& tx)
 
 void BalanceManager::update(const Transaction& tx)
 {
-    ASSERT(getBalance(tx.getFrom()) >= tx.getAmount());
-
+    std::unique_lock lk(_rw_mutex);
     auto from_iter = _storage.find(tx.getFrom());
 
-    from_iter->second = from_iter->second - tx.getAmount();
+    if(from_iter == _storage.end()) {
+        RAISE_ERROR(base::LogicError, "account doesn't have entry in balances db");
+    }
+    else if(from_iter->second < tx.getAmount()) {
+        RAISE_ERROR(base::LogicError, "account doesn't have enough funds to perform the operation");
+    }
 
+    from_iter->second = from_iter->second - tx.getAmount();
     if(auto to_iter = _storage.find(tx.getTo()); to_iter != _storage.end()) {
         to_iter->second += tx.getAmount();
     }
     else {
+        _storage[tx.getTo()] = tx.getAmount();
+    }
+}
+
+
+void BalanceManager::update(const Block& block)
+{
+    for(const auto& tx : block.getTransactions()) {
+        update(tx);
+    }
+}
+
+
+void BalanceManager::updateFromGenesis(const bc::Block &block) {
+    std::unique_lock lk(_rw_mutex);
+    for(const auto& tx : block.getTransactions()) {
         _storage[tx.getTo()] = tx.getAmount();
     }
 }

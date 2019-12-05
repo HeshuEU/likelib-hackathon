@@ -22,6 +22,8 @@ namespace impl
 {
     class MinerWorker;
 
+    using MinerHandlerType = std::function<void(Block&&)>;
+
     enum class Task
     {
         NONE,
@@ -29,6 +31,43 @@ namespace impl
         FIND_NONCE,
         EXIT
     };
+
+
+    struct CommonData
+    {
+        impl::Task task;
+        std::optional<Block> block_to_mine;
+        std::optional<base::Bytes> complexity;
+    };
+
+
+    class CommonState
+    {
+      public:
+        //===================
+        CommonState(CommonData&& initial_state, MinerHandlerType handler);
+        //===================
+        std::size_t getVersion() const;
+        //===================
+        [[maybe_unused]] std::size_t getCommonData(CommonData& data) const;
+        void setCommonData(const CommonData& data);
+        //===================
+        template<typename... Args>
+        void callHandlerAndDrop(Args&&... args);
+        //===================
+        void waitAndReadNewData(std::size_t& last_read_version, CommonData& data);
+        //===================
+      private:
+        //===================
+        mutable std::shared_mutex _state_mutex;
+        std::condition_variable_any _state_changed_cv;
+        std::atomic<std::size_t> _version;
+        //===================
+        CommonData _common_data;
+        MinerHandlerType _handler;
+        //===================
+    };
+
 } // namespace impl
 
 
@@ -36,26 +75,20 @@ class Miner
 {
   public:
     //===================
-    using HandlerType = std::function<void(Block&&)>;
+    using HandlerType = impl::MinerHandlerType;
     //===================
     Miner(const base::PropertyTree& config, HandlerType handler);
 
     ~Miner();
     //===================
-    void findNonce(const Block& block_without_nonce);
+    void findNonce(const Block& block_without_nonce, const base::Bytes& complexity);
     void dropJob();
     //===================
   private:
     //===================
-    HandlerType _handler;
+    impl::CommonState _common_state;
     //===================
     std::forward_list<impl::MinerWorker> _workers;
-    //===================
-    impl::Task _task;
-    std::optional<Block> _block_to_mine;
-    std::atomic<std::size_t> _job_version;
-    mutable std::shared_mutex _state_mutex;
-    std::condition_variable_any _state_changed_cv;
     //===================
     void stop();
     //===================

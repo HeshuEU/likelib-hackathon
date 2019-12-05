@@ -18,7 +18,11 @@ By default it is config.json file of the following format:
     "nodes": [
         "127.0.0.1:20204",
         "127.0.0.1:20205"
-    ]
+    ],
+    "database": {
+        "path": "likelib/database",
+        "clean": false
+    }
 }
 ```
 
@@ -30,6 +34,8 @@ Such things as port-forwarding with NAT, may change the port we need to connect 
 * `rpc.address` - address on which RPC is listening on;
 * `miner.threads` - optional parameter, sets the number of threads that miner is using;
 * `nodes` - list of known nodes.
+* `database.path` - path to folder with database files (will be created if not exists).
+* `database.clean` - bool flag. Remove add database folder if set true. If set false - do nothing.
 
 ---
 

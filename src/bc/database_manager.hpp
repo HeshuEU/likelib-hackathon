@@ -7,6 +7,7 @@
 #include "base/property_tree.hpp"
 
 #include <list>
+#include <shared_mutex>
 
 namespace bc
 {
@@ -21,13 +22,14 @@ class DatabaseManager
     bool isBlockExists(const ::base::Sha256& blockHash) const;
     ::bc::Block getBlock(const ::base::Sha256& blockHash) const;
     //=====================
-    ::base::Sha256 getLastBlockHash() const;
+    ::base::Sha256 getLastBlockHash() const noexcept;
     //=====================
     ::std::list<::base::Sha256> createAllBlockHashesList();
     //=====================
   private:
     //=====================
     std::unique_ptr<base::Database> _database;
+    mutable std::shared_mutex _rw_mutex;
     ::base::Sha256 _last_block_hash;
     //==============================
 };

@@ -3,10 +3,10 @@
 namespace bc
 {
 
-const base::DatabaseKey LAST_BLOCK_HASH_KEY{base::DatabaseKey::DataType::UNDEFINED, ::base::Bytes("last_block_hash")};
+const base::DatabaseKey LAST_BLOCK_HASH_KEY{base::DatabaseKey::DataType::UNDEFINED, base::Bytes("last_block_hash")};
 
 
-DatabaseManager::DatabaseManager(const ::base::PropertyTree& config) : _last_block_hash(base::getNullSha256())
+DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block_hash(base::getNullSha256())
 {
     auto database_path = config.get<std::string>("database.path");
     if(config.get<bool>("database.clean")) {
@@ -24,8 +24,9 @@ DatabaseManager::DatabaseManager(const ::base::PropertyTree& config) : _last_blo
 }
 
 
-::base::Sha256 DatabaseManager::addBlock(const ::bc::Block& block)
+base::Sha256 DatabaseManager::addBlock(const bc::Block& block)
 {
+    std::shared_lock lk(_rw_mutex);
     auto block_data = base::toBytes(block);
     auto block_hash = base::Sha256::compute(block_data);
     _database->put(base::DatabaseKey{base::DatabaseKey::DataType::BLOCK, block_hash.getBytes()}, block_data);
@@ -35,17 +36,19 @@ DatabaseManager::DatabaseManager(const ::base::PropertyTree& config) : _last_blo
 }
 
 
-bool DatabaseManager::isBlockExists(const ::base::Sha256& blockHash) const
+bool DatabaseManager::isBlockExists(const base::Sha256& blockHash) const
 {
+    std::shared_lock lk(_rw_mutex);
     return _database->exists(base::DatabaseKey{base::DatabaseKey::DataType::BLOCK, blockHash.getBytes()});
 }
 
 
-::bc::Block DatabaseManager::getBlock(const ::base::Sha256& blockHash) const
+bc::Block DatabaseManager::getBlock(const base::Sha256& blockHash) const
 {
     if(isBlockExists(blockHash)) {
+        std::shared_lock lk(_rw_mutex);
         auto block_data = _database->get(base::DatabaseKey{base::DatabaseKey::DataType::BLOCK, blockHash.getBytes()});
-        return ::base::fromBytes<::bc::Block>(block_data);
+        return base::fromBytes<::bc::Block>(block_data);
     }
     else {
         RAISE_ERROR(base::InvalidArgument, "No such block exists");
@@ -53,20 +56,22 @@ bool DatabaseManager::isBlockExists(const ::base::Sha256& blockHash) const
 }
 
 
-::base::Sha256 DatabaseManager::getLastBlockHash() const
+base::Sha256 DatabaseManager::getLastBlockHash() const noexcept
 {
     return _last_block_hash;
 }
 
 
-::std::list<::base::Sha256> DatabaseManager::createAllBlockHashesList()
+std::list<base::Sha256> DatabaseManager::createAllBlockHashesList()
 {
-    ::bc::Block current_block;
+    //TODO: replace for blocks iterator
+    std::shared_lock lk(_rw_mutex);
     ::std::list<::base::Sha256> all_blocks_hashes{};
-    for(::base::Sha256 current_block_hash = getLastBlockHash(); current_block_hash != base::getNullSha256();
-        current_block_hash = current_block.getPrevBlockHash()) {
-        all_blocks_hashes.push_back(current_block_hash);
-        current_block = getBlock(current_block_hash);
+    ::base::Sha256 current_block_hash = getLastBlockHash();
+    while(current_block_hash != base::getNullSha256()) {
+        all_blocks_hashes.push_front(current_block_hash);
+        auto block_data = _database->get(base::DatabaseKey{base::DatabaseKey::DataType::BLOCK, current_block_hash.getBytes()});
+        current_block_hash = base::fromBytes<::bc::Block>(block_data).getPrevBlockHash();
     }
     return all_blocks_hashes;
 }
