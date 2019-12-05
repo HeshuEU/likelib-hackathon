@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
 }
 
 
-BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
+BOOST_AUTO_TEST_CASE(serialization_operators_input_output_Bytes)
 {
     base::SerializationOArchive oa;
     std::vector<char> v1{'f', '!', '*', 'a'};
@@ -62,4 +62,80 @@ BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
     BOOST_CHECK(v2 == v22);
     BOOST_CHECK(v3 == v33);
     BOOST_CHECK(v4 == v44);
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_operators_input_output_string)
+{
+    base::SerializationOArchive oa;
+    std::string str1 = "\n dfg345 Talant\n >12";
+    std::string str2 = " _Krek +-* \n\n \\ \\\\";
+    std::string str3 = "  !*_ sdf * 345 vbm  ?  \n";
+    std::string str4;
+    oa << str1 << str2 << str3 << str4 << "refhu\n / sdfg// w04541(!&$ \\";
+
+    base::SerializationIArchive ia(oa.getBytes());
+    std::string s1, s2, s3, s4, s5;
+    ia >> s1 >> s2 >> s3 >> s4 >> s5;
+    BOOST_CHECK(str1 == s1);
+    BOOST_CHECK(str2 == s2);
+    BOOST_CHECK(str3 == s3);
+    BOOST_CHECK(str4 == s4);
+    BOOST_CHECK(s5 == "refhu\n / sdfg// w04541(!&$ \\");
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_operators_input_output_combo)
+{
+    base::SerializationOArchive oa;
+    std::string str1 = "\n sdfwg23793 238 JS sdf! //";
+    int i1 = 345;
+    base::Bytes bytes1{"359 sdf 54986 \n // ]\\ sdfe"};
+    long long ll1 = 90000000000;
+    std::vector<unsigned long long> arr1{29385710293, 9234825982, 2348, 92312039, 345986};
+    oa << str1 << i1 << bytes1 << ll1 << arr1 << "Combined test \n / sdf @$()29 ";
+
+    base::SerializationIArchive ia(oa.getBytes());
+    std::string str2;
+    int i2;
+    base::Bytes bytes2;
+    long long ll2;
+    std::vector<unsigned long long> arr2;
+    std::string str_t;
+    ia >> str2 >> i2 >> bytes2 >> ll2 >> arr2 >> str_t;
+    BOOST_CHECK(str1 == str2);
+    BOOST_CHECK(i1 == i2);
+    BOOST_CHECK(bytes1 == bytes2);
+    BOOST_CHECK(ll1 == ll2);
+    BOOST_CHECK(arr1 == arr2);
+    BOOST_CHECK(str_t == "Combined test \n / sdf @$()29 ");
+}
+
+BOOST_AUTO_TEST_CASE(serialization_fromBytes1)
+{
+    base::Bytes bytes{"fjdgl 230594 @ 235^#$ <ddfGDDFlsg SADFSD4awd4"};
+    
+    auto b2 = base::toBytes(bytes);
+    auto s = base::fromBytes<std::string>(b2);
+    BOOST_CHECK(s == bytes.toString());
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_fromBytes2)
+{
+    std::string str{"fjdgl 230594 @ 235^#$ <ddfGDDFlsg SADFSD4awd4"};
+    
+    auto b = base::toBytes(str);
+    auto s = base::fromBytes<std::string>(b);
+    BOOST_CHECK(s == str);
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_fromBytes3)
+{
+    long long ll = 9875423847583;
+
+    auto b= base::toBytes(ll);
+    auto ll2 = base::fromBytes<long long>(b);
+    BOOST_CHECK(ll2 == ll);
 }
