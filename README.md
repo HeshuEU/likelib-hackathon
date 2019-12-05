@@ -35,7 +35,7 @@ Such things as port-forwarding with NAT, may change the port we need to connect 
 * `miner.threads` - optional parameter, sets the number of threads that miner is using;
 * `nodes` - list of known nodes.
 * `database.path` - path to folder with database files (will be created if not exists).
-* `database.clean` - bool flag. Remove add database folder if set true. If set false - do nothing.
+* `database.clean` - if true - cleans database; otherwise does nothing.
 
 ---
 
