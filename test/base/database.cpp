@@ -11,20 +11,20 @@ BOOST_AUTO_TEST_CASE(data_base_test_1)
     base::Bytes target_key("test key");
     auto data_base = base::createClearDatabaseInstance(path_to_data_base_folder);
 
-    data_base->put(target_key, target_bytes);
+    data_base.put(target_key, target_bytes);
 
-    BOOST_CHECK(data_base->exists(target_key));
+    BOOST_CHECK(data_base.exists(target_key));
 
-    data_base->remove(target_key);
+    data_base.remove(target_key);
 
-    BOOST_CHECK(!data_base->exists(target_key));
+    BOOST_CHECK(!data_base.exists(target_key));
 
-    data_base->put(target_key, target_bytes);
+    data_base.put(target_key, target_bytes);
 
-    BOOST_CHECK(data_base->exists(target_key));
+    BOOST_CHECK(data_base.exists(target_key));
 
     base::Bytes target_bytes_2;
-    data_base->get(target_key, target_bytes_2);
+    data_base.get(target_key, target_bytes_2);
 
     BOOST_CHECK_EQUAL(target_bytes.toString(), target_bytes_2.toString());
 

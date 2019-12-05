@@ -5,19 +5,31 @@
 namespace base
 {
 
-Database::Database(Directory const& path) : _read_options(defaultReadOptions()), _write_options(defaultWriteOptions())
+Database::Database(Directory const& path)
 {
+    open(path);
+}
+
+
+void Database::open(Directory const& path)
+{
+    _read_options = defaultReadOptions();
+    _write_options = defaultWriteOptions();
     leveldb::DB* data_base = nullptr;
     auto const status = leveldb::DB::Open(defaultDBOptions(), path.string(), &data_base);
     if(!status.ok() || data_base == nullptr) {
         RAISE_ERROR(base::DatabaseError, "Failed to create data base instance.");
     }
     _data_base.reset(data_base);
+    inited = true;
 }
 
 
 void Database::get(const Bytes& key, Bytes& res) const
 {
+    if(!inited) {
+        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
+    }
     std::string value;
     auto const status = _data_base->Get(_read_options, key.toString(), &value);
     if(!status.ok()) {
@@ -31,6 +43,9 @@ void Database::get(const Bytes& key, Bytes& res) const
 
 bool Database::exists(const Bytes& key) const
 {
+    if(!inited) {
+        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
+    }
     std::string value;
     auto const status = _data_base->Get(_read_options, key.toString(), &value);
     if(status.IsNotFound()) {
@@ -45,6 +60,9 @@ bool Database::exists(const Bytes& key) const
 
 void Database::put(const Bytes& key, const Bytes& value)
 {
+    if(!inited) {
+        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
+    }
     auto const status = _data_base->Put(_write_options, key.toString(), value.toString());
     if(!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
@@ -54,6 +72,9 @@ void Database::put(const Bytes& key, const Bytes& value)
 
 void Database::remove(const Bytes& key)
 {
+    if(!inited) {
+        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
+    }
     auto const status = _data_base->Delete(_write_options, key.toString());
     if(!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
@@ -83,14 +104,13 @@ leveldb::Options Database::defaultDBOptions()
 }
 
 
-std::unique_ptr<Database> createDefaultDatabaseInstance(Directory const& path)
+Database createDefaultDatabaseInstance(Directory const& path)
 {
     createIfNotExists(path);
-    return std::make_unique<Database>(path);
+    return std::move(Database(path));
 }
 
-
-std::unique_ptr<Database> createClearDatabaseInstance(Directory const& path)
+Database createClearDatabaseInstance(Directory const& path)
 {
     if(std::filesystem::exists(path)) {
         std::filesystem::remove_all(path);

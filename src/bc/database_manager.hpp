@@ -28,7 +28,7 @@ class DatabaseManager
     //=====================
   private:
     //=====================
-    std::unique_ptr<base::Database> _database;
+    base::Database _database;
     mutable std::shared_mutex _rw_mutex;
     ::base::Sha256 _last_block_hash;
     //==============================
