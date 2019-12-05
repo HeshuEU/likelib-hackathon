@@ -4,15 +4,31 @@
 #include "base/log.hpp"
 #include "net/network.hpp"
 
+namespace
+{
+
+const bc::Block& generateGenesis()
+{
+    static bc::Block genesis;
+    genesis.setNonce(0);
+    genesis.setPrevBlockHash(base::Bytes(32));
+
+    static const bc::Address BASE_ADDRESS{std::string(32, '0')};
+    static const bc::Balance BASE_MONEY_AMOUNT = 0xffffffff;
+
+    genesis.addTransaction({BASE_ADDRESS, BASE_ADDRESS, BASE_MONEY_AMOUNT, base::Time()});
+    return genesis;
+}
+
+} // namespace
 
 namespace bc
 {
 
 Blockchain::Blockchain(const base::PropertyTree& config)
-    : _config(config), _miner(config, std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1)),
-      _network_handler(*this)
+    : _config(config), _database(config),
+      _miner(config, std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1)), _network_handler(*this)
 {
-    _database = std::make_unique<bc::DatabaseManager>(config);
     setupGenesis();
     setupBalanceManager();
     _network = std::make_unique<net::Network>(config, _network_handler);
@@ -22,7 +38,7 @@ Blockchain::Blockchain(const base::PropertyTree& config)
 void Blockchain::processReceivedBlock(Block&& block)
 {
     LOG_DEBUG << "Block received. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
-    ASSERT(_database->getLastBlockHash() != base::Bytes(32));
+    ASSERT(_database.getLastBlockHash() != base::Bytes(32));
 
     if(checkBlock(block)) {
         _miner.dropJob();
@@ -39,8 +55,9 @@ void Blockchain::processReceivedBlock(Block&& block)
 
 void Blockchain::addBlock(const Block& block)
 {
-    LOG_DEBUG << "Adding block. Block hash = " << base::Sha256::compute(base::toBytes(block)).getBytes().toHex();
-    _database->addBlock(block);
+    auto block_hash = base::Sha256::compute(base::toBytes(block));
+    LOG_DEBUG << "Adding block. Block hash = " << block_hash.getBytes().toHex();
+    _database.addBlock(block_hash, block);
     std::lock_guard lk(_pending_block_mutex);
     auto pending_transactions = _pending_block.getTransactions();
     for(const auto& tx: block.getTransactions()) {
@@ -69,7 +86,7 @@ bool Blockchain::processReceivedTransaction(Transaction&& transaction)
         std::lock_guard lk(_pending_block_mutex);
         if(!_pending_block.getTransactions().find(transaction)) {
             _pending_block.addTransaction(transaction);
-            _pending_block.setPrevBlockHash(_database->getLastBlockHash().getBytes());
+            _pending_block.setPrevBlockHash(_database.getLastBlockHash().getBytes());
             _network->broadcastTransaction(transaction);
             _miner.dropJob();
             _miner.findNonce(_pending_block, getMiningComplexity());
@@ -88,30 +105,31 @@ bc::Balance Blockchain::getBalance(const bc::Address& address) const
 
 void Blockchain::setupGenesis()
 {
-    if(_database->getLastBlockHash() == base::Bytes(32)) {
-        Block genesis;
-        genesis.setNonce(0);
-        genesis.setPrevBlockHash(base::Bytes(32));
-
-        static const bc::Address BASE_ADDRESS{std::string(32, '0')};
-        static const bc::Balance BASE_MONEY_AMOUNT = 0xffffffff;
-
-        genesis.addTransaction({BASE_ADDRESS, BASE_ADDRESS, BASE_MONEY_AMOUNT, base::Time()});
-        _database->addBlock(genesis);
+    if(_database.getLastBlockHash() == base::Bytes(32)) {
+        auto genesis = generateGenesis();
+        auto genesis_hash = base::Sha256::compute(base::toBytes(genesis));
+        _database.addBlock(genesis_hash, genesis);
         _balance_manager.updateFromGenesis(genesis);
+    }
+    else {
+        auto genesis_hash = base::Sha256::compute(base::toBytes(generateGenesis()));
+        auto all_blocks_hashes = _database.createAllBlockHashesList();
+        if(genesis_hash != all_blocks_hashes.front()) {
+            RAISE_ERROR(base::LogicError, "genesis block does not match genesis block from database");
+        }
     }
 }
 
 
 void Blockchain::setupBalanceManager()
 {
-    auto all_blocks_hashes = _database->createAllBlockHashesList();
+    auto all_blocks_hashes = _database.createAllBlockHashesList();
 
-    _balance_manager.updateFromGenesis(_database->getBlock(all_blocks_hashes.front()));
+    _balance_manager.updateFromGenesis(_database.getBlock(all_blocks_hashes.front()));
 
-    if(all_blocks_hashes.size() > 1){
-        for(std::size_t i = 0; i < all_blocks_hashes.size() ; i++) {
-            _balance_manager.update(_database->getBlock(all_blocks_hashes[i]));
+    if(all_blocks_hashes.size() > 1) {
+        for(std::size_t i = 0; i < all_blocks_hashes.size(); i++) {
+            _balance_manager.update(_database.getBlock(all_blocks_hashes[i]));
         }
     }
 }
@@ -140,9 +158,9 @@ bool Blockchain::checkTransaction(const Transaction& tx) const
     }
     {
         // TODO: optimize it of course
-        auto all_blocks_hashes = _database->createAllBlockHashesList();
-        for(const auto& block_hash : all_blocks_hashes) {
-            auto block = _database->getBlock(block_hash);
+        auto all_blocks_hashes = _database.createAllBlockHashesList();
+        for(const auto& block_hash: all_blocks_hashes) {
+            auto block = _database.getBlock(block_hash);
             for(const auto& transaction: block.getTransactions()) {
                 if(tx == transaction) {
                     return false;
@@ -158,7 +176,7 @@ bool Blockchain::checkBlock(const Block& block) const
 {
     const base::Sha256 block_hash = base::Sha256::compute(base::toBytes(block));
 
-    if(_database->getLastBlockHash().getBytes() != block.getPrevBlockHash()) {
+    if(_database.getLastBlockHash().getBytes() != block.getPrevBlockHash()) {
         // received block doesn't match our last
         return false;
     }

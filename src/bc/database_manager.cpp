@@ -46,15 +46,15 @@ DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block
 }
 
 
-base::Sha256 DatabaseManager::addBlock(const bc::Block& block)
+void DatabaseManager::addBlock(const base::Sha256& block_hash, const bc::Block& block)
 {
-    std::lock_guard lk(_rw_mutex);
     auto block_data = base::toBytes(block);
-    auto block_hash = base::Sha256::compute(block_data);
+    {
+    std::lock_guard lk(_rw_mutex);
     _database.put(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
     _database.put(LAST_BLOCK_HASH_KEY, block_hash.getBytes());
+    }
     _last_block_hash = block_hash;
-    return block_hash;
 }
 
 
@@ -85,7 +85,7 @@ const base::Sha256& DatabaseManager::getLastBlockHash() const noexcept
 }
 
 
-std::vector<base::Sha256> DatabaseManager::createAllBlockHashesList()
+std::vector<base::Sha256> DatabaseManager::createAllBlockHashesList() const
 {
     // TODO: replace for blocks iterator
     std::shared_lock lk(_rw_mutex);

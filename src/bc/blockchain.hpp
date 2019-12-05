@@ -36,7 +36,7 @@ class Blockchain
     //===================
     bool _is_running{false};
     //===================
-    std::unique_ptr<DatabaseManager> _database;
+    DatabaseManager _database;
     //===================
     Block _pending_block;
     mutable std::recursive_mutex _pending_block_mutex;
