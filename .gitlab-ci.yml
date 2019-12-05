@@ -6,3 +6,10 @@ Build:
      - docker build .
      - echo "Docker container build successfully"
 
+Code quality:
+  script:
+    - echo "Start checking code quality"
+    - docker run -it ${docker ps -n 1 -q} clang-tidy --version
+#    - clang-tidy --version || exit 1
+#    - clang-tidy -checks=* -extra-arg=-std=c++17 > ./Clang-tidy.log
+#    - echo "Code quality success, see Clang-tidy.log"

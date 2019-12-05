@@ -9,7 +9,7 @@ if [ ! -f "${SCRIPT_DIR}/prepare_build.sh" ]; then
 fi
 
 # install dependencies
-apt-get install -y gcc g++ make build-essential wget git unzip tar curl clang-tidy
+apt-get install -y gcc g++ make build-essential wget git unzip tar curl clang-tidy valgrind
 
 if ! command -v cmake; then
   # install cmake
@@ -70,7 +70,7 @@ else
     fi\n
     echo Build to \${PWD}\n
     echo From \${SOURCE_DIR}\n
-    cmake -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=*;-extra-arg=-std=c++17 -S \${SOURCE_DIR} -B \${PWD} \n
+    cmake -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=*;-extra-arg=-std=c++17" -S \${SOURCE_DIR} -B \${PWD} \n
     }" >>"${PATH_TO_BASH_RC}"
 
 fi
