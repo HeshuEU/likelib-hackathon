@@ -33,10 +33,6 @@ class Database
     leveldb::ReadOptions _read_options;
     leveldb::WriteOptions _write_options;
     //=====================
-    static leveldb::ReadOptions defaultReadOptions();
-    static leveldb::WriteOptions defaultWriteOptions();
-    static leveldb::Options defaultDBOptions();
-    //=====================
 };
 
 Database createDefaultDatabaseInstance(Directory const& path);
