@@ -1,10 +1,11 @@
 # Create docker environment for run test without any dependents
-FROM likelib2_build as code_quality
+FROM likelib2_build as build
+FROM ubuntu:19.10 as test
 
 WORKDIR /likelib
 
 # copy test executable
-COPY --from=code_quality /build/test/run_tests .
+COPY --from=build /build/test/run_tests .
 
 # run unit tests
 RUN ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info

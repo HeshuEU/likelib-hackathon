@@ -9,6 +9,7 @@ Build:
 Code quality:
   tags:
     - custom-tag
+  image: likelib2_build
   script:
     - echo "Start checking code quality"
     - docker build -f code-quality.Dockerfile -t likelib2_code_quality .
@@ -17,6 +18,7 @@ Code quality:
 Unit tests:
   tags:
     - custom-tag
+  image: likelib2_build
   script:
     - echo "Start checking auto tests"
     - docker build -f test.Dockerfile -t likelib2_unit_test .
