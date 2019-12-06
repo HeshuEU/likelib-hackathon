@@ -14,6 +14,9 @@ class Time
     friend ::base::SerializationOArchive& operator<<(::base::SerializationOArchive& oa, const Time& tx);
     //==========================
   public:
+    /**
+     * \brief default constructor which have an epoch january 1, 1970.
+     */
     Time() = default;
     Time(std::chrono::time_point<std::chrono::system_clock> time_point);
     Time(const Time&) = default;
