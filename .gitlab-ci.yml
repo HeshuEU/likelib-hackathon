@@ -1,4 +1,10 @@
+stages:
+  - build
+  - quality
+  - test
+
 Build:
+  stage: build
   tags: 
     - custom-tag
   script: 
@@ -7,6 +13,7 @@ Build:
      - echo "Docker container build successfully"
 
 Code quality:
+  stage: quality
   tags:
     - custom-tag
   image: likelib2_build
@@ -16,6 +23,7 @@ Code quality:
     - echo "Docker container code quality successfuly"
 
 Unit tests:
+  stage: test
   tags:
     - custom-tag
   image: likelib2_build
@@ -25,6 +33,7 @@ Unit tests:
     - echo "Docker container auto tests successfuly"
 
 #Integration tests:
+#  stage: test
 #  tags:
 #    - custom-tag
 #  script:

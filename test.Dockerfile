@@ -7,5 +7,7 @@ WORKDIR /likelib
 # copy test executable
 COPY --from=build /build/test/run_tests .
 
+RUN ls
+
 # run unit tests
 RUN ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
