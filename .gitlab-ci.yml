@@ -3,7 +3,7 @@ Build:
     - custom-tag
   script: 
      - echo "Start building docker container"
-     - docker build -f Dockerfile.build -t likelib2_build
+     - docker build -f Dockerfile.build -t likelib2_build .
      - echo "Docker container build successfully"
 
 Code quality:
@@ -11,7 +11,7 @@ Code quality:
     - custom-tag
   script:
     - echo "Start checking code quality"
-    - docker build -f Dockerfile.code-quality -t likelib2_code_quality
+    - docker build -f Dockerfile.code-quality -t likelib2_code_quality .
     - echo "Docker container code quality successfuly"
 #    - docker run -it ${docker ps -n 1 -q} clang-tidy --version
 #    - clang-tidy --version || exit 1

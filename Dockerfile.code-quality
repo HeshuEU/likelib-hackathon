@@ -6,6 +6,7 @@ FROM build as code-quality
 #    apt-get install -y clang-tidy
 
 RUN clang-tidy --version || exit 1
+#RUN cd src && clang-tidy ./node/main.cpp -- -I/home/user/vcpkg/installed/x64-linux/include -I${PWD} -std=c++17
 
 #COPY . ${PROJECT_SOURCE_DIR}
 #WORKDIR ${PROJECT_BUILD_DIR}
