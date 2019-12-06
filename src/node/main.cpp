@@ -7,7 +7,6 @@
 #include "base/log.hpp"
 #include "base/assert.hpp"
 #include "bc/blockchain.hpp"
-#include "net/network.hpp"
 #include "net/endpoint.hpp"
 #include "rpc/rpc.hpp"
 

@@ -24,7 +24,7 @@ class Time
     //====================
     ~Time() = default;
     //====================
-    std::uint_least32_t secondsInEpoch() const;
+    std::uint_least32_t seconds() const;
     //====================
     bool operator==(const Time& other) const;
     bool operator!=(const Time& other) const;

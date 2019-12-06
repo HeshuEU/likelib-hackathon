@@ -2,7 +2,7 @@
 
 #include "base/assert.hpp"
 #include "base/log.hpp"
-#include "net/network.hpp"
+#include "net/host.hpp"
 
 #include <optional>
 
@@ -11,7 +11,7 @@ namespace bc
 
 Blockchain::Blockchain(const base::PropertyTree& config)
     : _config(config), _miner(config, std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1)),
-      _network{config, std::bind(&Blockchain::onNetworkReceived, this, std::placeholders::_1)}
+      _host{config, std::bind(&Blockchain::onNetworkReceived, this, std::placeholders::_1)}
 {
     setupGenesis();
 }
@@ -56,7 +56,7 @@ void Blockchain::addBlock(const Block& block)
 std::optional<Block> Blockchain::findBlock(const base::Sha256& block_hash) const
 {
     std::shared_lock lk(_blocks_mutex);
-    for(const auto& block : _blocks) {
+    for(const auto& block: _blocks) {
         if(base::Sha256::compute(base::toBytes(block)) == block_hash) {
             return block;
         }
@@ -132,13 +132,13 @@ void Blockchain::onMinerFinished(Block&& block)
 
 void Blockchain::broadcastBlock(const bc::Block& block)
 {
-    _network.broadcast(base::toBytes(block));
+    _host.broadcastDataPacket(base::toBytes(block));
 }
 
 
 void Blockchain::broadcastTransaction(const bc::Transaction& tx)
 {
-    _network.broadcast(base::toBytes(tx));
+    _host.broadcastDataPacket(base::toBytes(tx));
 }
 
 
@@ -184,11 +184,11 @@ bool Blockchain::checkBlock(const Block& block) const
 void Blockchain::run()
 {
     // run network processing loop
-    _network.run();
+    _host.run();
 
     // connect to all nodes, given in configuration file
     for(const auto& node_ip_string: _config.getVector<std::string>("nodes")) {
-        _network.connect(net::Endpoint{node_ip_string});
+        _host.connect(net::Endpoint{node_ip_string});
     }
 }
 

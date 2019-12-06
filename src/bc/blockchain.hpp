@@ -6,9 +6,10 @@
 #include "bc/miner.hpp"
 #include "bc/transaction.hpp"
 #include "bc/transactions_set.hpp"
-#include "net/network.hpp"
+#include "net/host.hpp"
 
 #include <list>
+#include <shared_mutex>
 
 namespace bc
 {
@@ -28,7 +29,7 @@ class Blockchain
     void processReceivedTransaction(Transaction&& transaction);
     //===================
     void addBlock(const Block& block);
-    base::Block findBlock(const base::Sha256& block_hash) const;
+    std::optional<bc::Block> findBlock(const base::Sha256& block_hash) const;
     //===================
     bc::Balance getBalance(const bc::Address& address) const;
     //===================
@@ -39,7 +40,7 @@ class Blockchain
     bool _is_running{false};
     //===================
     std::list<Block> _blocks;
-    mutable std::recursive_mutex _blocks_mutex;
+    mutable std::shared_mutex _blocks_mutex;
     //===================
     Block _pending_block;
     mutable std::recursive_mutex _pending_block_mutex;
@@ -48,7 +49,7 @@ class Blockchain
     //===================
     bc::BalanceManager _balance_manager;
     //===================
-    net::Network _network;
+    net::Host _host;
     void onNetworkReceived(base::Bytes&& data);
     void broadcastBlock(const bc::Block& block);
     void broadcastTransaction(const bc::Transaction& tx);

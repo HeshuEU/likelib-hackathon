@@ -46,13 +46,13 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Packet&
 
 class ProtocolEngine
 {
-public:
+  public:
     //================
     ProtocolEngine(Blockchain& blockchain);
     //================
     void handle(net::Connection& connection, base::Bytes&& bytes);
     //================
-private:
+  private:
     //================
     Blockchain& _blockchain;
     //================

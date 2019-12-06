@@ -114,7 +114,7 @@ template<typename T>
 typename std::enable_if<std::is_enum<T>::value, SerializationOArchive&>::type SerializationOArchive::operator<<(
     const T& v)
 {
-    return *this << static_cast<typename std::underlying_type<T>>(v);
+    return *this << static_cast<typename std::underlying_type<T>::type>(v);
 }
 
 

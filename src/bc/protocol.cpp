@@ -67,7 +67,7 @@ Packet Packet::deserialize(base::SerializationIArchive& ia)
 
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Packet& v)
 {
-    oa << v.getType() << v.getBytes();
+    return oa << v.getType() << v.getBytes();
 }
 
 
@@ -78,8 +78,7 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Packet&
 }
 
 
-ProtocolEngine::ProtocolEngine(Blockchain& blockchain)
-    : _blockchain{blockchain}
+ProtocolEngine::ProtocolEngine(Blockchain& blockchain) : _blockchain{blockchain}
 {}
 
 
@@ -97,12 +96,12 @@ void ProtocolEngine::handle(net::Connection& connection, base::Bytes&& bytes)
             bool is_block_found;
             ia >> is_block_found;
             if(!is_block_found) {
-                //onResGetBlock();
+                // onResGetBlock();
             }
             else {
                 Block b;
                 ia >> b;
-                //onResGetBlock(std::move(b));
+                // onResGetBlock(std::move(b));
             }
             break;
         }
@@ -123,10 +122,8 @@ void ProtocolEngine::onGetBlock(net::Connection& connection, const base::Sha256&
 {
     if(auto block_opt = _blockchain.findBlock(block_hash)) {
         Block& block = *block_opt;
-
     }
     else {
-
     }
 }
 

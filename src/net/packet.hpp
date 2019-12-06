@@ -40,8 +40,6 @@ class Packet
 
   private:
     PacketType _type{PacketType::DISCONNECT};
-    std::vector<std::string> _known_endpoints;
-    unsigned short _server_public_port{0};
     base::Bytes _data;
 };
 

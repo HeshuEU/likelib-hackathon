@@ -2,7 +2,7 @@
 
 #include "base/property_tree.hpp"
 #include "bc/block.hpp"
-#include "net/connection.hpp"
+#include "net/peer.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -11,19 +11,20 @@
 #include <list>
 #include <memory>
 #include <set>
+#include <shared_mutex>
 #include <thread>
 
 namespace net
 {
 
-class Network
+class Host
 {
   public:
     //===================
     using DataHandler = std::function<void(base::Bytes&&)>;
     //===================
-    Network(const base::PropertyTree& config, DataHandler handler);
-    ~Network();
+    Host(const base::PropertyTree& config, DataHandler handler);
+    ~Host();
     //===================
     void run();
     void waitForFinish();
@@ -31,7 +32,7 @@ class Network
     void connect(const Endpoint& address);
     void connect(const std::vector<Endpoint>& nodes);
     //===================
-    void broadcast(const base::Bytes& data);
+    void broadcastDataPacket(const base::Bytes& data);
     //===================
   private:
     //===================
@@ -39,7 +40,8 @@ class Network
     const unsigned short _server_public_port;
     //===================
     boost::asio::io_context _io_context;
-    std::list<std::shared_ptr<Connection>> _connections;
+    std::list<Peer> _peers;
+    std::shared_mutex _connections_mutex;
     //===================
     std::unique_ptr<std::thread> _network_thread;
     void networkThreadWorkerFunction() noexcept;
@@ -49,11 +51,10 @@ class Network
     void acceptLoop();
     //===================
     boost::asio::steady_timer _heartbeat_timer;
-    std::set<std::size_t> _not_ponged_peer_ids;
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
-    void onConnectionReceivedPacketHandler(Connection& connection, Packet&& packet);
+    void onConnectionReceivedPacketHandler(Packet&& packet);
     DataHandler _data_handler;
     //===================
 };

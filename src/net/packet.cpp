@@ -41,30 +41,6 @@ bool Packet::operator!=(const Packet& another) const noexcept
 }
 
 
-const std::vector<std::string>& Packet::getKnownEndpoints() const
-{
-    return _known_endpoints;
-}
-
-
-void Packet::setKnownEndpoints(std::vector<std::string>&& endpoints)
-{
-    _known_endpoints = std::move(endpoints);
-}
-
-
-unsigned short Packet::getPublicServerPort() const noexcept
-{
-    return _server_public_port;
-}
-
-
-void Packet::setPublicServerPort(unsigned short endpoint)
-{
-    _server_public_port = endpoint;
-}
-
-
 const base::Bytes& Packet::getData() const& noexcept
 {
     return _data;

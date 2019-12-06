@@ -21,13 +21,12 @@ namespace net
 base::Bytes Connection::_read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE);
 
 
-Connection::Connection(
-    boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, ReceiveHandler receive_handler)
-    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)}, _receive_handler(receive_handler)
+Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket)
+    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)}
 {
     ASSERT(_socket.is_open());
-    _connect_endpoint =
-        std::make_unique<Endpoint>(_socket.remote_endpoint().address().to_string(), _socket.remote_endpoint().port());
+    const auto& re = _socket.remote_endpoint();
+    _connect_endpoint = std::make_unique<Endpoint>(re.address().to_string(), re.port());
 }
 
 
@@ -89,34 +88,14 @@ const Endpoint& Connection::getEndpoint() const
 }
 
 
-bool Connection::hasServerEndpoint() const noexcept
-{
-    return _server_endpoint.get() != nullptr;
-}
-
-
-const Endpoint& Connection::getServerEndpoint() const
-{
-    if(_server_endpoint) {
-        return *_server_endpoint;
-    }
-    else {
-        RAISE_ERROR(net::Error, "connection doesn't have server endpoint");
-    }
-}
-
-
-void Connection::setServerEndpoint(const Endpoint& server_endpoint)
-{
-    ASSERT(!_server_endpoint);
-    _server_endpoint = std::make_unique<Endpoint>(server_endpoint);
-}
-
-
-void Connection::startReceivingMessages()
+void Connection::startReceivingMessages(ReceiveHandler receive_handler)
 {
     ASSERT_SOFT(!_is_receiving_enabled);
     _is_receiving_enabled = true;
+    {
+        std::lock_guard lk(_receive_handler_mutex);
+        _receive_handler = std::move(receive_handler);
+    }
     receiveOne();
 }
 
@@ -131,46 +110,51 @@ void Connection::stopReceivingMessages()
 void Connection::receiveOne()
 {
     // ba::transfer_at_least just for now for debugging purposes, of course will be changed later
-    ba::async_read(_socket, ba::buffer(_read_buffer.toVector()), ba::transfer_at_least(5),
-        [this, cp = shared_from_this()](const boost::system::error_code& ec, const std::size_t bytes_received) {
-            if(_is_closed) {
-                LOG_DEBUG << "Received on closed connection";
-                return;
-            }
-            else if(ec) {
-                switch(ec.value()) {
-                    case ba::error::eof: {
-                        LOG_WARNING << "Connection to " << getEndpoint() << " closed";
-                        if(!_is_closed) {
-                            close();
+    ba::async_read(_socket, ba::buffer(_read_buffer.toVector()), ba::transfer_exactly(2),
+        [this, cpl = shared_from_this()](
+            const boost::system::error_code& ec, const std::size_t bytes_received) mutable {
+            auto length = base::fromBytes<std::uint16_t>(_read_buffer);
+            ba::async_read(_socket, ba::buffer(_read_buffer.toVector()), ba::transfer_exactly(length),
+                [this, cp = std::move(cpl)](const boost::system::error_code& ec, const std::size_t bytes_received) {
+                    if(_is_closed) {
+                        LOG_DEBUG << "Received on closed connection";
+                        return;
+                    }
+                    else if(ec) {
+                        switch(ec.value()) {
+                            case ba::error::eof: {
+                                LOG_WARNING << "Connection to " << getEndpoint() << " closed";
+                                if(!_is_closed) {
+                                    close();
+                                }
+                                break;
+                            }
+                            default: {
+                                LOG_WARNING << "Error occurred while receiving: " << ec << ' ' << ec.message();
+                                break;
+                            }
                         }
-                        break;
+                        // TODO: do something
                     }
-                    default: {
-                        LOG_WARNING << "Error occurred while receiving: " << ec << ' ' << ec.message();
-                        break;
-                    }
-                }
-                // TODO: do something
-            }
-            else {
-                // LOG_DEBUG << "Received " << bytes_received << " bytes from " << _connect_endpoint;
+                    else {
+                        if(_is_receiving_enabled) {
+                            try {
+                                auto packet = base::fromBytes<Packet>(_read_buffer);
+                                std::lock_guard lk(_receive_handler_mutex);
+                                _receive_handler(std::move(packet));
+                            }
+                            catch(const std::exception& e) {
+                                LOG_WARNING << "Error during packet handling: " << e.what();
+                            }
 
-                if(_is_receiving_enabled) {
-                    try {
-                        auto packet = base::fromBytes<Packet>(_read_buffer);
-                        _receive_handler(*this, std::move(packet));
+                            // double-check since the value may be changed - we don't know how long the handler was
+                            // executing
+                            if(_is_receiving_enabled) {
+                                receiveOne();
+                            }
+                        }
                     }
-                    catch(const std::exception& e) {
-                        LOG_WARNING << "Error during packet handling: " << e.what();
-                    }
-
-                    // double-check since the value may be changed - we don't know how long the handler was executing
-                    if(_is_receiving_enabled) {
-                        receiveOne();
-                    }
-                }
-            }
+                });
         });
 }
 
@@ -178,14 +162,18 @@ void Connection::receiveOne()
 void Connection::send(const Packet& packet)
 {
     LOG_DEBUG << "SEND [" << enumToString(packet.getType()) << ']';
-    send(base::toBytes(packet));
-}
 
+    bool is_already_writing;
+    {
+        std::lock_guard lk(_pending_send_messages_mutex);
+        is_already_writing = !_pending_send_messages.empty();
 
-void Connection::send(base::Bytes&& data)
-{
-    bool is_already_writing = !_pending_send_messages.empty();
-    _pending_send_messages.push(std::move(data));
+        base::SerializationOArchive oa;
+        auto bytes = base::toBytes(packet);
+        oa << static_cast<std::uint16_t>(bytes.size()) << std::move(bytes);
+
+        _pending_send_messages.push(std::move(oa).getBytes());
+    }
 
     if(!is_already_writing) {
         sendPendingMessages();
@@ -195,6 +183,7 @@ void Connection::send(base::Bytes&& data)
 
 void Connection::sendPendingMessages()
 {
+    std::lock_guard lk(_pending_send_messages_mutex);
     ASSERT_SOFT(!_pending_send_messages.empty());
     if(_pending_send_messages.empty()) {
         return;
@@ -213,6 +202,8 @@ void Connection::sendPendingMessages()
             else {
                 // LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();
             }
+
+            std::lock_guard lk(_pending_send_messages_mutex);
             _pending_send_messages.pop();
 
             if(!_pending_send_messages.empty()) {
@@ -222,9 +213,9 @@ void Connection::sendPendingMessages()
 }
 
 
-void Connection::startSession()
+void Connection::startSession(ReceiveHandler receive_handler)
 {
-    startReceivingMessages();
+    startReceivingMessages(receive_handler);
 }
 
 } // namespace net
