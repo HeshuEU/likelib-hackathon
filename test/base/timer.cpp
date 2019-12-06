@@ -3,7 +3,6 @@
 #include "base/timer.hpp"
 
 #include <thread>
-#include <iostream>
 
 constexpr std::int64_t milli_fault = 3;
 

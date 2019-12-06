@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(time_from_seconds)
     base::Time time1(base::Time::now());
     auto seconds = time1.secondsInEpoch();
     base::Time time2(base::Time::fromSeconds(seconds));
-    //BOOST_CHECK(time1 == time2);  NOT WORK NOW
+    //BOOST_CHECK(time1 == time2);  //TODO: NOT WORK NOW
     BOOST_CHECK(time1.secondsInEpoch() == time2.secondsInEpoch());
 }
 
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(time_serialization2)
     base::Time time2;
     base::SerializationIArchive ia(oa.getBytes());
     ia >> time2;
-    //BOOST_CHECK(time1 == time2);  NOT WORK NOW
+    //BOOST_CHECK(time1 == time2);  //TODO: NOT WORK NOW
 }
 
 
