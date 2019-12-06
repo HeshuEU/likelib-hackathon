@@ -105,14 +105,12 @@ bc::Balance Blockchain::getBalance(const bc::Address& address) const
 
 void Blockchain::setupGenesis()
 {
+    auto genesis = generateGenesis();
     if(_database.getLastBlockHash() == base::Bytes(32)) {
-        auto genesis = generateGenesis();
-        auto genesis_hash = base::Sha256::compute(base::toBytes(genesis));
-        _database.addBlock(genesis_hash, genesis);
-        _balance_manager.updateFromGenesis(genesis);
+        _database.addBlock(base::Sha256::compute(base::toBytes(genesis)), genesis);
     }
     else {
-        auto genesis_hash = base::Sha256::compute(base::toBytes(generateGenesis()));
+        auto genesis_hash = base::Sha256::compute(base::toBytes(genesis));
         auto all_blocks_hashes = _database.createAllBlockHashesList();
         if(genesis_hash != all_blocks_hashes.front()) {
             RAISE_ERROR(base::LogicError, "genesis block does not match genesis block from database");

@@ -44,7 +44,7 @@ void Database::open(Directory const& path)
     leveldb::DB* data_base = nullptr;
     auto const status = leveldb::DB::Open(database_options, path.string(), &data_base);
     if(!status.ok() || data_base == nullptr) {
-        RAISE_ERROR(base::DatabaseError, "Failed to create data base instance.");
+        RAISE_ERROR(base::DatabaseError, "Failed to create database instance.");
     }
     _database.reset(data_base);
 
@@ -55,9 +55,8 @@ void Database::open(Directory const& path)
 
 void Database::get(const Bytes& key, Bytes& res) const
 {
-    if(!_inited) {
-        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
-    }
+    checkStatus();
+
     std::string value;
     auto const status = _database->Get(_read_options, key.toString(), &value);
     if(!status.ok()) {
@@ -71,9 +70,8 @@ void Database::get(const Bytes& key, Bytes& res) const
 
 bool Database::exists(const Bytes& key) const
 {
-    if(!_inited) {
-        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
-    }
+    checkStatus();
+
     std::string value;
     auto const status = _database->Get(_read_options, key.toString(), &value);
     if(status.IsNotFound()) {
@@ -82,15 +80,15 @@ bool Database::exists(const Bytes& key) const
     if(!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
     }
+
     return true;
 }
 
 
 void Database::put(const Bytes& key, const Bytes& value)
 {
-    if(!_inited) {
-        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
-    }
+    checkStatus();
+
     auto const status = _database->Put(_write_options, key.toString(), value.toString());
     if(!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
@@ -100,12 +98,19 @@ void Database::put(const Bytes& key, const Bytes& value)
 
 void Database::remove(const Bytes& key)
 {
-    if(!_inited) {
-        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
-    }
+    checkStatus();
+
     auto const status = _database->Delete(_write_options, key.toString());
     if(!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
+    }
+}
+
+
+void Database::checkStatus() const
+{
+    if(!_inited) {
+        RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
     }
 }
 
@@ -115,6 +120,7 @@ Database createDefaultDatabaseInstance(Directory const& path)
     createIfNotExists(path);
     return Database(path);
 }
+
 
 Database createClearDatabaseInstance(Directory const& path)
 {
