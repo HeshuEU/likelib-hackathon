@@ -3,23 +3,29 @@ Build:
     - custom-tag
   script: 
      - echo "Start building docker container"
-     - docker build -f Dockerfile.build -t likelib2_build .
+     - docker build -f build.Dockerfile -t likelib2_build .
      - echo "Docker container build successfully"
-#  artifacts:
-#    - build
 
 Code quality:
   tags:
     - custom-tag
   script:
     - echo "Start checking code quality"
-    - docker build -f Dockerfile.code-quality -t likelib2_code_quality .
+    - docker build -f code-quality.Dockerfile -t likelib2_code_quality .
     - echo "Docker container code quality successfuly"
 
-Tests:
+Unit tests:
   tags:
     - custom-tag
   script:
     - echo "Start checking auto tests"
-    - docker build -f Dockerfile.test -t likelib2_test .
+    - docker build -f test.Dockerfile -t likelib2_unit_test .
     - echo "Docker container auto tests successfuly"
+
+#Integration tests:
+#  tags:
+#    - custom-tag
+#  script:
+#    - echo "Start checking integration tests"
+#    - docker build -f test.Dockerfile -t likelib2_integration_test .
+#    - echo "Docker container integration tests successfuly"
