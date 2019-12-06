@@ -24,8 +24,6 @@ WORKDIR ${PROJECT_BUILD_DIR}
 RUN cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
     make -j$(nproc)
 
-RUN ls / && ls /opt
-
 # Create docker environment for run test without any dependents
 FROM ubuntu:19.10 as test
 
@@ -35,7 +33,4 @@ WORKDIR /likelib
 COPY --from=build /build/test/run_tests .
 
 # run unit tests
-RUN ./run_tests 
-# --log_level=test_suite --detect_memory_leaks=1 --build_info
-
-RUN ls / && ls /opt /likelib -l && clang-tidy --version
+RUN ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
