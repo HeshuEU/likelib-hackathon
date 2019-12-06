@@ -1,14 +1,15 @@
 set(TEST_SOURCES
         main.cpp
-		base/crypto.cpp
         base/big_integer.cpp
-        base/property_tree.cpp
         base/bytes.cpp
+        base/crypto.cpp
+        base/database.cpp
         base/hash.cpp
         base/program_options.cpp
-        base/database.cpp
+        base/property_tree.cpp
 		base/serialization.cpp
 		base/time.cpp
+        base/timer.cpp
         net/packet.cpp
         bc/address.cpp
         bc/balance_manager.cpp
