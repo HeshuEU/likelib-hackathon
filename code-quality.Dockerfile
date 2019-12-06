@@ -1,6 +1,6 @@
 # Create docker environment for code cuality
 FROM likelib2_build as build
-FROM ubuntu:19.10 as quality
+# FROM ubuntu:19.10 as quality
 
 # copy project file from previous build
 

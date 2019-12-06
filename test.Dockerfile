@@ -1,6 +1,6 @@
 # Create docker environment for run test without any dependents
 FROM likelib2_build as build
-FROM ubuntu:19.10 as test
+# FROM ubuntu:19.10 as test
 
 WORKDIR /likelib
 
