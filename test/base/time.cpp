@@ -17,14 +17,15 @@ BOOST_AUTO_TEST_CASE(time_constructor_from_std1)
     base::Time time1{base::Time::now()};
     auto time2 = base::Time::fromTimePoint(std::chrono::system_clock::now());
     BOOST_CHECK(time1.getSecondsInEpoch() == time2.getSecondsInEpoch());
+    BOOST_CHECK(time1.toTimePoint() == time2.toTimePoint());
+    BOOST_CHECK(time1 == time2);
 }
 
 #include <iostream>
 BOOST_AUTO_TEST_CASE(time_constructor_from_std2)
 {
     base::Time time1{base::Time::now()};
-    auto time = std::chrono::system_clock::now();
-    base::Time time2{base::Time::fromTimePoint(time)};
+    base::Time time2{base::Time::fromTimePoint(time1.toTimePoint())};
     BOOST_CHECK(time1.getSecondsInEpoch() == time2.getSecondsInEpoch());
     BOOST_CHECK(time1.toTimePoint() == time2.toTimePoint());
     BOOST_CHECK(time1 == time2);
