@@ -9,27 +9,29 @@ Build:
     - custom-tag
   script: 
      - echo "Start building docker container"
-     - docker build -f build.Dockerfile -t likelib2_build .
+     - docker build -f build.Dockerfile -t likelib2_build
      - echo "Docker container build successfully"
 
 Code quality:
   stage: quality
   tags:
     - custom-tag
-  image: likelib2_build
+  services:
+    - likelib2_build
   script:
     - echo "Start checking code quality"
-    - docker build -f code-quality.Dockerfile -t likelib2_code_quality .
+    - docker build -f code-quality.Dockerfile -t likelib2_code_quality
     - echo "Docker container code quality successfuly"
 
 Unit tests:
   stage: test
   tags:
     - custom-tag
-  image: likelib2_build
+  services:
+    - likelib2_builds
   script:
     - echo "Start checking auto tests"
-    - docker build -f test.Dockerfile -t likelib2_unit_test .
+    - docker build -f test.Dockerfile -t likelib2_unit_test
     - echo "Docker container auto tests successfuly"
 
 #Integration tests:
