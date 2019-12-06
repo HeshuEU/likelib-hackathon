@@ -7,6 +7,7 @@
 namespace base
 {
 
+/// Time util class with second accuracy in measurement
 class Time
 {
     //=======================
@@ -35,9 +36,9 @@ class Time
     static Time now();
     static Time fromSeconds(std::uint_least32_t seconds_from_epoch);
     static Time fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time_point);
-    //====================
+    //=====================
   private:
-    std::chrono::time_point<std::chrono::system_clock> _time;
+    //=====================
     std::uint_least32_t _seconds_from_epoch_start{0};
     //=====================
 };
