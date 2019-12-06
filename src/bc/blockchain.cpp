@@ -4,6 +4,7 @@
 #include "base/log.hpp"
 #include "net/network.hpp"
 
+#include <optional>
 
 namespace bc
 {
@@ -52,6 +53,18 @@ void Blockchain::addBlock(const Block& block)
 }
 
 
+std::optional<Block> Blockchain::findBlock(const base::Sha256& block_hash) const
+{
+    std::shared_lock lk(_blocks_mutex);
+    for(const auto& block : _blocks) {
+        if(base::Sha256::compute(base::toBytes(block)) == block_hash) {
+            return block;
+        }
+    }
+    return std::nullopt;
+}
+
+
 void Blockchain::processReceivedTransaction(Transaction&& transaction)
 {
     LOG_DEBUG << "Received transaction. From: " << transaction.getFrom().toString()
@@ -69,7 +82,7 @@ void Blockchain::processReceivedTransaction(Transaction&& transaction)
                 std::lock_guard lk1(_blocks_mutex);
                 _pending_block.setPrevBlockHash(base::Sha256::compute(base::toBytes(_blocks.back())).getBytes());
             }
-            _network.broadcastTransaction(transaction);
+            broadcastTransaction(transaction);
             _miner.dropJob();
             _miner.findNonce(_pending_block, getMiningComplexity());
         }
@@ -117,10 +130,6 @@ void Blockchain::onMinerFinished(Block&& block)
 }
 
 
-void Blockchain::onNetworkReceived(base::Bytes&& bytes)
-{}
-
-
 void Blockchain::broadcastBlock(const bc::Block& block)
 {
     _network.broadcast(base::toBytes(block));
@@ -129,7 +138,7 @@ void Blockchain::broadcastBlock(const bc::Block& block)
 
 void Blockchain::broadcastTransaction(const bc::Transaction& tx)
 {
-    _network.broadcast(base::toBytes(transaction));
+    _network.broadcast(base::toBytes(tx));
 }
 
 

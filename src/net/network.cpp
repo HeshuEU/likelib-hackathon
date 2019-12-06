@@ -18,7 +18,9 @@ Network::Network(const base::PropertyTree& config, DataHandler handler)
     : _listen_ip{config.get<std::string>("net.listen_addr")},
       _server_public_port{config.get<unsigned short>("net.public_port")}, _heartbeat_timer{_io_context},
       _data_handler(handler)
-{}
+{
+    ASSERT(_data_handler);
+}
 
 
 Network::~Network()

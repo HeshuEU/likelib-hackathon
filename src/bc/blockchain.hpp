@@ -28,6 +28,7 @@ class Blockchain
     void processReceivedTransaction(Transaction&& transaction);
     //===================
     void addBlock(const Block& block);
+    base::Block findBlock(const base::Sha256& block_hash) const;
     //===================
     bc::Balance getBalance(const bc::Address& address) const;
     //===================
