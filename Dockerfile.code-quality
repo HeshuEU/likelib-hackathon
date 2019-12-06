@@ -22,17 +22,6 @@ ENV PROJECT_BUILD_DIR /build
 COPY . ${PROJECT_SOURCE_DIR}
 WORKDIR ${PROJECT_BUILD_DIR}
 
-
-
-
-
-#RUN apt-get update && \
-#    apt-get update -y && \
-#    apt-get install -y clang-tidy
-
 RUN clang-tidy --version || exit 1
-#RUN cd src && clang-tidy ./node/main.cpp -- -I/home/user/vcpkg/installed/x64-linux/include -I${PWD} -std=c++17
-
-#COPY . ${PROJECT_SOURCE_DIR}
-#WORKDIR ${PROJECT_BUILD_DIR}
+RUN cd src && clang-tidy ./node/main.cpp -- -I/opt/vcpkg/installed/x64-linux/include -I${PWD} -std=c++17
 
