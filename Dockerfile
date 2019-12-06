@@ -35,6 +35,7 @@ WORKDIR /likelib
 COPY --from=build /build/test/run_tests .
 
 # run unit tests
-RUN ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+RUN ./run_tests 
+# --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 RUN ls / && ls /opt /likelib -l && clang-tidy --version
