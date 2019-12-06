@@ -1,0 +1,12 @@
+# Create docker environment for code cuality
+FROM build as code-quality
+
+#RUN apt-get update && \
+#    apt-get update -y && \
+#    apt-get install -y clang-tidy
+
+RUN clang-tidy --version || exit 1
+
+#COPY . ${PROJECT_SOURCE_DIR}
+#WORKDIR ${PROJECT_BUILD_DIR}
+
