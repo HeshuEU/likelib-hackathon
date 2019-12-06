@@ -1,5 +1,30 @@
 # Create docker environment for code cuality
-FROM build as code-quality
+FROM ubuntu:19.10 as code-quality
+
+
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    apt-get update -y && \
+    apt-get install -y apt-utils && \
+    apt-get dist-upgrade -y
+
+# set work dir to /opt
+ENV INSTALL_DIR /opt
+WORKDIR ${INSTALL_DIR}
+
+# set up environment for building project
+COPY doc/prepare_build.sh ${INSTALL_DIR}
+RUN ./prepare_build.sh
+
+# build project
+ENV PROJECT_SOURCE_DIR /project
+ENV PROJECT_BUILD_DIR /build
+COPY . ${PROJECT_SOURCE_DIR}
+WORKDIR ${PROJECT_BUILD_DIR}
+
+
+
+
 
 #RUN apt-get update && \
 #    apt-get update -y && \
