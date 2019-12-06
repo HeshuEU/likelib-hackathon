@@ -23,5 +23,5 @@ COPY . ${PROJECT_SOURCE_DIR}
 WORKDIR ${PROJECT_BUILD_DIR}
 
 RUN clang-tidy --version || exit 1
-RUN cd src && clang-tidy ./node/main.cpp -- -I/opt/vcpkg/installed/x64-linux/include -I${PWD} -std=c++17
+RUN cd ${PROJECT_SOURCE_DIR}/src && clang-tidy ./node/main.cpp -- -I/opt/vcpkg/installed/x64-linux/include -I${PWD} -std=c++17
 
