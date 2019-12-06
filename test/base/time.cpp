@@ -2,8 +2,6 @@
 
 #include "base/time.hpp"
 
-#include <iostream>
-
 BOOST_AUTO_TEST_CASE(time_default_constructor)
 {
     base::Time time1;
