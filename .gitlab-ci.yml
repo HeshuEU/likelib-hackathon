@@ -5,6 +5,8 @@ Build:
      - echo "Start building docker container"
      - docker build -f Dockerfile.build -t likelib2_build .
      - echo "Docker container build successfully"
+  artifacts:
+    - build
 
 Code quality:
   tags:
