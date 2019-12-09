@@ -71,7 +71,7 @@ class MessageHandlerManager
 class ProtocolEngine
 {
   public:
-
+    ProtocolEngine();
   private:
     MessageHandlerManager _handler_manager;
 };

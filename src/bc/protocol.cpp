@@ -2,36 +2,51 @@
 
 #include "base/log.hpp"
 
+
+namespace
+{
+
+template<typename H, typename... Args>
+void runAllHandlers(std::vector<H>& handlers, Args&&... args)
+{
+    for(auto& handler : handlers) {
+        handler(args...);
+    }
+}
+
+}
+
+
 namespace bc
 {
 
 Message Message::blockBroadcast(const bc::Block& block)
 {
-    return {PacketType::BROADCAST_BLOCK, base::toBytes(block)};
+    return {MessageType::BLOCK, base::toBytes(block)};
 }
 
 
 Message Message::transactionBroadcast(const bc::Transaction& tx)
 {
-    return {PacketType::BROADCAST_BLOCK, base::toBytes(tx)};
+    return {MessageType::BLOCK, base::toBytes(tx)};
 }
 
 
 Message Message::getBlock(const base::Sha256& hash)
 {
-    return {PacketType::GET_BLOCK, hash.getBytes()};
+    return {MessageType::GET_BLOCK, hash.getBytes()};
 }
 
 
-Message::Message(PacketType type, const base::Bytes& bytes) : _type{type}, _raw_data{bytes}
+Message::Message(MessageType type, const base::Bytes& bytes) : _type{type}, _raw_data{bytes}
 {}
 
 
-Message::Message(PacketType type, base::Bytes&& bytes) : _type{type}, _raw_data(std::move(bytes))
+Message::Message(MessageType type, base::Bytes&& bytes) : _type{type}, _raw_data(std::move(bytes))
 {}
 
 
-PacketType Message::getType() const noexcept
+MessageType Message::getType() const noexcept
 {
     return _type;
 }
@@ -58,7 +73,7 @@ Message Message::deserialize(const base::Bytes& bytes)
 
 Message Message::deserialize(base::SerializationIArchive& ia)
 {
-    PacketType t;
+    MessageType t;
     base::Bytes b;
     ia >> t >> b;
     return Message(t, std::move(b));
@@ -78,52 +93,36 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Message
 }
 
 
-ProtocolEngine::ProtocolEngine(Blockchain& blockchain) : _blockchain{blockchain}
+ProtocolEngine::ProtocolEngine()
 {}
 
 
-void ProtocolEngine::handle(net::Connection& connection, base::Bytes&& bytes)
+void MessageHandlerManager::handle(net::Peer& peer, base::Bytes&& bytes)
 {
     auto packet = Message::deserialize(bytes);
     switch(packet.getType()) {
-        case PacketType::GET_BLOCK: {
+        case MessageType::GET_BLOCK: {
             base::Sha256 hash(std::move(bytes));
-            onGetBlock(connection, hash);
+            runAllHandlers(_on_get_block_handlers, hash);
             break;
         }
-        case PacketType::RES_GET_BLOCK: {
+        case MessageType::BLOCK: {
             base::SerializationIArchive ia(packet.getBytes());
-            bool is_block_found;
-            ia >> is_block_found;
-            if(!is_block_found) {
-                // onResGetBlock();
-            }
-            else {
-                Block b;
-                ia >> b;
-                // onResGetBlock(std::move(b));
-            }
+            Block b;
+            ia >> b;
+            runAllHandlers(_on_block_handlers, b);
             break;
         }
-        case PacketType::BROADCAST_BLOCK: {
-            break;
-        }
-        case PacketType::BROADCAST_TRANSACTION: {
+        case MessageType::TRANSACTION: {
+            base::SerializationIArchive ia(packet.getBytes());
+            Transaction tx;
+            ia >> tx;
+            runAllHandlers(_on_transaction_handlers, tx);
             break;
         }
         default: {
             LOG_WARNING << "Received an invalid block";
         }
-    }
-}
-
-
-void ProtocolEngine::onGetBlock(net::Connection& connection, const base::Sha256& block_hash)
-{
-    if(auto block_opt = _blockchain.findBlock(block_hash)) {
-        Block& block = *block_opt;
-    }
-    else {
     }
 }
 
