@@ -20,7 +20,7 @@ Code quality:
 #    - likelib2_build
   script:
     - echo "Start checking code quality"
-    - docker build -f code-quality.Dockerfile -t likelib2_code_quality .
+    - docker build --no-cahce -f code-quality.Dockerfile -t likelib2_code_quality .
     - echo "Docker container code quality successfuly"
 
 Unit tests:
@@ -31,7 +31,7 @@ Unit tests:
 #    - likelib2_builds
   script:
     - echo "Start checking auto tests"
-    - docker build -f test.Dockerfile -t likelib2_unit_test .
+    - docker build --no-cahce -f test.Dockerfile -t likelib2_unit_test .
     - echo "Docker container auto tests successfuly"
 
 #Integration tests:
