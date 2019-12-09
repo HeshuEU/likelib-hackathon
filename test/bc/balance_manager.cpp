@@ -13,8 +13,12 @@ std::map<bc::Address, bc::Balance> initMap()
     init_map[bc::Address("okDe")] = 7;
     init_map[bc::Address("Andrei")] = 9999;
     init_map[bc::Address("back_door")] = 1'000'000;
-    for(std::size_t i = 0; i < 10; i++){
-        init_map[bc::Address("Person" + std::to_string(i))] = 113 * i;
+
+    std::random_device rd;
+    std::default_random_engine generator(rd());
+    std::uniform_int_distribution<bc::Balance> tokens_distribution(0, 10000);
+    for(std::size_t i = 0; i < 30; i++) {
+        init_map[bc::Address("Person" + std::to_string(i))] = tokens_distribution(generator);
     }
     return init_map;
 }
@@ -65,39 +69,42 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_transaction)
 }
 
 
-void testUpdateTransaction(bc::BalanceManager& manager, std::vector<std::string>& names, std::vector<std::shared_mutex>& mutexes)
+void testUpdateTransaction(
+    bc::BalanceManager& manager, std::vector<std::string>& names, std::vector<std::shared_mutex>& mutexes)
 {
     std::random_device rd;
     std::default_random_engine generator(rd());
     std::uniform_int_distribution<std::size_t> person_distribution(0, names.size() - 1);
 
     for(std::size_t i = 0; i < 25; i++) {
+
         std::size_t sender_pos;
-        bool block = false;
+        bool lock = false;
         do {
-            if(block) {
+            if(lock) {
                 mutexes[sender_pos].unlock();
             }
             sender_pos = person_distribution(generator);
-            block = mutexes[sender_pos].try_lock();
-        } while(manager.getBalance(bc::Address{names[sender_pos]}) == 0 || !block);
+            lock = mutexes[sender_pos].try_lock();
+        } while(manager.getBalance(bc::Address{names[sender_pos]}) == 0 || !lock);
 
         std::size_t receiver_pos;
-        block = false;
+        lock = false;
         do {
-            if(block) {
+            if(lock) {
                 mutexes[receiver_pos].unlock();
             }
             receiver_pos = person_distribution(generator);
-            block = mutexes[receiver_pos].try_lock();
-        } while(!block);
+            lock = mutexes[receiver_pos].try_lock();
+        } while(!lock);
 
         auto sender_tokens = manager.getBalance(bc::Address{names[sender_pos]});
         auto receiver_tokens = manager.getBalance(bc::Address{names[receiver_pos]});
-        std::uniform_int_distribution<std::size_t> tokens_distribution(1, sender_tokens);
+        std::uniform_int_distribution<bc::Balance> tokens_distribution(1, sender_tokens);
         auto transfer_tokens = tokens_distribution(generator);
-        bc::Transaction transaction{bc::Address{names[sender_pos]}, bc::Address{names[receiver_pos]}, transfer_tokens, base::Time()};
-        
+        bc::Transaction transaction{
+            bc::Address{names[sender_pos]}, bc::Address{names[receiver_pos]}, transfer_tokens, base::Time()};
+
         manager.update(transaction);
 
         BOOST_CHECK(manager.getBalance(bc::Address(names[sender_pos])) == sender_tokens - transfer_tokens &&
@@ -113,7 +120,7 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_transaction_multithreads)
 {
     bc::BalanceManager manager(init_map);
     std::vector<std::string> names{"qwerty", "Troia", "okDe", "Andrei", "Ivan", "Orland"};
-    for(std::size_t i = 0; i < 10; i++){
+    for(std::size_t i = 0; i < init_map.size() - 5; i++) {
         names.push_back("Person" + std::to_string(i));
     }
     std::vector<std::shared_mutex> mutexes(names.size());
@@ -128,4 +135,111 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_transaction_multithreads)
 }
 
 
+BOOST_AUTO_TEST_CASE(balance_manager_update_block)
+{
+    bc::BalanceManager manager(init_map);
+    bc::Block block;
+    block.addTransaction(bc::Transaction(bc::Address("qwerty"), bc::Address("okDe"), 13, base::Time()));
+    block.addTransaction(bc::Transaction(bc::Address("Andrei"), bc::Address("Troia"), 11, base::Time()));
+    block.addTransaction(bc::Transaction(bc::Address("back_door"), bc::Address("Ivan"), 1, base::Time()));
+    manager.update(block);
 
+    BOOST_CHECK(manager.getBalance(bc::Address("qwerty")) == 1000 - 13);
+    BOOST_CHECK(manager.getBalance(bc::Address("Andrei")) == 9999 - 11);
+    BOOST_CHECK(manager.getBalance(bc::Address("back_door")) == 1'000'000 - 1);
+    BOOST_CHECK(manager.getBalance(bc::Address("okDe")) == 7 + 13);
+    BOOST_CHECK(manager.getBalance(bc::Address("Ivan")) == 1);
+}
+
+
+void testUpdateBlock(
+    bc::BalanceManager& manager, std::vector<std::string>& names, std::vector<std::shared_mutex>& mutexes)
+{
+    std::random_device rd;
+    std::default_random_engine generator(rd());
+    std::uniform_int_distribution<std::size_t> person_distribution(0, names.size() - 1);
+    std::uniform_int_distribution<std::size_t> transaction_distribution(1, 5);
+
+    for(std::size_t i = 0; i < 10; i++) {
+
+        std::size_t count_transactions = transaction_distribution(generator);
+        bc::Block block;
+
+        std::vector<std::size_t> senders;
+        bool lock = false;
+        while(senders.size() != count_transactions) {
+            std::size_t sender_pos;
+            sender_pos = person_distribution(generator);
+            lock = mutexes[sender_pos].try_lock();
+            if(manager.getBalance(bc::Address{names[sender_pos]}) != 0 && lock) {
+                senders.push_back(sender_pos);
+            }
+            else if(lock) {
+                mutexes[sender_pos].unlock();
+            }
+        }
+
+        std::vector<std::size_t> receivers;
+        lock = false;
+        while(receivers.size() != count_transactions) {
+            std::size_t receiver_pos;
+            receiver_pos = person_distribution(generator);
+            lock = mutexes[receiver_pos].try_lock();
+            if(lock) {
+                receivers.push_back(receiver_pos);
+            }
+            else if(lock) {
+                mutexes[receiver_pos].unlock();
+            }
+        }
+
+        std::vector<std::tuple<bc::Balance, bc::Balance, bc::Balance>> test_info;
+        for(std::size_t i = 0; i < count_transactions; i++) {
+            auto sender_tokens = manager.getBalance(bc::Address{names[senders[i]]});
+            auto receiver_tokens = manager.getBalance(bc::Address{names[receivers[i]]});
+            std::uniform_int_distribution<bc::Balance> tokens_distribution(1, sender_tokens);
+            auto transfer_tokens = tokens_distribution(generator);
+            test_info.push_back(std::make_tuple(sender_tokens, receiver_tokens, transfer_tokens));
+            block.addTransaction(bc::Transaction{
+                bc::Address{names[senders[i]]}, bc::Address{names[receivers[i]]}, transfer_tokens, base::Time()});
+        }
+
+
+        manager.update(block);
+
+        bool is_ok = true;
+        for(std::size_t i = 0; i < count_transactions; i++) {
+            is_ok = is_ok &&
+                (manager.getBalance(bc::Address(names[senders[i]])) ==
+                    std::get<0>(test_info[i]) - std::get<2>(test_info[i]));
+            is_ok = is_ok &&
+                (manager.getBalance(bc::Address(names[receivers[i]])) ==
+                    std::get<1>(test_info[i]) + std::get<2>(test_info[i]));
+        }
+        BOOST_CHECK(is_ok);
+
+        for(std::size_t i = 0; i < count_transactions; i++) {
+            mutexes[senders[i]].unlock();
+            mutexes[receivers[i]].unlock();
+        }
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(balance_manager_update_block_multithreads)
+{
+    bc::BalanceManager manager(init_map);
+    std::vector<std::string> names{"qwerty", "Troia", "okDe", "Andrei", "Ivan", "Orland"};
+    for(std::size_t i = 0; i < init_map.size() - 5; i++) {
+        names.push_back("Person" + std::to_string(i));
+    }
+    std::vector<std::shared_mutex> mutexes(names.size());
+
+    std::vector<std::thread> threads;
+    for(std::size_t i = 0; i < 6; i++) {
+        threads.push_back(std::thread(&testUpdateBlock, std::ref(manager), std::ref(names), std::ref(mutexes)));
+    }
+    for(auto& thread: threads) {
+        thread.join();
+    }
+}
