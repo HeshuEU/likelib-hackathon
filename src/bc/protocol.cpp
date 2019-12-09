@@ -5,75 +5,75 @@
 namespace bc
 {
 
-Packet Packet::blockBroadcast(const bc::Block& block)
+Message Message::blockBroadcast(const bc::Block& block)
 {
     return {PacketType::BROADCAST_BLOCK, base::toBytes(block)};
 }
 
 
-Packet Packet::transactionBroadcast(const bc::Transaction& tx)
+Message Message::transactionBroadcast(const bc::Transaction& tx)
 {
     return {PacketType::BROADCAST_BLOCK, base::toBytes(tx)};
 }
 
 
-Packet Packet::getBlock(const base::Sha256& hash)
+Message Message::getBlock(const base::Sha256& hash)
 {
     return {PacketType::GET_BLOCK, hash.getBytes()};
 }
 
 
-Packet::Packet(PacketType type, const base::Bytes& bytes) : _type{type}, _raw_data{bytes}
+Message::Message(PacketType type, const base::Bytes& bytes) : _type{type}, _raw_data{bytes}
 {}
 
 
-Packet::Packet(PacketType type, base::Bytes&& bytes) : _type{type}, _raw_data(std::move(bytes))
+Message::Message(PacketType type, base::Bytes&& bytes) : _type{type}, _raw_data(std::move(bytes))
 {}
 
 
-PacketType Packet::getType() const noexcept
+PacketType Message::getType() const noexcept
 {
     return _type;
 }
 
 
-const base::Bytes& Packet::getBytes() const& noexcept
+const base::Bytes& Message::getBytes() const& noexcept
 {
     return _raw_data;
 }
 
 
-base::Bytes&& Packet::getBytes() && noexcept
+base::Bytes&& Message::getBytes() && noexcept
 {
     return std::move(_raw_data);
 }
 
 
-Packet Packet::deserialize(const base::Bytes& bytes)
+Message Message::deserialize(const base::Bytes& bytes)
 {
     base::SerializationIArchive ia(bytes);
     return deserialize(ia);
 }
 
 
-Packet Packet::deserialize(base::SerializationIArchive& ia)
+Message Message::deserialize(base::SerializationIArchive& ia)
 {
     PacketType t;
     base::Bytes b;
     ia >> t >> b;
-    return Packet(t, std::move(b));
+    return Message(t, std::move(b));
 }
 
 
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Packet& v)
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Message& v)
 {
     return oa << v.getType() << v.getBytes();
 }
 
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Packet& v)
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Message& v)
 {
-    v = Packet::deserialize(ia);
+    v = Message::deserialize(ia);
     return ia;
 }
 
@@ -84,7 +84,7 @@ ProtocolEngine::ProtocolEngine(Blockchain& blockchain) : _blockchain{blockchain}
 
 void ProtocolEngine::handle(net::Connection& connection, base::Bytes&& bytes)
 {
-    auto packet = Packet::deserialize(bytes);
+    auto packet = Message::deserialize(bytes);
     switch(packet.getType()) {
         case PacketType::GET_BLOCK: {
             base::Sha256 hash(std::move(bytes));
