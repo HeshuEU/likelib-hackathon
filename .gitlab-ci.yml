@@ -36,5 +36,5 @@ Integration tests:
     - custom-tag
   script:
     - echo "Start checking integration tests"
-    - docker build -f integration_test.Dockerfile -t likelib2_integration_test .
+    - docker build --no-cache -f integration_test.Dockerfile -t likelib2_integration_test .
     - echo "Docker container integration tests successfuly"
