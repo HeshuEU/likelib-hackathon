@@ -30,11 +30,11 @@ Unit tests:
     - docker build --no-cache -f unit_test.Dockerfile -t likelib2_unit_test .
     - echo "Docker container auto tests successfuly"
 
-#Integration tests:
-#  stage: test
-#  tags:
-#    - custom-tag
-#  script:
-#    - echo "Start checking integration tests"
-#    - docker build -f integration_test.Dockerfile -t likelib2_integration_test .
-#    - echo "Docker container integration tests successfuly"
+Integration tests:
+  stage: test
+  tags:
+    - custom-tag
+  script:
+    - echo "Start checking integration tests"
+    - docker build -f integration_test.Dockerfile -t likelib2_integration_test .
+    - echo "Docker container integration tests successfuly"

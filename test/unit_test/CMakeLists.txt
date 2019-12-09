@@ -1,18 +1,18 @@
 set(TEST_SOURCES
         main.cpp
-		base/crypto.cpp
+        base/crypto.cpp
         base/big_integer.cpp
         base/property_tree.cpp
         base/bytes.cpp
         base/hash.cpp
         base/program_options.cpp
         base/database.cpp
-		base/serialization.cpp
-		base/time.cpp
+        base/serialization.cpp
+        base/time.cpp
         net/packet.cpp
         bc/address.cpp
         bc/balance_manager.cpp
-		bc/transaction.cpp
+        bc/transaction.cpp
 		)
 
 add_executable(run_tests ${TEST_SOURCES})
