@@ -23,4 +23,3 @@ COPY . ${PROJECT_SOURCE_DIR}
 WORKDIR ${PROJECT_BUILD_DIR}
 RUN cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
     make -j$(nproc)
-

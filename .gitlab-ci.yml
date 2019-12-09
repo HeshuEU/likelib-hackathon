@@ -16,8 +16,8 @@ Code quality:
   stage: quality
   tags:
     - custom-tag
-  services:
-    - likelib2_build
+#  services:
+#    - likelib2_build
   script:
     - echo "Start checking code quality"
     - docker build -f code-quality.Dockerfile -t likelib2_code_quality .
@@ -27,8 +27,8 @@ Unit tests:
   stage: test
   tags:
     - custom-tag
-  services:
-    - likelib2_builds
+#  services:
+#    - likelib2_builds
   script:
     - echo "Start checking auto tests"
     - docker build -f test.Dockerfile -t likelib2_unit_test .
