@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(time_constructor_from_std1)
     BOOST_CHECK(time1 == time2);
 }
 
-#include <iostream>
+
 BOOST_AUTO_TEST_CASE(time_constructor_from_std2)
 {
     base::Time time1{base::Time::now()};
