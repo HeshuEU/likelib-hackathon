@@ -16,8 +16,6 @@ Code quality:
   stage: quality
   tags:
     - custom-tag
-#  services:
-#    - likelib2_build
   script:
     - echo "Start checking code quality"
     - docker build --no-cache -f code-quality.Dockerfile -t likelib2_code_quality .
@@ -27,11 +25,9 @@ Unit tests:
   stage: test
   tags:
     - custom-tag
-#  services:
-#    - likelib2_builds
   script:
     - echo "Start checking auto tests"
-    - docker build --no-cache -f test.Dockerfile -t likelib2_unit_test .
+    - docker build --no-cache -f unit_test.Dockerfile -t likelib2_unit_test .
     - echo "Docker container auto tests successfuly"
 
 #Integration tests:
@@ -40,5 +36,5 @@ Unit tests:
 #    - custom-tag
 #  script:
 #    - echo "Start checking integration tests"
-#    - docker build -f test.Dockerfile -t likelib2_integration_test .
+#    - docker build -f integration_test.Dockerfile -t likelib2_integration_test .
 #    - echo "Docker container integration tests successfuly"
