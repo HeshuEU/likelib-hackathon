@@ -5,12 +5,8 @@
 namespace net
 {
 
-Peer::Peer(std::shared_ptr<Connection> connection, PacketHandler handler)
-    : _connection{std::move(connection)}, _handler{std::move(handler)}
-{
-    using namespace std::placeholders;
-    _connection->startSession(std::bind(&Peer::onConnectionReceived, this, _1));
-}
+Peer::Peer(std::unique_ptr<Connection> connection) : _connection{std::move(connection)}
+{}
 
 
 bool Peer::isActive() const noexcept
@@ -54,6 +50,13 @@ void Peer::onConnectionReceived(Packet&& packet)
 }
 
 
+void Peer::ping()
+{
+    Packet p{PacketType::PING};
+    _connection->send(p);
+}
+
+
 void Peer::onPing()
 {
     refreshLastSeen();
@@ -80,13 +83,54 @@ base::Time Peer::getLastSeen() const noexcept
 }
 
 
+void Peer::sendDataPacket(const base::Bytes& data)
+{
+    Packet p{PacketType::DATA};
+    p.setData(data);
+    _connection->send(std::move(p));
+}
+
+
+void Peer::sendDataPacket(base::Bytes&& data)
+{
+    Packet p{PacketType::DATA};
+    p.setData(std::move(data));
+    _connection->send(std::move(p));
+}
+
+
 void Peer::close()
 {
+    ASSERT(!_connection->isClosed());
     if(!_connection->isClosed()) {
         _connection->close();
     }
 }
 
+
+void Peers::add(std::shared_ptr<Peer> peer)
+{
+    ASSERT(peer);
+    std::lock_guard lk(_state_mutex);
+    _peers.push_front(std::move(peer));
+    ++_size;
+}
+
+
+std::size_t Peers::size() const noexcept
+{
+    std::shared_lock lk(_state_mutex);
+    return _size;
+}
+
+
+void Peers::forEach(std::function<void(Peer&)> f)
+{
+    std::lock_guard lk(_state_mutex);
+    for(auto& peer: _peers) {
+        f(*peer);
+    }
+}
 
 //    LOG_DEBUG << "RECEIVED [" << enumToString(packet.getType()) << ']';
 //    switch(packet.getType()) {

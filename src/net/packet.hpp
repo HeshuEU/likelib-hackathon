@@ -24,12 +24,6 @@ class Packet
     [[nodiscard]] PacketType getType() const;
     void setType(PacketType type);
     //===================
-    [[nodiscard]] const std::vector<std::string>& getKnownEndpoints() const;
-    void setKnownEndpoints(std::vector<std::string>&& endpoints);
-    //===================
-    [[nodiscard]] unsigned short getPublicServerPort() const noexcept;
-    void setPublicServerPort(unsigned short endpoint);
-    //===================
     [[nodiscard]] const base::Bytes& getData() const& noexcept;
     [[nodiscard]] base::Bytes&& getData() && noexcept;
     void setData(const base::Bytes& data);

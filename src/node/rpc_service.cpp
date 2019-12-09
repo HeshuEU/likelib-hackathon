@@ -28,8 +28,8 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
     const bc::Address& to_address, const base::Time& transaction_time)
 {
     LOG_TRACE << "Node received in {transaction}: from_address[" << from_address.toString() << "], to_address["
-              << to_address.toString() << "], amount[" << amount << "], transaction_time["
-              << transaction_time.seconds() << "]";
+              << to_address.toString() << "], amount[" << amount << "], transaction_time[" << transaction_time.seconds()
+              << "]";
 
     _bc->processReceivedTransaction(bc::Transaction(from_address, to_address, amount, transaction_time));
     return "likelib";

@@ -2,6 +2,8 @@
 
 #include "base/property_tree.hpp"
 #include "bc/block.hpp"
+#include "net/acceptor.hpp"
+#include "net/connector.hpp"
 #include "net/peer.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -23,7 +25,7 @@ class Host
     //===================
     using DataHandler = std::function<void(base::Bytes&&)>;
     //===================
-    Host(const base::PropertyTree& config, DataHandler handler);
+    Host(const base::PropertyTree& config);
     ~Host();
     //===================
     void run();
@@ -40,15 +42,15 @@ class Host
     const unsigned short _server_public_port;
     //===================
     boost::asio::io_context _io_context;
-    std::list<Peer> _peers;
-    std::shared_mutex _connections_mutex;
     //===================
     std::unique_ptr<std::thread> _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //===================
-    std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
+    Peers _peers;
+    net::Acceptor _acceptor;
+    net::Connector _connector;
+
     void acceptClients();
-    void acceptLoop();
     //===================
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();

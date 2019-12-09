@@ -11,7 +11,7 @@ namespace bc
 
 Blockchain::Blockchain(const base::PropertyTree& config)
     : _config(config), _miner(config, std::bind(&Blockchain::onMinerFinished, this, std::placeholders::_1)),
-      _host{config, std::bind(&Blockchain::onNetworkReceived, this, std::placeholders::_1)}
+      _host{config}
 {
     setupGenesis();
 }

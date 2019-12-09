@@ -62,4 +62,37 @@ class ProtocolEngine
 };
 
 
+namespace handlers
+{
+    class IHandler
+    {
+    public:
+        virtual ~IHandler() = default;
+        virtual void operator()() = 0;
+    };
+
+
+    class Blockchain : public IHandler
+    {
+    public:
+        void operator()() override;
+    private:
+    };
+
+
+    class Host : public IHandler
+    {
+    public:
+    private:
+    };
+
+
+    class Peer : public IHandler
+    {
+    public:
+    private:
+    };
+}
+
+
 } // namespace bc
