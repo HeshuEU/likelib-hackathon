@@ -75,4 +75,13 @@ class Bytes
 
 } // namespace base
 
+namespace std
+{
+template<>
+struct hash<base::Bytes>
+{
+    std::size_t operator()(const base::Bytes& k) const;
+};
+} // namespace std
+
 #include "bytes.tpp"

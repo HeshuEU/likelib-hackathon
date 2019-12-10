@@ -2,6 +2,8 @@
 
 #include "base/assert.hpp"
 
+#include <boost/container_hash/hash.hpp>
+
 #include <iterator>
 
 namespace base
@@ -199,3 +201,9 @@ bool Bytes::operator>=(const Bytes& another) const
 }
 
 } // namespace base
+
+
+std::size_t std::hash<base::Bytes>::operator()(const base::Bytes& k) const
+{
+    return boost::hash_value(k.toVector());
+}
