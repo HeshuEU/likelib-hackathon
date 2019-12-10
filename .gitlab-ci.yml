@@ -3,27 +3,31 @@ stages:
   - quality
   - test
 
-default:
-  tags:
-    - custom-tag
-
 Build:
   stage: build
+  tags:
+    - custom-tag
   script: 
      - docker build -f build.Dockerfile -t likelib2_build .
 
 Code quality:
   stage: quality
+  tags:
+    - custom-tag
   allow_failure: true
   script:
     - docker build --no-cache -f code-quality.Dockerfile -t likelib2_code_quality .
 
 Unit tests:
   stage: test
+  tags:
+    - custom-tag
   script:
     - docker build --no-cache -f unit_test.Dockerfile -t likelib2_unit_test .
 
 Integration tests:
   stage: test
+  tags:
+    - custom-tag
   script:
     - docker build --no-cache -f integration_test.Dockerfile -t likelib2_integration_test .
