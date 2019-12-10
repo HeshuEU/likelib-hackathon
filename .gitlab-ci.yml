@@ -1,33 +1,61 @@
+image: ubuntu:19.10
+
 stages:
   - build
-  - quality
-  - test
+#  - quality
+#  - test
+
+variables:
+  INSTALL_DIR: /opt
 
 Build:
   stage: build
   tags:
-    - custom-tag
-  script: 
-     - docker build -f build.Dockerfile -t likelib2_build .
-
-Code quality:
-  stage: quality
-  tags:
-    - custom-tag
-  allow_failure: true
+    - docker
   script:
-    - docker build --no-cache -f code-quality.Dockerfile -t likelib2_code_quality .
-
-Unit tests:
-  stage: test
-  tags:
-    - custom-tag
-  script:
-    - docker build --no-cache -f unit_test.Dockerfile -t likelib2_unit_test .
-
-Integration tests:
-  stage: test
-  tags:
-    - custom-tag
-  script:
-    - docker build --no-cache -f integration_test.Dockerfile -t likelib2_integration_test .
+    - ls
+#    # update system
+#    - RUN apt-get update && \
+#      apt-get install -y software-properties-common && \
+#      apt-get update -y && \
+#      apt-get install -y apt-utils && \
+#      apt-get dist-upgrade -y
+#
+#    - cd ${INSTALL_DIR}
+#
+#    # set up environment for building project
+#    COPY doc/prepare_build.sh ${INSTALL_DIR}
+#    RUN ./prepare_build.sh
+#
+#    # build project
+#    ENV PROJECT_SOURCE_DIR /project
+#    ENV PROJECT_BUILD_DIR /build
+#    COPY . ${PROJECT_SOURCE_DIR}
+#    WORKDIR ${PROJECT_BUILD_DIR}
+#    RUN cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
+#    make -j$(nproc)
+#
+#
+#    - docker build -f build.Dockerfile -t likelib2_build .
+#
+#Code quality:
+#  stage: quality
+#  tags:
+#    - custom-tag
+#  allow_failure: true
+#  script:
+#    - docker build --no-cache -f code-quality.Dockerfile -t likelib2_code_quality .
+#
+#Unit tests:
+#  stage: test
+#  tags:
+#    - custom-tag
+#  script:
+#    - docker build --no-cache -f unit_test.Dockerfile -t likelib2_unit_test .
+#
+#Integration tests:
+#  stage: test
+#  tags:
+#    - custom-tag
+#  script:
+#    - docker build --no-cache -f integration_test.Dockerfile -t likelib2_integration_test .
