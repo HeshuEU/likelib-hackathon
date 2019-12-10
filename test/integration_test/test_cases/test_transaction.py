@@ -81,18 +81,18 @@ def client_run_fun(rpc_client_exec_path):
     exit(0)
 
 
-# def main(node_exec_path, rpc_client_exec_path):
-#     if os.path.exists(_work_dir):
-#         shutil.rmtree(_work_dir, ignore_errors=True)
-#     os.makedirs(_work_dir)
+def main(node_exec_path, rpc_client_exec_path):
+    if os.path.exists(_work_dir):
+        shutil.rmtree(_work_dir, ignore_errors=True)
+    os.makedirs(_work_dir)
 
-#     node_process = mp.Process(target=node_run_fun, args=[node_exec_path, ])
-#     client_process = mp.Process(target=client_run_fun, args=[rpc_client_exec_path, ])
+    node_process = mp.Process(target=node_run_fun, args=[node_exec_path, ])
+    client_process = mp.Process(target=client_run_fun, args=[rpc_client_exec_path, ])
     
-#     node_process.start()
-#     client_process.start()
+    node_process.start()
+    client_process.start()
 
-#     client_process.join()
-#     node_process.kill()
+    client_process.join()
+    node_process.kill()
 
-#     return client_process.exitcode
+    return client_process.exitcode
