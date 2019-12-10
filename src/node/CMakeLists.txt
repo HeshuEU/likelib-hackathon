@@ -2,12 +2,14 @@ set(NODE_HEADERS
         hard_config.hpp
         soft_config.hpp
         rpc_service.hpp
+        miner.hpp
         )
 
 set(NODE_SOURCES
         soft_config.cpp
         hard_config.cpp
         rpc_service.cpp
+        miner.cpp
         main.cpp
         )
 

@@ -9,12 +9,12 @@ namespace
 template<typename H, typename... Args>
 void runAllHandlers(std::vector<H>& handlers, Args&&... args)
 {
-    for(auto& handler : handlers) {
+    for(auto& handler: handlers) {
         handler(args...);
     }
 }
 
-}
+} // namespace
 
 
 namespace bc
@@ -95,8 +95,6 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Message
 
 ProtocolEngine::ProtocolEngine()
 {}
-
-
 
 
 

@@ -17,9 +17,7 @@ namespace net
 Host::Host(const base::PropertyTree& config)
     : _listen_ip{config.get<std::string>("net.listen_addr")}, _server_public_port{config.get<unsigned short>(
                                                                   "net.public_port")},
-      _acceptor{_io_context, _listen_ip, _peers},
-      _connector{_io_context, _peers},
-      _heartbeat_timer{_io_context}
+      _acceptor{_io_context, _listen_ip, _peers}, _connector{_io_context, _peers}, _heartbeat_timer{_io_context}
 {
     ASSERT(_data_handler);
 }
@@ -106,18 +104,18 @@ void Host::dropZombieConnections()
 
     });
 
-//    for(auto it = _peers.begin(); it != _peers.end();) {
-//        auto& peer = *it;
-//        if(base::Time::now().seconds() - peer.getLastSeen().seconds() > base::config::NET_PING_FREQUENCY) {
-//            if(!peer.isClosed()) {
-//                peer.close();
-//            }
-//            it = _peers.erase(it);
-//        }
-//        else {
-//            ++it;
-//        }
-//    }
+    //    for(auto it = _peers.begin(); it != _peers.end();) {
+    //        auto& peer = *it;
+    //        if(base::Time::now().seconds() - peer.getLastSeen().seconds() > base::config::NET_PING_FREQUENCY) {
+    //            if(!peer.isClosed()) {
+    //                peer.close();
+    //            }
+    //            it = _peers.erase(it);
+    //        }
+    //        else {
+    //            ++it;
+    //        }
+    //    }
 }
 
 

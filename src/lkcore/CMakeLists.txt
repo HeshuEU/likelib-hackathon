@@ -1,9 +1,13 @@
 set(LKCORE_HEADERS
-        lkcore.hpp
+        balance_manager.hpp
+        core.hpp
+        protocol.hpp
         )
 
 set(LKCORE_SOURCES
-        lkcore.cpp
+        balance_manager.cpp
+        core.cpp
+        protocol.cpp
         )
 
 add_library(lkcore ${LKCORE_SOURCES} ${LKCORE_HEADERS})

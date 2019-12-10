@@ -11,8 +11,7 @@
 namespace bc
 {
 
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
-    MessageType, unsigned char, (TRANSACTION)(BLOCK)(GET_BLOCK))
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char, (TRANSACTION)(BLOCK)(GET_BLOCK))
 
 class Message
 {
@@ -74,7 +73,8 @@ class ProtocolEngine
 
     void broadcastTransaction(const bc::Transaction& tx);
     void broadcastBlock(const bc::Block& block);
-private:
+
+  private:
     MessageHandlerManager _handler_manager;
     net::Host _host;
 };
