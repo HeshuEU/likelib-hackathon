@@ -15,6 +15,7 @@ set(TEST_SOURCES
         bc/address.cpp
         bc/balance_manager.cpp
 		bc/transaction.cpp
+        bc/transactions_set.cpp
 		)
 
 add_executable(run_tests ${TEST_SOURCES})
