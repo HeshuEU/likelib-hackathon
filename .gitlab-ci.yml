@@ -21,9 +21,9 @@ build-code:
     - apt-get dist-upgrade -y
     - cd doc
     - PROJECT_SOURCE_DIR=$(pwd)
-    - cd ${INSTALL_DIR}
-    - chmod 775 ${PROJECT_SOURCE_DIR}/doc/prepare_build.sh && ${PROJECT_SOURCE_DIR}/doc/prepare_build.sh
-    - cd ${PROJECT_BUILD_DIR}
+    - mkdir -p ${INSTALL_DIR} && cd ${INSTALL_DIR}
+    - chmod 777 ${PROJECT_SOURCE_DIR}/doc/prepare_build.sh && ${PROJECT_SOURCE_DIR}/doc/prepare_build.sh
+    - mkdir -p ${PROJECT_BUILD_DIR} && cd ${PROJECT_BUILD_DIR}
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
   artifacts:
