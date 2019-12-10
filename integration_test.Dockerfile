@@ -9,8 +9,10 @@ RUN apt-get update && \
     apt-get install -y apt-utils && \
     apt-get dist-upgrade -y
 
+#install python3
 RUN apt-get install python3.7
 
+# set up env variables
 ENV TEST_FILES_DIR /likelib
 WORKDIR ${TEST_FILES_DIR}
 
