@@ -8,7 +8,7 @@ def __import_test_case(case_name):
         return main_fun
     except Exception as e:
         print(f"Failed to import test case [{case_name}]: {e}")
-        return None
+        raise Exception(e)
 
 
 def __register_test_cases(test_case_names):
@@ -16,11 +16,13 @@ def __register_test_cases(test_case_names):
 
     for test_case in test_case_names:
         if len(test_case) != 0:
-            test_case_main_fun = __import_test_case(test_case);
-            if test_case_main_fun is not None:
-                content = {"name": test_case, "run": test_case_main_fun}
-                registered_test_cases.append(content)
-
+            try:
+                test_case_main_fun = __import_test_case(test_case);
+                if test_case_main_fun is not None:
+                    content = {"name": test_case, "run": test_case_main_fun}
+                    registered_test_cases.append(content)
+            except:
+                exit(2)
     return registered_test_cases
 
 

@@ -11,7 +11,8 @@ RUN apt-get update && \
 
 RUN apt-get install python3.7
 
-WORKDIR /likelib
+ENV TEST_FILES_DIR /likelib
+WORKDIR ${TEST_FILES_DIR}
 
 # copy node executable
 COPY --from=build /build/src/node/node .
@@ -23,5 +24,5 @@ COPY --from=build /build/src/rpc-client/rpc-client .
 COPY --from=build /project/test/integration_test test_scripts
 
 # run integration tests
-RUN python3 test_scripts/run_test.py
+RUN python3 test_scripts/run_test.py -n ${TEST_FILES_DIR}/node -r ${TEST_FILES_DIR}/rpc-client
 
