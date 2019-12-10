@@ -93,11 +93,6 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Message
 }
 
 
-ProtocolEngine::ProtocolEngine()
-{}
-
-
-
 void MessageHandlerManager::handle(net::Peer& peer, base::Bytes&& bytes)
 {
     auto packet = Message::deserialize(bytes);

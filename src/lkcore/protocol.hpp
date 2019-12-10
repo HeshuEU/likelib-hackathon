@@ -65,19 +65,4 @@ class MessageHandlerManager
     //================
 };
 
-
-class ProtocolEngine
-{
-  public:
-    ProtocolEngine();
-
-    void broadcastTransaction(const bc::Transaction& tx);
-    void broadcastBlock(const bc::Block& block);
-
-  private:
-    MessageHandlerManager _handler_manager;
-    net::Host _host;
-};
-
-
 } // namespace bc
