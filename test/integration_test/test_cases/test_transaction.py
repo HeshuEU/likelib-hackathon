@@ -12,8 +12,8 @@ def node_run_fun(node_exec_path):
     node_config_file_content = '''
     {
         "net": {
-            "listen_addr": "127.0.0.1:20203",
-            "public_port": 20203
+            "listen_addr": "127.0.0.1:20202",
+            "public_port": 20202
         },
         "rpc": {
             "address": "127.0.0.1:50051"
@@ -36,12 +36,12 @@ def node_run_fun(node_exec_path):
     with open(_node_config_file, 'w') as node_config:
         node_config.write(node_config_file_content)
 
-    node_timeout = 20
+    test_timeout = 20
     try:
-        return_code = subprocess.run([node_exec_path, "--config", _node_config_file], timeout=node_timeoutm)
-        return return_code
+        return_code = subprocess.run([node_exec_path, "--config", _node_config_file], capture_output=True, timeout=test_timeout)
     except Exception:
-        exit(1)
+        pass
+    exit(0)
 
 
 def client_run_fun(rpc_client_exec_path):
@@ -64,7 +64,7 @@ def client_run_fun(rpc_client_exec_path):
     from_address = "00000000000000000000000000000000"
     
     amount = "120"
-    pipe = subprocess.run([rpc_client_exec_path, "transfer", "--host", host_address, "--from", from_address, "--to", to_address, "-amount", amount], capture_output=True)
+    pipe = subprocess.run([rpc_client_exec_path, "transfer", "--host", host_address, "--from", from_address, "--to", to_address, "--amount", amount], capture_output=True)
 
     if pipe.returncode != 0:
         print(pipe.stderr)
@@ -93,6 +93,10 @@ def main(node_exec_path, rpc_client_exec_path):
     client_process.start()
 
     client_process.join()
-    node_process.kill()
+    exit_code = client_process.exitcode
+    client_process.close()
 
-    return client_process.exitcode
+    node_process.join()
+    node_process.close()
+
+    return exit_code

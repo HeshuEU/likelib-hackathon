@@ -12,8 +12,8 @@ def node_run_fun(node_exec_path):
     node_config_file_content = '''
     {
         "net": {
-            "listen_addr": "0.0.0.0:20203",
-            "public_port": 20203
+            "listen_addr": "0.0.0.0:20202",
+            "public_port": 20202
         },
         "rpc": {
             "address": "0.0.0.0:50051"
@@ -35,11 +35,12 @@ def node_run_fun(node_exec_path):
     with open(_node_config_file, 'w') as node_config:
         node_config.write(node_config_file_content)
 
+    test_timeout = 7
     try:
-        return_code = subprocess.run([node_exec_path, "--config", _node_config_file], capture_output=True)
-        return return_code.returncode
+        return_code = subprocess.run([node_exec_path, "--config", _node_config_file], capture_output=True, timeout=test_timeout)
     except Exception:
-        exit(1)
+        pass
+    exit(0)
 
 
 def client_run_fun(rpc_client_exec_path):
@@ -52,7 +53,6 @@ def client_run_fun(rpc_client_exec_path):
     time.sleep(time_to_node_set_up)
     rpc_pipe = subprocess.run([rpc_client_exec_path, "test", "--host", "127.0.0.1:50051"], capture_output=True)
 
-    print(rpc_pipe.stdout)
     if b"Test passed" in rpc_pipe.stdout and rpc_pipe.returncode == 0:
         exit(0)
     else:
@@ -72,6 +72,10 @@ def main(node_exec_path, rpc_client_exec_path):
     client_process.start()
 
     client_process.join()
-    node_process.kill()
+    exit_code = client_process.exitcode
+    client_process.close()
+    
+    node_process.join()
+    node_process.close()
 
-    return client_process.exitcode
+    return exit_code
