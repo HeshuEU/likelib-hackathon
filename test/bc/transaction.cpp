@@ -79,3 +79,47 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
     BOOST_CHECK(tx2.getTimestamp() == base::Time::now());
     BOOST_CHECK(tx2.getAmount() == 1239823409);
 }
+
+
+BOOST_AUTO_TEST_CASE(transaction_set_all1)
+{
+    bc::Transaction tx;
+    tx.setFrom(bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
+    tx.setTo(bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
+    tx.setTimestamp(base::Time::now());
+    tx.setAmount(1239823409);
+
+    BOOST_CHECK(tx.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
+    BOOST_CHECK(tx.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
+    BOOST_CHECK(tx.getTimestamp() == base::Time::now());
+    BOOST_CHECK(tx.getAmount() == 1239823409);
+}
+
+
+BOOST_AUTO_TEST_CASE(transaction_set_all2)
+{
+    bc::Transaction tx(bc::Address("vjSSDGHS*#%/fg\f"), bc::Address("()#%sdo#%KGD\n/Skg/dfe"), 821481368, base::Time());
+
+    tx.setFrom(bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
+    tx.setTo(bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
+    tx.setTimestamp(base::Time::now());
+    tx.setAmount(1239823409);
+
+    BOOST_CHECK(tx.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
+    BOOST_CHECK(tx.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
+    BOOST_CHECK(tx.getTimestamp() == base::Time::now());
+    BOOST_CHECK(tx.getAmount() == 1239823409);
+}
+
+
+BOOST_AUTO_TEST_CASE(transaction_serialization)
+{
+    bc::Transaction tx1(bc::Address("vjSSDGHS*#%/fg\f"), bc::Address("()#%sdo#%KGD\n/Skg/dfe"), 821481368, base::Time::now());
+    base::SerializationOArchive oa;
+    oa << tx1;
+
+    base::SerializationIArchive ia(oa.getBytes());
+    bc::Transaction tx2;
+    ia >> tx2;
+    BOOST_CHECK(tx1 == tx2);
+}
