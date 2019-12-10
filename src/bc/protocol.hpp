@@ -6,8 +6,7 @@
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
 #include "bc/transaction.hpp"
-
-#include "net/connection.hpp"
+#include "net/host.hpp"
 
 namespace bc
 {
@@ -72,8 +71,12 @@ class ProtocolEngine
 {
   public:
     ProtocolEngine();
-  private:
+
+    void broadcastTransaction(const bc::Transaction& tx);
+    void broadcastBlock(const bc::Block& block);
+private:
     MessageHandlerManager _handler_manager;
+    net::Host _host;
 };
 
 

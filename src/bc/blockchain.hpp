@@ -49,10 +49,7 @@ class Blockchain
     //===================
     bc::BalanceManager _balance_manager;
     //===================
-    net::Host _host;
     void onNetworkReceived(base::Bytes&& data);
-    void broadcastBlock(const bc::Block& block);
-    void broadcastTransaction(const bc::Transaction& tx);
     //===================
     void setupGenesis();
     //===================
