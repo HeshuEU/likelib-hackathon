@@ -5,6 +5,8 @@
 #include <random>
 #include <thread>
 
+namespace
+{
 std::map<bc::Address, bc::Balance> initMap()
 {
     std::map<bc::Address, bc::Balance> init_map;
@@ -23,6 +25,7 @@ std::map<bc::Address, bc::Balance> initMap()
     return init_map;
 }
 std::map<bc::Address, bc::Balance> init_map = initMap();
+} // namespace
 
 BOOST_AUTO_TEST_CASE(balance_manager_constructor)
 {
