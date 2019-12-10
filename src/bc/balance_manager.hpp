@@ -26,7 +26,7 @@ class BalanceManager
     bool checkTransaction(const Transaction& tx) const;
     void update(const Transaction& tx);
     void update(const Block& block);
-    void updateFromGenesis(const Block& block);
+    void updateFromGenesis(const Block& block);   //TODO:make any tests for this?
     Balance getBalance(const Address& address) const;
     //================
   private:
