@@ -19,7 +19,6 @@ build-code:
     - apt-get update -y
     - apt-get install -y apt-utils
     - apt-get dist-upgrade -y
-    - cd doc
     - PROJECT_SOURCE_DIR=$(pwd)
     - mkdir -p ${INSTALL_DIR} && cd ${INSTALL_DIR}
     - chmod 777 ${PROJECT_SOURCE_DIR}/doc/prepare_build.sh && ${PROJECT_SOURCE_DIR}/doc/prepare_build.sh
