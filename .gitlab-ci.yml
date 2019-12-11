@@ -13,12 +13,18 @@ variables:
 
 before_script:
   - echo "Started before script"
+  - echo "folder content:" && ls
   - echo "get hash of prepare build"
   - echo "pull image by hash "
   - echo "if image was not found make image(prepare env) with tags hash and tag likelib_environment"
   - echo "push image to registry"
-  - echo "variable {ENV_HASH}"
+  - echo "variable ${ENV_HASH}"
   - ENV_HASH="befor_script"
+
+after_script:
+  - echo "After script"
+  - echo "folder content:" && ls
+  - echo "variable ${ENV_HASH}"
 
 job1:
   stage: stage_1
@@ -26,7 +32,8 @@ job1:
     - docker
   script:
     - echo "Started job 1"
-    - echo "variable {ENV_HASH}"
+    - echo "folder content:" && ls
+    - echo "variable ${ENV_HASH}"
     - ENV_HASH="job_1"
 
 job2:
@@ -35,7 +42,8 @@ job2:
     - docker
   script:
     - echo "Started job 2"
-    - echo "variable {ENV_HASH}"
+    - echo "folder content:" && ls
+    - echo "variable ${ENV_HASH}"
     - ENV_HASH="job_2"
 
 
