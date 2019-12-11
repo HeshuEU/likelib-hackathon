@@ -1,50 +1,36 @@
 # test for ci capabilities
-image: docker:19.03.1
-
-services:
-  - docker:19.03.1-dind
 
 stages:
   - stage_1
   - stage_2
 
-variables:
-  ENV_HASH: "temp"
-
-before_script:
-  - echo "Started before script"
-  - echo "folder content:" && ls
-  - echo "get hash of prepare build"
-  - echo "pull image by hash "
-  - echo "if image was not found make image(prepare env) with tags hash and tag likelib_environment"
-  - echo "push image to registry"
-  - echo "variable ${ENV_HASH}"
-  - ENV_HASH="befor_script"
-  - TEST_VAR="before_script"
-
-after_script:
-  - echo "After script"
-  - echo "folder content:" && ls
-  - echo "variable ${ENV_HASH}"
-  - echo "test variable ${TEST_VAR}"
+default:
+  image: docker:19.03.1
+  services:
+    - docker:19.03.1-dind
+  tags:
+    - docker
+  before_script:
+    - echo "Started before_script"
+    - echo "folder content:" && ls
+    - TEMP=$( md5sum doc/prepare_build.sh )
+    - ENV_HASH=$( echo $TEMP | awk 'NR==1{print $1}')
+    - echo "hash sum ${ENV_HASH}"
+    - echo "pull image by hash"
+    - echo "if image was not found make image(prepare env) with tags hash and tag likelib_environment"
+    - echo "push image to registry"
 
 job1:
   stage: stage_1
-  tags:
-    - docker
   script:
-    - echo "Started job 1"
+    - echo "Started job_1"
     - echo "folder content:" && ls
     - echo "variable ${ENV_HASH}"
-    - ENV_HASH="job_1"
-    - echo "test variable ${TEST_VAR}"
 
 job2:
   stage: stage_2
-  tags:
-    - docker
   script:
-    - echo "Started job 2"
+    - echo "Started job_2"
     - echo "folder content:" && ls
     - echo "variable ${ENV_HASH}"
     - ENV_HASH="job_2"
