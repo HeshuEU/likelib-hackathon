@@ -9,8 +9,11 @@ default:
   services:
     - docker:19.03.1-dind
   before_script:
-    - TEMP=$( md5sum doc/prepare_build.sh )
-      ENV_HASH=$( echo ${TEMP} | awk 'NR==1{print $1}')
+    - PREPARE_BUILD_HASH=$( md5sum doc/prepare_build.sh )
+      ENV_HASH=$( echo ${PREPARE_BUILD_HASH} | awk 'NR==1{print $1}')
+      ENV_HASH_CUT=${ENV_HASH:0:10}
+      ENV_TAG="likelib_env:${ENV_HASH_CUT}"
+    - echo "ENV_HASH - ${ENV_HASH}, ENV_HASH_CUT - ${ENV_HASH_CUT}, ENV_TAG - ${ENV_TAG} "
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
     - if docker pull ${ENV_HASH} ; then
         echo "Env exists in registry"
