@@ -8,8 +8,6 @@ default:
   image: docker:19.03.1
   services:
     - docker:19.03.1-dind
-  tags:
-    - docker
   before_script:
     - echo "Started before_script"
     - echo "folder content:" && ls
@@ -22,6 +20,8 @@ default:
 
 job1:
   stage: stage_1
+  tags:
+    - docker
   script:
     - echo "Started job_1"
     - echo "folder content:" && ls
@@ -29,6 +29,8 @@ job1:
 
 job2:
   stage: stage_2
+  tags:
+    - docker
   script:
     - echo "Started job_2"
     - echo "folder content:" && ls
