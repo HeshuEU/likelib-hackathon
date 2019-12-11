@@ -9,11 +9,6 @@
 
 namespace bc
 {
-/**
- * @brief Class which manager all balance in Blockchain
- * @async Yes
- * @threadsafe Yes
- */
 class BalanceManager
 {
   public:
