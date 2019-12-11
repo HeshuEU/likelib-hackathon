@@ -15,5 +15,8 @@ class Node
   private:
     base::PropertyTree _config;
     lk::Core _core;
-    Miner _miner;
+    std::unique_ptr<Miner> _miner;
+    std::unique_ptr<rpc::RpcServer> _rpc;
+
+    void onBlockMine(bc::Block&& block);
 };
