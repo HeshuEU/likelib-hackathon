@@ -76,13 +76,13 @@ int main(int argc, char** argv)
 
         // setup handler for all signal types defined in Standard, expect SIGABRT. Not all POSIX signals
         for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE}) {
-            [[maybe_unused]] auto r = std::signal(signal_code, signalHandler);
-            ASSERT_SOFT( r != SIG_ERR);
+            [[maybe_unused]] auto result = std::signal(signal_code, signalHandler);
+            ASSERT_SOFT( result != SIG_ERR);
         }
 
         {
-            [[maybe_unused]] auto r = std::atexit(atExitHandler);
-            ASSERT_SOFT(r == 0);
+            [[maybe_unused]] auto result = std::atexit(atExitHandler);
+            ASSERT_SOFT(result == 0);
         }
 
         //=====================
