@@ -46,6 +46,7 @@ class Bytes
     void clear();
     void resize(std::size_t new_size);
     void reserve(std::size_t reserve_size);
+    std::size_t capacity() const;
     void shrinkToFit();
     //==============
     const Byte* toArray() const;

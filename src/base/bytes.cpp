@@ -104,6 +104,12 @@ void Bytes::reserve(std::size_t reserve_size)
 }
 
 
+std::size_t Bytes::capacity() const
+{
+    return _raw.capacity();
+}
+
+
 void Bytes::shrinkToFit()
 {
     _raw.shrink_to_fit();
