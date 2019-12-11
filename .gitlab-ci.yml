@@ -9,14 +9,17 @@ default:
   services:
     - docker:19.03.1-dind
   before_script:
-    - echo "Started before_script"
-    - echo "folder content:" && ls
     - TEMP=$( md5sum doc/prepare_build.sh )
-    - ENV_HASH=$( echo $TEMP | awk 'NR==1{print $1}')
-    - echo "hash sum ${ENV_HASH}"
-    - echo "pull image by hash"
-    - echo "if image was not found make image(prepare env) with tags hash and tag likelib_environment"
-    - echo "push image to registry"
+      ENV_HASH=$( echo ${TEMP} | awk 'NR==1{print $1}')
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - if docker pull ${ENV_HASH} ; then
+        echo "Env exists in registry"
+      else
+        echo "hash sum ${ENV_HASH}"
+        echo "if image was not found make image(prepare env) with tags hash and tag likelib_environment"
+        echo "push image to registry"
+        echo "Command failed"
+      fi
 
 job1:
   stage: stage_1
