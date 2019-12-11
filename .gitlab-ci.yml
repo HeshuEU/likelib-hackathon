@@ -4,6 +4,25 @@ stages:
   - stage_1
   - stage_2
 
+variables:
+  # When using dind service we need to instruct docker, to talk with the
+  # daemon started inside of the service. The daemon is available with
+  # a network connection instead of the default /var/run/docker.sock socket.
+  #
+  # The 'docker' hostname is the alias of the service container as described at
+  # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
+  #
+  # Note that if you're using the Kubernetes executor, the variable should be set to
+  # tcp://localhost:2375 because of how the Kubernetes executor connects services
+  # to the job container
+  # DOCKER_HOST: tcp://localhost:2375
+  #
+  # For non-Kubernetes executors, we use tcp://docker:2375
+  DOCKER_HOST: tcp://docker:2375
+  #
+  # This will instruct Docker not to start over TLS.
+  DOCKER_TLS_CERTDIR: ""
+
 default:
   image: docker:19.03.1
   services:
@@ -13,13 +32,12 @@ default:
       ENV_HASH=$( echo ${PREPARE_BUILD_HASH} | awk 'NR==1{print $1}')
       ENV_HASH_CUT=${ENV_HASH:0:10}
       ENV_TAG="likelib_env:${ENV_HASH_CUT}"
-    - echo "ENV_HASH - ${ENV_HASH}, ENV_HASH_CUT - ${ENV_HASH_CUT}, ENV_TAG - ${ENV_TAG} "
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    - if docker pull ${ENV_HASH} ; then
+    - if docker pull ${ENV_TAG} ; then
         echo "Env exists in registry"
       else
-        echo "hash sum ${ENV_HASH}"
-        echo "if image was not found make image(prepare env) with tags hash and tag likelib_environment"
+        echo "hash sum ${ENV_TAG}"
+        echo "if image was not found make image"
         echo "push image to registry"
         echo "Command failed"
       fi
@@ -97,9 +115,6 @@ job2:
 #
 #    - docker build -f build.Dockerfile -t likelib2_build .
 #
-
-
-
 
 #Code quality:
 #  stage: quality
