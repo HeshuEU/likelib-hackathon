@@ -17,25 +17,13 @@ namespace net
 Host::Host(const base::PropertyTree& config)
     : _listen_ip{config.get<std::string>("net.listen_addr")}, _server_public_port{config.get<unsigned short>(
                                                                   "net.public_port")},
-      _acceptor{_io_context, _listen_ip, _peers}, _connector{_io_context, _peers}, _heartbeat_timer{_io_context}
+      _acceptor{_io_context, _listen_ip}, _connector{_io_context}, _heartbeat_timer{_io_context}
 {}
 
 
 Host::~Host()
 {
     _io_context.stop();
-    waitForFinish();
-}
-
-
-void Host::run(std::shared_ptr<HostHandler> handler)
-{
-    ASSERT(handler);
-
-    _handler = std::move(handler);
-    acceptClients();
-    scheduleHeartBeat();
-    _network_thread = std::make_unique<std::thread>(&Host::networkThreadWorkerFunction, this);
 }
 
 
@@ -49,10 +37,10 @@ void Host::scheduleHeartBeat()
 }
 
 
-void Host::acceptClients()
+void Host::accept(std::function<void(std::unique_ptr<Peer>)> on_accept)
 {
-    _acceptor.acceptInfinite([this](Peer& peer) {
-        _handler->onAccept(peer);
+    _acceptor.accept([on_accept = std::move(on_accept)](std::unique_ptr<Peer> peer) {
+        on_accept(std::move(peer));
     });
 }
 
@@ -69,28 +57,32 @@ void Host::networkThreadWorkerFunction() noexcept
 }
 
 
-void Host::connect(const std::vector<net::Endpoint>& addresses)
+void Host::run()
+{
+    _network_thread = std::thread(&Host::networkThreadWorkerFunction, this);
+}
+
+
+void Host::connect(const std::vector<net::Endpoint>& addresses, std::function<void(std::unique_ptr<Peer>)> on_connect)
 {
     for(const auto& address: addresses) {
-        connect(address);
+        connect(address, on_connect);
     }
 }
 
 
-void Host::connect(const net::Endpoint& address)
+void Host::connect(const net::Endpoint& address, std::function<void(std::unique_ptr<Peer>)> on_connect)
 {
-    _connector.connect(address, [this](Peer& peer) {
-        _handler->onConnect(peer);
+    _connector.connect(address, [on_connect = std::move(on_connect)](std::unique_ptr<Peer> peer) {
+        on_connect(std::move(peer));
     });
 }
 
 
-
-void Host::waitForFinish()
+void Host::join()
 {
-    if(_network_thread && _network_thread->joinable()) {
-        _network_thread->join();
-        _network_thread.reset(nullptr);
+    if(_network_thread.joinable()) {
+        _network_thread.join();
     }
 }
 

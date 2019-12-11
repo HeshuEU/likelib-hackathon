@@ -3,8 +3,8 @@
 #include "base/property_tree.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
-#include "lkcore/balance_manager.hpp"
-#include "lkcore/protocol.hpp"
+#include "lk/balance_manager.hpp"
+#include "lk/protocol.hpp"
 #include "net/host.hpp"
 
 
@@ -22,7 +22,7 @@ class Core
      *
      *  @threadsafe
      */
-    ~Core();
+    ~Core() = default;
     //==================
     /**
      *  @brief Loads blockchain from disk and runs networking.
@@ -38,9 +38,7 @@ class Core
     //==================
     BalanceManager _balance_manager;
     bc::Blockchain _blockchain;
-    net::Host _host;
-    //==================
-    lk::MessageHandlerRouter _handler;
+    lk::ProtocolEngine _protocol_engine;
     //==================
     void broadcastBlock(const bc::Block& block);
     //==================

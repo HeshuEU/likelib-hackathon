@@ -9,7 +9,6 @@
 #include <boost/asio/read.hpp>
 #include <boost/asio/write.hpp>
 
-#include <atomic>
 #include <thread>
 #include <utility>
 
@@ -19,8 +18,7 @@ namespace net
 {
 
 Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket)
-    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)},
-      _read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE)
+    : _io_context{io_context}, _socket{std::move(socket)}, _read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE)
 {
     ASSERT(_socket.is_open());
     const auto& re = _socket.remote_endpoint();
@@ -38,19 +36,6 @@ Connection::~Connection()
             LOG_WARNING << "Error while closing connection: " << e.what();
         }
     }
-}
-
-
-std::size_t Connection::getNextId()
-{
-    static std::atomic<int> next_id{0};
-    return next_id++;
-}
-
-
-std::size_t Connection::getId() const noexcept
-{
-    return _id;
 }
 
 

@@ -15,58 +15,55 @@
 #include <thread>
 
 
-namespace bc
-{
-
 namespace impl
 {
-    class MinerWorker;
+class MinerWorker;
 
-    using MinerHandlerType = std::function<void(Block&&)>;
+using MinerHandlerType = std::function<void(bc::Block&&)>;
 
-    enum class Task
-    {
-        NONE,
-        DROP_JOB,
-        FIND_NONCE,
-        EXIT
-    };
-
-
-    struct CommonData
-    {
-        impl::Task task;
-        std::optional<Block> block_to_mine;
-        std::optional<base::Bytes> complexity;
-    };
+enum class Task
+{
+    NONE,
+    DROP_JOB,
+    FIND_NONCE,
+    EXIT
+};
 
 
-    class CommonState
-    {
-      public:
-        //===================
-        CommonState(CommonData&& initial_state, MinerHandlerType handler);
-        //===================
-        std::size_t getVersion() const;
-        //===================
-        [[maybe_unused]] std::size_t getCommonData(CommonData& data) const;
-        void setCommonData(const CommonData& data);
-        //===================
-        template<typename... Args>
-        void callHandlerAndDrop(Args&&... args);
-        //===================
-        void waitAndReadNewData(std::size_t& last_read_version, CommonData& data);
-        //===================
-      private:
-        //===================
-        mutable std::shared_mutex _state_mutex;
-        std::condition_variable_any _state_changed_cv;
-        std::atomic<std::size_t> _version;
-        //===================
-        CommonData _common_data;
-        MinerHandlerType _handler;
-        //===================
-    };
+struct CommonData
+{
+    impl::Task task;
+    std::optional<bc::Block> block_to_mine;
+    std::optional<base::Bytes> complexity;
+};
+
+
+class CommonState
+{
+  public:
+    //===================
+    CommonState(CommonData&& initial_state, MinerHandlerType handler);
+    //===================
+    std::size_t getVersion() const;
+    //===================
+    [[maybe_unused]] std::size_t getCommonData(CommonData& data) const;
+    void setCommonData(const CommonData& data);
+    //===================
+    template<typename... Args>
+    void callHandlerAndDrop(Args&&... args);
+    //===================
+    void waitAndReadNewData(std::size_t& last_read_version, CommonData& data);
+    //===================
+  private:
+    //===================
+    mutable std::shared_mutex _state_mutex;
+    std::condition_variable_any _state_changed_cv;
+    std::atomic<std::size_t> _version;
+    //===================
+    CommonData _common_data;
+    MinerHandlerType _handler;
+    //===================
+};
 
 } // namespace impl
 
@@ -81,7 +78,7 @@ class Miner
 
     ~Miner();
     //===================
-    void findNonce(const Block& block_without_nonce, const base::Bytes& complexity);
+    void findNonce(const bc::Block& block_without_nonce, const base::Bytes& complexity);
     void dropJob();
     //===================
   private:
@@ -93,7 +90,3 @@ class Miner
     void stop();
     //===================
 };
-
-
-
-} // namespace bc

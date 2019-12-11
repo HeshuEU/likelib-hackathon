@@ -11,7 +11,6 @@
 namespace net
 {
 
-
 class Peer
 {
   public:
@@ -30,14 +29,26 @@ class Peer
     //=================
     void close();
     //=================
+    std::size_t getId() const noexcept;
+    //=================
   private:
     //=================
+    const std::size_t _id;
+    std::size_t getNextId() const;
+    //==================
     std::unique_ptr<net::Connection> _connection;
     //=================
     void refreshLastSeen();
     base::Time _last_seen;
     //=================
 };
+
+bool operator<(const Peer& a, const Peer& b);
+bool operator>(const Peer& a, const Peer& b);
+bool operator<=(const Peer& a, const Peer& b);
+bool operator>=(const Peer& a, const Peer& b);
+bool operator==(const Peer& a, const Peer& b);
+bool operator!=(const Peer& a, const Peer& b);
 
 
 class Peers
@@ -58,6 +69,5 @@ class Peers
     std::size_t _size{0};
     mutable std::shared_mutex _state_mutex;
 };
-
 
 } // namespace net

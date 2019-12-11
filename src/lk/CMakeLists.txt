@@ -1,15 +1,15 @@
-set(LKCORE_HEADERS
+set(LK_HEADERS
         balance_manager.hpp
         core.hpp
         protocol.hpp
         )
 
-set(LKCORE_SOURCES
+set(LK_SOURCES
         balance_manager.cpp
         core.cpp
         protocol.cpp
         )
 
-add_library(lkcore ${LKCORE_SOURCES} ${LKCORE_HEADERS})
+add_library(lk ${LK_SOURCES} ${LK_HEADERS})
 
-target_link_libraries(lkcore base bc net)
+target_link_libraries(lk base bc net)

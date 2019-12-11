@@ -27,6 +27,29 @@ class MessageHandlerRouter
     net::Host& _host;
     net::Peer& _peer;
     //==================
+    void onTransaction(bc::Transaction&& tx);
+    void onBlock(bc::Block&& block);
+    void onGetBlock(base::Sha256&& block_hash);
+    //==================
 };
+
+
+class ProtocolEngine
+{
+  public:
+    ProtocolEngine(const base::PropertyTree& config, bc::Blockchain& blockchain);
+    void run();
+
+  private:
+    const base::PropertyTree& _config;
+    net::Host _host;
+    bc::Blockchain& _blockchain;
+    std::map<std::size_t, MessageHandlerRouter> _routers;
+
+    void onAccept(net::Peer& peer);
+    void onConnect(net::Peer& peer);
+    void onReceive(net::Peer& peer, const base::Bytes& data);
+};
+
 
 } // namespace lk

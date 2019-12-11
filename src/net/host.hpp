@@ -19,35 +19,22 @@
 namespace net
 {
 
-
-class HostHandler
-{
-  public:
-    virtual ~HostHandler() = default;
-
-    virtual void onAccept(Peer& peer);
-    virtual void onConnect(Peer& peer);
-    virtual void onReceive(Peer& peer, const base::Bytes& data);
-    virtual void onSend(Peer& peer);
-};
-
-
 class Host
 {
   public:
     //===================
-    using DataHandler = std::function<void(base::Bytes&&)>;
-    //===================
     Host(const base::PropertyTree& config);
     ~Host();
     //===================
-    void run(std::shared_ptr<HostHandler> handler);
-    void waitForFinish();
+    void accept(std::function<void(std::unique_ptr<Peer>)> on_accept);
     //===================
-    void connect(const Endpoint& address);
-    void connect(const std::vector<Endpoint>& nodes);
+    void connect(const Endpoint& address, std::function<void(std::unique_ptr<Peer>)> on_connect);
+    void connect(const std::vector<Endpoint>& nodes, std::function<void(std::unique_ptr<Peer>)> on_connect);
     //===================
     void broadcast(const base::Bytes& data);
+    //===================
+    void run();
+    void join();
     //===================
   private:
     //===================
@@ -56,7 +43,7 @@ class Host
     //===================
     boost::asio::io_context _io_context;
     //===================
-    std::unique_ptr<std::thread> _network_thread;
+    std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //===================
     Peers _peers;
@@ -68,8 +55,6 @@ class Host
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();
     void dropZombieConnections();
-    //===================
-    std::shared_ptr<HostHandler> _handler;
     //===================
 };
 

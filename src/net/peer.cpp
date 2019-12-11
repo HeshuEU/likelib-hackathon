@@ -5,8 +5,21 @@
 namespace net
 {
 
-Peer::Peer(std::unique_ptr<Connection> connection) : _connection{std::move(connection)}
+Peer::Peer(std::unique_ptr<Connection> connection) : _id{Peer::getNextId()}, _connection{std::move(connection)}
 {}
+
+
+std::size_t Peer::getNextId() const
+{
+    static std::atomic<std::size_t> next_id{0};
+    return next_id++;
+}
+
+
+std::size_t Peer::getId() const noexcept
+{
+    return _id;
+}
 
 
 bool Peer::isActive() const noexcept
@@ -59,6 +72,42 @@ void Peer::close()
     if(!_connection->isClosed()) {
         _connection->close();
     }
+}
+
+
+bool operator<(const Peer& a, const Peer& b)
+{
+    return a.getId() < b.getId();
+}
+
+
+bool operator>(const Peer& a, const Peer& b)
+{
+    return a.getId() > b.getId();
+}
+
+
+bool operator<=(const Peer& a, const Peer& b)
+{
+    return a.getId() <= b.getId();
+}
+
+
+bool operator>=(const Peer& a, const Peer& b)
+{
+    return a.getId() >= b.getId();
+}
+
+
+bool operator==(const Peer& a, const Peer& b)
+{
+    return a.getId() == b.getId();
+}
+
+
+bool operator!=(const Peer& a, const Peer& b)
+{
+    return a.getId() != b.getId();
 }
 
 

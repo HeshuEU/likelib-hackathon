@@ -44,15 +44,9 @@ class Connection : public std::enable_shared_from_this<Connection>
     //====================
     void receive(std::size_t bytes_to_receive, ReceiveHandler receive_handler);
     //====================
-    std::size_t getId() const noexcept;
     const Endpoint& getEndpoint() const;
     //====================
   private:
-    //====================
-    using SharedPointer = std::shared_ptr<Connection>;
-    //====================
-    const std::size_t _id;
-    static std::size_t getNextId();
     //====================
     boost::asio::io_context& _io_context;
     boost::asio::ip::tcp::socket _socket;

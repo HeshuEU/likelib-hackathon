@@ -3,13 +3,13 @@
 namespace lk
 {
 
-Core::Core(const base::PropertyTree& config) : _config{config}, _host{config}
+Core::Core(const base::PropertyTree& config) : _config{config}, _protocol_engine{_config, _blockchain}
 {
     applyGenesis();
 }
 
 
-const bc::Block& getGenesisBlock()
+const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
         bc::Block ret;
@@ -31,7 +31,7 @@ void Core::applyGenesis()
 
 void Core::run()
 {
-    //_host.run();
+    _protocol_engine.run();
 }
 
 

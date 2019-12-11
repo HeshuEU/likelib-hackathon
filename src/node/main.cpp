@@ -1,14 +1,13 @@
 #include "soft_config.hpp"
 #include "hard_config.hpp"
-#include "rpc_service.hpp"
 
 #include "base/program_options.hpp"
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
-#include "bc/blockchain.hpp"
+#include "node/node.hpp"
 #include "net/endpoint.hpp"
-#include "rpc/rpc.hpp"
+
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
@@ -20,8 +19,6 @@
 #include <exception>
 #include <thread>
 #include <filesystem>
-
-#include <sys/resource.h>
 
 namespace
 {
@@ -79,20 +76,19 @@ int main(int argc, char** argv)
 
         // setup handler for all signal types defined in Standard, expect SIGABRT. Not all POSIX signals
         for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE}) {
-            ASSERT_SOFT(std::signal(signal_code, signalHandler) != SIG_ERR);
+            [[maybe_unused]] auto r = std::signal(signal_code, signalHandler);
+            ASSERT_SOFT( r != SIG_ERR);
         }
 
-        ASSERT_SOFT(std::atexit(atExitHandler) == 0);
+        {
+            [[maybe_unused]] auto r = std::atexit(atExitHandler);
+            ASSERT_SOFT(r == 0);
+        }
 
         //=====================
         SoftConfig exe_config(config_file_path);
-        bc::Blockchain blockchain(exe_config);
-        blockchain.run();
-        //=====================
-        auto service = std::make_shared<node::GeneralServerService>(&blockchain);
-        rpc::RpcServer rpc(exe_config.get<std::string>("rpc.address"), service);
-        rpc.run();
-        LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc.address");
+        Node node(exe_config);
+        node.run();
         //=====================
         std::this_thread::sleep_for(std::chrono::seconds(4500));
 

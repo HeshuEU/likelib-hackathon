@@ -14,14 +14,12 @@ namespace net
 class Connector
 {
   public:
-    Connector(boost::asio::io_context& io_context, Peers& peers);
+    Connector(boost::asio::io_context& io_context);
 
-    void connect(const Endpoint& address, std::function<void(Peer&)> on_connect);
+    void connect(const Endpoint& address, std::function<void(std::unique_ptr<Peer>)> on_connect);
 
   private:
     boost::asio::io_context& _io_context;
-
-    Peers& _peers;
 };
 
 } // namespace net

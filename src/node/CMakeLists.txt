@@ -3,6 +3,7 @@ set(NODE_HEADERS
         soft_config.hpp
         rpc_service.hpp
         miner.hpp
+        node.hpp
         )
 
 set(NODE_SOURCES
@@ -10,9 +11,10 @@ set(NODE_SOURCES
         hard_config.cpp
         rpc_service.cpp
         miner.cpp
+        node.cpp
         main.cpp
         )
 
 add_executable(node ${NODE_SOURCES} ${NODE_HEADERS})
 
-target_link_libraries(node base net bc rpc)
+target_link_libraries(node base net bc lk rpc)
