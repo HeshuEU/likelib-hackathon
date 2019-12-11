@@ -20,11 +20,13 @@ before_script:
   - echo "push image to registry"
   - echo "variable ${ENV_HASH}"
   - ENV_HASH="befor_script"
+  - TEST_VAR="before_script"
 
 after_script:
   - echo "After script"
   - echo "folder content:" && ls
   - echo "variable ${ENV_HASH}"
+  - echo "test variable ${TEST_VAR}"
 
 job1:
   stage: stage_1
@@ -35,6 +37,7 @@ job1:
     - echo "folder content:" && ls
     - echo "variable ${ENV_HASH}"
     - ENV_HASH="job_1"
+    - echo "test variable ${TEST_VAR}"
 
 job2:
   stage: stage_2
@@ -45,7 +48,7 @@ job2:
     - echo "folder content:" && ls
     - echo "variable ${ENV_HASH}"
     - ENV_HASH="job_2"
-
+    - echo "test variable ${TEST_VAR}"
 
 #build-code:
 #  stage: build
