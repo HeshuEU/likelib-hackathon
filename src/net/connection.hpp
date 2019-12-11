@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/bytes.hpp"
+#include "base/config.hpp"
 #include "net/endpoint.hpp"
 #include "net/packet.hpp"
 
@@ -20,18 +21,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 {
   public:
     //====================
-    enum class Status
-    {
-        ACCEPTED,
-        CONNECTED,
-
-        HANDSHAKE_1,
-        HANDSHAKE_2,
-
-        WAITING_FOR_PONG
-    };
-
-    using ReceiveHandler = std::function<void(Packet&&)>;
+    using ReceiveHandler = std::function<void(const base::Bytes&)>;
     //====================
     Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket);
 
@@ -48,15 +38,12 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     ~Connection();
     //====================
-    void startSession(ReceiveHandler receive_handler);
-
     void close();
     bool isClosed() const noexcept;
     //====================
-    void send(const Packet& packet);
+    void send(base::Bytes data);
     //====================
-    void startReceivingMessages(ReceiveHandler receive_handler);
-    void stopReceivingMessages();
+    void receive(std::size_t bytes_to_receive, ReceiveHandler receive_handler);
     //====================
     std::size_t getId() const noexcept;
     const Endpoint& getEndpoint() const;
@@ -74,11 +61,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     std::atomic<bool> _is_closed{false};
     //====================
-    static base::Bytes _read_buffer;
-    std::atomic<bool> _is_receiving_enabled{false};
-    std::mutex _receive_handler_mutex;
-    ReceiveHandler _receive_handler;
-    void receiveOne();
+    base::Bytes _read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE);
     //====================
     std::queue<base::Bytes> _pending_send_messages;
     std::mutex _pending_send_messages_mutex;

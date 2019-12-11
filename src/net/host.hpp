@@ -19,6 +19,19 @@
 namespace net
 {
 
+
+class HostHandler
+{
+  public:
+    virtual ~HostHandler() = default;
+
+    virtual void onAccept(Peer& peer);
+    virtual void onConnect(Peer& peer);
+    virtual void onReceive(Peer& peer, const base::Bytes& data);
+    virtual void onSend(Peer& peer);
+};
+
+
 class Host
 {
   public:
@@ -28,13 +41,13 @@ class Host
     Host(const base::PropertyTree& config);
     ~Host();
     //===================
-    void run();
+    void run(std::shared_ptr<HostHandler> handler);
     void waitForFinish();
     //===================
     void connect(const Endpoint& address);
     void connect(const std::vector<Endpoint>& nodes);
     //===================
-    void broadcastDataPacket(const base::Bytes& data);
+    void broadcast(const base::Bytes& data);
     //===================
   private:
     //===================
@@ -56,8 +69,7 @@ class Host
     void scheduleHeartBeat();
     void dropZombieConnections();
     //===================
-    void onConnectionReceivedPacketHandler(Packet&& packet);
-    DataHandler _data_handler;
+    std::shared_ptr<HostHandler> _handler;
     //===================
 };
 

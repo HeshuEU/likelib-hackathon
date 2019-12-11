@@ -83,19 +83,20 @@ base::Time Peer::getLastSeen() const noexcept
 }
 
 
-void Peer::sendDataPacket(const base::Bytes& data)
+void Peer::receive(Peer::ReceiveHandler handler)
 {
-    Packet p{PacketType::DATA};
-    p.setData(data);
-    _connection->send(std::move(p));
+    _connection->receive(2, [this, handler = std::move(handler)](const base::Bytes& data) {
+        auto length = base::fromBytes<std::uint16_t>(data);
+        _connection->receive(length, [handler = std::move(handler)](const base::Bytes& data) {
+            handler(data);
+        });
+    });
 }
 
 
-void Peer::sendDataPacket(base::Bytes&& data)
+void Peer::send(base::Bytes data)
 {
-    Packet p{PacketType::DATA};
-    p.setData(std::move(data));
-    _connection->send(std::move(p));
+    _connection->send(std::move(data));
 }
 
 
@@ -132,68 +133,13 @@ void Peers::forEach(std::function<void(Peer&)> f)
     }
 }
 
-//    LOG_DEBUG << "RECEIVED [" << enumToString(packet.getType()) << ']';
-//    switch(packet.getType()) {
-//        case PacketType::HANDSHAKE: {
-//
-//            break;
-//        }
-//        case PacketType::PONG: {
-//            if(auto it = _not_ponged_peer_ids.find(connection.getId()); it == _not_ponged_peer_ids.end()) {
-//                LOG_WARNING << "Connection " << connection.getEndpoint() << " sent an unexpected PONG";
-//            }
-//            else {
-//                _not_ponged_peer_ids.erase(it);
-//                connection.send(net::PacketType::DISCOVERY_REQ);
-//            }
-//            break;
-//        }
-//        case PacketType::DATA: {
-//            _data_handler(std::move(packet).getData());
-//            break;
-//        }
-//        case PacketType::DISCOVERY_REQ: {
-//            // then we gotta send those node our endpoints
-//            std::vector<std::string> endpoints;
-//            for(const auto& c: _peers) {
-//                if(c->hasServerEndpoint() && c->getEndpoint() != connection.getEndpoint()) {
-//                    std::string a = c->getServerEndpoint().toString();
-//                    endpoints.push_back(a);
-//                }
-//            }
-//
-//            Packet ret{net::PacketType::DISCOVERY_RES};
-//            ret.setKnownEndpoints(std::move(endpoints));
-//            connection.send(ret);
-//
-//            break;
-//        }
-//        case PacketType::DISCOVERY_RES: {
-//            LOG_DEBUG << "Received endpoints:";
-//            for(const auto& endpoint: packet.getKnownEndpoints()) {
-//                LOG_DEBUG << endpoint;
-//                net::Endpoint received_endpoint{endpoint};
-//                // of course this will be changed later
-//                bool is_found = false;
-//                for(const auto& connection: _peers) {
-//                    if(connection->getServerEndpoint() == received_endpoint) {
-//                        is_found = true;
-//                        break;
-//                    }
-//                }
-//                if(!is_found) {
-//                    LOG_DEBUG << "Going to connect to a new node: " << received_endpoint;
-//                    connect(received_endpoint);
-//                }
-//            }
-//            break;
-//        }
-//        default: {
-//            LOG_WARNING << "Received an invalid packet from " << connection.getEndpoint();
-//            break;
-//        }
-//    }
-//}
 
+void Peers::removeClosed()
+{
+    std::lock_guard lk(_state_mutex);
+    _peers.remove_if([](const auto& peer) {
+        return peer.isClosed();
+    });
+}
 
 } // namespace net
