@@ -21,56 +21,6 @@ bool Peer::isClosed() const noexcept
 }
 
 
-void Peer::onConnectionReceived(Packet&& packet)
-{
-    switch(packet.getType()) {
-        case PacketType::HANDSHAKE: {
-            LOG_DEBUG << "[handshake] currently does nothing";
-            break;
-        }
-        case PacketType::PING: {
-            onPing();
-            _connection->send(Packet{PacketType::PONG});
-            break;
-        }
-        case PacketType::PONG: {
-            onPong();
-            break;
-        }
-        case PacketType::DATA: {
-            // call onDataHandler
-            _handler(std::move(packet));
-            break;
-        }
-        default: {
-            LOG_WARNING << "[!] Received an invalid packet";
-            break;
-        }
-    }
-}
-
-
-void Peer::ping()
-{
-    Packet p{PacketType::PING};
-    _connection->send(p);
-}
-
-
-void Peer::onPing()
-{
-    refreshLastSeen();
-    Packet p{PacketType::PONG};
-    _connection->send(p);
-}
-
-
-void Peer::onPong()
-{
-    refreshLastSeen();
-}
-
-
 void Peer::refreshLastSeen()
 {
     _last_seen = base::Time::now();
@@ -85,9 +35,12 @@ base::Time Peer::getLastSeen() const noexcept
 
 void Peer::receive(Peer::ReceiveHandler handler)
 {
+    // TODO: add shared_from_this capturing in lambda
     _connection->receive(2, [this, handler = std::move(handler)](const base::Bytes& data) {
+        refreshLastSeen();
         auto length = base::fromBytes<std::uint16_t>(data);
-        _connection->receive(length, [handler = std::move(handler)](const base::Bytes& data) {
+        _connection->receive(length, [this, handler = std::move(handler)](const base::Bytes& data) {
+            refreshLastSeen();
             handler(data);
         });
     });
@@ -138,7 +91,7 @@ void Peers::removeClosed()
 {
     std::lock_guard lk(_state_mutex);
     _peers.remove_if([](const auto& peer) {
-        return peer.isClosed();
+        return peer->isClosed();
     });
 }
 

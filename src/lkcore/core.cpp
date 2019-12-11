@@ -31,7 +31,7 @@ void Core::applyGenesis()
 
 void Core::run()
 {
-    _host.run();
+    //_host.run();
 }
 
 

@@ -1,6 +1,7 @@
 #include "connection.hpp"
 
 #include "base/assert.hpp"
+#include "base/config.hpp"
 #include "base/log.hpp"
 #include "net/error.hpp"
 #include "net/packet.hpp"
@@ -18,7 +19,8 @@ namespace net
 {
 
 Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket)
-    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)}
+    : _id{getNextId()}, _io_context{io_context}, _socket{std::move(socket)},
+      _read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE)
 {
     ASSERT(_socket.is_open());
     const auto& re = _socket.remote_endpoint();
@@ -112,7 +114,7 @@ void Connection::receive(std::size_t bytes_to_receive, net::Connection::ReceiveH
             else {
                 try {
                     _read_buffer.resize(bytes_received);
-                    _receive_handler(_read_buffer);
+                    (std::move(handler))(_read_buffer);
                     _read_buffer.resize(_read_buffer.capacity());
                 }
                 catch(const std::exception& e) {

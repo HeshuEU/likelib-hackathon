@@ -9,7 +9,7 @@
 namespace bc
 {
 
-Blockchain::Blockchain()
+Blockchain::Blockchain() : _top_level_block_hash(base::Bytes(32))
 {
     setupGenesis();
 }
@@ -57,6 +57,9 @@ void Blockchain::setupGenesis()
     static const bc::Address BASE_ADDRESS{std::string(32, '0')};
     static const bc::Balance BASE_MONEY_AMOUNT = 0xffffffff;
     genesis.addTransaction({BASE_ADDRESS, BASE_ADDRESS, BASE_MONEY_AMOUNT, base::Time()});
+
+    auto hash = base::Sha256::compute(base::toBytes(genesis));
+    _top_level_block_hash = std::move(hash);
 }
 
 } // namespace bc

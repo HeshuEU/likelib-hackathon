@@ -4,6 +4,7 @@
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
 #include "lkcore/balance_manager.hpp"
+#include "lkcore/protocol.hpp"
 #include "net/host.hpp"
 
 
@@ -38,6 +39,8 @@ class Core
     BalanceManager _balance_manager;
     bc::Blockchain _blockchain;
     net::Host _host;
+    //==================
+    lk::MessageHandlerRouter _handler;
     //==================
     void broadcastBlock(const bc::Block& block);
     //==================

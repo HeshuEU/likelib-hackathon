@@ -5,7 +5,7 @@
 namespace lk
 {
 
-BalanceManager::BalanceManager(const std::map<Address, bc::Balance>& initial_state) : _storage(initial_state)
+BalanceManager::BalanceManager(const std::map<bc::Address, bc::Balance>& initial_state) : _storage(initial_state)
 {}
 
 
@@ -14,7 +14,7 @@ bc::Balance BalanceManager::getBalance(const bc::Address& address) const
     std::shared_lock lk(_rw_mutex);
     auto it = _storage.find(address);
     if(it == _storage.end()) {
-        return Balance{0};
+        return bc::Balance{0};
     }
     else {
         return it->second;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "base/bytes.hpp"
-#include "base/config.hpp"
 #include "net/endpoint.hpp"
 #include "net/packet.hpp"
 
@@ -61,7 +60,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 
     std::atomic<bool> _is_closed{false};
     //====================
-    base::Bytes _read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE);
+    base::Bytes _read_buffer;
     //====================
     std::queue<base::Bytes> _pending_send_messages;
     std::mutex _pending_send_messages_mutex;
