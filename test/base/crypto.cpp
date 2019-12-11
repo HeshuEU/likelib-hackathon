@@ -95,6 +95,9 @@ BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_save_in_file)
     dec_msg1 = priv_rsa.decrypt(enc_msg1);
     dec_msg2 = priv_rsa2.decrypt(enc_msg2);
     BOOST_CHECK(dec_msg1 == dec_msg2);
+
+    std::filesystem::remove("private");
+    std::filesystem::remove("public");
 }
 
 BOOST_AUTO_TEST_CASE(RsaAes_constructor_encrypt_decrypt)
@@ -108,49 +111,49 @@ BOOST_AUTO_TEST_CASE(RsaAes_constructor_encrypt_decrypt)
 
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit)
 {
-    base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
+    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
     base::AesKey key;
-    auto encrypted_data = key.encrypt(target_bytes);
+    auto encrypted_data = key.encrypt(msg);
     auto decrypt_target = key.decrypt(encrypted_data);
-    BOOST_CHECK_EQUAL(target_bytes.toString(), decrypt_target.toString());
+    BOOST_CHECK_EQUAL(msg.toString(), decrypt_target.toString());
 }
 
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit_by_serialized_key)
 {
-    base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
+    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
     base::AesKey key;
-    auto encrypted_data = key.encrypt(target_bytes);
+    auto encrypted_data = key.encrypt(msg);
     auto serialised_key = key.toBytes();
     base::AesKey deserialized_key(serialised_key);
     auto decrypt_target = deserialized_key.decrypt(encrypted_data);
-    BOOST_CHECK_EQUAL(target_bytes.toString(), decrypt_target.toString());
+    BOOST_CHECK_EQUAL(msg.toString(), decrypt_target.toString());
 }
 
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit)
 {
-    base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
+    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
     base::AesKey key(base::AesKey::KeyType::K128BIT);
-    auto encrypted_data = key.encrypt(target_bytes);
+    auto encrypted_data = key.encrypt(msg);
     auto decrypt_target = key.decrypt(encrypted_data);
-    BOOST_CHECK_EQUAL(target_bytes.toString(), decrypt_target.toString());
+    BOOST_CHECK_EQUAL(msg.toString(), decrypt_target.toString());
 }
 
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit_by_serialized_key)
 {
-    base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
+    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
     base::AesKey key(base::AesKey::KeyType::K128BIT);
-    auto encrypted_data = key.encrypt(target_bytes);
+    auto encrypted_data = key.encrypt(msg);
     auto serialised_key = key.toBytes();
     base::AesKey deserialized_key(serialised_key);
     auto decrypt_target = deserialized_key.decrypt(encrypted_data);
-    BOOST_CHECK_EQUAL(target_bytes.toString(), decrypt_target.toString());
+    BOOST_CHECK_EQUAL(msg.toString(), decrypt_target.toString());
 }
 
 BOOST_AUTO_TEST_CASE(aes_double_encrypt_128bit)
 {
-    base::Bytes target_bytes("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
+    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
     base::AesKey key(base::AesKey::KeyType ::K128BIT);
-    auto encrypted_data_1 = key.encrypt(target_bytes);
-    auto encrypted_data_2 = key.encrypt(target_bytes);
+    auto encrypted_data_1 = key.encrypt(msg);
+    auto encrypted_data_2 = key.encrypt(msg);
     BOOST_CHECK_EQUAL(encrypted_data_1.toString(), encrypted_data_2.toString());
 }
