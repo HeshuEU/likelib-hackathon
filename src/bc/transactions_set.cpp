@@ -20,10 +20,7 @@ void TransactionsSet::add(const bc::Transaction& tx)
 
 bool TransactionsSet::find(const bc::Transaction& tx) const
 {
-    auto a = _txs.begin();
-    auto b = _txs.end();
-    auto it = std::find(a, b, tx);
-    return it != b;
+    return std::find(_txs.begin(), _txs.end(), tx) != _txs.end();
 }
 
 
@@ -47,6 +44,12 @@ void TransactionsSet::remove(const bc::Transaction& tx)
 bool TransactionsSet::isEmpty() const
 {
     return _txs.empty();
+}
+
+
+std::size_t TransactionsSet::size() const
+{
+    return _txs.size();
 }
 
 

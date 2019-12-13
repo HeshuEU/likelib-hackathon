@@ -17,6 +17,8 @@ class TransactionsSet
     void remove(const TransactionsSet& other);
     bool isEmpty() const;
 
+    std::size_t size() const;
+
     std::vector<Transaction>::const_iterator begin() const;
     std::vector<Transaction>::const_iterator end() const;
 
