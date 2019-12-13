@@ -77,7 +77,7 @@ int main(int argc, char** argv)
         // setup handler for all signal types defined in Standard, expect SIGABRT. Not all POSIX signals
         for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE}) {
             [[maybe_unused]] auto result = std::signal(signal_code, signalHandler);
-            ASSERT_SOFT( result != SIG_ERR);
+            ASSERT_SOFT(result != SIG_ERR);
         }
 
         {

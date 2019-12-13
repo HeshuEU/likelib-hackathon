@@ -37,10 +37,12 @@ void Host::scheduleHeartBeat()
 }
 
 
-void Host::accept(std::function<void(std::unique_ptr<Peer>)> on_accept)
+void Host::accept(std::function<void(std::shared_ptr<Peer>)> on_accept)
 {
-    _acceptor.accept([on_accept = std::move(on_accept)](std::unique_ptr<Peer> peer) {
-        on_accept(std::move(peer));
+    _acceptor.accept([this, on_accept = std::move(on_accept)](std::unique_ptr<Peer> peer) {
+        std::shared_ptr<Peer> ps{std::move(peer)};
+        _peers.add(ps);
+        on_accept(std::move(ps));
     });
 }
 
@@ -63,7 +65,7 @@ void Host::run()
 }
 
 
-void Host::connect(const std::vector<net::Endpoint>& addresses, std::function<void(std::unique_ptr<Peer>)> on_connect)
+void Host::connect(const std::vector<net::Endpoint>& addresses, std::function<void(std::shared_ptr<Peer>)> on_connect)
 {
     for(const auto& address: addresses) {
         connect(address, on_connect);
@@ -71,10 +73,12 @@ void Host::connect(const std::vector<net::Endpoint>& addresses, std::function<vo
 }
 
 
-void Host::connect(const net::Endpoint& address, std::function<void(std::unique_ptr<Peer>)> on_connect)
+void Host::connect(const net::Endpoint& address, std::function<void(std::shared_ptr<Peer>)> on_connect)
 {
-    _connector.connect(address, [on_connect = std::move(on_connect)](std::unique_ptr<Peer> peer) {
-        on_connect(std::move(peer));
+    _connector.connect(address, [this, on_connect = std::move(on_connect)](std::unique_ptr<Peer> peer) {
+        std::shared_ptr<Peer> sp{std::move(peer)};
+        _peers.add(sp);
+        on_connect(std::move(sp));
     });
 }
 

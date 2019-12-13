@@ -50,6 +50,20 @@ std::optional<Block> Blockchain::findBlock(const base::Sha256& block_hash) const
 }
 
 
+std::optional<bc::Transaction> Blockchain::findTransaction(const base::Sha256& tx_hash) const
+{
+    std::shared_lock lk(_blocks_mutex);
+    for(const auto& block: _blocks) {
+        for(const auto& tx: block.second.getTransactions()) {
+            if(base::Sha256::compute(base::toBytes(tx)) == tx_hash) {
+                return tx;
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+
 void Blockchain::setupGenesis()
 {
     Block genesis;

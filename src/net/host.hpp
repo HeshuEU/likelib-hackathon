@@ -26,10 +26,10 @@ class Host
     Host(const base::PropertyTree& config);
     ~Host();
     //===================
-    void accept(std::function<void(std::unique_ptr<Peer>)> on_accept);
+    void accept(std::function<void(std::shared_ptr<Peer>)> on_accept);
     //===================
-    void connect(const Endpoint& address, std::function<void(std::unique_ptr<Peer>)> on_connect);
-    void connect(const std::vector<Endpoint>& nodes, std::function<void(std::unique_ptr<Peer>)> on_connect);
+    void connect(const Endpoint& address, std::function<void(std::shared_ptr<Peer>)> on_connect);
+    void connect(const std::vector<Endpoint>& nodes, std::function<void(std::shared_ptr<Peer>)> on_connect);
     //===================
     void broadcast(const base::Bytes& data);
     //===================

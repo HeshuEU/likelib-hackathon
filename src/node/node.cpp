@@ -2,8 +2,7 @@
 
 #include <functional>
 
-Node::Node(const base::PropertyTree& config)
-    : _config{config}, _core{_config}
+Node::Node(const base::PropertyTree& config) : _config{config}, _core{_config}
 {
     auto service = std::make_shared<node::GeneralServerService>(_core);
     _rpc = std::make_unique<rpc::RpcServer>(_config.get<std::string>("rpc.address"), service);
@@ -12,7 +11,6 @@ Node::Node(const base::PropertyTree& config)
     _miner = std::make_unique<Miner>(_config, miner_callback);
 
     _core.signal_new_transaction.connect(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
-
 }
 
 

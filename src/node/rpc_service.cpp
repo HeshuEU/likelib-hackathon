@@ -21,8 +21,7 @@ GeneralServerService::~GeneralServerService()
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
-    // return _bc->getBalance(address);
-    return 0x42;
+    return _core.getBalance(address);
 }
 
 std::string GeneralServerService::transaction(bc::Balance amount, const bc::Address& from_address,
@@ -32,7 +31,7 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
               << to_address.toString() << "], amount[" << amount << "], transaction_time[" << transaction_time.seconds()
               << "]";
 
-    // _bc->processReceivedTransaction(bc::Transaction(from_address, to_address, amount, transaction_time));
+    _core.(bc::Transaction(from_address, to_address, amount, transaction_time));
     return "likelib";
 }
 

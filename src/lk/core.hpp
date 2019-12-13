@@ -37,6 +37,7 @@ class Core
     boost::signals2::signal<void(const bc::Transaction& transaction)> signal_new_transaction;
     //==================
     void tryAddBlock(const bc::Block& b);
+    bc::Balance getBalance(const bc::Address& address) const;
     //==================
   private:
     //==================
@@ -48,6 +49,8 @@ class Core
     //==================
     static const bc::Block& getGenesisBlock();
     void applyGenesis();
+    //==================
+    bool checkBlock(const bc::Block& block) const;
     //==================
 };
 

@@ -25,6 +25,7 @@ class Blockchain
     //===================
     bool tryAddBlock(const Block& block);
     std::optional<bc::Block> findBlock(const base::Sha256& block_hash) const;
+    std::optional<bc::Transaction> findTransaction(const base::Sha256& tx_hash) const;
     //===================
     boost::signals2::signal<void(const Block&)> signal_block_added;
     //===================

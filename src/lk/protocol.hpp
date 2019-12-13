@@ -43,6 +43,7 @@ class ProtocolEngine
     void broadcastBlock(const bc::Block& block);
 
     boost::signals2::signal<void(const bc::Transaction&)> signal_transaction_received;
+
   private:
     const base::PropertyTree& _config;
     net::Host _host;
@@ -52,6 +53,9 @@ class ProtocolEngine
     void onAccept(net::Peer& peer);
     void onConnect(net::Peer& peer);
     void onReceive(net::Peer& peer, const base::Bytes& data);
+
+    void acceptLoop();
+    void connectToPeersFromConfig();
 };
 
 

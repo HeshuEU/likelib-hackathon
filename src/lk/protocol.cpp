@@ -44,7 +44,12 @@ void MessageHandlerRouter::handle(const base::Bytes& data)
 
 void MessageHandlerRouter::onTransaction(bc::Transaction&& tx)
 {
-    // add to mining if Miner
+    if(!!_blockchain.findTransaction(base::toBytes(tx))) {
+        return;
+    }
+    base::SerializationOArchive msg;
+    msg << MessageType::TRANSACTION << tx;
+    _host.broadcast(std::move(msg).getBytes());
 }
 
 
@@ -53,7 +58,7 @@ void MessageHandlerRouter::onBlock(bc::Block&& block)
     if(_blockchain.tryAddBlock(block)) {
         base::SerializationOArchive msg;
         msg << MessageType::BLOCK << block;
-        _peer.send(std::move(msg).getBytes());
+        _host.broadcast(std::move(msg).getBytes());
     }
 }
 
@@ -76,15 +81,41 @@ ProtocolEngine::ProtocolEngine(const base::PropertyTree& config, bc::Blockchain&
 
 void ProtocolEngine::run()
 {
+    acceptLoop();
     _host.run();
-    _host.accept([this](std);
+    connectToPeersFromConfig();
+}
+
+
+void ProtocolEngine::acceptLoop()
+{
+    LOG_INFO << "listening for new connections";
+    _host.accept([this](std::shared_ptr<net::Peer> peer) {
+        LOG_INFO << "peer accepted";
+        onAccept(*peer);
+        acceptLoop();
+    });
+}
+
+
+void ProtocolEngine::connectToPeersFromConfig()
+{
+    if(_config.hasKey("nodes")) {
+        auto nodes = _config.getVector<std::string>("nodes");
+        for(const auto& node: nodes) {
+            _host.connect(net::Endpoint{node}, [this](std::shared_ptr<net::Peer> node) {
+                onConnect(*node);
+            });
+        }
+    }
 }
 
 
 void ProtocolEngine::onAccept(net::Peer& peer)
 {
     _routers.emplace(peer.getId(), MessageHandlerRouter(_blockchain, _host, peer));
-    peer.receive([this](const base::Bytes& received_data) {
+    peer.receive([this, &peer](const base::Bytes& received_data) {
+        onReceive(peer, received_data);
     });
 }
 

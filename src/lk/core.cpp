@@ -40,11 +40,33 @@ void Core::run()
 
 void Core::tryAddBlock(const bc::Block& b)
 {
-    if(_blockchain.tryAddBlock(b))
-    {
+    if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
+        _balance_manager.update(b);
         _protocol_engine.broadcastBlock(b);
     }
 }
 
+
+bool Core::checkBlock(const bc::Block& b) const
+{
+    if(_blockchain.findBlock(base::Sha256::compute(base::toBytes(b)))) {
+        return false;
+    }
+
+    // FIXME: this works wrong if two transactions are both valid, but together are not
+    for(const auto& tx: b.getTransactions()) {
+        if(!_balance_manager.checkTransaction(tx)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+bc::Balance Core::getBalance(const bc::Address& address) const
+{
+    return _balance_manager.getBalance(address);
+}
 
 } // namespace lk
