@@ -77,6 +77,7 @@ ProtocolEngine::ProtocolEngine(const base::PropertyTree& config, bc::Blockchain&
 void ProtocolEngine::run()
 {
     _host.run();
+    _host.accept([this](std);
 }
 
 
@@ -100,6 +101,14 @@ void ProtocolEngine::onReceive(net::Peer& peer, const base::Bytes& received_data
 
     auto& [id, router] = *_routers.find(peer.getId());
     router.handle(received_data);
+}
+
+
+void ProtocolEngine::broadcastBlock(const bc::Block& block)
+{
+    base::SerializationOArchive oa;
+    oa << MessageType::BLOCK << block;
+    _host.broadcast(std::move(oa).getBytes());
 }
 
 } // namespace lk

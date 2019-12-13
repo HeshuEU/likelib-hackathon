@@ -6,6 +6,9 @@ namespace lk
 Core::Core(const base::PropertyTree& config) : _config{config}, _protocol_engine{_config, _blockchain}
 {
     applyGenesis();
+
+    signal_new_block.connect(_blockchain.signal_block_added);
+    signal_new_transaction.connect(_protocol_engine.signal_transaction_received);
 }
 
 
@@ -32,6 +35,15 @@ void Core::applyGenesis()
 void Core::run()
 {
     _protocol_engine.run();
+}
+
+
+void Core::tryAddBlock(const bc::Block& b)
+{
+    if(_blockchain.tryAddBlock(b))
+    {
+        _protocol_engine.broadcastBlock(b);
+    }
 }
 
 

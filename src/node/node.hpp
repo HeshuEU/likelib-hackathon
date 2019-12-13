@@ -13,10 +13,14 @@ class Node
     void run();
 
   private:
-    base::PropertyTree _config;
+    const base::PropertyTree& _config;
     lk::Core _core;
-    std::unique_ptr<Miner> _miner;
     std::unique_ptr<rpc::RpcServer> _rpc;
 
+    std::unique_ptr<Miner> _miner;
+    bc::Block _block_to_mine;
+
     void onBlockMine(bc::Block&& block);
+    void onNewTransactionReceived(const bc::Transaction& tx);
+    void onNewBlockReceived(const bc::Block& block);
 };

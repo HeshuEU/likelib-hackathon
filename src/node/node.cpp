@@ -10,6 +10,9 @@ Node::Node(const base::PropertyTree& config)
 
     auto miner_callback = std::bind(&Node::onBlockMine, this, std::placeholders::_1);
     _miner = std::make_unique<Miner>(_config, miner_callback);
+
+    _core.signal_new_transaction.connect(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
+
 }
 
 
@@ -24,5 +27,27 @@ void Node::run()
 
 void Node::onBlockMine(bc::Block&& block)
 {
+    _core.tryAddBlock(block);
+}
 
+
+void Node::onNewTransactionReceived(const bc::Transaction& tx)
+{
+    _block_to_mine.addTransaction(tx);
+    base::Bytes complexity(32);
+    complexity[2] = 0x4f;
+    _miner->findNonce(_block_to_mine, complexity);
+}
+
+
+void Node::onNewBlockReceived(const bc::Block& block)
+{
+    auto tset = _block_to_mine.getTransactions();
+    tset.remove(block.getTransactions());
+    if(tset.size() != _block_to_mine.getTransactions().size()) {
+        _block_to_mine.setTransactions(std::move(tset));
+        base::Bytes complexity(32);
+        complexity[2] = 0x4f;
+        _miner->findNonce(_block_to_mine, complexity);
+    }
 }

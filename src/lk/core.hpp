@@ -7,6 +7,7 @@
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
 
+#include <boost/signals2.hpp>
 
 namespace lk
 {
@@ -32,6 +33,11 @@ class Core
      */
     void run();
     //==================
+    boost::signals2::signal<void(const bc::Block& block)> signal_new_block;
+    boost::signals2::signal<void(const bc::Transaction& transaction)> signal_new_transaction;
+    //==================
+    void tryAddBlock(const bc::Block& b);
+    //==================
   private:
     //==================
     const base::PropertyTree& _config;
@@ -39,8 +45,6 @@ class Core
     BalanceManager _balance_manager;
     bc::Blockchain _blockchain;
     lk::ProtocolEngine _protocol_engine;
-    //==================
-    void broadcastBlock(const bc::Block& block);
     //==================
     static const bc::Block& getGenesisBlock();
     void applyGenesis();

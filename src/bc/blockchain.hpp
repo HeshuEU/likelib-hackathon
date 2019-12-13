@@ -6,6 +6,8 @@
 #include "bc/transaction.hpp"
 #include "bc/transactions_set.hpp"
 
+#include <boost/signals2.hpp>
+
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -24,7 +26,7 @@ class Blockchain
     bool tryAddBlock(const Block& block);
     std::optional<bc::Block> findBlock(const base::Sha256& block_hash) const;
     //===================
-    bc::Balance getBalance(const bc::Address& address) const;
+    boost::signals2::signal<void(const Block&)> signal_block_added;
     //===================
   private:
     //===================

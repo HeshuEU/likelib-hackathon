@@ -40,6 +40,9 @@ class ProtocolEngine
     ProtocolEngine(const base::PropertyTree& config, bc::Blockchain& blockchain);
     void run();
 
+    void broadcastBlock(const bc::Block& block);
+
+    boost::signals2::signal<void(const bc::Transaction&)> signal_transaction_received;
   private:
     const base::PropertyTree& _config;
     net::Host _host;

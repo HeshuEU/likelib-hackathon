@@ -32,6 +32,8 @@ bool Blockchain::tryAddBlock(const Block& block)
         }
     }
     LOG_DEBUG << "Adding block. Block hash = " << hash.getBytes().toHex();
+
+    signal_block_added(_blocks[hash]);
     return true;
 }
 
