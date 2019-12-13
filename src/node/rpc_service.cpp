@@ -31,7 +31,7 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
               << to_address.toString() << "], amount[" << amount << "], transaction_time[" << transaction_time.seconds()
               << "]";
 
-    _core.(bc::Transaction(from_address, to_address, amount, transaction_time));
+    _core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time));
     return "likelib";
 }
 

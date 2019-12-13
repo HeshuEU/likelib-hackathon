@@ -112,7 +112,7 @@ void Connection::receive(std::size_t bytes_to_receive, net::Connection::ReceiveH
 
 void Connection::send(base::Bytes data)
 {
-    LOG_DEBUG << "SENDING [" << data.size() << "bytes ]";
+    LOG_DEBUG << "SENDING [" << data.size() << "bytes]";
 
     bool is_already_writing;
     {

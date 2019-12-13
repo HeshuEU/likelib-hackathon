@@ -39,6 +39,8 @@ class Core
     void tryAddBlock(const bc::Block& b);
     bc::Balance getBalance(const bc::Address& address) const;
     //==================
+    void performTransaction(const bc::Transaction& tx);
+    //==================
   private:
     //==================
     const base::PropertyTree& _config;

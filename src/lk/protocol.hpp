@@ -41,6 +41,7 @@ class ProtocolEngine
     void run();
 
     void broadcastBlock(const bc::Block& block);
+    void broadcastTransaction(const bc::Transaction& tx);
 
     boost::signals2::signal<void(const bc::Transaction&)> signal_transaction_received;
 

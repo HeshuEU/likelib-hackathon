@@ -64,6 +64,15 @@ bool Core::checkBlock(const bc::Block& b) const
 }
 
 
+void Core::performTransaction(const bc::Transaction& tx)
+{
+    if(!!_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
+        return;
+    }
+    _protocol_engine.broadcastTransaction(tx);
+}
+
+
 bc::Balance Core::getBalance(const bc::Address& address) const
 {
     return _balance_manager.getBalance(address);

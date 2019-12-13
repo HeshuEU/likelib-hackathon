@@ -129,7 +129,7 @@ void ProtocolEngine::onConnect(net::Peer& peer)
 void ProtocolEngine::onReceive(net::Peer& peer, const base::Bytes& received_data)
 {
     ASSERT(_routers.find(peer.getId()) != _routers.end());
-
+    LOG_DEBUG << "Received [" << received_data.size() << "] bytes";
     auto& [id, router] = *_routers.find(peer.getId());
     router.handle(received_data);
 }
@@ -139,6 +139,14 @@ void ProtocolEngine::broadcastBlock(const bc::Block& block)
 {
     base::SerializationOArchive oa;
     oa << MessageType::BLOCK << block;
+    _host.broadcast(std::move(oa).getBytes());
+}
+
+
+void ProtocolEngine::broadcastTransaction(const bc::Transaction & tx)
+{
+    base::SerializationOArchive oa;
+    oa << MessageType::TRANSACTION << tx;
     _host.broadcast(std::move(oa).getBytes());
 }
 
