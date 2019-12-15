@@ -11,53 +11,46 @@
 namespace lk
 {
 
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char, (SOME_ZERO_ENUM)(TRANSACTION)(BLOCK)(GET_BLOCK))
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char, (SOME_ZERO_ENUM)(PING)(PONG)(TRANSACTION)(BLOCK)(GET_BLOCK))
 
-class MessageHandlerRouter
+class Core;
+
+
+class MessageHandler
 {
   public:
-    //==================
-    MessageHandlerRouter(bc::Blockchain& blockchain, net::Host& host, net::Peer& peer);
-    //==================
-    void handle(const base::Bytes& data);
-    //==================
+    //================
+    MessageHandler(Core& core, net::Host& host);
+    //================
+    void handle(net::Session& session, const base::Bytes& data);
+    //================
   private:
-    //==================
-    bc::Blockchain& _blockchain;
+    //================
+    Core& _core;
     net::Host& _host;
-    net::Peer& _peer;
-    //==================
+    //================
+    void onPing(net::Session& session);
+    void onPong(net::Session& session);
     void onTransaction(bc::Transaction&& tx);
     void onBlock(bc::Block&& block);
-    void onGetBlock(base::Sha256&& block_hash);
-    //==================
+    void onGetBlock(net::Session& session, base::Sha256&& hash);
+    //================
 };
 
 
-class ProtocolEngine
+class Network
 {
   public:
-    ProtocolEngine(const base::PropertyTree& config, bc::Blockchain& blockchain);
+    Network(const base::PropertyTree& config, Core& core);
+
     void run();
 
     void broadcastBlock(const bc::Block& block);
     void broadcastTransaction(const bc::Transaction& tx);
-
-    boost::signals2::signal<void(const bc::Transaction&)> signal_transaction_received;
-
   private:
     const base::PropertyTree& _config;
     net::Host _host;
-    bc::Blockchain& _blockchain;
-    std::map<std::size_t, MessageHandlerRouter> _routers;
-
-    void onAccept(net::Peer& peer);
-    void onConnect(net::Peer& peer);
-    void onReceive(net::Peer& peer, const base::Bytes& data);
-
-    void acceptLoop();
-    void connectToPeersFromConfig();
+    MessageHandler _handler;
 };
-
 
 } // namespace lk

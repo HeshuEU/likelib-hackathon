@@ -7,6 +7,7 @@ set(NET_HEADERS
         endpoint.hpp
         packet.hpp
         peer.hpp
+        session.hpp
         )
 
 set(NET_SOURCES
@@ -17,6 +18,7 @@ set(NET_SOURCES
         endpoint.cpp
         packet.cpp
         peer.cpp
+        session.cpp
         )
 
 add_library(net ${NET_SOURCES} ${NET_HEADERS})

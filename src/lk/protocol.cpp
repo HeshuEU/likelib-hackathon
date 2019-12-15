@@ -1,21 +1,61 @@
 #include "protocol.hpp"
 
 #include "base/log.hpp"
+#include "lk/core.hpp"
 
 namespace lk
 {
 
-MessageHandlerRouter::MessageHandlerRouter(bc::Blockchain& blockchain, net::Host& host, net::Peer& peer)
-    : _blockchain{blockchain}, _host{host}, _peer{peer}
+Network::Network(const base::PropertyTree& config, Core& core)
+    : _config(config), _host{_config}, _handler{core, _host}
 {}
 
 
-void MessageHandlerRouter::handle(const base::Bytes& data)
+void Network::broadcastBlock(const bc::Block& block)
 {
+    base::SerializationOArchive oa;
+    oa << MessageType::BLOCK << block;
+    _host.broadcast(std::move(oa).getBytes());
+}
+
+
+void Network::broadcastTransaction(const bc::Transaction& tx)
+{
+    base::SerializationOArchive oa;
+    oa << MessageType::TRANSACTION << tx;
+    _host.broadcast(std::move(oa).getBytes());
+}
+
+
+void Network::run()
+{
+    _host.run([this](net::Session& session, const base::Bytes& received_data){
+        _handler.handle(session, received_data);
+    });
+}
+
+
+MessageHandler::MessageHandler(Core& core, net::Host& host)
+    : _core{core}, _host{host}
+{}
+
+
+void MessageHandler::handle(net::Session& session, const base::Bytes& data)
+{
+    if(session.isClosed()) {
+        return;
+    }
+
     base::SerializationIArchive ia(data);
     MessageType type;
     ia >> type;
     switch(type) {
+        case MessageType::PING: {
+            break;
+        }
+        case MessageType::PONG: {
+            break;
+        }
         case MessageType::TRANSACTION: {
             bc::Transaction tx;
             ia >> tx;
@@ -31,137 +71,53 @@ void MessageHandlerRouter::handle(const base::Bytes& data)
         case MessageType::GET_BLOCK: {
             base::Bytes block_hash;
             ia >> block_hash;
-            onGetBlock(base::Sha256(block_hash));
+            onGetBlock(session, base::Sha256(block_hash));
             break;
         }
         default: {
-            LOG_DEBUG << "Received an invalid block from peer " << _peer.getId();
+            LOG_DEBUG << "Received an invalid block from peer #123";
             break;
         }
     }
 }
 
 
-void MessageHandlerRouter::onTransaction(bc::Transaction&& tx)
+void MessageHandler::onPing(net::Session& session)
 {
-    LOG_TRACE << "MessageHandlerRouter::onTransaction peer #" << _peer.getId();
-    if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
-        return;
-    }
     base::SerializationOArchive msg;
-    msg << MessageType::TRANSACTION << tx;
-    _host.broadcast(std::move(msg).getBytes());
+    msg << MessageType::PONG;
+    session.send(std::move(msg).getBytes());
 }
 
 
-void MessageHandlerRouter::onBlock(bc::Block&& block)
+void MessageHandler::onPong(net::Session& session)
 {
-    LOG_TRACE << "MessageHandlerRouter::onBlock peer #" << _peer.getId();
-    if(_blockchain.tryAddBlock(block)) {
-        base::SerializationOArchive msg;
-        msg << MessageType::BLOCK << block;
-        _host.broadcast(std::move(msg).getBytes());
-    }
 }
 
 
-void MessageHandlerRouter::onGetBlock(base::Sha256&& block_hash)
+void MessageHandler::onTransaction(bc::Transaction&& tx)
 {
-    LOG_TRACE << "MessageHandlerRouter::onGetBlock peer #" << _peer.getId();
-    auto block = _blockchain.findBlock(block_hash);
+    LOG_TRACE << "Session::onTransaction peer #123";
+    _core.performTransaction(tx);
+}
+
+
+void MessageHandler::onBlock(bc::Block&& block)
+{
+    LOG_TRACE << "Session::onBlock peer #123";
+    _core.tryAddBlock(std::move(block));
+}
+
+
+void MessageHandler::onGetBlock(net::Session& session, base::Sha256&& block_hash)
+{
+    LOG_TRACE << "Session::onGetBlock peer #123";
+    auto block = _core.findBlock(block_hash);
     if(block) {
         base::SerializationOArchive msg;
         msg << MessageType::BLOCK << *block;
-        _peer.send(std::move(msg).getBytes());
+        session.send(std::move(msg).getBytes());
     }
-}
-
-
-ProtocolEngine::ProtocolEngine(const base::PropertyTree& config, bc::Blockchain& blockchain)
-    : _config{config}, _host{_config}, _blockchain{blockchain}
-{}
-
-
-void ProtocolEngine::run()
-{
-    acceptLoop();
-    _host.run();
-    connectToPeersFromConfig();
-}
-
-
-void ProtocolEngine::acceptLoop()
-{
-    LOG_INFO << "listening for new connections";
-    _host.accept([this](std::shared_ptr<net::Peer> peer) {
-        LOG_INFO << "peer accepted";
-        onAccept(*peer);
-        acceptLoop();
-    });
-}
-
-
-void ProtocolEngine::connectToPeersFromConfig()
-{
-    if(_config.hasKey("nodes")) {
-        auto nodes = _config.getVector<std::string>("nodes");
-        for(const auto& node: nodes) {
-            _host.connect(net::Endpoint{node}, [this](std::shared_ptr<net::Peer> node) {
-                onConnect(*node);
-            });
-        }
-    }
-}
-
-
-void ProtocolEngine::onAccept(net::Peer& peer)
-{
-    LOG_TRACE << "ProtocolEngine::onAccept from " << peer.getId();
-    _routers.emplace(peer.getId(), MessageHandlerRouter(_blockchain, _host, peer));
-    peer.receive([this, &peer](const base::Bytes& received_data) {
-        onReceive(peer, received_data);
-    });
-}
-
-
-void ProtocolEngine::onConnect(net::Peer& peer)
-{
-    LOG_TRACE << "ProtocolEngine::onConnect";
-    _routers.emplace(peer.getId(), MessageHandlerRouter(_blockchain, _host, peer));
-    peer.receive([this, &peer](const base::Bytes& received_data) {
-      onReceive(peer, received_data);
-    });
-}
-
-
-void ProtocolEngine::onReceive(net::Peer& peer, const base::Bytes& received_data)
-{
-    LOG_TRACE << "ProtocolEngine::onReceive";
-    ASSERT(_routers.find(peer.getId()) != _routers.end());
-    LOG_DEBUG << "Received [" << received_data.size() << "] bytes";
-    peer.receive([this, &peer](const base::Bytes& received_data) {
-      onReceive(peer, received_data);
-    });
-    auto& [id, router] = *_routers.find(peer.getId());
-    router.handle(received_data);
-}
-
-
-void ProtocolEngine::broadcastBlock(const bc::Block& block)
-{
-    LOG_TRACE << "ProtocolEngine::broadcastBlock";
-    base::SerializationOArchive oa;
-    oa << MessageType::BLOCK << block;
-    _host.broadcast(std::move(oa).getBytes());
-}
-
-
-void ProtocolEngine::broadcastTransaction(const bc::Transaction& tx)
-{
-    LOG_TRACE << "ProtocolEngine::broadcastTransaction";
-    base::SerializationOArchive oa;
-    oa << MessageType::TRANSACTION << tx;
-    _host.broadcast(std::move(oa).getBytes());
 }
 
 } // namespace lk

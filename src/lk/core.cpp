@@ -3,12 +3,12 @@
 namespace lk
 {
 
-Core::Core(const base::PropertyTree& config) : _config{config}, _protocol_engine{_config, _blockchain}
+Core::Core(const base::PropertyTree& config) : _config{config}, _network{_config, *this}
 {
     applyGenesis();
 
     signal_new_block.connect(_blockchain.signal_block_added);
-    signal_new_transaction.connect(_protocol_engine.signal_transaction_received);
+    //signal_new_transaction.connect(_network.signal_transaction_received);
 }
 
 
@@ -34,17 +34,27 @@ void Core::applyGenesis()
 
 void Core::run()
 {
-    _protocol_engine.run();
+    _network.run();
 }
 
 
-void Core::tryAddBlock(const bc::Block& b)
+bool Core::tryAddBlock(const bc::Block& b)
 {
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
         _balance_manager.update(b);
-        _protocol_engine.broadcastBlock(b);
+        _network.broadcastBlock(b);
         signal_new_block(b);
+        return true;
     }
+    else {
+        return false;
+    }
+}
+
+
+std::optional<bc::Block> Core::findBlock(const base::Sha256& hash) const
+{
+    return _blockchain.findBlock(hash);
 }
 
 
@@ -65,13 +75,15 @@ bool Core::checkBlock(const bc::Block& b) const
 }
 
 
-void Core::performTransaction(const bc::Transaction& tx)
+bool Core::performTransaction(const bc::Transaction& tx)
 {
     if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
-        return;
+        return true;
     }
-    _protocol_engine.broadcastTransaction(tx);
-    signal_new_transaction(tx);
+    else {
+        _network.broadcastTransaction(tx);
+        signal_new_transaction(tx);
+    }
 }
 
 

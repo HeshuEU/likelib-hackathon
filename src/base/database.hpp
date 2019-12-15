@@ -18,6 +18,7 @@ enum class BaseDataType
     TRANSACTION = 3
 };
 
+
 class DatabaseKey
 {
   public:

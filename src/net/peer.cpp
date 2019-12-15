@@ -64,7 +64,7 @@ void Peer::receive(Peer::ReceiveHandler handler)
 void Peer::send(base::Bytes data)
 {
     base::Bytes b;
-    b.append(base::toBytes(static_cast<std::uint16_t >(data.size())));
+    b.append(base::toBytes(static_cast<std::uint16_t>(data.size())));
     b.append(data);
     _connection->send(std::move(b));
 }

@@ -37,12 +37,28 @@ void Host::scheduleHeartBeat()
 }
 
 
-void Host::accept(std::function<void(std::shared_ptr<Peer>)> on_accept)
+void Host::addNewSession(std::unique_ptr<Peer> peer)
 {
-    _acceptor.accept([this, on_accept = std::move(on_accept)](std::unique_ptr<Peer> peer) {
-        std::shared_ptr<Peer> ps{std::move(peer)};
-        _peers.add(ps);
-        on_accept(std::move(ps));
+    std::unique_lock lk(_sessions_mutex);
+    _sessions.push_back(std::make_shared<Session>(std::move(peer)));
+    auto& session = *_sessions.back();
+    session.start(_receive_handler);
+}
+
+
+void Host::accept()
+{
+    _acceptor.accept([this](std::unique_ptr<Peer> peer) {
+        addNewSession(std::move(peer));
+        accept();
+    });
+}
+
+
+void Host::connect(const net::Endpoint& address)
+{
+    _connector.connect(address, [this](std::unique_ptr<Peer> peer) {
+        addNewSession(std::move(peer));
     });
 }
 
@@ -59,27 +75,12 @@ void Host::networkThreadWorkerFunction() noexcept
 }
 
 
-void Host::run()
+void Host::run(Session::MessageHandler receive_handler)
 {
+    ASSERT(receive_handler);
+    _receive_handler = std::move(receive_handler);
+    accept();
     _network_thread = std::thread(&Host::networkThreadWorkerFunction, this);
-}
-
-
-void Host::connect(const std::vector<net::Endpoint>& addresses, std::function<void(std::shared_ptr<Peer>)> on_connect)
-{
-    for(const auto& address: addresses) {
-        connect(address, on_connect);
-    }
-}
-
-
-void Host::connect(const net::Endpoint& address, std::function<void(std::shared_ptr<Peer>)> on_connect)
-{
-    _connector.connect(address, [this, on_connect = std::move(on_connect)](std::unique_ptr<Peer> peer) {
-        std::shared_ptr<Peer> sp{std::move(peer)};
-        _peers.add(sp);
-        on_connect(std::move(sp));
-    });
 }
 
 
@@ -93,21 +94,19 @@ void Host::join()
 
 void Host::dropZombieConnections()
 {
-    _peers.forEach([this](Peer& peer) {
-        if(base::Time::now().seconds() - peer.getLastSeen().seconds() > base::config::NET_PING_FREQUENCY) {
-            if(!peer.isClosed()) {
-                peer.close();
-            }
-        }
-    });
+    std::unique_lock lk(_sessions_mutex);
+    _sessions.erase(std::remove_if(_sessions.begin(), _sessions.end(), [](auto& session) {
+        return session->isClosed();
+    }), _sessions.end());
 }
 
 
 void Host::broadcast(const base::Bytes& data)
 {
-    _peers.forEach([&data](Peer& peer) {
-        peer.send(data);
-    });
+    std::shared_lock lk(_sessions_mutex);
+    for(auto& session: _sessions) {
+        session->send(data);
+    }
 }
 
 } // namespace net

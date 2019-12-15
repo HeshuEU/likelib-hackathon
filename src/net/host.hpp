@@ -4,6 +4,7 @@
 #include "bc/block.hpp"
 #include "net/acceptor.hpp"
 #include "net/connector.hpp"
+#include "net/session.hpp"
 #include "net/peer.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -26,14 +27,11 @@ class Host
     Host(const base::PropertyTree& config);
     ~Host();
     //===================
-    void accept(std::function<void(std::shared_ptr<Peer>)> on_accept);
-    //===================
-    void connect(const Endpoint& address, std::function<void(std::shared_ptr<Peer>)> on_connect);
-    void connect(const std::vector<Endpoint>& nodes, std::function<void(std::shared_ptr<Peer>)> on_connect);
+    void connect(const Endpoint& address);
     //===================
     void broadcast(const base::Bytes& data);
     //===================
-    void run();
+    void run(Session::MessageHandler receive_handler);
     void join();
     //===================
   private:
@@ -46,11 +44,15 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //===================
-    Peers _peers;
+    std::vector<std::shared_ptr<Session>> _sessions;
+    std::shared_mutex _sessions_mutex;
+
     net::Acceptor _acceptor;
     net::Connector _connector;
+    Session::MessageHandler _receive_handler;
 
-    void acceptClients();
+    void accept();
+    void addNewSession(std::unique_ptr<Peer> peer);
     //===================
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();

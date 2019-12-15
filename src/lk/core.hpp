@@ -36,11 +36,12 @@ class Core
     boost::signals2::signal<void(const bc::Block& block)> signal_new_block;
     boost::signals2::signal<void(const bc::Transaction& transaction)> signal_new_transaction;
     //==================
-    void tryAddBlock(const bc::Block& b);
     bc::Balance getBalance(const bc::Address& address) const;
     //==================
-    void performTransaction(const bc::Transaction& tx);
+    bool performTransaction(const bc::Transaction& tx);
     //==================
+    bool tryAddBlock(const bc::Block& b);
+    std::optional<bc::Block> findBlock(const base::Sha256& hash) const;
     const bc::Block& getTopBlock() const;
     //==================
   private:
@@ -49,7 +50,7 @@ class Core
     //==================
     BalanceManager _balance_manager;
     bc::Blockchain _blockchain;
-    lk::ProtocolEngine _protocol_engine;
+    lk::Network _network;
     //==================
     static const bc::Block& getGenesisBlock();
     void applyGenesis();
