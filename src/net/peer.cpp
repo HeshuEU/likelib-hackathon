@@ -52,6 +52,7 @@ void Peer::receive(Peer::ReceiveHandler handler)
     _connection->receive(2, [this, handler = std::move(handler)](const base::Bytes& data) {
         refreshLastSeen();
         auto length = base::fromBytes<std::uint16_t>(data);
+        LOG_DEBUG << "Received length = " << length;
         _connection->receive(length, [this, handler = std::move(handler)](const base::Bytes& data) {
             refreshLastSeen();
             handler(data);
@@ -62,7 +63,10 @@ void Peer::receive(Peer::ReceiveHandler handler)
 
 void Peer::send(base::Bytes data)
 {
-    _connection->send(std::move(data));
+    base::Bytes b;
+    b.append(base::toBytes(static_cast<std::uint16_t >(data.size())));
+    b.append(data);
+    _connection->send(std::move(b));
 }
 
 

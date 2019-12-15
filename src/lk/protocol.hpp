@@ -11,7 +11,7 @@
 namespace lk
 {
 
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char, (TRANSACTION)(BLOCK)(GET_BLOCK))
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char, (SOME_ZERO_ENUM)(TRANSACTION)(BLOCK)(GET_BLOCK))
 
 class MessageHandlerRouter
 {

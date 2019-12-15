@@ -11,6 +11,7 @@ Node::Node(const base::PropertyTree& config) : _config{config}, _core{_config}
     _miner = std::make_unique<Miner>(_config, miner_callback);
 
     _core.signal_new_transaction.connect(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
+    _core.signal_new_block.connect(std::bind(&Node::onNewBlock, this, std::placeholders::_1));
 }
 
 
@@ -31,6 +32,9 @@ void Node::onBlockMine(bc::Block&& block)
 
 void Node::onNewTransactionReceived(const bc::Transaction& tx)
 {
+    if(_block_to_mine.getTransactions().isEmpty()) {
+        _block_to_mine.setPrevBlockHash(base::Sha256::compute(base::toBytes(_core.getTopBlock())).getBytes());
+    }
     _block_to_mine.addTransaction(tx);
     base::Bytes complexity(32);
     complexity[2] = 0x4f;
@@ -38,12 +42,13 @@ void Node::onNewTransactionReceived(const bc::Transaction& tx)
 }
 
 
-void Node::onNewBlockReceived(const bc::Block& block)
+void Node::onNewBlock(const bc::Block& block)
 {
     auto tset = _block_to_mine.getTransactions();
     tset.remove(block.getTransactions());
-    if(tset.size() != _block_to_mine.getTransactions().size()) {
+    if(!tset.isEmpty() && tset.size() != _block_to_mine.getTransactions().size()) {
         _block_to_mine.setTransactions(std::move(tset));
+        _block_to_mine.setPrevBlockHash(base::Sha256::compute(base::toBytes(block)).getBytes());
         base::Bytes complexity(32);
         complexity[2] = 0x4f;
         _miner->findNonce(_block_to_mine, complexity);

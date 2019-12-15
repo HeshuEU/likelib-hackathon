@@ -36,7 +36,7 @@ class Peer
     const std::size_t _id;
     std::size_t getNextId() const;
     //==================
-    std::unique_ptr<net::Connection> _connection;
+    std::shared_ptr<net::Connection> _connection;
     //=================
     void refreshLastSeen();
     base::Time _last_seen;

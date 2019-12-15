@@ -28,7 +28,7 @@ bool Blockchain::tryAddBlock(const Block& block)
         }
         else {
             _blocks[hash] = block;
-            _top_level_block_hash = std::move(hash);
+            _top_level_block_hash = hash;
         }
     }
     LOG_DEBUG << "Adding block. Block hash = " << hash.getBytes().toHex();
@@ -76,6 +76,15 @@ void Blockchain::setupGenesis()
 
     auto hash = base::Sha256::compute(base::toBytes(genesis));
     _top_level_block_hash = std::move(hash);
+}
+
+
+const Block& Blockchain::getTopBlock() const
+{
+    std::shared_lock lk(_blocks_mutex);
+    auto it = _blocks.find(_top_level_block_hash);
+    ASSERT(it != _blocks.end());
+    return it->second;
 }
 
 } // namespace bc

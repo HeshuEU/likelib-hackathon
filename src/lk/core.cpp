@@ -43,6 +43,7 @@ void Core::tryAddBlock(const bc::Block& b)
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
         _balance_manager.update(b);
         _protocol_engine.broadcastBlock(b);
+        signal_new_block(b);
     }
 }
 
@@ -66,16 +67,23 @@ bool Core::checkBlock(const bc::Block& b) const
 
 void Core::performTransaction(const bc::Transaction& tx)
 {
-    if(!!_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
+    if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
         return;
     }
     _protocol_engine.broadcastTransaction(tx);
+    signal_new_transaction(tx);
 }
 
 
 bc::Balance Core::getBalance(const bc::Address& address) const
 {
     return _balance_manager.getBalance(address);
+}
+
+
+const bc::Block& Core::getTopBlock() const
+{
+    return _blockchain.getTopBlock();
 }
 
 } // namespace lk

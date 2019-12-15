@@ -22,5 +22,5 @@ class Node
 
     void onBlockMine(bc::Block&& block);
     void onNewTransactionReceived(const bc::Transaction& tx);
-    void onNewBlockReceived(const bc::Block& block);
+    void onNewBlock(const bc::Block& block);
 };

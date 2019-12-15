@@ -41,6 +41,8 @@ class Core
     //==================
     void performTransaction(const bc::Transaction& tx);
     //==================
+    const bc::Block& getTopBlock() const;
+    //==================
   private:
     //==================
     const base::PropertyTree& _config;

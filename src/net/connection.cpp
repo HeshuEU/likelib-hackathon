@@ -98,9 +98,9 @@ void Connection::receive(std::size_t bytes_to_receive, net::Connection::ReceiveH
             }
             else {
                 try {
-                    _read_buffer.resize(bytes_received);
+                    //_read_buffer.resize(bytes_received);
                     (std::move(handler))(_read_buffer);
-                    _read_buffer.resize(_read_buffer.capacity());
+                    _read_buffer.resize(base::config::NET_MESSAGE_BUFFER_SIZE);
                 }
                 catch(const std::exception& e) {
                     LOG_WARNING << "Error during packet handling: " << e.what();
@@ -112,8 +112,6 @@ void Connection::receive(std::size_t bytes_to_receive, net::Connection::ReceiveH
 
 void Connection::send(base::Bytes data)
 {
-    LOG_DEBUG << "SENDING [" << data.size() << "bytes]";
-
     bool is_already_writing;
     {
         std::lock_guard lk(_pending_send_messages_mutex);
@@ -147,7 +145,7 @@ void Connection::sendPendingMessages()
                 // TODO: do something
             }
             else {
-                // LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();
+                LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();
             }
 
             std::lock_guard lk(_pending_send_messages_mutex);
