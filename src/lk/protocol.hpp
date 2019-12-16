@@ -32,8 +32,8 @@ class MessageHandler
     //================
     void onPing(net::Session& session);
     void onPong(net::Session& session);
-    void onTransaction(bc::Transaction&& tx);
-    void onBlock(bc::Block&& block);
+    void onTransaction(net::Session& session, bc::Transaction&& tx);
+    void onBlock(net::Session& session, bc::Block&& block);
     void onGetBlock(net::Session& session, base::Sha256&& hash);
     //================
 };

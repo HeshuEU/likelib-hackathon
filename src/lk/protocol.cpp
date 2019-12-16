@@ -57,12 +57,12 @@ void MessageHandler::handle(net::Session& session, const base::Bytes& data)
         case MessageType::TRANSACTION: {
             bc::Transaction tx;
             ia >> tx;
-            onTransaction(std::move(tx));
+            onTransaction(session, std::move(tx));
             break;
         }
         case MessageType::BLOCK: {
             auto block = bc::Block::deserialize(ia);
-            onBlock(std::move(block));
+            onBlock(session, std::move(block));
             break;
         }
         case MessageType::GET_BLOCK: {
@@ -91,23 +91,23 @@ void MessageHandler::onPong(net::Session& session)
 {}
 
 
-void MessageHandler::onTransaction(bc::Transaction&& tx)
+void MessageHandler::onTransaction(net::Session& session, bc::Transaction&& tx)
 {
-    LOG_TRACE << "Session::onTransaction peer #123";
+    LOG_TRACE << "Session::onTransaction peer " << session.getId();
     _core.performTransaction(tx);
 }
 
 
-void MessageHandler::onBlock(bc::Block&& block)
+void MessageHandler::onBlock(net::Session& session, bc::Block&& block)
 {
-    LOG_TRACE << "Session::onBlock peer #123";
+    LOG_TRACE << "Session::onBlock peer " << session.getId();
     _core.tryAddBlock(std::move(block));
 }
 
 
 void MessageHandler::onGetBlock(net::Session& session, base::Sha256&& block_hash)
 {
-    LOG_TRACE << "Session::onGetBlock peer #123";
+    LOG_TRACE << "Session::onGetBlock peer " << session.getId();
     auto block = _core.findBlock(block_hash);
     if(block) {
         base::SerializationOArchive msg;
