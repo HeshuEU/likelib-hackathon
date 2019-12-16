@@ -8,15 +8,13 @@ Core::Core(const base::PropertyTree& config) : _config{config}, _network{_config
     applyGenesis();
 
     signal_new_block.connect(_blockchain.signal_block_added);
-    //signal_new_transaction.connect(_network.signal_transaction_received);
 }
 
 
 const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
-        bc::Block ret;
-        ret.setPrevBlockHash(base::Bytes(32));
+        bc::Block ret{base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address(bc::Address(std::string(32, '0')));
         ret.addTransaction({null_address, null_address, bc::Balance{0xFFFFFFFF}, base::Time::fromSeconds(0)});
         return ret;
@@ -41,6 +39,7 @@ void Core::run()
 bool Core::tryAddBlock(const bc::Block& b)
 {
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
+        _pending_transactions.remove(b.getTransactions());
         _balance_manager.update(b);
         _network.broadcastBlock(b);
         signal_new_block(b);
@@ -75,14 +74,26 @@ bool Core::checkBlock(const bc::Block& b) const
 }
 
 
+bc::Block Core::getBlockTemplate() const
+{
+    auto prev_hash = base::Sha256::compute(base::toBytes(_blockchain.getTopBlock()));
+    return bc::Block{prev_hash, _pending_transactions};
+}
+
+
 bool Core::performTransaction(const bc::Transaction& tx)
 {
     if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
-        return true;
+        return false;
+    }
+    else if(_pending_transactions.find(tx)) {
+        return false;
     }
     else {
+        _pending_transactions.add(tx);
         _network.broadcastTransaction(tx);
         signal_new_transaction(tx);
+        return true;
     }
 }
 

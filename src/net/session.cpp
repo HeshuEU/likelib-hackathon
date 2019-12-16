@@ -21,25 +21,27 @@ bool Session::isClosed() const
 
 void Session::send(const base::Bytes& data)
 {
-    ASSERT(isActive());
-    _peer->send(data);
+    if(isActive()) {
+        _peer->send(data);
+    }
 }
 
 
 void Session::send(base::Bytes&& data)
 {
-    ASSERT(isActive());
-    _peer->send(std::move(data));
+    if(isActive()) {
+        _peer->send(std::move(data));
+    }
 }
 
 
 void Session::start(MessageHandler handler)
 {
-    ASSERT(isActive());
     ASSERT(handler);
-
-    _receive_handler = std::move(handler);
-    receive();
+    if(isActive()) {
+        _receive_handler = std::move(handler);
+        receive();
+    }
 }
 
 

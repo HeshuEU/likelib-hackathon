@@ -18,6 +18,7 @@ Blockchain::Blockchain() : _top_level_block_hash(base::Bytes(32))
 bool Blockchain::tryAddBlock(const Block& block)
 {
     auto hash = base::Sha256::compute(base::toBytes(block));
+    decltype(_blocks)::iterator inserted_block;
     {
         std::lock_guard lk(_blocks_mutex);
         if(!_blocks.empty() && _blocks.find(hash) != _blocks.end()) {
@@ -27,13 +28,13 @@ bool Blockchain::tryAddBlock(const Block& block)
             return false;
         }
         else {
-            _blocks[hash] = block;
+            inserted_block = _blocks.insert({hash, block}).first;
             _top_level_block_hash = hash;
         }
     }
     LOG_DEBUG << "Adding block. Block hash = " << hash.getBytes().toHex();
 
-    signal_block_added(_blocks[hash]);
+    signal_block_added(inserted_block->second);
     return true;
 }
 
@@ -66,9 +67,8 @@ std::optional<bc::Transaction> Blockchain::findTransaction(const base::Sha256& t
 
 void Blockchain::setupGenesis()
 {
-    Block genesis;
+    Block genesis(base::Sha256(base::Bytes(32)), TransactionsSet{});
     genesis.setNonce(0);
-    genesis.setPrevBlockHash(base::Bytes(32));
 
     static const bc::Address BASE_ADDRESS{std::string(32, '0')};
     static const bc::Balance BASE_MONEY_AMOUNT = 0xffffffff;

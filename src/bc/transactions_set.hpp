@@ -12,18 +12,19 @@ class TransactionsSet
 {
   public:
     void add(const Transaction& tx);
-    bool find(const Transaction& tx) const;
+    [[nodiscard]] bool find(const Transaction& tx) const;
+    [[nodiscard]] std::optional<Transaction> find(const base::Sha256& hash) const;
     void remove(const Transaction& tx);
     void remove(const TransactionsSet& other);
-    bool isEmpty() const;
+    [[nodiscard]] bool isEmpty() const;
 
-    std::size_t size() const;
+    [[nodiscard]] std::size_t size() const;
 
-    std::vector<Transaction>::const_iterator begin() const;
-    std::vector<Transaction>::const_iterator end() const;
+    [[nodiscard]] std::vector<Transaction>::const_iterator begin() const;
+    [[nodiscard]] std::vector<Transaction>::const_iterator end() const;
 
-    std::vector<Transaction>::iterator begin();
-    std::vector<Transaction>::iterator end();
+    [[nodiscard]] std::vector<Transaction>::iterator begin();
+    [[nodiscard]] std::vector<Transaction>::iterator end();
 
   private:
     std::vector<Transaction> _txs;

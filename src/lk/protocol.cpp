@@ -6,8 +6,7 @@
 namespace lk
 {
 
-Network::Network(const base::PropertyTree& config, Core& core)
-    : _config(config), _host{_config}, _handler{core, _host}
+Network::Network(const base::PropertyTree& config, Core& core) : _config(config), _host{_config}, _handler{core, _host}
 {}
 
 
@@ -29,14 +28,13 @@ void Network::broadcastTransaction(const bc::Transaction& tx)
 
 void Network::run()
 {
-    _host.run([this](net::Session& session, const base::Bytes& received_data){
+    _host.run([this](net::Session& session, const base::Bytes& received_data) {
         _handler.handle(session, received_data);
     });
 }
 
 
-MessageHandler::MessageHandler(Core& core, net::Host& host)
-    : _core{core}, _host{host}
+MessageHandler::MessageHandler(Core& core, net::Host& host) : _core{core}, _host{host}
 {}
 
 
@@ -63,8 +61,7 @@ void MessageHandler::handle(net::Session& session, const base::Bytes& data)
             break;
         }
         case MessageType::BLOCK: {
-            bc::Block block;
-            ia >> block;
+            auto block = bc::Block::deserialize(ia);
             onBlock(std::move(block));
             break;
         }
@@ -91,8 +88,7 @@ void MessageHandler::onPing(net::Session& session)
 
 
 void MessageHandler::onPong(net::Session& session)
-{
-}
+{}
 
 
 void MessageHandler::onTransaction(bc::Transaction&& tx)

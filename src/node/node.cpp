@@ -30,27 +30,33 @@ void Node::onBlockMine(bc::Block&& block)
 }
 
 
-void Node::onNewTransactionReceived(const bc::Transaction& tx)
+base::Bytes Node::getMiningComplexity()
 {
-    if(_block_to_mine.getTransactions().isEmpty()) {
-        _block_to_mine.setPrevBlockHash(base::Sha256::compute(base::toBytes(_core.getTopBlock())).getBytes());
-    }
-    _block_to_mine.addTransaction(tx);
     base::Bytes complexity(32);
     complexity[2] = 0x4f;
-    _miner->findNonce(_block_to_mine, complexity);
+    return complexity;
 }
 
 
-void Node::onNewBlock(const bc::Block& block)
+void Node::onNewTransactionReceived(const bc::Transaction& tx)
 {
-    auto tset = _block_to_mine.getTransactions();
-    tset.remove(block.getTransactions());
-    if(!tset.isEmpty() && tset.size() != _block_to_mine.getTransactions().size()) {
-        _block_to_mine.setTransactions(std::move(tset));
-        _block_to_mine.setPrevBlockHash(base::Sha256::compute(base::toBytes(block)).getBytes());
-        base::Bytes complexity(32);
-        complexity[2] = 0x4f;
-        _miner->findNonce(_block_to_mine, complexity);
+    bc::Block block = _core.getBlockTemplate();
+    if(!block.getTransactions().isEmpty()) {
+        _miner->findNonce(_core.getBlockTemplate(), getMiningComplexity());
+    }
+    else {
+        _miner->dropJob();
+    }
+}
+
+
+void Node::onNewBlock(const bc::Block&)
+{
+    bc::Block block = _core.getBlockTemplate();
+    if(!block.getTransactions().isEmpty()) {
+        _miner->findNonce(_core.getBlockTemplate(), getMiningComplexity());
+    }
+    else {
+        _miner->dropJob();
     }
 }

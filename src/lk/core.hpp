@@ -44,6 +44,8 @@ class Core
     std::optional<bc::Block> findBlock(const base::Sha256& hash) const;
     const bc::Block& getTopBlock() const;
     //==================
+    bc::Block getBlockTemplate() const;
+    //==================
   private:
     //==================
     const base::PropertyTree& _config;
@@ -51,6 +53,7 @@ class Core
     BalanceManager _balance_manager;
     bc::Blockchain _blockchain;
     lk::Network _network;
+    bc::TransactionsSet _pending_transactions;
     //==================
     static const bc::Block& getGenesisBlock();
     void applyGenesis();

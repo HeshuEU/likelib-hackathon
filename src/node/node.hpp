@@ -18,7 +18,8 @@ class Node
     std::unique_ptr<rpc::RpcServer> _rpc;
 
     std::unique_ptr<Miner> _miner;
-    bc::Block _block_to_mine;
+
+    static base::Bytes getMiningComplexity();
 
     void onBlockMine(bc::Block&& block);
     void onNewTransactionReceived(const bc::Transaction& tx);

@@ -57,12 +57,14 @@ void CommonState::setCommonData(const CommonData& data)
 template<typename... Args>
 void CommonState::callHandlerAndDrop(Args&&... args)
 {
-    std::unique_lock lk(_state_mutex);
-    _version.fetch_add(1, std::memory_order_release);
-    _common_data.task = Task::DROP_JOB;
-    _common_data.block_to_mine.reset();
-    _common_data.complexity.reset();
-    _state_changed_cv.notify_all();
+    {
+        std::unique_lock lk(_state_mutex);
+        _version.fetch_add(1, std::memory_order_release);
+        _common_data.task = Task::DROP_JOB;
+        _common_data.block_to_mine.reset();
+        _common_data.complexity.reset();
+        _state_changed_cv.notify_all();
+    }
 
     _handler(std::forward<Args>(args)...);
 }

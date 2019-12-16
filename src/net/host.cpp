@@ -15,9 +15,9 @@ namespace net
 {
 
 Host::Host(const base::PropertyTree& config)
-    : _listen_ip{config.get<std::string>("net.listen_addr")}, _server_public_port{config.get<unsigned short>(
-                                                                  "net.public_port")},
-      _acceptor{_io_context, _listen_ip}, _connector{_io_context}, _heartbeat_timer{_io_context}
+    : _config{config}, _listen_ip{_config.get<std::string>("net.listen_addr")},
+      _server_public_port{_config.get<unsigned short>("net.public_port")}, _acceptor{_io_context, _listen_ip},
+      _connector{_io_context}, _heartbeat_timer{_io_context}
 {}
 
 
@@ -79,7 +79,15 @@ void Host::run(Session::MessageHandler receive_handler)
 {
     ASSERT(receive_handler);
     _receive_handler = std::move(receive_handler);
+
     accept();
+
+    if(_config.hasKey("nodes")) {
+        for(const auto& node: _config.getVector<std::string>("nodes")) {
+            connect(net::Endpoint(node));
+        }
+    }
+
     _network_thread = std::thread(&Host::networkThreadWorkerFunction, this);
 }
 
@@ -95,9 +103,11 @@ void Host::join()
 void Host::dropZombieConnections()
 {
     std::unique_lock lk(_sessions_mutex);
-    _sessions.erase(std::remove_if(_sessions.begin(), _sessions.end(), [](auto& session) {
-        return session->isClosed();
-    }), _sessions.end());
+    _sessions.erase(std::remove_if(_sessions.begin(), _sessions.end(),
+                        [](auto& session) {
+                            return session->isClosed();
+                        }),
+        _sessions.end());
 }
 
 

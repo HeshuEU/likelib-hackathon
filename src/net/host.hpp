@@ -36,6 +36,8 @@ class Host
     //===================
   private:
     //===================
+    const base::PropertyTree& _config;
+    //===================
     const Endpoint _listen_ip;
     const unsigned short _server_public_port;
     //===================

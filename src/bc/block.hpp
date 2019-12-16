@@ -14,9 +14,7 @@ class Block
 {
   public:
     //=================
-    Block() = default;
-    Block(const base::Bytes& prev_block_hash, TransactionsSet&& txs);
-    Block(base::Bytes&& prev_block_hash, TransactionsSet&& txs);
+    Block(base::Sha256 prev_block_hash, TransactionsSet txs);
 
     Block(const Block&) = default;
     Block(Block&&) = default;
@@ -26,27 +24,29 @@ class Block
 
     ~Block() = default;
     //=================
-    const base::Bytes& getPrevBlockHash() const;
+    static base::SerializationOArchive& serialize(base::SerializationOArchive& oa, const Block& block);
+    static Block deserialize(base::SerializationIArchive& ia);
+    //=================
+    const base::Sha256& getPrevBlockHash() const;
     const TransactionsSet& getTransactions() const;
     NonceInt getNonce() const noexcept;
     //=================
     void setNonce(NonceInt nonce) noexcept;
-    void setPrevBlockHash(const base::Bytes& prev_block_hash);
-    void setTransactions(TransactionsSet&& txs);
+    void setPrevBlockHash(const base::Sha256& prev_block_hash);
+    void setTransactions(TransactionsSet txs);
     void addTransaction(const Transaction& tx);
     //=================
 
 
 
     //=================
-
-    bool checkValidness() const;
-
   private:
+    //=================
     NonceInt _nonce;
 
-    base::Bytes _prev_block_hash;
+    base::Sha256 _prev_block_hash;
     TransactionsSet _txs;
+    //=================
 };
 
 

@@ -25,16 +25,22 @@ namespace
 
 extern "C" void signalHandler(int signal)
 {
-    LOG_INFO << "Signal caught: " << signal
+    if(signal == SIGINT) {
+        LOG_INFO << "SIGINT caught. Exit.";
+        std::abort(); // TODO: a clean exit
+    }
+    else {
+        LOG_INFO << "Signal caught: " << signal
 #ifdef CONFIG_OS_FAMILY_UNIX
-             << " (" << strsignal(signal) << ")"
+                 << " (" << strsignal(signal) << ")"
 #endif
 #ifdef CONFIG_IS_DEBUG
-             << '\n'
-             << boost::stacktrace::stacktrace()
+                 << '\n'
+                 << boost::stacktrace::stacktrace()
 #endif
-        ;
-    std::abort();
+            ;
+        std::abort();
+    }
 }
 
 

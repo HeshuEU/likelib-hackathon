@@ -11,7 +11,8 @@
 namespace lk
 {
 
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char, (SOME_ZERO_ENUM)(PING)(PONG)(TRANSACTION)(BLOCK)(GET_BLOCK))
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
+    MessageType, unsigned char, (SOME_ZERO_ENUM)(PING)(PONG)(TRANSACTION)(BLOCK)(GET_BLOCK))
 
 class Core;
 
@@ -47,6 +48,7 @@ class Network
 
     void broadcastBlock(const bc::Block& block);
     void broadcastTransaction(const bc::Transaction& tx);
+
   private:
     const base::PropertyTree& _config;
     net::Host _host;
