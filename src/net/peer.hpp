@@ -11,6 +11,39 @@
 namespace net
 {
 
+
+class Id
+{
+public:
+    //=================
+    Id();
+    Id(std::size_t id);
+    Id(const Id&) = default;
+    ~Id() = default;
+    //=================
+    [[nodiscard]] std::size_t getId() const noexcept;
+    void setId(std::size_t id) noexcept;
+    //=================
+private:
+    //=================
+    std::size_t _id;
+    //=================
+    static std::size_t getNextId();
+    //=================
+};
+
+
+bool operator<(const Id& a, const Id& b);
+bool operator>(const Id& a, const Id& b);
+bool operator<=(const Id& a, const Id& b);
+bool operator>=(const Id& a, const Id& b);
+bool operator==(const Id& a, const Id& b);
+bool operator!=(const Id& a, const Id& b);
+
+
+std::ostream& operator<<(std::ostream& os, const Id& id);
+
+
 class Peer
 {
   public:
@@ -29,12 +62,11 @@ class Peer
     //=================
     void close();
     //=================
-    std::size_t getId() const noexcept;
+    Id getId() const noexcept;
     //=================
   private:
     //=================
-    const std::size_t _id;
-    std::size_t getNextId() const;
+    const Id _id;
     //==================
     std::shared_ptr<net::Connection> _connection;
     //=================

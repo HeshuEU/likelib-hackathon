@@ -2,21 +2,81 @@
 
 #include "base/log.hpp"
 
+#include <ostream>
+
 namespace net
 {
 
-Peer::Peer(std::unique_ptr<Connection> connection) : _id{Peer::getNextId()}, _connection{std::move(connection)}
+Id::Id()
+    : _id{getNextId()}
 {}
 
 
-std::size_t Peer::getNextId() const
+Id::Id(std::size_t id)
+    : _id{id}
+{}
+
+
+std::size_t Id::getId() const noexcept
+{
+    return _id;
+}
+
+
+void Id::setId(std::size_t id) noexcept
+{
+    _id = id;
+}
+
+
+std::size_t Id::getNextId()
 {
     static std::atomic<std::size_t> next_id{0};
     return next_id++;
 }
 
 
-std::size_t Peer::getId() const noexcept
+bool operator<(const Id& a, const Id& b)
+{
+    return a.getId() < b.getId();
+}
+
+
+bool operator>(const Id& a, const Id& b)
+{
+    return a.getId() > b.getId();
+}
+
+
+bool operator<=(const Id& a, const Id& b)
+{
+    return !(a > b);
+}
+
+
+bool operator>=(const Id& a, const Id& b)
+{
+    return !(a < b);
+}
+
+
+bool operator==(const Id& a, const Id& b)
+{
+    return a.getId() == b.getId();
+}
+
+
+bool operator!=(const Id& a, const Id& b)
+{
+    return a != b;
+}
+
+
+Peer::Peer(std::unique_ptr<Connection> connection) : _id{}, _connection{std::move(connection)}
+{}
+
+
+Id Peer::getId() const noexcept
 {
     return _id;
 }
@@ -76,6 +136,12 @@ void Peer::close()
     if(!_connection->isClosed()) {
         _connection->close();
     }
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Id& id)
+{
+    return os << '#' << id.getId();
 }
 
 
