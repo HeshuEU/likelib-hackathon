@@ -12,7 +12,7 @@ namespace lk
 {
 
 DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
-    MessageType, unsigned char, (SOME_ZERO_ENUM)(PING)(PONG)(TRANSACTION)(BLOCK)(GET_BLOCK))
+    MessageType, unsigned char, (NOT_AVAILABLE)(PING)(PONG)(TRANSACTION)(BLOCK)(GET_BLOCK))
 
 class Core;
 
