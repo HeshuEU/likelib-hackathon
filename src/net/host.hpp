@@ -31,7 +31,10 @@ class Host
     //===================
     void broadcast(const base::Bytes& data);
     //===================
-    void run(Session::MessageHandler receive_handler);
+    using AcceptHandler = std::function<void(Session&)>;
+    using ConnectHandler = std::function<void(Session&)>;
+
+    void run(AcceptHandler on_accept, ConnectHandler on_connect, Session::SessionManager receive_handler);
     void join();
     //===================
   private:
@@ -51,10 +54,13 @@ class Host
 
     net::Acceptor _acceptor;
     net::Connector _connector;
-    Session::MessageHandler _receive_handler;
+
+    AcceptHandler _accept_handler;
+    ConnectHandler _connect_handler;
+    Session::SessionManager _receive_handler;
 
     void accept();
-    void addNewSession(std::unique_ptr<Peer> peer);
+    Session& addNewSession(std::unique_ptr<Peer> peer);
     //===================
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();

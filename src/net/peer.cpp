@@ -215,3 +215,8 @@ void Peers::removeClosed()
 }
 
 } // namespace net
+
+std::size_t std::hash<net::Id>::operator()(const net::Id& k) const
+{
+    return k.getId();
+}

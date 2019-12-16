@@ -5,7 +5,7 @@ namespace net
 
 Session::Session(std::unique_ptr<Peer> peer) : _peer{std::move(peer)}
 {
-    ASSERT(peer);
+    ASSERT(_peer);
 }
 
 
@@ -43,7 +43,7 @@ Id Session::getId() const
 }
 
 
-void Session::start(MessageHandler handler)
+void Session::start(SessionManager handler)
 {
     ASSERT(handler);
     if(isActive()) {

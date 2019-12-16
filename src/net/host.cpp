@@ -37,19 +37,25 @@ void Host::scheduleHeartBeat()
 }
 
 
-void Host::addNewSession(std::unique_ptr<Peer> peer)
+Session& Host::addNewSession(std::unique_ptr<Peer> peer)
 {
+    ASSERT(peer);
     std::unique_lock lk(_sessions_mutex);
     _sessions.push_back(std::make_shared<Session>(std::move(peer)));
     auto& session = *_sessions.back();
-    session.start(_receive_handler);
+    return session;
 }
 
 
 void Host::accept()
 {
     _acceptor.accept([this](std::unique_ptr<Peer> peer) {
-        addNewSession(std::move(peer));
+        ASSERT(peer);
+        auto& session = addNewSession(std::move(peer));
+        if(_accept_handler) {
+            _accept_handler(session);
+        }
+        session.start(_receive_handler);
         accept();
     });
 }
@@ -58,7 +64,11 @@ void Host::accept()
 void Host::connect(const net::Endpoint& address)
 {
     _connector.connect(address, [this](std::unique_ptr<Peer> peer) {
-        addNewSession(std::move(peer));
+        auto& session = addNewSession(std::move(peer));
+        if(_connect_handler) {
+            _connect_handler(session);
+        }
+        session.start(_receive_handler);
     });
 }
 
@@ -75,9 +85,12 @@ void Host::networkThreadWorkerFunction() noexcept
 }
 
 
-void Host::run(Session::MessageHandler receive_handler)
+void Host::run(AcceptHandler on_accept, ConnectHandler on_connect, Session::SessionManager receive_handler)
 {
     ASSERT(receive_handler);
+
+    _accept_handler = std::move(on_accept);
+    _connect_handler = std::move(on_connect);
     _receive_handler = std::move(receive_handler);
 
     accept();
@@ -87,6 +100,8 @@ void Host::run(Session::MessageHandler receive_handler)
             connect(net::Endpoint(node));
         }
     }
+
+    scheduleHeartBeat();
 
     _network_thread = std::thread(&Host::networkThreadWorkerFunction, this);
 }

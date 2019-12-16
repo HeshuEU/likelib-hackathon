@@ -8,40 +8,57 @@
 #include <memory>
 #include <shared_mutex>
 
+namespace net {
+
+
+    class Id {
+    public:
+        //=================
+        Id();
+
+        Id(std::size_t id);
+
+        Id(const Id &) = default;
+
+        ~Id() = default;
+
+        //=================
+        [[nodiscard]] std::size_t getId() const noexcept;
+
+        void setId(std::size_t id) noexcept;
+        //=================
+    private:
+        //=================
+        std::size_t _id;
+
+        //=================
+        static std::size_t getNextId();
+        //=================
+    };
+
+
+    bool operator<(const Id &a, const Id &b);
+    bool operator>(const Id &a, const Id &b);
+    bool operator<=(const Id &a, const Id &b);
+    bool operator>=(const Id &a, const Id &b);
+    bool operator==(const Id &a, const Id &b);
+    bool operator!=(const Id &a, const Id &b);
+
+    std::ostream &operator<<(std::ostream &os, const Id &id);
+
+}
+
+namespace std
+{
+    template<>
+    struct hash<net::Id>
+    {
+        std::size_t operator()(const net::Id& k) const;
+    };
+}
+
 namespace net
 {
-
-
-class Id
-{
-public:
-    //=================
-    Id();
-    Id(std::size_t id);
-    Id(const Id&) = default;
-    ~Id() = default;
-    //=================
-    [[nodiscard]] std::size_t getId() const noexcept;
-    void setId(std::size_t id) noexcept;
-    //=================
-private:
-    //=================
-    std::size_t _id;
-    //=================
-    static std::size_t getNextId();
-    //=================
-};
-
-
-bool operator<(const Id& a, const Id& b);
-bool operator>(const Id& a, const Id& b);
-bool operator<=(const Id& a, const Id& b);
-bool operator>=(const Id& a, const Id& b);
-bool operator==(const Id& a, const Id& b);
-bool operator!=(const Id& a, const Id& b);
-
-
-std::ostream& operator<<(std::ostream& os, const Id& id);
 
 
 class Peer

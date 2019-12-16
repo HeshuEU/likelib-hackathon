@@ -12,7 +12,7 @@ class Session
 {
   public:
     //==================
-    using MessageHandler = std::function<void(Session& session, const base::Bytes& data)>;
+    using SessionManager = std::function<void(Session& session, const base::Bytes& data)>;
     //==================
     explicit Session(std::unique_ptr<Peer> peer);
     //==================
@@ -24,13 +24,13 @@ class Session
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
     //==================
-    void start(MessageHandler receive_handler);
+    void start(SessionManager receive_handler);
     void stop();
     //==================
   private:
     //==================
     std::unique_ptr<Peer> _peer;
-    MessageHandler _receive_handler;
+    SessionManager _receive_handler;
     //==================
     void receive();
     //==================

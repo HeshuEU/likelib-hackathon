@@ -33,7 +33,7 @@ void Node::onBlockMine(bc::Block&& block)
 base::Bytes Node::getMiningComplexity()
 {
     base::Bytes complexity(32);
-    complexity[3] = 0x8f;
+    complexity[2] = 0x8f;
     return complexity;
 }
 
