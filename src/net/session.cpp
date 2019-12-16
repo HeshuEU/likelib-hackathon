@@ -4,7 +4,9 @@ namespace net
 {
 
 Session::Session(std::unique_ptr<Peer> peer) : _peer{std::move(peer)}
-{}
+{
+    ASSERT(peer);
+}
 
 
 bool Session::isActive() const
@@ -35,12 +37,26 @@ void Session::send(base::Bytes&& data)
 }
 
 
+Id Session::getId() const
+{
+    return _peer->getId();
+}
+
+
 void Session::start(MessageHandler handler)
 {
     ASSERT(handler);
     if(isActive()) {
         _receive_handler = std::move(handler);
         receive();
+    }
+}
+
+
+void Session::stop()
+{
+    if(isActive()) {
+        _peer->close();
     }
 }
 

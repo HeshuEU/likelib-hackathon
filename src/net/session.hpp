@@ -19,6 +19,8 @@ class Session
     [[nodiscard]] bool isActive() const;
     [[nodiscard]] bool isClosed() const;
     //==================
+    [[nodiscard]] Id getId() const;
+    //==================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
     //==================
