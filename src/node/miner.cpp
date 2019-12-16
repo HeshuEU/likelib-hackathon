@@ -59,6 +59,14 @@ void CommonState::callHandlerAndDrop(Args&&... args)
 {
     {
         std::unique_lock lk(_state_mutex);
+        if(_common_data.task != Task::FIND_NONCE) {
+            /* guard on case if several handlers want to be called simultaneously.
+             * we cannot bring _handler call under mutex, because if _handler
+             * sets some work to miner, it will cause deadlock.
+             */
+            return;
+        }
+
         _version.fetch_add(1, std::memory_order_release);
         _common_data.task = Task::DROP_JOB;
         _common_data.block_to_mine.reset();
