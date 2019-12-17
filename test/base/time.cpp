@@ -15,5 +15,5 @@ BOOST_AUTO_TEST_CASE(time_seconds_serialization)
 BOOST_AUTO_TEST_CASE(time_genesis_check)
 {
     base::Time empty_time;
-    BOOST_CHECK_EQUAL(empty_time.secondsInEpoch(), 0);
+    BOOST_CHECK_EQUAL(empty_time.seconds(), 0);
 }
