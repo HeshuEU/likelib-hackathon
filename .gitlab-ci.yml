@@ -14,7 +14,7 @@ before_script:
       apt-get update -y && \
       apt-get install -y apt-utils && \
       apt-get dist-upgrade -y
-    - export INSTALL_DIR /opt
+    - set INSTALL_DIR /opt
     #- export WORKDIR ${INSTALL_DIR}
     - cp doc/prepare_build.sh ${INSTALL_DIR}
     #- cd ${INSTALL_DIR} && ./prepare_build.sh
