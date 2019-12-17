@@ -35,7 +35,8 @@ void Network::run()
             return;
         }
         else {
-            auto[inserted_it, is_inserted] = _peers.insert({session.getId(), SessionManager::accepted(session, _core, _host)});
+            auto [inserted_it, is_inserted] =
+                _peers.insert({session.getId(), SessionManager::accepted(session, _core, _host)});
             ASSERT(is_inserted);
             it = inserted_it;
         }
@@ -48,7 +49,8 @@ void Network::run()
             return;
         }
         else {
-            auto[inserted_it, is_inserted] = _peers.insert({session.getId(), SessionManager::connected(session, _core, _host)});
+            auto [inserted_it, is_inserted] =
+                _peers.insert({session.getId(), SessionManager::connected(session, _core, _host)});
             ASSERT(is_inserted);
             it = inserted_it;
         }
@@ -112,7 +114,7 @@ void SessionManager::handle(net::Session& session, const base::Bytes& data)
         }
     }
     else {
-        switch (type) {
+        switch(type) {
             case MessageType::PING: {
                 onPing(session);
                 break;
