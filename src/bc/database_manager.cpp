@@ -72,7 +72,8 @@ bc::Block DatabaseManager::getBlock(const base::Sha256& blockHash) const
         std::shared_lock lk(_rw_mutex);
         base::Bytes block_data;
         _database.get(toBytes(DataType::BLOCK, blockHash.getBytes()), block_data);
-        return base::fromBytes<::bc::Block>(block_data);
+        base::SerializationIArchive ia(block_data);
+        return bc::Block::deserialize(ia);
     }
     else {
         RAISE_ERROR(base::InvalidArgument, "No such block exists");
@@ -96,7 +97,8 @@ std::vector<base::Sha256> DatabaseManager::createAllBlockHashesList() const
         all_blocks_hashes.push_back(current_block_hash);
         base::Bytes block_data;
         _database.get(toBytes(DataType::BLOCK, current_block_hash.getBytes()), block_data);
-        current_block_hash = base::fromBytes<::bc::Block>(block_data).getPrevBlockHash();
+        base::SerializationIArchive ia(block_data);
+        current_block_hash = bc::Block::deserialize(ia).getPrevBlockHash();
     }
 
     std::reverse(std::begin(all_blocks_hashes), std::end(all_blocks_hashes));
