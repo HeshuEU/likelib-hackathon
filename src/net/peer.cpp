@@ -7,13 +7,11 @@
 namespace net
 {
 
-Id::Id()
-    : _id{getNextId()}
+Id::Id() : _id{getNextId()}
 {}
 
 
-Id::Id(std::size_t id)
-    : _id{id}
+Id::Id(std::size_t id) : _id{id}
 {}
 
 
