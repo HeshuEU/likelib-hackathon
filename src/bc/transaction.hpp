@@ -39,7 +39,7 @@ class Transaction
   private:
     bc::Address _from;
     bc::Address _to;
-    bc::Balance _amount;
+    bc::Balance _amount = 1; // TODO: change it later, temporary fix
     base::Time _timestamp;
 };
 
