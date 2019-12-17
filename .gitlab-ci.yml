@@ -15,9 +15,11 @@ before_script:
       apt-get install -y apt-utils && \
       apt-get dist-upgrade -y
     - export INSTALL_DIR="/opt"
-    #- export WORKDIR ${INSTALL_DIR}
+    - export PROJECT_SOURCE_DIR="/project"
+    - export PROJECT_BUILD_DIR="/build"
+    - mkdir ${PROJECT_BUILD_DIR}
     - cp doc/prepare_build.sh ${INSTALL_DIR}
-    - echo ${PWD} && ls
+    - mkdir  ${PROJECT_SOURCE_DIR} && cp -r . ${PROJECT_SOURCE_DIR}
     - cd ${INSTALL_DIR} && ./prepare_build.sh
 
 Build:
@@ -35,12 +37,8 @@ Build:
 #    - cp doc/prepare_build.sh ${INSTALL_DIR}
 #    - cd ${INSTALL_DIR} && ./prepare_build.sh
     # after soft installed
-    - ls ${INSTALL_DIR}
-    - export PROJECT_SOURCE_DIR="/project"
-    - export PROJECT_BUILD_DIR="/build"
-    - ls -l
-    - cp -r . ${PROJECT_SOURCE_DIR}
-    - mkdir ${PROJECT_BUILD_DIR} && cd ${PROJECT_BUILD_DIR}
+    - echo ${PWD} && ls ${INSTALL_DIR}
+    - cd ${PROJECT_BUILD_DIR}
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
       make -j$(nproc)
 
