@@ -1,8 +1,24 @@
-Build:
-  tags: 
-    - custom-tag
-  script: 
-     - echo "Start building docker container"
-     - docker build .
-     - echo "Docker container build successfully"
 
+image: ubuntu:19.10
+stages:
+  - create
+  - ls
+tag:
+  - docker
+Creating files:
+  stage: create
+  script: 
+     - echo "Start create container"
+     - mkdir build
+     - touch ./build/1
+     - touch ./build/2
+     - echo "Docker container create successfully"
+  artifacts:
+    paths:
+      - build
+
+View files:
+  stage: ls
+  script:
+    - ls -l
+    - ls ./build -l
