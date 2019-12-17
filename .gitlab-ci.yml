@@ -55,6 +55,7 @@ Code quality:
     - docker
   allow_failure: true
   script:
+    - ls  ${INSTALL_DIR}
     - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I/build/grpc/gen -std=c++17"
     - clang-tidy node/main.cpp -- ${INCLUDE} > clang-tidy-node.log
   artifacts:
@@ -87,7 +88,7 @@ Integration tests:
       apt-get update -y && \
       apt-get install -y apt-utils && \
       apt-get dist-upgrade -y
-    - apt-get install python3.7
+    - apt-get install -y python3.7
     - export  TEST_FILES_DIR="/likelib"
     - cd ${TEST_FILES_DIR}
     - cp build/src/node/node .
