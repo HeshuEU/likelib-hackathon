@@ -17,6 +17,12 @@ Sha256::Sha256(const Bytes& data) : _bytes(data)
     ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
 }
 
+Sha256::Sha256(Bytes&& data) : _bytes(data)
+{
+    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
+}
+
+
 std::string Sha256::toHex() const
 {
     return _bytes.toHex();

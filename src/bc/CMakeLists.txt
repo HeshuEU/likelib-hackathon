@@ -5,6 +5,7 @@ set(BC_HEADERS
         transaction.hpp
         types.hpp
         transactions_set.hpp
+        database_manager.hpp
         )
 
 set(BC_SOURCES
@@ -13,6 +14,7 @@ set(BC_SOURCES
         blockchain.cpp
         transaction.cpp
         transactions_set.cpp
+        database_manager.cpp
         )
 
 add_library(bc ${BC_SOURCES} ${BC_HEADERS})
