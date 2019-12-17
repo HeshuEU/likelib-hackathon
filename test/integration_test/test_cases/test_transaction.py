@@ -8,7 +8,7 @@ import multiprocessing as mp
 _work_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_transaction")
 
 
-def create_and_check_transaction(rpc_client_exec_path, host_address, from_address, to_address, amount, final_amount):
+def create_and_check_transaction(rpc_client_exec_path, host_address, from_address, to_address, amount, final_from_amount, final_to_amount):
     pipe = subprocess.run([rpc_client_exec_path, "transfer", "--host", host_address, "--from", from_address, "--to", to_address, "--amount", amount], capture_output=True)
 
     if pipe.returncode != 0:
@@ -19,7 +19,12 @@ def create_and_check_transaction(rpc_client_exec_path, host_address, from_addres
     time.sleep(transfer_time_out)
 
     pipe = subprocess.run([rpc_client_exec_path, "get_balance", "--host", host_address, "--address", to_address], capture_output=True)
-    if final_amount.encode() not in pipe.stdout or pipe.returncode != 0:
+    if final_to_amount.encode() not in pipe.stdout or pipe.returncode != 0:
+        print(pipe.stderr)
+        exit(1)
+
+    pipe = subprocess.run([rpc_client_exec_path, "get_balance", "--host", host_address, "--address", from_address], capture_output=True)
+    if final_from_amount.encode() not in pipe.stdout or pipe.returncode != 0:
         print(pipe.stderr)
         exit(1)
 
@@ -72,9 +77,9 @@ def client_run_fun(rpc_client_exec_path):
 
     host_address = "127.0.0.1:50051"
     
-    create_and_check_transaction(rpc_client_exec_path, host_address, "00000000000000000000000000000000", "Shisha", "1000", "1000")
-    #create_and_check_transaction(rpc_client_exec_path, host_address, "Shisha", "Andre", "670", "670")  #isn't working right now, waiting 
-    #create_and_check_transaction(rpc_client_exec_path, host_address, "Andre", "Shisha", "100", "100")  #for the storage branch to be filled
+    #create_and_check_transaction(rpc_client_exec_path, host_address, "00000000000000000000000000000000", "Shisha", "1000", "4294966295", "1000") 
+    #create_and_check_transaction(rpc_client_exec_path, host_address, "Shisha", "Andre", "670", "330", "670")  #isn't working right now, waiting 
+    #create_and_check_transaction(rpc_client_exec_path, host_address, "Andre", "Shisha", "100", "570", "100")  #for the storage branch to be filled
 
     exit(0)
 

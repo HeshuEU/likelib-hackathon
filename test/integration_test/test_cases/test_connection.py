@@ -12,11 +12,11 @@ def node_run_fun(node_exec_path):
     node_config_file_content = '''
     {
         "net": {
-            "listen_addr": "0.0.0.0:20202",
+            "listen_addr": "127.0.0.1:20202",
             "public_port": 20202
         },
         "rpc": {
-            "address": "0.0.0.0:50051"
+            "address": "127.0.0.1:50051"
         },
         "miner": {
             "threads": 2
