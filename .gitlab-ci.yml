@@ -34,6 +34,7 @@ Build:
 #    - cp doc/prepare_build.sh ${INSTALL_DIR}
 #    - cd ${INSTALL_DIR} && ./prepare_build.sh
     # after soft installed
+    - ls ${INSTALL_DIR}
     - export PROJECT_SOURCE_DIR="/project"
     - export PROJECT_BUILD_DIR="/build"
     - cp -r . ${PROJECT_SOURCE_DIR}
@@ -43,7 +44,7 @@ Build:
 
   artifacts:
     paths:
-    - ../build
+    - ${PROJECT_BUILD_DIR}
     expire_in: 1 week
 
     
