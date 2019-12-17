@@ -9,7 +9,6 @@
 
 namespace lk
 {
-
 class BalanceManager
 {
   public:
