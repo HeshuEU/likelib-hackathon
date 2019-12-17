@@ -14,8 +14,7 @@ before_script:
       apt-get update -y && \
       apt-get install -y apt-utils && \
       apt-get dist-upgrade -y
-    - export INSTALL_DIR="./opt"
-    - mkdir ${INSTALL_DIR}
+    - export INSTALL_DIR="/opt"
     #- export WORKDIR ${INSTALL_DIR}
     - cp doc/prepare_build.sh ${INSTALL_DIR}
     - cd ${INSTALL_DIR} && ./prepare_build.sh
@@ -40,9 +39,8 @@ Build:
     - export PROJECT_BUILD_DIR="/build"
     - cp -r . ${PROJECT_SOURCE_DIR}
     - mkdir ${PROJECT_BUILD_DIR} && cd ${PROJECT_BUILD_DIR}
-    - touch hello.txt
-    #- cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
-    #  make -j$(nproc)
+    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
+      make -j$(nproc)
 
   artifacts:
     paths:
