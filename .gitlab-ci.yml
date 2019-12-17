@@ -9,7 +9,6 @@ cache:
     - ./opt
 
 before_script:
-    #- ls ./opt
     - apt-get update && \
       apt-get install -y software-properties-common && \
       apt-get update -y && \
@@ -18,7 +17,7 @@ before_script:
     - export INSTALL_DIR="./opt"
     #- export WORKDIR ${INSTALL_DIR}
     - cp doc/prepare_build.sh ${INSTALL_DIR}
-    #- cd ${INSTALL_DIR} && ./prepare_build.sh
+    - cd ${INSTALL_DIR} && ./prepare_build.sh
 
 Build:
   stage: build
