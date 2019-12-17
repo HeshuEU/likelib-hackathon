@@ -2,7 +2,7 @@
 
 #include "base/property_tree.hpp"
 #include "bc/block.hpp"
-#include "node/miner.hpp"
+#include "bc/database_manager.hpp"
 #include "bc/transaction.hpp"
 #include "bc/transactions_set.hpp"
 
@@ -18,10 +18,12 @@ class Blockchain
 {
   public:
     //===================
-    Blockchain();
+    Blockchain(const base::PropertyTree& config);
     Blockchain(const Blockchain&) = delete;
     Blockchain(Blockchain&&) = delete;
     ~Blockchain() = default;
+    //===================
+    void load();
     //===================
     bool tryAddBlock(const Block& block);
     std::optional<bc::Block> findBlock(const base::Sha256& block_hash) const;
@@ -33,9 +35,13 @@ class Blockchain
     //===================
   private:
     //===================
+    const base::PropertyTree& _config;
+    //===================
     std::unordered_map<base::Sha256, Block> _blocks;
     base::Sha256 _top_level_block_hash;
     mutable std::shared_mutex _blocks_mutex;
+    //===================
+    bc::DatabaseManager _database;
     //===================
     void setupGenesis();
     //===================

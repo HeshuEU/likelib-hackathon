@@ -13,6 +13,7 @@ namespace bc
 class DatabaseManager
 {
   public:
+    //==============================
     explicit DatabaseManager(const base::PropertyTree& config);
     ~DatabaseManager() = default;
     //==============================

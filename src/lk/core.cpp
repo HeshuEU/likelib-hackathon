@@ -3,11 +3,13 @@
 namespace lk
 {
 
-Core::Core(const base::PropertyTree& config) : _config{config}, _network{_config, *this}
+Core::Core(const base::PropertyTree& config) : _config{config}, _blockchain{_config}, _network{_config, *this}
 {
-    applyGenesis();
+    _blockchain.signal_block_added.connect(signal_new_block);
+    _blockchain.signal_block_added.connect(std::bind(&Core::updateNewBlock, this, std::placeholders::_1));
 
-    signal_new_block.connect(_blockchain.signal_block_added);
+    tryAddBlock(getGenesisBlock());
+    _blockchain.load();
 }
 
 
@@ -40,7 +42,6 @@ bool Core::tryAddBlock(const bc::Block& b)
 {
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
         _pending_transactions.remove(b.getTransactions());
-        _balance_manager.update(b);
         _network.broadcastBlock(b);
         signal_new_block(b);
         return true;
@@ -107,6 +108,18 @@ bc::Balance Core::getBalance(const bc::Address& address) const
 const bc::Block& Core::getTopBlock() const
 {
     return _blockchain.getTopBlock();
+}
+
+
+void Core::updateNewBlock(const bc::Block& block)
+{
+    if(!_is_balance_manager_updated) {
+        _balance_manager.updateFromGenesis(block);
+        _is_balance_manager_updated = true;
+    }
+    else {
+        _balance_manager.update(block);
+    }
 }
 
 } // namespace lk

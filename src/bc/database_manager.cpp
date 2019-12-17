@@ -52,6 +52,9 @@ void DatabaseManager::addBlock(const base::Sha256& block_hash, const bc::Block& 
     auto block_data = base::toBytes(block);
     {
         std::lock_guard lk(_rw_mutex);
+        if(_database.exists(toBytes(DataType::BLOCK, block_hash.getBytes()))) {
+            return;
+        }
         _database.put(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
         _database.put(LAST_BLOCK_HASH_KEY, block_hash.getBytes());
     }

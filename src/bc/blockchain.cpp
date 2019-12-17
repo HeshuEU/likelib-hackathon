@@ -9,9 +9,17 @@
 namespace bc
 {
 
-Blockchain::Blockchain() : _top_level_block_hash(base::Bytes(32))
+Blockchain::Blockchain(const base::PropertyTree& config)
+    : _config{config}, _top_level_block_hash(base::Bytes(32)), _database{_config}
+{}
+
+
+void Blockchain::load()
 {
-    setupGenesis();
+    for(const auto& block_hash: _database.createAllBlockHashesList()) {
+        LOG_DEBUG << "Loading block " << block_hash << " from database";
+        tryAddBlock(_database.getBlock(block_hash));
+    }
 }
 
 
@@ -29,12 +37,14 @@ bool Blockchain::tryAddBlock(const Block& block)
         }
         else {
             inserted_block = _blocks.insert({hash, block}).first;
+            _database.addBlock(hash, block);
             _top_level_block_hash = hash;
         }
     }
-    LOG_DEBUG << "Adding block. Block hash = " << hash.getBytes().toHex();
 
+    LOG_DEBUG << "Adding block. Block hash = " << hash;
     signal_block_added(inserted_block->second);
+
     return true;
 }
 
@@ -62,20 +72,6 @@ std::optional<bc::Transaction> Blockchain::findTransaction(const base::Sha256& t
         }
     }
     return std::nullopt;
-}
-
-
-void Blockchain::setupGenesis()
-{
-    Block genesis(base::Sha256(base::Bytes(32)), TransactionsSet{});
-    genesis.setNonce(0);
-
-    static const bc::Address BASE_ADDRESS{std::string(32, '0')};
-    static const bc::Balance BASE_MONEY_AMOUNT = 0xffffffff;
-    genesis.addTransaction({BASE_ADDRESS, BASE_ADDRESS, BASE_MONEY_AMOUNT, base::Time()});
-
-    auto hash = base::Sha256::compute(base::toBytes(genesis));
-    _top_level_block_hash = std::move(hash);
 }
 
 

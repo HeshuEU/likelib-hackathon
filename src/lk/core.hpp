@@ -50,6 +50,7 @@ class Core
     //==================
     const base::PropertyTree& _config;
     //==================
+    bool _is_balance_manager_updated{false};
     BalanceManager _balance_manager;
     bc::Blockchain _blockchain;
     lk::Network _network;
@@ -57,6 +58,8 @@ class Core
     //==================
     static const bc::Block& getGenesisBlock();
     void applyGenesis();
+    void loadBlockchainFromDisk();
+    void updateNewBlock(const bc::Block& block);
     //==================
     bool checkBlock(const bc::Block& block) const;
     //==================
