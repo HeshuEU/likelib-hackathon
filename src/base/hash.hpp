@@ -90,6 +90,9 @@ class Sha1
     base::Bytes _bytes;
 };
 
+
+std::ostream& operator<<(std::ostream& os, const Sha256& sha);
+
 } // namespace base
 
 

@@ -62,6 +62,12 @@ Sha256 Sha256::compute(const base::Bytes& data)
 }
 
 
+std::ostream& operator<<(std::ostream& os, const Sha256& sha)
+{
+    return os << sha.getBytes().toHex();
+}
+
+
 std::string Sha1::toHex() const
 {
     return _bytes.toHex();
@@ -104,6 +110,12 @@ Sha1 Sha1::compute(const base::Bytes& data)
 Sha1::Sha1(const Bytes& another) : _bytes(another)
 {
     ASSERT(_bytes.size() == SHA_DIGEST_LENGTH);
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Sha1& sha)
+{
+    return os << sha.getBytes().toHex();
 }
 
 } // namespace base
