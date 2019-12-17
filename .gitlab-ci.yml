@@ -37,7 +37,7 @@ Build:
     - export PROJECT_SOURCE_DIR="/project"
     - export PROJECT_BUILD_DIR="/build"
     - cp -r . ${PROJECT_SOURCE_DIR}
-    - cd ${PROJECT_BUILD_DIR}
+    - mkdir ${PROJECT_BUILD_DIR} && cd ${PROJECT_BUILD_DIR}
     #- cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
     #  make -j$(nproc)
 
