@@ -3,9 +3,9 @@ image: ubuntu:19.10
 stages:
   - create
   - ls
-tags:
-  - docker
 Creating files:
+  tags:
+    - docker
   stage: create
   script: 
      - echo "Start create container"
@@ -18,6 +18,8 @@ Creating files:
       - build
 
 View files:
+  tags:
+    - docker
   stage: ls
   script:
     - ls -l
