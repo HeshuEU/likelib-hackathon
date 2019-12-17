@@ -24,7 +24,8 @@ bc::Balance BalanceManager::getBalance(const bc::Address& address) const
 
 bool BalanceManager::checkTransaction(const bc::Transaction& tx) const
 {
-    return getBalance(tx.getFrom()) >= tx.getAmount();
+
+    return _storage.find(tx.getFrom()) != _storage.end() && getBalance(tx.getFrom()) >= tx.getAmount();
 }
 
 
