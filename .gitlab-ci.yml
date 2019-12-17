@@ -36,10 +36,10 @@ Build:
     # after soft installed
     - export PROJECT_SOURCE_DIR="/project"
     - export PROJECT_BUILD_DIR="/build"
-    - cp . ${PROJECT_SOURCE_DIR}
+    - cp -r . ${PROJECT_SOURCE_DIR}
     - cd ${PROJECT_BUILD_DIR}
-    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
-      make -j$(nproc)
+    #- cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
+    #  make -j$(nproc)
 
   artifacts:
     paths:
