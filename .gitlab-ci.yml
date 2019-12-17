@@ -17,6 +17,7 @@ before_script:
     - export INSTALL_DIR="/opt"
     #- export WORKDIR ${INSTALL_DIR}
     - cp doc/prepare_build.sh ${INSTALL_DIR}
+    - echo ${PWD} && ls
     - cd ${INSTALL_DIR} && ./prepare_build.sh
 
 Build:
