@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "bc/balance_manager.hpp"
+#include "lk/balance_manager.hpp"
 
 BOOST_AUTO_TEST_CASE(balance_manager_plain_test)
 {

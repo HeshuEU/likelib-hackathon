@@ -1,15 +1,13 @@
 #include "soft_config.hpp"
 #include "hard_config.hpp"
-#include "rpc_service.hpp"
 
 #include "base/program_options.hpp"
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/assert.hpp"
-#include "bc/blockchain.hpp"
-#include "net/network.hpp"
+#include "node/node.hpp"
 #include "net/endpoint.hpp"
-#include "rpc/rpc.hpp"
+
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
@@ -22,23 +20,27 @@
 #include <thread>
 #include <filesystem>
 
-#include <sys/resource.h>
-
 namespace
 {
 
 extern "C" void signalHandler(int signal)
 {
-    LOG_INFO << "Signal caught: " << signal
+    if(signal == SIGINT) {
+        LOG_INFO << "SIGINT caught. Exit.";
+        std::abort(); // TODO: a clean exit
+    }
+    else {
+        LOG_INFO << "Signal caught: " << signal
 #ifdef CONFIG_OS_FAMILY_UNIX
-             << " (" << strsignal(signal) << ")"
+                 << " (" << strsignal(signal) << ")"
 #endif
 #ifdef CONFIG_IS_DEBUG
-             << '\n'
-             << boost::stacktrace::stacktrace()
+                 << '\n'
+                 << boost::stacktrace::stacktrace()
 #endif
-        ;
-    std::abort();
+            ;
+        std::abort();
+    }
 }
 
 
@@ -80,20 +82,19 @@ int main(int argc, char** argv)
 
         // setup handler for all signal types defined in Standard, expect SIGABRT. Not all POSIX signals
         for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE}) {
-            ASSERT_SOFT(std::signal(signal_code, signalHandler) != SIG_ERR);
+            [[maybe_unused]] auto result = std::signal(signal_code, signalHandler);
+            ASSERT_SOFT(result != SIG_ERR);
         }
 
-        ASSERT_SOFT(std::atexit(atExitHandler) == 0);
+        {
+            [[maybe_unused]] auto result = std::atexit(atExitHandler);
+            ASSERT_SOFT(result == 0);
+        }
 
         //=====================
         SoftConfig exe_config(config_file_path);
-        bc::Blockchain blockchain(exe_config);
-        blockchain.run();
-        //=====================
-        auto service = std::make_shared<node::GeneralServerService>(&blockchain);
-        rpc::RpcServer rpc(exe_config.get<std::string>("rpc.address"), service);
-        rpc.run();
-        LOG_INFO << "RPC server started: " << exe_config.get<std::string>("rpc.address");
+        Node node(exe_config);
+        node.run();
         //=====================
         std::this_thread::sleep_for(std::chrono::seconds(4500));
 

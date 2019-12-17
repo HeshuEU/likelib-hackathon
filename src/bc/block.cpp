@@ -7,17 +7,36 @@
 namespace bc
 {
 
-Block::Block(const base::Bytes& prev_block_hash, TransactionsSet&& txs)
-    : _prev_block_hash{prev_block_hash}, _txs(std::move(txs))
-{}
-
-
-Block::Block(base::Bytes&& prev_block_hash, TransactionsSet&& txs)
+Block::Block(base::Sha256 prev_block_hash, TransactionsSet txs)
     : _prev_block_hash{std::move(prev_block_hash)}, _txs(std::move(txs))
 {}
 
 
-const base::Bytes& Block::getPrevBlockHash() const
+base::SerializationOArchive& Block::serialize(base::SerializationOArchive& oa, const Block& block)
+{
+    return oa << block.getNonce() << block.getPrevBlockHash().getBytes() << block.getTransactions();
+}
+
+
+Block Block::deserialize(base::SerializationIArchive& ia)
+{
+    NonceInt nonce;
+    ia >> nonce;
+
+    base::Bytes prev_block_hash;
+    ia >> prev_block_hash;
+
+    TransactionsSet txs;
+    ia >> txs;
+
+    Block ret{base::Sha256(prev_block_hash), std::move(txs)};
+    ret.setNonce(nonce);
+
+    return ret;
+}
+
+
+const base::Sha256& Block::getPrevBlockHash() const
 {
     return _prev_block_hash;
 }
@@ -41,24 +60,13 @@ void Block::setNonce(NonceInt nonce) noexcept
 }
 
 
-bool Block::checkValidness() const
-{
-    //    static const base::Bytes MAX_HASH_VALUE = getComplexity();
-    //    base::SerializationOArchive oa;
-    //    oa << *this;
-    //    return base::Sha256::compute(oa.getBytes()).getBytes() < MAX_HASH_VALUE;
-    // TODO: implement
-    return true;
-}
-
-
-void Block::setPrevBlockHash(const base::Bytes& prev_block_hash)
+void Block::setPrevBlockHash(const base::Sha256& prev_block_hash)
 {
     _prev_block_hash = prev_block_hash;
 }
 
 
-void Block::setTransactions(TransactionsSet&& txs)
+void Block::setTransactions(TransactionsSet txs)
 {
     _txs = std::move(txs);
 }
@@ -72,25 +80,15 @@ void Block::addTransaction(const Transaction& tx)
 
 base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block)
 {
-    NonceInt nonce;
-    ia >> nonce;
-    block.setNonce(nonce);
-
-    base::Bytes prev_block_hash;
-    ia >> prev_block_hash;
-    block.setPrevBlockHash(prev_block_hash);
-
-    TransactionsSet txs;
-    ia >> txs;
-    block.setTransactions(std::move(txs));
-
+    block = Block::deserialize(ia);
     return ia;
 }
 
 
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block)
 {
-    return oa << block.getNonce() << block.getPrevBlockHash() << block.getTransactions();
+    Block::serialize(oa, block);
+    return oa;
 }
 
 } // namespace bc

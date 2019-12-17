@@ -7,7 +7,7 @@ Time::Time(std::chrono::time_point<std::chrono::system_clock> time_point) : _tim
 {}
 
 
-std::uint_least32_t Time::secondsInEpoch() const
+std::uint_least32_t Time::seconds() const
 {
     return std::chrono::duration_cast<std::chrono::seconds>(_time.time_since_epoch()).count();
 }

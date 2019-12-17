@@ -2,6 +2,8 @@
 
 #include "base/assert.hpp"
 
+#include <boost/container_hash/hash.hpp>
+
 #include <iterator>
 
 namespace base
@@ -102,6 +104,12 @@ void Bytes::reserve(std::size_t reserve_size)
 }
 
 
+std::size_t Bytes::capacity() const
+{
+    return _raw.capacity();
+}
+
+
 void Bytes::shrinkToFit()
 {
     _raw.shrink_to_fit();
@@ -199,3 +207,9 @@ bool Bytes::operator>=(const Bytes& another) const
 }
 
 } // namespace base
+
+
+std::size_t std::hash<base::Bytes>::operator()(const base::Bytes& k) const
+{
+    return boost::hash_value(k.toVector());
+}
