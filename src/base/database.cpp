@@ -53,18 +53,16 @@ void Database::open(Directory const& path)
 }
 
 
-void Database::get(const Bytes& key, Bytes& res) const
+std::optional<Bytes> Database::get(const Bytes& key) const
 {
     checkStatus();
 
     std::string value;
     auto const status = _database->Get(_read_options, key.toString(), &value);
     if(!status.ok()) {
-        RAISE_ERROR(base::DatabaseError, status.ToString());
+        return std::nullopt;
     }
-    else {
-        res = Bytes(value);
-    }
+    return Bytes(value);
 }
 
 

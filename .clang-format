@@ -12,7 +12,7 @@ AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: None
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None

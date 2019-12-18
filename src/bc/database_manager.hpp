@@ -5,6 +5,7 @@
 #include "base/database.hpp"
 #include "base/property_tree.hpp"
 
+#include <optional>
 #include <shared_mutex>
 
 namespace bc
@@ -18,8 +19,7 @@ class DatabaseManager
     ~DatabaseManager() = default;
     //==============================
     void addBlock(const base::Sha256& block_hash, const bc::Block& block);
-    bool isBlockExists(const base::Sha256& blockHash) const;
-    bc::Block getBlock(const base::Sha256& blockHash) const;
+    std::optional<bc::Block> findBlock(const base::Sha256& block_hash) const;
     //==============================
     const base::Sha256& getLastBlockHash() const noexcept;
     //==============================
