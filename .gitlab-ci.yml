@@ -24,7 +24,7 @@ Build:
 
   artifacts:
     paths:
-    - ${PROJECT_BUILD_DIR}
+    - /build
     expire_in: 1 week
 
     
