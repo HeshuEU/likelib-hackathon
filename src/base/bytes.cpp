@@ -173,19 +173,20 @@ std::string Bytes::toString() const
 
 namespace
 {
-
-size_t findIndexOfHexCharacter(const char sym)
-{
-    static constexpr const char HEX_DIGITS[] = "0123456789abcdef";
-    for(std::size_t i = 0; i < sizeof(HEX_DIGITS); i++) {
-        if(sym == HEX_DIGITS[i])
-            return i;
+    std::size_t hexToInt(char hex)
+    {
+        if('0' <= hex && hex <= '9') {
+            return hex - '0';
+        }
+        else if('a' <= hex && hex <= 'f') {
+            return hex - 'a' + 10;
+        }
+        else {
+            return hex - 'A' + 10;
+        }
     }
-    ASSERT(false)
-    return sizeof(HEX_DIGITS);
-}
 
-}
+} // namespace
 
 
 Bytes Bytes::fromHex(const std::string& hex_view)
@@ -194,11 +195,11 @@ Bytes Bytes::fromHex(const std::string& hex_view)
 
     auto bytes_size = hex_view.size() / 2;
     std::vector<Byte> bytes(bytes_size);
-    for(std::size_t current_symbol_index = 0 ; current_symbol_index < bytes_size; current_symbol_index++){
+    for(std::size_t current_symbol_index = 0; current_symbol_index < bytes_size; current_symbol_index++) {
         auto index = current_symbol_index * 2;
-        auto senior_part= findIndexOfHexCharacter(hex_view[index]);
-        auto junior_part = findIndexOfHexCharacter(hex_view[index+1]);
-        bytes[current_symbol_index] = (senior_part << 4) + junior_part;
+        auto high_part = hexToInt(hex_view[index]);
+        auto low_part = hexToInt(hex_view[index + 1]);
+        bytes[current_symbol_index] = (high_part << 4) + low_part;
     }
 
     return Bytes(bytes);
