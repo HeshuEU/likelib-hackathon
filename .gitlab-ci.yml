@@ -35,6 +35,7 @@ Code quality:
     - docker
   allow_failure: true
   script:
+    - apt install -y clang-tidy
     - echo ${INSTALL_DIR} && ls  ${INSTALL_DIR}
     - echo ${PWD} && ls 
     - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I/build/grpc/gen -std=c++17"
@@ -53,7 +54,7 @@ Unit tests:
   script:
     - touch unit_test.log
     - echo ${PWD} && ls
-    - ls build/test/unit_test/ -l
+    - ls build -l
     - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info >> unit_test.log
   artifacts:
     paths:
