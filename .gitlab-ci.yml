@@ -3,10 +3,10 @@ stages:
   - quality
   - test
 
-cache:
-  key: ${CI_COMMIT_REF_SLUG}
-  paths:
-    - ./opt
+#cache:
+#  key: ${CI_COMMIT_REF_SLUG}
+#  paths:
+#    - ./opt
 
 #before_script:
 #    - apt-get update && \
