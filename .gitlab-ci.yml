@@ -24,7 +24,7 @@ before_script:
 
 Build:
   stage: build
-  image: heshuby/prepare_build
+  image: heshuby/prepare_build:2019-12-18
   tags:
     - docker
   script: 
