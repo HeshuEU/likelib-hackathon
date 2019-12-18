@@ -1,7 +1,7 @@
 #pragma once
 
+#include "net/connection.hpp"
 #include "net/endpoint.hpp"
-#include "net/peer.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -15,7 +15,7 @@ class Acceptor
     //==============
     Acceptor(boost::asio::io_context& io_context, const Endpoint& listen_endpoint);
     //==============
-    void accept(std::function<void(std::unique_ptr<Peer>)> on_accept);
+    void accept(std::function<void(std::unique_ptr<Connection>)> on_accept);
     //==============
   private:
     //==============

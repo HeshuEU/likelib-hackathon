@@ -5,8 +5,6 @@ set(NET_HEADERS
         error.hpp
         host.hpp
         endpoint.hpp
-        packet.hpp
-        peer.hpp
         session.hpp
         )
 
@@ -16,8 +14,6 @@ set(NET_SOURCES
         connector.cpp
         host.cpp
         endpoint.cpp
-        packet.cpp
-        peer.cpp
         session.cpp
         )
 

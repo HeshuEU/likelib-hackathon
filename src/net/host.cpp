@@ -2,7 +2,6 @@
 
 #include "base/assert.hpp"
 #include "base/log.hpp"
-#include "bc/blockchain.hpp"
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/error.hpp>
@@ -37,11 +36,11 @@ void Host::scheduleHeartBeat()
 }
 
 
-Session& Host::addNewSession(std::unique_ptr<Peer> peer)
+Session& Host::addNewSession(std::unique_ptr<Connection> connection)
 {
-    ASSERT(peer);
+    ASSERT(connection);
     std::unique_lock lk(_sessions_mutex);
-    _sessions.push_back(std::make_shared<Session>(std::move(peer)));
+    _sessions.push_back(std::make_shared<Session>(std::move(connection), _handler_factory->create()));
     auto& session = *_sessions.back();
     return session;
 }
@@ -49,26 +48,18 @@ Session& Host::addNewSession(std::unique_ptr<Peer> peer)
 
 void Host::accept()
 {
-    _acceptor.accept([this](std::unique_ptr<Peer> peer) {
-        ASSERT(peer);
-        auto& session = addNewSession(std::move(peer));
-        if(_accept_handler) {
-            _accept_handler(session);
-        }
-        session.start(_receive_handler);
-        accept();
+    _acceptor.accept([this](std::unique_ptr<Connection> connection) {
+        ASSERT(connection);
+        auto& session = addNewSession(std::move(connection));
     });
 }
 
 
 void Host::connect(const net::Endpoint& address)
 {
-    _connector.connect(address, [this](std::unique_ptr<Peer> peer) {
-        auto& session = addNewSession(std::move(peer));
-        if(_connect_handler) {
-            _connect_handler(session);
-        }
-        session.start(_receive_handler);
+    _connector.connect(address, [this](std::unique_ptr<Connection> connection) {
+        ASSERT(connection);
+        auto& session = addNewSession(std::move(connection));
     });
 }
 
@@ -85,13 +76,11 @@ void Host::networkThreadWorkerFunction() noexcept
 }
 
 
-void Host::run(AcceptHandler on_accept, ConnectHandler on_connect, Session::SessionManager receive_handler)
+void Host::run(std::unique_ptr<HandlerFactory> handler_factory)
 {
-    ASSERT(receive_handler);
+    ASSERT(handler_factory);
 
-    _accept_handler = std::move(on_accept);
-    _connect_handler = std::move(on_connect);
-    _receive_handler = std::move(receive_handler);
+    _handler_factory = std::move(handler_factory);
 
     accept();
 

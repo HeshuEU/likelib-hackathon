@@ -5,7 +5,6 @@
 #include "net/acceptor.hpp"
 #include "net/connector.hpp"
 #include "net/session.hpp"
-#include "net/peer.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -20,21 +19,30 @@
 namespace net
 {
 
+
+class HandlerFactory
+{
+  public:
+    //===================
+    virtual std::unique_ptr<Handler> create() = 0;
+    //===================
+    virtual ~HandlerFactory() = default;
+    //===================
+};
+
+
 class Host
 {
   public:
     //===================
-    Host(const base::PropertyTree& config);
+    explicit Host(const base::PropertyTree& config);
     ~Host();
     //===================
     void connect(const Endpoint& address);
     //===================
     void broadcast(const base::Bytes& data);
     //===================
-    using AcceptHandler = std::function<void(Session&)>;
-    using ConnectHandler = std::function<void(Session&)>;
-
-    void run(AcceptHandler on_accept, ConnectHandler on_connect, Session::SessionManager receive_handler);
+    void run(std::unique_ptr<HandlerFactory> handler_factory);
     void join();
     //===================
   private:
@@ -55,12 +63,10 @@ class Host
     net::Acceptor _acceptor;
     net::Connector _connector;
 
-    AcceptHandler _accept_handler;
-    ConnectHandler _connect_handler;
-    Session::SessionManager _receive_handler;
+    std::unique_ptr<HandlerFactory> _handler_factory;
 
     void accept();
-    Session& addNewSession(std::unique_ptr<Peer> peer);
+    Session& addNewSession(std::unique_ptr<Connection> peer);
     //===================
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();

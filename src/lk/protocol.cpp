@@ -6,6 +6,26 @@
 namespace lk
 {
 
+void Peer::onReceive(const base::Bytes& bytes)
+{
+    LOG_DEBUG << "onReceive " << bytes.toString();
+}
+
+
+void Peer::onClose()
+{
+    LOG_DEBUG << "onClose";
+}
+
+
+std::unique_ptr<net::Handler> HandlerFactory::create()
+{
+    auto ret = std::make_unique<Handler>();
+    return std::move(ret);
+}
+
+
+
 Network::Network(const base::PropertyTree& config, Core& core) : _config(config), _core{core}, _host{_config}
 {}
 

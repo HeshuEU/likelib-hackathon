@@ -8,6 +8,7 @@
 #include "bc/transaction.hpp"
 #include "net/host.hpp"
 
+
 #include <stack>
 
 namespace lk
@@ -17,6 +18,38 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
     MessageType, unsigned char, (NOT_AVAILABLE)(HANDSHAKE)(PING)(PONG)(TRANSACTION)(BLOCK)(GET_BLOCK)(INFO))
 
 class Core;
+
+
+class Peer
+{
+  public:
+    class Handler : public net::Handler
+    {
+        //================
+        void onReceive(const base::Bytes& bytes) override;
+        // virtual void onSend() = 0;
+        void onClose() override;
+        //===================
+        ~Handler() override = default;
+        //================
+    };
+
+  private:
+    //================
+
+    //================
+};
+
+
+class HandlerFactory : public net::HandlerFactory
+{
+  public:
+    //================
+    ~HandlerFactory() override = default;
+    //================
+    std::unique_ptr<net::Handler> create() override;
+    //================
+};
 
 
 class SessionManager
