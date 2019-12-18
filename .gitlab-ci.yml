@@ -37,11 +37,11 @@ Code quality:
     - echo ${PWD} && ls 
     - cd ./src
     - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
-    - clang-tidy node/main.cpp -- ${INCLUDE}  2> ../clang-tidy-node.log 1> ../clang-tidy-node.log
-  artifacts:
-    paths:
-    - clang-tidy-node.log
-    expire_in: 1 week
+    - clang-tidy node/main.cpp -- ${INCLUDE} # 2> ../clang-tidy-node.log 1> ../clang-tidy-node.log
+#  artifacts:
+#    paths:
+#    - clang-tidy-node.log
+#    expire_in: 1 week
 
 
 Unit tests:
@@ -53,9 +53,9 @@ Unit tests:
     - touch unit_test.log
     - echo ${PWD} && ls
     - ls build -l
-    - build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info >> unit_test.log
-  artifacts:
-    paths:
-    - unit_test.log
-    expire_in: 1 week
+    - build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info #>> unit_test.log
+#  artifacts:
+#    paths:
+#    - unit_test.log
+#    expire_in: 1 week
 
