@@ -62,25 +62,17 @@ void DatabaseManager::addBlock(const base::Sha256& block_hash, const bc::Block& 
 }
 
 
-bool DatabaseManager::isBlockExists(const base::Sha256& blockHash) const
+std::optional<bc::Block> DatabaseManager::findBlock(const base::Sha256& block_hash) const
 {
     std::shared_lock lk(_rw_mutex);
-    return _database.exists(toBytes(DataType::BLOCK, blockHash.getBytes()));
-}
-
-
-bc::Block DatabaseManager::getBlock(const base::Sha256& blockHash) const
-{
-    if(isBlockExists(blockHash)) {
-        std::shared_lock lk(_rw_mutex);
-        base::Bytes block_data;
-        _database.get(toBytes(DataType::BLOCK, blockHash.getBytes()), block_data);
-        base::SerializationIArchive ia(block_data);
-        return bc::Block::deserialize(ia);
+    base::Bytes block_data;
+    try {
+        _database.get(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
+    } catch (const base::DatabaseError& error) {
+        return std::nullopt;
     }
-    else {
-        RAISE_ERROR(base::InvalidArgument, "No such block exists");
-    }
+    base::SerializationIArchive ia(block_data);
+    return bc::Block::deserialize(ia);
 }
 
 
