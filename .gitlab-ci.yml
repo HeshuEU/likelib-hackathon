@@ -14,7 +14,6 @@ before_script:
 #      apt-get update -y && \
 #      apt-get install -y apt-utils && \
 #      apt-get dist-upgrade -y
-    - make --version
     - export INSTALL_DIR="/opt"
     - export PROJECT_SOURCE_DIR="/project"
     - export PROJECT_BUILD_DIR="/build"
