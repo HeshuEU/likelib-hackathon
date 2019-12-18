@@ -41,7 +41,7 @@ Code quality:
     - echo ${PWD} && ls 
     - cd ./src
     - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
-    - clang-tidy node/main.cpp -- ${INCLUDE} # > clang-tidy-node.log
+    - clang-tidy node/main.cpp -- ${INCLUDE}  > ../clang-tidy-node.log
   artifacts:
     paths:
     - clang-tidy-node.log
