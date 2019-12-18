@@ -20,7 +20,7 @@ Build:
     - cd ${PROJECT_BUILD_DIR}
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
-    - ls build
+#    - ls build
 #    - echo artifacts ${PROJECT_BUILD_DIR} && ls  ${PROJECT_BUILD_DIR}
 
   artifacts:
