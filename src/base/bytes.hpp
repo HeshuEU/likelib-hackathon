@@ -46,6 +46,7 @@ class Bytes
     void clear();
     void resize(std::size_t new_size);
     void reserve(std::size_t reserve_size);
+    std::size_t capacity() const;
     void shrinkToFit();
     //==============
     const Byte* toArray() const;
@@ -74,5 +75,14 @@ class Bytes
 };
 
 } // namespace base
+
+namespace std
+{
+template<>
+struct hash<base::Bytes>
+{
+    std::size_t operator()(const base::Bytes& k) const;
+};
+} // namespace std
 
 #include "bytes.tpp"

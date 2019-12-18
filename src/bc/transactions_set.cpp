@@ -1,8 +1,5 @@
 #include "transactions_set.hpp"
 
-#include "base/assert.hpp"
-#include "base/error.hpp"
-
 #include <algorithm>
 #include <iterator>
 #include <utility>
@@ -20,10 +17,22 @@ void TransactionsSet::add(const bc::Transaction& tx)
 
 bool TransactionsSet::find(const bc::Transaction& tx) const
 {
-    auto a = _txs.begin();
-    auto b = _txs.end();
-    auto it = std::find(a, b, tx);
-    return it != b;
+    return std::find(_txs.begin(), _txs.end(), tx) != _txs.end();
+}
+
+
+std::optional<Transaction> TransactionsSet::find(const base::Sha256& hash) const
+{
+    auto it = std::find_if(_txs.begin(), _txs.end(), [&hash](const auto& tx) {
+        return base::Sha256::compute(base::toBytes(tx)) == hash;
+    });
+
+    if(it == _txs.end()) {
+        return std::nullopt;
+    }
+    else {
+        return *it;
+    }
 }
 
 
@@ -47,6 +56,12 @@ void TransactionsSet::remove(const bc::Transaction& tx)
 bool TransactionsSet::isEmpty() const
 {
     return _txs.empty();
+}
+
+
+std::size_t TransactionsSet::size() const
+{
+    return _txs.size();
 }
 
 

@@ -41,16 +41,18 @@ int getBalance(base::SubprogramRouter& router)
         }
         //====================================
         std::string host_address;
-        if(router.optionsParser()->hasOption(HOST_OPTION)){
+        if(router.optionsParser()->hasOption(HOST_OPTION)) {
             host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
-        } else {
+        }
+        else {
             host_address = helper->getValue<std::string>("nodes", "host address");
         }
         //====================================
         std::string account_address;
-        if(router.optionsParser()->hasOption(ADDRESS_OPTION)){
+        if(router.optionsParser()->hasOption(ADDRESS_OPTION)) {
             account_address = router.optionsParser()->getValue<std::string>(ADDRESS_OPTION);
-        } else {
+        }
+        else {
             account_address = helper->getValue<std::string>("addresses", "account address");
         }
         //====================================
@@ -117,30 +119,34 @@ int transfer(base::SubprogramRouter& router)
 
         //====================================
         std::string host_address;
-        if(router.optionsParser()->hasOption(HOST_OPTION)){
+        if(router.optionsParser()->hasOption(HOST_OPTION)) {
             host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
-        } else {
+        }
+        else {
             host_address = helper->getValue<std::string>("nodes", "host address");
         }
         //====================================
         std::string from_address;
-        if(router.optionsParser()->hasOption(FROM_ADDRESS_OPTION)){
+        if(router.optionsParser()->hasOption(FROM_ADDRESS_OPTION)) {
             from_address = router.optionsParser()->getValue<std::string>(FROM_ADDRESS_OPTION);
-        } else {
+        }
+        else {
             from_address = helper->getValue<std::string>("addresses", "from account address");
         }
         //====================================
         std::string to_address;
-        if(router.optionsParser()->hasOption(TO_ADDRESS_OPTION)){
+        if(router.optionsParser()->hasOption(TO_ADDRESS_OPTION)) {
             to_address = router.optionsParser()->getValue<std::string>(TO_ADDRESS_OPTION);
-        } else {
+        }
+        else {
             to_address = helper->getValue<std::string>("addresses", "to account address");
         }
         //====================================
         bc::Balance amount;
-        if(router.optionsParser()->hasOption(AMOUNT_OPTION)){
+        if(router.optionsParser()->hasOption(AMOUNT_OPTION)) {
             amount = router.optionsParser()->getValue<bc::Balance>(AMOUNT_OPTION);
-        } else {
+        }
+        else {
             amount = helper->getValue<bc::Balance>("amount", "transfer amount");
         }
         //====================================
@@ -199,9 +205,10 @@ int test(base::SubprogramRouter& router)
         }
         //====================================
         std::string host_address;
-        if(router.optionsParser()->hasOption(HOST_OPTION)){
+        if(router.optionsParser()->hasOption(HOST_OPTION)) {
             host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
-        } else {
+        }
+        else {
             host_address = helper->getValue<std::string>("nodes", "host address");
         }
         //====================================

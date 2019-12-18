@@ -10,4 +10,4 @@ ParametersHelper::ParametersHelper()
 ParametersHelper::ParametersHelper(const std::filesystem::path& path) : _config(base::readConfig(path))
 {}
 
-}
+} // namespace rpc_client
