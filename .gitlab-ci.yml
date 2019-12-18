@@ -55,7 +55,8 @@ Code quality:
     - docker
   allow_failure: true
   script:
-    - ls  ${INSTALL_DIR}
+    - echo ${INSTALL_DIR} && ls  ${INSTALL_DIR}
+    - echo ${PWD} && ls 
     - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I/build/grpc/gen -std=c++17"
     - clang-tidy node/main.cpp -- ${INCLUDE} > clang-tidy-node.log
   artifacts:
@@ -71,6 +72,7 @@ Unit tests:
   cache: {}
   script:
     - touch unit_test.log
+    - echo ${PWD} && ls
     - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info >> unit_test.log
   artifacts:
     paths:
@@ -90,7 +92,7 @@ Integration tests:
       apt-get dist-upgrade -y
     - apt-get install -y python3.7
     - export  TEST_FILES_DIR="/likelib"
-    - cd ${TEST_FILES_DIR}
+    - mkdir ${TEST_FILES_DIR} && cd ${TEST_FILES_DIR}
     - cp build/src/node/node .
     - cp /build/src/rpc-client/rpc-client .
     - cp /project/test/integration_test test_scripts
