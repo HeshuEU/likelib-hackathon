@@ -41,9 +41,9 @@ DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block
     else {
         _database = base::createDefaultDatabaseInstance(base::Directory(database_path));
         if(_database.exists(LAST_BLOCK_HASH_KEY)) {
-            base::Bytes hash_data;
-            _database.get(LAST_BLOCK_HASH_KEY, hash_data);
-            _last_block_hash = base::Sha256(std::move(hash_data));
+            auto hash_data = _database.get(LAST_BLOCK_HASH_KEY);
+            ASSERT(hash_data);
+            _last_block_hash = base::Sha256(std::move(hash_data.value()));
         }
         LOG_INFO << "Loaded database by path: " << database_path;
     }
@@ -52,7 +52,7 @@ DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block
 
 void DatabaseManager::addBlock(const base::Sha256& block_hash, const bc::Block& block)
 {
-    auto previous_block_hash_data = block.getPrevBlockHash().getBytes();
+    const auto& previous_block_hash_data = block.getPrevBlockHash().getBytes();
     auto block_data = base::toBytes(block);
     {
         std::lock_guard lk(_rw_mutex);
@@ -70,14 +70,11 @@ void DatabaseManager::addBlock(const base::Sha256& block_hash, const bc::Block& 
 std::optional<bc::Block> DatabaseManager::findBlock(const base::Sha256& block_hash) const
 {
     std::shared_lock lk(_rw_mutex);
-    base::Bytes block_data;
-    try {
-        _database.get(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
-    }
-    catch(const base::DatabaseError& error) {
+    auto block_data = _database.get(toBytes(DataType::BLOCK, block_hash.getBytes()));
+    if(!block_data) {
         return std::nullopt;
     }
-    base::SerializationIArchive ia(block_data);
+    base::SerializationIArchive ia(block_data.value());
     return bc::Block::deserialize(ia);
 }
 
@@ -96,9 +93,9 @@ std::vector<base::Sha256> DatabaseManager::createAllBlockHashesList() const
     std::shared_lock lk(_rw_mutex); // if you create a lock below, it may be a non-consistent result of the function
     while(current_block_hash != base::Bytes(32)) {
         all_blocks_hashes.push_back(current_block_hash);
-        base::Bytes previous_block_hash_data;
-        _database.get(toBytes(DataType::PREVIOUS_BLOCK_HASH, current_block_hash.getBytes()), previous_block_hash_data);
-        current_block_hash = base::Sha256(std::move(previous_block_hash_data));
+        auto previous_block_hash_data = _database.get(toBytes(DataType::PREVIOUS_BLOCK_HASH, current_block_hash.getBytes()));
+        ASSERT(previous_block_hash_data);
+        current_block_hash = base::Sha256(std::move(previous_block_hash_data.value()));
     }
 
     std::reverse(std::begin(all_blocks_hashes), std::end(all_blocks_hashes));

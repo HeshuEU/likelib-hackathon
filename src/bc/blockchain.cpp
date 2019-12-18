@@ -19,9 +19,8 @@ void Blockchain::load()
     for(const auto& block_hash: _database.createAllBlockHashesList()) {
         LOG_DEBUG << "Loading block " << block_hash << " from database";
         auto current_block = _database.findBlock(block_hash);
-        if(current_block) {
-            tryAddBlock(current_block.value());
-        }
+        ASSERT(current_block);
+        tryAddBlock(current_block.value());
     }
 }
 
