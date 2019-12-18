@@ -171,6 +171,40 @@ std::string Bytes::toString() const
 }
 
 
+namespace
+{
+
+size_t findIndexOfHexCharacter(const char sym)
+{
+    static constexpr const char HEX_DIGITS[] = "0123456789abcdef";
+    for(std::size_t i = 0; i < sizeof(HEX_DIGITS); i++) {
+        if(sym == HEX_DIGITS[i])
+            return i;
+    }
+    ASSERT(false)
+    return sizeof(HEX_DIGITS);
+}
+
+}
+
+
+Bytes Bytes::fromHex(const std::string& hex_view)
+{
+    ASSERT(hex_view.size() % 2 == 0)
+
+    auto bytes_size = hex_view.size() / 2;
+    std::vector<Byte> bytes(bytes_size);
+    for(std::size_t current_symbol_index = 0 ; current_symbol_index < bytes_size; current_symbol_index++){
+        auto index = current_symbol_index * 2;
+        auto senior_part= findIndexOfHexCharacter(hex_view[index]);
+        auto junior_part = findIndexOfHexCharacter(hex_view[index+1]);
+        bytes[current_symbol_index] = (senior_part << 4) + junior_part;
+    }
+
+    return Bytes(bytes);
+}
+
+
 bool Bytes::operator==(const Bytes& another) const
 {
     return _raw == another._raw;
@@ -204,6 +238,12 @@ bool Bytes::operator<=(const Bytes& another) const
 bool Bytes::operator>=(const Bytes& another) const
 {
     return !(*this < another);
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
+{
+    return os << bytes.toHex();
 }
 
 } // namespace base

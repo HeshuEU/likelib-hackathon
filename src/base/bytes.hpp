@@ -27,22 +27,20 @@ class Bytes
     Bytes& operator=(Bytes&&) = default;
     ~Bytes() = default;
     //==============
-
     template<typename I>
     Bytes(I begin, I end);
-
+    //==============
     Byte& operator[](std::size_t index);
     const Byte& operator[](std::size_t index) const;
-
+    //==============
     Bytes takePart(std::size_t begin_index, std::size_t one_past_end_index) const;
-
+    //==============
     Bytes& append(Byte byte);
     Bytes& append(const Byte* byte, std::size_t length);
-
     Bytes& append(const Bytes& bytes);
-
+    //==============
     std::size_t size() const noexcept;
-
+    //==============
     void clear();
     void resize(std::size_t new_size);
     void reserve(std::size_t reserve_size);
@@ -51,14 +49,14 @@ class Bytes
     //==============
     const Byte* toArray() const;
     Byte* toArray();
-
+    //==============
     std::vector<Byte>& toVector() noexcept;
     const std::vector<Byte>& toVector() const noexcept;
     //==============
-
     std::string toHex() const;
-
     std::string toString() const;
+    //==============
+    static Bytes fromHex(const std::string& hex_view);
     //==============
     bool operator==(const Bytes& another) const;
     bool operator!=(const Bytes& another) const;
@@ -73,6 +71,8 @@ class Bytes
   private:
     std::vector<Byte> _raw;
 };
+
+std::ostream& operator<<(std::ostream& os, const Bytes& bytes);
 
 } // namespace base
 
