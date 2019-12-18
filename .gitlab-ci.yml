@@ -10,7 +10,7 @@ Build:
     - docker
   script: 
     - export INSTALL_DIR="/opt"
-    - export PROJECT_SOURCE_DIR="."
+    - export PROJECT_SOURCE_DIR=${PWD}
     - export PROJECT_BUILD_DIR="./build"
     - mkdir ${PROJECT_BUILD_DIR}
 #    - cp doc/prepare_build.sh ${INSTALL_DIR}
