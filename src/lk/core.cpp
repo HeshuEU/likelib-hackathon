@@ -8,7 +8,7 @@ Core::Core(const base::PropertyTree& config) : _config{config}, _blockchain{_con
     _blockchain.signal_block_added.connect(signal_new_block);
     _blockchain.signal_block_added.connect(std::bind(&Core::updateNewBlock, this, std::placeholders::_1));
 
-    tryAddBlock(getGenesisBlock());
+    _blockchain.addGenesisBlock(getGenesisBlock());
     _blockchain.load();
 }
 
