@@ -35,7 +35,7 @@ Code quality:
     - docker
   allow_failure: true
   script:
-    - apt install -y clang-tidy
+    - apt update && apt install -y clang-tidy
     - echo ${INSTALL_DIR} && ls  ${INSTALL_DIR}
     - echo ${PWD} && ls 
     - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I/build/grpc/gen -std=c++17"
@@ -55,32 +55,9 @@ Unit tests:
     - touch unit_test.log
     - echo ${PWD} && ls
     - ls build -l
-    - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info >> unit_test.log
+    - build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info >> unit_test.log
   artifacts:
     paths:
     - unit_test.log
-    expire_in: 1 week
-
-Integration tests:
-  stage: test
-  tags:
-    - docker
-  cache: {}
-  script:
-    - apt-get update && \
-      apt-get install -y software-properties-common && \
-      apt-get update -y && \
-      apt-get install -y apt-utils && \
-      apt-get dist-upgrade -y
-    - apt-get install -y python3.7
-    - export  TEST_FILES_DIR="/likelib"
-    - mkdir ${TEST_FILES_DIR} && cd ${TEST_FILES_DIR}
-    - cp build/src/node/node .
-    - cp /build/src/rpc-client/rpc-client .
-    - cp /project/test/integration_test test_scripts
-    - python3 test_scripts/run_test.py -n ${TEST_FILES_DIR}/node -r ${TEST_FILES_DIR}/rpc-client > integration_test.log
-  artifacts:
-    paths:
-    - integration_test.log
     expire_in: 1 week
 
