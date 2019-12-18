@@ -10,21 +10,25 @@ _work_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_conne
 
 def node_run_fun(node_exec_path):   
     node_config_file_content = '''
-    {
-        "net": {
-            "listen_addr": "127.0.0.1:20202",
-            "public_port": 20202
-        },
-        "rpc": {
-            "address": "127.0.0.1:50051"
-        },
-        "miner": {
-            "threads": 2
-        },
-        "nodes": [
-        ]
-    } 
-    '''
+{
+    "net": {
+        "listen_addr": "0.0.0.0:20203",
+        "public_port": 20203
+    },
+    "rpc": {
+        "address": "0.0.0.0:50051"
+    },
+    "miner": {
+        "threads": 4
+    },
+    "nodes": [
+    ],
+    "database": {
+        "path": "likelib/database",
+        "clean": false
+    }
+}
+'''
 
     work_dir = os.path.join(_work_dir, "node_work_dir")
     if not os.path.exists(work_dir):
@@ -51,7 +55,7 @@ def client_run_fun(rpc_client_exec_path):
 
     time_to_node_set_up = 5
     time.sleep(time_to_node_set_up)
-    rpc_pipe = subprocess.run([rpc_client_exec_path, "test", "--host", "127.0.0.1:50051"], capture_output=True)
+    rpc_pipe = subprocess.run([rpc_client_exec_path, "test", "--host", "0.0.0.0:50051"], capture_output=True)
 
     if b"Test passed" in rpc_pipe.stdout and rpc_pipe.returncode == 0:
         exit(0)

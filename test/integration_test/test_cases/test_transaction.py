@@ -8,7 +8,8 @@ import multiprocessing as mp
 _work_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_transaction")
 
 
-def create_and_check_transaction(rpc_client_exec_path, host_address, from_address, to_address, amount, final_from_amount, final_to_amount):
+def create_and_check_transaction(rpc_client_exec_path, from_address, to_address, amount, final_from_amount, final_to_amount):
+    host_address = "127.0.0.1:50051"
     pipe = subprocess.run([rpc_client_exec_path, "transfer", "--host", host_address, "--from", from_address, "--to", to_address, "--amount", amount], capture_output=True)
 
     if pipe.returncode != 0:
@@ -44,7 +45,11 @@ def node_run_fun(node_exec_path):
             "threads": 2
         },
         "nodes": [
-        ]
+        ],
+    "database": {
+        "path": "likelib/database",
+        "clean": false
+        }
     } 
     '''
 
@@ -58,7 +63,7 @@ def node_run_fun(node_exec_path):
     with open(_node_config_file, 'w') as node_config:
         node_config.write(node_config_file_content)
 
-    test_timeout = 15
+    test_timeout = 3#15
     try:
         return_code = subprocess.run([node_exec_path, "--config", _node_config_file], capture_output=True, timeout=test_timeout)
     except Exception:
@@ -74,12 +79,10 @@ def client_run_fun(rpc_client_exec_path):
 
     time_to_node_set_up = 3
     time.sleep(time_to_node_set_up)
-
-    host_address = "127.0.0.1:50051"
     
-    #create_and_check_transaction(rpc_client_exec_path, host_address, "00000000000000000000000000000000", "Shisha", "1000", "4294966295", "1000") 
-    #create_and_check_transaction(rpc_client_exec_path, host_address, "Shisha", "Andre", "670", "330", "670")  #isn't working right now, waiting 
-    #create_and_check_transaction(rpc_client_exec_path, host_address, "Andre", "Shisha", "100", "570", "100")  #for the storage branch to be filled
+    #create_and_check_transaction(rpc_client_exec_path,  "00000000000000000000000000000000", "Shisha", "1000", "4294966295", "1000") 
+    #create_and_check_transaction(rpc_client_exec_path,  "Shisha", "Andre", "670", "330", "670")  #isn't working right now, waiting 
+    #create_and_check_transaction(rpc_client_exec_path,  "Andre", "Shisha", "100", "570", "100")  #for the storage branch to be filled
 
     exit(0)
 
