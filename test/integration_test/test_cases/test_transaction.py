@@ -21,12 +21,12 @@ def create_and_check_transaction(rpc_client_exec_path, from_address, to_address,
 
     pipe = subprocess.run([rpc_client_exec_path, "get_balance", "--host", host_address, "--address", to_address], capture_output=True)
     if final_to_amount.encode() not in pipe.stdout or pipe.returncode != 0:
-        print(pipe.stderr)
+        print("Balance of the recipient: " + to_address)
         exit(1)
 
     pipe = subprocess.run([rpc_client_exec_path, "get_balance", "--host", host_address, "--address", from_address], capture_output=True)
     if final_from_amount.encode() not in pipe.stdout or pipe.returncode != 0:
-        print(pipe.stderr)
+        print("Misbalance of the sender: " + from_address)
         exit(1)
 
 
@@ -63,7 +63,7 @@ def node_run_fun(node_exec_path):
     with open(_node_config_file, 'w') as node_config:
         node_config.write(node_config_file_content)
 
-    test_timeout = 3#15
+    test_timeout = 15
     try:
         return_code = subprocess.run([node_exec_path, "--config", _node_config_file], capture_output=True, timeout=test_timeout)
     except Exception:
@@ -80,9 +80,9 @@ def client_run_fun(rpc_client_exec_path):
     time_to_node_set_up = 3
     time.sleep(time_to_node_set_up)
     
-    #create_and_check_transaction(rpc_client_exec_path,  "00000000000000000000000000000000", "Shisha", "1000", "4294966295", "1000") 
-    #create_and_check_transaction(rpc_client_exec_path,  "Shisha", "Andre", "670", "330", "670")  #isn't working right now, waiting 
-    #create_and_check_transaction(rpc_client_exec_path,  "Andre", "Shisha", "100", "570", "100")  #for the storage branch to be filled
+    create_and_check_transaction(rpc_client_exec_path,  "00000000000000000000000000000000", "Shisha", "1000", "4294966295", "1000") 
+    create_and_check_transaction(rpc_client_exec_path,  "Shisha", "Andre", "670", "330", "670")  #isn't working right now, waiting 
+    create_and_check_transaction(rpc_client_exec_path,  "Andre", "Shisha", "100", "570", "430")  #for the storage branch to be filled
 
     exit(0)
 

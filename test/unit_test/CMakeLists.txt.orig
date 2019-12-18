@@ -1,5 +1,9 @@
 set(TEST_SOURCES
         main.cpp
+<<<<<<< HEAD:test/unit_test/CMakeLists.txt
+        base/crypto.cpp
+=======
+>>>>>>> master:test/CMakeLists.txt
         base/big_integer.cpp
         base/bytes.cpp
         base/crypto.cpp
@@ -7,16 +11,26 @@ set(TEST_SOURCES
         base/error.cpp
         base/hash.cpp
         base/program_options.cpp
+<<<<<<< HEAD:test/unit_test/CMakeLists.txt
+        base/database.cpp
+        base/serialization.cpp
+        base/time.cpp
+        net/packet.cpp
+        bc/address.cpp
+        bc/balance_manager.cpp
+        bc/transaction.cpp
+=======
         base/property_tree.cpp
-	base/serialization.cpp
-	base/time.cpp
+		base/serialization.cpp
+		base/time.cpp
         base/timer.cpp
         net/packet.cpp
         bc/address.cpp
         bc/block.cpp
-	bc/transaction.cpp
+		bc/transaction.cpp
         bc/transactions_set.cpp
         lk/balance_manager.cpp
+>>>>>>> master:test/CMakeLists.txt
 		)
 
 add_executable(run_tests ${TEST_SOURCES})

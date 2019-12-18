@@ -23,6 +23,25 @@ void Blockchain::load()
 }
 
 
+void Blockchain::addGenesisBlock(const Block& block)
+{
+    auto hash = base::Sha256::compute(base::toBytes(block));
+
+    std::lock_guard lk(_blocks_mutex);
+    if(!_blocks.empty()) {
+        RAISE_ERROR(base::LogicError, "cannot add genesis to non-empty chain");
+    }
+
+    auto inserted_block = _blocks.insert({hash, block}).first;
+    _database.addBlock(hash, block);
+    _top_level_block_hash = hash;
+
+    LOG_DEBUG << "Adding genesis block. Block hash = " << hash;
+    signal_block_added(inserted_block->second);
+}
+
+
+
 bool Blockchain::tryAddBlock(const Block& block)
 {
     auto hash = base::Sha256::compute(base::toBytes(block));

@@ -1,5 +1,6 @@
 # test for ci capabilities
 
+<<<<<<< HEAD
 stages:
   - stage_1
   - stage_2
@@ -137,3 +138,6 @@ job2:
 #    - custom-tag
 #  script:
 #    - docker build --no-cache -f integration_test.Dockerfile -t likelib2_integration_test .
+=======
+
+>>>>>>> master

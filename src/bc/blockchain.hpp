@@ -25,6 +25,7 @@ class Blockchain
     //===================
     void load();
     //===================
+    void addGenesisBlock(const Block& block);
     bool tryAddBlock(const Block& block);
     std::optional<bc::Block> findBlock(const base::Sha256& block_hash) const;
     std::optional<bc::Transaction> findTransaction(const base::Sha256& tx_hash) const;
