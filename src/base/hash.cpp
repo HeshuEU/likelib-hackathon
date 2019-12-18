@@ -4,18 +4,15 @@
 
 #include <openssl/sha.h>
 
+
 namespace base
 {
-
-Sha256::Sha256(const std::string& data) : _bytes(data)
-{
-    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
-}
 
 Sha256::Sha256(const Bytes& data) : _bytes(data)
 {
     ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
 }
+
 
 Sha256::Sha256(Bytes&& data) : _bytes(data)
 {
@@ -29,12 +26,6 @@ std::string Sha256::toHex() const
 }
 
 
-std::string Sha256::toString() const
-{
-    return _bytes.toString();
-}
-
-
 const base::Bytes& Sha256::getBytes() const noexcept
 {
     return _bytes;
@@ -43,13 +34,13 @@ const base::Bytes& Sha256::getBytes() const noexcept
 
 bool Sha256::operator==(const Sha256& another) const
 {
-    return toString() == another.toString();
+    return getBytes() == another.getBytes();
 }
 
 
 bool Sha256::operator!=(const Sha256& another) const
 {
-    return toString() != another.toString();
+    return getBytes() != another.getBytes();
 }
 
 
@@ -62,21 +53,41 @@ Sha256 Sha256::compute(const base::Bytes& data)
 }
 
 
+SerializationOArchive& Sha256::serialize(SerializationOArchive& oa, const Sha256& block)
+{
+    return block.serialize(oa);
+}
+
+
+SerializationOArchive& Sha256::serialize(SerializationOArchive& oa) const
+{
+    return oa << _bytes;
+}
+
+
+Sha256 Sha256::deserialize(SerializationIArchive& ia)
+{
+    Bytes data;
+    ia >> data;
+    return Sha256(data);
+}
+
+
 std::ostream& operator<<(std::ostream& os, const Sha256& sha)
 {
     return os << sha.getBytes().toHex();
 }
 
 
-std::string Sha1::toHex() const
+Sha1::Sha1(const Bytes& another) : _bytes(another)
 {
-    return _bytes.toHex();
+    ASSERT(_bytes.size() == SHA_DIGEST_LENGTH);
 }
 
 
-std::string Sha1::toString() const
+std::string Sha1::toHex() const
 {
-    return _bytes.toString();
+    return _bytes.toHex();
 }
 
 
@@ -88,13 +99,13 @@ const base::Bytes& Sha1::getBytes() const noexcept
 
 bool Sha1::operator==(const Sha1& another) const
 {
-    return toString() == another.toString();
+    return getBytes() == another.getBytes();
 }
 
 
 bool Sha1::operator!=(const Sha1& another) const
 {
-    return toString() != another.toString();
+    return getBytes() != another.getBytes();
 }
 
 
@@ -107,9 +118,23 @@ Sha1 Sha1::compute(const base::Bytes& data)
 }
 
 
-Sha1::Sha1(const Bytes& another) : _bytes(another)
+SerializationOArchive& Sha1::serialize(SerializationOArchive& oa, const Sha1& block)
 {
-    ASSERT(_bytes.size() == SHA_DIGEST_LENGTH);
+    return block.serialize(oa);
+}
+
+
+SerializationOArchive& Sha1::serialize(SerializationOArchive& oa) const
+{
+    return oa << _bytes;
+}
+
+
+Sha1 Sha1::deserialize(SerializationIArchive& ia)
+{
+    Bytes data;
+    ia >> data;
+    return Sha1(data);
 }
 
 
