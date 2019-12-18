@@ -1,7 +1,6 @@
 #pragma once
 
-#include "bc/blockchain.hpp"
-
+#include "lk/core.hpp"
 #include "rpc/base_rpc.hpp"
 
 namespace node
@@ -10,7 +9,7 @@ namespace node
 class GeneralServerService : public rpc::BaseRpc
 {
   public:
-    explicit GeneralServerService(bc::Blockchain* bc);
+    explicit GeneralServerService(lk::Core& core);
 
     ~GeneralServerService() override;
 
@@ -22,6 +21,6 @@ class GeneralServerService : public rpc::BaseRpc
     std::string test(const std::string& test_request) override;
 
   private:
-    bc::Blockchain* _bc;
+    lk::Core& _core;
 };
 } // namespace node

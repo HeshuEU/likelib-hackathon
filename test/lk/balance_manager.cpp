@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "bc/balance_manager.hpp"
+#include "lk/balance_manager.hpp"
 
 #include <random>
 #include <thread>
@@ -29,7 +29,7 @@ std::map<bc::Address, bc::Balance> init_map = initMap();
 
 BOOST_AUTO_TEST_CASE(balance_manager_constructor)
 {
-    bc::BalanceManager manager(init_map);
+    lk::BalanceManager manager(init_map);
 
     BOOST_CHECK(manager.getBalance(bc::Address("qwerty")) == 1000);
     BOOST_CHECK(manager.getBalance(bc::Address("Andrei")) == 9999);
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(balance_manager_constructor)
 
 BOOST_AUTO_TEST_CASE(balance_manager_check_transaction)
 {
-    bc::BalanceManager manager(init_map);
+    lk::BalanceManager manager(init_map);
 
     bc::Transaction trans1(bc::Address("qwerty"), bc::Address("okDe"), 13, base::Time());
     bc::Transaction trans2(bc::Address("Andrei"), bc::Address("Troia"), 9999, base::Time());
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(balance_manager_check_transaction)
 
 BOOST_AUTO_TEST_CASE(balance_manager_update_transaction)
 {
-    bc::BalanceManager manager(init_map);
+    lk::BalanceManager manager(init_map);
     manager.update(bc::Transaction(bc::Address("qwerty"), bc::Address("okDe"), 13, base::Time()));
     manager.update(bc::Transaction(bc::Address("Andrei"), bc::Address("Troia"), 11, base::Time()));
     manager.update(bc::Transaction(bc::Address("back_door"), bc::Address("Ivan"), 1, base::Time()));
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_transaction)
 
 
 void testUpdateTransaction(
-    bc::BalanceManager& manager, std::vector<std::string>& names, std::vector<std::shared_mutex>& mutexes)
+    lk::BalanceManager& manager, std::vector<std::string>& names, std::vector<std::shared_mutex>& mutexes)
 {
     std::random_device rd;
     std::default_random_engine generator(rd());
@@ -121,7 +121,7 @@ void testUpdateTransaction(
 
 BOOST_AUTO_TEST_CASE(balance_manager_update_transaction_multithreads)
 {
-    bc::BalanceManager manager(init_map);
+    lk::BalanceManager manager(init_map);
     std::vector<std::string> names{"qwerty", "Troia", "okDe", "Andrei", "Ivan", "Orland"};
     for(std::size_t i = 0; i < init_map.size() - 5; i++) {
         names.push_back("Person" + std::to_string(i));
@@ -140,11 +140,13 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_transaction_multithreads)
 
 BOOST_AUTO_TEST_CASE(balance_manager_update_block)
 {
-    bc::BalanceManager manager(init_map);
-    bc::Block block;
-    block.addTransaction(bc::Transaction(bc::Address("qwerty"), bc::Address("okDe"), 13, base::Time()));
-    block.addTransaction(bc::Transaction(bc::Address("Andrei"), bc::Address("Troia"), 11, base::Time()));
-    block.addTransaction(bc::Transaction(bc::Address("back_door"), bc::Address("Ivan"), 1, base::Time()));
+    lk::BalanceManager manager(init_map);
+    bc::TransactionsSet transaction_set;
+    
+    transaction_set.add(bc::Transaction(bc::Address("qwerty"), bc::Address("okDe"), 13, base::Time()));
+    transaction_set.add(bc::Transaction(bc::Address("Andrei"), bc::Address("Troia"), 11, base::Time()));
+    transaction_set.add(bc::Transaction(bc::Address("back_door"), bc::Address("Ivan"), 1, base::Time()));
+    bc::Block block(base::Sha256::compute(base::Bytes("")), std::move(transaction_set));
     manager.update(block);
 
     BOOST_CHECK(manager.getBalance(bc::Address("qwerty")) == 1000 - 13);
@@ -156,7 +158,7 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_block)
 
 
 void testUpdateBlock(
-    bc::BalanceManager& manager, std::vector<std::string>& names, std::vector<std::shared_mutex>& mutexes)
+    lk::BalanceManager& manager, std::vector<std::string>& names, std::vector<std::shared_mutex>& mutexes)
 {
     std::random_device rd;
     std::default_random_engine generator(rd());
@@ -166,7 +168,6 @@ void testUpdateBlock(
     for(std::size_t i = 0; i < 10; i++) {
 
         std::size_t count_transactions = transaction_distribution(generator);
-        bc::Block block;
 
         std::vector<std::size_t> senders;
         bool lock = false;
@@ -197,16 +198,17 @@ void testUpdateBlock(
         }
 
         std::vector<std::tuple<bc::Balance, bc::Balance, bc::Balance>> test_info;
+        bc::TransactionsSet transaction_set;
         for(std::size_t i = 0; i < count_transactions; i++) {
             auto sender_tokens = manager.getBalance(bc::Address{names[senders[i]]});
             auto receiver_tokens = manager.getBalance(bc::Address{names[receivers[i]]});
             std::uniform_int_distribution<bc::Balance> tokens_distribution(1, sender_tokens);
             auto transfer_tokens = tokens_distribution(generator);
             test_info.push_back(std::make_tuple(sender_tokens, receiver_tokens, transfer_tokens));
-            block.addTransaction(bc::Transaction{
+            transaction_set.add(bc::Transaction{
                 bc::Address{names[senders[i]]}, bc::Address{names[receivers[i]]}, transfer_tokens, base::Time()});
         }
-
+        bc::Block block(base::Sha256::compute(base::Bytes("")), std::move(transaction_set));
 
         manager.update(block);
 
@@ -231,7 +233,7 @@ void testUpdateBlock(
 
 BOOST_AUTO_TEST_CASE(balance_manager_update_block_multithreads)
 {
-    bc::BalanceManager manager(init_map);
+    lk::BalanceManager manager(init_map);
     std::vector<std::string> names{"qwerty", "Troia", "okDe", "Andrei", "Ivan", "Orland"};
     for(std::size_t i = 0; i < init_map.size() - 5; i++) {
         names.push_back("Person" + std::to_string(i));

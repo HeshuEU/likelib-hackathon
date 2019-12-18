@@ -11,8 +11,8 @@
 namespace net
 {
 
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(PacketType, unsigned char,
-    (HANDSHAKE)(PING)(PONG)(DISCOVERY_REQ)(DISCOVERY_RES)(DATA)(BLOCK)(TRANSACTION)(DISCONNECT))
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
+    PacketType, unsigned char, (HANDSHAKE)(PING)(PONG)(DISCOVERY_REQ)(DISCOVERY_RES)(DATA)(DISCONNECT))
 
 class Packet
 {
@@ -21,16 +21,11 @@ class Packet
     Packet() = default;
     Packet(PacketType type);
     //===================
-    PacketType getType() const;
+    [[nodiscard]] PacketType getType() const;
     void setType(PacketType type);
     //===================
-    const std::vector<std::string> getKnownEndpoints() const;
-    void setKnownEndpoints(std::vector<std::string>&& endpoints);
-    //===================
-    unsigned short getPublicServerPort() const noexcept;
-    void setPublicServerPort(unsigned short endpoint);
-    //===================
-    const base::Bytes& getData() const noexcept;
+    [[nodiscard]] const base::Bytes& getData() const& noexcept;
+    [[nodiscard]] base::Bytes&& getData() && noexcept;
     void setData(const base::Bytes& data);
     //===================
     bool operator==(const Packet& another) const noexcept;
@@ -39,12 +34,10 @@ class Packet
 
   private:
     PacketType _type{PacketType::DISCONNECT};
-    std::vector<std::string> _known_endpoints;
-    unsigned short _server_public_port{0};
     base::Bytes _data;
 };
 
-base::SerializationOArchive& operator<<(base::SerializationOArchive& ia, const Packet& v);
-base::SerializationIArchive& operator>>(base::SerializationIArchive& oa, Packet& v);
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Packet& v);
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Packet& v);
 
 } // namespace net

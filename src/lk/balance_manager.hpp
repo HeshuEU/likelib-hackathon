@@ -7,7 +7,7 @@
 #include <shared_mutex>
 
 
-namespace bc
+namespace lk
 {
 
 class BalanceManager
@@ -15,7 +15,7 @@ class BalanceManager
   public:
     //================
     explicit BalanceManager() = default;
-    explicit BalanceManager(const std::map<Address, Balance>& initial_state);
+    explicit BalanceManager(const std::map<bc::Address, bc::Balance>& initial_state);
     BalanceManager(const BalanceManager& hash) = delete;
     BalanceManager(BalanceManager&& hash) = default;
 
@@ -23,17 +23,17 @@ class BalanceManager
     BalanceManager& operator=(BalanceManager&& another) = default;
     ~BalanceManager() = default;
     //================
-    bool checkTransaction(const Transaction& tx) const;
-    void update(const Transaction& tx);
-    void update(const Block& block);
-    void updateFromGenesis(const Block& block);   //TODO:make any tests for this?
-    Balance getBalance(const Address& address) const;
+    bool checkTransaction(const bc::Transaction& tx) const;
+    void update(const bc::Transaction& tx);
+    void update(const bc::Block& block);
+    void updateFromGenesis(const bc::Block& block);
+    bc::Balance getBalance(const bc::Address& address) const;
     //================
   private:
     //================
-    std::map<Address, Balance> _storage;
+    std::map<bc::Address, bc::Balance> _storage;
     mutable std::shared_mutex _rw_mutex;
     //================
 };
 
-} // namespace bc
+} // namespace lk

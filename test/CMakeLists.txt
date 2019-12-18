@@ -13,12 +13,12 @@ set(TEST_SOURCES
         base/timer.cpp
         net/packet.cpp
         bc/address.cpp
-        bc/balance_manager.cpp
         bc/block.cpp
 		bc/transaction.cpp
         bc/transactions_set.cpp
+        lk/balance_manager.cpp
 		)
 
 add_executable(run_tests ${TEST_SOURCES})
 
-target_link_libraries(run_tests base net rpc Boost::unit_test_framework)
+target_link_libraries(run_tests base net rpc lk Boost::unit_test_framework)

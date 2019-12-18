@@ -17,6 +17,12 @@ Sha256::Sha256(const Bytes& data) : _bytes(data)
     ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
 }
 
+Sha256::Sha256(Bytes&& data) : _bytes(data)
+{
+    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
+}
+
+
 std::string Sha256::toHex() const
 {
     return _bytes.toHex();
@@ -50,10 +56,15 @@ bool Sha256::operator!=(const Sha256& another) const
 Sha256 Sha256::compute(const base::Bytes& data)
 {
     base::Bytes ret(SHA256_DIGEST_LENGTH);
-    SHA256(data.toArray(), data.size(),
-        reinterpret_cast<unsigned char*>(ret.toArray())); // reinterpret_cast is necessary if base::Byte changes
+    SHA256(data.toArray(), data.size(), ret.toArray());
     ASSERT(ret.size() == SHA256_DIGEST_LENGTH);
     return Sha256(ret);
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Sha256& sha)
+{
+    return os << sha.getBytes().toHex();
 }
 
 
@@ -101,4 +112,22 @@ Sha1::Sha1(const Bytes& another) : _bytes(another)
     ASSERT(_bytes.size() == SHA_DIGEST_LENGTH);
 }
 
+
+std::ostream& operator<<(std::ostream& os, const Sha1& sha)
+{
+    return os << sha.getBytes().toHex();
+}
+
 } // namespace base
+
+
+std::size_t std::hash<base::Sha256>::operator()(const base::Sha256& k) const
+{
+    return std::hash<base::Bytes>{}(k.getBytes());
+}
+
+
+std::size_t std::hash<base::Sha1>::operator()(const base::Sha1& k) const
+{
+    return std::hash<base::Bytes>{}(k.getBytes());
+}

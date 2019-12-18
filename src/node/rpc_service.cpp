@@ -8,7 +8,7 @@
 namespace node
 {
 
-GeneralServerService::GeneralServerService(bc::Blockchain* bc) : _bc{bc}
+GeneralServerService::GeneralServerService(lk::Core& core) : _core{core}
 {
     LOG_TRACE << "Created GeneralServerService";
 }
@@ -21,7 +21,7 @@ GeneralServerService::~GeneralServerService()
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
-    return _bc->getBalance(address);
+    return _core.getBalance(address);
 }
 
 std::string GeneralServerService::transaction(bc::Balance amount, const bc::Address& from_address,
@@ -31,7 +31,7 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
               << to_address.toString() << "], amount[" << amount << "], transaction_time["
               << transaction_time.getSecondsInEpoch() << "]";
 
-    _bc->processReceivedTransaction(bc::Transaction(from_address, to_address, amount, transaction_time));
+    _core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time));
     return "likelib";
 }
 
