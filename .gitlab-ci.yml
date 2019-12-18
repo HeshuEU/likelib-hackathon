@@ -9,21 +9,22 @@ cache:
     - ./opt
 
 before_script:
-    - apt-get update && \
-      apt-get install -y software-properties-common && \
-      apt-get update -y && \
-      apt-get install -y apt-utils && \
-      apt-get dist-upgrade -y
+#    - apt-get update && \
+#      apt-get install -y software-properties-common && \
+#      apt-get update -y && \
+#      apt-get install -y apt-utils && \
+#      apt-get dist-upgrade -y
     - export INSTALL_DIR="/opt"
     - export PROJECT_SOURCE_DIR="/project"
     - export PROJECT_BUILD_DIR="/build"
     - mkdir ${PROJECT_BUILD_DIR}
-    - cp doc/prepare_build.sh ${INSTALL_DIR}
+#    - cp doc/prepare_build.sh ${INSTALL_DIR}
     - mkdir  ${PROJECT_SOURCE_DIR} && cp -r . ${PROJECT_SOURCE_DIR}
-    - cd ${INSTALL_DIR} && ./prepare_build.sh
+#    - cd ${INSTALL_DIR} && ./prepare_build.sh
 
 Build:
   stage: build
+  image: heshuby/prepare_build
   tags:
     - docker
   script: 
