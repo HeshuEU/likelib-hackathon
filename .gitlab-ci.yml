@@ -18,9 +18,9 @@ Build:
     - cd ${PROJECT_BUILD_DIR}
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
-    - echo =========================================================================
-    - echo ==                          Finish building                            ==
-    - echo =========================================================================
+    - echo ========================================================================= > /dev/null
+    - echo ==                          Finish building                            == > /dev/null
+    - echo ========================================================================= > /dev/null
 
   artifacts:
     paths:
@@ -38,9 +38,9 @@ Code quality:
     - apt update && apt install -y clang-tidy
     - echo ${INSTALL_DIR} && ls  ${INSTALL_DIR}
     - echo ${PWD} && ls 
-    - echo =========================================================================
-    - echo ==                          Start code quality                         ==
-    - echo =========================================================================
+    - echo ========================================================================= > /dev/null
+    - echo ==                          Start code quality                         == > /dev/null
+    - echo ========================================================================= > /dev/null
     - cd ./src
     - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
     - clang-tidy node/main.cpp -- ${INCLUDE} # 2> ../clang-tidy-node.log 1> ../clang-tidy-node.log
@@ -59,9 +59,9 @@ Unit tests:
     - touch unit_test.log
     - echo ${PWD} && ls
     - ls build -l
-    - echo =========================================================================
-    - echo ==                          Start tests                                ==
-    - echo =========================================================================
+    - echo ========================================================================= > /dev/null
+    - echo ==                          Start tests                                == > /dev/null
+    - echo ========================================================================= > /dev/null
     - build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info #>> unit_test.log
 #  artifacts:
 #    paths:
