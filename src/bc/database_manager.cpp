@@ -1,5 +1,7 @@
 #include "database_manager.hpp"
 
+#include "base/log.hpp"
+
 #include <algorithm>
 
 namespace
