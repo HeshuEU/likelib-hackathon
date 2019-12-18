@@ -8,7 +8,8 @@ namespace
 enum class DataType
 {
     SYSTEM = 1,
-    BLOCK = 2
+    BLOCK = 2,
+    PREVIOUS_BLOCK_HASH = 3,
 };
 
 base::Bytes toBytes(DataType type, const base::Bytes& key)
@@ -25,7 +26,7 @@ base::Bytes toBytes(DataType type, const base::Bytes& key)
 namespace bc
 {
 
-const base::Bytes LAST_BLOCK_HASH_KEY(toBytes(DataType::SYSTEM, base::Bytes("last_block_hash")));
+const base::Bytes LAST_BLOCK_HASH_KEY{toBytes(DataType::SYSTEM, base::Bytes("last_block_hash"))};
 
 
 DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block_hash(base::Bytes(32))
@@ -49,6 +50,7 @@ DatabaseManager::DatabaseManager(const base::PropertyTree& config) : _last_block
 
 void DatabaseManager::addBlock(const base::Sha256& block_hash, const bc::Block& block)
 {
+    auto previous_block_hash_data = block.getPrevBlockHash().getBytes();
     auto block_data = base::toBytes(block);
     {
         std::lock_guard lk(_rw_mutex);
@@ -56,6 +58,7 @@ void DatabaseManager::addBlock(const base::Sha256& block_hash, const bc::Block& 
             return;
         }
         _database.put(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
+        _database.put(toBytes(DataType::PREVIOUS_BLOCK_HASH, block_hash.getBytes()), previous_block_hash_data);
         _database.put(LAST_BLOCK_HASH_KEY, block_hash.getBytes());
     }
     _last_block_hash = block_hash;
@@ -68,7 +71,8 @@ std::optional<bc::Block> DatabaseManager::findBlock(const base::Sha256& block_ha
     base::Bytes block_data;
     try {
         _database.get(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
-    } catch (const base::DatabaseError& error) {
+    }
+    catch(const base::DatabaseError& error) {
         return std::nullopt;
     }
     base::SerializationIArchive ia(block_data);
@@ -88,12 +92,11 @@ std::vector<base::Sha256> DatabaseManager::createAllBlockHashesList() const
     base::Sha256 current_block_hash = getLastBlockHash();
 
     std::shared_lock lk(_rw_mutex); // if you create a lock below, it may be a non-consistent result of the function
-    while(current_block_hash != base::Bytes(32)) { // TODO: optimization
+    while(current_block_hash != base::Bytes(32)) {
         all_blocks_hashes.push_back(current_block_hash);
-        base::Bytes block_data;
-        _database.get(toBytes(DataType::BLOCK, current_block_hash.getBytes()), block_data);
-        base::SerializationIArchive ia(block_data);
-        current_block_hash = bc::Block::deserialize(ia).getPrevBlockHash();
+        base::Bytes previous_block_hash_data;
+        _database.get(toBytes(DataType::PREVIOUS_BLOCK_HASH, current_block_hash.getBytes()), previous_block_hash_data);
+        current_block_hash = base::Sha256(std::move(previous_block_hash_data));
     }
 
     std::reverse(std::begin(all_blocks_hashes), std::end(all_blocks_hashes));
