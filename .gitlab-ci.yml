@@ -21,12 +21,12 @@ Build:
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
     - echo artifacts ${PROJECT_BUILD_DIR} && ls  ${PROJECT_BUILD_DIR}
-    - mkdir /1
-    - touch /1/1 && touch /1/2
+    - mkdir 1
+    - touch 1/1 && touch 1/2
 
   artifacts:
     paths:
-    - /1
+    - 1
     expire_in: 1 week
 
     
