@@ -18,8 +18,8 @@ Build:
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
     - |
-      echo -e "\033[34;1;42m ========================================================================= \n 
-      ==                          Finish building                            == \n \
+      echo -e "\033[40;1;42m =========================================================================
+       ==                          Finish building                            == \n \
       ========================================================================= \033[0m"
 
   artifacts:
