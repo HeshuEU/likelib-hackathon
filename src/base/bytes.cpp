@@ -1,10 +1,9 @@
 #include "bytes.hpp"
 
 #include "base/assert.hpp"
+#include "base/error.hpp"
 
 #include <boost/container_hash/hash.hpp>
-
-#include <iterator>
 
 namespace base
 {
@@ -173,6 +172,7 @@ std::string Bytes::toString() const
 
 namespace
 {
+
     std::size_t hexToInt(char hex)
     {
         if('0' <= hex && hex <= '9') {
@@ -181,8 +181,11 @@ namespace
         else if('a' <= hex && hex <= 'f') {
             return hex - 'a' + 10;
         }
-        else {
+        else if('A' <= hex && hex <= 'F') {
             return hex - 'A' + 10;
+        }
+        else {
+            RAISE_ERROR(base::InvalidArgument, "Non hex symbol.");
         }
     }
 
@@ -191,7 +194,9 @@ namespace
 
 Bytes Bytes::fromHex(const std::string& hex_view)
 {
-    ASSERT(hex_view.size() % 2 == 0)
+    if(hex_view.size() % 2 != 0) {
+        RAISE_ERROR(InvalidArgument, "Invalid string length. Odd line length.");
+    }
 
     auto bytes_size = hex_view.size() / 2;
     std::vector<Byte> bytes(bytes_size);

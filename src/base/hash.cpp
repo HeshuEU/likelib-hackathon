@@ -1,6 +1,7 @@
 #include "hash.hpp"
 
 #include "base/assert.hpp"
+#include "error.hpp"
 
 #include <openssl/sha.h>
 
@@ -10,13 +11,17 @@ namespace base
 
 Sha256::Sha256(const Bytes& data) : _bytes(data)
 {
-    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
+    if(_bytes.size() != SHA256_DIGEST_LENGTH) {
+        RAISE_ERROR(InvalidArgument, "Not valid bytes size");
+    }
 }
 
 
 Sha256::Sha256(Bytes&& data) : _bytes(data)
 {
-    ASSERT(_bytes.size() == SHA256_DIGEST_LENGTH);
+    if(_bytes.size() != SHA256_DIGEST_LENGTH) {
+        RAISE_ERROR(InvalidArgument, "Not valid bytes size");
+    }
 }
 
 
@@ -29,6 +34,13 @@ std::string Sha256::toHex() const
 const base::Bytes& Sha256::getBytes() const noexcept
 {
     return _bytes;
+}
+
+
+Sha256 Sha256::fromHex(const std::string& hex_view)
+{
+    auto bytes = Bytes::fromHex(hex_view);
+    return Sha256(bytes);
 }
 
 
@@ -81,7 +93,17 @@ std::ostream& operator<<(std::ostream& os, const Sha256& sha)
 
 Sha1::Sha1(const Bytes& another) : _bytes(another)
 {
-    ASSERT(_bytes.size() == SHA_DIGEST_LENGTH);
+    if(_bytes.size() != SHA_DIGEST_LENGTH) {
+        RAISE_ERROR(InvalidArgument, "Not valid bytes size");
+    }
+}
+
+
+Sha1::Sha1(Bytes&& another) : _bytes(another)
+{
+    if(_bytes.size() != SHA_DIGEST_LENGTH) {
+        RAISE_ERROR(InvalidArgument, "Not valid bytes size");
+    }
 }
 
 
@@ -94,6 +116,13 @@ std::string Sha1::toHex() const
 const base::Bytes& Sha1::getBytes() const noexcept
 {
     return _bytes;
+}
+
+
+Sha1 Sha1::fromHex(const std::string& hex_view)
+{
+    auto bytes = Bytes::fromHex(hex_view);
+    return Sha1(bytes);
 }
 
 

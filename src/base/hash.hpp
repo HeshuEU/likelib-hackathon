@@ -13,15 +13,17 @@ class Sha256
   public:
     //----------------------------------
     Sha256(const Sha256&) = default;
+    Sha256(Sha256&&) = default;
     Sha256(const Bytes& data);
     Sha256(Bytes&& data);
-    Sha256(Sha256&&) = default;
     Sha256& operator=(const Sha256&) = default;
     Sha256& operator=(Sha256&&) = default;
     ~Sha256() = default;
     //----------------------------------
     std::string toHex() const;
     const base::Bytes& getBytes() const noexcept;
+    //----------------------------------
+    static Sha256 fromHex(const std::string& hex_view);
     //----------------------------------
     bool operator==(const Sha256& another) const;
     bool operator!=(const Sha256& another) const;
@@ -60,12 +62,15 @@ class Sha1
     Sha1(const Sha1&) = default;
     Sha1(Sha1&&) = default;
     Sha1(const Bytes& another);
+    Sha1(Bytes&& another);
     Sha1& operator=(const Sha1&) = default;
     Sha1& operator=(Sha1&&) = default;
     ~Sha1() = default;
     //----------------------------------
     std::string toHex() const;
     const base::Bytes& getBytes() const noexcept;
+    //----------------------------------
+    static Sha1 fromHex(const std::string& hex_view);
     //----------------------------------
     bool operator==(const Sha1& another) const;
     bool operator!=(const Sha1& another) const;

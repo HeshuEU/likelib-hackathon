@@ -46,6 +46,20 @@ BOOST_AUTO_TEST_CASE(sha256_serialization)
 }
 
 
+BOOST_AUTO_TEST_CASE(sha256_hex)
+{
+    auto target_hash =
+        base::Sha256::compute(base::Bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30});
+    auto target_hex_view = "5fa56e73ead625a67cb2b6c3394664491432c7d1402d738c285a8903572c4846";
+
+    auto hex_view = target_hash.toHex();
+    auto from_hex_hash = base::Sha256::fromHex(hex_view);
+
+    BOOST_CHECK_EQUAL(hex_view, target_hex_view);
+    BOOST_CHECK_EQUAL(target_hash, from_hex_hash);
+}
+
+
 BOOST_AUTO_TEST_CASE(sha256_multiple_serialization)
 {
     auto target_hash_1 =
@@ -119,6 +133,20 @@ BOOST_AUTO_TEST_CASE(sha1_serialization)
     BOOST_CHECK_EQUAL(deserialized_hash, target_hash);
     BOOST_CHECK_EQUAL(deserialized_hash.toHex(), target_hex_view);
     BOOST_CHECK_EQUAL(deserialized_hash.getBytes().toHex(), target_hex_view);
+}
+
+
+BOOST_AUTO_TEST_CASE(sha1_hex)
+{
+    auto target_hash =
+        base::Sha1::compute(base::Bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30});
+    auto target_hex_view = "8b3b3476a984cc1c0d2bf1b3751ca366818f8b08";
+
+    auto hex_view = target_hash.toHex();
+    auto from_hex_hash = base::Sha1::fromHex(hex_view);
+
+    BOOST_CHECK_EQUAL(hex_view, target_hex_view);
+    BOOST_CHECK_EQUAL(target_hash, from_hex_hash);
 }
 
 
