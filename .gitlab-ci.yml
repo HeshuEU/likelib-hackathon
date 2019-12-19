@@ -17,9 +17,10 @@ Build:
     - cd ${PROJECT_BUILD_DIR}
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
-    - echo ========================================================================= > /dev/null
-    - echo ==                          Finish building                            == > /dev/null
-    - echo ========================================================================= > /dev/null
+    - |
+      echo -e "\033[34;1;42m ========================================================================= \n \
+==                          Finish building                            == \n \
+========================================================================= \033[0m"
 
   artifacts:
     paths:
