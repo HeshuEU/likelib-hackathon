@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(bytes_take_part)
     BOOST_CHECK(!(part != answer));
 }
 
-BOOST_AUTO_TEST_CASE(bytes_append)
+BOOST_AUTO_TEST_CASE(bytes_append1)
 {
     base::Bytes bytes1(234);
     for(std::size_t i = 0; i < bytes1.size(); ++i) {
@@ -84,6 +84,38 @@ BOOST_AUTO_TEST_CASE(bytes_append)
     res = true;
     for(std::size_t i = 0; i < bytes2.size(); ++i) {
         res = res && (bytes_concat[bytes1.size() + i] == bytes2[i]);
+    }
+    BOOST_CHECK(res);
+}
+
+
+BOOST_AUTO_TEST_CASE(bytes_append2)
+{
+    base::Bytes bytes1(333);
+    for(std::size_t i = 0; i < bytes1.size(); ++i) {
+        bytes1[i] = static_cast<base::Byte>(i ^ 11);
+    }
+
+    base::Bytes bytes2(200);
+    for(std::size_t i = 0; i < bytes2.size(); i++){
+        bytes2[i] = static_cast<base::Byte>(i ^ 13);
+    }
+
+    base::Bytes bytes_concat;
+    bytes_concat.append(bytes1);
+    std::size_t count_to_concat = bytes2.size() / 2;
+    bytes_concat.append(bytes2.toArray(), count_to_concat);
+    BOOST_CHECK(bytes_concat.size() == bytes1.size() + count_to_concat);
+
+    bool res = true;
+    for(std::size_t i = 0; i < bytes1.size(); ++i) {
+        res = res && (bytes_concat[i] == bytes1[i]);
+    }
+    BOOST_CHECK(res);
+
+    res = true;
+    for(std::size_t i = 0; i < count_to_concat; ++i) {
+        res = res && (bytes_concat[i + bytes1.size()] == bytes2[i]);
     }
     BOOST_CHECK(res);
 }
