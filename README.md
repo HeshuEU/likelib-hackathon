@@ -21,7 +21,7 @@ By default it is config.json file of the following format:
     ],
     "keys": {
         "public_path": "rsa.pub",
-        "private_path": "rsa",
+        "private_path": "rsa"
     }
     "database": {
         "path": "likelib/database",
