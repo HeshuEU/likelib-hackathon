@@ -1,143 +1,33 @@
-# test for ci capabilities
-
-<<<<<<< HEAD
 stages:
-  - stage_1
-  - stage_2
+  - build
+  - quality
+  - test
 
-variables:
-  # When using dind service we need to instruct docker, to talk with the
-  # daemon started inside of the service. The daemon is available with
-  # a network connection instead of the default /var/run/docker.sock socket.
-  #
-  # The 'docker' hostname is the alias of the service container as described at
-  # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
-  #
-  # Note that if you're using the Kubernetes executor, the variable should be set to
-  # tcp://localhost:2375 because of how the Kubernetes executor connects services
-  # to the job container
-  # DOCKER_HOST: tcp://localhost:2375
-  #
-  # For non-Kubernetes executors, we use tcp://docker:2375
-  DOCKER_HOST: tcp://docker:2375
-  #
-  # This will instruct Docker not to start over TLS.
-  DOCKER_TLS_CERTDIR: ""
-
-default:
-  image: docker:19.03.1
-  services:
-    - docker:19.03.1-dind
-  before_script:
-    - PREPARE_BUILD_HASH=$( md5sum doc/prepare_build.sh )
-      ENV_HASH=$( echo ${PREPARE_BUILD_HASH} | awk 'NR==1{print $1}')
-      ENV_HASH_CUT=${ENV_HASH:0:10}
-      ENV_TAG="likelib_env:${ENV_HASH_CUT}"
-    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
-    - if docker pull ${ENV_TAG} ; then
-        echo "Env exists in registry"
-      else
-        echo "hash sum ${ENV_TAG}"
-        echo "if image was not found make image"
-        echo "push image to registry"
-        echo "Command failed"
-      fi
-
-job1:
-  stage: stage_1
+Build:
+  stage: build
   tags:
-    - docker
+    - custom-tag
   script:
-    - echo "Started job_1"
-    - echo "folder content:" && ls
-    - echo "variable ${ENV_HASH}"
+    - docker build -f build.Dockerfile -t likelib2_build .
 
-job2:
-  stage: stage_2
+Code quality:
+  stage: quality
   tags:
-    - docker
+    - custom-tag
+  allow_failure: true
   script:
-    - echo "Started job_2"
-    - echo "folder content:" && ls
-    - echo "variable ${ENV_HASH}"
-    - ENV_HASH="job_2"
-    - echo "test variable ${TEST_VAR}"
+    - docker build --no-cache -f code-quality.Dockerfile -t likelib2_code_quality .
 
-#build-code:
-#  stage: build
-#  tags:
-#    - docker
-#  script:
-#    - apt-get update
-#    - apt-get install -y software-properties-common
-#    - apt-get update -y
-#    - apt-get install -y apt-utils
-#    - apt-get dist-upgrade -y
-#    - PROJECT_SOURCE_DIR=$(pwd)
-#    - mkdir -p ${INSTALL_DIR}
-#    - cd doc || exit 1
-#    - chmod 777 prepare_build.sh && ./prepare_build.sh
-#    - mkdir -p ${PROJECT_BUILD_DIR} && cd ${PROJECT_BUILD_DIR} || exit 1
-#    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
-#    - make -j$(nproc)
-#  artifacts:
-#    paths:
-#      - ${PROJECT_BUILD_DIR}
-#
-#run-quality-test:
-#  stage: quality
-#  tags:
-#    - docker
-#  script:
-#    - ls
-#    - ls ${PROJECT_BUILD_DIR}
+Unit tests:
+  stage: test
+  tags:
+    - custom-tag
+  script:
+    - docker build --no-cache -f unit_test.Dockerfile -t likelib2_unit_test .
 
-#    # update system
-#    - RUN apt-get update && \
-#      apt-get install -y software-properties-common && \
-#      apt-get update -y && \
-#      apt-get install -y apt-utils && \
-#      apt-get dist-upgrade -y
-#
-#    - cd ${INSTALL_DIR}
-#
-#    # set up environment for building project
-#    COPY doc/prepare_build.sh ${INSTALL_DIR}
-#    RUN ./prepare_build.sh
-#
-#    # build project
-#    ENV PROJECT_SOURCE_DIR /project
-#    ENV PROJECT_BUILD_DIR /build
-#    COPY . ${PROJECT_SOURCE_DIR}
-#    WORKDIR ${PROJECT_BUILD_DIR}
-#    RUN cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && \
-#    make -j$(nproc)
-#
-#
-#    - docker build -f build.Dockerfile -t likelib2_build .
-#
-
-#Code quality:
-#  stage: quality
-#  tags:
-#    - custom-tag
-#  allow_failure: true
-#  script:
-#    - docker build --no-cache -f code-quality.Dockerfile -t likelib2_code_quality .
-#
-#Unit tests:
-#  stage: test
-#  tags:
-#    - custom-tag
-#  script:
-#    - docker build --no-cache -f unit_test.Dockerfile -t likelib2_unit_test .
-#
-#Integration tests:
-#  stage: test
-#  tags:
-#    - custom-tag
-#  script:
-#    - docker build --no-cache -f integration_test.Dockerfile -t likelib2_integration_test .
-=======
-
->>>>>>> master
+Integration tests:
+  stage: test
+  tags:
+    - custom-tag
+  script:
+    - docker build --no-cache -f integration_test.Dockerfile -t likelib2_integration_test .
