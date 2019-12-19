@@ -44,8 +44,7 @@ Code quality:
       echo -e "\033[40;1;42m ========================================================================= 
        ==                          Start code quality                         == \n \
       ========================================================================= \033[0m"
-    - clang-tidy node/main.cpp -header-filter=.* -- ${INCLUDE}
-    - clang-tidy rpc-client/main.cpp -header-filter=.* -- ${INCLUDE}
+    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
 
 
 Unit tests:
