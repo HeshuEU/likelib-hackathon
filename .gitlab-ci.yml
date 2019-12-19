@@ -35,9 +35,7 @@ Code quality:
     - docker
   allow_failure: true
   script:
-    - apt update && apt install -y clang-tidy
-    - echo ${INSTALL_DIR} && ls  ${INSTALL_DIR}
-    - echo ${PWD} && ls 
+    - apt update && apt install -y clang-tidy > /dev/null
     - echo ========================================================================= > /dev/null
     - echo ==                          Start code quality                         == > /dev/null
     - echo ========================================================================= > /dev/null
@@ -56,9 +54,6 @@ Unit tests:
     - docker
   cache: {}
   script:
-    - touch unit_test.log
-    - echo ${PWD} && ls
-    - ls build -l
     - echo ========================================================================= > /dev/null
     - echo ==                          Start tests                                == > /dev/null
     - echo ========================================================================= > /dev/null
