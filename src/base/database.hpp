@@ -8,6 +8,7 @@
 #include <string>
 #include <filesystem>
 #include <memory>
+#include <optional>
 
 namespace base
 {
@@ -23,7 +24,7 @@ class Database
     //======================
     void open(Directory const& path);
     //======================
-    void get(const Bytes& key, Bytes& res) const;
+    std::optional<Bytes> get(const Bytes& key) const;
     bool exists(const Bytes& key) const;
     void put(const Bytes& key, const Bytes& value);
     void remove(const Bytes& key);
