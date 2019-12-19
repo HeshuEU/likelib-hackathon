@@ -113,6 +113,15 @@ BOOST_AUTO_TEST_CASE(RsaAes_constructor_encrypt_decrypt)
     BOOST_CHECK(msg == dec_msg);
 }
 
+BOOST_AUTO_TEST_CASE(RsaAes_small_key_encrypt_decrypt)
+{
+    auto rsa = base::generateKeys(1024);
+    base::Bytes msg("f1rst RsaAes_tes!");
+    auto enc_msg = rsa.first.encryptWithAes(msg);
+    auto dec_msg = rsa.second.decryptWithAes(enc_msg);
+    BOOST_CHECK(msg == dec_msg);
+}
+
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit)
 {
     base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");

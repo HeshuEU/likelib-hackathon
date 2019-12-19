@@ -88,7 +88,7 @@ Bytes RsaPublicKey::encrypt(const Bytes& message) const
 
 Bytes RsaPublicKey::encryptWithAes(const Bytes& message) const
 {
-    if(maxEncryptSize() < 256) {
+    if(maxEncryptSize() < 32) {
         RAISE_ERROR(CryptoError, "small Rsa key size for RsaAes encryption");
     }
     base::AesKey symmetric_key(base::AesKey::KeyType::K256BIT);
