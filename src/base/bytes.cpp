@@ -1,10 +1,9 @@
 #include "bytes.hpp"
 
 #include "base/assert.hpp"
+#include "base/error.hpp"
 
 #include <boost/container_hash/hash.hpp>
-
-#include <iterator>
 
 namespace base
 {
@@ -171,6 +170,47 @@ std::string Bytes::toString() const
 }
 
 
+namespace
+{
+
+    std::size_t hexToInt(char hex)
+    {
+        if('0' <= hex && hex <= '9') {
+            return hex - '0';
+        }
+        else if('a' <= hex && hex <= 'f') {
+            return hex - 'a' + 10;
+        }
+        else if('A' <= hex && hex <= 'F') {
+            return hex - 'A' + 10;
+        }
+        else {
+            RAISE_ERROR(base::InvalidArgument, "Non hex symbol.");
+        }
+    }
+
+} // namespace
+
+
+Bytes Bytes::fromHex(const std::string_view& hex_view)
+{
+    if(hex_view.size() % 2 != 0) {
+        RAISE_ERROR(InvalidArgument, "Invalid string length. Odd line length.");
+    }
+
+    auto bytes_size = hex_view.size() / 2;
+    std::vector<Byte> bytes(bytes_size);
+    for(std::size_t current_symbol_index = 0; current_symbol_index < bytes_size; current_symbol_index++) {
+        auto index = current_symbol_index * 2;
+        auto high_part = hexToInt(hex_view[index]);
+        auto low_part = hexToInt(hex_view[index + 1]);
+        bytes[current_symbol_index] = (high_part << 4) + low_part;
+    }
+
+    return Bytes(bytes);
+}
+
+
 bool Bytes::operator==(const Bytes& another) const
 {
     return _raw == another._raw;
@@ -204,6 +244,12 @@ bool Bytes::operator<=(const Bytes& another) const
 bool Bytes::operator>=(const Bytes& another) const
 {
     return !(*this < another);
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
+{
+    return os << bytes.toHex();
 }
 
 } // namespace base
