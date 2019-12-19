@@ -13,7 +13,7 @@ KeyVault::KeyVault(const base::PropertyTree& config) : _config{config}
 
     if(std::filesystem::exists(public_key_path) && std::filesystem::exists(private_key_path)) {
         _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::read(public_key_path));
-        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::read(public_key_path));
+        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::read(private_key_path));
     }
     else {
         LOG_WARNING << "Key files was not found: public[" << public_key_path << "], private[" << private_key_path << "].";
@@ -21,7 +21,9 @@ KeyVault::KeyVault(const base::PropertyTree& config) : _config{config}
         auto keys = base::generateKeys(rsa_keys_length);
         _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
         _private_key = std::make_unique<base::RsaPrivateKey>(std::move(keys.second));
-        LOG_WARNING << "Generated new key pair.";
+        _public_key->save(public_key_path);
+        _private_key->save(private_key_path);
+        LOG_WARNING << "Generated new key pair and saved by config paths.";
     }
     LOG_INFO << "Public key hash:" << base::Sha256::compute(_public_key->toBytes()).toHex();
     // TODO: maybe implement unload to disk mechanic for private key.
