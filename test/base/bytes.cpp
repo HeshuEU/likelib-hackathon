@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
-#include <base/hash.hpp>
 
+#include "base/hash.hpp"
 #include "base/bytes.hpp"
 
 BOOST_AUTO_TEST_CASE(bytes_storage_check)
@@ -111,6 +111,18 @@ BOOST_AUTO_TEST_CASE(bytes_to_string)
 {
     base::Bytes bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30, 0x02};
     BOOST_CHECK_EQUAL(bytes.toString(), "LIKELIB\t2.0\x02");
+}
+
+
+BOOST_AUTO_TEST_CASE(bytes_from_hex)
+{
+    base::Bytes target_bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
+    auto target_hex = "01ff02fe00";
+    auto hex_view = target_bytes.toHex();
+    BOOST_CHECK_EQUAL(hex_view, target_hex);
+
+    auto from_hex_bytes = base::Bytes::fromHex(target_hex);
+    BOOST_CHECK_EQUAL(from_hex_bytes, target_bytes);
 }
 
 
