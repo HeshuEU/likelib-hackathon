@@ -40,8 +40,8 @@ Code quality:
     - echo ========================================================================= > /dev/null
     - echo ==                          Start code quality                         == > /dev/null
     - echo ========================================================================= > /dev/null
-    - clang-tidy node/main.cpp -- ${INCLUDE}
-    - clang-tidy rpc-client/main.cpp -- ${INCLUDE}
+    - clang-tidy node/main.cpp -- ${INCLUDE} -header-filter=.*
+    - clang-tidy rpc-client/main.cpp -- ${INCLUDE} -header-filter=.*
 
 
 Unit tests:
@@ -64,6 +64,6 @@ Valgrind test:
     - echo ========================================================================= > /dev/null
     - echo ==                          Start memory check                         == > /dev/null
     - echo ========================================================================= > /dev/null
-    - valgrind --leak-check=full build/src/node/node
-    - valgrind --leak-check=full build/src/rpc-client/rpc-client
+    - valgrind --leak-check=full build/src/node/node && echo Node check success
+    - valgrind --leak-check=full build/src/rpc-client/rpc-client && echo RPC-client check success
 
