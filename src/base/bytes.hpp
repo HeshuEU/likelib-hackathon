@@ -56,7 +56,7 @@ class Bytes
     std::string toHex() const;
     std::string toString() const;
     //==============
-    static Bytes fromHex(const std::string& hex_view);
+    static Bytes fromHex(const std::string_view& hex_view);
     //==============
     bool operator==(const Bytes& another) const;
     bool operator!=(const Bytes& another) const;
