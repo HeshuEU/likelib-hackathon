@@ -18,6 +18,7 @@ Build:
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
     - |
+      
       echo -e "\033[40;1;42m ========================================================================= 
        ==                          Finish building                            == \n \
       ========================================================================= \033[0m"
@@ -67,10 +68,10 @@ Valgrind test:
     - echo ========================================================================= > /dev/null
     - |
       valgrind --leak-check=full build/src/node/node &&
-      echo -e "\033[34;1;42m        Node check success        \033[0m" || 
+      echo -e "\033[37;1;42m        Node check success        \033[0m" || 
       echo -e "\033[37;1;41m Node check failed\033[0m"
     - |
       valgrind --leak-check=full build/src/rpc-client/rpc-client && 
-      echo -e "\033[34;1;42m        RPC-client check success        \033[0m" || 
+      echo -e "\033[37;1;42m        RPC-client check success        \033[0m" || 
       echo -e "\033[37;1;41m RPC-client check failed\033[0m"
 
