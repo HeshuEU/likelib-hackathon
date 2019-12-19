@@ -2,7 +2,7 @@
 
 #include "base/assert.hpp"
 #include "base/error.hpp"
-#include "directory.hpp"
+#include "base/directory.hpp"
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -17,7 +17,7 @@
 namespace
 {
 
-base::Bytes read_all_file(const std::filesystem::path& path)
+base::Bytes readAllFile(const std::filesystem::path& path)
 {
     if(!std::filesystem::exists(path)) {
         RAISE_ERROR(base::InvalidArgument, "the file with this path does not exist");
@@ -32,7 +32,7 @@ base::Bytes read_all_file(const std::filesystem::path& path)
 }
 
 
-void write_file(const std::filesystem::path& path, const base::Bytes& data)
+void writeFile(const std::filesystem::path& path, const base::Bytes& data)
 {
     if(std::filesystem::exists(path)) {
         LOG_WARNING << "file[" << path << "] already exists";
@@ -88,10 +88,14 @@ Bytes RsaPublicKey::encrypt(const Bytes& message) const
 
 Bytes RsaPublicKey::encryptWithAes(const Bytes& message) const
 {
-    if(maxEncryptSize() < 32) {
-        RAISE_ERROR(CryptoError, "small Rsa key size for RsaAes encryption");
-    }
     base::AesKey symmetric_key(base::AesKey::KeyType::K256BIT);
+    if(maxEncryptSize() < symmetric_key.size()) {
+        symmetric_key = base::AesKey(base::AesKey::KeyType::K128BIT);
+        if(maxEncryptSize() < symmetric_key.size()) {
+            RAISE_ERROR(CryptoError, "small Rsa key size for RsaAes encryption");
+        }
+    }
+
     auto encrypted_message = symmetric_key.encrypt(message);
     auto serialized_symmetric_key = symmetric_key.toBytes();
     auto encrypted_serialized_symmetric_key = encrypt(serialized_symmetric_key);
@@ -129,13 +133,13 @@ std::size_t RsaPublicKey::maxEncryptSize() const noexcept
 
 void RsaPublicKey::save(const std::filesystem::path& path) const
 {
-    write_file(path, toBytes());
+    writeFile(path, toBytes());
 }
 
 
 RsaPublicKey RsaPublicKey::read(const std::filesystem::path& path)
 {
-    return RsaPublicKey(read_all_file(path));
+    return RsaPublicKey(readAllFile(path));
 }
 
 
@@ -229,12 +233,12 @@ std::size_t RsaPrivateKey::maxEncryptSize() const noexcept
 
 void RsaPrivateKey::save(const std::filesystem::path& path) const
 {
-    write_file(path, toBytes());
+    writeFile(path, toBytes());
 }
 
 RsaPrivateKey RsaPrivateKey::read(const std::filesystem::path& path)
 {
-    return RsaPrivateKey(read_all_file(path));
+    return RsaPrivateKey(readAllFile(path));
 }
 
 
@@ -268,6 +272,10 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& 
 
 std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 {
+    static constexpr std::size_t minimal_secure_key_size = 1024;
+    if(keys_size < minimal_secure_key_size){
+        LOG_WARNING << "using less than "<< minimal_secure_key_size << "bits for key generation is not insecure";
+    }
     // create big number for random generation
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
     if(!BN_set_word(bn.get(), RSA_F4)) {
@@ -334,23 +342,23 @@ AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generat
 
 AesKey::AesKey(const Bytes& bytes)
 {
-    static constexpr std::size_t _aes_256_size = 48;
-    static constexpr std::size_t _aes_128_size = 24;
+    // key may be 2 * size iv
+    static constexpr std::size_t _aes_256_size = static_cast<std::size_t>(base::AesKey::KeyType::K256BIT) / 2 * 3;
+    static constexpr std::size_t _aes_128_size = static_cast<std::size_t>(base::AesKey::KeyType::K128BIT) / 2 * 3;
 
     switch(bytes.size()) {
         case _aes_256_size:
             _type = base::AesKey::KeyType::K256BIT;
-            _key = bytes.takePart(0, 16 * 2);
-            _iv = bytes.takePart(16 * 2, bytes.size());
             break;
         case _aes_128_size:
             _type = base::AesKey::KeyType::K128BIT;
-            _key = bytes.takePart(0, 8 * 2);
-            _iv = bytes.takePart(8 * 2, bytes.size());
             break;
         default:
             RAISE_ERROR(InvalidArgument, "bytes_key are not valid. They must be obtained by Key::toBytes");
     }
+    auto last_bit_number = static_cast<std::size_t>(_type);
+    _key = bytes.takePart(0, last_bit_number);
+    _iv = bytes.takePart(last_bit_number, bytes.size());
 }
 
 
@@ -386,15 +394,27 @@ Bytes AesKey::decrypt(const Bytes& data) const
 }
 
 
+std::size_t AesKey::size() const
+{
+    switch(_type) {
+        case KeyType::K256BIT:
+        case KeyType::K128BIT:
+            return static_cast<std::size_t>(_type);
+        default:
+            RAISE_ERROR(CryptoError, "Unexpected key type");
+    }
+}
+
+
 void AesKey::save(const std::filesystem::path& path)
 {
-    write_file(path, toBytes());
+    writeFile(path, toBytes());
 }
 
 
 AesKey AesKey::read(const std::filesystem::path& path)
 {
-    return AesKey(read_all_file(path));
+    return AesKey(readAllFile(path));
 }
 
 
@@ -402,9 +422,8 @@ Bytes AesKey::generateKey(KeyType type)
 {
     switch(type) {
         case KeyType::K256BIT:
-            return generate_bytes(16 * 2); // 32(bytes) * 8(bit in byte) = 256(bit)
         case KeyType::K128BIT:
-            return generate_bytes(8 * 2); // 16(bytes) * 8(bit in byte) = 128(bit)
+            return generate_bytes(static_cast<std::size_t>(type));
         default:
             RAISE_ERROR(CryptoError, "Unexpected key type");
     }
@@ -415,9 +434,8 @@ Bytes AesKey::generateIv(KeyType type)
 {
     switch(type) {
         case KeyType::K256BIT:
-            return generate_bytes(16); // 16(bytes) * 8(bit in byte) = 128(bit)
         case KeyType::K128BIT:
-            return generate_bytes(8); // 8(bytes) * 8(bit in byte) = 64(bit)
+            return generate_bytes(static_cast<std::size_t>(type) / 2);
         default:
             RAISE_ERROR(CryptoError, "Unexpected key type");
     }

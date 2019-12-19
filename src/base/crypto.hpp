@@ -77,10 +77,11 @@ class AesKey
 {
   public:
     //=================
-    enum class KeyType
+    enum class KeyType : std::size_t
     {
-        K256BIT,
-        K128BIT
+        K256BIT = 32, // 32(bytes)
+        K128BIT = 16  // 16(bytes)
+
     };
     //=================
     AesKey();
@@ -95,6 +96,8 @@ class AesKey
     Bytes toBytes() const;
     Bytes encrypt(const Bytes& data) const;
     Bytes decrypt(const Bytes& data) const;
+    //=================
+    std::size_t size() const;
     //=================
     void save(const std::filesystem::path& path);
     static AesKey read(const std::filesystem::path& path);
