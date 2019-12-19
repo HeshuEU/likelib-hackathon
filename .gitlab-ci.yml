@@ -60,10 +60,10 @@ Valgrind test:
   tags:
     - docker
   script:
-    - apt update > /dev/null && apt install -y valgrind
+    - apt update > /dev/null && apt install -y valgrind > /dev/null
     - echo ========================================================================= > /dev/null
     - echo ==                          Start memory check                         == > /dev/null
     - echo ========================================================================= > /dev/null
-    - valgrind --leak-check=full build/src/node/node && echo Node check success
-    - valgrind --leak-check=full build/src/rpc-client/rpc-client && echo RPC-client check success
+    - valgrind --leak-check=full build/src/node/node && echo -e "\033[34 Node check success\033[0m" || echo -e "\033[31 Node check failed\033[0m"
+    - valgrind --leak-check=full build/src/rpc-client/rpc-client && echo -e "\033[34 RPC-client check success\033[0m" || echo -e "\033[31 RPC-client check failed\033[0m"
 
