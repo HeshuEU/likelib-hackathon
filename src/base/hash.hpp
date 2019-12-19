@@ -61,8 +61,8 @@ class Sha1
     //----------------------------------
     Sha1(const Sha1&) = default;
     Sha1(Sha1&&) = default;
-    Sha1(const Bytes& another);
-    Sha1(Bytes&& another);
+    Sha1(const Bytes& data);
+    Sha1(Bytes&& data);
     Sha1& operator=(const Sha1&) = default;
     Sha1& operator=(Sha1&&) = default;
     ~Sha1() = default;
@@ -70,7 +70,7 @@ class Sha1
     std::string toHex() const;
     const base::Bytes& getBytes() const noexcept;
     //----------------------------------
-    static Sha1 fromHex(const std::string& hex_view);
+    static Sha1 fromHex(const std::string_view& hex_view);
     //----------------------------------
     bool operator==(const Sha1& another) const;
     bool operator!=(const Sha1& another) const;

@@ -192,7 +192,7 @@ namespace
 } // namespace
 
 
-Bytes Bytes::fromHex(const std::string& hex_view)
+Bytes Bytes::fromHex(const std::string_view& hex_view)
 {
     if(hex_view.size() % 2 != 0) {
         RAISE_ERROR(InvalidArgument, "Invalid string length. Odd line length.");

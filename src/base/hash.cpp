@@ -91,7 +91,7 @@ std::ostream& operator<<(std::ostream& os, const Sha256& sha)
 }
 
 
-Sha1::Sha1(const Bytes& another) : _bytes(another)
+Sha1::Sha1(const Bytes& data) : _bytes(data)
 {
     if(_bytes.size() != SHA_DIGEST_LENGTH) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size");
@@ -99,7 +99,7 @@ Sha1::Sha1(const Bytes& another) : _bytes(another)
 }
 
 
-Sha1::Sha1(Bytes&& another) : _bytes(another)
+Sha1::Sha1(Bytes&& data) : _bytes(data)
 {
     if(_bytes.size() != SHA_DIGEST_LENGTH) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size");
@@ -119,7 +119,7 @@ const base::Bytes& Sha1::getBytes() const noexcept
 }
 
 
-Sha1 Sha1::fromHex(const std::string& hex_view)
+Sha1 Sha1::fromHex(const std::string_view& hex_view)
 {
     auto bytes = Bytes::fromHex(hex_view);
     return Sha1(bytes);
