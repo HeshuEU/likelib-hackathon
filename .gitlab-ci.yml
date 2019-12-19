@@ -40,8 +40,8 @@ Code quality:
     - echo ========================================================================= > /dev/null
     - echo ==                          Start code quality                         == > /dev/null
     - echo ========================================================================= > /dev/null
-    - clang-tidy node/main.cpp -- ${INCLUDE} -header-filter=.*
-    - clang-tidy rpc-client/main.cpp -- ${INCLUDE} -header-filter=.*
+    - clang-tidy node/main.cpp -header-filter=.* -- ${INCLUDE}
+    - clang-tidy rpc-client/main.cpp -header-filter=.* -- ${INCLUDE}
 
 
 Unit tests:
