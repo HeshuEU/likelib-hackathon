@@ -18,7 +18,7 @@ Build:
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
     - |
-      
+      echo
       echo -e "\033[40;1;42m ========================================================================= 
        ==                          Finish building                            == \n \
       ========================================================================= \033[0m"
@@ -39,9 +39,11 @@ Code quality:
     - apt update > /dev/null && apt install -y clang-tidy > /dev/null
     - cd ./src
     - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
-    - echo ========================================================================= > /dev/null
-    - echo ==                          Start code quality                         == > /dev/null
-    - echo ========================================================================= > /dev/null
+    - |
+      echo
+      echo -e "\033[40;1;42m =========================================================================
+       ==                          Start code quality                         == \n \
+      ========================================================================= \033[0m"
     - clang-tidy node/main.cpp -header-filter=.* -- ${INCLUDE}
     - clang-tidy rpc-client/main.cpp -header-filter=.* -- ${INCLUDE}
 
@@ -52,9 +54,11 @@ Unit tests:
     - docker
   cache: {}
   script:
-    - echo ========================================================================= > /dev/null
-    - echo ==                          Start tests                                == > /dev/null
-    - echo ========================================================================= > /dev/null
+    - |
+      echo
+      echo -e "\033[40;1;42m =========================================================================
+       ==                          Start tests                                == \n \
+      ========================================================================= \033[0m"
     - build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 Valgrind test:
@@ -63,9 +67,11 @@ Valgrind test:
     - docker
   script:
     - apt update > /dev/null && apt install -y valgrind > /dev/null
-    - echo ========================================================================= > /dev/null
-    - echo ==                          Start memory check                         == > /dev/null
-    - echo ========================================================================= > /dev/null
+    - |
+      echo
+      echo -e "\033[40;1;42m =========================================================================
+       ==                          Start memory check                         == \n \
+      ========================================================================= \033[0m"
     - |
       valgrind --leak-check=full build/src/node/node &&
       echo -e "\033[37;1;42m        Node check success        \033[0m" || 
