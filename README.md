@@ -38,6 +38,8 @@ Such things as port-forwarding with NAT, may change the port we need to connect 
 * `rpc.address` - address on which RPC is listening on;
 * `miner.threads` - optional parameter, sets the number of threads that miner is using;
 * `nodes` - list of known nodes.
+* `keys.public_path` - public key file path. if file not exists generate new key pair and save by this path.
+* `keys.private_path` - private key file path. if file not exists generate new key pair and save by this path.
 * `database.path` - path to folder with database files (will be created if not exists).
 * `database.clean` - if true - cleans database; otherwise does nothing.
 
