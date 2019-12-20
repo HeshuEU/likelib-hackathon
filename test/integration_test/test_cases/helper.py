@@ -13,9 +13,8 @@ LOCAL_HOST_IP_ADDRESS = "127.0.0.1"
 
 def TEST_CHECK(boolean_value, *, message=""):
     if not boolean_value:
-        print("Check failed:", message)
         traceback.print_stack()
-        exit(1)
+        raise Exception("Check failed:" + message)
 
 
 def TEST_CHECK_EQUAL(left, right, *, message=""):
@@ -26,42 +25,55 @@ def TEST_CHECK_NOT_EQUAL(left, right, *, message=""):
     TEST_CHECK(left != right, message=message)
 
 
+class NodeId:
+    def __init__(self, sync_port, rpc_port, listening_addres="0.0.0.0", absolute_address="127.0.0.1"):
+        self.listening_addres = listening_addres
+        self.absolute_address = absolute_address
+        self.sync_port = sync_port
+        self.rpc_port = rpc_port
+
+    @property
+    def listen_sync_address(self):
+        return f"{self.listening_addres}:{self.sync_port}"
+
+    @property
+    def connect_sync_address(self):
+        return f"{self.absolute_address}:{self.sync_port}"
+
+    @property
+    def listen_rpc_address(self):
+        return f"{self.listening_addres}:{self.rpc_port}"
+
+    @property
+    def connect_rpc_address(self):
+        return f"{self.absolute_address}:{self.rpc_port}"
+
+
 class NodeRunner:
     running = False
 
     def __init__(self, node_exec_path, work_dir):
         self.work_dir = os.path.abspath(work_dir)
         self.node_exec_path = node_exec_path
+        self.clean_up()
 
     @staticmethod
-    def generate_config(node_work_dir="", listen_address="0.0.0.0",
-                        net_public_port=20021, rpc_listening_port=50051, miner_threads=2, nodes_list=[],
+    def generate_config(node_work_dir="", *, current_node_info=NodeId(20203, 50051), miner_threads=2, nodes_infos_list=[],
                         path_to_database="likelib/database", clean_up_database=True):
 
-        config = {"net": {"listen_addr": f"{listen_address}:{net_public_port}",
-                          "public_port":  net_public_port},
-                  "rpc": {"address": f"{listen_address}:{rpc_listening_port}"},
+        config = {"net": {"listen_addr": current_node_info.listen_sync_address,
+                          "public_port": current_node_info.sync_port},
+                  "rpc": {"address": current_node_info.listen_rpc_address},
                   "miner": {"threads": miner_threads},
-                  "nodes": nodes_list,
+                  "nodes": [node_info.connect_sync_address for node_info in nodes_infos_list],
                   "database": {"path": path_to_database,
                                "clean": clean_up_database}
                   }
         return json.dumps(config)
 
-    @staticmethod
-    def _runner(work_dir, node_exec_path, node_config_file, time_out):
-        os.chdir(work_dir)
-        try:
-            print("Debug message:", "sterted")
-            node_pipe = subprocess.run(
-                [node_exec_path, "--config", node_config_file], capture_output=True, timeout=time_out)
-            print("Debug message:", "stoped")
-            print("Debug message:", node_pipe.stdout)
-            print("Debug message:", node_pipe.stderr)
-        except Exception:
-            pass
-
-    def start(self, node_config_content, time_out=15):
+    def start(self, node_config_content, start_up_time=2):
+        if self.running:
+            raise Exception("Process already started")
 
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
@@ -70,26 +82,41 @@ class NodeRunner:
         node_config_file = "config.json"
         with open(node_config_file, 'w') as node_config:
             node_config.write(node_config_content)
+        print("Node | Debug message: config content:", node_config_content)
+        self.process = subprocess.Popen(
+            [self.node_exec_path, "--config", node_config_file], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-        self.process = mp.Process(target=NodeRunner._runner, args=[
-                                  self.work_dir, self.node_exec_path, node_config_file, time_out])
-        self.process.start()
-        self.running = True
-        time.sleep(5)
-
-    def check(self):
-        # todo run parallel process to check output
-        if self.running:
-            self.process.join()
-            exit_code = self.process.exitcode
-            self.process.close()
+        if self.process.poll() is None:
+            print("Node | Debug message: process started")
+            self.running = True
+        else:
+            print("Node | Debug message: process failed to start")
             self.running = False
-            return exit_code
+
+        time.sleep(start_up_time)
+
+    # def check(self):
+    #     if self.running:
+    #         print("Process stdout:")
+    #         while True:
+    #             lines = self.process.stderr.read()
+    #             print(line.rstrip())
+    #     else:
+    #         raise Exception("process is not running")
+
+    def close(self):
+        self.process.kill()
+        exit_code = self.process.poll()
+        self.running = False
+        self.clean_up()
+        print("Node | Debug message: process closed")
 
     def clean_up(self):
         if not self.running:
             if os.path.exists(self.work_dir):
                 shutil.rmtree(self.work_dir, ignore_errors=True)
+        else:
+            print("Warning: call clean_up during node work")
 
 
 class Client:
@@ -109,6 +136,7 @@ class Client:
                         command, "--host", f"{host_ip}:{host_port}"]
         run_commands.extend(parameters)
 
+        print("Client | Debug message: call string", run_commands)
         pipe = subprocess.run(run_commands, capture_output=True)
 
         if pipe.returncode != 0:
@@ -165,13 +193,8 @@ class Client:
         return self.check_get_balance_result(self.get_balance(address=address, host_port=host_port, host_ip=host_ip), target_balance)
 
     def clean_up(self):
-        print("Client | Debug message: clean up call")
         if os.path.exists(self.work_dir):
             shutil.rmtree(self.work_dir, ignore_errors=True)
-
-
-class NetworkBuilder:
-    pass
 
 
 if __name__ == "__main__":
@@ -182,46 +205,45 @@ if __name__ == "__main__":
 
     def test_connection(work_dir, node_exec_path, rpc_client_exec_path):
         node = NodeRunner(node_exec_path, os.path.join(work_dir, "node"))
-        node.start(node.generate_config())
+        node_info = NodeId(sync_port=20204, rpc_port=50054)
+        node.start(node.generate_config(current_node_info=node_info))
 
         client = Client(rpc_client_exec_path,
-                              os.path.join(work_dir, "client"))
-        TEST_CHECK(client.run_check_test(host_port=50051))
+                        os.path.join(work_dir, "client"))
+        TEST_CHECK(client.run_check_test(
+            host_port=node_info.rpc_port, host_ip=node_info.absolute_address))
+        node.close()
 
-        return_code = node.check()
-
-        node.clean_up()
-        client.clean_up()
+    test_connection(os.path.join(work_dir, "test_connection"),
+                    node_exec_path, rpc_client_exec_path)
 
     def test_transfer(work_dir, node_exec_path, rpc_client_exec_path):
         node = NodeRunner(node_exec_path, os.path.join(work_dir, "node"))
 
+        node_info = NodeId(sync_port=20204, rpc_port=50054)
+
+        node.start(node.generate_config(current_node_info=node_info))
+
         client = Client(rpc_client_exec_path,
-                              os.path.join(work_dir, "client"))
+                        os.path.join(work_dir, "client"))
 
-        node.start(node.generate_config())
-
-        TEST_CHECK(client.run_check_test(host_port=50051))
+        TEST_CHECK(client.run_check_test(
+            host_port=node_info.rpc_port, host_ip=node_info.absolute_address))
 
         target_address = "11111111111111111111111111111111"
 
-        TEST_CHECK(client.run_check_balance(address=target_address,
-                                            host_port=50051, target_balance=0))
+        TEST_CHECK(client.run_check_balance(address=target_address, host_ip=node_info.absolute_address,
+                                            host_port=node_info.rpc_port, target_balance=0))
 
         from_address = "00000000000000000000000000000000"
+        amount = 333
+        transaction_wait = 2
+        TEST_CHECK(client.run_check_transfer(from_address=from_address, host_ip=node_info.absolute_address,
+                                             to_address=target_address, amount=amount, host_port=node_info.rpc_port, wait=transaction_wait))
 
-        TEST_CHECK(client.run_check_transfer(from_address=from_address,
-                                             to_address=target_address, amount=333, host_port=50051, wait=2))
+        TEST_CHECK(client.run_check_balance(address=target_address, host_ip=node_info.absolute_address,
+                                            host_port=node_info.rpc_port, target_balance=amount))
+        node.close()
 
-        TEST_CHECK(client.run_check_balance(address=target_address,
-                                            host_port=50051, target_balance=333))
-
-        return_code = node.check()
-
-        node.clean_up()
-        client.clean_up()
-
-    test_connection(os.path.join(work_dir, "test_connection"),
-                    node_exec_path, rpc_client_exec_path)
     test_transfer(os.path.join(work_dir, "test_transfer"),
                   node_exec_path, rpc_client_exec_path)

@@ -4,7 +4,8 @@ import os
 def __import_test_case(case_name):
     try:
         imported_module = __import__(f"test_cases.{case_name}")
-        main_fun = imported_module.__dict__[case_name].__dict__.get("main", None)
+        main_fun = imported_module.__dict__[
+            case_name].__dict__.get("main", None)
         return main_fun
     except Exception as e:
         print(f"Failed to import test case [{case_name}]: {e}")
@@ -17,7 +18,7 @@ def __register_test_cases(test_case_names):
     for test_case in test_case_names:
         if len(test_case) != 0:
             try:
-                test_case_main_fun = __import_test_case(test_case);
+                test_case_main_fun = __import_test_case(test_case)
                 if test_case_main_fun is not None:
                     content = {"name": test_case, "run": test_case_main_fun}
                     registered_test_cases.append(content)
@@ -36,4 +37,3 @@ def __get_test_case_names():
 
 
 registered_test_cases = __register_test_cases(__get_test_case_names())
-
