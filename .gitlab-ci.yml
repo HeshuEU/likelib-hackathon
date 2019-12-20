@@ -5,7 +5,7 @@ stages:
 
 Build:
   stage: build
-  image: heshuby/prepare_build:2019-12-19
+  image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
   script: 
@@ -31,7 +31,7 @@ Build:
     
 Code quality:
   stage: quality
-  image: heshuby/prepare_build:2019-12-19
+  image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
   allow_failure: true
@@ -61,7 +61,7 @@ Unit tests:
 
 Valgrind test:
   stage: test
-  image: heshuby/prepare_build:2019-12-19
+  image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
   script:
