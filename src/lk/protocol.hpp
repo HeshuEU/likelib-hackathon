@@ -9,8 +9,6 @@
 #include "net/host.hpp"
 
 
-#include <stack>
-
 namespace lk
 {
 
@@ -19,21 +17,25 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
 
 class Core;
 
-
 class Peer
 {
   public:
+    //================
     class Handler : public net::Handler
     {
+    public:
+        //===================
+        explicit Handler(net::Session& handled_session);
+        ~Handler() override = default;
         //================
         void onReceive(const base::Bytes& bytes) override;
         // virtual void onSend() = 0;
         void onClose() override;
-        //===================
-        ~Handler() override = default;
         //================
+    private:
+        net::Session& _handled_session;
     };
-
+    //================
   private:
     //================
 
@@ -41,17 +43,39 @@ class Peer
 };
 
 
-class HandlerFactory : public net::HandlerFactory
+class Network
 {
   public:
     //================
-    ~HandlerFactory() override = default;
+    Network(const base::PropertyTree& config, Core& core);
+
+    class HandlerFactory : public net::HandlerFactory
+    {
+      public:
+        //================
+        explicit HandlerFactory(Network& owning_network_object);
+        ~HandlerFactory() override = default;
+        //================
+        std::unique_ptr<net::Handler> create() override;
+        void destroy() override;
+        void close();
+        //================
+    private:
+        //================
+        Network& _owning_network_object;
+        //================
+    };
     //================
-    std::unique_ptr<net::Handler> create() override;
+    void run();
     //================
+    void broadcastBlock(const bc::Block& block);
+    void broadcastTransaction(const bc::Transaction& tx);
+    //================
+  private:
+    net::Host _host;
 };
 
-
+/*
 class SessionManager
 {
   public:
@@ -110,5 +134,6 @@ class Network
     net::Host _host;
     std::unordered_map<net::Id, std::unique_ptr<SessionManager>> _peers;
 };
+ */
 
 } // namespace lk

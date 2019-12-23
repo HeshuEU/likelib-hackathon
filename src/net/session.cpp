@@ -1,5 +1,8 @@
 #include "session.hpp"
 
+#include "base/assert.hpp"
+#include "base/serialization.hpp"
+
 #include <atomic>
 
 namespace net

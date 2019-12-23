@@ -4,7 +4,6 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "net/error.hpp"
-#include "net/packet.hpp"
 
 #include <boost/asio/read.hpp>
 #include <boost/asio/write.hpp>
