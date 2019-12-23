@@ -40,8 +40,9 @@ Session& Host::addNewSession(std::unique_ptr<Connection> connection)
 {
     ASSERT(connection);
     std::unique_lock lk(_sessions_mutex);
-    _sessions.push_back(std::make_shared<Session>(std::move(connection), _handler_factory->create()));
+    _sessions.push_back(std::make_shared<Session>(std::move(connection)));
     auto& session = *_sessions.back();
+    session.setHandler(_handler_factory->create(session));
     return session;
 }
 

@@ -26,7 +26,7 @@ class Session
     //==================
     using SessionManager = std::function<void(Session& session, const base::Bytes& data)>;
     //==================
-    Session(std::unique_ptr<Connection> connection, std::unique_ptr<Handler> handler);
+    explicit Session(std::unique_ptr<Connection> connection);
     ~Session();
     //==================
     [[nodiscard]] bool isActive() const;
@@ -34,9 +34,12 @@ class Session
     //==================
     [[nodiscard]] std::size_t getId() const;
     //==================
+    void setHandler(std::unique_ptr<Handler> handler);
+    //==================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
     //==================
+    void start();
     void close();
     //==================
   private:

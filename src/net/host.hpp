@@ -24,7 +24,7 @@ class HandlerFactory
 {
   public:
     //===================
-    virtual std::unique_ptr<Handler> create() = 0;
+    virtual std::unique_ptr<Handler> create(Session& session) = 0;
     virtual void destroy() = 0;
     //===================
     virtual ~HandlerFactory() = default;

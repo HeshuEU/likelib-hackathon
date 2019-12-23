@@ -6,51 +6,220 @@
 namespace lk
 {
 
-Peer::Handler::Handler(net::Session& handled_session)
-    : _handled_session{handled_session}
+namespace mh
+{
+
+    //=========================
+
+    bool Ping::canHandle(MessageType type) const
+    {
+        return type == MessageType::PING;
+    }
+
+
+    void Ping::handle(MessageType type, Data& data, base::Bytes& bytes)
+    {}
+
+    //=========================
+
+    bool Pong::canHandle(MessageType type) const
+    {
+        return type == MessageType::PING;
+    }
+
+
+    void Pong::handle(MessageType type, Data& data, base::Bytes& bytes)
+    {}
+
+    //=========================
+
+    bool Transaction::canHandle(MessageType type) const
+    {
+        return type == MessageType::PING;
+    }
+
+
+    void Transaction::handle(MessageType type, Data& data, base::Bytes& bytes)
+    {}
+
+    //=========================
+
+    bool AllHandler::canHandle(MessageType type) const
+    {
+        for(auto& handler: _handlers) {
+            if(handler->canHandle(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    void AllHandler::handle(MessageType type, Data& data, base::Bytes& bytes)
+    {
+        for(auto& handler: _handlers) {
+            handler->handle(type, data, bytes);
+        }
+    }
+
+    //=========================
+
+} // namespace mh
+
+
+Peer::Handler::Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session)
+    : _owning_peer{owning_peer}, _owning_network_object{owning_network_object}, _session{handled_session}
 {}
 
 
-void Peer::Handler::onReceive(const base::Bytes& bytes)
+void Peer::Handler::onReceive(const base::Bytes& data)
 {
+    if(_session.isClosed()) {
+        return;
+    }
 
+    base::SerializationIArchive ia(data);
+    MessageType type;
+    ia >> type;
+    base::Bytes data_without_type;
+    ia >> data_without_type;
+
+    if(_state != State::SYNCHRONISED) {
+        if(type == MessageType::HANDSHAKE) {
+            base::Bytes top_block_hash;
+            ia >> top_block_hash;
+            onHandshake(_session, base::Sha256(top_block_hash));
+        }
+        else if(type == MessageType::BLOCK) {
+            bc::Block block = bc::Block::deserialize(ia);
+            onSyncBlock(_session, std::move(block));
+        }
+        else {
+            LOG_DEBUG << "Received on non-handshaked connection with peer " << _session.getId();
+        }
+    }
+    else {
+        switch(type) {
+            case MessageType::PING: {
+                onPing(_session);
+                break;
+            }
+            case MessageType::PONG: {
+                break;
+            }
+            case MessageType::TRANSACTION: {
+                bc::Transaction tx;
+                ia >> tx;
+                onTransaction(_session, std::move(tx));
+                break;
+            }
+            case MessageType::BLOCK: {
+                auto block = bc::Block::deserialize(ia);
+                onBlock(_session, std::move(block));
+                break;
+            }
+            case MessageType::GET_BLOCK: {
+                base::Bytes block_hash;
+                ia >> block_hash;
+                onGetBlock(_session, base::Sha256(block_hash));
+                break;
+            }
+            case MessageType::INFO: {
+                break;
+            }
+            default: {
+                LOG_DEBUG << "Received an invalid block from peer " << _session.getId();
+                break;
+            }
+        }
+    }
 }
 
 
 void Peer::Handler::onClose()
 {
-
+    LOG_DEBUG << "Closing peer";
+    _owning_network_object.removePeer(_owning_peer);
 }
 
 
-Network::HandlerFactory::HandlerFactory(Network& owning_network_object)
-    : _owning_network_object{owning_network_object}
+void Peer::Handler::onPing()
+{}
+
+
+void Peer::Handler::onPong()
+{}
+
+
+
+void Peer::Handler::onTransaction(bc::Transaction&& tx)
+{}
+
+
+void Peer::Handler::onBlock(bc::Block&& block)
+{}
+
+
+void Peer::Handler::onGetBlock(base::Sha256&& block_hash)
+{}
+
+
+void Peer::Handler::onInfo()
+{}
+
+Peer::Peer(Network& owning_network_object, net::Session& session)
+    : _owning_network_object{owning_network_object}, _session{session}
+{}
+
+
+std::unique_ptr<Peer::Handler> Peer::createHandler()
 {
+    return std::make_unique<Peer::Handler>(*this, _owning_network_object, _session);
 }
 
 
-std::unique_ptr<net::Handler> Network::HandlerFactory::create()
-{
+Network::HandlerFactory::HandlerFactory(Network& owning_network_object) : _owning_network_object{owning_network_object}
+{}
 
+
+std::unique_ptr<net::Handler> Network::HandlerFactory::create(net::Session& session)
+{
+    auto& peer = _owning_network_object.createPeer(session);
+    return peer.createHandler();
 }
 
 
 void Network::HandlerFactory::destroy()
-{
+{}
 
+
+Network::Network(const base::PropertyTree& config, Core& core) : _host{config}
+{}
+
+
+Peer& Network::createPeer(net::Session& session)
+{
+    auto& peer = _peers.emplace_back(*this, session);
+    return peer;
 }
 
 
-void Network::HandlerFactory::close()
-{
+void Network::removePeer(const Peer& peer)
+{}
 
+void Network::broadcastBlock(const bc::Block& block)
+{
+    base::SerializationOArchive oa;
+    oa << MessageType::BLOCK << block;
+    _host.broadcast(std::move(oa).getBytes());
 }
 
 
-Network::Network(const base::PropertyTree& config, Core& core)
-    : _host{config}
+void Network::broadcastTransaction(const bc::Transaction& tx)
 {
-
+    base::SerializationOArchive oa;
+    oa << MessageType::TRANSACTION << tx;
+    _host.broadcast(std::move(oa).getBytes());
 }
 
 
@@ -59,19 +228,19 @@ void Network::run()
     _host.run(std::make_unique<HandlerFactory>(*this));
 }
 
-//void Peer::onReceive(const base::Bytes& bytes)
+// void Peer::onReceive(const base::Bytes& bytes)
 //{
 //    LOG_DEBUG << "onReceive " << bytes.toString();
 //}
 //
 //
-//void Peer::onClose()
+// void Peer::onClose()
 //{
 //    LOG_DEBUG << "onClose";
 //}
 //
 //
-//std::unique_ptr<net::Handler> HandlerFactory::create()
+// std::unique_ptr<net::Handler> HandlerFactory::create()
 //{
 //    auto ret = std::make_unique<Handler>();
 //    return std::move(ret);
@@ -79,11 +248,11 @@ void Network::run()
 //
 //
 //
-//Network::Network(const base::PropertyTree& config, Core& core) : _config(config), _core{core}, _host{_config}
+// Network::Network(const base::PropertyTree& config, Core& core) : _config(config), _core{core}, _host{_config}
 //{}
 //
 //
-//void Network::broadcastBlock(const bc::Block& block)
+// void Network::broadcastBlock(const bc::Block& block)
 //{
 //    base::SerializationOArchive oa;
 //    oa << MessageType::BLOCK << block;
@@ -91,7 +260,7 @@ void Network::run()
 //}
 //
 //
-//void Network::broadcastTransaction(const bc::Transaction& tx)
+// void Network::broadcastTransaction(const bc::Transaction& tx)
 //{
 //    base::SerializationOArchive oa;
 //    oa << MessageType::TRANSACTION << tx;
@@ -99,7 +268,7 @@ void Network::run()
 //}
 //
 //
-//void Network::run()
+// void Network::run()
 //{
 //    auto on_accept = [this](net::Session& session) {
 //        auto it = _peers.find(session.getId());
@@ -140,7 +309,7 @@ void Network::run()
 //}
 //
 //
-//std::unique_ptr<SessionManager> SessionManager::accepted(net::Session& session, Core& core, net::Host& host)
+// std::unique_ptr<SessionManager> SessionManager::accepted(net::Session& session, Core& core, net::Host& host)
 //{
 //    std::unique_ptr<SessionManager> ret{new SessionManager(core, host)};
 //    ret->_state = State::ACCEPTED;
@@ -149,7 +318,7 @@ void Network::run()
 //}
 //
 //
-//std::unique_ptr<SessionManager> SessionManager::connected(net::Session& session, Core& core, net::Host& host)
+// std::unique_ptr<SessionManager> SessionManager::connected(net::Session& session, Core& core, net::Host& host)
 //{
 //    std::unique_ptr<SessionManager> ret{new SessionManager(core, host)};
 //    ret->_state = State::CONNECTED;
@@ -158,11 +327,11 @@ void Network::run()
 //}
 //
 //
-//SessionManager::SessionManager(Core& core, net::Host& host) : _core{core}, _host{host}
+// SessionManager::SessionManager(Core& core, net::Host& host) : _core{core}, _host{host}
 //{}
 //
 //
-//void SessionManager::handle(net::Session& session, const base::Bytes& data)
+// void SessionManager::handle(net::Session& session, const base::Bytes& data)
 //{
 //    if(session.isClosed()) {
 //        return;
@@ -224,7 +393,7 @@ void Network::run()
 //}
 //
 //
-//void SessionManager::onPing(net::Session& session)
+// void SessionManager::onPing(net::Session& session)
 //{
 //    base::SerializationOArchive msg;
 //    msg << MessageType::PONG;
@@ -232,25 +401,25 @@ void Network::run()
 //}
 //
 //
-//void SessionManager::onPong(net::Session& session)
+// void SessionManager::onPong(net::Session& session)
 //{}
 //
 //
-//void SessionManager::onTransaction(net::Session& session, bc::Transaction&& tx)
+// void SessionManager::onTransaction(net::Session& session, bc::Transaction&& tx)
 //{
 //    LOG_TRACE << "Session::onTransaction peer " << session.getId();
 //    _core.performTransaction(tx);
 //}
 //
 //
-//void SessionManager::onBlock(net::Session& session, bc::Block&& block)
+// void SessionManager::onBlock(net::Session& session, bc::Block&& block)
 //{
 //    LOG_TRACE << "Session::onBlock peer " << session.getId();
 //    _core.tryAddBlock(std::move(block));
 //}
 //
 //
-//void SessionManager::onGetBlock(net::Session& session, base::Sha256&& block_hash)
+// void SessionManager::onGetBlock(net::Session& session, base::Sha256&& block_hash)
 //{
 //    LOG_TRACE << "Session::onGetBlock peer " << session.getId();
 //    auto block = _core.findBlock(block_hash);
@@ -262,7 +431,7 @@ void Network::run()
 //}
 //
 //
-//void SessionManager::onInfo(net::Session& session)
+// void SessionManager::onInfo(net::Session& session)
 //{
 //    LOG_TRACE << "Session::onInfo peer " << session.getId();
 //    base::SerializationOArchive oa;
@@ -271,7 +440,7 @@ void Network::run()
 //}
 //
 //
-//void SessionManager::handshakeRoutine(net::Session& session)
+// void SessionManager::handshakeRoutine(net::Session& session)
 //{
 //    LOG_TRACE << "Session::handshakeRoutine peer " << session.getId();
 //    base::SerializationOArchive oa;
@@ -280,7 +449,7 @@ void Network::run()
 //}
 //
 //
-//void SessionManager::onHandshake(net::Session& session, base::Sha256&& top_block_hash)
+// void SessionManager::onHandshake(net::Session& session, base::Sha256&& top_block_hash)
 //{
 //    LOG_DEBUG << "SessionManager::onHandshake with node " << session.getId();
 //    if(top_block_hash != base::Sha256::compute(base::toBytes(_core.getTopBlock()))) {
@@ -305,7 +474,7 @@ void Network::run()
 //}
 //
 //
-//void SessionManager::onSyncBlock(net::Session& session, bc::Block&& block)
+// void SessionManager::onSyncBlock(net::Session& session, bc::Block&& block)
 //{
 //    LOG_DEBUG << "SessionManager::onSyncBlock with node " << session.getId();
 //    if(_core.findBlock(base::Sha256::compute(base::toBytes(block)))) {
