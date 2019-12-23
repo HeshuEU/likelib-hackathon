@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(block_operator_move)
 }
 
 
-BOOST_AUTO_TEST_CASE(block_sets_all)
+BOOST_AUTO_TEST_CASE(block_sets)
 {
     bc::Block block(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     auto tx_set = getTestSet();
@@ -182,7 +182,34 @@ BOOST_AUTO_TEST_CASE(block_add_transaction)
 }
 
 
-BOOST_AUTO_TEST_CASE(block_serialization)
+BOOST_AUTO_TEST_CASE(block_serialization1)
+{
+    bc::Block block1(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
+    block1.setNonce(bc::NonceInt(6706744));
+    base::SerializationOArchive oa;
+    bc::Block::serialize(oa, block1);
+
+    base::SerializationIArchive ia(oa.getBytes());
+    bc::Block block2(base::Sha256::compute(base::Bytes("")), bc::TransactionsSet());
+    block2 = bc::Block::deserialize(ia);
+    BOOST_CHECK(block2.getPrevBlockHash() == base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")));
+    BOOST_CHECK(block2.getNonce() == bc::NonceInt(6706744));
+    auto block_tx_set = block1.getTransactions();
+
+    BOOST_CHECK(block_tx_set.find(
+        bc::Transaction(bc::Address("from1 vjS247DGFSv\n "), bc::Address("to1 ()#%DSOJ\n"), 12398, base::Time())));
+    BOOST_CHECK(block_tx_set.find(
+        bc::Transaction(bc::Address("from2 vj^Hs47DGFSv\n "), bc::Address("to2 ()#%Dsdg\n"), 5825285, base::Time())));
+    BOOST_CHECK(block_tx_set.find(
+        bc::Transaction(bc::Address("from3 vjS2%#&DGF\n "), bc::Address("to3 ()#%DdfOJ\n"), 12245398, base::Time())));
+    BOOST_CHECK(block_tx_set.find(
+        bc::Transaction(bc::Address("from4 vjS247sdgFSv\n "), bc::Address("to4 {#%DSOJ "), 168524347, base::Time())));
+    BOOST_CHECK(block_tx_set.find(
+        bc::Transaction(bc::Address("from5 vjS2  DGFSv\n "), bc::Address("to5 ()#%DSdsJ\n"), 1434457, base::Time())));
+}
+
+
+BOOST_AUTO_TEST_CASE(block_serialization2)
 {
     bc::Block block1(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     block1.setNonce(bc::NonceInt(6706744));
