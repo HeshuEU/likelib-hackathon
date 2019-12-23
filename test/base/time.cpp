@@ -86,3 +86,13 @@ BOOST_AUTO_TEST_CASE(time_seconds_serialization)
     auto time_2_serialized{now_2.getSecondsSinceEpochBeginning()};
     BOOST_CHECK_EQUAL(time_1_serialized, time_2_serialized);
 }
+
+
+BOOST_AUTO_TEST_CASE(time_toBytes_from_Bytes)
+{
+    auto time1{base::Time::now()};
+    auto b = base::toBytes(time1);
+    auto time2 = base::fromBytes<base::Time>(b);
+    BOOST_CHECK(time1.getSecondsSinceEpochBeginning() == time2.getSecondsSinceEpochBeginning());
+    BOOST_CHECK(time1.toTimePoint() == time2.toTimePoint());
+}

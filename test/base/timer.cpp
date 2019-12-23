@@ -1,6 +1,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "base/timer.hpp"
+#include "base/serialization.hpp"
 
 #include <thread>
 
