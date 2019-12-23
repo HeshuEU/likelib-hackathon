@@ -46,5 +46,5 @@ if __name__ == "__main__":
         print(f"Not found file by path: {rpc_client_exec_path}")
         exit(2)
 
-    return_code = helper.run_registered_test_cases(node_exec_path, rpc_client_exec_path)
+    return_code = tester.run_registered_test_cases(node_exec_path, rpc_client_exec_path)
     exit(return_code)
