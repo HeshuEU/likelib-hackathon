@@ -14,6 +14,7 @@ set(TEST_SOURCES
         net/packet.cpp
         bc/address.cpp
         bc/block.cpp
+        bc/database_manager.cpp
 		bc/transaction.cpp
         bc/transactions_set.cpp
         lk/balance_manager.cpp
