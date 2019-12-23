@@ -7,7 +7,6 @@ import tester
 import test_connection
 import test_transaction
 
-
 # TODO: make script multi-platform
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@ def TEST_CHECK_NOT_EQUAL(left, right, *, message=""):
 
 # TODO: implement logger insteed print
 
+
 class NodeId:
     def __init__(self, sync_port, rpc_port, listening_addres="0.0.0.0", absolute_address="127.0.0.1"):
         self.listening_addres = listening_addres
@@ -49,11 +50,12 @@ class NodeId:
 
 
 class NodeRunner:
+    __temp_file_name = "temp.lock"
     running = False
 
     def __init__(self, node_exec_path, node_config_content, work_dir, start_up_time=2):
         self.work_dir = os.path.abspath(work_dir)
-        print("Node | Debug message: work dir:", self.work_dir)
+        # print("Node | Debug message: work dir:", self.work_dir)
         self.node_exec_path = node_exec_path
         if os.path.exists(self.work_dir):
             shutil.rmtree(self.work_dir, ignore_errors=True)
@@ -63,10 +65,9 @@ class NodeRunner:
         with open(self.node_config_file, 'w') as node_config:
             node_config.write(node_config_content)
 
-        print("Node | Debug message: config content:", node_config_content)
+        # print("Node | Debug message: config content:", node_config_content)
 
         self.start_up_time = start_up_time
-        
 
     @staticmethod
     def generate_config(*, current_node_id=NodeId(20203, 50051), miner_threads=2, nodes_id_list=[],
@@ -90,28 +91,52 @@ class NodeRunner:
             [self.node_exec_path, "--config", self.node_config_file], cwd=self.work_dir, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
         if self.process.poll() is None:
-            print("Node | Debug message: process started")
+            # print("Node | Debug message: process started")
             self.running = True
         else:
-            print("Node | Debug message: process failed to start")
+            # print("Node | Debug message: process failed to start")
             self.running = False
             raise Exception("Process failed to start")
 
         time.sleep(self.start_up_time)
 
-    # def check(self):
-    #     if self.running:
-    #         print("Process stdout:")
-    #         while True:
-    #             lines = self.process.stderr.read()
-    #             print(line.rstrip())
-    #     else:
-    #         raise Exception("process is not running")
+    def _get_buffer(self):
+        if self.running:
+            def __check_log(pipe):
+                with open(NodeRunner.__temp_file_name, "at") as temp_file:
+                    while True:
+                        temp_file.write(pipe.readline().decode("utf8"))
+                        temp_file.flush()
+
+            proc = mp.Process(target=__check_log, args=[self.process.stderr, ])
+            proc.start()
+            # can't read all buffer and wait EOF, but process is infinite
+            proc.join(1)
+            if proc.is_alive():
+                proc.kill()
+                proc.join()
+            exit_code = proc.exitcode
+            proc.close()
+
+    def check(self, check_line_fun):
+        self._get_buffer()
+        if os.path.exists(NodeRunner.__temp_file_name):
+            exit_value = False
+            with open(NodeRunner.__temp_file_name, "rt") as temp_file:
+                while True:
+                    line = temp_file.readline()
+                    if not line:
+                        break
+                    if check_line_fun(line):
+                        exit_value = True
+            return exit_value
+        else:
+            raise Exception("Buffer file was not found")
 
     def __enter__(self):
         self.start()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         if exc_val:
@@ -122,7 +147,7 @@ class NodeRunner:
             self.process.kill()
             exit_code = self.process.poll()
             self.running = False
-            print("Node | Debug message: process closed")
+            # print("Node | Debug message: process closed")
 
 
 class Client:
@@ -130,7 +155,7 @@ class Client:
 
     def __init__(self, rpc_client_exec_path, work_dir):
         self.work_dir = os.path.abspath(work_dir)
-        print("Client | Debug message: work dir:", self.work_dir)
+        # print("Client | Debug message: work dir:", self.work_dir)
         self.rpc_client_exec_path = rpc_client_exec_path
         if os.path.exists(self.work_dir):
             shutil.rmtree(self.work_dir, ignore_errors=True)
@@ -139,10 +164,11 @@ class Client:
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
 
-        run_commands = [self.rpc_client_exec_path, command, "--host", host_id.connect_rpc_address]
+        run_commands = [self.rpc_client_exec_path,
+                        command, "--host", host_id.connect_rpc_address]
         run_commands.extend(parameters)
 
-        print("Client | Debug message: call string", run_commands)
+        # print("Client | Debug message: call string", run_commands)
         pipe = subprocess.run(
             run_commands, cwd=self.work_dir, capture_output=True)
 
@@ -156,28 +182,29 @@ class Client:
 
     @staticmethod
     def check_test_result(result):
-        print("Client | Debug message:", result)
+        # print("Client | Debug message:", result)
         if result.success and b"Test passed\n" in result.message:
             return True
         else:
-            print("test check failed:", result.message)
+            # print("test check failed:", result.message)
             return False
 
     def run_check_test(self, *, host_id):
         return self.check_test_result(self.test(host_id=host_id))
 
     def transfer(self, *, from_address, to_address, amount, host_id, wait):
-        result = self.__run(command="transfer", parameters=["--from", from_address, "--to", to_address, "--amount", str(amount)], host_id=host_id)
+        result = self.__run(command="transfer", parameters=[
+                            "--from", from_address, "--to", to_address, "--amount", str(amount)], host_id=host_id)
         time.sleep(wait)
         return result
 
     @staticmethod
     def check_transfer_result(result):
-        print("Client | Debug message:", result)
+        # print("Client | Debug message:", result)
         if result.success and b"Remote call of transaction -> [likelib]\n" in result.message:
             return True
         else:
-            print("transfer check failed:", result.message)
+            # print("transfer check failed:", result.message)
             return False
 
     def run_check_transfer(self, *, from_address, to_address, amount, host_id, wait):
@@ -188,11 +215,11 @@ class Client:
 
     @staticmethod
     def check_get_balance_result(result, target_balance):
-        print("Client | Debug message:", result)
+        # print("Client | Debug message:", result)
         if result.success and (f"Remote call of get_balance -> [{target_balance}]\n").encode('utf8') in result.message:
             return True
         else:
-            print("get_balance check failed:", result.message)
+            # print("get_balance check failed:", result.message)
             return False
 
     def run_check_balance(self, *, address, host_id, target_balance):
