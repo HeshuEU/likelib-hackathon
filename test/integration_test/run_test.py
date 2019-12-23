@@ -5,7 +5,9 @@ import glob
 import tester
 
 import test_connection
-import test_transaction
+import test_transfer
+import test_multi_network
+import test_multi_transfer
 
 # TODO: make script multi-platform
 

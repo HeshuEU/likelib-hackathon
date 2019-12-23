@@ -50,7 +50,7 @@ class NodeId:
 
 
 class NodeRunner:
-    __temp_file_name = "temp.lock"
+    BUFFER_FILE_NAME = "temp.lock"
     running = False
 
     def __init__(self, node_exec_path, node_config_content, work_dir, start_up_time=2):
@@ -66,7 +66,7 @@ class NodeRunner:
             node_config.write(node_config_content)
 
         # print("Node | Debug message: config content:", node_config_content)
-
+        self.buffer_file = os.path.join(self.work_dir, NodeRunner.BUFFER_FILE_NAME)
         self.start_up_time = start_up_time
 
     @staticmethod
@@ -102,13 +102,13 @@ class NodeRunner:
 
     def _get_buffer(self):
         if self.running:
-            def __check_log(pipe):
-                with open(NodeRunner.__temp_file_name, "at") as temp_file:
+            def __check_log(pipe, buffer_file_name):
+                with open(buffer_file_name, "at") as temp_file:
                     while True:
                         temp_file.write(pipe.readline().decode("utf8"))
                         temp_file.flush()
 
-            proc = mp.Process(target=__check_log, args=[self.process.stderr, ])
+            proc = mp.Process(target=__check_log, args=[self.process.stderr, self.buffer_file])
             proc.start()
             # can't read all buffer and wait EOF, but process is infinite
             proc.join(1)
@@ -120,9 +120,9 @@ class NodeRunner:
 
     def check(self, check_line_fun):
         self._get_buffer()
-        if os.path.exists(NodeRunner.__temp_file_name):
+        if os.path.exists(self.buffer_file):
             exit_value = False
-            with open(NodeRunner.__temp_file_name, "rt") as temp_file:
+            with open(self.buffer_file, "rt") as temp_file:
                 while True:
                     line = temp_file.readline()
                     if not line:
@@ -139,8 +139,6 @@ class NodeRunner:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-        if exc_val:
-            raise Exception("Unexpected error")
 
     def close(self):
         if self.running:
@@ -204,7 +202,7 @@ class Client:
         if result.success and b"Remote call of transaction -> [likelib]\n" in result.message:
             return True
         else:
-            # print("transfer check failed:", result.message)
+            print("transfer check failed:", result.message)
             return False
 
     def run_check_transfer(self, *, from_address, to_address, amount, host_id, wait):
@@ -219,7 +217,7 @@ class Client:
         if result.success and (f"Remote call of get_balance -> [{target_balance}]\n").encode('utf8') in result.message:
             return True
         else:
-            # print("get_balance check failed:", result.message)
+            print("get_balance check failed:", result.message)
             return False
 
     def run_check_balance(self, *, address, host_id, target_balance):
@@ -235,7 +233,7 @@ def test_case(registration_test_case_name=""):
             test_name = registration_test_case_name
         else:
             test_name = func.__name__
-        print("Registered test case:", test_name)
+        print(f"Registered test case: {test_name}")
 
         __test_case_work_dir = os.path.join(os.getcwd(), test_name)
 
