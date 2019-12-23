@@ -16,6 +16,16 @@ BOOST_AUTO_TEST_CASE(time_usage1)
 }
 
 
+BOOST_AUTO_TEST_CASE(time_without_sleep)
+{
+    base::Timer timer;
+    timer.start();
+
+    auto milli = timer.elapsedMillis();
+    BOOST_CHECK(milli <= 1);
+}
+
+
 BOOST_AUTO_TEST_CASE(time_usage2)
 {
     base::Timer timer1;
