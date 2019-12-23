@@ -141,3 +141,32 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_integers)
     BOOST_CHECK(v4 == base::fromBytes<std::vector<long long>>(b4));
     BOOST_CHECK(v5 == base::fromBytes<std::vector<unsigned char>>(b5));
 }
+
+
+BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_strings)
+{
+    std::vector<std::string> v1{"34fGEk350u8Fj", "DFN#%06784 giksdf34 \n  ", "asd35%64khrtfFsp    ad03\n\n\n\n"};
+    std::vector<std::string> v2{};
+
+    auto b1 = base::toBytes(v1);
+    auto b2 = base::toBytes(v2);
+
+    BOOST_CHECK(v1 == base::fromBytes<std::vector<std::string>>(b1));
+    BOOST_CHECK(v2 == base::fromBytes<std::vector<std::string>>(b2));
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_enum)
+{
+    enum class E {
+        A, B, C, D
+    };
+    std::vector<E> v1{E::A, E::C, E::D};
+    std::vector<E> v2{};
+
+    auto b1 = base::toBytes(v1);
+    auto b2 = base::toBytes(v2);
+
+    BOOST_CHECK(v1 == base::fromBytes<std::vector<E>>(b1));
+    BOOST_CHECK(v2 == base::fromBytes<std::vector<E>>(b2));
+}
