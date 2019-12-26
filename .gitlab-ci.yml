@@ -10,20 +10,17 @@ Build:
   tags:
     - docker
   script:
-    - export INSTALL_DIR="/opt"
-    - export PROJECT_SOURCE_DIR=${PWD}
-    - export PROJECT_BUILD_DIR="./build"
+    - INSTALL_DIR="/opt"
+    - PROJECT_SOURCE_DIR=${PWD}
+    - PROJECT_BUILD_DIR="./build"
     - mkdir ${PROJECT_BUILD_DIR}
-
     - cd ${PROJECT_BUILD_DIR}
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
-    - |
-      echo
+    - echo
       echo -e "\033[40;1;42m =========================================================================
        ==                          Finish building                            == \n \
       ========================================================================= \033[0m"
-
   artifacts:
     paths:
     - build
@@ -38,9 +35,8 @@ Code quality:
   allow_failure: true
   script:
     - cd ./src
-    - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
-    - |
-      echo
+    - INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
+    - echo
       echo -e "\033[40;1;42m =========================================================================
        ==                          Start code quality                         == \n \
       ========================================================================= \033[0m"
@@ -52,12 +48,10 @@ Unit tests:
   tags:
     - docker
   script:
-    - |
-      echo
+    - echo
       echo -e "\033[40;1;42m =========================================================================
        ==                          Start unit tests                                == \n \
       ========================================================================= \033[0m"
-
     - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
@@ -67,12 +61,10 @@ Integration tests:
   tags:
     - docker
   script:
-    - |
-      echo
+    - echo
       echo -e "\033[40;1;42m =========================================================================
        ==                          Start integraion tests                                == \n \
       ========================================================================= \033[0m"
-
     - python3 test/integration_test/run_test.py -n build/src/node/node -r build/src/rpc-client/rpc-clientt 1
 
 
@@ -82,10 +74,8 @@ Valgrind test:
   tags:
     - docker
   script:
-    - |
-      echo
+    - echo
       echo -e "\033[40;1;42m =========================================================================
        ==                          Start memory check                         == \n \
       ========================================================================= \033[0m"
-
     - valgrind --leak-check=full --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
