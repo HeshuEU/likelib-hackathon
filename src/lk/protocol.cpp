@@ -44,6 +44,14 @@ namespace mh
 
     //=========================
 
+    AllHandler::AllHandler()
+    {
+        _handlers.push_back(std::make_unique<Ping>());
+        _handlers.push_back(std::make_unique<Pong>());
+        _handlers.push_back(std::make_unique<Transaction>());
+        _handlers.push_back(std::make_unique<Ping>());
+    }
+
     bool AllHandler::canHandle(MessageType type) const
     {
         for(auto& handler: _handlers) {
@@ -84,15 +92,15 @@ void Peer::Handler::onReceive(const base::Bytes& data)
     base::Bytes data_without_type;
     ia >> data_without_type;
 
-    if(_state != State::SYNCHRONISED) {
+    if(_owning_peer._state != State::SYNCHRONISED) {
         if(type == MessageType::HANDSHAKE) {
             base::Bytes top_block_hash;
             ia >> top_block_hash;
-            onHandshake(_session, base::Sha256(top_block_hash));
+            onHandshake(base::Sha256(top_block_hash));
         }
         else if(type == MessageType::BLOCK) {
             bc::Block block = bc::Block::deserialize(ia);
-            onSyncBlock(_session, std::move(block));
+            onBlock(std::move(block));
         }
         else {
             LOG_DEBUG << "Received on non-handshaked connection with peer " << _session.getId();
@@ -101,27 +109,28 @@ void Peer::Handler::onReceive(const base::Bytes& data)
     else {
         switch(type) {
             case MessageType::PING: {
-                onPing(_session);
+                onPing();
                 break;
             }
             case MessageType::PONG: {
+                onPong();
                 break;
             }
             case MessageType::TRANSACTION: {
                 bc::Transaction tx;
                 ia >> tx;
-                onTransaction(_session, std::move(tx));
+                onTransaction(std::move(tx));
                 break;
             }
             case MessageType::BLOCK: {
                 auto block = bc::Block::deserialize(ia);
-                onBlock(_session, std::move(block));
+                onBlock(std::move(block));
                 break;
             }
             case MessageType::GET_BLOCK: {
                 base::Bytes block_hash;
                 ia >> block_hash;
-                onGetBlock(_session, base::Sha256(block_hash));
+                onGetBlock(base::Sha256(block_hash));
                 break;
             }
             case MessageType::INFO: {
@@ -140,6 +149,12 @@ void Peer::Handler::onClose()
 {
     LOG_DEBUG << "Closing peer";
     _owning_network_object.removePeer(_owning_peer);
+}
+
+
+void Peer::Handler::onHandshake(base::Sha256&& top_block_hash)
+{
+
 }
 
 

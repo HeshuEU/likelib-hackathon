@@ -114,6 +114,7 @@ class Peer
         Network& _owning_network_object;
         net::Session& _session;
         //================
+        void onHandshake(base::Sha256&& top_block_hash);
         void onPing();
         void onPong();
         void onTransaction(bc::Transaction&& tx);
@@ -125,6 +126,7 @@ class Peer
     //================
     Network& _owning_network_object;
     net::Session& _session;
+    State _state;
     //================
 };
 
