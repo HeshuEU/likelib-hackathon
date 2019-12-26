@@ -66,7 +66,8 @@ class NodeRunner:
             node_config.write(node_config_content)
 
         # print("Node | Debug message: config content:", node_config_content)
-        self.buffer_file = os.path.join(self.work_dir, NodeRunner.BUFFER_FILE_NAME)
+        self.buffer_file = os.path.join(
+            self.work_dir, NodeRunner.BUFFER_FILE_NAME)
         self.start_up_time = start_up_time
 
     @staticmethod
@@ -79,7 +80,9 @@ class NodeRunner:
                   "miner": {"threads": miner_threads},
                   "nodes": [node_id.connect_sync_address for node_id in nodes_id_list],
                   "database": {"path": path_to_database,
-                               "clean": clean_up_database}
+                               "clean": clean_up_database},
+                  "keys": {"public_path": "rsa.pub",
+                           "private_path": "rsa"}
                   }
         return json.dumps(config)
 
@@ -108,7 +111,8 @@ class NodeRunner:
                         temp_file.write(pipe.readline().decode("utf8"))
                         temp_file.flush()
 
-            proc = mp.Process(target=__check_log, args=[self.process.stderr, self.buffer_file])
+            proc = mp.Process(target=__check_log, args=[
+                              self.process.stderr, self.buffer_file])
             proc.start()
             # can't read all buffer and wait EOF, but process is infinite
             proc.join(1)
