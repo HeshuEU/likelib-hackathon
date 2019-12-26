@@ -65,7 +65,7 @@ Integration tests:
       echo -e "\033[40;1;42m =========================================================================
        ==                          Start integraion tests                                == \n \
       ========================================================================= \033[0m"
-    - python3 test/integration_test/run_test.py -n build/src/node/node -r build/src/rpc-client/rpc-clientt 1
+    - python3 test/integration_test/run_test.py -n build/src/node/node -r build/src/rpc-client/rpc-client
 
 
 Valgrind test:
