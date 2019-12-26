@@ -58,14 +58,7 @@ Unit tests:
        ==                          Start unit tests                                == \n \
       ========================================================================= \033[0m"
 
-    - if build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info ;
-      then
-        echo -e "\033[37;1;42m        Tests check success        \033[0m"
-        exit 0
-      else
-        echo -e "\033[37;1;41m        Tests check failed         \033[0m"
-        exit 1
-      fi
+    - build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
 Integration tests:
@@ -79,14 +72,7 @@ Integration tests:
        ==                          Start integraion tests                                == \n \
       ========================================================================= \033[0m"
 
-    - if python3 test/integration_test/run_test.py -n build/src/node/node -r build/src/rpc-client/rpc-client ;
-      then
-        echo -e "\033[37;1;42m        Tests check success        \033[0m"
-        exit 0
-      else
-        echo -e "\033[37;1;41m        Tests check failed         \033[0m"
-        exit 1
-      fi
+    - python3 test/integration_test/run_test.py -n build/src/node/node -r build/src/rpc-client/rpc-clientt 1
 
 
 Valgrind test:
@@ -101,12 +87,4 @@ Valgrind test:
        ==                          Start memory check                         == \n \
       ========================================================================= \033[0m"
 
-    - if valgrind --leak-check=full --show-leak-kinds=all build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info ;
-      then
-        echo -e "\033[37;1;42m        Tests check success        \033[0m"
-        exit 0
-      else
-        echo -e "\033[37;1;41m        Tests check failed         \033[0m"
-        exit 1
-      fi
-
+    - valgrind --leak-check=full --show-leak-kinds=all build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
