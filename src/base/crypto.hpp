@@ -13,7 +13,6 @@ class RsaPublicKey
   public:
     //=================
     RsaPublicKey(const Bytes& key_word);
-    RsaPublicKey(const std::filesystem::path& path);
     RsaPublicKey(const RsaPublicKey& another) = default;
     RsaPublicKey(RsaPublicKey&& another) = default;
     RsaPublicKey& operator=(const RsaPublicKey& another) = default;
@@ -22,9 +21,12 @@ class RsaPublicKey
     Bytes encrypt(const Bytes& message) const;
     Bytes encryptWithAes(const Bytes& message) const;
     Bytes decrypt(const Bytes& encrypted_message) const;
+    //=================
     std::size_t maxEncryptSize() const noexcept;
-    void save(const std::filesystem::path& path) const;
+    //=================
     Bytes toBytes() const;
+    void save(const std::filesystem::path& path) const;
+    static RsaPublicKey read(const std::filesystem::path& path);
     //=================
   private:
     //=================
@@ -32,8 +34,6 @@ class RsaPublicKey
     //=================
     std::unique_ptr<RSA, decltype(&::RSA_free)> _rsa_key;
     std::size_t _encrypted_message_size;
-    //=================
-    std::size_t encryptedMessageSize() const noexcept;
     //=================
     static std::unique_ptr<RSA, decltype(&::RSA_free)> loadKey(const Bytes& key_word);
     //=================
@@ -45,7 +45,6 @@ class RsaPrivateKey
     //=================
     RsaPrivateKey() = default;
     RsaPrivateKey(const Bytes& key_word);
-    RsaPrivateKey(const std::filesystem::path& path);
     RsaPrivateKey(const RsaPrivateKey& another) = default;
     RsaPrivateKey(RsaPrivateKey&& another) = default;
     RsaPrivateKey& operator=(const RsaPrivateKey& another) = default;
@@ -54,9 +53,12 @@ class RsaPrivateKey
     Bytes encrypt(const Bytes& message) const;
     Bytes decrypt(const Bytes& encrypted_message) const;
     Bytes decryptWithAes(const Bytes& message) const;
+    //=================
     std::size_t maxEncryptSize() const noexcept;
-    void save(const std::filesystem::path& path) const;
+    //=================
     Bytes toBytes() const;
+    void save(const std::filesystem::path& path) const;
+    static RsaPrivateKey read(const std::filesystem::path& path);
     //=================
   private:
     //=================
@@ -64,7 +66,6 @@ class RsaPrivateKey
     //=================
     std::unique_ptr<RSA, decltype(&::RSA_free)> _rsa_key;
     std::size_t _encrypted_message_size;
-    std::size_t encryptedMessageSize() const noexcept;
     //=================
     static std::unique_ptr<RSA, decltype(&::RSA_free)> loadKey(const Bytes& key_word);
     //=================
@@ -76,10 +77,11 @@ class AesKey
 {
   public:
     //=================
-    enum class KeyType
+    enum class KeyType : std::size_t
     {
-        K256BIT,
-        K128BIT
+        K256BIT = 32, // 32(bytes)
+        K128BIT = 16  // 16(bytes)
+
     };
     //=================
     AesKey();
@@ -95,10 +97,12 @@ class AesKey
     Bytes encrypt(const Bytes& data) const;
     Bytes decrypt(const Bytes& data) const;
     //=================
-  private:
+    std::size_t size() const;
     //=================
-    static constexpr std::size_t _aes_256_size = 48;
-    static constexpr std::size_t _aes_128_size = 24;
+    void save(const std::filesystem::path& path);
+    static AesKey read(const std::filesystem::path& path);
+    //=================
+  private:
     //=================
     KeyType _type;
     Bytes _key;
