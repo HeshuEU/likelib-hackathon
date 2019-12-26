@@ -65,8 +65,15 @@ Integration tests:
       echo -e "\033[40;1;42m =========================================================================
        ==                          Start integraion tests                                == \n \
       ========================================================================= \033[0m"
-    - python3 ${PWD}/test/integration_test/run_test.py -n ${PWD}/build/src/node/node -r ${PWD}/build/src/rpc-client/rpc-client
-
+    - PROJECT_SOURCE_DIR=${PWD}
+    - TEST_DIR="intergation_test_run"
+    - mkdir ${TEST_DIR}
+    - cd ${TEST_DIR}
+    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/src/node/node -r ${PROJECT_SOURCE_DIR}/build/src/rpc-client/rpc-client
+  artifacts:
+    paths:
+      - intergation_test_run
+    expire_in: 1 week
 
 Valgrind test:
   stage: test
