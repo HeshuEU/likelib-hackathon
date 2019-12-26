@@ -58,11 +58,12 @@ Unit tests:
        ==                          Start unit tests                                == \n \
       ========================================================================= \033[0m"
 
-    - build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
 Integration tests:
   stage: test
+  image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
   script:
@@ -87,4 +88,4 @@ Valgrind test:
        ==                          Start memory check                         == \n \
       ========================================================================= \033[0m"
 
-    - valgrind --leak-check=full --show-leak-kinds=all build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - valgrind --leak-check=full --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
