@@ -19,6 +19,9 @@ class SerializationIArchive
     //=================
     template<typename T>
     typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::type operator>>(T& v);
+
+    template<typename T>
+    typename std::enable_if<std::is_enum<T>::value, SerializationIArchive&>::type operator>>(T& v);
     // TODO: work if some of this types is not defined
     //=================
   private:
@@ -35,6 +38,9 @@ class SerializationOArchive
     //=================
     template<typename T>
     typename std::enable_if<std::is_integral<T>::value, SerializationOArchive&>::type operator<<(const T& v);
+
+    template<typename T>
+    typename std::enable_if<std::is_enum<T>::value, SerializationOArchive&>::type operator<<(const T& v);
     // TODO: work if some of this types is not defined
     //=================
     void clear();

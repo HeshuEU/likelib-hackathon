@@ -55,7 +55,7 @@ class ParsingError : public Error
     using Error::Error;
 };
 
-class DataBaseError : public Error
+class DatabaseError : public Error
 {
     using Error::Error;
 };

@@ -1,8 +1,9 @@
 #include "bytes.hpp"
 
 #include "base/assert.hpp"
+#include "base/error.hpp"
 
-#include <iterator>
+#include <boost/container_hash/hash.hpp>
 
 namespace base
 {
@@ -102,6 +103,12 @@ void Bytes::reserve(std::size_t reserve_size)
 }
 
 
+std::size_t Bytes::capacity() const
+{
+    return _raw.capacity();
+}
+
+
 void Bytes::shrinkToFit()
 {
     _raw.shrink_to_fit();
@@ -163,6 +170,47 @@ std::string Bytes::toString() const
 }
 
 
+namespace
+{
+
+    std::size_t hexToInt(char hex)
+    {
+        if('0' <= hex && hex <= '9') {
+            return hex - '0';
+        }
+        else if('a' <= hex && hex <= 'f') {
+            return hex - 'a' + 10;
+        }
+        else if('A' <= hex && hex <= 'F') {
+            return hex - 'A' + 10;
+        }
+        else {
+            RAISE_ERROR(base::InvalidArgument, "Non hex symbol.");
+        }
+    }
+
+} // namespace
+
+
+Bytes Bytes::fromHex(const std::string_view& hex_view)
+{
+    if(hex_view.size() % 2 != 0) {
+        RAISE_ERROR(InvalidArgument, "Invalid string length. Odd line length.");
+    }
+
+    auto bytes_size = hex_view.size() / 2;
+    std::vector<Byte> bytes(bytes_size);
+    for(std::size_t current_symbol_index = 0; current_symbol_index < bytes_size; current_symbol_index++) {
+        auto index = current_symbol_index * 2;
+        auto high_part = hexToInt(hex_view[index]);
+        auto low_part = hexToInt(hex_view[index + 1]);
+        bytes[current_symbol_index] = (high_part << 4) + low_part;
+    }
+
+    return Bytes(bytes);
+}
+
+
 bool Bytes::operator==(const Bytes& another) const
 {
     return _raw == another._raw;
@@ -198,4 +246,16 @@ bool Bytes::operator>=(const Bytes& another) const
     return !(*this < another);
 }
 
+
+std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
+{
+    return os << bytes.toHex();
+}
+
 } // namespace base
+
+
+std::size_t std::hash<base::Bytes>::operator()(const base::Bytes& k) const
+{
+    return boost::hash_value(k.toVector());
+}

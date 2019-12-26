@@ -1,14 +1,15 @@
 #pragma once
 
 #include "base/property_tree.hpp"
-#include "bc/balance_manager.hpp"
 #include "bc/block.hpp"
-#include "bc/miner.hpp"
+#include "bc/database_manager.hpp"
 #include "bc/transaction.hpp"
 #include "bc/transactions_set.hpp"
-#include "net/network.hpp"
 
-#include <list>
+#include <boost/signals2.hpp>
+
+#include <shared_mutex>
+#include <unordered_map>
 
 namespace bc
 {
@@ -17,58 +18,33 @@ class Blockchain
 {
   public:
     //===================
-    explicit Blockchain(const base::PropertyTree& config);
+    Blockchain(const base::PropertyTree& config);
     Blockchain(const Blockchain&) = delete;
     Blockchain(Blockchain&&) = delete;
     ~Blockchain() = default;
     //===================
-    void run();
+    void load();
     //===================
-    void processReceivedBlock(Block&& block);
-    void processReceivedTransaction(Transaction&& transaction);
+    void addGenesisBlock(const Block& block);
+    bool tryAddBlock(const Block& block);
+    std::optional<bc::Block> findBlock(const base::Sha256& block_hash) const;
+    std::optional<bc::Transaction> findTransaction(const base::Sha256& tx_hash) const;
     //===================
-    void addBlock(const Block& block);
+    const bc::Block& getTopBlock() const;
     //===================
-    bc::Balance getBalance(const bc::Address& address) const;
+    boost::signals2::signal<void(const Block&)> signal_block_added;
     //===================
   private:
     //===================
     const base::PropertyTree& _config;
     //===================
-    bool _is_running{false};
+    std::unordered_map<base::Sha256, Block> _blocks;
+    base::Sha256 _top_level_block_hash;
+    mutable std::shared_mutex _blocks_mutex;
     //===================
-    std::list<Block> _blocks;
-    mutable std::recursive_mutex _blocks_mutex;
-    //===================
-    Block _pending_block;
-    mutable std::recursive_mutex _pending_block_mutex;
-    //===================
-    Miner _miner;
-    //===================
-    bc::BalanceManager _balance_manager;
-    //===================
-    std::unique_ptr<net::Network> _network;
-
-    class NetworkHandler : public net::NetworkHandler
-    {
-      public:
-        NetworkHandler(Blockchain&);
-        void onBlockReceived(Block&& block) override;
-        void onTransactionReceived(Transaction&& tx) override;
-
-      private:
-        Blockchain& _bc;
-    };
-
-    NetworkHandler _network_handler;
+    bc::DatabaseManager _database;
     //===================
     void setupGenesis();
-    //===================
-    base::Bytes getMiningComplexity() const;
-    void onMinerFinished(Block&& block);
-    //===================
-    bool checkBlock(const Block& block) const;
-    bool checkTransaction(const Transaction& tx) const;
     //===================
 };
 

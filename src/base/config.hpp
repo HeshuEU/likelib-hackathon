@@ -85,4 +85,11 @@ constexpr const char* RPC_CURRENT_SECRET_TEST_REQUEST = "Valar morghulis";
 constexpr const char* RPC_CURRENT_SECRET_TEST_RESPONSE = "Valar dohaeris";
 //--------------------
 
+// database
+constexpr std::size_t DATABASE_WRITE_BUFFER_SIZE = 50 * 1024 * 1024; // 50MB write buffer
+constexpr std::size_t DATABASE_DATA_BLOCK_SIZE = 10 * 1024; // 10KB data-block size
+constexpr std::size_t DATABASE_DATA_BLOCK_CACHE_SIZE = 50 * 1024 * 1024; // 50MB data-block cache size
+constexpr bool DATABASE_COMPRESS_DATA = false; // no compress data
+//--------------------
+
 } // namespace base::config

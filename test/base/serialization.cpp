@@ -5,22 +5,25 @@
 BOOST_AUTO_TEST_CASE(serialization_sanity_check1)
 {
     base::SerializationOArchive oa;
-    oa << base::Byte{0x12} << -35 << -7ll;
+    std::uint16_t s{0x1234};
+    oa << base::Byte{0x12} << -35 << -7ll << s;
 
     base::SerializationIArchive ia(oa.getBytes());
     base::Byte a;
     int b;
     long long c;
-    ia >> a >> b >> c;
+    std::uint16_t d;
+    ia >> a >> b >> c >> d;
     BOOST_CHECK_EQUAL(a, 0x12);
     BOOST_CHECK_EQUAL(b, -35);
     BOOST_CHECK_EQUAL(c, -7);
+    BOOST_CHECK_EQUAL(d, s);
 }
 
 
 BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
 {
-    const std::size_t aa = 0x35;
+    const std::uint64_t aa = 0x12345678987654;
     base::Bytes bb{0x1, 0x3, 0x5, 0x7, 0x15};
     const std::vector<std::string> cc{"a", "b", "c"};
 
@@ -29,7 +32,7 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
 
     base::SerializationIArchive ia(oa.getBytes());
 
-    std::size_t a;
+    std::uint64_t a;
     ia >> a;
     BOOST_CHECK_EQUAL(a, aa);
 
@@ -62,4 +65,23 @@ BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
     BOOST_CHECK(v2 == v22);
     BOOST_CHECK(v3 == v33);
     BOOST_CHECK(v4 == v44);
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_enum)
+{
+    enum class E {
+        A, B, C, D
+    };
+    base::SerializationOArchive oa;
+    oa << E::A << E::C << E::B << E::D;
+
+    E a, b, c, d;
+    base::SerializationIArchive ia(oa.getBytes());
+    ia >> a >> c >> b >> d;
+
+    BOOST_CHECK(a == E::A);
+    BOOST_CHECK(b == E::B);
+    BOOST_CHECK(c == E::C);
+    BOOST_CHECK(d == E::D);
 }

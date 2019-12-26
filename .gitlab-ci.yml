@@ -76,3 +76,4 @@ Valgrind test:
       echo -e "\033[37;1;42m        Tests check success        \033[0m" ||
       echo -e "\033[37;1;41m        Tests check failed         \033[0m"
 
+
