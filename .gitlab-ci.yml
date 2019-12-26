@@ -9,27 +9,24 @@ Build:
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
-  script: 
-    - export INSTALL_DIR="/opt"
-    - export PROJECT_SOURCE_DIR=${PWD}
-    - export PROJECT_BUILD_DIR="./build"
+  script:
+    - INSTALL_DIR="/opt"
+    - PROJECT_SOURCE_DIR=${PWD}
+    - PROJECT_BUILD_DIR="./build"
     - mkdir ${PROJECT_BUILD_DIR}
-
     - cd ${PROJECT_BUILD_DIR}
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
+    - echo
+      echo -e "\033[40;1;42m =========================================================================
        ==                          Finish building                            == \n \
       ========================================================================= \033[0m"
-
   artifacts:
     paths:
     - build
     expire_in: 1 week
 
-    
+
 Code quality:
   stage: quality
   image: heshuby/prepare_build:2019-12-20
@@ -38,10 +35,9 @@ Code quality:
   allow_failure: true
   script:
     - cd ./src
-    - export INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
+    - INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
+    - echo
+      echo -e "\033[40;1;42m =========================================================================
        ==                          Start code quality                         == \n \
       ========================================================================= \033[0m"
     - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
@@ -51,14 +47,33 @@ Unit tests:
   stage: test
   tags:
     - docker
-  cache: {}
   script:
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Start tests                                == \n \
+    - echo
+      echo -e "\033[40;1;42m =========================================================================
+       ==                          Start unit tests                                == \n \
       ========================================================================= \033[0m"
-    - build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+
+
+Integration tests:
+  stage: test
+  image: heshuby/prepare_build:2019-12-20
+  tags:
+    - docker
+  script:
+    - echo
+      echo -e "\033[40;1;42m =========================================================================
+       ==                          Start integraion tests                                == \n \
+      ========================================================================= \033[0m"
+    - PROJECT_SOURCE_DIR=${PWD}
+    - TEST_DIR="intergation_test_run"
+    - mkdir ${TEST_DIR}
+    - cd ${TEST_DIR}
+    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/src/node/node -r ${PROJECT_SOURCE_DIR}/build/src/rpc-client/rpc-client
+  artifacts:
+    paths:
+      - intergation_test_run
+    expire_in: 1 week
 
 Valgrind test:
   stage: test
@@ -66,14 +81,8 @@ Valgrind test:
   tags:
     - docker
   script:
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
+    - echo
+      echo -e "\033[40;1;42m =========================================================================
        ==                          Start memory check                         == \n \
       ========================================================================= \033[0m"
-    - |
-      valgrind --leak-check=full --show-leak-kinds=all build/test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info &&
-      echo -e "\033[37;1;42m        Tests check success        \033[0m" ||
-      echo -e "\033[37;1;41m        Tests check failed         \033[0m"
-
-
+    - valgrind --leak-check=full --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
