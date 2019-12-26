@@ -13,8 +13,6 @@
 #include <fstream>
 #include <memory>
 
-#include <iostream>
-
 namespace
 {
 base::Bytes read_all_file(const std::filesystem::path& path)
@@ -260,61 +258,58 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& 
 
 std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 {
-  std::cout << "Hello 1";
     // create big number for random generation
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
     if(!BN_set_word(bn.get(), RSA_F4)) {
         RAISE_ERROR(Error, "Fail to create big number for RSA generation");
     }
-  std::cout << "Hello 2";
     // create rsa and fill by created big number
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa(RSA_new(), ::RSA_free);
     if(!RSA_generate_key_ex(rsa.get(), keys_size, bn.get(), nullptr)) {
         RAISE_ERROR(Error, "Fail to generate RSA key");
     }
-  std::cout << "Hello 3";
     // ==================
     // create bio for public key
     std::unique_ptr<BIO, decltype(&::BIO_free)> public_bio(BIO_new(BIO_s_mem()), ::BIO_free);
-  std::cout << "Hello 4";
+
     // get public key spec
     std::unique_ptr<RSA, decltype(&::RSA_free)> public_rsa_key(RSAPublicKey_dup(rsa.get()), ::RSA_free);
 
-  std::cout << "Hello 5";
+
     // fill bio by public key spec
     if(!PEM_write_bio_RSAPublicKey(public_bio.get(), public_rsa_key.get())) {
         RAISE_ERROR(Error, "Fail to generate public RSA key");
     }
-  std::cout << "Hello 6";
+
     // write rsa data
     Bytes public_key_bytes(BIO_pending(public_bio.get()));
-  std::cout << "Hello 7";
+
     // check errors in generation
     if(!BIO_read(public_bio.get(), public_key_bytes.toArray(), public_key_bytes.size())) {
         RAISE_ERROR(Error, "Fail to check public RSA key");
     }
     // =============
-std::cout << "Hello 8";
+
     // create bio for private key
     std::unique_ptr<BIO, decltype(&::BIO_free)> private_bio(BIO_new(BIO_s_mem()), ::BIO_free);
-std::cout << "Hello 9";
+
     // get private key spec
     std::unique_ptr<RSA, decltype(&::RSA_free)> private_rsa_key(RSAPrivateKey_dup(rsa.get()), ::RSA_free);
-std::cout << "Hello A";
+
     // fill bio by private key spec
     if(!PEM_write_bio_RSAPrivateKey(private_bio.get(), private_rsa_key.get(), nullptr, nullptr, 0, nullptr, nullptr)) {
         RAISE_ERROR(Error, "Fail to generate private RSA key");
     }
-std::cout << "Hello B";
+
     // write rsa data
     Bytes private_key_bytes(BIO_pending(private_bio.get()));
-std::cout << "Hello C";
+
     // check errors in generation
     if(!BIO_read(private_bio.get(), private_key_bytes.toArray(), BIO_pending(private_bio.get()))) {
         RAISE_ERROR(Error, "Fail to check private RSA key");
     }
     // =============
-std::cout << "Hello D";
+
     return std::pair<RsaPublicKey, RsaPrivateKey>(public_key_bytes, private_key_bytes);
 }
 
