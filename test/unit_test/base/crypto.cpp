@@ -77,10 +77,14 @@ BOOST_AUTO_TEST_CASE(Rsa_serialization_constructor)
 BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_save_in_file)
 {
     auto [pub_rsa, priv_rsa] = base::generateKeys(3738);
-    priv_rsa.save("private");
-    pub_rsa.save("public");
-    base::RsaPrivateKey priv_rsa2("private");
-    base::RsaPublicKey pub_rsa2("public");
+    std::filesystem::path private_key_path{"ssh/rsa.priv"};
+    std::filesystem::path public_key_path{"ssh/rsa.pub"};
+
+    priv_rsa.save(private_key_path);
+    pub_rsa.save(public_key_path);
+
+    auto priv_rsa2 = base::RsaPrivateKey::read(private_key_path);
+    auto pub_rsa2 = base::RsaPublicKey::read(public_key_path);
 
     base::Bytes msg("RSa_FI1E_TES!");
     auto enc_msg1 = priv_rsa.encrypt(msg);
@@ -96,13 +100,22 @@ BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_save_in_file)
     dec_msg2 = priv_rsa2.decrypt(enc_msg2);
     BOOST_CHECK(dec_msg1 == dec_msg2);
 
-    std::filesystem::remove("private");
-    std::filesystem::remove("public");
+    std::filesystem::remove(private_key_path);
+    std::filesystem::remove(public_key_path);
 }
 
 BOOST_AUTO_TEST_CASE(RsaAes_constructor_encrypt_decrypt)
 {
     auto rsa = base::generateKeys(2894);
+    base::Bytes msg("f1rst RsaAes_tes!");
+    auto enc_msg = rsa.first.encryptWithAes(msg);
+    auto dec_msg = rsa.second.decryptWithAes(enc_msg);
+    BOOST_CHECK(msg == dec_msg);
+}
+
+BOOST_AUTO_TEST_CASE(RsaAes_small_key_encrypt_decrypt)
+{
+    auto rsa = base::generateKeys(1024);
     base::Bytes msg("f1rst RsaAes_tes!");
     auto enc_msg = rsa.first.encryptWithAes(msg);
     auto dec_msg = rsa.second.decryptWithAes(enc_msg);
@@ -156,4 +169,21 @@ BOOST_AUTO_TEST_CASE(aes_double_encrypt_128bit)
     auto encrypted_data_1 = key.encrypt(msg);
     auto encrypted_data_2 = key.encrypt(msg);
     BOOST_CHECK_EQUAL(encrypted_data_1.toString(), encrypted_data_2.toString());
+}
+
+
+BOOST_AUTO_TEST_CASE(aes_serialization_256bit)
+{
+    base::Bytes target_msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
+    base::AesKey target_key(base::AesKey::KeyType ::K128BIT);
+    auto encrypted_data = target_key.encrypt(target_msg);
+
+    std::filesystem::path key_path{"test.aes"};
+    target_key.save(key_path);
+
+    auto deserialized_key = base::AesKey::read(key_path);
+    auto decrypt_message = deserialized_key.decrypt(encrypted_data);
+    BOOST_CHECK_EQUAL(target_msg, decrypt_message);
+
+    std::filesystem::remove(key_path);
 }
