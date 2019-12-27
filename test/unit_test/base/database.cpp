@@ -215,3 +215,25 @@ BOOST_AUTO_TEST_CASE(data_base_createDefaultDatabaseInstance)
 
     std::filesystem::remove_all(path_to_data_base_folder);
 }
+
+
+BOOST_AUTO_TEST_CASE(data_base_with_long_path)
+{
+    std::filesystem::path path_to_data_base_folder("local/test/base");
+
+    base::Bytes bytes1("sgfabvduflalfgfdnjknv  lcjnajfhvbadg ksd weufib34g 8vb");
+    base::Bytes key1("test key");
+    {
+        auto data_base = base::createClearDatabaseInstance(path_to_data_base_folder);
+
+        data_base.put(key1, bytes1);
+        BOOST_CHECK(data_base.exists(key1));
+    }
+
+    auto data_base2 = base::createDefaultDatabaseInstance(path_to_data_base_folder);
+    BOOST_CHECK(data_base2.exists(key1));
+
+    BOOST_CHECK_EQUAL(data_base2.get(key1).value().toString(), bytes1.toString());
+
+    std::filesystem::remove_all(path_to_data_base_folder);
+}
