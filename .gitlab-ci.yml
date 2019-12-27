@@ -17,8 +17,9 @@ Build:
     - cd ${PROJECT_BUILD_DIR}
     - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
-    - echo
-      echo -e "\033[40;1;42m =========================================================================
+    - |
+      echo
+      echo -e "\033[40;1;42m ========================================================================= 
        ==                          Finish building                            == \n \
       ========================================================================= \033[0m"
   artifacts:
@@ -36,8 +37,9 @@ Code quality:
   script:
     - cd ./src
     - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
-    - echo
-      echo -e "\033[40;1;42m =========================================================================
+    - |
+      echo
+      echo -e "\033[40;1;42m ========================================================================= 
        ==                          Start code quality                         == \n \
       ========================================================================= \033[0m"
     - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
@@ -48,8 +50,9 @@ Unit tests:
   tags:
     - docker
   script:
-    - echo
-      echo -e "\033[40;1;42m =========================================================================
+    - |
+      echo
+      echo -e "\033[40;1;42m ========================================================================= 
        ==                          Start unit tests                                == \n \
       ========================================================================= \033[0m"
     - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
@@ -61,9 +64,10 @@ Integration tests:
   tags:
     - docker
   script:
-    - echo
+    - |
+      echo
       echo -e "\033[40;1;42m =========================================================================
-       ==                          Start integraion tests                                == \n \
+       ==                          Start integration tests                    == \n \
       ========================================================================= \033[0m"
     - PROJECT_SOURCE_DIR=${PWD}
     - TEST_DIR="intergation_test_run"
@@ -81,8 +85,9 @@ Valgrind test:
   tags:
     - docker
   script:
-    - echo
-      echo -e "\033[40;1;42m =========================================================================
+    - |
+      echo
+      echo -e "\033[40;1;42m ========================================================================= 
        ==                          Start memory check                         == \n \
       ========================================================================= \033[0m"
     - valgrind --leak-check=full --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
