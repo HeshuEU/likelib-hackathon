@@ -3,27 +3,28 @@
 #include "bc/database_manager.hpp"
 
 #include <fstream>
+#include <vector>
 
 namespace
 {
-auto hash1 = base::Sha256::compute(base::Bytes("first"));
-auto hash2 = base::Sha256::compute(base::Bytes("second"));
-auto hash3 = base::Sha256::compute(base::Bytes("third"));
+
+std::vector<base::Sha256> hashes{base::Sha256::compute(base::Bytes("first")),
+    base::Sha256::compute(base::Bytes("second")), base::Sha256::compute(base::Bytes("third"))};
 
 std::vector<bc::Block> getInitBlocks()
 {
     std::vector<bc::Block> blocks;
 
-    blocks.push_back(bc::Block(hash1, bc::TransactionsSet()));
+    blocks.push_back(bc::Block(hashes[0], bc::TransactionsSet()));
 
     bc::TransactionsSet set1;
     set1.add(bc::Transaction(bc::Address("from1"), bc::Address("to1"), bc::Balance(100), base::Time::now()));
-    blocks.push_back(bc::Block(hash2, set1));
+    blocks.push_back(bc::Block(hashes[1], set1));
 
     bc::TransactionsSet set2;
     set2.add(bc::Transaction(bc::Address("from2"), bc::Address("to2"), bc::Balance(133), base::Time::now()));
     set2.add(bc::Transaction(bc::Address("from3"), bc::Address("to3"), bc::Balance(85), base::Time()));
-    blocks.push_back(bc::Block(hash3, set2));
+    blocks.push_back(bc::Block(hashes[2], set2));
     return blocks;
 }
 
@@ -57,10 +58,10 @@ BOOST_AUTO_TEST_CASE(database_manager_usage1)
         manager.addBlock(block.getPrevBlockHash(), block);
     }
 
-    BOOST_CHECK(manager.findBlock(hash1) != std::nullopt);
-    BOOST_CHECK(manager.findBlock(hash2) != std::nullopt);
-    BOOST_CHECK(manager.findBlock(hash3) != std::nullopt);
-    BOOST_CHECK(manager.getLastBlockHash() == hash3);
+    BOOST_CHECK(manager.findBlock(hashes[0]) != std::nullopt);
+    BOOST_CHECK(manager.findBlock(hashes[1]) != std::nullopt);
+    BOOST_CHECK(manager.findBlock(hashes[2]) != std::nullopt);
+    BOOST_CHECK(manager.getLastBlockHash() == hashes[2]);
 
     std::filesystem::remove_all("likelib/local_test_base");
     std::filesystem::remove("config.json");
@@ -84,16 +85,16 @@ BOOST_AUTO_TEST_CASE(database_manager_usage2)
 
     auto blocks = getInitBlocks();
     manager.addBlock(blocks[0].getPrevBlockHash(), blocks[0]);
-    BOOST_CHECK(manager.findBlock(hash1) != std::nullopt);
-    BOOST_CHECK(manager.getLastBlockHash() == hash1);
+    BOOST_CHECK(manager.findBlock(hashes[0]) != std::nullopt);
+    BOOST_CHECK(manager.getLastBlockHash() == hashes[0]);
 
     manager.addBlock(blocks[1].getPrevBlockHash(), blocks[1]);
-    BOOST_CHECK(manager.findBlock(hash2) != std::nullopt);
-    BOOST_CHECK(manager.getLastBlockHash() == hash2);
+    BOOST_CHECK(manager.findBlock(hashes[1]) != std::nullopt);
+    BOOST_CHECK(manager.getLastBlockHash() == hashes[1]);
 
     manager.addBlock(blocks[2].getPrevBlockHash(), blocks[2]);
-    BOOST_CHECK(manager.findBlock(hash3) != std::nullopt);
-    BOOST_CHECK(manager.getLastBlockHash() == hash3);
+    BOOST_CHECK(manager.findBlock(hashes[2]) != std::nullopt);
+    BOOST_CHECK(manager.getLastBlockHash() == hashes[2]);
 
     std::filesystem::remove_all("likelib/local_test_base");
     std::filesystem::remove("config.json");
@@ -120,27 +121,15 @@ BOOST_AUTO_TEST_CASE(database_manager_check_transaction_in_blocks)
         manager.addBlock(block.getPrevBlockHash(), block);
     }
 
-    auto trans1 = getTransactionFromBlock(blocks[0]);
-    auto trans11 = getTransactionFromBlock(manager.findBlock(hash1).value()); // TODO:make it with for
     bool res = true;
-    for(std::size_t i = 0; i < trans1.size(); i++) {
-        res = res && (trans1 == trans11);
-    }
-    BOOST_CHECK(res);
-
-    res = true;
-    auto trans2 = getTransactionFromBlock(blocks[1]);
-    auto trans22 = getTransactionFromBlock(manager.findBlock(hash2).value());
-    for(std::size_t i = 0; i < trans1.size(); i++) {
-        res = res && (trans2 == trans22);
-    }
-    BOOST_CHECK(res);
-
-    res = true;
-    auto trans3 = getTransactionFromBlock(blocks[2]);
-    auto trans33 = getTransactionFromBlock(manager.findBlock(hash3).value());
-    for(std::size_t i = 0; i < trans1.size(); i++) {
-        res = res && (trans3 == trans33);
+    for(std::size_t i = 0; i < blocks.size(); i++) {
+        auto trans1 = getTransactionFromBlock(blocks[i]);
+        auto trans1_set = blocks[i].getTransactions();
+        auto trans2 = getTransactionFromBlock(manager.findBlock(hashes[i]).value());
+        res = res && (trans1.size() == trans2.size());
+        for(std::size_t j = 0; j < trans2.size(); j++) {
+            res = res && (trans1_set.find(trans2[j]));
+        }
     }
     BOOST_CHECK(res);
 
@@ -172,10 +161,10 @@ BOOST_AUTO_TEST_CASE(database_manager_with_not_empty_database)
     }
 
     bc::DatabaseManager manager(config);
-    BOOST_CHECK(manager.findBlock(hash1) != std::nullopt);
-    BOOST_CHECK(manager.findBlock(hash2) != std::nullopt);
-    BOOST_CHECK(manager.findBlock(hash3) != std::nullopt);
-    BOOST_CHECK(manager.getLastBlockHash() == hash3);
+    BOOST_CHECK(manager.findBlock(hashes[0]) != std::nullopt);
+    BOOST_CHECK(manager.findBlock(hashes[1]) != std::nullopt);
+    BOOST_CHECK(manager.findBlock(hashes[2]) != std::nullopt);
+    BOOST_CHECK(manager.getLastBlockHash() == hashes[2]);
 
     std::filesystem::remove_all("likelib/local_test_base");
     std::filesystem::remove("config.json");
@@ -205,9 +194,9 @@ BOOST_AUTO_TEST_CASE(database_manager_with_not_empty_database_and_clean)
     }
 
     bc::DatabaseManager manager(config);
-    BOOST_CHECK(manager.findBlock(hash1) == std::nullopt);
-    BOOST_CHECK(manager.findBlock(hash2) == std::nullopt);
-    BOOST_CHECK(manager.findBlock(hash3) == std::nullopt);
+    BOOST_CHECK(manager.findBlock(hashes[0]) == std::nullopt);
+    BOOST_CHECK(manager.findBlock(hashes[1]) == std::nullopt);
+    BOOST_CHECK(manager.findBlock(hashes[2]) == std::nullopt);
 
     std::filesystem::remove_all("likelib/local_test_base");
     std::filesystem::remove("config.json");
