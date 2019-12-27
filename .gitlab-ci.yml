@@ -35,7 +35,7 @@ Code quality:
   allow_failure: true
   script:
     - cd ./src
-    - INCLUDE="-I/opt/vcpkg/installed/x64-linux/include -I${PWD} -I../build/grpc/gen -std=c++17"
+    - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
     - echo
       echo -e "\033[40;1;42m =========================================================================
        ==                          Start code quality                         == \n \
