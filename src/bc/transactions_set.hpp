@@ -4,6 +4,7 @@
 #include "bc/transaction.hpp"
 
 #include <vector>
+#include <map>
 
 namespace bc
 {
@@ -32,5 +33,8 @@ class TransactionsSet
     friend base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, TransactionsSet& txs);
     friend base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TransactionsSet& txs);
 };
+
+
+std::map<Address, Balance> calcBalance(const TransactionsSet& txs);
 
 } // namespace bc
