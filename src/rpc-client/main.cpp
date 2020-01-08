@@ -12,10 +12,12 @@
 namespace rpc_client
 {
 
+static constexpr const char* DEFAULT_CONFIG_PATH = "config.json";
+
 int getBalance(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
-    router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
+    router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "rpc_config json file path");
     constexpr const char* HOST_OPTION = "host";
     router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
     constexpr const char* ADDRESS_OPTION = "address";
@@ -88,7 +90,7 @@ int getBalance(base::SubprogramRouter& router)
 int transfer(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
-    router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
+    router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "rpc_config json file path");
     constexpr const char* HOST_OPTION = "host";
     router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
     constexpr const char* FROM_ADDRESS_OPTION = "from";
@@ -181,7 +183,7 @@ int transfer(base::SubprogramRouter& router)
 int test(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
-    router.optionsParser()->addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
+    router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "rpc_config json file path");
     constexpr const char* HOST_OPTION = "host";
     router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
     router.update();
