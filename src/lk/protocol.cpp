@@ -3,80 +3,32 @@
 #include "base/log.hpp"
 #include "lk/core.hpp"
 
+
+namespace
+{
+
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
+        MessageType, unsigned char, (NOT_AVAILABLE)(HANDSHAKE)(PING)(PONG)(TRANSACTION)(GET_BLOCK)(BLOCK)(BLOCK_NOT_FOUND)(GET_INFO)(INFO))
+
+template<typename... Args>
+base::Bytes createMessage(MessageType type, Args&&... args)
+{
+    base::SerializationOArchive ret;
+    ret << type;
+    (ret << ... << std::forward<Args>(args));
+    return ret.getBytes();
+}
+
+}
+
+
 namespace lk
 {
 
-namespace mh
-{
+//=====================================
 
-    //=========================
-
-    bool Ping::canHandle(MessageType type) const
-    {
-        return type == MessageType::PING;
-    }
-
-
-    void Ping::handle(MessageType type, Data& data, base::Bytes& bytes)
-    {}
-
-    //=========================
-
-    bool Pong::canHandle(MessageType type) const
-    {
-        return type == MessageType::PING;
-    }
-
-
-    void Pong::handle(MessageType type, Data& data, base::Bytes& bytes)
-    {}
-
-    //=========================
-
-    bool Transaction::canHandle(MessageType type) const
-    {
-        return type == MessageType::PING;
-    }
-
-
-    void Transaction::handle(MessageType type, Data& data, base::Bytes& bytes)
-    {}
-
-    //=========================
-
-    AllHandler::AllHandler()
-    {
-        _handlers.push_back(std::make_unique<Ping>());
-        _handlers.push_back(std::make_unique<Pong>());
-        _handlers.push_back(std::make_unique<Transaction>());
-        _handlers.push_back(std::make_unique<Ping>());
-    }
-
-    bool AllHandler::canHandle(MessageType type) const
-    {
-        for(auto& handler: _handlers) {
-            if(handler->canHandle(type)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    void AllHandler::handle(MessageType type, Data& data, base::Bytes& bytes)
-    {
-        for(auto& handler: _handlers) {
-            handler->handle(type, data, bytes);
-        }
-    }
-
-    //=========================
-
-} // namespace mh
-
-
-Peer::Handler::Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session)
-    : _owning_peer{owning_peer}, _owning_network_object{owning_network_object}, _session{handled_session}
+Peer::Handler::Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session, Core& core)
+    : _owning_peer{owning_peer}, _owning_network_object{owning_network_object}, _session{handled_session}, _core{core}
 {}
 
 
@@ -130,10 +82,22 @@ void Peer::Handler::onReceive(const base::Bytes& data)
             case MessageType::GET_BLOCK: {
                 base::Bytes block_hash;
                 ia >> block_hash;
-                onGetBlock(base::Sha256(block_hash));
+                onGetBlock(base::Sha256(std::move(block_hash)));
                 break;
             }
             case MessageType::INFO: {
+                base::Bytes top_block_hash;
+                std::vector<std::string> available_peers_strings;
+                ia >> top_block_hash >> available_peers_strings;
+                std::vector<net::Endpoint> available_peers;
+                for(auto&& s : available_peers_strings) {
+                    available_peers.emplace_back(std::move(s));
+                }
+                onInfo(std::move(top_block_hash), std::move(available_peers));
+                break;
+            }
+            case MessageType::GET_INFO: {
+                onGetInfo();
                 break;
             }
             default: {
@@ -159,39 +123,68 @@ void Peer::Handler::onHandshake(base::Sha256&& top_block_hash)
 
 
 void Peer::Handler::onPing()
-{}
+{
+    _session.send(createMessage(MessageType::PONG));
+}
 
 
 void Peer::Handler::onPong()
 {}
 
 
-
 void Peer::Handler::onTransaction(bc::Transaction&& tx)
-{}
+{
+    _core.performTransaction(tx);
+}
 
 
 void Peer::Handler::onBlock(bc::Block&& block)
-{}
+{
+    _core.tryAddBlock(block);
+}
 
 
 void Peer::Handler::onGetBlock(base::Sha256&& block_hash)
-{}
+{
+    auto block = _core.findBlock(block_hash);
+    if(block) {
+        _session.send(createMessage(MessageType::BLOCK, *block));
+    }
+    else {
+        _session.send(createMessage(MessageType::BLOCK_NOT_FOUND, block_hash.getBytes()));
+    }
+}
 
 
-void Peer::Handler::onInfo()
-{}
+void Peer::Handler::onGetInfo()
+{
+    _session.send(createMessage(MessageType::INFO, _core.getTopBlock(), _owning_network_object.allPeersAddresses()));
+}
 
-Peer::Peer(Network& owning_network_object, net::Session& session)
-    : _owning_network_object{owning_network_object}, _session{session}
+
+void Peer::Handler::onInfo(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
+{
+
+}
+
+
+Peer::Peer(Network& owning_network_object, net::Session& session, Core& core)
+    : _owning_network_object{owning_network_object}, _session{session}, _core{core}
 {}
 
 
 std::unique_ptr<Peer::Handler> Peer::createHandler()
 {
-    return std::make_unique<Peer::Handler>(*this, _owning_network_object, _session);
+    return std::make_unique<Peer::Handler>(*this, _owning_network_object, _session, _core);
 }
 
+
+std::optional<net::Endpoint> Peer::getServerEndpoint() const
+{
+
+}
+
+//=====================================
 
 Network::HandlerFactory::HandlerFactory(Network& owning_network_object) : _owning_network_object{owning_network_object}
 {}
@@ -207,20 +200,22 @@ std::unique_ptr<net::Handler> Network::HandlerFactory::create(net::Session& sess
 void Network::HandlerFactory::destroy()
 {}
 
+//=====================================
 
-Network::Network(const base::PropertyTree& config, Core& core) : _host{config}
+Network::Network(const base::PropertyTree& config, Core& core) : _host{config}, _core{core}
 {}
 
 
 Peer& Network::createPeer(net::Session& session)
 {
-    auto& peer = _peers.emplace_back(*this, session);
+    auto& peer = _peers.emplace_back(*this, session, _core);
     return peer;
 }
 
 
 void Network::removePeer(const Peer& peer)
 {}
+
 
 void Network::broadcastBlock(const bc::Block& block)
 {
@@ -238,10 +233,23 @@ void Network::broadcastTransaction(const bc::Transaction& tx)
 }
 
 
+std::vector<net::Endpoint> Network::allPeersAddresses() const
+{
+    std::vector<net::Endpoint> ret;
+    for(const auto& peer : _peers) {
+        if(auto server_endpoint = peer.getServerEndpoint()) {
+            ret.push_back(*std::move(server_endpoint));
+        }
+    }
+}
+
+
 void Network::run()
 {
     _host.run(std::make_unique<HandlerFactory>(*this));
 }
+
+//=====================================
 
 // void Peer::onReceive(const base::Bytes& bytes)
 //{

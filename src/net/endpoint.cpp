@@ -103,4 +103,19 @@ std::ostream& operator<<(std::ostream& os, const Endpoint& endpoint)
     return os << endpoint.toString();
 }
 
+
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Endpoint& endpoint)
+{
+    std::string ip_with_port;
+    ia >> ip_with_port;
+    endpoint = Endpoint(ip_with_port);
+    return ia;
+}
+
+
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Endpoint& endpoint)
+{
+    return oa << endpoint.toString();
+}
+
 } // namespace net

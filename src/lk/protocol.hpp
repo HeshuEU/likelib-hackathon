@@ -12,74 +12,15 @@
 namespace lk
 {
 
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(
-    MessageType, unsigned char, (NOT_AVAILABLE)(HANDSHAKE)(PING)(PONG)(TRANSACTION)(BLOCK)(GET_BLOCK)(INFO))
-
 class Core;
 class Network;
-class Peer;
-
-
-namespace mh
-{
-    class IHandler
-    {
-      public:
-        virtual ~IHandler() = default;
-
-        virtual bool canHandle(MessageType type) const = 0;
-
-        struct Data
-        {
-            Peer& peer;
-            Network& network;
-            Core& core;
-        };
-        virtual void handle(MessageType type, Data& data, base::Bytes& bytes) = 0;
-    };
-
-
-    class Ping : public IHandler
-    {
-      public:
-        bool canHandle(MessageType type) const override;
-        void handle(MessageType type, Data& data, base::Bytes& bytes) override;
-    };
-
-
-    class Pong : public IHandler
-    {
-      public:
-        bool canHandle(MessageType type) const override;
-        void handle(MessageType type, Data& data, base::Bytes& bytes) override;
-    };
-
-
-    class Transaction : public IHandler
-    {
-      public:
-        bool canHandle(MessageType type) const override;
-        void handle(MessageType type, Data& data, base::Bytes& bytes) override;
-    };
-
-    class AllHandler final : public IHandler
-    {
-      public:
-        AllHandler();
-        bool canHandle(MessageType type) const override;
-        void handle(MessageType type, Data& data, base::Bytes& bytes) override;
-
-      private:
-        std::vector<std::unique_ptr<IHandler>> _handlers;
-    };
-} // namespace mh
 
 
 class Peer
 {
   public:
     //================
-    Peer(Network& owning_network_object, net::Session& session);
+    Peer(Network& owning_network_object, net::Session& session, Core& _core);
     //================
     enum class State
     {
@@ -89,11 +30,13 @@ class Peer
         SYNCHRONISED
     };
     //================
+    [[nodiscard]] std::optional<net::Endpoint> getServerEndpoint() const;
+    //================
   private:
     class Handler;
 
   public:
-    std::unique_ptr<Handler> createHandler();
+    [[nodiscard]] std::unique_ptr<Handler> createHandler();
     //================
   private:
     //================
@@ -101,7 +44,7 @@ class Peer
     {
       public:
         //===================
-        Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session);
+        Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session, Core& core);
         ~Handler() override = default;
         //================
         void onReceive(const base::Bytes& data) override;
@@ -113,6 +56,7 @@ class Peer
         Peer& _owning_peer;
         Network& _owning_network_object;
         net::Session& _session;
+        Core& _core;
         //================
         void onHandshake(base::Sha256&& top_block_hash);
         void onPing();
@@ -120,12 +64,14 @@ class Peer
         void onTransaction(bc::Transaction&& tx);
         void onBlock(bc::Block&& block);
         void onGetBlock(base::Sha256&& block_hash);
-        void onInfo();
+        void onGetInfo();
+        void onInfo(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers);
         //================
     };
     //================
     Network& _owning_network_object;
     net::Session& _session;
+    Core& _core;
     State _state;
     //================
 };
@@ -141,6 +87,8 @@ class Network
     //================
     void broadcastBlock(const bc::Block& block);
     void broadcastTransaction(const bc::Transaction& tx);
+    //================
+    [[nodiscard]] std::vector<net::Endpoint> allPeersAddresses() const;
     //================
   private:
     //================
@@ -163,8 +111,8 @@ class Network
     };
     //================
     net::Host _host;
-    mh::AllHandler _all_message_handlers;
     std::vector<Peer> _peers;
+    Core& _core;
     //================
     Peer& createPeer(net::Session& session);
     void removePeer(const Peer& peer);
