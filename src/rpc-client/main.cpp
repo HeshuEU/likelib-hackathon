@@ -29,25 +29,15 @@ int getBalance(base::SubprogramRouter& router)
         return base::config::EXIT_OK;
     }
 
-    if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
-        std::cout << "Warning. Config was not found." << std::endl;
-    }
-
     try {
-        std::unique_ptr<ParametersHelper> helper;
-        if(router.optionsParser()->hasOption(CONFIG_OPTION)) {
-            helper = std::make_unique<ParametersHelper>(router.optionsParser()->getValue<std::string>(CONFIG_OPTION));
-        }
-        else {
-            helper = std::make_unique<ParametersHelper>();
-        }
+        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION)};
         //====================================
         std::string host_address;
         if(router.optionsParser()->hasOption(HOST_OPTION)) {
             host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
         }
         else {
-            host_address = helper->getValue<std::string>("nodes", "host address");
+            host_address = helper.getValue<std::string>("nodes", "host address");
         }
         //====================================
         std::string account_address;
@@ -55,7 +45,7 @@ int getBalance(base::SubprogramRouter& router)
             account_address = router.optionsParser()->getValue<std::string>(ADDRESS_OPTION);
         }
         else {
-            account_address = helper->getValue<std::string>("addresses", "account address");
+            account_address = helper.getValue<std::string>("addresses", "account address");
         }
         //====================================
 
@@ -106,18 +96,8 @@ int transfer(base::SubprogramRouter& router)
         return base::config::EXIT_OK;
     }
 
-    if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
-        std::cout << "Warning. Config was not found." << std::endl;
-    }
-
     try {
-        std::unique_ptr<ParametersHelper> helper;
-        if(router.optionsParser()->hasOption(CONFIG_OPTION)) {
-            helper = std::make_unique<ParametersHelper>(router.optionsParser()->getValue<std::string>(CONFIG_OPTION));
-        }
-        else {
-            helper = std::make_unique<ParametersHelper>();
-        }
+        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION)};
 
         //====================================
         std::string host_address;
@@ -125,7 +105,7 @@ int transfer(base::SubprogramRouter& router)
             host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
         }
         else {
-            host_address = helper->getValue<std::string>("nodes", "host address");
+            host_address = helper.getValue<std::string>("nodes", "host address");
         }
         //====================================
         std::string from_address;
@@ -133,7 +113,7 @@ int transfer(base::SubprogramRouter& router)
             from_address = router.optionsParser()->getValue<std::string>(FROM_ADDRESS_OPTION);
         }
         else {
-            from_address = helper->getValue<std::string>("addresses", "from account address");
+            from_address = helper.getValue<std::string>("addresses", "from account address");
         }
         //====================================
         std::string to_address;
@@ -141,7 +121,7 @@ int transfer(base::SubprogramRouter& router)
             to_address = router.optionsParser()->getValue<std::string>(TO_ADDRESS_OPTION);
         }
         else {
-            to_address = helper->getValue<std::string>("addresses", "to account address");
+            to_address = helper.getValue<std::string>("addresses", "to account address");
         }
         //====================================
         bc::Balance amount;
@@ -149,7 +129,7 @@ int transfer(base::SubprogramRouter& router)
             amount = router.optionsParser()->getValue<bc::Balance>(AMOUNT_OPTION);
         }
         else {
-            amount = helper->getValue<bc::Balance>("amount", "transfer amount");
+            amount = helper.getValue<bc::Balance>("amount", "transfer amount");
         }
         //====================================
         rpc::RpcClient client(host_address);
@@ -193,25 +173,16 @@ int test(base::SubprogramRouter& router)
         return base::config::EXIT_OK;
     }
 
-    if(!router.optionsParser()->hasOption(CONFIG_OPTION)) {
-        std::cout << "Warning. Config was not found." << std::endl;
-    }
-
     try {
-        std::unique_ptr<ParametersHelper> helper;
-        if(router.optionsParser()->hasOption(CONFIG_OPTION)) {
-            helper = std::make_unique<ParametersHelper>(router.optionsParser()->getValue<std::string>(CONFIG_OPTION));
-        }
-        else {
-            helper = std::make_unique<ParametersHelper>();
-        }
+        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION)};
+
         //====================================
         std::string host_address;
         if(router.optionsParser()->hasOption(HOST_OPTION)) {
             host_address = router.optionsParser()->getValue<std::string>(HOST_OPTION);
         }
         else {
-            host_address = helper->getValue<std::string>("nodes", "host address");
+            host_address = helper.getValue<std::string>("nodes", "host address");
         }
         //====================================
         LOG_INFO << "Try to connect to rpc server by: " << host_address;

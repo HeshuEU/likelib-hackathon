@@ -11,7 +11,6 @@ class ParametersHelper
 {
   public:
     //=====================
-    ParametersHelper();
     ParametersHelper(const std::filesystem::path& path);
     //========================
     template<typename Type>
