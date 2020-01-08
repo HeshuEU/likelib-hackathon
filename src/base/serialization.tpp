@@ -143,6 +143,37 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T
 
 
 template<typename T>
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::optional<T>& v)
+{
+    bool do_we_have_a_value;
+    ia >> do_we_have_a_value;
+    if(do_we_have_a_value) {
+        T t;
+        ia >> t;
+        v = t;
+    }
+    else {
+        v = std::nullopt;
+    }
+
+    return ia;
+}
+
+
+template<typename T>
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v)
+{
+    if(v) {
+        oa << true << v;
+    }
+    else {
+        oa << false;
+    }
+    return oa;
+}
+
+
+template<typename T>
 base::Bytes toBytes(const T& value)
 {
     SerializationOArchive oa;

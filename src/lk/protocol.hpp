@@ -8,6 +8,7 @@
 #include "bc/transaction.hpp"
 #include "net/host.hpp"
 
+#include <forward_list>
 
 namespace lk
 {
@@ -22,21 +23,10 @@ class Peer
     //================
     Peer(Network& owning_network_object, net::Session& session, Core& _core);
     //================
-    enum class State
-    {
-        CONNECTED,
-        ACCEPTED,
-        REQUESTED_BLOCKS,
-        SYNCHRONISED
-    };
-    //================
     [[nodiscard]] std::optional<net::Endpoint> getServerEndpoint() const;
+    void setServerEndpoint(net::Endpoint endpoint);
     //================
-  private:
-    class Handler;
-
-  public:
-    [[nodiscard]] std::unique_ptr<Handler> createHandler();
+    [[nodiscard]] std::unique_ptr<net::Handler> createHandler();
     //================
   private:
     //================
@@ -58,21 +48,35 @@ class Peer
         net::Session& _session;
         Core& _core;
         //================
-        void onHandshake(base::Sha256&& top_block_hash);
-        void onPing();
-        void onPong();
-        void onTransaction(bc::Transaction&& tx);
-        void onBlock(bc::Block&& block);
-        void onGetBlock(base::Sha256&& block_hash);
-        void onGetInfo();
-        void onInfo(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers);
+        std::forward_list<bc::Block> _sync_blocks;
+        //================
+        void onHandshakeMessage(bc::Block&& top_block_hash, std::optional<std::uint16_t>&& public_port);
+        void onPingMessage();
+        void onPongMessage();
+        void onTransactionMessage(bc::Transaction&& tx);
+        void onBlockMessage(bc::Block&& block);
+        void onGetBlockMessage(base::Sha256&& block_hash);
+        void onGetInfoMessage();
+        void onInfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers);
         //================
     };
+    //================
+    enum class State
+    {
+        CONNECTED,
+        ACCEPTED,
+        REQUESTED_BLOCKS,
+        SYNCHRONISED
+    };
+    //================
+    void doHandshake();
     //================
     Network& _owning_network_object;
     net::Session& _session;
     Core& _core;
-    State _state;
+    //================
+    State _state{State::SYNCHRONISED};
+    std::optional<net::Endpoint> _address_for_incoming_connections;
     //================
 };
 
@@ -110,9 +114,12 @@ class Network
         //================
     };
     //================
+    const base::PropertyTree& _config;
     net::Host _host;
     std::vector<Peer> _peers;
     Core& _core;
+    //================
+    std::optional<std::uint16_t> _public_port;
     //================
     Peer& createPeer(net::Session& session);
     void removePeer(const Peer& peer);

@@ -56,6 +56,12 @@ unsigned short Endpoint::getPort() const noexcept
 }
 
 
+void Endpoint::setPort(unsigned short port) noexcept
+{
+    _port = port;
+}
+
+
 Endpoint::operator boost::asio::ip::tcp::endpoint() const
 {
     return {_address, _port};

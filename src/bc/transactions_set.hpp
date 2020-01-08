@@ -26,6 +26,9 @@ class TransactionsSet
     [[nodiscard]] std::vector<Transaction>::iterator begin();
     [[nodiscard]] std::vector<Transaction>::iterator end();
 
+    [[nodiscard]] bool operator==(const TransactionsSet& other) const;
+    [[nodiscard]] bool operator!=(const TransactionsSet& other) const;
+
   private:
     std::vector<Transaction> _txs;
 

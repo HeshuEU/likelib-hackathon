@@ -26,6 +26,7 @@ class Endpoint
     operator boost::asio::ip::tcp::endpoint() const;
     //=============
     unsigned short getPort() const noexcept;
+    void setPort(unsigned short port) noexcept;
     //=============
     bool operator==(const Endpoint& other) const;
     bool operator!=(const Endpoint& other) const;

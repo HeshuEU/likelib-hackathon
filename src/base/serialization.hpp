@@ -3,8 +3,9 @@
 #include "base/bytes.hpp"
 
 #include <cstdint>
-#include <type_traits>
+#include <optional>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace base
@@ -68,6 +69,12 @@ SerializationIArchive& operator>>(SerializationIArchive& ia, std::vector<T>& v);
 template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
 
+
+template<typename T>
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::optional<T>& v);
+
+template<typename T>
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v);
 
 template<typename T>
 base::Bytes toBytes(const T& value);

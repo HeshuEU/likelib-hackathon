@@ -70,8 +70,12 @@ BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
 
 BOOST_AUTO_TEST_CASE(serialization_enum)
 {
-    enum class E {
-        A, B, C, D
+    enum class E
+    {
+        A,
+        B,
+        C,
+        D
     };
     base::SerializationOArchive oa;
     oa << E::A << E::C << E::B << E::D;

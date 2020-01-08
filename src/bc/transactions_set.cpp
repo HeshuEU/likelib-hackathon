@@ -97,6 +97,18 @@ void TransactionsSet::remove(const TransactionsSet& other)
 }
 
 
+bool TransactionsSet::operator==(const TransactionsSet& other) const
+{
+    return _txs == other._txs;
+}
+
+
+bool TransactionsSet::operator!=(const TransactionsSet& other) const
+{
+    return !(*this == other);
+}
+
+
 base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, TransactionsSet& txs)
 {
     return ia >> txs._txs;

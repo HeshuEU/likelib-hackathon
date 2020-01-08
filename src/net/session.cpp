@@ -104,4 +104,10 @@ void Session::receive()
 }
 
 
+const Endpoint& Session::getEndpoint() const
+{
+    return _connection->getEndpoint();
+}
+
+
 } // namespace net

@@ -42,6 +42,8 @@ class Session
     void start();
     void close();
     //==================
+    const Endpoint& getEndpoint() const;
+    //==================
   private:
     //==================
     std::size_t _id;

@@ -14,7 +14,7 @@ class Block
 {
   public:
     //=================
-    Block(base::Sha256 prev_block_hash, TransactionsSet txs);
+    Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, TransactionsSet txs);
 
     Block(const Block&) = default;
     Block(Block&&) = default;
@@ -25,23 +25,22 @@ class Block
     ~Block() = default;
     //=================
     static base::SerializationOArchive& serialize(base::SerializationOArchive& oa, const Block& block);
-    static Block deserialize(base::SerializationIArchive& ia);
+    [[nodiscard]] static Block deserialize(base::SerializationIArchive& ia);
     //=================
-    const base::Sha256& getPrevBlockHash() const;
-    const TransactionsSet& getTransactions() const;
-    NonceInt getNonce() const noexcept;
+    [[nodiscard]] BlockDepth getDepth() const noexcept;
+    [[nodiscard]] const base::Sha256& getPrevBlockHash() const;
+    [[nodiscard]] const TransactionsSet& getTransactions() const;
+    [[nodiscard]] NonceInt getNonce() const noexcept;
     //=================
+    void setDepth(BlockDepth depth) noexcept;
     void setNonce(NonceInt nonce) noexcept;
     void setPrevBlockHash(const base::Sha256& prev_block_hash);
     void setTransactions(TransactionsSet txs);
     void addTransaction(const Transaction& tx);
     //=================
-
-
-
-    //=================
   private:
     //=================
+    bc::BlockDepth _depth;
     NonceInt _nonce;
 
     base::Sha256 _prev_block_hash;
@@ -52,5 +51,8 @@ class Block
 
 base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block);
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block);
+
+bool operator==(const bc::Block& a, const bc::Block& b);
+bool operator!=(const bc::Block& a, const bc::Block& b);
 
 } // namespace bc

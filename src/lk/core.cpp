@@ -16,7 +16,7 @@ Core::Core(const base::PropertyTree& config) : _config{config}, _blockchain{_con
 const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
-        bc::Block ret{base::Sha256(base::Bytes(32)), {}};
+        bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address(bc::Address(std::string(32, '0')));
         ret.addTransaction({null_address, null_address, bc::Balance{0xFFFFFFFF}, base::Time::fromSeconds(0)});
         return ret;
@@ -77,8 +77,10 @@ bool Core::checkBlock(const bc::Block& b) const
 
 bc::Block Core::getBlockTemplate() const
 {
-    auto prev_hash = base::Sha256::compute(base::toBytes(_blockchain.getTopBlock()));
-    return bc::Block{prev_hash, _pending_transactions};
+    const auto& top_block = _blockchain.getTopBlock();
+    bc::BlockDepth depth = top_block.getDepth() + 1;
+    auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
+    return bc::Block{depth, prev_hash, _pending_transactions};
 }
 
 
