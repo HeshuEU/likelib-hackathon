@@ -80,17 +80,15 @@ void testUpdateTransaction(lk::BalanceManager& manager, std::size_t sequence_num
         std::size_t sender_pos = sequence_number * count_accounts + (i * period) % count_accounts;
         std::size_t receiver_pos = sequence_number * count_accounts + (i * period + period) % count_accounts;
 
-        bc::Transaction transaction{bc::Address{std::to_string(sender_pos)},
-            bc::Address{std::to_string(receiver_pos)}, transfer_tokens, base::Time()};
+        bc::Transaction transaction{bc::Address{std::to_string(sender_pos)}, bc::Address{std::to_string(receiver_pos)},
+            transfer_tokens, base::Time()};
 
         manager.update(transaction);
     }
 
     bool res = true;
     for(std::size_t i = 0; i < count_accounts; i++) {
-        res = res &&
-            (manager.getBalance(std::to_string(count_accounts * sequence_number + i)) ==
-                balance_each_person);
+        res = res && (manager.getBalance(std::to_string(count_accounts * sequence_number + i)) == balance_each_person);
     }
     BOOST_CHECK(res);
 }
@@ -153,9 +151,7 @@ void testUpdateBlock(lk::BalanceManager& manager, std::size_t sequence_number)
 
     bool res = true;
     for(std::size_t i = 0; i < count_accounts; i++) {
-        res = res &&
-            (manager.getBalance(std::to_string(count_accounts * sequence_number + i)) ==
-                balance_each_person);
+        res = res && (manager.getBalance(std::to_string(count_accounts * sequence_number + i)) == balance_each_person);
     }
     BOOST_CHECK(res);
 }
