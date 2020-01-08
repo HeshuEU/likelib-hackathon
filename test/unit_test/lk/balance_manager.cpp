@@ -19,7 +19,7 @@ std::map<bc::Address, bc::Balance> initMap()
     init_map[bc::Address("back_door")] = 1'000'000;
 
     for(std::size_t i = 0; i < 90; i++) {
-        init_map[bc::Address("Person" + std::to_string(i))] = balance_each_person;
+        init_map[bc::Address(std::to_string(i))] = balance_each_person;
     }
     return init_map;
 }
@@ -73,23 +73,24 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_transaction)
 
 void testUpdateTransaction(lk::BalanceManager& manager, std::size_t sequence_number)
 {
-    std::size_t count_accounts = 9;
-    std::size_t period = 2;
-    bc::Balance transfer_tokens = 100;
+    constexpr std::size_t count_accounts = 9;
+    constexpr std::size_t period = 2;
+    constexpr bc::Balance transfer_tokens = 100;
     for(std::size_t i = 0; i < count_accounts * 100; i++) {
-
         std::size_t sender_pos = sequence_number * count_accounts + (i * period) % count_accounts;
         std::size_t receiver_pos = sequence_number * count_accounts + (i * period + period) % count_accounts;
 
-        bc::Transaction transaction{bc::Address{"Person" + std::to_string(sender_pos)},
-            bc::Address{"Person" + std::to_string(receiver_pos)}, transfer_tokens, base::Time()};
+        bc::Transaction transaction{bc::Address{std::to_string(sender_pos)},
+            bc::Address{std::to_string(receiver_pos)}, transfer_tokens, base::Time()};
 
         manager.update(transaction);
     }
 
     bool res = true;
     for(std::size_t i = 0; i < count_accounts; i++) {
-        res = res && (manager.getBalance("Person" + std::to_string(count_accounts * sequence_number + i)) == balance_each_person);
+        res = res &&
+            (manager.getBalance(std::to_string(count_accounts * sequence_number + i)) ==
+                balance_each_person);
     }
     BOOST_CHECK(res);
 }
@@ -128,92 +129,45 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_block)
 }
 
 
-void testUpdateBlock(
-    lk::BalanceManager& manager, std::vector<std::string>& names, std::vector<std::shared_mutex>& mutexes)
+void testUpdateBlock(lk::BalanceManager& manager, std::size_t sequence_number)
 {
-    std::random_device rd;
-    std::default_random_engine generator(rd());
-    std::uniform_int_distribution<std::size_t> person_distribution(0, names.size() - 1);
-    std::uniform_int_distribution<std::size_t> transaction_distribution(1, 5);
+    constexpr std::size_t count_accounts = 9;
+    constexpr std::size_t period = 2;
+    constexpr bc::Balance transfer_tokens = 100;
+    constexpr std::size_t count_transaction = 10;
 
-    for(std::size_t i = 0; i < 10; i++) {
-
-        std::size_t count_transactions = transaction_distribution(generator);
-
-        std::vector<std::size_t> senders;
-        bool lock = false;
-        while(senders.size() != count_transactions) {
-            std::size_t sender_pos;
-            sender_pos = person_distribution(generator);
-            lock = mutexes[sender_pos].try_lock();
-            if(manager.getBalance(bc::Address{names[sender_pos]}) != 0 && lock) {
-                senders.push_back(sender_pos);
-            }
-            else if(lock) {
-                mutexes[sender_pos].unlock();
-            }
-        }
-
-        std::vector<std::size_t> receivers;
-        lock = false;
-        while(receivers.size() != count_transactions) {
-            std::size_t receiver_pos;
-            receiver_pos = person_distribution(generator);
-            lock = mutexes[receiver_pos].try_lock();
-            if(lock) {
-                receivers.push_back(receiver_pos);
-            }
-            else if(lock) {
-                mutexes[receiver_pos].unlock();
-            }
-        }
-
-        std::vector<std::tuple<bc::Balance, bc::Balance, bc::Balance>> test_info;
+    for(std::size_t i = 0; i < count_accounts * 10; i++) {
         bc::TransactionsSet transaction_set;
-        for(std::size_t i = 0; i < count_transactions; i++) {
-            auto sender_tokens = manager.getBalance(bc::Address{names[senders[i]]});
-            auto receiver_tokens = manager.getBalance(bc::Address{names[receivers[i]]});
-            std::uniform_int_distribution<bc::Balance> tokens_distribution(1, sender_tokens);
-            auto transfer_tokens = tokens_distribution(generator);
-            test_info.push_back(std::make_tuple(sender_tokens, receiver_tokens, transfer_tokens));
-            transaction_set.add(bc::Transaction{
-                bc::Address{names[senders[i]]}, bc::Address{names[receivers[i]]}, transfer_tokens, base::Time()});
+        for(std::size_t j = 0; j < count_transaction; j++) {
+            std::size_t sender_pos =
+                sequence_number * count_accounts + (i * count_transaction * period + j * period) % count_accounts;
+            std::size_t receiver_pos = sequence_number * count_accounts +
+                (i * count_transaction * period + j * period + period) % count_accounts;
+            transaction_set.add(bc::Transaction{bc::Address{std::to_string(sender_pos)},
+                bc::Address{std::to_string(receiver_pos)}, transfer_tokens, base::Time()});
         }
         bc::Block block(base::Sha256::compute(base::Bytes("")), std::move(transaction_set));
 
         manager.update(block);
-
-        bool is_ok = true;
-        for(std::size_t i = 0; i < count_transactions; i++) {
-            is_ok = is_ok &&
-                (manager.getBalance(bc::Address(names[senders[i]])) ==
-                    std::get<0>(test_info[i]) - std::get<2>(test_info[i]));
-            is_ok = is_ok &&
-                (manager.getBalance(bc::Address(names[receivers[i]])) ==
-                    std::get<1>(test_info[i]) + std::get<2>(test_info[i]));
-        }
-        BOOST_CHECK(is_ok);
-
-        for(std::size_t i = 0; i < count_transactions; i++) {
-            mutexes[senders[i]].unlock();
-            mutexes[receivers[i]].unlock();
-        }
     }
+
+    bool res = true;
+    for(std::size_t i = 0; i < count_accounts; i++) {
+        res = res &&
+            (manager.getBalance(std::to_string(count_accounts * sequence_number + i)) ==
+                balance_each_person);
+    }
+    BOOST_CHECK(res);
 }
 
 
 BOOST_AUTO_TEST_CASE(balance_manager_update_block_multithreads)
 {
     lk::BalanceManager manager(init_map);
-    std::vector<std::string> names{"qwerty", "Troia", "okDe", "Andrei", "Ivan", "Orland"};
-    for(std::size_t i = 0; i < init_map.size() - 5; i++) {
-        names.push_back("Person" + std::to_string(i));
-    }
-    std::vector<std::shared_mutex> mutexes(names.size());
 
     std::vector<std::thread> threads;
-    for(std::size_t i = 0; i < 6; i++) {
-        threads.push_back(std::thread(&testUpdateBlock, std::ref(manager), std::ref(names), std::ref(mutexes)));
+    for(std::size_t i = 0; i < 10; i++) {
+        threads.emplace_back(&testUpdateBlock, std::ref(manager), i);
     }
     for(auto& thread: threads) {
         thread.join();
