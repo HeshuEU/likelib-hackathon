@@ -15,7 +15,7 @@ base::Bytes createMessage(MessageType type, Args&&... args)
 {
     base::SerializationOArchive ret;
     ret << type;
-    (ret << ... << std::forward<Args>(args));
+    (ret << ... << args);
     return ret.getBytes();
 }
 
@@ -29,7 +29,9 @@ namespace lk
 
 Peer::Handler::Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session, Core& core)
     : _owning_peer{owning_peer}, _owning_network_object{owning_network_object}, _session{handled_session}, _core{core}
-{}
+{
+    _session.start();
+}
 
 
 void Peer::Handler::onReceive(const base::Bytes& data)
@@ -46,12 +48,14 @@ void Peer::Handler::onReceive(const base::Bytes& data)
 
     if(_owning_peer._state != State::SYNCHRONISED) {
         if(type == MessageType::HANDSHAKE) {
+            LOG_DEBUG << "RECEIVED HANDSHAKE";
             auto top_block = bc::Block::deserialize(ia);
             std::optional<std::uint16_t> public_port;
             ia >> public_port;
             onHandshakeMessage(std::move(top_block), std::move(public_port));
         }
         else if(type == MessageType::BLOCK) {
+            LOG_DEBUG << "RECEIVED SYNCHRONIZATION BLOCK";
             bc::Block block = bc::Block::deserialize(ia);
             onBlockMessage(std::move(block));
         }

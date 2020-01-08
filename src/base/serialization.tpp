@@ -164,7 +164,7 @@ template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v)
 {
     if(v) {
-        oa << true << v;
+        oa << true << *v;
     }
     else {
         oa << false;

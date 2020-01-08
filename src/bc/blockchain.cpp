@@ -54,7 +54,7 @@ bool Blockchain::tryAddBlock(const Block& block)
         else if(!_blocks.empty() && _top_level_block_hash != block.getPrevBlockHash()) {
             return false;
         }
-        else if(_blocks.size() - 1 != block.getDepth()) {
+        else if(_blocks.size() != block.getDepth()) {
             return false;
         }
         else {
