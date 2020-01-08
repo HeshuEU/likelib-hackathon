@@ -11,13 +11,14 @@ set(TEST_SOURCES
 		base/serialization.cpp
 		base/time.cpp
         base/timer.cpp
-        net/packet.cpp
         bc/address.cpp
         bc/block.cpp
         bc/database_manager.cpp
 		bc/transaction.cpp
         bc/transactions_set.cpp
         lk/balance_manager.cpp
+        net/packet.cpp
+        net/endpoint.cpp
 		)
 
 add_executable(run_tests ${TEST_SOURCES})
