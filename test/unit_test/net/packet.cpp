@@ -24,6 +24,66 @@ BOOST_AUTO_TEST_CASE(packet_constructor)
 }
 
 
+BOOST_AUTO_TEST_CASE(packet_constructor_copy)
+{
+    net::Packet packet1(net::PacketType::PING);
+    base::Bytes bytes1("|SD,wt35/n F{eg\n dflp3DSFP#%");
+    packet1.setData(bytes1);
+    net::Packet packet2(packet1);
+
+    BOOST_CHECK(packet1 == packet2);
+    BOOST_CHECK(packet1.getType() == packet2.getType());
+    BOOST_CHECK(packet1.getData() == packet2.getData());
+}
+
+
+BOOST_AUTO_TEST_CASE(packet_constructor_move)
+{
+    net::PacketType type = net::PacketType::PING;
+    net::Packet packet1(type);
+    base::Bytes bytes1("|SD,wt35/n F{eg\n dflp3DSFP#%");
+    packet1.setData(bytes1);
+    net::Packet packet2(std::move(packet1));
+
+    BOOST_CHECK(packet2.getType() == type);
+    BOOST_CHECK(packet2.getData() == bytes1);
+}
+
+
+BOOST_AUTO_TEST_CASE(packet_operator_copy)
+{
+    net::Packet packet1(net::PacketType::PING);
+    net::Packet packet2(net::PacketType::DATA);
+    base::Bytes bytes1("|SD,wt35/n F{eg\n dflp3DSFP#%");
+    base::Bytes bytes2("(#%Fje,?249^-2=$kgm@$k6/q)");
+    packet1.setData(bytes1);
+    packet2.setData(bytes2);
+
+    packet2 = packet1;
+
+    BOOST_CHECK(packet1 == packet2);
+    BOOST_CHECK(packet1.getType() == packet2.getType());
+    BOOST_CHECK(packet1.getData() == packet2.getData());
+}
+
+
+BOOST_AUTO_TEST_CASE(packet_operator_move)
+{
+    net::PacketType type = net::PacketType::PING;
+    net::Packet packet1(type);
+    net::Packet packet2(net::PacketType::DATA);
+    base::Bytes bytes1("|SD,wt35/n F{eg\n dflp3DSFP#%");
+    base::Bytes bytes2("(#%Fje,?249^-2=$kgm@$k6/q)");
+    packet1.setData(bytes1);
+    packet2.setData(bytes2);
+
+    packet2 = std::move(packet1);
+
+    BOOST_CHECK(packet2.getType() == type);
+    BOOST_CHECK(packet2.getData() == bytes1);
+}
+
+
 BOOST_AUTO_TEST_CASE(packet_set_and_get_data)
 {
     net::Packet packet1(net::PacketType::PING);
