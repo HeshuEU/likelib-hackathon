@@ -70,9 +70,14 @@ void Host::networkThreadWorkerFunction() noexcept
     try {
         _io_context.run();
     }
+    catch(const std::exception& e) {
+        // TODO: thread worker function error-handling
+        LOG_WARNING << boost::stacktrace::stacktrace();
+        LOG_WARNING << "Error occurred in network thread: " << e.what();
+    }
     catch(...) {
         // global catch done for safety, since thread function cannot throw.
-        // TODO: thread worker function error-handling
+        LOG_WARNING << "Error occurred in network thread";
     }
 }
 

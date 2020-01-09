@@ -63,8 +63,7 @@ class Peer
     //================
     enum class State
     {
-        CONNECTED,
-        ACCEPTED,
+        JUST_ESTABLISHED,
         REQUESTED_BLOCKS,
         SYNCHRONISED
     };
@@ -75,7 +74,7 @@ class Peer
     net::Session& _session;
     Core& _core;
     //================
-    State _state{State::SYNCHRONISED};
+    State _state{State::JUST_ESTABLISHED};
     std::optional<net::Endpoint> _address_for_incoming_connections;
     //================
 };
@@ -116,7 +115,7 @@ class Network
     //================
     const base::PropertyTree& _config;
     net::Host _host;
-    std::vector<Peer> _peers;
+    std::forward_list<Peer> _peers;
     Core& _core;
     //================
     std::optional<std::uint16_t> _public_port;

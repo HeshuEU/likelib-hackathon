@@ -49,7 +49,7 @@ class Session
     std::size_t _id;
     void setNextId();
     //==================
-    std::unique_ptr<Connection> _connection;
+    std::shared_ptr<Connection> _connection;
     std::unique_ptr<Handler> _handler;
     //==================
     void receive();

@@ -5,10 +5,14 @@
 
 #include <atomic>
 
+namespace {
+    static constexpr std::size_t SIZE_OF_MESSAGE_LENGTH_IN_BYTES = 2;
+}
+
 namespace net
 {
 
-Session::Session(std::unique_ptr<Connection> connection) : _connection{std::move(connection)}
+Session::Session(std::unique_ptr<Connection> connection) : _connection{connection.release()}
 {
     ASSERT(_connection);
     setNextId();
@@ -38,7 +42,7 @@ bool Session::isClosed() const
 void Session::send(const base::Bytes& data)
 {
     if(isActive()) {
-        _connection->send(data);
+        _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data);
     }
 }
 
@@ -46,7 +50,7 @@ void Session::send(const base::Bytes& data)
 void Session::send(base::Bytes&& data)
 {
     if(isActive()) {
-        _connection->send(std::move(data));
+        _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + std::move(data));
     }
 }
 
@@ -89,7 +93,6 @@ void Session::close()
 
 void Session::receive()
 {
-    static constexpr std::size_t SIZE_OF_MESSAGE_LENGTH_IN_BYTES = 2;
     _connection->receive(SIZE_OF_MESSAGE_LENGTH_IN_BYTES, [this](const base::Bytes& data) {
         auto length = base::fromBytes<std::uint16_t>(data);
         _connection->receive(length, [this](const base::Bytes& data) {

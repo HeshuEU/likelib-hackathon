@@ -43,8 +43,6 @@ void Peer::Handler::onReceive(const base::Bytes& data)
     base::SerializationIArchive ia(data);
     MessageType type;
     ia >> type;
-    base::Bytes data_without_type;
-    ia >> data_without_type;
 
     if(_owning_peer._state != State::SYNCHRONISED) {
         if(type == MessageType::HANDSHAKE) {
@@ -106,7 +104,7 @@ void Peer::Handler::onReceive(const base::Bytes& data)
                 break;
             }
             default: {
-                LOG_DEBUG << "Received an invalid block from peer " << _session.getId();
+                LOG_DEBUG << "Received an invalid block from peer " << _session.getId() << " with msgtype = " << static_cast<int>(type);
                 break;
             }
         }
@@ -275,7 +273,7 @@ Network::Network(const base::PropertyTree& config, Core& core) : _config{config}
 
 Peer& Network::createPeer(net::Session& session)
 {
-    auto& peer = _peers.emplace_back(*this, session, _core);
+    auto& peer = _peers.emplace_front(*this, session, _core);
     return peer;
 }
 
