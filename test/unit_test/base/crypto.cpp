@@ -187,3 +187,15 @@ BOOST_AUTO_TEST_CASE(aes_serialization_256bit)
 
     std::filesystem::remove(key_path);
 }
+
+
+BOOST_AUTO_TEST_CASE(base64_encode)
+{
+
+    base::Bytes target_msg("dfjbvalgecnhq=ygrbn3f5xgvidyt nwucgfim2yx139sv7yx\nw4hj  i5468337dk;126H>R46;");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base64Decode(base64);
+    BOOST_CHECK(base64.toString() ==
+        "ZGZqYnZhbGdlY25ocT15Z3JibjNmNXhndmlkeXQgbnd1Y2dmaW0yeXgxMzlzdjd5eAp3NGhqICBpNTQ2ODMzN2RrOzEyNkg+UjQ2Ow==");
+    BOOST_CHECK(target_msg == decode_base64);
+}

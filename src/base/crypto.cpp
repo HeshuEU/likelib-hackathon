@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <iostream>
 
 namespace
 {
@@ -273,8 +274,8 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& 
 std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 {
     static constexpr std::size_t minimal_secure_key_size = 1024;
-    if(keys_size < minimal_secure_key_size){
-        LOG_WARNING << "using less than "<< minimal_secure_key_size << "bits for key generation is not insecure";
+    if(keys_size < minimal_secure_key_size) {
+        LOG_WARNING << "using less than " << minimal_secure_key_size << "bits for key generation is not insecure";
     }
     // create big number for random generation
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
@@ -537,6 +538,42 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
     decrypted_message_len_in_buffer += current_data_len;
 
     return output_data.takePart(0, decrypted_message_len_in_buffer);
+}
+
+
+base::Bytes base64Encode(const base::Bytes& bytes)
+{
+    BIO* bio = BIO_new(BIO_s_mem());
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BUF_MEM* bufferPtr = BUF_MEM_new();
+
+    bio = BIO_push(b64, bio);
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+    BIO_write(bio, bytes.toArray(), static_cast<int>(bytes.size()));
+    BIO_flush(bio);
+    BIO_get_mem_ptr(bio, &bufferPtr);
+
+    base::Bytes base64_bytes(std::string(bufferPtr->data, bufferPtr->length));
+
+    free(bufferPtr);
+    BIO_set_close(bio, BIO_NOCLOSE);
+    BIO_free_all(bio);
+    return base64_bytes;
+}
+
+base::Bytes base64Decode(const base::Bytes& base64_bytes)
+{
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BIO* bio = BIO_new_mem_buf(base64_bytes.toArray(), base64_bytes.size());
+    base::Bytes ret(base64_bytes.size());
+
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    bio = BIO_push(b64, bio);
+    auto new_length = BIO_read(bio, ret.toArray(), base64_bytes.size());
+
+    BIO_free_all(bio);
+
+    return ret.takePart(0, new_length);
 }
 
 
