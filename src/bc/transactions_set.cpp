@@ -97,6 +97,18 @@ void TransactionsSet::remove(const TransactionsSet& other)
 }
 
 
+bool TransactionsSet::operator==(const TransactionsSet& other) const
+{
+    return _txs == other._txs;
+}
+
+
+bool TransactionsSet::operator!=(const TransactionsSet& other) const
+{
+    return !(*this == other);
+}
+
+
 base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, TransactionsSet& txs)
 {
     return ia >> txs._txs;
@@ -106,6 +118,33 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transac
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TransactionsSet& txs)
 {
     return oa << txs._txs;
+}
+
+
+std::map<Address, Balance> calcBalance(const TransactionsSet& txs)
+{
+    std::map<Address, Balance> result;
+    for(const auto& tx: txs) {
+
+        auto from_address_in_result = result.find(tx.getFrom());
+        auto from_amount_modifier = -tx.getAmount();
+        if(from_address_in_result == result.end()) {
+            result.insert({tx.getFrom(), from_amount_modifier});
+        }
+        else {
+            from_address_in_result->second = from_address_in_result->second + from_amount_modifier;
+        }
+
+        auto to_address_in_result = result.find(tx.getTo());
+        auto to_amount_modifier = tx.getAmount();
+        if(to_address_in_result == result.end()) {
+            result.insert({tx.getTo(), to_amount_modifier});
+        }
+        else {
+            to_address_in_result->second = to_address_in_result->second + to_amount_modifier;
+        }
+    }
+    return result;
 }
 
 } // namespace bc

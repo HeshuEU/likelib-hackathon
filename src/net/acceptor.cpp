@@ -16,7 +16,7 @@ Acceptor::Acceptor(ba::io_context& io_context, const Endpoint& listen_endpoint)
 }
 
 
-void Acceptor::accept(std::function<void(std::unique_ptr<Peer>)> on_accept)
+void Acceptor::accept(std::function<void(std::unique_ptr<Connection>)> on_accept)
 {
     _acceptor.async_accept(
         [this, on_accept = std::move(on_accept)](const boost::system::error_code& ec, ba::ip::tcp::socket socket) {
@@ -26,9 +26,8 @@ void Acceptor::accept(std::function<void(std::unique_ptr<Peer>)> on_accept)
             else {
                 auto connection = std::make_unique<Connection>(_io_context, std::move(socket));
                 LOG_INFO << "Connection accepted: " << connection->getEndpoint();
-                auto peer = std::make_unique<Peer>(std::move(connection));
                 if(on_accept) {
-                    on_accept(std::move(peer));
+                    on_accept(std::move(connection));
                 }
             }
         });

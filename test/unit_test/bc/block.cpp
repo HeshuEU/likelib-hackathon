@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(block_constructor1)
 {
     auto tx_set = getTestSet();
     std::string str_for_sha = "#%*(D VASGL/n\n\f asdeGDH#%";
-    bc::Block block(base::Sha256::compute(base::Bytes(str_for_sha)), std::move(tx_set));
+    bc::Block block(12, base::Sha256::compute(base::Bytes(str_for_sha)), std::move(tx_set));
 
     BOOST_CHECK(block.getPrevBlockHash() == base::Sha256::compute(base::Bytes(str_for_sha)));
     auto block_tx_set = block.getTransactions();
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(block_constructor2)
 {
     auto tx_set = getTestSet();
     std::string str_for_sha = "#%*(D VASGL/n\n\f asdeGDH#%";
-    bc::Block block(base::Sha256::compute(base::Bytes(str_for_sha)), std::move(tx_set));
+    bc::Block block(112, base::Sha256::compute(base::Bytes(str_for_sha)), std::move(tx_set));
 
     BOOST_CHECK(block.getPrevBlockHash() == base::Sha256::compute(base::Bytes(str_for_sha)));
     auto block_tx_set = block.getTransactions();
@@ -73,8 +73,8 @@ BOOST_AUTO_TEST_CASE(block_operator_equal)
     tx_set.remove(trans1);
 
     std::string str_for_sha = "#%*(D VASGL/n\n\f asdeGDH#%";
-    bc::Block block1(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f a%")), std::move(tx_set));
-    bc::Block block2(base::Sha256::compute(base::Bytes(str_for_sha)), getTestSet());
+    bc::Block block1(113, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f a%")), std::move(tx_set));
+    bc::Block block2(114, base::Sha256::compute(base::Bytes(str_for_sha)), getTestSet());
     block1 = block2;
 
     BOOST_CHECK(block1.getPrevBlockHash() == base::Sha256::compute(base::Bytes(str_for_sha)));
@@ -98,8 +98,8 @@ BOOST_AUTO_TEST_CASE(block_operator_move)
     tx_set.remove(trans1);
 
     std::string str_for_sha = "#%*(D VASGL/n\n\f asdeGDH#%";
-    bc::Block block1(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f a%")), std::move(tx_set));
-    bc::Block block2(base::Sha256::compute(base::Bytes(str_for_sha)), getTestSet());
+    bc::Block block1(115, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f a%")), std::move(tx_set));
+    bc::Block block2(116, base::Sha256::compute(base::Bytes(str_for_sha)), getTestSet());
     block1 = std::move(block2);
 
     BOOST_CHECK(block1.getPrevBlockHash() == base::Sha256::compute(base::Bytes(str_for_sha)));
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(block_operator_move)
 
 BOOST_AUTO_TEST_CASE(block_sets)
 {
-    bc::Block block(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
+    bc::Block block(117, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     auto tx_set = getTestSet();
 
     bc::Transaction new_trans{"SD#%),/n\' \n", "#(vm496LDF ", 67805678, base::Time()};
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(block_sets)
 
 BOOST_AUTO_TEST_CASE(block_add_transaction)
 {
-    bc::Block block(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
+    bc::Block block(118, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     bc::Transaction new_trans1{"SD#%),/n\' \n", "#(vm496LDF ", 67805678, base::Time()};
     bc::Transaction new_trans2{"(#583 Ks%3\n\\  sf )", "# sd  FS34$", 2078911, base::Time()};
 
@@ -165,14 +165,14 @@ BOOST_AUTO_TEST_CASE(block_add_transaction)
 BOOST_AUTO_TEST_CASE(block_serialization1)
 {
     std::string str_fro_sha = "#%*(D VASGL/n\n\f asdeGDH#%";
-    bc::Block block1(base::Sha256::compute(base::Bytes(str_fro_sha)), getTestSet());
+    bc::Block block1(119, base::Sha256::compute(base::Bytes(str_fro_sha)), getTestSet());
 
     block1.setNonce(bc::NonceInt(6706744));
     base::SerializationOArchive oa;
     bc::Block::serialize(oa, block1);
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Block block2(base::Sha256::compute(base::Bytes("")), bc::TransactionsSet());
+    bc::Block block2(120, base::Sha256::compute(base::Bytes("")), bc::TransactionsSet());
     block2 = bc::Block::deserialize(ia);
 
     BOOST_CHECK(block2.getPrevBlockHash() == base::Sha256::compute(base::Bytes(str_fro_sha)));
@@ -190,14 +190,14 @@ BOOST_AUTO_TEST_CASE(block_serialization1)
 BOOST_AUTO_TEST_CASE(block_serialization2)
 {
     std::string str_fro_sha = "#%*(D VASGL/n\n\f asdeGDH#%";
-    bc::Block block1(base::Sha256::compute(base::Bytes(str_fro_sha)), getTestSet());
+    bc::Block block1(119, base::Sha256::compute(base::Bytes(str_fro_sha)), getTestSet());
 
     block1.setNonce(bc::NonceInt(6706744));
     base::SerializationOArchive oa;
     oa << block1;
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Block block2(base::Sha256::compute(base::Bytes("")), bc::TransactionsSet());
+    bc::Block block2(120, base::Sha256::compute(base::Bytes("")), bc::TransactionsSet());
     ia >> block2;
 
     BOOST_CHECK(block2.getPrevBlockHash() == base::Sha256::compute(base::Bytes(str_fro_sha)));

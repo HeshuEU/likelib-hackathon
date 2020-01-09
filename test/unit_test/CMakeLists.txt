@@ -13,11 +13,9 @@ set(TEST_SOURCES
         base/timer.cpp
         bc/address.cpp
         bc/block.cpp
-        bc/database_manager.cpp
 		bc/transaction.cpp
         bc/transactions_set.cpp
         lk/balance_manager.cpp
-        net/packet.cpp
         net/endpoint.cpp
 		)
 

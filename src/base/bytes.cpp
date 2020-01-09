@@ -5,6 +5,8 @@
 
 #include <boost/container_hash/hash.hpp>
 
+#include <iterator>
+
 namespace base
 {
 
@@ -170,6 +172,55 @@ std::string Bytes::toString() const
 }
 
 
+bool Bytes::operator==(const Bytes& another) const
+{
+    return _raw == another._raw;
+}
+
+
+bool Bytes::operator!=(const Bytes& another) const
+{
+    return !(*this == another);
+}
+
+
+bool Bytes::operator<(const Bytes& another) const
+{
+    return _raw < another._raw;
+}
+
+
+bool Bytes::operator>(const Bytes& another) const
+{
+    return _raw > another._raw;
+}
+
+
+bool Bytes::operator<=(const Bytes& another) const
+{
+    return !(*this > another);
+}
+
+
+bool Bytes::operator>=(const Bytes& another) const
+{
+    return !(*this < another);
+}
+
+
+base::Bytes operator+(const base::Bytes& a, const base::Bytes& b)
+{
+    base::Bytes ret{a};
+    ret.append(b);
+    return ret;
+}
+
+std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
+{
+    return os << bytes.toHex();
+}
+
+
 namespace
 {
 
@@ -208,48 +259,6 @@ Bytes Bytes::fromHex(const std::string_view& hex_view)
     }
 
     return Bytes(bytes);
-}
-
-
-bool Bytes::operator==(const Bytes& another) const
-{
-    return _raw == another._raw;
-}
-
-
-bool Bytes::operator!=(const Bytes& another) const
-{
-    return !(*this == another);
-}
-
-
-bool Bytes::operator<(const Bytes& another) const
-{
-    return _raw < another._raw;
-}
-
-
-bool Bytes::operator>(const Bytes& another) const
-{
-    return _raw > another._raw;
-}
-
-
-bool Bytes::operator<=(const Bytes& another) const
-{
-    return !(*this > another);
-}
-
-
-bool Bytes::operator>=(const Bytes& another) const
-{
-    return !(*this < another);
-}
-
-
-std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
-{
-    return os << bytes.toHex();
 }
 
 } // namespace base

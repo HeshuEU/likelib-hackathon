@@ -1,6 +1,8 @@
 #include "connector.hpp"
 
 #include "base/log.hpp"
+#include "net/connection.hpp"
+#include "net/session.hpp"
 
 namespace ba = boost::asio;
 
@@ -11,7 +13,7 @@ Connector::Connector(boost::asio::io_context& io_context) : _io_context{io_conte
 {}
 
 
-void Connector::connect(const Endpoint& address, std::function<void(std::unique_ptr<Peer>)> on_connect)
+void Connector::connect(const Endpoint& address, std::function<void(std::unique_ptr<Connection>)> on_connect)
 {
     LOG_DEBUG << "Connecting to " << address.toString();
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
@@ -37,9 +39,8 @@ void Connector::connect(const Endpoint& address, std::function<void(std::unique_
             else {
                 auto connection = std::make_unique<Connection>(_io_context, std::move(*socket.release()));
                 LOG_INFO << "Connection established: " << connection->getEndpoint();
-                auto peer = std::make_unique<Peer>(std::move(connection));
                 if(on_connect) {
-                    on_connect(std::move(peer));
+                    on_connect(std::move(connection));
                 }
             }
         });

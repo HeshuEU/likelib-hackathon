@@ -4,6 +4,7 @@
 #include "bc/transaction.hpp"
 
 #include <vector>
+#include <map>
 
 namespace bc
 {
@@ -26,11 +27,17 @@ class TransactionsSet
     [[nodiscard]] std::vector<Transaction>::iterator begin();
     [[nodiscard]] std::vector<Transaction>::iterator end();
 
+    [[nodiscard]] bool operator==(const TransactionsSet& other) const;
+    [[nodiscard]] bool operator!=(const TransactionsSet& other) const;
+
   private:
     std::vector<Transaction> _txs;
 
     friend base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, TransactionsSet& txs);
     friend base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TransactionsSet& txs);
 };
+
+
+std::map<Address, Balance> calcBalance(const TransactionsSet& txs);
 
 } // namespace bc

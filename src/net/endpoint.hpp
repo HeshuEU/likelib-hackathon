@@ -1,5 +1,7 @@
 #pragma once
 
+#include "base/serialization.hpp"
+
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
@@ -24,6 +26,7 @@ class Endpoint
     operator boost::asio::ip::tcp::endpoint() const;
     //=============
     unsigned short getPort() const noexcept;
+    void setPort(unsigned short port) noexcept;
     //=============
     bool operator==(const Endpoint& other) const;
     bool operator!=(const Endpoint& other) const;
@@ -45,6 +48,8 @@ class Endpoint
 
 
 std::ostream& operator<<(std::ostream& os, const Endpoint& endpoint);
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Endpoint& endpoint);
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Endpoint& endpoint);
 
 
 } // namespace net
