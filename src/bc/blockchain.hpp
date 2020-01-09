@@ -1,10 +1,11 @@
 #pragma once
 
-#include "base/property_tree.hpp"
 #include "bc/block.hpp"
-#include "bc/database_manager.hpp"
 #include "bc/transaction.hpp"
 #include "bc/transactions_set.hpp"
+
+#include "base/property_tree.hpp"
+#include "base/database.hpp"
 
 #include <boost/signals2.hpp>
 
@@ -37,14 +38,19 @@ class Blockchain
   private:
     //===================
     const base::PropertyTree& _config;
+    bool _is_loaded;
     //===================
     std::unordered_map<base::Sha256, Block> _blocks;
     base::Sha256 _top_level_block_hash;
     mutable std::shared_mutex _blocks_mutex;
     //===================
-    bc::DatabaseManager _database;
+    base::Database _database;
+    mutable std::shared_mutex _database_rw_mutex;
     //===================
-    void setupGenesis();
+    void pushForwardToPersistentStorage(const base::Sha256& block_hash, const bc::Block& block);
+    std::optional<base::Sha256> getLastBlockHashAtPersistentStorage() const;
+    std::optional<bc::Block> findBlockAtPersistentStorage(const base::Sha256& block_hash) const;
+    std::vector<base::Sha256> createAllBlockHashesListAtPersistentStorage() const;
     //===================
 };
 

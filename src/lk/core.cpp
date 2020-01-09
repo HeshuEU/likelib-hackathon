@@ -18,7 +18,8 @@ const bc::Block& Core::getGenesisBlock()
     static bc::Block genesis = [] {
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address(bc::Address(std::string(32, '0')));
-        ret.addTransaction({null_address, null_address, bc::Balance{0xFFFFFFFF}, base::Time::fromSecondsSinceEpochBeginning(0)});
+        ret.addTransaction(
+            {null_address, null_address, bc::Balance{0xFFFFFFFF}, base::Time::fromSecondsSinceEpochBeginning(0)});
         return ret;
     }();
     return genesis;
@@ -75,6 +76,28 @@ bool Core::checkBlock(const bc::Block& b) const
 }
 
 
+bool Core::checkTransaction(const bc::Transaction& tx) const
+{
+    if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
+        return false;
+    }
+    if(_pending_transactions.find(tx)) {
+        return false;
+    }
+
+    auto current_pending_balance = bc::calcBalance(_pending_transactions);
+
+    auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
+    if(pending_from_account_balance != current_pending_balance.end()) {
+        auto current_from_account_balance = _balance_manager.getBalance(tx.getFrom());
+        return ((pending_from_account_balance->second + current_from_account_balance - tx.getAmount()) >= 0);
+    }
+    else {
+        return _balance_manager.checkTransaction(tx);
+    }
+}
+
+
 bc::Block Core::getBlockTemplate() const
 {
     const auto& top_block = _blockchain.getTopBlock();
@@ -86,18 +109,13 @@ bc::Block Core::getBlockTemplate() const
 
 bool Core::performTransaction(const bc::Transaction& tx)
 {
-    if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
-        return false;
-    }
-    else if(_pending_transactions.find(tx)) {
-        return false;
-    }
-    else {
+    if(checkTransaction(tx)) {
         _pending_transactions.add(tx);
         _network.broadcastTransaction(tx);
         signal_new_transaction(tx);
         return true;
     }
+    return false;
 }
 
 

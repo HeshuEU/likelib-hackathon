@@ -62,6 +62,7 @@ class Core
     void updateNewBlock(const bc::Block& block);
     //==================
     bool checkBlock(const bc::Block& block) const;
+    bool checkTransaction(const bc::Transaction& tx) const;
     //==================
 };
 

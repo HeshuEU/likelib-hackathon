@@ -203,7 +203,7 @@ class Client:
     @staticmethod
     def check_transfer_result(result):
         # print("Client | Debug message:", result)
-        if result.success and b"Remote call of transaction -> [likelib]\n" in result.message:
+        if result.success and b"Remote call of transaction -> [Success! Transaction added to queue successfully.]\n" in result.message:
             return True
         else:
             print("transfer check failed:", result.message)
