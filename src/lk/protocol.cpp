@@ -62,6 +62,7 @@ void Peer::Handler::onReceive(const base::Bytes& data)
         }
     }
     else {
+        LOG_DEBUG << "RECEIVED " << enumToString(type);
         switch(type) {
             case MessageType::PING: {
                 onPingMessage();
@@ -104,7 +105,8 @@ void Peer::Handler::onReceive(const base::Bytes& data)
                 break;
             }
             default: {
-                LOG_DEBUG << "Received an invalid block from peer " << _session.getId() << " with msgtype = " << static_cast<int>(type);
+                LOG_DEBUG << "Received an invalid block from peer " << _session.getId()
+                          << " with msgtype = " << static_cast<int>(type);
                 break;
             }
         }
@@ -143,10 +145,15 @@ void Peer::Handler::onHandshakeMessage(bc::Block&& theirs_top_block, std::option
             return;
         }
         else {
-            _session.send(
-                createMessage(MessageType::BLOCK, base::Sha256::compute(base::toBytes(theirs_top_block)).getBytes()));
-            _owning_peer._state = State::REQUESTED_BLOCKS;
-            _sync_blocks.emplace_front(std::move(theirs_top_block));
+            if(_core.getTopBlock().getDepth() + 1 == theirs_top_block.getDepth()) {
+                _core.tryAddBlock(theirs_top_block);
+                _owning_peer._state = State::SYNCHRONISED;
+            }
+            else {
+                _session.send(createMessage(MessageType::GET_BLOCK, theirs_top_block.getPrevBlockHash().getBytes()));
+                _owning_peer._state = State::REQUESTED_BLOCKS;
+                _sync_blocks.emplace_front(std::move(theirs_top_block));
+            }
         }
     }
 }
@@ -186,7 +193,7 @@ void Peer::Handler::onBlockMessage(bc::Block&& block)
             _sync_blocks.clear();
         }
         else {
-            _session.send(createMessage(MessageType::BLOCK, _sync_blocks.front().getPrevBlockHash().getBytes()));
+            _session.send(createMessage(MessageType::GET_BLOCK, _sync_blocks.front().getPrevBlockHash().getBytes()));
         }
     }
 }

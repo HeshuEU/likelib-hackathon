@@ -5,8 +5,9 @@
 
 #include <atomic>
 
-namespace {
-    static constexpr std::size_t SIZE_OF_MESSAGE_LENGTH_IN_BYTES = 2;
+namespace
+{
+static constexpr std::size_t SIZE_OF_MESSAGE_LENGTH_IN_BYTES = 2;
 }
 
 namespace net
