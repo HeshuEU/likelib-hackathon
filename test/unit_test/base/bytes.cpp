@@ -56,6 +56,16 @@ BOOST_AUTO_TEST_CASE(bytes_take_part)
     BOOST_CHECK(!(part != answer));
 }
 
+
+BOOST_AUTO_TEST_CASE(bytes_take_part_one_symbol)
+{
+    base::Bytes bytes("eeeaaabbb");
+    base::Bytes part = bytes.takePart(7, 8);
+
+    BOOST_CHECK(part.toString() == "b");
+}
+
+
 BOOST_AUTO_TEST_CASE(bytes_append1)
 {
     base::Bytes bytes1(234);
