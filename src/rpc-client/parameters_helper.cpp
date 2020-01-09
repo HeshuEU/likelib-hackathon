@@ -3,11 +3,14 @@
 namespace rpc_client
 {
 
-ParametersHelper::ParametersHelper()
-{}
-
-
-ParametersHelper::ParametersHelper(const std::filesystem::path& path) : _config(base::readConfig(path))
-{}
+ParametersHelper::ParametersHelper(const std::filesystem::path& path)
+{
+    if(std::filesystem::exists(path)) {
+        _config = base::readConfig(path);
+    }
+    else {
+        std::cout << "Warning. Config was not found." << std::endl;
+    }
+}
 
 } // namespace rpc_client
