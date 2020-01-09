@@ -206,6 +206,15 @@ bool Bytes::operator>=(const Bytes& another) const
     return !(*this < another);
 }
 
+
+base::Bytes operator+(const base::Bytes& a, const base::Bytes& b)
+{
+    base::Bytes ret{a};
+    ret.append(b);
+    return ret;
+}
+
+
 } // namespace base
 
 

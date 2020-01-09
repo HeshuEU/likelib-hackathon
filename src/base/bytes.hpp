@@ -74,6 +74,8 @@ class Bytes
     std::vector<Byte> _raw;
 };
 
+base::Bytes operator+(const base::Bytes& a, const base::Bytes& b);
+
 } // namespace base
 
 namespace std
