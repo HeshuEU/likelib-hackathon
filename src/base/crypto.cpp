@@ -3,6 +3,7 @@
 #include "base/assert.hpp"
 #include "base/error.hpp"
 #include "base/directory.hpp"
+#include "base/log.hpp"
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
