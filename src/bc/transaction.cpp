@@ -9,7 +9,7 @@ Transaction::Transaction(
     const bc::Address& from, const bc::Address& to, const bc::Balance& amount, const base::Time& timestamp)
     : _from{from}, _to{to}, _amount{amount}, _timestamp(timestamp)
 {
-    if(_amount == 0){
+    if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
     }
 }
@@ -53,7 +53,7 @@ void Transaction::setTo(const bc::Address& to)
 
 void Transaction::setAmount(const bc::Balance& amount)
 {
-    if(amount == 0){
+    if(amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
     }
     _amount = amount;

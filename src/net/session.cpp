@@ -1,17 +1,36 @@
 #include "session.hpp"
 
+#include "base/assert.hpp"
+#include "base/serialization.hpp"
+
+#include <atomic>
+
+namespace
+{
+static constexpr std::size_t SIZE_OF_MESSAGE_LENGTH_IN_BYTES = 2;
+}
+
 namespace net
 {
 
-Session::Session(std::unique_ptr<Peer> peer) : _peer{std::move(peer)}
+Session::Session(std::unique_ptr<Connection> connection) : _connection{connection.release()}
 {
-    ASSERT(_peer);
+    ASSERT(_connection);
+    setNextId();
+}
+
+
+Session::~Session()
+{
+    if(isActive()) {
+        close();
+    }
 }
 
 
 bool Session::isActive() const
 {
-    return _peer && _peer->isActive();
+    return _connection && !_connection->isClosed();
 }
 
 
@@ -24,7 +43,7 @@ bool Session::isClosed() const
 void Session::send(const base::Bytes& data)
 {
     if(isActive()) {
-        _peer->send(data);
+        _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data);
     }
 }
 
@@ -32,43 +51,66 @@ void Session::send(const base::Bytes& data)
 void Session::send(base::Bytes&& data)
 {
     if(isActive()) {
-        _peer->send(std::move(data));
+        _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + std::move(data));
     }
 }
 
 
-Id Session::getId() const
+std::size_t Session::getId() const
 {
-    return _peer->getId();
+    return _id;
 }
 
 
-void Session::start(SessionManager handler)
+void Session::setNextId()
 {
-    ASSERT(handler);
-    if(isActive()) {
-        _receive_handler = std::move(handler);
-        receive();
-    }
+    static std::atomic<std::size_t> next_id;
+    _id = next_id++;
 }
 
 
-void Session::stop()
+void Session::setHandler(std::unique_ptr<Handler> handler)
+{
+    _handler = std::move(handler);
+}
+
+
+void Session::start()
+{
+    receive();
+}
+
+
+void Session::close()
 {
     if(isActive()) {
-        _peer->close();
+        if(_handler) {
+            _handler->onClose();
+        }
+        _connection->close();
     }
 }
 
 
 void Session::receive()
 {
-    _peer->receive([this](const base::Bytes& data) {
-        _receive_handler(*this, data);
-        if(isActive()) {
-            receive();
-        }
+    _connection->receive(SIZE_OF_MESSAGE_LENGTH_IN_BYTES, [this](const base::Bytes& data) {
+        auto length = base::fromBytes<std::uint16_t>(data);
+        _connection->receive(length, [this](const base::Bytes& data) {
+            if(_handler) {
+                _handler->onReceive(data);
+            }
+            if(isActive()) {
+                receive();
+            }
+        });
     });
+}
+
+
+const Endpoint& Session::getEndpoint() const
+{
+    return _connection->getEndpoint();
 }
 
 

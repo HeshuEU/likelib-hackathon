@@ -25,7 +25,7 @@ bc::TransactionsSet getTestSet()
 BOOST_AUTO_TEST_CASE(block_constructor1)
 {
     auto tx_set = getTestSet();
-    bc::Block block(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), std::move(tx_set));
+    bc::Block block(12, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), std::move(tx_set));
 
     BOOST_CHECK(block.getPrevBlockHash() == base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")));
     auto block_tx_set = block.getTransactions();
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(block_constructor1)
 BOOST_AUTO_TEST_CASE(block_constructor2)
 {
     auto tx_set = getTestSet();
-    bc::Block block(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), std::move(tx_set));
+    bc::Block block(112, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), std::move(tx_set));
 
     BOOST_CHECK(block.getPrevBlockHash() == base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")));
     auto block_tx_set = block.getTransactions();
@@ -77,9 +77,10 @@ BOOST_AUTO_TEST_CASE(block_constructor2)
 BOOST_AUTO_TEST_CASE(block_operator_equal)
 {
     auto tx_set = getTestSet();
-    tx_set.remove(bc::Transaction(bc::Address("from1 vjS247DGFSv\n "), bc::Address("to1 ()#%DSOJ\n"), 12398, base::Time()));
-    bc::Block block1(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f a%")), std::move(tx_set));
-    bc::Block block2(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
+    tx_set.remove(
+        bc::Transaction(bc::Address("from1 vjS247DGFSv\n "), bc::Address("to1 ()#%DSOJ\n"), 12398, base::Time()));
+    bc::Block block1(113, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f a%")), std::move(tx_set));
+    bc::Block block2(114, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     block1 = block2;
 
     BOOST_CHECK(block1.getPrevBlockHash() == base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")));
@@ -106,9 +107,10 @@ BOOST_AUTO_TEST_CASE(block_operator_equal)
 BOOST_AUTO_TEST_CASE(block_operator_move)
 {
     auto tx_set = getTestSet();
-    tx_set.remove(bc::Transaction(bc::Address("from1 vjS247DGFSv\n "), bc::Address("to1 ()#%DSOJ\n"), 12398, base::Time()));
-    bc::Block block1(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f a%")), std::move(tx_set));
-    bc::Block block2(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
+    tx_set.remove(
+        bc::Transaction(bc::Address("from1 vjS247DGFSv\n "), bc::Address("to1 ()#%DSOJ\n"), 12398, base::Time()));
+    bc::Block block1(115, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f a%")), std::move(tx_set));
+    bc::Block block2(116, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     block1 = std::move(block2);
 
     BOOST_CHECK(block1.getPrevBlockHash() == base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")));
@@ -134,7 +136,7 @@ BOOST_AUTO_TEST_CASE(block_operator_move)
 
 BOOST_AUTO_TEST_CASE(block_sets_all)
 {
-    bc::Block block(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
+    bc::Block block(117, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     auto tx_set = getTestSet();
     tx_set.remove(
         bc::Transaction(bc::Address("from3 vjS2%#&DGF\n "), bc::Address("to3 ()#%DdfOJ\n"), 12245398, base::Time()));
@@ -167,7 +169,7 @@ BOOST_AUTO_TEST_CASE(block_sets_all)
 
 BOOST_AUTO_TEST_CASE(block_add_transaction)
 {
-    bc::Block block(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
+    bc::Block block(118, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     block.addTransaction(
         bc::Transaction(bc::Address("SD#%),/n\' \n"), bc::Address("#(vm496LDF "), 67805678, base::Time()));
     block.addTransaction(
@@ -184,13 +186,13 @@ BOOST_AUTO_TEST_CASE(block_add_transaction)
 
 BOOST_AUTO_TEST_CASE(block_serialization)
 {
-    bc::Block block1(base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
+    bc::Block block1(119, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     block1.setNonce(bc::NonceInt(6706744));
     base::SerializationOArchive oa;
     oa << block1;
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Block block2(base::Sha256::compute(base::Bytes("")), bc::TransactionsSet());
+    bc::Block block2(120, base::Sha256::compute(base::Bytes("")), bc::TransactionsSet());
     ia >> block2;
     BOOST_CHECK(block2.getPrevBlockHash() == base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")));
     BOOST_CHECK(block2.getNonce() == bc::NonceInt(6706744));

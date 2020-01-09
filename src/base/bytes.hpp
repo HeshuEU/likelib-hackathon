@@ -27,6 +27,7 @@ class Bytes
     Bytes& operator=(Bytes&&) = default;
     ~Bytes() = default;
     //==============
+
     template<typename I>
     Bytes(I begin, I end);
     //==============
@@ -37,6 +38,7 @@ class Bytes
     //==============
     Bytes& append(Byte byte);
     Bytes& append(const Byte* byte, std::size_t length);
+
     Bytes& append(const Bytes& bytes);
     //==============
     std::size_t size() const noexcept;
@@ -53,7 +55,9 @@ class Bytes
     std::vector<Byte>& toVector() noexcept;
     const std::vector<Byte>& toVector() const noexcept;
     //==============
+
     std::string toHex() const;
+
     std::string toString() const;
     //==============
     static Bytes fromHex(const std::string_view& hex_view);
@@ -71,6 +75,8 @@ class Bytes
   private:
     std::vector<Byte> _raw;
 };
+
+base::Bytes operator+(const base::Bytes& a, const base::Bytes& b);
 
 std::ostream& operator<<(std::ostream& os, const Bytes& bytes);
 

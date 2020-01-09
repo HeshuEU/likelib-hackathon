@@ -142,11 +142,11 @@ BOOST_AUTO_TEST_CASE(balance_manager_update_block)
 {
     lk::BalanceManager manager(init_map);
     bc::TransactionsSet transaction_set;
-    
+
     transaction_set.add(bc::Transaction(bc::Address("qwerty"), bc::Address("okDe"), 13, base::Time()));
     transaction_set.add(bc::Transaction(bc::Address("Andrei"), bc::Address("Troia"), 11, base::Time()));
     transaction_set.add(bc::Transaction(bc::Address("back_door"), bc::Address("Ivan"), 1, base::Time()));
-    bc::Block block(base::Sha256::compute(base::Bytes("")), std::move(transaction_set));
+    bc::Block block(123, base::Sha256::compute(base::Bytes("")), std::move(transaction_set));
     manager.update(block);
 
     BOOST_CHECK(manager.getBalance(bc::Address("qwerty")) == 1000 - 13);
@@ -208,7 +208,7 @@ void testUpdateBlock(
             transaction_set.add(bc::Transaction{
                 bc::Address{names[senders[i]]}, bc::Address{names[receivers[i]]}, transfer_tokens, base::Time()});
         }
-        bc::Block block(base::Sha256::compute(base::Bytes("")), std::move(transaction_set));
+        bc::Block block(1, base::Sha256::compute(base::Bytes("")), std::move(transaction_set));
 
         manager.update(block);
 
