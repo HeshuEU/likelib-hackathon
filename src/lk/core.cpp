@@ -18,7 +18,7 @@ const bc::Block& Core::getGenesisBlock()
     static bc::Block genesis = [] {
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address(bc::Address(std::string(32, '0')));
-        ret.addTransaction({null_address, null_address, bc::Balance{0xFFFFFFFF}, base::Time::fromSeconds(0)});
+        ret.addTransaction({null_address, null_address, bc::Balance{0xFFFFFFFF}, base::Time::fromSecondsSinceEpochBeginning(0)});
         return ret;
     }();
     return genesis;

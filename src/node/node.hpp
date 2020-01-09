@@ -5,6 +5,7 @@
 #include "node/miner.hpp"
 #include "rpc/rpc.hpp"
 #include "node/rpc_service.hpp"
+#include "node/key_vault.hpp"
 
 class Node
 {
@@ -16,11 +17,13 @@ class Node
     const base::PropertyTree& _config;
     lk::Core _core;
     std::unique_ptr<rpc::RpcServer> _rpc;
-
+    //---------------------------
     std::unique_ptr<Miner> _miner;
-
+    //---------------------------
+    crypto::KeyVault _key_vault;
+    //---------------------------
     static base::Bytes getMiningComplexity();
-
+    //---------------------------
     void onBlockMine(bc::Block&& block);
     void onNewTransactionReceived(const bc::Transaction& tx);
     void onNewBlock(const bc::Block& block);

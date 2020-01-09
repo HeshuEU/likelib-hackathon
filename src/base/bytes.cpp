@@ -214,6 +214,11 @@ base::Bytes operator+(const base::Bytes& a, const base::Bytes& b)
     return ret;
 }
 
+std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
+{
+    return os << bytes.toHex();
+}
+
 
 } // namespace base
 

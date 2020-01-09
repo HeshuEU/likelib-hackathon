@@ -9,7 +9,8 @@ if [ ! -f "${SCRIPT_DIR}/prepare_build.sh" ]; then
 fi
 
 # install dependencies
-apt-get install -y gcc g++ make build-essential wget git unzip tar curl
+apt-get install -y gcc g++ make build-essential wget git unzip tar curl \
+                   valgrind clang-tidy python3.7
 
 if ! command -v cmake; then
   # install cmake
@@ -49,9 +50,11 @@ PATH_TO_BASH_RC="/home/${SUDO_USER}/.bashrc"
 
 if [[ "${EUID}" -ne 0 ]]; then
   PATH_TO_BASH_RC="/home/${USER}/.bashrc"
+else
+  exit
 fi
 
-if cat ${PATH_TO_BASH_RC} | grep "#===========likelib============="; then
+if cat ${PATH_TO_BASH_RC} | grep "#=========== LikeLib2.0 ============="; then
   echo "You already have installed lkgen to ~/.bashrc $(cat ${PATH_TO_BASH_RC} | grep SOURCE_DIR)"
   echo "Exit..."
   exit

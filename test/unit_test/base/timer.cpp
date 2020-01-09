@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_CASE(time_usage1)
     timer.start();
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     auto milli = timer.elapsedMillis();
-    BOOST_CHECK(milli >= 30 && milli < (30 + milli_fault));
+    BOOST_CHECK(milli >= 30);
 }
 
 

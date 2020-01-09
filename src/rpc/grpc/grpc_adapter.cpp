@@ -36,7 +36,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 
     try {
         response->set_hash_string(
-            _service->transaction(amount, from_address, to_address, base::Time::fromSeconds(creation_time)));
+            _service->transaction(amount, from_address, to_address, base::Time::fromSecondsSinceEpochBeginning(creation_time)));
     }
     catch(const base::Error& e) {
         LOG_ERROR << e.what();

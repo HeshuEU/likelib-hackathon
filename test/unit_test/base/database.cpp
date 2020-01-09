@@ -23,10 +23,10 @@ BOOST_AUTO_TEST_CASE(data_base_test_1)
 
     BOOST_CHECK(data_base.exists(target_key));
 
-    base::Bytes target_bytes_2;
-    data_base.get(target_key, target_bytes_2);
+    auto target_bytes_2 = data_base.get(target_key);
 
-    BOOST_CHECK_EQUAL(target_bytes.toString(), target_bytes_2.toString());
+    BOOST_CHECK(target_bytes_2);
+    BOOST_CHECK_EQUAL(target_bytes.toString(), target_bytes_2.value().toString());
 
     std::filesystem::remove_all(path_to_data_base_folder);
 }
