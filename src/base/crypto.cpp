@@ -561,8 +561,13 @@ base::Bytes base64Encode(const base::Bytes& bytes)
     return base64_bytes;
 }
 
+
 base::Bytes base64Decode(const base::Bytes& base64_bytes)
 {
+    if(base64_bytes.size() == 0){
+        return base::Bytes();
+    }
+    
     BIO* b64 = BIO_new(BIO_f_base64());
     BIO* bio = BIO_new_mem_buf(base64_bytes.toArray(), base64_bytes.size());
     base::Bytes ret(base64_bytes.size());
@@ -572,7 +577,6 @@ base::Bytes base64Decode(const base::Bytes& base64_bytes)
     auto new_length = BIO_read(bio, ret.toArray(), base64_bytes.size());
 
     BIO_free_all(bio);
-
     return ret.takePart(0, new_length);
 }
 
