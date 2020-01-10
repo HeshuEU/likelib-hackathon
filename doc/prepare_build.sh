@@ -73,7 +73,7 @@ else
     fi\n
     echo Build to \${PWD}\n
     echo From \${SOURCE_DIR}\n
-    cmake -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake -S \${SOURCE_DIR} -B \${PWD} \n
+    cmake -DCMAKE_TOOLCHAIN_FILE=${INSTALL_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake \"\$*\" -S \${SOURCE_DIR} -B \${PWD} \n
     }" >>"${PATH_TO_BASH_RC}"
 
 fi
