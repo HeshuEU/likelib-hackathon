@@ -38,7 +38,7 @@ def check_block_add(log_line):
         return False
 
 
-@test_case("test_miltitransfer")
+@test_case("test_milti_transfer")
 def main(node_exec_path, rpc_client_exec_path):
 
     node_id_1 = NodeId(sync_port=20206, rpc_port=50056)
