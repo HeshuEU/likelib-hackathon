@@ -23,7 +23,7 @@ def check_connection_established_builder(node_info):
     return check_connect_established
 
 
-@test_case("test_milti_network")
+@test_case("test_multi_network")
 def main(node_exec_path, rpc_client_exec_path):
 
     node_id_1 = NodeId(sync_port=20206, rpc_port=50056)
@@ -48,12 +48,13 @@ def main(node_exec_path, rpc_client_exec_path):
     return 0
 
 
-@test_case("test_milti_network_one_by_one")
+@test_case("test_multi_network_one_by_one")
 def main(node_exec_path, rpc_client_exec_path):
 
     start_sync_port = 20206
     start_rpc_port = 50056
     waiting_time = 3
+    count_nodes = 4
     nodes_id = [NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1")]
 
     client = Client(rpc_client_exec_path, "client")
@@ -63,7 +64,7 @@ def main(node_exec_path, rpc_client_exec_path):
     TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
     TEST_CHECK(nodes[0].check(check_test_received))
 
-    for i in range(1, 4):
+    for i in range(1, count_nodes):
         nodes_id.append(NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0." + str(i + 1)))
         nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[i],
          nodes_id_list=[nodes_id[i - 1]]), "node_" + str(i + 1), start_up_time = waiting_time))
@@ -76,17 +77,18 @@ def main(node_exec_path, rpc_client_exec_path):
         TEST_CHECK(nodes[i - 1].check(check_connect_asepted))
         TEST_CHECK(nodes[i].check(check_connection_established_builder(nodes_id[i - 1])))
 
-    for i in range(4):
+    for i in range(count_nodes):
         nodes[i].close()
     return 0
 
 
-@test_case("test_milti_network_with_everything")
+@test_case("test_multi_network_with_everything")
 def main(node_exec_path, rpc_client_exec_path):
 
     start_sync_port = 20206
     start_rpc_port = 50056
     nodes_time = 3
+    count_nodes = 4
     nodes_id = [NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1")]
 
     client = Client(rpc_client_exec_path, "client")
@@ -96,7 +98,7 @@ def main(node_exec_path, rpc_client_exec_path):
     TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
     TEST_CHECK(nodes[0].check(check_test_received))
 
-    for i in range(1, 4):
+    for i in range(1, count_nodes):
         node_info = NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0." + str(i + 1))
         nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = node_info,
          nodes_id_list=nodes_id), "node_" + str(i + 1), start_up_time = nodes_time))
@@ -111,6 +113,6 @@ def main(node_exec_path, rpc_client_exec_path):
         for j in range(i):
             TEST_CHECK(nodes[i].check(check_connection_established_builder(nodes_id[j])))
 
-    for i in range(4):
+    for i in range(count_nodes):
         nodes[i].close()
     return 0
