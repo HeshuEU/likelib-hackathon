@@ -2,6 +2,8 @@
 
 #include <boost/preprocessor.hpp>
 
+namespace base
+{
 
 #define X_DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS_TOSTRING_CASE(r, data, elem) \
     case data::elem: \
@@ -21,3 +23,10 @@
                 return nullptr; \
         } \
     }
+
+
+template<typename... Types>
+struct TypeList
+{};
+
+} // namespace base
