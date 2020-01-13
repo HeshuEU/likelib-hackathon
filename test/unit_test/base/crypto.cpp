@@ -209,3 +209,14 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode_empty)
     BOOST_CHECK(base64.toString() == "");
     BOOST_CHECK(target_msg == decode_base64);
 }
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
+{
+    base::Bytes target_msg("1");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base64Decode(base64);
+    
+    BOOST_CHECK(base64.toString() == "MQ==");
+    BOOST_CHECK(target_msg == decode_base64);
+}
