@@ -16,7 +16,8 @@ KeyVault::KeyVault(const base::PropertyTree& config) : _config{config}
         _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::read(private_key_path));
     }
     else {
-        LOG_WARNING << "Key files was not found: public[" << public_key_path << "], private[" << private_key_path << "].";
+        LOG_WARNING << "Key files was not found: public[" << public_key_path << "], private[" << private_key_path
+                    << "].";
         static constexpr std::size_t rsa_keys_length = 1000;
         auto keys = base::generateKeys(rsa_keys_length);
         _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
@@ -29,4 +30,4 @@ KeyVault::KeyVault(const base::PropertyTree& config) : _config{config}
     // TODO: maybe implement unload to disk mechanic for private key.
 }
 
-}
+} // namespace crypto

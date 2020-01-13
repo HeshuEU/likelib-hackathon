@@ -30,7 +30,6 @@ class Sha256
     //----------------------------------
     static Sha256 compute(const base::Bytes& data);
     //----------------------------------
-    static SerializationOArchive& serialize(SerializationOArchive& oa, const Sha256& block);
     SerializationOArchive& serialize(SerializationOArchive& oa) const;
     static Sha256 deserialize(SerializationIArchive& ia);
     //----------------------------------
