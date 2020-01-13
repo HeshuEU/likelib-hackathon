@@ -4,128 +4,43 @@
 #include "lk/core.hpp"
 
 
-namespace
-{
-
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char,
-    (NOT_AVAILABLE)(HANDSHAKE)(PING)(PONG)(TRANSACTION)(GET_BLOCK)(BLOCK)(BLOCK_NOT_FOUND)(GET_INFO)(INFO))
-
-template<typename... Args>
-base::Bytes createMessage(MessageType type, Args&&... args)
-{
-    base::SerializationOArchive ret;
-    ret << type;
-    (ret << ... << args);
-    return ret.getBytes();
-}
-
-} // namespace
-
-
 namespace lk
 {
 
-//=====================================
+//============================================
 
-Peer::Handler::Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session, Core& core)
-    : _owning_peer{owning_peer}, _owning_network_object{owning_network_object}, _session{handled_session}, _core{core}
+constexpr MessageType HandshakeMessage::getHandledMessageType()
 {
-    _session.start();
+    return MessageType::HANDSHAKE;
 }
 
 
-void Peer::Handler::onReceive(const base::Bytes& data)
+void HandshakeMessage::serialize(base::SerializationOArchive& oa, const bc::Block& block, std::uint16_t public_port)
 {
-    if(_session.isClosed()) {
-        return;
-    }
-
-    base::SerializationIArchive ia(data);
-    MessageType type;
-    ia >> type;
-
-    if(_owning_peer._state != State::SYNCHRONISED) {
-        if(type == MessageType::HANDSHAKE) {
-            LOG_DEBUG << "RECEIVED HANDSHAKE";
-            auto top_block = bc::Block::deserialize(ia);
-            std::optional<std::uint16_t> public_port;
-            ia >> public_port;
-            onHandshakeMessage(std::move(top_block), std::move(public_port));
-        }
-        else if(type == MessageType::BLOCK) {
-            LOG_DEBUG << "RECEIVED SYNCHRONIZATION BLOCK";
-            bc::Block block = bc::Block::deserialize(ia);
-            onBlockMessage(std::move(block));
-        }
-        else {
-            LOG_DEBUG << "Received on non-handshaked connection with peer " << _session.getId();
-        }
-    }
-    else {
-        LOG_DEBUG << "RECEIVED " << enumToString(type);
-        switch(type) {
-            case MessageType::PING: {
-                onPingMessage();
-                break;
-            }
-            case MessageType::PONG: {
-                onPongMessage();
-                break;
-            }
-            case MessageType::TRANSACTION: {
-                bc::Transaction tx;
-                ia >> tx;
-                onTransactionMessage(std::move(tx));
-                break;
-            }
-            case MessageType::BLOCK: {
-                auto block = bc::Block::deserialize(ia);
-                onBlockMessage(std::move(block));
-                break;
-            }
-            case MessageType::GET_BLOCK: {
-                base::Bytes block_hash;
-                ia >> block_hash;
-                onGetBlockMessage(base::Sha256(std::move(block_hash)));
-                break;
-            }
-            case MessageType::INFO: {
-                base::Bytes top_block_hash;
-                std::vector<std::string> available_peers_strings;
-                ia >> top_block_hash >> available_peers_strings;
-                std::vector<net::Endpoint> available_peers;
-                for(auto&& s: available_peers_strings) {
-                    available_peers.emplace_back(std::move(s));
-                }
-                onInfoMessage(std::move(top_block_hash), std::move(available_peers));
-                break;
-            }
-            case MessageType::GET_INFO: {
-                onGetInfoMessage();
-                break;
-            }
-            default: {
-                LOG_DEBUG << "Received an invalid block from peer " << _session.getId()
-                          << " with msgtype = " << static_cast<int>(type);
-                break;
-            }
-        }
-    }
+    oa << MessageType::HANDSHAKE << block << public_port;
 }
 
 
-void Peer::Handler::onClose()
+void HandshakeMessage::serialize(base::SerializationOArchive& oa)
 {
-    LOG_DEBUG << "Closing peer";
-    _owning_network_object.removePeer(_owning_peer);
+    serialize(oa, _top_block, _public_port);
 }
 
 
-void Peer::Handler::onHandshakeMessage(bc::Block&& theirs_top_block, std::optional<std::uint16_t>&& public_port)
+HandshakeMessage HandshakeMessage::deserialize(base::SerializationIArchive& ia)
 {
-    const auto& ours_top_block = _core.getTopBlock();
+    auto top_block = bc::Block::deserialize(ia);
+    std::uint16_t _public_port;
+    ia >> _public_port;
+    return HandshakeMessage(std::move(top_block), _public_port);
+}
 
-    if(public_port) {
+
+void HandshakeMessage::handle(MessageHandlerRequiredInterface& interface)
+{
+    const auto& ours_top_block = interface.getTopBlock();
+
+    if(_public_port) {
         net::Endpoint ep = _session.getEndpoint();
         ep.setPort(*public_port);
         _owning_peer.setServerEndpoint(std::move(ep));
@@ -159,23 +74,165 @@ void Peer::Handler::onHandshakeMessage(bc::Block&& theirs_top_block, std::option
 }
 
 
-void Peer::Handler::onPingMessage()
+HandshakeMessage::HandshakeMessage(bc::Block&& top_block, std::uint16_t public_port)
+    : _top_block{std::move(top_block)}, _public_port{public_port}
+{}
+
+//============================================
+
+constexpr MessageType PingMessage::getHandledMessageType()
 {
-    _session.send(createMessage(MessageType::PONG));
+    return MessageType::PING;
 }
 
 
-void Peer::Handler::onPongMessage()
+void PingMessage::serialize(base::SerializationOArchive& oa)
+{
+    oa << MessageType::PING;
+}
+
+
+PingMessage PingMessage::deserialize(base::SerializationIArchive& ia)
+{
+    return {};
+}
+
+
+void PingMessage::handle(MessageHandlerRequiredInterface& interface)
 {}
 
 
-void Peer::Handler::onTransactionMessage(bc::Transaction&& tx)
+//============================================
+
+constexpr MessageType PongMessage::getHandledMessageType()
+{
+    return MessageType::PONG;
+}
+
+
+void PongMessage::serialize(base::SerializationOArchive& oa)
+{
+    oa << MessageType::PONG;
+}
+
+
+PongMessage PongMessage::deserialize(base::SerializationIArchive& ia)
+{
+    return {};
+}
+
+
+void PongMessage::handle(MessageHandlerRequiredInterface& interface)
+{}
+
+//============================================
+
+constexpr MessageType TransactionMessage::getHandledMessageType()
+{
+    return MessageType::TRANSACTION;
+}
+
+
+void TransactionMessage::serialize(base::SerializationOArchive& oa, bc::Transaction tx)
+{
+    oa << MessageType::TRANSACTION << tx;
+}
+
+
+void TransactionMessage::serialize(base::SerializationOArchive& oa)
+{
+    serialize(oa, _tx);
+}
+
+
+TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& ia)
+{
+    bc::Transaction tx;
+    ia >> tx;
+    return {std::move(tx)};
+}
+
+
+void TransactionMessage::handle(MessageHandlerRequiredInterface& interface)
 {
     _core.performTransaction(tx);
 }
 
 
-void Peer::Handler::onBlockMessage(bc::Block&& block)
+TransactionMessage::TransactionMessage(bc::Transaction tx) : _tx{std::move(tx)}
+{}
+
+//============================================
+
+constexpr MessageType GetBlockMessage::getHandledMessageType()
+{
+    return MessageType::GET_BLOCK;
+}
+
+
+void GetBlockMessage::serialize(base::SerializationOArchive& oa, base::Sha256& block_hash)
+{
+    oa << MessageType::GET_BLOCK;
+    block_hash.serialize(oa);
+}
+
+
+void GetBlockMessage::serialize(base::SerializationOArchive& oa)
+{
+    serialize(oa, _block_hash);
+}
+
+
+GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
+{
+    auto block_hash = base::Sha256::deserialize(ia);
+    return {std::move(block_hash)};
+}
+
+
+void GetBlockMessage::handle(MessageHandlerRequiredInterface& interface)
+{
+    auto block = _core.findBlock(block_hash);
+    if(block) {
+        _session.send(createMessage(MessageType::BLOCK, *block));
+    }
+    else {
+        _session.send(createMessage(MessageType::BLOCK_NOT_FOUND, block_hash.getBytes()));
+    }
+}
+
+
+GetBlockMessage::GetBlockMessage(base::Sha256 block_hash) : _block_hash{std::move(block_hash)}
+{}
+
+//============================================
+
+constexpr MessageType BlockMessage::getHandledMessageType()
+{
+    return MessageType::BLOCK;
+}
+
+
+void BlockMessage::serialize(base::SerializationOArchive& oa, bc::Block& block)
+{
+    oa << MessageType::BLOCK << block;
+}
+
+
+void BlockMessage::serialize(base::SerializationOArchive& oa)
+{
+    serialize(oa, _block);
+}
+
+
+BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
+{
+    auto block = bc::Block::deserialize(ia);
+    return {std::move(block)};
+}
+
+
+void BlockMessage::handle(MessageHandlerRequiredInterface& interface)
 {
     if(_owning_peer._state == State::SYNCHRONISED) {
         _core.tryAddBlock(block);
@@ -199,26 +256,142 @@ void Peer::Handler::onBlockMessage(bc::Block&& block)
 }
 
 
-void Peer::Handler::onGetBlockMessage(base::Sha256&& block_hash)
+BlockMessage::BlockMessage(bc::Block block) : _block{std::move(block)}
+{}
+
+//============================================
+
+constexpr MessageType BlockNotFoundMessage::getHandledMessageType()
 {
-    auto block = _core.findBlock(block_hash);
-    if(block) {
-        _session.send(createMessage(MessageType::BLOCK, *block));
-    }
-    else {
-        _session.send(createMessage(MessageType::BLOCK_NOT_FOUND, block_hash.getBytes()));
-    }
+    return MessageType::BLOCK_NOT_FOUND;
 }
 
 
-void Peer::Handler::onGetInfoMessage()
+void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa, base::Sha256& block_hash)
+{
+    oa << MessageType::BLOCK_NOT_FOUND;
+    block_hash.serialize(oa);
+}
+
+
+void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa)
+{
+    serialize(oa, _block_hash);
+}
+
+
+BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchive& ia)
+{
+    auto block_hash = base::Sha256::deserialize(ia);
+    return {std::move(block_hash)};
+}
+
+
+void BlockNotFoundMessage::handle(MessageHandlerRequiredInterface& interface)
+{}
+
+
+BlockNotFoundMessage::BlockNotFoundMessage(base::Sha256 block_hash) : _block_hash{std::move(block_hash)}
+{}
+
+//============================================
+
+constexpr MessageType GetInfoMessage::getHandledMessageType()
+{
+    return MessageType::GET_INFO;
+}
+
+
+void GetInfoMessage::serialize(base::SerializationOArchive& oa)
+{
+    oa << MessageType::GET_INFO;
+}
+
+
+GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive& ia)
+{
+    return {};
+}
+
+
+void GetInfoMessage::handle(MessageHandlerRequiredInterface& interface)
 {
     _session.send(createMessage(MessageType::INFO, _core.getTopBlock(), _owning_network_object.allPeersAddresses()));
 }
 
+//============================================
 
-void Peer::Handler::onInfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
+constexpr MessageType InfoMessage::getHandledMessageType()
+{
+    return MessageType::INFO;
+}
+
+
+void InfoMessage::serialize(
+    base::SerializationOArchive& oa, base::Sha256& top_block_hash, std::vector<net::Endpoint>& available_peers)
+{
+    oa << MessageType::INFO;
+    top_block_hash.serialize(oa);
+    oa << available_peers;
+}
+
+
+void InfoMessage::serialize(base::SerializationOArchive& oa)
+{
+    serialize(oa, _top_block_hash, _available_peers);
+}
+
+
+InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
+{
+    base::Bytes top_block_hash;
+    std::vector<std::string> available_peers_strings;
+    ia >> top_block_hash >> available_peers_strings;
+    std::vector<net::Endpoint> available_peers;
+    for(auto&& s: available_peers_strings) {
+        available_peers.emplace_back(std::move(s));
+    }
+
+    return {std::move(top_block_hash), std::move(available_peers)};
+}
+
+
+void InfoMessage::handle(MessageHandlerRequiredInterface& interface)
 {}
+
+InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
+    : _top_block_hash{std::move(top_block_hash)}, _available_peers{std::move(available_peers)}
+{}
+
+//============================================
+
+void MessageProcessor::process(const base::Bytes& raw_message)
+{}
+
+//============================================
+
+Peer::Handler::Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session, Core& core)
+    : _owning_peer{owning_peer}, _owning_network_object{owning_network_object}, _session{handled_session}, _core{core}
+{
+    _session.start();
+}
+
+
+void Peer::Handler::onReceive(const base::Bytes& data)
+{
+    if(_session.isClosed()) {
+        return;
+    }
+
+    _message_processor.process(data);
+}
+
+
+void Peer::Handler::onClose()
+{
+    LOG_DEBUG << "Closing peer";
+    _owning_network_object.removePeer(_owning_peer);
+}
 
 //=====================================
 
@@ -249,7 +422,9 @@ void Peer::setServerEndpoint(net::Endpoint endpoint)
 
 void Peer::doHandshake()
 {
-    _session.send(createMessage(MessageType::HANDSHAKE, _core.getTopBlock(), _owning_network_object._public_port));
+    base::SerializationOArchive oa;
+    HandshakeMessage::serialize(oa, _core.getTopBlock(), _owning_network_object._public_port ? *_owning_network_object._public_port : 0);
+    _session.send(std::move(oa).getBytes());
 }
 
 //=====================================
@@ -287,22 +462,6 @@ Peer& Network::createPeer(net::Session& session)
 
 void Network::removePeer(const Peer& peer)
 {}
-
-
-void Network::broadcastBlock(const bc::Block& block)
-{
-    base::SerializationOArchive oa;
-    oa << MessageType::BLOCK << block;
-    _host.broadcast(std::move(oa).getBytes());
-}
-
-
-void Network::broadcastTransaction(const bc::Transaction& tx)
-{
-    base::SerializationOArchive oa;
-    oa << MessageType::TRANSACTION << tx;
-    _host.broadcast(std::move(oa).getBytes());
-}
 
 
 std::vector<net::Endpoint> Network::allPeersAddresses() const
