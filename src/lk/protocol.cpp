@@ -36,21 +36,16 @@ HandshakeMessage HandshakeMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void HandshakeMessage::handle(MessageHandlerRequiredInterface& interface)
+void HandshakeMessage::handle(Peer& peer, Network& network, Core& core)
 {
-    const auto& ours_top_block = interface.getTopBlock();
+    const auto& ours_top_block = core.getTopBlock();
 
-    if(_public_port) {
-        net::Endpoint ep = _session.getEndpoint();
-        ep.setPort(*public_port);
-        _owning_peer.setServerEndpoint(std::move(ep));
-    }
-    else {
-        _owning_peer.setServerEndpoint(_session.getEndpoint());
+    if(auto ep = peer.getServerEndpoint(); !ep) {
+        peer.setServerEndpoint(std::move(*ep));
     }
 
-    if(theirs_top_block == ours_top_block) {
-        _owning_peer._state = State::SYNCHRONISED;
+    if(_top_block == ours_top_block) {
+        peer.setState(Peer::State::SYNCHRONISED);
         return; // nothing changes, because top blocks are equal
     }
     else {
@@ -98,7 +93,7 @@ PingMessage PingMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void PingMessage::handle(MessageHandlerRequiredInterface& interface)
+void PingMessage::handle(Peer& peer, Network& network, Core& core)
 {}
 
 
@@ -122,7 +117,7 @@ PongMessage PongMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void PongMessage::handle(MessageHandlerRequiredInterface& interface)
+void PongMessage::handle(Peer& peer, Network& network, Core& core)
 {}
 
 //============================================
@@ -153,7 +148,7 @@ TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& 
 }
 
 
-void TransactionMessage::handle(MessageHandlerRequiredInterface& interface)
+void TransactionMessage::handle(Peer& peer, Network& network, Core& core)
 {
     _core.performTransaction(tx);
 }
@@ -190,7 +185,7 @@ GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void GetBlockMessage::handle(MessageHandlerRequiredInterface& interface)
+void GetBlockMessage::handle(Peer& peer, Network& network, Core& core)
 {
     auto block = _core.findBlock(block_hash);
     if(block) {
@@ -232,25 +227,20 @@ BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void BlockMessage::handle(MessageHandlerRequiredInterface& interface)
+void BlockMessage::handle(Peer& peer, Network& network, Core& core)
 {
-    if(_owning_peer._state == State::SYNCHRONISED) {
-        _core.tryAddBlock(block);
+    if(peer.getState() == Peer::State::SYNCHRONISED) {
+        core.tryAddBlock(std::move(_block));
     }
     else {
-        _sync_blocks.emplace_front(std::move(block));
+        bc::BlockDepth block_depth = _block.getDepth();
+        peer.addSyncBlock(std::move(_block));
 
-        if(block.getDepth() == _core.getTopBlock().getDepth() + 1) {
-            // all requested blocks are received
-            for(auto&& x: _sync_blocks) {
-                if(!_core.tryAddBlock(x)) {
-                    return; // TODO: reduce peer rating
-                }
-            }
-            _sync_blocks.clear();
+        if(block_depth == core.getTopBlock().getDepth() + 1) {
+            peer.applySyncs();
         }
         else {
-            _session.send(createMessage(MessageType::GET_BLOCK, _sync_blocks.front().getPrevBlockHash().getBytes()));
+            peer.send(createMessage(MessageType::GET_BLOCK, _sync_blocks.front().getPrevBlockHash().getBytes()));
         }
     }
 }
@@ -287,7 +277,7 @@ BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchi
 }
 
 
-void BlockNotFoundMessage::handle(MessageHandlerRequiredInterface& interface)
+void BlockNotFoundMessage::handle(Peer& peer, Network& network, Core& core)
 {}
 
 
@@ -314,9 +304,9 @@ GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void GetInfoMessage::handle(MessageHandlerRequiredInterface& interface)
+void GetInfoMessage::handle(Peer& peer, Network& network, Core& core)
 {
-    _session.send(createMessage(MessageType::INFO, _core.getTopBlock(), _owning_network_object.allPeersAddresses()));
+    peer.send(createMessage(MessageType::INFO, core.getTopBlock(), network.allPeersAddresses()));
 }
 
 //============================================
@@ -356,7 +346,7 @@ InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void InfoMessage::handle(MessageHandlerRequiredInterface& interface)
+void InfoMessage::handle(Peer& peer, Network& network, Core& core)
 {}
 
 InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
@@ -425,6 +415,35 @@ void Peer::doHandshake()
     base::SerializationOArchive oa;
     HandshakeMessage::serialize(oa, _core.getTopBlock(), _owning_network_object._public_port ? *_owning_network_object._public_port : 0);
     _session.send(std::move(oa).getBytes());
+}
+
+
+void Peer::setState(State new_state)
+{
+    _state = new_state;
+}
+
+
+Peer::State Peer::getState() const noexcept
+{
+    return _state;
+}
+
+
+void Peer::addSyncBlock(bc::Block block)
+{
+    _sync_blocks.push_front(std::move(block));
+}
+
+
+bool Peer::applySyncs()
+{
+    for(auto&& block : _sync_blocks) {
+        if(!_core.tryAddBlock(block)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 //=====================================

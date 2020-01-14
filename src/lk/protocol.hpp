@@ -15,21 +15,6 @@ namespace lk
 
 //================
 
-class MessageHandlerRequiredInterface
-{
-  public:
-    class Peer* peer;
-    class Network* network;
-    class Host* host;
-};
-
-
-struct StateVars
-{
-
-};
-
-
 // clang-format off
     DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char,
                                               (NOT_AVAILABLE)
@@ -46,14 +31,19 @@ struct StateVars
 // clang-format on
 
 
+class Core;
+class Network;
+class Peer;
+
+
 class HandshakeMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, bc::Block& block, std::uint16_t public_port);
+    static void serialize(base::SerializationOArchive& oa, const bc::Block& block, std::uint16_t public_port);
     void serialize(base::SerializationOArchive& oa);
     static HandshakeMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     bc::Block _top_block;
@@ -69,7 +59,7 @@ class PingMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static PingMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     PingMessage() = default;
@@ -83,7 +73,7 @@ class PongMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static PongMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     PongMessage() = default;
@@ -98,7 +88,7 @@ class TransactionMessage
     static void serialize(base::SerializationOArchive& oa, bc::Transaction tx);
     void serialize(base::SerializationOArchive& oa);
     static TransactionMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     bc::Transaction _tx;
@@ -115,7 +105,7 @@ class GetBlockMessage
     static void serialize(base::SerializationOArchive& oa, base::Sha256& block_hash);
     void serialize(base::SerializationOArchive& oa);
     static GetBlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     base::Sha256 _block_hash;
@@ -132,7 +122,7 @@ class BlockMessage
     static void serialize(base::SerializationOArchive& oa, bc::Block& block);
     void serialize(base::SerializationOArchive& oa);
     static BlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     bc::Block _block;
@@ -149,7 +139,7 @@ class BlockNotFoundMessage
     static void serialize(base::SerializationOArchive& oa, base::Sha256& block_hash);
     void serialize(base::SerializationOArchive& oa);
     static BlockNotFoundMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     base::Sha256 _block_hash;
@@ -165,7 +155,7 @@ class GetInfoMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static GetInfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     GetInfoMessage() = default;
@@ -181,7 +171,7 @@ class InfoMessage
         base::SerializationOArchive& oa, base::Sha256& top_block_hash, std::vector<net::Endpoint>& available_peers);
     void serialize(base::SerializationOArchive& oa);
     static InfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(MessageHandlerRequiredInterface& interface);
+    void handle(Peer& peer, Network& network, Core& core);
 
   private:
     base::Sha256 _top_block_hash;
@@ -195,7 +185,7 @@ class InfoMessage
 class MessageProcessor
 {
   public:
-    MessageProcessor(MessageHandlerRequiredInterface& mhri);
+    MessageProcessor(Peer& peer, Network& network, Core& core);
 
     void process(const base::Bytes& raw_message);
 
@@ -203,24 +193,35 @@ class MessageProcessor
     static const base::TypeList<HandshakeMessage, PingMessage, PongMessage, TransactionMessage, GetBlockMessage,
         BlockMessage, BlockNotFoundMessage, GetInfoMessage, InfoMessage> _all_message_types;
 
-    MessageHandlerRequiredInterface& _mhri;
+    Peer& _peer;
+    Network& _network;
+    Core& _core;
 };
 
 
 //================
 
-class Core;
-class Network;
-
-
 class Peer
 {
   public:
+    //================
+    enum class State
+    {
+        JUST_ESTABLISHED,
+        REQUESTED_BLOCKS,
+        SYNCHRONISED
+    };
     //================
     Peer(Network& owning_network_object, net::Session& session, Core& _core);
     //================
     [[nodiscard]] std::optional<net::Endpoint> getServerEndpoint() const;
     void setServerEndpoint(net::Endpoint endpoint);
+    //================
+    void setState(State new_state);
+    State getState() const noexcept;
+    //================
+    void addSyncBlock(bc::Block block);
+    bool applySyncs();
     //================
     [[nodiscard]] std::unique_ptr<net::Handler> createHandler();
     //================
@@ -246,15 +247,7 @@ class Peer
         //================
         MessageProcessor _message_processor;
         //================
-        std::forward_list<bc::Block> _sync_blocks;
         //================
-    };
-    //================
-    enum class State
-    {
-        JUST_ESTABLISHED,
-        REQUESTED_BLOCKS,
-        SYNCHRONISED
     };
     //================
     void doHandshake();
@@ -265,6 +258,8 @@ class Peer
     //================
     State _state{State::JUST_ESTABLISHED};
     std::optional<net::Endpoint> _address_for_incoming_connections;
+    //================
+    std::forward_list<bc::Block> _sync_blocks;
     //================
 };
 
