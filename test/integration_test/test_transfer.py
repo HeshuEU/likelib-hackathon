@@ -41,7 +41,7 @@ def main(node_exec_path, rpc_client_exec_path):
 
         from_address = "00000000000000000000000000000000"
         amount = 333
-        transaction_wait = 2
+        transaction_wait = 3
         TEST_CHECK(client.run_check_transfer(from_address=from_address, host_id=node_id, to_address=target_address, amount=amount, wait=transaction_wait))
 
         TEST_CHECK(node.check(transaction_check_builder(from_address, target_address, amount)))
