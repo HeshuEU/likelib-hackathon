@@ -39,6 +39,51 @@ def check_block_add(log_line):
         return False
 
 
+def init_addresses(count_addresses):
+    return [str(i) * (32 - len(str(i))) + str(i) for i in range(count_addresses)]
+
+
+def init_nodes_with_everything(node_exec_path, rpc_client_exec_path, client, nodes, nodes_id, count_nodes):
+    start_sync_port = 20206
+    start_rpc_port = 50056
+    nodes_time = 3
+    nodes_id.append(NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1"))
+
+    nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_1", start_up_time = nodes_time))
+    nodes[0].start()
+    TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
+    TEST_CHECK(nodes[0].check(check_test_received))
+
+    for i in range(1, count_nodes):
+        node_info = NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0." + str(i + 1))
+        nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = node_info,
+         nodes_id_list=nodes_id), "node_" + str(i + 1), start_up_time = nodes_time))
+        nodes[i].start()
+        nodes_id.append(node_info)
+
+        for j in range(i + 1):
+            TEST_CHECK(client.run_check_test(host_id=nodes_id[j]))
+        
+        TEST_CHECK(nodes[i].check(check_test_received))
+        TEST_CHECK(nodes[i - 1].check(check_connect_asepted))
+        for j in range(i):
+            TEST_CHECK(nodes[i].check(check_connection_established_builder(nodes_id[j])))
+
+
+
+
+def process_node_transfers(node, node_id, client, addresses):
+    shift = len(addresses) - 1
+    pos = 0
+    from_address = addresses[pos]
+    amount = 300
+    wait = 3
+    for i in range(len(addresses)):
+        pos = (pos + shift) % len(addresses)
+        to_address = addresses[pos]
+        client.transfer(from_address=from_address, to_address=to_address, amount=amount, host_id=node_id, wait=wait)
+
+
 @test_case("test_multi_transfer")
 def main(node_exec_path, rpc_client_exec_path):
 
@@ -82,39 +127,17 @@ def main(node_exec_path, rpc_client_exec_path):
 @test_case("test_multi_transfer_connected_with_everything")
 def main(node_exec_path, rpc_client_exec_path):
 
-    start_sync_port = 20206
-    start_rpc_port = 50056
-    nodes_time = 3
     count_nodes = 5
-    nodes_id = [NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1")]
-    address = [str(i) * 32 for i in range(count_nodes)]
-
     client = Client(rpc_client_exec_path, "client")
-
-    nodes = [NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_1", start_up_time = nodes_time)]
-    nodes[0].start()
-    TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
-    TEST_CHECK(nodes[0].check(check_test_received))
-
-    for i in range(1, count_nodes):
-        node_info = NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0." + str(i + 1))
-        nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = node_info,
-         nodes_id_list=nodes_id), "node_" + str(i + 1), start_up_time = nodes_time))
-        nodes[i].start()
-        nodes_id.append(node_info)
-
-        for j in range(i + 1):
-            TEST_CHECK(client.run_check_test(host_id=nodes_id[j]))
-        
-        TEST_CHECK(nodes[i].check(check_test_received))
-        TEST_CHECK(nodes[i - 1].check(check_connect_asepted))
-        for j in range(i):
-            TEST_CHECK(nodes[i].check(check_connection_established_builder(nodes_id[j])))
+    nodes_id = []
+    nodes = []
+    init_nodes_with_everything(node_exec_path, rpc_client_exec_path, client, nodes, nodes_id, count_nodes)
+    addresses = init_addresses(count_nodes)
 
     first_amount = 1000
-    for i in range(1, len(address)):
-        from_address = address[0]
-        to_address = address[i]
+    for i in range(1, len(addresses)):
+        from_address = addresses[0]
+        to_address = addresses[i]
         
         for j in nodes_id:
             TEST_CHECK(client.run_check_balance(address=to_address, host_id=j, target_balance=0))
@@ -125,9 +148,9 @@ def main(node_exec_path, rpc_client_exec_path):
         for j in nodes_id:
             TEST_CHECK(client.run_check_balance(address=to_address, host_id=j, target_balance=first_amount))
 
-    for i in range(1, len(address) - 1):
-        from_address = address[i]
-        to_address = address[i + 1]
+    for i in range(1, len(addresses) - 1):
+        from_address = addresses[i]
+        to_address = addresses[i + 1]
         amount = i * 100
         transaction_wait = 4
         TEST_CHECK(client.run_check_transfer(from_address=from_address, host_id=nodes_id[i], to_address=to_address, amount=amount, wait=transaction_wait))
@@ -150,7 +173,7 @@ def main(node_exec_path, rpc_client_exec_path):
     waiting_time = 4
     count_nodes = 5
     nodes_id = [NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1")]
-    address = [str(i) * 32 for i in range(count_nodes)]
+    address = init_addresses(count_nodes)
 
     client = Client(rpc_client_exec_path, "client")
 
