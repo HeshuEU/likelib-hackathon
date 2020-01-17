@@ -65,12 +65,6 @@ Sha256 Sha256::compute(const base::Bytes& data)
 }
 
 
-SerializationOArchive& Sha256::serialize(SerializationOArchive& oa, const Sha256& block)
-{
-    return block.serialize(oa);
-}
-
-
 SerializationOArchive& Sha256::serialize(SerializationOArchive& oa) const
 {
     return oa << _bytes;

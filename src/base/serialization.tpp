@@ -6,6 +6,8 @@
 
 #include <boost/asio.hpp>
 
+#include <functional>
+
 
 namespace impl
 {
@@ -13,6 +15,38 @@ namespace impl
 template<typename T>
 struct TrickFalse : std::false_type
 {};
+
+
+struct Base {};
+struct Derived : Base {};
+
+template<typename T>
+struct IntHolder
+{
+    using Type = int;
+};
+
+
+template<typename T, typename IntHolder<decltype(T::serialize)>::Type = 0>
+void callRightMethod(base::SerializationOArchive& oa, T&& t, Derived)
+{
+    std::forward<T>(t).serialize(oa);
+}
+
+
+template<typename T>
+void callRightMethod(base::SerializationOArchive& oa, T&& t, Base)
+{
+    oa << std::forward<T>(t);
+}
+
+
+template<typename T>
+void chooseSerializationMethod(base::SerializationOArchive& oa, T&& t)
+{
+    callRightMethod(oa, std::forward<T>(t), Derived{});
+}
+
 
 } // namespace impl
 
@@ -189,6 +223,14 @@ T fromBytes(const base::Bytes& bytes)
     T t;
     ia >> t;
     return t;
+}
+
+
+template<typename T, typename TT = typename std::remove_reference<T>::type, bool Dummy = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value >
+typename std::enable_if<Dummy, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t)
+{
+    std::forward<T>(t).serialize(oa);
+    return oa;
 }
 
 } // namespace base
