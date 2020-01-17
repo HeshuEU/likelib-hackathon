@@ -5,8 +5,7 @@
 
 BOOST_AUTO_TEST_CASE(sha256_hash)
 {
-    auto sha256_1 =
-        base::Sha256::compute(base::Bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30});
+    auto sha256_1 = base::Sha256::compute(base::Bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30});
     BOOST_CHECK_EQUAL(sha256_1.toHex(), "5fa56e73ead625a67cb2b6c3394664491432c7d1402d738c285a8903572c4846");
     BOOST_CHECK_EQUAL(sha256_1.getBytes().toHex(), "5fa56e73ead625a67cb2b6c3394664491432c7d1402d738c285a8903572c4846");
 
@@ -181,4 +180,3 @@ BOOST_AUTO_TEST_CASE(sha1_multiple_serialization)
     BOOST_CHECK_EQUAL(deserialized_hash_2.toHex(), target_hex_view_2);
     BOOST_CHECK_EQUAL(deserialized_hash_2.getBytes().toHex(), target_hex_view_2);
 }
-

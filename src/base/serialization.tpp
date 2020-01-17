@@ -17,8 +17,10 @@ struct TrickFalse : std::false_type
 {};
 
 
-struct Base {};
-struct Derived : Base {};
+struct Base
+{};
+struct Derived : Base
+{};
 
 template<typename T>
 struct IntHolder
@@ -226,7 +228,8 @@ T fromBytes(const base::Bytes& bytes)
 }
 
 
-template<typename T, typename TT = typename std::remove_reference<T>::type, bool Dummy = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value >
+template<typename T, typename TT = typename std::remove_reference<T>::type,
+    bool Dummy = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value>
 typename std::enable_if<Dummy, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t)
 {
     std::forward<T>(t).serialize(oa);

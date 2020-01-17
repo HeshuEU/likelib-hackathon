@@ -373,8 +373,7 @@ InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoin
 
 MessageProcessor::MessageProcessor(Peer& peer, Network& network, Core& core)
     : _peer{peer}, _network{network}, _core{core}
-{
-}
+{}
 
 
 void MessageProcessor::process(const base::Bytes& raw_message)
