@@ -1,13 +1,12 @@
 #pragma once
 
 #include "base/property_tree.hpp"
+#include "base/utility.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
 #include "lk/balance_manager.hpp"
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
-
-#include <boost/signals2.hpp>
 
 namespace lk
 {
@@ -33,8 +32,7 @@ class Core
      */
     void run();
     //==================
-    boost::signals2::signal<void(const bc::Block& block)> signal_new_block;
-    boost::signals2::signal<void(const bc::Transaction& transaction)> signal_new_transaction;
+    //void subscribeOnNewBlock()
     //==================
     bc::Balance getBalance(const bc::Address& address) const;
     //==================
@@ -55,6 +53,8 @@ class Core
     bc::Blockchain _blockchain;
     lk::Network _network;
     bc::TransactionsSet _pending_transactions;
+    //==================
+    base::Observable<const bc::Block&> _on_block_added;
     //==================
     static const bc::Block& getGenesisBlock();
     void applyGenesis();

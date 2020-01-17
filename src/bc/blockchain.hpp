@@ -1,13 +1,12 @@
 #pragma once
 
+#include "base/database.hpp"
+#include "base/property_tree.hpp"
+#include "base/utility.hpp"
+
 #include "bc/block.hpp"
 #include "bc/transaction.hpp"
 #include "bc/transactions_set.hpp"
-
-#include "base/property_tree.hpp"
-#include "base/database.hpp"
-
-#include <boost/signals2.hpp>
 
 #include <shared_mutex>
 #include <unordered_map>
@@ -33,7 +32,7 @@ class Blockchain
     //===================
     const bc::Block& getTopBlock() const;
     //===================
-    boost::signals2::signal<void(const Block&)> signal_block_added;
+
     //===================
   private:
     //===================
@@ -46,6 +45,8 @@ class Blockchain
     //===================
     base::Database _database;
     mutable std::shared_mutex _database_rw_mutex;
+    //===================
+    base::Observable<const bc::Block&> _block_added;
     //===================
     void pushForwardToPersistentStorage(const base::Sha256& block_hash, const bc::Block& block);
     std::optional<base::Sha256> getLastBlockHashAtPersistentStorage() const;

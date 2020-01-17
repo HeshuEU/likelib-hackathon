@@ -44,7 +44,7 @@ bool Core::tryAddBlock(const bc::Block& b)
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
         _pending_transactions.remove(b.getTransactions());
         // _network.broadcastBlock(b);
-        signal_new_block(b);
+        _on_block_added.notify(b);
         return true;
     }
     else {
