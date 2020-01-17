@@ -32,8 +32,7 @@ const base::Bytes LAST_BLOCK_HASH_KEY{toBytes(DataType::SYSTEM, base::Bytes("las
 namespace bc
 {
 
-Blockchain::Blockchain(const base::PropertyTree& config)
-    : _config{config}, _top_level_block_hash(base::Bytes(32))
+Blockchain::Blockchain(const base::PropertyTree& config) : _config{config}, _top_level_block_hash(base::Bytes(32))
 {
     auto database_path = config.get<std::string>("database.path");
     if(config.get<bool>("database.clean")) {

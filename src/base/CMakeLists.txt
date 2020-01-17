@@ -4,7 +4,7 @@ set(BASE_HEADERS
         big_integer.hpp
         big_integer.tpp
         error.hpp
-        stringifiable_enum_class.hpp
+        utility.hpp
         assert.hpp
         config.hpp
         log.hpp

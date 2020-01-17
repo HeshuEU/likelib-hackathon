@@ -80,7 +80,7 @@ class AesKey
     enum class KeyType : std::size_t
     {
         K256BIT = 32, // 32(bytes)
-        K128BIT = 16  // 16(bytes)
+        K128BIT = 16 // 16(bytes)
 
     };
     //=================

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/stringifiable_enum_class.hpp"
+#include "base/utility.hpp"
 
 #include <boost/current_function.hpp>
 

@@ -12,9 +12,9 @@ Block::Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, TransactionsSet
 {}
 
 
-base::SerializationOArchive& Block::serialize(base::SerializationOArchive& oa, const Block& block)
+base::SerializationOArchive& Block::serialize(base::SerializationOArchive& oa) const
 {
-    return oa << block.getDepth() << block.getNonce() << block.getPrevBlockHash().getBytes() << block.getTransactions();
+    return oa << _depth << _nonce << _prev_block_hash << _txs;
 }
 
 
@@ -26,13 +26,12 @@ Block Block::deserialize(base::SerializationIArchive& ia)
     NonceInt nonce;
     ia >> nonce;
 
-    base::Bytes prev_block_hash;
-    ia >> prev_block_hash;
+    auto prev_block_hash = base::Sha256::deserialize(ia);
 
     TransactionsSet txs;
     ia >> txs;
 
-    Block ret{depth, base::Sha256(prev_block_hash), std::move(txs)};
+    Block ret{depth, std::move(prev_block_hash), std::move(txs)};
     ret.setNonce(nonce);
 
     return ret;
@@ -115,7 +114,7 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& 
 
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block)
 {
-    Block::serialize(oa, block);
+    block.serialize(oa);
     return oa;
 }
 
