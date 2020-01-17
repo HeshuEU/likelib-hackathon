@@ -46,7 +46,7 @@ class HandshakeMessage
     void handle(Peer& peer, Network& network, Core& core);
 
   private:
-    bc::Block _top_block;
+    bc::Block _theirs_top_block;
     std::uint16_t _public_port;
 
     HandshakeMessage(bc::Block&& top_block, std::uint16_t public_port);
@@ -102,7 +102,7 @@ class GetBlockMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, base::Sha256& block_hash);
+    static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
     void serialize(base::SerializationOArchive& oa);
     static GetBlockMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
@@ -119,7 +119,7 @@ class BlockMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, bc::Block& block);
+    static void serialize(base::SerializationOArchive& oa, const bc::Block& block);
     void serialize(base::SerializationOArchive& oa);
     static BlockMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
@@ -191,7 +191,8 @@ class MessageProcessor
 
   private:
     static const base::TypeList<HandshakeMessage, PingMessage, PongMessage, TransactionMessage, GetBlockMessage,
-        BlockMessage, BlockNotFoundMessage, GetInfoMessage, InfoMessage> _all_message_types;
+        BlockMessage, BlockNotFoundMessage, GetInfoMessage, InfoMessage>
+        _all_message_types;
 
     Peer& _peer;
     Network& _network;
@@ -222,8 +223,12 @@ class Peer
     //================
     void addSyncBlock(bc::Block block);
     bool applySyncs();
+    [[nodiscard]] const std::forward_list<bc::Block>& getSyncBlocks() const noexcept;
     //================
     [[nodiscard]] std::unique_ptr<net::Handler> createHandler();
+    //================
+    void send(const base::Bytes& data);
+    void send(base::Bytes&& data);
     //================
   private:
     //================
@@ -246,7 +251,6 @@ class Peer
         Core& _core;
         //================
         MessageProcessor _message_processor;
-        //================
         //================
     };
     //================
