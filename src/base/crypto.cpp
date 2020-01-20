@@ -1,6 +1,5 @@
 #include "crypto.hpp"
 
-#include "base/assert.hpp"
 #include "base/error.hpp"
 #include "base/directory.hpp"
 #include "base/log.hpp"
@@ -275,7 +274,7 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 {
     static constexpr std::size_t minimal_secure_key_size = 1024;
     if(keys_size < minimal_secure_key_size) {
-        LOG_WARNING << "using less than " << minimal_secure_key_size << "bits for key generation is not insecure";
+        LOG_WARNING << "using less than " << minimal_secure_key_size << " bits for key generation is not secure";
     }
     // create big number for random generation
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);

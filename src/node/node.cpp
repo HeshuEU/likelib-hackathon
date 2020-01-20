@@ -10,8 +10,8 @@ Node::Node(const base::PropertyTree& config) : _config{config}, _core{_config}, 
     auto miner_callback = std::bind(&Node::onBlockMine, this, std::placeholders::_1);
     _miner = std::make_unique<Miner>(_config, miner_callback);
 
-    _core.signal_new_transaction.connect(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
-    _core.signal_new_block.connect(std::bind(&Node::onNewBlock, this, std::placeholders::_1));
+    _core.subscribeToNewPendingTransaction(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
+    _core.subscribeToBlockAddition(std::bind(&Node::onNewBlock, this, std::placeholders::_1));
 }
 
 

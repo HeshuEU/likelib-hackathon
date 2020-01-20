@@ -5,10 +5,8 @@ namespace lk
 
 Core::Core(const base::PropertyTree& config) : _config{config}, _blockchain{_config}, _network{_config, *this}
 {
-    _blockchain.signal_block_added.connect(signal_new_block);
-    _blockchain.signal_block_added.connect(std::bind(&Core::updateNewBlock, this, std::placeholders::_1));
-
-    _blockchain.addGenesisBlock(getGenesisBlock());
+    ASSERT(_blockchain.tryAddBlock(getGenesisBlock()));
+    _balance_manager.updateFromGenesis(getGenesisBlock());
     _blockchain.load();
 }
 
@@ -26,13 +24,6 @@ const bc::Block& Core::getGenesisBlock()
 }
 
 
-void Core::applyGenesis()
-{
-    ASSERT(_blockchain.tryAddBlock(getGenesisBlock()));
-    _balance_manager.updateFromGenesis(getGenesisBlock());
-}
-
-
 void Core::run()
 {
     _network.run();
@@ -43,8 +34,8 @@ bool Core::tryAddBlock(const bc::Block& b)
 {
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
         _pending_transactions.remove(b.getTransactions());
-        // _network.broadcastBlock(b);
-        _on_block_added.notify(b);
+        updateNewBlock(b);
+        _event_block_added.notify(b);
         return true;
     }
     else {
@@ -111,8 +102,8 @@ bool Core::performTransaction(const bc::Transaction& tx)
 {
     if(checkTransaction(tx)) {
         _pending_transactions.add(tx);
-        //_network.broadcastTransaction(tx);
-        signal_new_transaction(tx);
+        LOG_DEBUG << "Core::performTransaction(const bc::Transaction&)";
+        _event_new_pending_transaction.notify(tx);
         return true;
     }
     return false;
@@ -141,5 +132,19 @@ void Core::updateNewBlock(const bc::Block& block)
         _balance_manager.update(block);
     }
 }
+
+
+void Core::subscribeToBlockAddition(decltype(Core::_event_block_added)::CallbackType callback)
+{
+    _event_block_added.subscribe(std::move(callback));
+}
+
+
+
+void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_transaction)::CallbackType callback)
+{
+    _event_new_pending_transaction.subscribe(std::move(callback));
+}
+
 
 } // namespace lk

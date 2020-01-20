@@ -365,6 +365,7 @@ InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 void InfoMessage::handle(Peer& peer, Network& network, Core& core)
 {}
 
+
 InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
     : _top_block_hash{std::move(top_block_hash)}, _available_peers{std::move(available_peers)}
 {}
@@ -376,8 +377,28 @@ MessageProcessor::MessageProcessor(Peer& peer, Network& network, Core& core)
 {}
 
 
+namespace
+{
+    template<typename M, typename... Args>
+    void runHandle(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core, base::TypeList<M, Args...> type_list) {
+        if(M::getHandledMessageType() == mt) {
+            auto message = M::deserialize(ia);
+            message.handle(peer, network, core);
+        }
+        else {
+            runHandle<Args...>(mt, ia, peer, network, core, base::TypeList<Args...>{});
+        }
+    }
+}
+
+
 void MessageProcessor::process(const base::Bytes& raw_message)
-{}
+{
+    base::SerializationIArchive ia(raw_message);
+    MessageType mt;
+    ia >> mt;
+    runHandle(mt, ia, _peer, _network, _core, _all_message_types);
+}
 
 //============================================
 
@@ -510,6 +531,8 @@ Network::Network(const base::PropertyTree& config, Core& core) : _config{config}
     if(_config.hasKey("net.public_port")) {
         _public_port = _config.get<std::uint16_t>("net.public_port");
     }
+    _core.subscribeToBlockAddition(std::bind(&Network::onNewBlock, this, std::placeholders::_1));
+    _core.subscribeToNewPendingTransaction(std::bind(&Network::onNewPendingTransaction, this, std::placeholders::_1));
 }
 
 
@@ -533,6 +556,26 @@ std::vector<net::Endpoint> Network::allPeersAddresses() const
         }
     }
     return ret;
+}
+
+
+void Network::broadcast(const base::Bytes& data)
+{
+    _host.broadcast(data);
+}
+
+
+void Network::onNewBlock(const bc::Block& block)
+{
+    LOG_DEBUG << "Network::onNewBlock()";
+    broadcast(serializeMessage<BlockMessage>(block));
+}
+
+
+void Network::onNewPendingTransaction(const bc::Transaction& tx)
+{
+    LOG_DEBUG << "Network::onNewPendingTransaction()";
+    broadcast(serializeMessage<TransactionMessage>(tx));
 }
 
 

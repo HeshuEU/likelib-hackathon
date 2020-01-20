@@ -26,7 +26,7 @@ KeyVault::KeyVault(const base::PropertyTree& config) : _config{config}
         _private_key->save(private_key_path);
         LOG_WARNING << "Generated new key pair and saved by config paths.";
     }
-    LOG_INFO << "Public key hash:" << base::Sha256::compute(_public_key->toBytes()).toHex();
+    LOG_INFO << "Public key hash: " << base::Sha256::compute(_public_key->toBytes()).toHex();
     // TODO: maybe implement unload to disk mechanic for private key.
 }
 

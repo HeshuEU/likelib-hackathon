@@ -308,6 +308,11 @@ class Network
     Peer& createPeer(net::Session& session);
     void removePeer(const Peer& peer);
     //================
+    void broadcast(const base::Bytes& data);
+    //================
+    void onNewBlock(const bc::Block& block);
+    void onNewPendingTransaction(const bc::Transaction& tx);
+    //================
 };
 
 } // namespace lk
