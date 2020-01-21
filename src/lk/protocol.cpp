@@ -11,6 +11,7 @@ template<typename M, typename... Args>
 base::Bytes serializeMessage(Args&&... args)
 {
     base::SerializationOArchive oa;
+    oa << M::getHandledMessageType();
     (oa << ... << std::forward<Args>(args));
     return std::move(oa).getBytes();
 }
