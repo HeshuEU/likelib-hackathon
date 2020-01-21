@@ -2,6 +2,8 @@
 
 #include "base/serialization.hpp"
 
+#include <limits>
+
 BOOST_AUTO_TEST_CASE(serialization_sanity_check1)
 {
     base::SerializationOArchive oa;
@@ -50,8 +52,8 @@ BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
 {
     base::SerializationOArchive oa;
     std::vector<char> v1{'f', '!', '*', 'a'};
-    std::vector<int> v2{2200, -8001, 111, 77, -99976};
-    std::vector<long long> v3{20000000000};
+    std::vector<int> v2{2200, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 77, -99976};
+    std::vector<long long> v3{20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
     std::vector<unsigned char> v4;
     oa << v1 << v2 << v3 << v4;
 
@@ -88,4 +90,87 @@ BOOST_AUTO_TEST_CASE(serialization_enum)
     BOOST_CHECK(b == E::B);
     BOOST_CHECK(c == E::C);
     BOOST_CHECK(d == E::D);
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_integers)
+{
+    char ch = 98;
+    int short sh = 30111;
+    int i = 57678;
+    int long long ll = 5471756785678;
+
+    auto bch = base::toBytes(ch);
+    auto bsh = base::toBytes(sh);
+    auto bi = base::toBytes(i);
+    auto bll = base::toBytes(ll);
+
+    BOOST_CHECK_EQUAL(ch, base::fromBytes<char>(bch));
+    BOOST_CHECK_EQUAL(sh, base::fromBytes<short>(bsh));
+    BOOST_CHECK_EQUAL(i, base::fromBytes<int>(bi));
+    BOOST_CHECK_EQUAL(ll, base::fromBytes<long long>(bll));
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_strings)
+{
+    std::string str1 = "fgkj3%835/ n af[dsgp/n   ";
+    std::string str2 = "*(#%JGold^LF\n sdei6^94";
+
+    auto b1 = base::toBytes(str1);
+    auto b2 = base::toBytes(str2);
+
+    BOOST_CHECK_EQUAL(str1, base::fromBytes<std::string>(b1));
+    BOOST_CHECK_EQUAL(str2, base::fromBytes<std::string>(b2));
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_integers)
+{
+    std::vector<char> v1{'f', '!', '*', 'a'};
+    std::vector<short> v2{11057, std::numeric_limits<short>::min(), std::numeric_limits<short>::max(), 767};
+    std::vector<int> v3{2200, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 77, -99976};
+    std::vector<long long> v4{20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
+    std::vector<unsigned char> v5;
+
+    auto b1 = base::toBytes(v1);
+    auto b2 = base::toBytes(v2);
+    auto b3 = base::toBytes(v3);
+    auto b4 = base::toBytes(v4);
+    auto b5 = base::toBytes(v5);
+
+    BOOST_CHECK(v1 == base::fromBytes<std::vector<char>>(b1));
+    BOOST_CHECK(v2 == base::fromBytes<std::vector<short>>(b2));
+    BOOST_CHECK(v3 == base::fromBytes<std::vector<int>>(b3));
+    BOOST_CHECK(v4 == base::fromBytes<std::vector<long long>>(b4));
+    BOOST_CHECK(v5 == base::fromBytes<std::vector<unsigned char>>(b5));
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_strings)
+{
+    std::vector<std::string> v1{"34fGEk350u8Fj", "DFN#%06784 giksdf34 \n  ", "asd35%64khrtfFsp    ad03\n\n\n\n"};
+    std::vector<std::string> v2{};
+
+    auto b1 = base::toBytes(v1);
+    auto b2 = base::toBytes(v2);
+
+    BOOST_CHECK(v1 == base::fromBytes<std::vector<std::string>>(b1));
+    BOOST_CHECK(v2 == base::fromBytes<std::vector<std::string>>(b2));
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_enum)
+{
+    enum class E {
+        A, B, C, D
+    };
+    std::vector<E> v1{E::A, E::C, E::D};
+    std::vector<E> v2{};
+
+    auto b1 = base::toBytes(v1);
+    auto b2 = base::toBytes(v2);
+
+    BOOST_CHECK(v1 == base::fromBytes<std::vector<E>>(b1));
+    BOOST_CHECK(v2 == base::fromBytes<std::vector<E>>(b2));
 }

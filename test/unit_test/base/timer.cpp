@@ -1,12 +1,13 @@
 #include <boost/test/unit_test.hpp>
 
 #include "base/timer.hpp"
+#include "base/serialization.hpp"
 
 #include <thread>
 
 constexpr std::int64_t milli_fault = 3;
 
-BOOST_AUTO_TEST_CASE(time_usage1)
+BOOST_AUTO_TEST_CASE(timer_usage1)
 {
     base::Timer timer;
     timer.start();
@@ -16,7 +17,17 @@ BOOST_AUTO_TEST_CASE(time_usage1)
 }
 
 
-BOOST_AUTO_TEST_CASE(time_usage2)
+BOOST_AUTO_TEST_CASE(timer_without_sleep)
+{
+    base::Timer timer;
+    timer.start();
+
+    auto milli = timer.elapsedMillis();
+    BOOST_CHECK(milli <= 1);
+}
+
+
+BOOST_AUTO_TEST_CASE(timer_usage2)
 {
     base::Timer timer1;
     base::Timer timer2;
@@ -29,7 +40,7 @@ BOOST_AUTO_TEST_CASE(time_usage2)
 }
 
 
-BOOST_AUTO_TEST_CASE(time_constructor_copy)
+BOOST_AUTO_TEST_CASE(timer_constructor_copy)
 {
     base::Timer timer1;
     timer1.start();
@@ -41,7 +52,7 @@ BOOST_AUTO_TEST_CASE(time_constructor_copy)
 }
 
 
-BOOST_AUTO_TEST_CASE(time_constructor_move)
+BOOST_AUTO_TEST_CASE(timer_constructor_move)
 {
     base::Timer timer1;
     timer1.start();
@@ -53,7 +64,7 @@ BOOST_AUTO_TEST_CASE(time_constructor_move)
 }
 
 
-BOOST_AUTO_TEST_CASE(time_elapsed_seconds)
+BOOST_AUTO_TEST_CASE(timer_elapsed_seconds)
 {
     base::Timer timer;
     timer.start();

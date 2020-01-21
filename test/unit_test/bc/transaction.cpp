@@ -20,85 +20,104 @@ BOOST_AUTO_TEST_CASE(transaction_constructor1)
 
 BOOST_AUTO_TEST_CASE(transaction_constructor2)
 {
-    bc::Transaction tx(bc::Address("vjS#%(247DGFSMKv\n sdf?//"), bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"), 1239823409,
-        base::Time::now());
-    BOOST_CHECK(tx.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    BOOST_CHECK(tx.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    BOOST_CHECK(tx.getTimestamp() == base::Time::now());
-    BOOST_CHECK(tx.getAmount() == 1239823409);
+    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
+    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Transaction tx(bc::Address(str_from), bc::Address(str_to), amount, time);
+
+    BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
+    BOOST_CHECK(tx.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx.getTimestamp() == time);
+    BOOST_CHECK(tx.getAmount() == amount);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
 {
-    bc::Transaction tx1(bc::Address("vjS#%(247DGFSMKv\n sdf?//"), bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"),
-        1239823409, base::Time::now());
+    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
+    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
     bc::Transaction tx2(tx1);
 
-    BOOST_CHECK(tx2.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    BOOST_CHECK(tx2.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    BOOST_CHECK(tx2.getTimestamp() == base::Time::now());
-    BOOST_CHECK(tx2.getAmount() == 1239823409);
+    BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
+    BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx2.getTimestamp() == time);
+    BOOST_CHECK(tx2.getAmount() == amount);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_move)
 {
-    bc::Transaction tx1(bc::Address("vjS#%(247DGFSMKv\n sdf?//"), bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"),
-        1239823409, base::Time::now());
+    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
+    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
     bc::Transaction tx2(std::move(tx1));
 
-    BOOST_CHECK(tx2.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    BOOST_CHECK(tx2.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    BOOST_CHECK(tx2.getTimestamp() == base::Time::now());
-    BOOST_CHECK(tx2.getAmount() == 1239823409);
+    BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
+    BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx2.getTimestamp() == time);
+    BOOST_CHECK(tx2.getAmount() == amount);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 {
-    bc::Transaction tx1(bc::Address("vjS#%(247DGFSMKv\n sdf?//"), bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"),
-        1239823409, base::Time::now());
-    bc::Transaction tx2(
-        bc::Address("vjSSDGHS*#%/fg\f"), bc::Address("()#%sdo#%KGD\n/Skg/dfe"), 821481368, base::Time::now());
+    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
+    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
+    bc::Transaction tx2(bc::Address(str_from), bc::Address(str_to), 821481368, time);
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = tx1;
-    BOOST_CHECK(tx2.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    BOOST_CHECK(tx2.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    BOOST_CHECK(tx2.getTimestamp() == base::Time::now());
-    BOOST_CHECK(tx2.getAmount() == 1239823409);
+    BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
+    BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx2.getTimestamp() == time);
+    BOOST_CHECK(tx2.getAmount() == amount);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 {
-    bc::Transaction tx1(bc::Address("vjS#%(247DGFSMKv\n sdf?//"), bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"),
-        1239823409, base::Time::now());
-    bc::Transaction tx2(
-        bc::Address("vjSSDGHS*#%/fg\f"), bc::Address("()#%sdo#%KGD\n/Skg/dfe"), 821481368, base::Time::now());
+    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
+    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
+    bc::Transaction tx2(bc::Address(str_from), bc::Address(str_to), 821481368, time);
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = std::move(tx1);
-    BOOST_CHECK(tx2.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    BOOST_CHECK(tx2.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    BOOST_CHECK(tx2.getTimestamp() == base::Time::now());
-    BOOST_CHECK(tx2.getAmount() == 1239823409);
+    BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
+    BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx2.getTimestamp() == time);
+    BOOST_CHECK(tx2.getAmount() == amount);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_set_all1)
 {
+    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
+    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
     bc::Transaction tx;
-    tx.setFrom(bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    tx.setTo(bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    tx.setTimestamp(base::Time::now());
-    tx.setAmount(1239823409);
 
-    BOOST_CHECK(tx.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    BOOST_CHECK(tx.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    BOOST_CHECK(tx.getTimestamp() == base::Time::now());
-    BOOST_CHECK(tx.getAmount() == 1239823409);
+    tx.setFrom(bc::Address(str_from));
+    tx.setTo(bc::Address(str_to));
+    tx.setTimestamp(time);
+    tx.setAmount(amount);
+
+    BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
+    BOOST_CHECK(tx.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx.getTimestamp() == time);
+    BOOST_CHECK(tx.getAmount() == amount);
 }
 
 
@@ -106,22 +125,45 @@ BOOST_AUTO_TEST_CASE(transaction_set_all2)
 {
     bc::Transaction tx(bc::Address("vjSSDGHS*#%/fg\f"), bc::Address("()#%sdo#%KGD\n/Skg/dfe"), 821481368, base::Time());
 
-    tx.setFrom(bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    tx.setTo(bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    tx.setTimestamp(base::Time::now());
-    tx.setAmount(1239823409);
+    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
+    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
 
-    BOOST_CHECK(tx.getFrom() == bc::Address("vjS#%(247DGFSMKv\n sdf?//"));
-    BOOST_CHECK(tx.getTo() == bc::Address("()#%9vdmLDSOJ\n\n\\/Skg/dfe"));
-    BOOST_CHECK(tx.getTimestamp() == base::Time::now());
-    BOOST_CHECK(tx.getAmount() == 1239823409);
+    tx.setFrom(bc::Address(str_from));
+    tx.setTo(bc::Address(str_to));
+    tx.setTimestamp(time);
+    tx.setAmount(amount);
+
+    BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
+    BOOST_CHECK(tx.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx.getTimestamp() == time);
+    BOOST_CHECK(tx.getAmount() == amount);
 }
 
 
-BOOST_AUTO_TEST_CASE(transaction_serialization)
+BOOST_AUTO_TEST_CASE(transaction_serialization1)
 {
-    bc::Transaction tx1(
-        bc::Address("vjSSDGHS*#%/fg\f"), bc::Address("()#%sdo#%KGD\n/Skg/dfe"), 821481368, base::Time::now());
+    bc::Transaction tx1;
+
+    base::SerializationOArchive oa;
+    oa << tx1;
+
+    base::SerializationIArchive ia(oa.getBytes());
+    bc::Transaction tx2;
+    ia >> tx2;
+    BOOST_CHECK(tx1 == tx2);
+}
+
+
+BOOST_AUTO_TEST_CASE(transaction_serialization2)
+{
+    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
+    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
+
     base::SerializationOArchive oa;
     oa << tx1;
 

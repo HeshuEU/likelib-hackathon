@@ -16,6 +16,7 @@ set(TEST_SOURCES
 		bc/transaction.cpp
         bc/transactions_set.cpp
         lk/balance_manager.cpp
+        net/endpoint.cpp
 		)
 
 add_executable(run_tests ${TEST_SOURCES})
