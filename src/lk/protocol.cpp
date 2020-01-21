@@ -379,15 +379,29 @@ MessageProcessor::MessageProcessor(Peer& peer, Network& network, Core& core)
 
 namespace
 {
-    template<typename M, typename... Args>
-    void runHandle(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core, base::TypeList<M, Args...> type_list) {
-        if(M::getHandledMessageType() == mt) {
-            auto message = M::deserialize(ia);
+    template<typename F, typename... O>
+    void runHandleImpl(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core)
+    {
+        if(F::getHandledMessageType() == mt) {
+            auto message = F::deserialize(ia);
             message.handle(peer, network, core);
         }
         else {
-            runHandle<Args...>(mt, ia, peer, network, core, base::TypeList<Args...>{});
+            runHandleImpl<O...>(mt, ia, peer, network, core);
         }
+    }
+
+
+    template<>
+    void runHandleImpl<void>(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core)
+    {
+        return;
+    }
+
+
+    template<typename... Args>
+    void runHandle(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core, base::TypeList<Args...> type_list) {
+        runHandleImpl<Args..., void>(mt, ia, peer, network, core);
     }
 }
 

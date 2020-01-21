@@ -1,5 +1,7 @@
 #include "core.hpp"
 
+#include "base/log.hpp"
+
 namespace lk
 {
 
