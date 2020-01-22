@@ -53,7 +53,8 @@ BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
     base::SerializationOArchive oa;
     std::vector<char> v1{'f', '!', '*', 'a'};
     std::vector<int> v2{2200, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 77, -99976};
-    std::vector<long long> v3{20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
+    std::vector<long long> v3{
+        20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
     std::vector<unsigned char> v4;
     oa << v1 << v2 << v3 << v4;
 
@@ -130,7 +131,8 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_integers)
     std::vector<char> v1{'f', '!', '*', 'a'};
     std::vector<short> v2{11057, std::numeric_limits<short>::min(), std::numeric_limits<short>::max(), 767};
     std::vector<int> v3{2200, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 77, -99976};
-    std::vector<long long> v4{20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
+    std::vector<long long> v4{
+        20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
     std::vector<unsigned char> v5;
 
     auto b1 = base::toBytes(v1);
@@ -162,8 +164,12 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_strings)
 
 BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_enum)
 {
-    enum class E {
-        A, B, C, D
+    enum class E
+    {
+        A,
+        B,
+        C,
+        D
     };
     std::vector<E> v1{E::A, E::C, E::D};
     std::vector<E> v2{};
