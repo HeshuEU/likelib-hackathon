@@ -2,6 +2,10 @@
 
 #include <boost/preprocessor.hpp>
 
+#include <functional>
+
+namespace base
+{
 
 #define X_DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS_TOSTRING_CASE(r, data, elem) \
     case data::elem: \
@@ -21,3 +25,26 @@
                 return nullptr; \
         } \
     }
+
+
+template<typename... Types>
+struct TypeList
+{};
+
+
+template<typename... Args>
+class Observable
+{
+public:
+    using CallbackType = std::function<void(Args...)>;
+
+    void subscribe(CallbackType callback);
+    void notify(Args... args);
+private:
+    std::vector<CallbackType> _observers;
+
+};
+
+} // namespace base
+
+#include "utility.tpp"

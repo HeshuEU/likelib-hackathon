@@ -1,13 +1,12 @@
 #pragma once
 
 #include "base/property_tree.hpp"
+#include "base/utility.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
 #include "lk/balance_manager.hpp"
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
-
-#include <boost/signals2.hpp>
 
 namespace lk
 {
@@ -33,9 +32,6 @@ class Core
      */
     void run();
     //==================
-    boost::signals2::signal<void(const bc::Block& block)> signal_new_block;
-    boost::signals2::signal<void(const bc::Transaction& transaction)> signal_new_transaction;
-    //==================
     bc::Balance getBalance(const bc::Address& address) const;
     //==================
     bool performTransaction(const bc::Transaction& tx);
@@ -50,6 +46,9 @@ class Core
     //==================
     const base::PropertyTree& _config;
     //==================
+    base::Observable<const bc::Block&> _event_block_added;
+    base::Observable<const bc::Transaction&> _event_new_pending_transaction;
+    //==================
     bool _is_balance_manager_updated{false};
     BalanceManager _balance_manager;
     bc::Blockchain _blockchain;
@@ -57,12 +56,18 @@ class Core
     bc::TransactionsSet _pending_transactions;
     //==================
     static const bc::Block& getGenesisBlock();
-    void applyGenesis();
-    void loadBlockchainFromDisk();
     void updateNewBlock(const bc::Block& block);
     //==================
     bool checkBlock(const bc::Block& block) const;
     bool checkTransaction(const bc::Transaction& tx) const;
+    //==================
+public:
+    //==================
+    // notifies if new blocks are added: genesis and blocks, that are stored in DB, are not handled by this
+    void subscribeToBlockAddition(decltype(_event_block_added)::CallbackType callback);
+
+    // notifies if some transaction was added to set of pending
+    void subscribeToNewPendingTransaction(decltype(_event_new_pending_transaction)::CallbackType callback);
     //==================
 };
 

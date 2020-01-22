@@ -32,8 +32,7 @@ const base::Bytes LAST_BLOCK_HASH_KEY{toBytes(DataType::SYSTEM, base::Bytes("las
 namespace bc
 {
 
-Blockchain::Blockchain(const base::PropertyTree& config)
-    : _config{config}, _top_level_block_hash(base::Bytes(32))
+Blockchain::Blockchain(const base::PropertyTree& config) : _config{config}, _top_level_block_hash(base::Bytes(32))
 {
     auto database_path = config.get<std::string>("database.path");
     if(config.get<bool>("database.clean")) {
@@ -72,7 +71,7 @@ void Blockchain::addGenesisBlock(const Block& block)
     _top_level_block_hash = hash;
 
     LOG_DEBUG << "Adding genesis block. Block hash = " << hash;
-    signal_block_added(inserted_block->second);
+    _block_added.notify(inserted_block->second);
 }
 
 
@@ -100,7 +99,7 @@ bool Blockchain::tryAddBlock(const Block& block)
     }
 
     LOG_DEBUG << "Adding block. Block hash = " << hash;
-    signal_block_added(inserted_block->second);
+    _block_added.notify(inserted_block->second);
 
     return true;
 }

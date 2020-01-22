@@ -29,4 +29,4 @@ class KeyVault
     //---------------------------
 };
 
-}
+} // namespace crypto
