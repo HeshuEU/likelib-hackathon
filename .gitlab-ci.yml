@@ -16,7 +16,7 @@ Build:
     - PROJECT_BUILD_DIR="./build"
     - mkdir ${PROJECT_BUILD_DIR}
     - cd ${PROJECT_BUILD_DIR}
-    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Realese -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
+    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
     - |
       echo
