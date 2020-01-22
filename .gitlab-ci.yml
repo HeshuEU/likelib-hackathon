@@ -60,8 +60,8 @@ Unit tests:
 
 
 Integration tests:
-  stage: integration-tests
   timeout: 15
+  stage: integration-tests
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
