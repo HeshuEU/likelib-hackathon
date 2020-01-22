@@ -51,7 +51,7 @@ void Session::send(const base::Bytes& data)
 void Session::send(base::Bytes&& data)
 {
     if(isActive()) {
-        _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + std::move(data));
+        _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data);
     }
 }
 

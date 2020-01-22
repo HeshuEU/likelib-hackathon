@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(sha256_serialization)
     BOOST_CHECK_EQUAL(target_hash.getBytes().toHex(), target_hex_view);
 
     base::SerializationOArchive out;
-    base::Sha256::serialize(out, target_hash);
+    target_hash.serialize(out);
 
     auto serialized_bytes = out.getBytes();
     base::SerializationIArchive in(serialized_bytes);
@@ -80,8 +80,7 @@ BOOST_AUTO_TEST_CASE(sha256_multiple_serialization)
     BOOST_CHECK_EQUAL(target_hash_2.getBytes().toHex(), target_hex_view_2);
 
     base::SerializationOArchive out;
-    base::Sha256::serialize(out, target_hash_1);
-    base::Sha256::serialize(out, target_hash_2);
+    out << target_hash_1 << target_hash_2;
 
     auto serialized_bytes = out.getBytes();
     base::SerializationIArchive in(serialized_bytes);
@@ -190,3 +189,4 @@ BOOST_AUTO_TEST_CASE(sha1_multiple_serialization)
     BOOST_CHECK_EQUAL(deserialized_hash_2.toHex(), target_hex_view_2);
     BOOST_CHECK_EQUAL(deserialized_hash_2.getBytes().toHex(), target_hex_view_2);
 }
+
