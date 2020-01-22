@@ -30,7 +30,7 @@ Build:
 
 
 Code quality:
-  stage: valgrind & code quality
+  stage: analyzers
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
@@ -47,7 +47,7 @@ Code quality:
 
 
 Unit tests:
-  stage: unit-tests
+  stage: unit tests
   tags:
     - docker
   script:
@@ -60,7 +60,7 @@ Unit tests:
 
 
 Integration tests:
-  stage: integration-tests
+  stage: integration tests
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
@@ -81,7 +81,7 @@ Integration tests:
     expire_in: 1 week
 
 Valgrind test:
-  stage: valgrind & code quality
+  stage: analyzers
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
