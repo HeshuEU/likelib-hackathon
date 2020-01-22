@@ -51,7 +51,8 @@ void Host::accept()
 {
     _acceptor.accept([this](std::unique_ptr<Connection> connection) {
         ASSERT(connection);
-        auto& session = addNewSession(std::move(connection));
+        [[maybe_unused]] auto& session = addNewSession(std::move(connection));
+        accept();
     });
 }
 
@@ -60,7 +61,7 @@ void Host::connect(const net::Endpoint& address)
 {
     _connector.connect(address, [this](std::unique_ptr<Connection> connection) {
         ASSERT(connection);
-        auto& session = addNewSession(std::move(connection));
+        [[maybe_unused]] auto& session = addNewSession(std::move(connection));
     });
 }
 
@@ -84,19 +85,9 @@ void Host::networkThreadWorkerFunction() noexcept
 void Host::run(std::unique_ptr<HandlerFactory> handler_factory)
 {
     ASSERT(handler_factory);
-
     _handler_factory = std::move(handler_factory);
-
     accept();
-
-    if(_config.hasKey("nodes")) {
-        for(const auto& node: _config.getVector<std::string>("nodes")) {
-            connect(net::Endpoint(node));
-        }
-    }
-
     scheduleHeartBeat();
-
     _network_thread = std::thread(&Host::networkThreadWorkerFunction, this);
 }
 
@@ -126,6 +117,18 @@ void Host::broadcast(const base::Bytes& data)
     for(auto& session: _sessions) {
         session->send(data);
     }
+}
+
+
+bool Host::isConnectedTo(const Endpoint& endpoint) const
+{
+    std::shared_lock lk(_sessions_mutex);
+    for(const auto& session: _sessions) {
+        if(session->getEndpoint() == endpoint) {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace net

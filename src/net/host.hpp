@@ -46,6 +46,8 @@ class Host
     void run(std::unique_ptr<HandlerFactory> handler_factory);
     void join();
     //===================
+    bool isConnectedTo(const Endpoint& endpoint) const;
+    //===================
   private:
     //===================
     const base::PropertyTree& _config;
@@ -59,7 +61,7 @@ class Host
     void networkThreadWorkerFunction() noexcept;
     //===================
     std::vector<std::shared_ptr<Session>> _sessions;
-    std::shared_mutex _sessions_mutex;
+    mutable std::shared_mutex _sessions_mutex;
 
     net::Acceptor _acceptor;
     net::Connector _connector;
