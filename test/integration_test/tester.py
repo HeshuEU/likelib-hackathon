@@ -210,7 +210,7 @@ class Client:
         if result.success and b"Remote call of transaction -> [Success! Transaction added to queue successfully.]\n" in result.message:
             return True
         else:
-            print("transfer check failed:", result.message)
+            print("transfer check failed:", result.message.decode('utf-8'))
             return False
 
     def run_check_transfer(self, *, from_address, to_address, amount, host_id, wait):
@@ -225,7 +225,7 @@ class Client:
         if result.success and (f"Remote call of get_balance -> [{target_balance}]\n").encode('utf8') in result.message:
             return True
         else:
-            print("get_balance check failed:", result.message)
+            print("get_balance check failed:", result.message.decode('utf-8'))
             return False
 
     def run_check_balance(self, *, address, host_id, target_balance):
