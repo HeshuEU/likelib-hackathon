@@ -2,7 +2,7 @@ stages:
   - build
   - unit-tests
   - integration-tests
-  - valgrind & code quality
+  - analyzers
 
 
 Build:
