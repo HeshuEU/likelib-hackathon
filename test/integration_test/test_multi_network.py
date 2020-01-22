@@ -65,7 +65,7 @@ def main(node_exec_path, rpc_client_exec_path):
     TEST_CHECK(nodes[0].check(check_test_received))
 
     for i in range(1, count_nodes):
-        nodes_id.append(NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0." + str(i + 1)))
+        nodes_id.append(NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0.1"))
         nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[i],
          nodes_id_list=[nodes_id[i - 1]]), "node_" + str(i + 1), start_up_time = waiting_time))
         nodes[i].start()
@@ -99,7 +99,7 @@ def main(node_exec_path, rpc_client_exec_path):
     TEST_CHECK(nodes[0].check(check_test_received))
 
     for i in range(1, count_nodes):
-        node_info = NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0." + str(i + 1))
+        node_info = NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0.1")
         nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = node_info,
          nodes_id_list=nodes_id), "node_" + str(i + 1), start_up_time = waiting_time))
         nodes[i].start()
