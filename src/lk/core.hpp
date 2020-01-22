@@ -61,7 +61,7 @@ class Core
     bool checkBlock(const bc::Block& block) const;
     bool checkTransaction(const bc::Transaction& tx) const;
     //==================
-public:
+  public:
     //==================
     // notifies if new blocks are added: genesis and blocks, that are stored in DB, are not handled by this
     void subscribeToBlockAddition(decltype(_event_block_added)::CallbackType callback);
