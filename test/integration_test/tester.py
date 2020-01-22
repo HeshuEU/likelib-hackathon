@@ -11,8 +11,12 @@ import traceback
 
 def TEST_CHECK(boolean_value, *, message=""):
     if not boolean_value:
-        traceback.print_stack()
-        raise Exception("Check failed:" + message)
+        traceback_list = traceback.format_stack()
+        for i in traceback_list:
+            if(i.find('TEST_CHECK') > 0):
+                log_message = i
+                break
+        raise Exception("Check failed:" + message + '\n' + log_message)
 
 
 def TEST_CHECK_EQUAL(left, right, *, message=""):
