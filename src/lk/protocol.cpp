@@ -65,7 +65,6 @@ void HandshakeMessage::handle(Peer& peer, Network& network, Core& core)
     }
 
     for(const auto& endpoint : _known_endpoints) {
-        LOG_DEBUG << endpoint;
         network.checkOutNode(endpoint);
     }
 
@@ -629,7 +628,6 @@ std::vector<net::Endpoint> Network::allPeersAddresses() const
 
 bool Network::checkOutNode(const net::Endpoint& endpoint)
 {
-    LOG_DEBUG << "Checking out node " << endpoint;
     if(_host.isConnectedTo(endpoint)) {
         return false;
     }
@@ -640,9 +638,9 @@ bool Network::checkOutNode(const net::Endpoint& endpoint)
         }
     }
 
-    LOG_DEBUG << "Connecting to node";
+    LOG_DEBUG << "Connecting to node after Network::checkOutNode()";
     _host.connect(endpoint);
-    LOG_DEBUG << "Connection action is added to queue";
+    LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
     return true;
 }
 

@@ -21,7 +21,9 @@ GeneralServerService::~GeneralServerService()
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
-    return _core.getBalance(address);
+    auto ret = _core.getBalance(address);
+    LOG_TRACE << "Balance request has been successfully executed";
+    return ret;
 }
 
 std::string GeneralServerService::transaction(bc::Balance amount, const bc::Address& from_address,
