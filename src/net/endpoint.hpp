@@ -37,6 +37,9 @@ class Endpoint
     bool operator<=(const Endpoint& other) const;
     bool operator>=(const Endpoint& other) const;
     //=============
+    static Endpoint deserialize(base::SerializationIArchive& ia);
+    base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const;
+    //=============
   private:
     //=============
     boost::asio::ip::address_v4 _address;
@@ -48,8 +51,5 @@ class Endpoint
 
 
 std::ostream& operator<<(std::ostream& os, const Endpoint& endpoint);
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Endpoint& endpoint);
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Endpoint& endpoint);
-
 
 } // namespace net
