@@ -35,14 +35,14 @@ struct TypeList
 template<typename... Args>
 class Observable
 {
-public:
+  public:
     using CallbackType = std::function<void(Args...)>;
 
     void subscribe(CallbackType callback);
     void notify(Args... args);
-private:
-    std::vector<CallbackType> _observers;
 
+  private:
+    std::vector<CallbackType> _observers;
 };
 
 } // namespace base

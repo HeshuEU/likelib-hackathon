@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(bytes_append2)
     }
 
     base::Bytes bytes2(200);
-    for(std::size_t i = 0; i < bytes2.size(); i++){
+    for(std::size_t i = 0; i < bytes2.size(); i++) {
         bytes2[i] = static_cast<base::Byte>(i ^ 13);
     }
 

@@ -27,6 +27,7 @@ namespace lk
                                                       (BLOCK_NOT_FOUND)
                                                       (GET_INFO)
                                                       (INFO)
+                                                      (NEW_NODE)
     )
 // clang-format on
 
@@ -40,16 +41,17 @@ class HandshakeMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const bc::Block& block, std::uint16_t public_port);
-    void serialize(base::SerializationOArchive& oa);
+    static void serialize(base::SerializationOArchive& oa, const bc::Block& block, std::uint16_t public_port, const std::vector<net::Endpoint>& known_endpoints);
+    void serialize(base::SerializationOArchive& oa) const;
     static HandshakeMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
   private:
     bc::Block _theirs_top_block;
-    std::uint16_t _public_port;
+    std::uint16_t _public_port; // zero public port states that peer didn't provide information about his public endpoint
+    std::vector<net::Endpoint> _known_endpoints;
 
-    HandshakeMessage(bc::Block&& top_block, std::uint16_t public_port);
+    HandshakeMessage(bc::Block&& top_block, std::uint16_t public_port, std::vector<net::Endpoint>&& known_endpoints);
 };
 
 
@@ -86,7 +88,7 @@ class TransactionMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, bc::Transaction tx);
-    void serialize(base::SerializationOArchive& oa);
+    void serialize(base::SerializationOArchive& oa) const;
     static TransactionMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
@@ -103,7 +105,7 @@ class GetBlockMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
-    void serialize(base::SerializationOArchive& oa);
+    void serialize(base::SerializationOArchive& oa) const;
     static GetBlockMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
@@ -120,7 +122,7 @@ class BlockMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const bc::Block& block);
-    void serialize(base::SerializationOArchive& oa);
+    void serialize(base::SerializationOArchive& oa) const;
     static BlockMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
@@ -136,8 +138,8 @@ class BlockNotFoundMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, base::Sha256& block_hash);
-    void serialize(base::SerializationOArchive& oa);
+    static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
+    void serialize(base::SerializationOArchive& oa) const;
     static BlockNotFoundMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
@@ -167,9 +169,9 @@ class InfoMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(
-        base::SerializationOArchive& oa, base::Sha256& top_block_hash, std::vector<net::Endpoint>& available_peers);
-    void serialize(base::SerializationOArchive& oa);
+    static void serialize(base::SerializationOArchive& oa, const base::Sha256& top_block_hash,
+        const std::vector<net::Endpoint>& available_peers);
+    void serialize(base::SerializationOArchive& oa) const;
     static InfoMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
@@ -178,6 +180,23 @@ class InfoMessage
     std::vector<net::Endpoint> _available_peers;
 
     InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers);
+};
+
+//============================================
+
+class NewNodeMessage
+{
+  public:
+    static constexpr MessageType getHandledMessageType();
+    static void serialize(base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint);
+    void serialize(base::SerializationOArchive& oa) const;
+    static NewNodeMessage deserialize(base::SerializationIArchive& ia);
+    void handle(Peer& peer, Network& network, Core& core);
+
+  private:
+    net::Endpoint _new_node_endpoint;
+
+    NewNodeMessage(net::Endpoint&& new_node_endpoint);
 };
 
 //============================================
@@ -191,7 +210,7 @@ class MessageProcessor
 
   private:
     static const base::TypeList<HandshakeMessage, PingMessage, PongMessage, TransactionMessage, GetBlockMessage,
-        BlockMessage, BlockNotFoundMessage, GetInfoMessage, InfoMessage>
+        BlockMessage, BlockNotFoundMessage, GetInfoMessage, InfoMessage, NewNodeMessage>
         _all_message_types;
 
     Peer& _peer;
@@ -215,7 +234,8 @@ class Peer
     //================
     Peer(Network& owning_network_object, net::Session& session, Core& _core);
     //================
-    [[nodiscard]] std::optional<net::Endpoint> getServerEndpoint() const;
+    [[nodiscard]] net::Endpoint getEndpoint() const;
+    [[nodiscard]] std::optional<net::Endpoint> getPublicEndpoint() const;
     void setServerEndpoint(net::Endpoint endpoint);
     //================
     void setState(State new_state);
@@ -277,6 +297,9 @@ class Network
     void run();
     //================
     [[nodiscard]] std::vector<net::Endpoint> allPeersAddresses() const;
+    bool checkOutNode(const net::Endpoint& endpoint);
+    //================
+    void broadcast(const base::Bytes& data);
     //================
   private:
     //================
@@ -307,8 +330,6 @@ class Network
     //================
     Peer& createPeer(net::Session& session);
     void removePeer(const Peer& peer);
-    //================
-    void broadcast(const base::Bytes& data);
     //================
     void onNewBlock(const bc::Block& block);
     void onNewPendingTransaction(const bc::Transaction& tx);

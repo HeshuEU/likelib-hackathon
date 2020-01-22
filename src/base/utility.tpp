@@ -17,9 +17,9 @@ void Observable<Args...>::subscribe(std::function<void(Args...)> callback)
 template<typename... Args>
 void Observable<Args...>::notify(Args... args)
 {
-    for(auto& callback : _observers) {
+    for(auto& callback: _observers) {
         callback(args...);
     }
 }
 
-}
+} // namespace base

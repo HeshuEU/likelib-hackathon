@@ -169,7 +169,6 @@ BOOST_AUTO_TEST_CASE(block_serialization1)
 
     block1.setNonce(bc::NonceInt(6706744));
     base::SerializationOArchive oa;
-    //bc::Block::serialize(oa, block1);
     block1.serialize(oa);
 
     base::SerializationIArchive ia(oa.getBytes());

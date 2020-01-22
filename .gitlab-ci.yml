@@ -1,7 +1,8 @@
 stages:
   - build
-  - quality
-  - test
+  - unit-tests
+  - integration-tests
+  - analyzers
 
 
 Build:
@@ -15,7 +16,7 @@ Build:
     - PROJECT_BUILD_DIR="./build"
     - mkdir ${PROJECT_BUILD_DIR}
     - cd ${PROJECT_BUILD_DIR}
-    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
+    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
     - make -j$(nproc)
     - |
       echo
@@ -24,12 +25,12 @@ Build:
       ========================================================================= \033[0m"
   artifacts:
     paths:
-    - build
+      - build
     expire_in: 1 week
 
 
 Code quality:
-  stage: quality
+  stage: analyzers
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
@@ -46,20 +47,21 @@ Code quality:
 
 
 Unit tests:
-  stage: test
+  stage: unit-tests
   tags:
     - docker
   script:
     - |
       echo
-      echo -e "\033[40;1;42m ========================================================================= 
+      echo -e "\033[40;1;42m =========================================================================
        ==                          Start unit tests                           == \n \
       ========================================================================= \033[0m"
     - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
 Integration tests:
-  stage: test
+  timeout: 15m
+  stage: integration-tests
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
@@ -80,7 +82,7 @@ Integration tests:
     expire_in: 1 week
 
 Valgrind test:
-  stage: test
+  stage: analyzers
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
