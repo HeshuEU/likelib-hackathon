@@ -155,7 +155,22 @@ typename std::enable_if<std::is_enum<T>::value, SerializationOArchive&>::type Se
 
 
 template<typename T>
-SerializationIArchive& operator>>(SerializationIArchive& ia, std::vector<T>& v)
+typename std::enable_if<!std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
+    SerializationIArchive& ia, std::vector<T>& v)
+{
+    std::size_t size;
+    ia >> size;
+    v.reserve(size);
+    for(std::size_t i = 0; i < size; ++i) {
+        v.push_back(std::move(T::deserialize(ia)));
+    }
+    return ia;
+}
+
+
+template<typename T>
+typename std::enable_if<std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
+    SerializationIArchive& ia, std::vector<T>& v)
 {
     std::size_t size;
     ia >> size;
@@ -229,11 +244,20 @@ T fromBytes(const base::Bytes& bytes)
 
 
 template<typename T, typename TT = typename std::remove_reference<T>::type,
-    bool Dummy = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value>
-typename std::enable_if<Dummy, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t)
+    bool H = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value>
+typename std::enable_if<H, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t)
 {
     std::forward<T>(t).serialize(oa);
     return oa;
+}
+
+
+template<typename T, typename TT = typename std::remove_reference<T>::type,
+    bool H = std::is_same<decltype(&TT::deserialize), decltype(&TT::deserialize)>::value>
+typename std::enable_if<H, SerializationIArchive&>::type operator>>(SerializationIArchive& ia, T&& t)
+{
+    t = TT::deserialize(ia);
+    return ia;
 }
 
 } // namespace base

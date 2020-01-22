@@ -3,6 +3,7 @@
 #include "base/bytes.hpp"
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -64,7 +65,14 @@ SerializationIArchive& operator>>(SerializationIArchive& ia, std::string& v);
 
 
 template<typename T>
-SerializationIArchive& operator>>(SerializationIArchive& ia, std::vector<T>& v);
+typename std::enable_if<!std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
+    SerializationIArchive& ia, std::vector<T>& v);
+
+
+template<typename T>
+typename std::enable_if<std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
+    SerializationIArchive& ia, std::vector<T>& v);
+
 
 template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
@@ -73,8 +81,20 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T
 template<typename T>
 SerializationIArchive& operator>>(SerializationIArchive& ia, std::optional<T>& v);
 
+
 template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v);
+
+
+template<typename T, typename TT = typename std::remove_reference<T>::type,
+    bool H = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value>
+typename std::enable_if<H, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t);
+
+
+template<typename T, typename TT = typename std::remove_reference<T>::type,
+    bool H = std::is_same<decltype(&TT::deserialize), decltype(&TT::deserialize)>::value>
+typename std::enable_if<H, SerializationIArchive&>::type operator>>(SerializationIArchive& ia, T&& t);
+
 
 template<typename T>
 base::Bytes toBytes(const T& value);
