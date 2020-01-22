@@ -189,4 +189,3 @@ BOOST_AUTO_TEST_CASE(sha1_multiple_serialization)
     BOOST_CHECK_EQUAL(deserialized_hash_2.toHex(), target_hex_view_2);
     BOOST_CHECK_EQUAL(deserialized_hash_2.getBytes().toHex(), target_hex_view_2);
 }
-
