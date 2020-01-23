@@ -6,12 +6,12 @@
 #include "base/log.hpp"
 #include "base/assert.hpp"
 #include "node/node.hpp"
-#include "net/endpoint.hpp"
-
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
 #endif
+
+#include <boost/stacktrace.hpp>
 
 #include <iostream>
 #include <csignal>
@@ -34,10 +34,8 @@ extern "C" void signalHandler(int signal)
 #ifdef CONFIG_OS_FAMILY_UNIX
                  << " (" << strsignal(signal) << ")"
 #endif
-#ifdef CONFIG_IS_DEBUG
                  << '\n'
                  << boost::stacktrace::stacktrace()
-#endif
             ;
         std::abort();
     }
