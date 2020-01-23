@@ -16,7 +16,7 @@ def TEST_CHECK(boolean_value, *, message=""):
             if(i.find('TEST_CHECK') > 0):
                 log_message = i
                 break
-        raise Exception("Check failed:" + message + '\n' + log_message)
+        raise Exception("Check failed: " + message + '\n' + log_message)
 
 
 def TEST_CHECK_EQUAL(left, right, *, message=""):
@@ -175,8 +175,16 @@ class Client:
         run_commands.extend(parameters)
 
         # print("Client | Debug message: call string", run_commands)
-        pipe = subprocess.run(
-            run_commands, cwd=self.work_dir, capture_output=True)
+        try:
+            pipe = subprocess.run(
+                run_commands, cwd=self.work_dir, capture_output=True, timeout=15)
+        except subprocess.TimeoutExpired:
+            traceback_list = traceback.format_stack()
+            for i in traceback_list:
+                if(i.find('TEST_CHECK') > 0):
+                    log_message = i
+                    break
+            raise Exception("Slow command execution: " + command + '\n' + log_message)
 
         if pipe.returncode != 0:
             return Client.Result(not bool(pipe.returncode), pipe.stderr)
