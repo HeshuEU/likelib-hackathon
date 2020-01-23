@@ -11,6 +11,7 @@
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/stacktrace.hpp>
 
 #include <ctime>
 #include <filesystem>
@@ -121,6 +122,11 @@ void initLog(base::LogLevel logLevel, size_t mode)
     }
 
     boost::log::add_common_attributes();
+}
+
+void dumpDebuggingInfo()
+{
+    LOG_DEBUG << boost::stacktrace::stacktrace();
 }
 
 } // namespace base
