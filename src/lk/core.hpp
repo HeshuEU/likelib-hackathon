@@ -8,6 +8,8 @@
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
 
+#include <shared_mutex>
+
 namespace lk
 {
 
@@ -53,7 +55,9 @@ class Core
     BalanceManager _balance_manager;
     bc::Blockchain _blockchain;
     lk::Network _network;
+    //==================
     bc::TransactionsSet _pending_transactions;
+    mutable std::shared_mutex _pending_transactions_mutex;
     //==================
     static const bc::Block& getGenesisBlock();
     void updateNewBlock(const bc::Block& block);

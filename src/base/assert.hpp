@@ -1,14 +1,13 @@
 #pragma once
 
 #include "base/config.hpp"
-
-#ifdef CONFIG_IS_DEBUG
-
 #include "base/log.hpp"
 
 #include <boost/stacktrace.hpp>
 
-#include <exception>
+#include <cstdlib>
+
+#ifdef CONFIG_IS_DEBUG
 
 #define ASSERT(condition) \
     if(!(condition)) { \
@@ -24,6 +23,9 @@
 #else
 #define ASSERT(condition) \
     do { \
+    if(!(condition)) { \
+       LOG_DEBUG << "Assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace(); \
+    } \
     } while(0)
 
 #define ASSERT_SOFT(condition) \

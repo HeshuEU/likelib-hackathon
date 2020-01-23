@@ -7,7 +7,8 @@ namespace lk
 
 Core::Core(const base::PropertyTree& config) : _config{config}, _blockchain{_config}, _network{_config, *this}
 {
-    ASSERT(_blockchain.tryAddBlock(getGenesisBlock()));
+    [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
+    ASSERT(result);
     _balance_manager.updateFromGenesis(getGenesisBlock());
     _blockchain.load();
 }
@@ -35,7 +36,10 @@ void Core::run()
 bool Core::tryAddBlock(const bc::Block& b)
 {
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
-        _pending_transactions.remove(b.getTransactions());
+        {
+            std::shared_lock lk(_pending_transactions_mutex);
+            _pending_transactions.remove(b.getTransactions());
+        }
         updateNewBlock(b);
         _event_block_added.notify(b);
         return true;
@@ -74,11 +78,16 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
     if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
         return false;
     }
-    if(_pending_transactions.find(tx)) {
-        return false;
-    }
 
-    auto current_pending_balance = bc::calcBalance(_pending_transactions);
+    std::map<bc::Address, bc::Balance> current_pending_balance;
+    {
+        std::shared_lock lk(_pending_transactions_mutex);
+        if (_pending_transactions.find(tx)) {
+            return false;
+        }
+
+        current_pending_balance = bc::calcBalance(_pending_transactions);
+    }
 
     auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
     if(pending_from_account_balance != current_pending_balance.end()) {
@@ -96,6 +105,7 @@ bc::Block Core::getBlockTemplate() const
     const auto& top_block = _blockchain.getTopBlock();
     bc::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
+    std::shared_lock lk(_pending_transactions_mutex);
     return bc::Block{depth, prev_hash, _pending_transactions};
 }
 
@@ -103,8 +113,10 @@ bc::Block Core::getBlockTemplate() const
 bool Core::performTransaction(const bc::Transaction& tx)
 {
     if(checkTransaction(tx)) {
-        _pending_transactions.add(tx);
-        LOG_DEBUG << "Core::performTransaction(const bc::Transaction&)";
+        {
+            std::unique_lock lk(_pending_transactions_mutex);
+            _pending_transactions.add(tx);
+        }
         _event_new_pending_transaction.notify(tx);
         return true;
     }
