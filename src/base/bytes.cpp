@@ -30,12 +30,8 @@ Bytes::Bytes(const std::string& s) : _raw(s.length())
 }
 
 
-Bytes::Bytes(const Byte* const bytes, std::size_t length) : _raw(length)
-{
-    for(std::size_t index = 0; index < length; index++) {
-        _raw[index] = bytes[index];
-    }
-}
+Bytes::Bytes(const Byte* const bytes, std::size_t length) : _raw(bytes, bytes + length)
+{}
 
 
 Bytes::Bytes(std::initializer_list<Byte> l) : _raw(l)
