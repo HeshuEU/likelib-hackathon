@@ -12,10 +12,7 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS system exception log program_options serialization unit_test_framework)
 include_directories(${Boost_INCLUDE_DIR})
 
-# without following definition it will print addresses insted of function names durung stack dump
-if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-    add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
 
 # adding cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")

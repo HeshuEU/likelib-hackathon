@@ -113,7 +113,7 @@ void Host::dropZombieConnections()
 
 void Host::broadcast(const base::Bytes& data)
 {
-    std::shared_lock lk(_sessions_mutex);
+    std::unique_lock lk(_sessions_mutex);
     for(auto& session: _sessions) {
         session->send(data);
     }

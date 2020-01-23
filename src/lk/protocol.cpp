@@ -647,20 +647,19 @@ bool Network::checkOutNode(const net::Endpoint& endpoint)
 
 void Network::broadcast(const base::Bytes& data)
 {
+    LOG_DEBUG << "Broadcasting data size = " << data.size();
     _host.broadcast(data);
 }
 
 
 void Network::onNewBlock(const bc::Block& block)
 {
-    LOG_DEBUG << "Network::onNewBlock()";
     broadcast(serializeMessage<BlockMessage>(block));
 }
 
 
 void Network::onNewPendingTransaction(const bc::Transaction& tx)
 {
-    LOG_DEBUG << "Network::onNewPendingTransaction()";
     broadcast(serializeMessage<TransactionMessage>(tx));
 }
 
