@@ -30,6 +30,10 @@ Bytes::Bytes(const std::string& s) : _raw(s.length())
 }
 
 
+Bytes::Bytes(const Byte* const bytes, std::size_t length) : _raw(bytes, bytes + length)
+{}
+
+
 Bytes::Bytes(std::initializer_list<Byte> l) : _raw(l)
 {}
 
