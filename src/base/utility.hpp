@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/preprocessor.hpp>
+#include <boost/type_index.hpp>
 
 #include <functional>
 
@@ -44,6 +45,8 @@ class Observable
   private:
     std::vector<CallbackType> _observers;
 };
+
+#define TYPE_NAME(t) boost::typeindex::type_id<t>().pretty_name()
 
 } // namespace base
 

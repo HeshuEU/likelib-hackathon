@@ -1,7 +1,7 @@
 #pragma once
 
+#include <boost/current_function.hpp>
 #include <boost/log/trivial.hpp>
-#include <boost/type_index.hpp>
 
 #include <cstddef>
 
@@ -30,8 +30,6 @@ void initLog(LogLevel logLevel = LogLevel::ALL, std::size_t mode = Sink::FILE);
 
 void dumpDebuggingInfo();
 
-#define TYPE_NAME(t) boost::typeindex::type_id<t>().pretty_name()
-
 } // namespace base
 
 #define LOG_TRACE BOOST_LOG_TRIVIAL(trace)
@@ -40,3 +38,5 @@ void dumpDebuggingInfo();
 #define LOG_WARNING BOOST_LOG_TRIVIAL(warning)
 #define LOG_ERROR BOOST_LOG_TRIVIAL(error)
 #define LOG_FATAL BOOST_LOG_TRIVIAL(fatal)
+
+#define LOG_CURRENT_FUNCTION LOG_DEBUG << BOOST_CURRENT_FUNCTION << ' '
