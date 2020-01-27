@@ -6,7 +6,7 @@ namespace bc
 const Address BASE_ADDRESS{"00000000000000000000000000000000"};
 
 
-Address::Address(const char* data_string) : _address(std::string(data_string))
+Address::Address(const char* data_string) : _address(base::Bytes::fromHex(data_string))
 {}
 
 
@@ -18,7 +18,7 @@ Address::Address() : _address{}
 // {}
 
 
-Address::Address(const std::string& data_string) : _address(data_string)
+Address::Address(const std::string& data_string) : _address(base::Bytes::fromHex(data_string))
 {}
 
 
