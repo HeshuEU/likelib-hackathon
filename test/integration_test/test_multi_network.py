@@ -1,4 +1,5 @@
 from tester import NodeRunner, NodeId, Client, TEST_CHECK, test_case
+import concurrent.futures
 
 
 def check_test_received(log_line):
@@ -116,3 +117,45 @@ def main(node_exec_path, rpc_client_exec_path):
     for i in range(count_nodes):
         nodes[i].close()
     return 0
+
+
+def init_nodes(node_exec_path, start_sync_port, start_rpc_port, nodes_id, first_node_id, waiting_time):
+    nodes = []
+    for node_id in nodes_id:
+        node = NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = node_id,
+         nodes_id_list=[first_node_id]), "node_" + str(node_id.sync_port), start_up_time = waiting_time)
+        node.start()
+        nodes.append(node)
+    return nodes
+
+
+# @test_case("test_parallel_multi_network_to_one")  #unfinished
+# def main(node_exec_path, rpc_client_exec_path):
+
+#     start_sync_port = 20206
+#     start_rpc_port = 50056
+#     waiting_time = 5
+#     count_threads = 10
+#     count_nodes_per_thread = 10
+#     nodes_id = [NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1")]
+
+#     client = Client(rpc_client_exec_path, "client")
+
+#     nodes = [NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_1", start_up_time = waiting_time)]
+#     nodes[0].start()
+#     TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
+#     TEST_CHECK(nodes[0].check(check_test_received))
+
+#     for i in range(1, count_threads * count_nodes_per_thread+1):
+#         nodes_id.append(NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0.1"))
+
+#     with concurrent.futures.ThreadPoolExecutor(count_threads) as executor:
+#         threads = []
+#         for i in range(count_threads):
+#             threads.append(executor.submit(init_nodes, node_exec_path, start_sync_port, start_rpc_port, nodes_id[count_nodes_per_thread*i+1 : count_nodes_per_thread*(i+1)+1], nodes_id[0], waiting_time))
+#         for i in threads:
+#             nodes += i.result()
+
+#     for i in range(len(nodes)):
+#         nodes[i].close()
+#     return 0
