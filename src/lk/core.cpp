@@ -7,6 +7,7 @@ namespace lk
 
 Core::Core(const base::PropertyTree& config) : _config{config}, _blockchain{_config}, _network{_config, *this}
 {
+    LOG_CURRENT_FUNCTION;
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
     _balance_manager.updateFromGenesis(getGenesisBlock());
@@ -35,6 +36,7 @@ void Core::run()
 
 bool Core::tryAddBlock(const bc::Block& b)
 {
+    LOG_CURRENT_FUNCTION;
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
         {
             std::shared_lock lk(_pending_transactions_mutex);
@@ -102,6 +104,7 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
 
 bc::Block Core::getBlockTemplate() const
 {
+    LOG_CURRENT_FUNCTION;
     const auto& top_block = _blockchain.getTopBlock();
     bc::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
@@ -112,6 +115,7 @@ bc::Block Core::getBlockTemplate() const
 
 bool Core::performTransaction(const bc::Transaction& tx)
 {
+    LOG_CURRENT_FUNCTION << tx;
     if(checkTransaction(tx)) {
         {
             std::unique_lock lk(_pending_transactions_mutex);
@@ -138,6 +142,7 @@ const bc::Block& Core::getTopBlock() const
 
 void Core::updateNewBlock(const bc::Block& block)
 {
+    LOG_CURRENT_FUNCTION << block;
     if(!_is_balance_manager_updated) {
         _balance_manager.updateFromGenesis(block);
         _is_balance_manager_updated = true;

@@ -10,6 +10,7 @@ namespace
 template<typename M, typename... Args>
 base::Bytes serializeMessage(Args&&... args)
 {
+    LOG_CURRENT_FUNCTION << lk::enumToString(M::getHandledMessageType());
     base::SerializationOArchive oa;
     oa << M::getHandledMessageType();
     (oa << ... << std::forward<Args>(args));
