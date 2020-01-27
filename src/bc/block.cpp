@@ -118,4 +118,10 @@ base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const B
     return oa;
 }
 
+
+std::ostream& operator<<(std::ostream& os, const Block& block)
+{
+    return os << base::Sha256::compute(base::toBytes(block));
+}
+
 } // namespace bc

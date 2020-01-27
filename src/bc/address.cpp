@@ -24,7 +24,7 @@ Address::Address(const std::string& data_string) : _address(data_string)
 
 std::string Address::toString() const
 {
-    return _address.toString();
+    return _address.toHex();
 }
 
 
@@ -52,6 +52,12 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx)
 {
     return oa << tx.toString();
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Address& address)
+{
+    return os << address.toString();
 }
 
 } // namespace bc

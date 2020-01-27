@@ -7,6 +7,8 @@
 #include "bc/transactions_set.hpp"
 #include "bc/types.hpp"
 
+#include <iosfwd>
+
 namespace bc
 {
 
@@ -48,6 +50,7 @@ class Block
     //=================
 };
 
+std::ostream& operator<<(std::ostream& os, const Block& block);
 
 base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block);
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block);

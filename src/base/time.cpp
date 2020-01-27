@@ -70,4 +70,9 @@ Time Time::fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time
 }
 
 
+std::ostream& operator<<(std::ostream& os, const Time& time)
+{
+    return os << time.getSecondsSinceEpochBeginning();
+}
+
 } // namespace base

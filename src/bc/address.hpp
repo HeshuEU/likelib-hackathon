@@ -42,6 +42,8 @@ bool operator<(const Address& a, const Address& b);
 base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address& tx);
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx);
 
+std::ostream& operator<<(std::ostream& os, const Address& address);
+
 extern const Address BASE_ADDRESS;
 
 } // namespace bc

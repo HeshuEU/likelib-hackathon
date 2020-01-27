@@ -43,6 +43,8 @@ class Transaction
     base::Time _timestamp;
 };
 
+std::ostream& operator<<(std::ostream& os, const Transaction& tx);
+
 base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transaction& tx);
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Transaction& tx);
 
