@@ -186,7 +186,7 @@ class Client:
                 if(i.find('TEST_CHECK') > 0):
                     log_message = i
                     break
-            raise Exception("Slow command execution: " + command + str(parameters) + '\n' + log_message)
+            raise Exception("slow command execution " + command + str(parameters) + " with node " + host_id.listen_sync_address + '\n' + log_message)
 
         if pipe.returncode != 0:
             return Client.Result(not bool(pipe.returncode), pipe.stderr)
