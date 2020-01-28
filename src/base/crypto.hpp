@@ -118,4 +118,9 @@ class AesKey
     //=================
 };
 
+
+base::Bytes base64Encode(const base::Bytes& bytes);
+
+base::Bytes base64Decode(const base::Bytes& base64_bytes);
+
 } // namespace base

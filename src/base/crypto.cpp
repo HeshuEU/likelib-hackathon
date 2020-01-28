@@ -1,5 +1,6 @@
 #include "crypto.hpp"
 
+#include "base/assert.hpp"
 #include "base/error.hpp"
 #include "base/directory.hpp"
 #include "base/log.hpp"
@@ -537,6 +538,59 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
     decrypted_message_len_in_buffer += current_data_len;
 
     return output_data.takePart(0, decrypted_message_len_in_buffer);
+}
+
+
+base::Bytes base64Encode(const base::Bytes& bytes)
+{
+    if(bytes.size() == 0) {
+        return base::Bytes();
+    }
+
+    BIO* bio = BIO_new(BIO_s_mem());
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BUF_MEM* bufferPtr = BUF_MEM_new();
+
+    bio = BIO_push(b64, bio);
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+    if(BIO_write(bio, bytes.toArray(), static_cast<int>(bytes.size())) < 1) {
+        RAISE_ERROR(CryptoError, "Base64 encode write error");
+    }
+    if(BIO_flush(bio) < 1) {
+        RAISE_ERROR(CryptoError, "Base64 encode flush error");
+    }
+    if(BIO_get_mem_ptr(bio, &bufferPtr) < 1) {
+        RAISE_ERROR(CryptoError, "Get pointer to memory from base64 error");
+    }
+
+    base::Bytes base64_bytes(std::string(bufferPtr->data, bufferPtr->length));
+
+    free(bufferPtr);
+    BIO_set_close(bio, BIO_NOCLOSE);
+    BIO_free_all(bio);
+    return base64_bytes;
+}
+
+
+base::Bytes base64Decode(const base::Bytes& base64_bytes)
+{
+    if(base64_bytes.size() == 0) {
+        return base::Bytes();
+    }
+
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BIO* bio = BIO_new_mem_buf(base64_bytes.toArray(), base64_bytes.size());
+    base::Bytes ret(base64_bytes.size());
+
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    bio = BIO_push(b64, bio);
+    auto new_length = BIO_read(bio, ret.toArray(), base64_bytes.size());
+    if(new_length < 1){
+        RAISE_ERROR(CryptoError, "Base64 decode write error");
+    }
+
+    BIO_free_all(bio);
+    return ret.takePart(0, new_length);
 }
 
 

@@ -187,3 +187,36 @@ BOOST_AUTO_TEST_CASE(aes_serialization_256bit)
 
     std::filesystem::remove(key_path);
 }
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode)
+{
+    base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base64Decode(base64);
+
+    BOOST_CHECK(base64.toString() == "ZEZNIzY5MzU2XiMtMDQgIEAjNC0wXgoKNCMwNjMyPS1HRUozZGxzNXMsc3BpKy01KzA=");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode_empty)
+{
+    base::Bytes target_msg("");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base64Decode(base64);
+    
+    BOOST_CHECK(base64.toString() == "");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
+{
+    base::Bytes target_msg("1");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base64Decode(base64);
+    
+    BOOST_CHECK(base64.toString() == "MQ==");
+    BOOST_CHECK(target_msg == decode_base64);
+}
