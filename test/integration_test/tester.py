@@ -16,7 +16,7 @@ def TEST_CHECK(boolean_value, *, message=""):
             if(i.find('TEST_CHECK') > 0):
                 log_message = i
                 break
-        raise Exception("Check failed:" + message + '\n' + log_message)
+        raise Exception("Check failed: " + message + '\n' + log_message)
 
 
 def TEST_CHECK_EQUAL(left, right, *, message=""):
@@ -175,8 +175,16 @@ class Client:
         run_commands.extend(parameters)
 
         # print("Client | Debug message: call string", run_commands)
-        pipe = subprocess.run(
-            run_commands, cwd=self.work_dir, capture_output=True)
+        try:
+            pipe = subprocess.run(
+                run_commands, cwd=self.work_dir, capture_output=True, timeout=15)
+        except subprocess.TimeoutExpired:
+            traceback_list = traceback.format_stack()
+            for i in traceback_list:
+                if(i.find('TEST_CHECK') > 0):
+                    log_message = i
+                    break
+            raise Exception("Slow command execution: " + command + '\n' + log_message)
 
         if pipe.returncode != 0:
             return Client.Result(not bool(pipe.returncode), pipe.stderr)
@@ -210,7 +218,7 @@ class Client:
         if result.success and b"Remote call of transaction -> [Success! Transaction added to queue successfully.]\n" in result.message:
             return True
         else:
-            print("transfer check failed:", result.message)
+            print("transfer check failed:", result.message.decode('utf-8'))
             return False
 
     def run_check_transfer(self, *, from_address, to_address, amount, host_id, wait):
@@ -225,7 +233,7 @@ class Client:
         if result.success and (f"Remote call of get_balance -> [{target_balance}]\n").encode('utf8') in result.message:
             return True
         else:
-            print("get_balance check failed:", result.message)
+            print("get_balance check failed:", result.message.decode('utf-8'))
             return False
 
     def run_check_balance(self, *, address, host_id, target_balance):
