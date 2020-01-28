@@ -43,7 +43,7 @@ def init_addresses(count_addresses):
     return ['0' * (32 - len(str(i))) + str(i) for i in range(count_addresses)]
 
 
-def init_nodes_with_everything(node_exec_path, rpc_client_exec_path, client, nodes, nodes_id, count_nodes):
+def init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes):
     start_sync_port = 20206
     start_rpc_port = 50056
     waiting_time = 4
@@ -62,7 +62,7 @@ def init_nodes_with_everything(node_exec_path, rpc_client_exec_path, client, nod
         nodes_id.append(node_info)
 
 
-def init_nodes_one_by_one(node_exec_path, rpc_client_exec_path, client, nodes, nodes_id, count_nodes):
+def init_nodes_one_by_one(node_exec_path, client, nodes, nodes_id, count_nodes):
     start_sync_port = 20206
     start_rpc_port = 50056
     waiting_time = 2
@@ -108,12 +108,14 @@ def node_transfers(node_id, client, addresses):
     from_address = addresses[pos]
     amount = 300
     wait = 5
-    for i in range(len(addresses) * 5):
-        pos = (pos + shift) % len(addresses)
-        to_address = addresses[pos]
-        client.run_check_transfer(from_address=from_address, host_id=node_id, to_address=to_address, amount=amount, wait=wait)
-        from_address = to_address
-    print('Close ' + node_id.absolute_address)
+    try:
+        for i in range(len(addresses) * 5):
+            pos = (pos + shift) % len(addresses)
+            to_address = addresses[pos]
+            client.run_check_transfer(from_address=from_address, host_id=node_id, to_address=to_address, amount=amount, wait=wait)
+            from_address = to_address
+    except Exception as exs:
+        print(exs)
     
 
 
@@ -164,7 +166,7 @@ def main(node_exec_path, rpc_client_exec_path):
     client = Client(rpc_client_exec_path, "client")
     nodes_id = []
     nodes = []
-    init_nodes_with_everything(node_exec_path, rpc_client_exec_path, client, nodes, nodes_id, count_nodes)
+    init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes)
 
     for i in range(1, count_nodes):
         for j in range(i + 1):
@@ -203,7 +205,7 @@ def main(node_exec_path, rpc_client_exec_path):
     client = Client(rpc_client_exec_path, "client")
     nodes_id = []
     nodes = []
-    init_nodes_one_by_one(node_exec_path, rpc_client_exec_path, client, nodes, nodes_id, count_nodes)
+    init_nodes_one_by_one(node_exec_path, client, nodes, nodes_id, count_nodes)
 
     init_amount = 1000
     addresses = init_addresses(count_nodes)
@@ -229,11 +231,11 @@ def main(node_exec_path, rpc_client_exec_path):
 @test_case("test_parallel_transfer_connected_with_everything")  #not being executed right now
 def main(node_exec_path, rpc_client_exec_path):
 
-    count_nodes = 10
+    count_nodes = 5
     client = Client(rpc_client_exec_path, "client")
     nodes_id = []
     nodes = []
-    init_nodes_with_everything(node_exec_path, rpc_client_exec_path, client, nodes, nodes_id, count_nodes)
+    init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes)
 
     init_amount = 1000
     address_per_nodes = 2
