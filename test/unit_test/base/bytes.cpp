@@ -24,10 +24,11 @@ BOOST_AUTO_TEST_CASE(bytes_storage_check)
 BOOST_AUTO_TEST_CASE(bytes_constructor_from_array_of_chars)
 {
     std::size_t length = 10;
-    base::Byte c_str[length];
+    base::Bytes tmp;
     for(std::size_t i = 0; i < length; i++) {
-        c_str[i] = static_cast<base::Byte>(i ^ 3);
+        tmp.append(static_cast<base::Byte>(i ^ 3));
     }
+    auto c_str = tmp.toArray();
     base::Bytes bytes(c_str, length);
 
     BOOST_CHECK(bytes.size() == length);
