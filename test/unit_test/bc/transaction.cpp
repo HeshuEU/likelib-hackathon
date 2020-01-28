@@ -20,11 +20,11 @@ BOOST_AUTO_TEST_CASE(transaction_constructor1)
 
 BOOST_AUTO_TEST_CASE(transaction_constructor2)
 {
-    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
-    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx(bc::Address(str_from), bc::Address(str_to), amount, time);
+    bc::Transaction tx(str_from, str_to, amount, time);
 
     BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
     BOOST_CHECK(tx.getTo() == bc::Address(str_to));
@@ -35,11 +35,11 @@ BOOST_AUTO_TEST_CASE(transaction_constructor2)
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
 {
-    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
-    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
+    bc::Transaction tx1(str_from, str_to, amount, time);
     bc::Transaction tx2(tx1);
 
     BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
@@ -51,11 +51,11 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_move)
 {
-    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
-    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
+    bc::Transaction tx1(str_from, str_to, amount, time);
     bc::Transaction tx2(std::move(tx1));
 
     BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
@@ -67,12 +67,12 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_move)
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 {
-    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
-    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
-    bc::Transaction tx2(bc::Address(str_from), bc::Address(str_to), 821481368, time);
+    bc::Transaction tx1(str_from, str_to, amount, time);
+    bc::Transaction tx2(str_from, str_to, 821481368, time);
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = tx1;
@@ -85,12 +85,12 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 {
-    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
-    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
-    bc::Transaction tx2(bc::Address(str_from), bc::Address(str_to), 821481368, time);
+    bc::Transaction tx1(str_from, str_to, amount, time);
+    bc::Transaction tx2(str_from, str_to, 821481368, time);
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = std::move(tx1);
@@ -103,8 +103,8 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 
 BOOST_AUTO_TEST_CASE(transaction_set_all1)
 {
-    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
-    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Transaction tx;
@@ -123,10 +123,11 @@ BOOST_AUTO_TEST_CASE(transaction_set_all1)
 
 BOOST_AUTO_TEST_CASE(transaction_set_all2)
 {
-    bc::Transaction tx(bc::Address("vjSSDGHS*#%/fg\f"), bc::Address("()#%sdo#%KGD\n/Skg/dfe"), 821481368, base::Time());
+    bc::Transaction tx(base::Bytes("vjSSDGHS*#%/fg\f").toHex(), base::Bytes("()#%sdo#%KGD\n/Skg/dfe").toHex(),
+        821481368, base::Time());
 
-    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
-    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
 
@@ -158,11 +159,11 @@ BOOST_AUTO_TEST_CASE(transaction_serialization1)
 
 BOOST_AUTO_TEST_CASE(transaction_serialization2)
 {
-    std::string str_from = "vjS#%(247DGFSMKv\n sdf?//";
-    std::string str_to = "()#%9vdmLDSOJ\n\n\\/Skg/dfe";
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(bc::Address(str_from), bc::Address(str_to), amount, time);
+    bc::Transaction tx1(str_from, str_to, amount, time);
 
     base::SerializationOArchive oa;
     oa << tx1;

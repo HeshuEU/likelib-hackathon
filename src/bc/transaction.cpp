@@ -102,7 +102,8 @@ base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const T
 
 std::ostream& operator<<(std::ostream& os, const Transaction& tx)
 {
-    return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount() << " timestamp: " << tx.getTimestamp();
+    return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount()
+              << " timestamp: " << tx.getTimestamp();
 }
 
 } // namespace bc

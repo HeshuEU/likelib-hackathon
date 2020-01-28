@@ -24,15 +24,16 @@ BOOST_AUTO_TEST_CASE(bytes_storage_check)
 BOOST_AUTO_TEST_CASE(bytes_constructor_from_array_of_chars)
 {
     std::size_t length = 10;
-    base::Byte c_str[length];
-    for(std::size_t i = 0; i < length; i++){
-        c_str[i] = static_cast<base::Byte>(i ^ 3);
+    base::Bytes tmp;
+    for(std::size_t i = 0; i < length; i++) {
+        tmp.append(static_cast<base::Byte>(i ^ 3));
     }
+    auto c_str = tmp.toArray();
     base::Bytes bytes(c_str, length);
 
     BOOST_CHECK(bytes.size() == length);
     bool res = true;
-    for(std::size_t i = 0; i < length; i++){
+    for(std::size_t i = 0; i < length; i++) {
         res = res && (bytes[i] == c_str[i]);
     }
     BOOST_CHECK(res);
@@ -43,14 +44,14 @@ BOOST_AUTO_TEST_CASE(bytes_constructor_from_array_of_chars_dynamic)
 {
     std::size_t length = 11;
     std::unique_ptr<base::Byte[]> c_str = std::make_unique<base::Byte[]>(length);
-    for(std::size_t i = 0; i < length; i++){
+    for(std::size_t i = 0; i < length; i++) {
         c_str[i] = static_cast<base::Byte>(i ^ 3);
     }
     base::Bytes bytes(c_str.get(), length);
 
     BOOST_CHECK(bytes.size() == length);
     bool res = true;
-    for(std::size_t i = 0; i < length; i++){
+    for(std::size_t i = 0; i < length; i++) {
         res = res && (bytes[i] == c_str[i]);
     }
     BOOST_CHECK(res);
