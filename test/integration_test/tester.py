@@ -73,7 +73,8 @@ class NodeRunner:
     BUFFER_FILE_NAME = "temp.lock"
     running = False
 
-    def __init__(self, node_exec_path, node_config_content, work_dir, start_up_time=2):
+    def __init__(self, node_exec_path, node_config_content, work_dir, logger, start_up_time=2):
+        self.logger = logger
         self.work_dir = os.path.abspath(work_dir)
         # print("Node | Debug message: work dir:", self.work_dir)
         self.node_exec_path = node_exec_path
@@ -193,6 +194,7 @@ class Client:
 
         # print("Client | Debug message: call string", run_commands)
         try:
+            self.logger.info(f"{command} start with parameters " + f"{parameters} --to_node {host_id.listen_sync_address}")
             pipe = subprocess.run(
                 run_commands, cwd=self.work_dir, capture_output=True, timeout=15)
         except subprocess.TimeoutExpired:
@@ -211,7 +213,9 @@ class Client:
         return Client.Result(not bool(pipe.returncode), pipe.stdout)
 
     def test(self, *, host_id):
-        return self.__run(command="test", parameters=[], host_id=host_id)
+        result = self.__run(command="test", parameters=[], host_id=host_id)
+        self.logger.info("test end with parameters []" + f"--to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        return result
 
     @staticmethod
     def check_test_result(result):
@@ -226,10 +230,9 @@ class Client:
         return self.check_test_result(self.test(host_id=host_id))
 
     def transfer(self, *, from_address, to_address, amount, host_id, wait):
-        self.logger.info("start transfer with parameters " + f" --from {from_address} --to {to_address} --amount {amount} --to_node {host_id.listen_sync_address}")
         result = self.__run(command="transfer", parameters=[
                             "--from", from_address, "--to", to_address, "--amount", str(amount)], host_id=host_id)
-        self.logger.info("completed transfer with parameters " + f" --from {from_address} --to {to_address} --amount {amount} --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        self.logger.info("transfer end with parameters " + f" ['--from', '{from_address}', '--to', '{to_address}', '--amount' '{amount}'] --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
         time.sleep(wait)
         return result
 
@@ -246,9 +249,8 @@ class Client:
         return self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, host_id=host_id, wait=wait))
 
     def get_balance(self, *, address, host_id):
-        self.logger.info("start get_balance with parameters " + f" --address {address} --to_node {host_id.listen_sync_address}")
         result = self.__run(command="get_balance", parameters=["--address", address], host_id=host_id)
-        self.logger.info("completed get_balance with parameters " + f" --address {address} --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        self.logger.info("get_balance end with parameters " + f" ['--address', '{address}'] --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
 
         return result
 
@@ -262,6 +264,7 @@ class Client:
             return False
 
     def run_check_balance(self, *, address, host_id, target_balance):
+        self.logger.info(f"check balance in address {address} with balance {target_balance} to node {host_id.listen_sync_address}")
         return self.check_get_balance_result(self.get_balance(address=address, host_id=host_id), target_balance)
 
 

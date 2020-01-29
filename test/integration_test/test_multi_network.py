@@ -38,12 +38,14 @@ def main(node_exec_path, rpc_client_exec_path):
     try:
         client = Client(rpc_client_exec_path, "client", logger = logger)
 
-        with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_1), "node_"+str(node_id_1.sync_port)) as node_1:
+        with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_1), "node_"+str(node_id_1.sync_port),
+        logger=logger) as node_1:
 
             TEST_CHECK(client.run_check_test(host_id=node_id_1))
             TEST_CHECK(node_1.check(check_test_received))
 
-            with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_2, nodes_id_list=[node_id_1, ]), "node_"+str(node_id_1.sync_port)) as node_2:
+            with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_2, nodes_id_list=[node_id_1, ]),
+            "node_"+str(node_id_1.sync_port), logger=logger) as node_2:
 
                 TEST_CHECK(client.run_check_test(host_id=node_id_1))
                 TEST_CHECK(client.run_check_test(host_id=node_id_2))
@@ -71,7 +73,8 @@ def main(node_exec_path, rpc_client_exec_path):
     try:
         client = Client(rpc_client_exec_path, "client", logger=logger)
 
-        nodes = [NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port), start_up_time = waiting_time)]
+        nodes = [NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port), 
+        logger=logger, start_up_time = waiting_time)]
         nodes[0].start()
         TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
         TEST_CHECK(nodes[0].check(check_test_received))
@@ -79,7 +82,7 @@ def main(node_exec_path, rpc_client_exec_path):
         for i in range(1, count_nodes):
             nodes_id.append(NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0.1"))
             nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[i],
-            nodes_id_list=[nodes_id[i - 1]]), "node_" + str(start_sync_port + i), start_up_time = waiting_time))
+            nodes_id_list=[nodes_id[i - 1]]), "node_" + str(start_sync_port + i), logger=logger, start_up_time = waiting_time))
             nodes[i].start()
 
             for j in range(i + 1):
@@ -109,7 +112,8 @@ def main(node_exec_path, rpc_client_exec_path):
     try:
         client = Client(rpc_client_exec_path, "client", logger=logger)
 
-        nodes = [NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port), start_up_time = waiting_time)]
+        nodes = [NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port),
+        logger=logger, start_up_time = waiting_time)]
         nodes[0].start()
         TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
         TEST_CHECK(nodes[0].check(check_test_received))
@@ -117,7 +121,7 @@ def main(node_exec_path, rpc_client_exec_path):
         for i in range(1, count_nodes):
             node_info = NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0.1")
             nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = node_info,
-            nodes_id_list=nodes_id), "node_" + str(i + start_sync_port), start_up_time = waiting_time))
+            nodes_id_list=nodes_id), "node_" + str(i + start_sync_port), logger=logger, start_up_time = waiting_time))
             nodes[i].start()
             nodes_id.append(node_info)
 
@@ -137,11 +141,11 @@ def main(node_exec_path, rpc_client_exec_path):
     return 0
 
 
-def init_nodes(node_exec_path, start_sync_port, start_rpc_port, nodes_id, first_node_id, waiting_time):
+def init_nodes(node_exec_path, start_sync_port, start_rpc_port, nodes_id, first_node_id, waiting_time, logger):
     nodes = []
     for node_id in nodes_id:
         node = NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = node_id,
-         nodes_id_list=[first_node_id]), "node_" + str(node_id.sync_port), start_up_time = waiting_time)
+         nodes_id_list=[first_node_id]), "node_" + str(node_id.sync_port), logger=logger, start_up_time = waiting_time)
         node.start()
         nodes.append(node)
     return nodes
@@ -161,7 +165,8 @@ def main(node_exec_path, rpc_client_exec_path):
     try:
         client = Client(rpc_client_exec_path, "client", logger=logger)
 
-        nodes = [NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port), start_up_time = waiting_time)]
+        nodes = [NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port),
+        logger=logger,start_up_time = waiting_time)]
         nodes[0].start()
         TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
         TEST_CHECK(nodes[0].check(check_test_received))
@@ -172,7 +177,8 @@ def main(node_exec_path, rpc_client_exec_path):
         with concurrent.futures.ThreadPoolExecutor(count_threads) as executor:
             threads = []
             for i in range(count_threads):
-                threads.append(executor.submit(init_nodes, node_exec_path, start_sync_port, start_rpc_port, nodes_id[count_nodes_per_thread*i+1 : count_nodes_per_thread*(i+1)+1], nodes_id[0], waiting_time))
+                threads.append(executor.submit(init_nodes, node_exec_path, start_sync_port, start_rpc_port, 
+                nodes_id[count_nodes_per_thread*i+1 : count_nodes_per_thread*(i+1)+1], nodes_id[0], waiting_time, logger))
             for i in threads:
                 nodes += i.result()
 

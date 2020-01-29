@@ -22,38 +22,40 @@ def init_addresses(count_addresses):
     return ['0' * (32 - len(str(i))) + str(i) for i in range(count_addresses)]
 
 
-def init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes):
+def init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes, logger):
     start_sync_port = 20206
     start_rpc_port = 50056
     waiting_time = 4
     nodes_id.append(NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1"))
 
-    nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port), start_up_time = waiting_time))
+    nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port), 
+    logger=logger, start_up_time = waiting_time))
     nodes[0].start()
     TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
 
     for i in range(1, count_nodes):
         node_info = NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0.1")
         nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = node_info,
-         nodes_id_list=nodes_id), "node_" + str(start_sync_port + i), start_up_time = waiting_time))
+         nodes_id_list=nodes_id), "node_" + str(start_sync_port + i), logger=logger, start_up_time = waiting_time))
         nodes[i].start()
         nodes_id.append(node_info)
 
 
-def init_nodes_one_by_one(node_exec_path, client, nodes, nodes_id, count_nodes):
+def init_nodes_one_by_one(node_exec_path, client, nodes, nodes_id, count_nodes, logger):
     start_sync_port = 20206
     start_rpc_port = 50056
     waiting_time = 2
     nodes_id.append(NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1"))
 
-    nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), "node_" + str(start_sync_port), start_up_time = waiting_time))
+    nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[0]), 
+    "node_" + str(start_sync_port), logger=logger, start_up_time = waiting_time))
     nodes[0].start()
     TEST_CHECK(client.run_check_test(host_id = nodes_id[0]))
 
     for i in range(1, count_nodes):
         nodes_id.append(NodeId(sync_port=start_sync_port + i, rpc_port=start_rpc_port + i, absolute_address = "127.0.0.1"))
         nodes.append(NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id = nodes_id[i],
-         nodes_id_list=[nodes_id[i - 1]]), "node_" + str(i + start_sync_port), start_up_time = waiting_time))
+         nodes_id_list=[nodes_id[i - 1]]), "node_" + str(i + start_sync_port), logger=logger, start_up_time = waiting_time))
         nodes[i].start()
 
         for j in range(i + 1):
@@ -106,11 +108,13 @@ def main(node_exec_path, rpc_client_exec_path):
     try:
         client = Client(rpc_client_exec_path, "client", logger=logger)
 
-        with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_1), "node_"+str(node_id_1.sync_port)) as node_1:
+        with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_1), "node_"+str(node_id_1.sync_port), 
+        logger=logger) as node_1:
 
             TEST_CHECK(client.run_check_test(host_id=node_id_1))
 
-            with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_2, nodes_id_list=[node_id_1, ]), "node_"+str(node_id_2.sync_port)) as node_2:
+            with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_2, nodes_id_list=[node_id_1, ]),
+            "node_"+str(node_id_2.sync_port), logger=logger) as node_2:
 
                 target_address = "1" * 32
 
@@ -142,7 +146,7 @@ def main(node_exec_path, rpc_client_exec_path):
     nodes_id = []
     nodes = []
     try:
-        init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes)
+        init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes, logger)
 
         for i in range(1, count_nodes):
             for j in range(i + 1):
@@ -181,7 +185,7 @@ def main(node_exec_path, rpc_client_exec_path):
     nodes_id = []
     nodes = []
     try:
-        init_nodes_one_by_one(node_exec_path, client, nodes, nodes_id, count_nodes)
+        init_nodes_one_by_one(node_exec_path, client, nodes, nodes_id, count_nodes, logger)
 
         init_amount = 1000
         addresses = init_addresses(count_nodes)
@@ -216,7 +220,7 @@ def main(node_exec_path, rpc_client_exec_path):
     nodes_id = []
     nodes = []
     try:
-        init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes)
+        init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes, logger)
 
         init_amount = 1000
         address_per_nodes = 2
