@@ -7,6 +7,7 @@ import subprocess
 import multiprocessing as mp
 import collections
 import traceback
+import logging
 
 
 def TEST_CHECK(boolean_value, *, message=""):
@@ -53,12 +54,27 @@ class NodeId:
     def connect_rpc_address(self):
         return f"{self.absolute_address}:{self.rpc_port}"
 
+class Log:
+
+    def __init__(self, log_name):
+        self.logger = logging.getLogger(log_name)
+        self.logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(os.path.abspath(log_name))
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
+
+    def info(self, message):
+        self.logger.info(message)
+
 
 class NodeRunner:
     BUFFER_FILE_NAME = "temp.lock"
     running = False
 
-    def __init__(self, node_exec_path, node_config_content, work_dir, start_up_time=2):
+    def __init__(self, node_exec_path, node_config_content, work_dir, logger, start_up_time=2):
+        self.logger = logger
         self.work_dir = os.path.abspath(work_dir)
         # print("Node | Debug message: work dir:", self.work_dir)
         self.node_exec_path = node_exec_path
@@ -94,14 +110,17 @@ class NodeRunner:
     def start(self):
         if self.running:
             raise Exception("Process already started")
-
+        
+        self.logger.info(f"start node with work directory {self.work_dir}")
         self.process = subprocess.Popen(
             [self.node_exec_path, "--config", self.node_config_file], cwd=self.work_dir, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
         if self.process.poll() is None:
+            self.logger.info(f"running node with work directory {self.work_dir}")
             # print("Node | Debug message: process started")
             self.running = True
         else:
+            self.logger.info(f"failed running node with work directory {self.work_dir}")
             # print("Node | Debug message: process failed to start")
             self.running = False
             raise Exception("Process failed to start")
@@ -160,7 +179,8 @@ class NodeRunner:
 class Client:
     Result = collections.namedtuple('Result', ["success", "message"])
 
-    def __init__(self, rpc_client_exec_path, work_dir):
+    def __init__(self, rpc_client_exec_path, work_dir, logger):
+        self.logger = logger
         self.work_dir = os.path.abspath(work_dir)
         # print("Client | Debug message: work dir:", self.work_dir)
         self.rpc_client_exec_path = rpc_client_exec_path
@@ -177,16 +197,18 @@ class Client:
 
         # print("Client | Debug message: call string", run_commands)
         try:
+            self.logger.info(f"{command} start with parameters " + f"{parameters} --to_node {host_id.listen_sync_address}")
             pipe = subprocess.run(
                 run_commands, cwd=self.work_dir, capture_output=True, timeout=15)
         except subprocess.TimeoutExpired:
+            self.logger.info(f"slow command execution {command} {parameters} with node {host_id.listen_sync_address}")
             traceback_list = traceback.format_stack()
             log_message = ''
             for i in traceback_list:
                 if(i.find('TEST_CHECK') > 0):
                     log_message = i
                     break
-            raise Exception("slow command execution " + command + str(parameters) + " with node " + host_id.listen_sync_address + '\n' + log_message)
+            raise Exception(f"slow command execution {command} {parameters} with node {host_id.listen_sync_address}\n{log_message}")
 
         if pipe.returncode != 0:
             return Client.Result(not bool(pipe.returncode), pipe.stderr)
@@ -194,7 +216,9 @@ class Client:
         return Client.Result(not bool(pipe.returncode), pipe.stdout)
 
     def test(self, *, host_id):
-        return self.__run(command="test", parameters=[], host_id=host_id)
+        result = self.__run(command="test", parameters=[], host_id=host_id)
+        self.logger.info("test end with parameters []" + f"--to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        return result
 
     @staticmethod
     def check_test_result(result):
@@ -211,6 +235,7 @@ class Client:
     def transfer(self, *, from_address, to_address, amount, host_id, wait):
         result = self.__run(command="transfer", parameters=[
                             "--from", from_address, "--to", to_address, "--amount", str(amount)], host_id=host_id)
+        self.logger.info("transfer end with parameters " + f" ['--from', '{from_address}', '--to', '{to_address}', '--amount' '{amount}'] --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
         time.sleep(wait)
         return result
 
@@ -227,7 +252,10 @@ class Client:
         return self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, host_id=host_id, wait=wait))
 
     def get_balance(self, *, address, host_id):
-        return self.__run(command="get_balance", parameters=["--address", address], host_id=host_id)
+        result = self.__run(command="get_balance", parameters=["--address", address], host_id=host_id)
+        self.logger.info("get_balance end with parameters " + f" ['--address', '{address}'] --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+
+        return result
 
     @staticmethod
     def check_get_balance_result(result, target_balance):
@@ -239,6 +267,7 @@ class Client:
             return False
 
     def run_check_balance(self, *, address, host_id, target_balance):
+        self.logger.info(f"check balance in address {address} with balance {target_balance} to node {host_id.listen_sync_address}")
         return self.check_get_balance_result(self.get_balance(address=address, host_id=host_id), target_balance)
 
 
