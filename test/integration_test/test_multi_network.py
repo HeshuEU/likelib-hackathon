@@ -173,6 +173,7 @@ def main(node_exec_path, rpc_client_exec_path):
                 nodes += i.result()
 
         addresses = ['0' * (32 - len(str(i))) + str(i) for i in range(len(nodes)+1)]
+        amount = 1000
         for i in range(1, len(addresses)):
             from_address = addresses[0]
             to_address = addresses[i]   
