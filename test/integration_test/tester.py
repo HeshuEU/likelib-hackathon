@@ -110,14 +110,17 @@ class NodeRunner:
     def start(self):
         if self.running:
             raise Exception("Process already started")
-
+        
+        self.logger.info(f"start node with work directory {self.work_dir}")
         self.process = subprocess.Popen(
             [self.node_exec_path, "--config", self.node_config_file], cwd=self.work_dir, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
         if self.process.poll() is None:
+            self.logger.info(f"running node with work directory {self.work_dir}")
             # print("Node | Debug message: process started")
             self.running = True
         else:
+            self.logger.info(f"failed running node with work directory {self.work_dir}")
             # print("Node | Debug message: process failed to start")
             self.running = False
             raise Exception("Process failed to start")
