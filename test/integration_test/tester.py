@@ -7,6 +7,7 @@ import subprocess
 import multiprocessing as mp
 import collections
 import traceback
+import logging
 
 
 def TEST_CHECK(boolean_value, *, message=""):
@@ -52,6 +53,20 @@ class NodeId:
     @property
     def connect_rpc_address(self):
         return f"{self.absolute_address}:{self.rpc_port}"
+
+class Log:
+
+    def __init__(self, log_name):
+        self.logger = logging.getLogger(log_name)
+        self.logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(os.path.abspath(log_name))
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
+
+    def info(self, message):
+        self.logger.info(message)
 
 
 class NodeRunner:
@@ -160,7 +175,8 @@ class NodeRunner:
 class Client:
     Result = collections.namedtuple('Result', ["success", "message"])
 
-    def __init__(self, rpc_client_exec_path, work_dir):
+    def __init__(self, rpc_client_exec_path, work_dir, logger):
+        self.logger = logger
         self.work_dir = os.path.abspath(work_dir)
         # print("Client | Debug message: work dir:", self.work_dir)
         self.rpc_client_exec_path = rpc_client_exec_path
@@ -180,13 +196,14 @@ class Client:
             pipe = subprocess.run(
                 run_commands, cwd=self.work_dir, capture_output=True, timeout=15)
         except subprocess.TimeoutExpired:
+            self.logger.info(f"slow command execution {command} {parameters} with node {host_id.listen_sync_address}")
             traceback_list = traceback.format_stack()
             log_message = ''
             for i in traceback_list:
                 if(i.find('TEST_CHECK') > 0):
                     log_message = i
                     break
-            raise Exception("slow command execution " + command + str(parameters) + " with node " + host_id.listen_sync_address + '\n' + log_message)
+            raise Exception(f"slow command execution {command} {parameters} with node {host_id.listen_sync_address}\n{log_message}")
 
         if pipe.returncode != 0:
             return Client.Result(not bool(pipe.returncode), pipe.stderr)
@@ -209,8 +226,10 @@ class Client:
         return self.check_test_result(self.test(host_id=host_id))
 
     def transfer(self, *, from_address, to_address, amount, host_id, wait):
+        self.logger.info("start transfer with parameters " + f" --from {from_address} --to {to_address} --amount {amount} --to_node {host_id.listen_sync_address}")
         result = self.__run(command="transfer", parameters=[
                             "--from", from_address, "--to", to_address, "--amount", str(amount)], host_id=host_id)
+        self.logger.info("completed transfer with parameters " + f" --from {from_address} --to {to_address} --amount {amount} --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
         time.sleep(wait)
         return result
 
@@ -227,7 +246,11 @@ class Client:
         return self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, host_id=host_id, wait=wait))
 
     def get_balance(self, *, address, host_id):
-        return self.__run(command="get_balance", parameters=["--address", address], host_id=host_id)
+        self.logger.info("start get_balance with parameters " + f" --address {address} --to_node {host_id.listen_sync_address}")
+        result = self.__run(command="get_balance", parameters=["--address", address], host_id=host_id)
+        self.logger.info("completed get_balance with parameters " + f" --address {address} --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+
+        return result
 
     @staticmethod
     def check_get_balance_result(result, target_balance):

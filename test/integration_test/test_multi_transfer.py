@@ -1,4 +1,4 @@
-from tester import NodeRunner, NodeId, Client, TEST_CHECK, test_case
+from tester import Log, NodeRunner, NodeId, Client, TEST_CHECK, test_case
 import threading
 
 
@@ -99,11 +99,12 @@ def node_transfers(node_id, client, addresses):
 @test_case("test_multi_transfer")
 def main(node_exec_path, rpc_client_exec_path):
 
+    logger = Log("test_multi_transfer_log")
     node_id_1 = NodeId(sync_port=20206, rpc_port=50056)
     node_id_2 = NodeId(sync_port=20202, rpc_port=50053)
 
     try:
-        client = Client(rpc_client_exec_path, "client")
+        client = Client(rpc_client_exec_path, "client", logger=logger)
 
         with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id_1), "node_"+str(node_id_1.sync_port)) as node_1:
 
@@ -135,8 +136,9 @@ def main(node_exec_path, rpc_client_exec_path):
 @test_case("test_multi_transfer_connected_with_everything")
 def main(node_exec_path, rpc_client_exec_path):
 
+    logger = Log("test_multi_transfer_connected_with_everything_log")
     count_nodes = 5
-    client = Client(rpc_client_exec_path, "client")
+    client = Client(rpc_client_exec_path, "client", logger=logger)
     nodes_id = []
     nodes = []
     try:
@@ -173,8 +175,9 @@ def main(node_exec_path, rpc_client_exec_path):
 @test_case("test_multi_transfer_connected_one_by_one")
 def main(node_exec_path, rpc_client_exec_path):
 
+    logger = Log("test_multi_transfer_connected_one_by_one_log")
     count_nodes = 5
-    client = Client(rpc_client_exec_path, "client")
+    client = Client(rpc_client_exec_path, "client", logger=logger)
     nodes_id = []
     nodes = []
     try:
@@ -207,8 +210,9 @@ def main(node_exec_path, rpc_client_exec_path):
 @test_case("test_parallel_transfer_connected_with_everything")  #not being executed right now
 def main(node_exec_path, rpc_client_exec_path):
 
+    logger = Log("test_parallel_transfer_connected_with_everything_log")
     count_nodes = 10
-    client = Client(rpc_client_exec_path, "client")
+    client = Client(rpc_client_exec_path, "client", logger=logger)
     nodes_id = []
     nodes = []
     try:
