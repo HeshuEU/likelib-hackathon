@@ -22,6 +22,17 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     LOG_CURRENT_FUNCTION;
     LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
+    LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
     boost::log::core::get()->flush();
     LOG_DEBUG << "_core addr" << &_core;
     boost::log::core::get()->flush();

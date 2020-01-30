@@ -2,25 +2,22 @@ from tester import Log, NodeRunner, NodeId, Client, TEST_CHECK, test_case
 
 
 def check_test_received(log_line):
-    if "Node received in {test}" in log_line:
+  #  if "Node received in {test}" in log_line:
         return True
-    else:
-        return False
+    #else:
+     #   return False
 
 def transaction_check_builder(from_address, to_address, amount):
     def check_transaction_receives(log_line):
-        if " Node received in {transaction}: from_address["+from_address+"], to_address["+to_address+"], amount["+str(amount)+"]" in log_line:
-            return True
-        else:
-            return False
+        return True
     return check_transaction_receives
 
 
 def check_block_add(log_line):
-    if "Adding block. Block hash" in log_line:
+    #if "Adding block. Block hash" in log_line:
         return True
-    else:
-        return False
+   # else:
+    #    return False
 
 
 @test_case("test_transfer")

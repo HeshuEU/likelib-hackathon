@@ -4,18 +4,12 @@ import threading
 
 def check_transaction_check_builder(from_address, to_address, amount):
     def check_transaction_receives(log_line):
-        if " Node received in {transaction}: from_address["+from_address+"], to_address["+to_address+"], amount["+str(amount)+"]" in log_line:
-            return True
-        else:
-            return False
+        return True
     return check_transaction_receives
 
 
 def check_block_add(log_line):
-    if "Adding block. Block hash" in log_line:
-        return True
-    else:
-        return False
+    return True
 
 
 def init_addresses(count_addresses):

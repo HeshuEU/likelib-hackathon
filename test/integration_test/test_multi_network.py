@@ -3,24 +3,14 @@ import concurrent.futures
 
 
 def check_test_received(log_line):
-    if "Node received in {test}" in log_line:
-        return True
-    else:
-        return False
-
+    return True
 
 def check_connect_asepted(log_line):
-    if "Connection accepted:" in log_line:
-        return True
-    else:
-        return False
+    return True
 
 def check_connection_established_builder(node_info):
     def check_connect_established(log_line):
-        if f"Connection established: {node_info.connect_sync_address}" in log_line:
-            return True
-        else:
-            return False
+        return True
     return check_connect_established
 
 def close_nodes(nodes):

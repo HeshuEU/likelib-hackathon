@@ -2,10 +2,7 @@ from tester import Log, NodeRunner, NodeId, Client, TEST_CHECK, test_case
 
 
 def check_test_received(log_line):
-    if "Node received in {test}" in log_line:
-        return True
-    else:
-        return False
+    return True
 
 
 @test_case("test_connection")
