@@ -32,8 +32,8 @@ def close_nodes(nodes):
 def main(node_exec_path, rpc_client_exec_path):
 
     logger = Log("test_multi_network_log")
-    node_id_1 = NodeId(sync_port=20206, rpc_port=50056)
-    node_id_2 = NodeId(sync_port=20202, rpc_port=50053)
+    node_id_1 = NodeId(sync_port=20207, rpc_port=50057)
+    node_id_2 = NodeId(sync_port=20208, rpc_port=50058)
 
     try:
         client = Client(rpc_client_exec_path, "client", logger = logger)
@@ -64,8 +64,8 @@ def main(node_exec_path, rpc_client_exec_path):
 def main(node_exec_path, rpc_client_exec_path):
 
     logger = Log("test_multi_network_one_by_one_log")
-    start_sync_port = 20206
-    start_rpc_port = 50056
+    start_sync_port = 20209
+    start_rpc_port = 50059
     waiting_time = 3
     count_nodes = 4
     nodes_id = [NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1")]
@@ -103,8 +103,8 @@ def main(node_exec_path, rpc_client_exec_path):
 def main(node_exec_path, rpc_client_exec_path):
 
     logger = Log("test_multi_network_with_everything_log")
-    start_sync_port = 20206
-    start_rpc_port = 50056
+    start_sync_port = 20215
+    start_rpc_port = 50065
     waiting_time = 5
     count_nodes = 4
     nodes_id = [NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1")]
@@ -155,8 +155,8 @@ def init_nodes(node_exec_path, start_sync_port, start_rpc_port, nodes_id, first_
 def main(node_exec_path, rpc_client_exec_path):
 
     logger = Log("test_multi_network_parallel_stress_test_log")
-    start_sync_port = 20206
-    start_rpc_port = 50056
+    start_sync_port = 20230
+    start_rpc_port = 50080
     waiting_time = 20
     count_threads = 5
     count_nodes_per_thread = 1
