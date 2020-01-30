@@ -218,7 +218,7 @@ class Client:
 
     def test(self, *, host_id):
         result = self.__run(command="test", parameters=[], host_id=host_id)
-        self.logger.info("test end with parameters []" + f"to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        self.logger.info("test end with parameters []" + f"to_node {host_id.listen_sync_address} with result \"{result.message.decode('utf-8').strip()}\"")
         return result
 
     @staticmethod
@@ -236,8 +236,11 @@ class Client:
     def transfer(self, *, from_address, to_address, amount, host_id, wait):
         result = self.__run(command="transfer", parameters=[
                             "--from", from_address, "--to", to_address, "--amount", str(amount)], host_id=host_id)
-        self.logger.info("transfer end with parameters " + f" ['--from', '{from_address}', '--to', '{to_address}', '--amount' '{amount}'] to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
-        time.sleep(wait)
+        self.logger.info("transfer end with parameters " + f" ['--from', '{from_address}', '--to', '{to_address}', '--amount' '{amount}'] to_node {host_id.listen_sync_address} with result \"{result.message.decode('utf-8').strip()}\"")
+        time.sleep(wait // 2)
+        if not result:
+            self.
+        time.sleep(wait - wait // 2)
         return result
 
     @staticmethod
@@ -254,7 +257,7 @@ class Client:
 
     def get_balance(self, *, address, host_id):
         result = self.__run(command="get_balance", parameters=["--address", address], host_id=host_id)
-        self.logger.info("get_balance end with parameters " + f" ['--address', '{address}'] to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        self.logger.info("get_balance end with parameters " + f" ['--address', '{address}'] to_node {host_id.listen_sync_address} with result  \"{result.message.decode('utf-8').strip()}\"")
 
         return result
 
