@@ -22,9 +22,7 @@ def init_addresses(count_addresses):
     return ['0' * (32 - len(str(i))) + str(i) for i in range(count_addresses)]
 
 
-def init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes, logger):
-    start_sync_port = 20206
-    start_rpc_port = 50056
+def init_nodes_with_everything(node_exec_path, start_sync_port, start_rpc_port, client, nodes, nodes_id, count_nodes, logger):
     waiting_time = 4
     nodes_id.append(NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1"))
 
@@ -41,9 +39,7 @@ def init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_no
         nodes_id.append(node_info)
 
 
-def init_nodes_one_by_one(node_exec_path, client, nodes, nodes_id, count_nodes, logger):
-    start_sync_port = 20206
-    start_rpc_port = 50056
+def init_nodes_one_by_one(node_exec_path, start_sync_port, start_rpc_port, client, nodes, nodes_id, count_nodes, logger):
     waiting_time = 2
     nodes_id.append(NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1"))
 
@@ -102,8 +98,8 @@ def node_transfers(node_id, client, addresses):
 def main(node_exec_path, rpc_client_exec_path):
 
     logger = Log("test_multi_transfer_log")
-    node_id_1 = NodeId(sync_port=20206, rpc_port=50056)
-    node_id_2 = NodeId(sync_port=20202, rpc_port=50053)
+    node_id_1 = NodeId(sync_port=20300, rpc_port=50150)
+    node_id_2 = NodeId(sync_port=20301, rpc_port=50151)
 
     try:
         client = Client(rpc_client_exec_path, "client", logger=logger)
@@ -142,11 +138,13 @@ def main(node_exec_path, rpc_client_exec_path):
 
     logger = Log("test_multi_transfer_connected_with_everything_log")
     count_nodes = 5
+    start_sync_port = 20302
+    start_rpc_port = 50152
     client = Client(rpc_client_exec_path, "client", logger=logger)
     nodes_id = []
     nodes = []
     try:
-        init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes, logger)
+        init_nodes_with_everything(node_exec_path, start_sync_port, start_rpc_port, client, nodes, nodes_id, count_nodes, logger)
 
         for i in range(1, count_nodes):
             for j in range(i + 1):
@@ -181,11 +179,13 @@ def main(node_exec_path, rpc_client_exec_path):
 
     logger = Log("test_multi_transfer_connected_one_by_one_log")
     count_nodes = 5
+    start_sync_port = 20310
+    start_rpc_port = 50160
     client = Client(rpc_client_exec_path, "client", logger=logger)
     nodes_id = []
     nodes = []
     try:
-        init_nodes_one_by_one(node_exec_path, client, nodes, nodes_id, count_nodes, logger)
+        init_nodes_one_by_one(node_exec_path, start_sync_port, start_rpc_port, client, nodes, nodes_id, count_nodes, logger)
 
         init_amount = 1000
         addresses = init_addresses(count_nodes)
@@ -216,11 +216,13 @@ def main(node_exec_path, rpc_client_exec_path):
 
     logger = Log("test_parallel_transfer_connected_with_everything_log")
     count_nodes = 10
+    start_sync_port = 20330
+    start_rpc_port = 50180
     client = Client(rpc_client_exec_path, "client", logger=logger)
     nodes_id = []
     nodes = []
     try:
-        init_nodes_with_everything(node_exec_path, client, nodes, nodes_id, count_nodes, logger)
+        init_nodes_with_everything(node_exec_path, start_sync_port, start_rpc_port, client, nodes, nodes_id, count_nodes, logger)
 
         init_amount = 1000
         address_per_nodes = 2
