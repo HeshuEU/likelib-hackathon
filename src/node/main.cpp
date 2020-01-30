@@ -27,6 +27,8 @@ extern "C" void signalHandler(int signal)
 {
     if(signal == SIGINT) {
         LOG_INFO << "SIGINT caught. Exit.";
+        boost::log::core::get()->flush();
+        exit(1);
         std::abort(); // TODO: a clean exit
     }
     else {
@@ -37,6 +39,7 @@ extern "C" void signalHandler(int signal)
                  << '\n'
                  << boost::stacktrace::stacktrace()
             ;
+        boost::log::core::get()->flush();
         std::abort();
     }
 }
@@ -45,6 +48,8 @@ extern "C" void signalHandler(int signal)
 void atExitHandler()
 {
     LOG_INFO << "Node shutdown";
+    boost::log::core::get()->flush();
+    exit(1);
 }
 
 } // namespace

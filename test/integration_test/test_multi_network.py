@@ -158,8 +158,8 @@ def main(node_exec_path, rpc_client_exec_path):
     start_sync_port = 20206
     start_rpc_port = 50056
     waiting_time = 20
-    count_threads = 10
-    count_nodes_per_thread = 5
+    count_threads = 5
+    count_nodes_per_thread = 1
     nodes_id = [NodeId(sync_port = start_sync_port, rpc_port = start_rpc_port, absolute_address = "127.0.0.1")]
 
     try:

@@ -36,17 +36,24 @@ void Core::run()
 
 bool Core::tryAddBlock(const bc::Block& b)
 {
-    LOG_CURRENT_FUNCTION;
+    LOG_CURRENT_FUNCTION << " with block = " << b;
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
+        LOG_CURRENT_FUNCTION << "removing txs in block from pending";
         {
+            LOG_CURRENT_FUNCTION << "acquiring shared lock";
             std::shared_lock lk(_pending_transactions_mutex);
+            LOG_CURRENT_FUNCTION << "removing txs";
             _pending_transactions.remove(b.getTransactions());
+            LOG_CURRENT_FUNCTION << "removed transactions and freed lock";
         }
+        LOG_CURRENT_FUNCTION << "updating during to a new block";
         updateNewBlock(b);
+        LOG_CURRENT_FUNCTION << "notifying all subscribers to a new block";
         _event_block_added.notify(b);
         return true;
     }
     else {
+        LOG_CURRENT_FUNCTION << "rejecting this block";
         return false;
     }
 }
@@ -105,10 +112,13 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
 bc::Block Core::getBlockTemplate() const
 {
     LOG_CURRENT_FUNCTION;
+    LOG_CURRENT_FUNCTION << "retrieving ours top block";
     const auto& top_block = _blockchain.getTopBlock();
     bc::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
+    LOG_CURRENT_FUNCTION << "acquiring lock on pending txs";
     std::shared_lock lk(_pending_transactions_mutex);
+    LOG_CURRENT_FUNCTION << "returning block";
     return bc::Block{depth, prev_hash, _pending_transactions};
 }
 
@@ -130,6 +140,7 @@ bool Core::performTransaction(const bc::Transaction& tx)
 
 bc::Balance Core::getBalance(const bc::Address& address) const
 {
+    LOG_CURRENT_FUNCTION;
     return _balance_manager.getBalance(address);
 }
 

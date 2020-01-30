@@ -4,6 +4,7 @@
 #include <boost/log/trivial.hpp>
 
 #include <cstddef>
+#include <thread>
 
 namespace base
 {
@@ -32,11 +33,11 @@ void dumpDebuggingInfo();
 
 } // namespace base
 
-#define LOG_TRACE BOOST_LOG_TRIVIAL(trace)
-#define LOG_DEBUG BOOST_LOG_TRIVIAL(debug)
-#define LOG_INFO BOOST_LOG_TRIVIAL(info)
-#define LOG_WARNING BOOST_LOG_TRIVIAL(warning)
-#define LOG_ERROR BOOST_LOG_TRIVIAL(error)
+#define LOG_TRACE BOOST_LOG_TRIVIAL(trace) << std::this_thread::get_id() << ' '
+#define LOG_DEBUG BOOST_LOG_TRIVIAL(debug) << std::this_thread::get_id() << ' '
+#define LOG_INFO BOOST_LOG_TRIVIAL(info) << std::this_thread::get_id() << ' '
+#define LOG_WARNING BOOST_LOG_TRIVIAL(warning) << std::this_thread::get_id() << ' '
+#define LOG_ERROR BOOST_LOG_TRIVIAL(error) << std::this_thread::get_id() << ' '
 #define LOG_FATAL BOOST_LOG_TRIVIAL(fatal)
 
 #define LOG_CURRENT_FUNCTION LOG_DEBUG << BOOST_CURRENT_FUNCTION << ' '

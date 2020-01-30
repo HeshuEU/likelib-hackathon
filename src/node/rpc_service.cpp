@@ -20,7 +20,11 @@ GeneralServerService::~GeneralServerService()
 
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
+    LOG_CURRENT_FUNCTION;
     LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
+    boost::log::core::get()->flush();
+    LOG_DEBUG << "_core addr" << &_core;
+    boost::log::core::get()->flush();
     auto ret = _core.getBalance(address);
     LOG_TRACE << "Balance request has been successfully executed";
     return ret;
@@ -34,9 +38,11 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
               << transaction_time.getSecondsSinceEpochBeginning() << "]";
 
     if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time))) {
+        LOG_TRACE << "Added tx to pending";
         return "Success! Transaction added to queue successfully.";
     }
     else {
+        LOG_TRACE << "Rejecting tx";
         return "Error! Transaction rejected.";
     }
 }

@@ -2,6 +2,7 @@ import os
 import time
 import shutil
 import json
+import signal
 import datetime
 import subprocess
 import multiprocessing as mp
@@ -171,7 +172,8 @@ class NodeRunner:
     def close(self):
         if self.running:
             self.logger.info(f"close node with work_dir {self.work_dir}")
-            self.process.kill()
+            self.process.send_signal(signal.SIGINT)
+            time.sleep(0.2)
             exit_code = self.process.poll()
             self.running = False
             # print("Node | Debug message: process closed")
@@ -198,7 +200,7 @@ class Client:
 
         # print("Client | Debug message: call string", run_commands)
         try:
-            self.logger.info(f"{command} start with parameters " + f"{parameters} to_node {host_id.listen_sync_address}")
+            self.logger.info(f"{command} start with parameters " + f"{parameters} --to_node {host_id.listen_sync_address}")
             pipe = subprocess.run(
                 run_commands, cwd=self.work_dir, capture_output=True, timeout=15)
         except subprocess.TimeoutExpired:
@@ -218,7 +220,7 @@ class Client:
 
     def test(self, *, host_id):
         result = self.__run(command="test", parameters=[], host_id=host_id)
-        self.logger.info("test end with parameters []" + f"to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        self.logger.info("test end with parameters []" + f"--to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
         return result
 
     @staticmethod
@@ -236,7 +238,7 @@ class Client:
     def transfer(self, *, from_address, to_address, amount, host_id, wait):
         result = self.__run(command="transfer", parameters=[
                             "--from", from_address, "--to", to_address, "--amount", str(amount)], host_id=host_id)
-        self.logger.info("transfer end with parameters " + f" ['--from', '{from_address}', '--to', '{to_address}', '--amount' '{amount}'] to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        self.logger.info("transfer end with parameters " + f" ['--from', '{from_address}', '--to', '{to_address}', '--amount' '{amount}'] --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
         time.sleep(wait)
         return result
 
@@ -246,7 +248,7 @@ class Client:
         if result.success and b"Remote call of transaction -> [Success! Transaction added to queue successfully.]\n" in result.message:
             return True
         else:
-            #print("transfer check failed:", result.message.decode('utf-8'))
+            print("transfer check failed:", result.message.decode('utf-8'))
             return False
 
     def run_check_transfer(self, *, from_address, to_address, amount, host_id, wait):
@@ -254,7 +256,7 @@ class Client:
 
     def get_balance(self, *, address, host_id):
         result = self.__run(command="get_balance", parameters=["--address", address], host_id=host_id)
-        self.logger.info("get_balance end with parameters " + f" ['--address', '{address}'] to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
+        self.logger.info("get_balance end with parameters " + f" ['--address', '{address}'] --to_node {host_id.listen_sync_address} with result {result.message.decode('utf-8')}")
 
         return result
 
@@ -264,7 +266,7 @@ class Client:
         if result.success and (f"Remote call of get_balance -> [{target_balance}]\n").encode('utf8') in result.message:
             return True
         else:
-            #print("get_balance check failed:", result.message.decode('utf-8'))
+            print("get_balance check failed:", result.message.decode('utf-8'))
             return False
 
     def run_check_balance(self, *, address, host_id, target_balance):
