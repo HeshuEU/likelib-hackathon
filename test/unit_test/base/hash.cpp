@@ -189,3 +189,27 @@ BOOST_AUTO_TEST_CASE(sha1_multiple_serialization)
     BOOST_CHECK_EQUAL(deserialized_hash_2.toHex(), target_hex_view_2);
     BOOST_CHECK_EQUAL(deserialized_hash_2.getBytes().toHex(), target_hex_view_2);
 }
+
+
+// BOOST_AUTO_TEST_CASE(sha3_256_hash)
+// {
+//     // auto sha256_1 = base::Sha3::compute(base::Bytes{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30}, base::Sha3::Sha3Type::Sha3Type256);
+//     // auto hex_str1 = "5fa56e73ead625a67cb2b6c3394664491432c7d1402d738c285a8903572c4846";
+//     // BOOST_CHECK_EQUAL(sha256_1.toHex(), hex_str1);
+//     // BOOST_CHECK_EQUAL(sha256_1.getBytes().toHex(), hex_str1);
+
+//     auto sha256_2 = base::Sha3::compute(base::Bytes("likelib.2"), base::Sha3::Sha3Type::Sha3Type256);
+//     auto hex_str2 = "62e3a6a603eb661780d4a48b21349070b7003fae7125deec536ed35f04f33ef1";
+//     BOOST_CHECK_EQUAL(sha256_2.toHex(), hex_str2);
+//     BOOST_CHECK_EQUAL(sha256_2.getBytes().toHex(), hex_str2);
+
+//     auto sha256_3 = base::Sha3::compute(base::Bytes("it's third test"), base::Sha3::Sha3Type::Sha3Type256);
+//     auto hex_str3 = "7b10f626fc69151701595993d9b303891f0e3febf9a5ad1bf10368dcfa2a4ed0";
+//     BOOST_CHECK_EQUAL(sha256_3.toHex(), hex_str3);
+//     BOOST_CHECK_EQUAL(sha256_3.getBytes().toHex(), hex_str3);
+
+//     auto sha256_4 = base::Sha3::compute(base::Bytes(""), base::Sha3::Sha3Type::Sha3Type256);
+//     auto hex_str4 = "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a";
+//     BOOST_CHECK_EQUAL(sha256_4.toHex(), hex_str4);
+//     BOOST_CHECK_EQUAL(sha256_4.getBytes().toHex(), hex_str4);
+// }
