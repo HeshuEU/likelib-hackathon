@@ -7,7 +7,9 @@ import subprocess
 import multiprocessing as mp
 import collections
 import traceback
+import signal
 import logging
+import re
 
 
 def TEST_CHECK(boolean_value, *, message=""):
@@ -18,7 +20,7 @@ def TEST_CHECK(boolean_value, *, message=""):
             if(i.find('TEST_CHECK') > 0):
                 log_message = i
                 break
-        raise Exception("Check failed: " + message + '\n' + log_message)
+        raise Exception(f"Check failed: {message}'\n'{log_message}")
 
 
 def TEST_CHECK_EQUAL(left, right, *, message=""):
@@ -27,8 +29,6 @@ def TEST_CHECK_EQUAL(left, right, *, message=""):
 
 def TEST_CHECK_NOT_EQUAL(left, right, *, message=""):
     TEST_CHECK(left != right, message=message)
-
-# TODO: implement logger insteed print
 
 
 class NodeId:
@@ -54,47 +54,71 @@ class NodeId:
     def connect_rpc_address(self):
         return f"{self.absolute_address}:{self.rpc_port}"
 
-class Log:
 
-    def __init__(self, log_name):
-        self.logger = logging.getLogger(log_name)
-        self.logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler(os.path.abspath(log_name))
-        fh.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+class Log:
+    def __init__(self, log_file, log_level=logging.DEBUG):
+        self.logger = logging.getLogger(str(hash(os.getcwd() + log_file)))
+        self.logger.setLevel(log_level)
+
+        fh = logging.FileHandler(os.path.abspath(log_file))
+        fh.setLevel(log_level)
+
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s')
         fh.setFormatter(formatter)
+
         self.logger.addHandler(fh)
 
     def info(self, message):
         self.logger.info(message)
 
+    def debug(self, message):
+        self.logger.debug(message)
+
+    def error(self, message):
+        self.logger.error(message)
+
 
 class NodeRunner:
     BUFFER_FILE_NAME = "temp.lock"
+    LOG_PREFIX = "NodeRunner"
+    CLOSE_TIME_PROCESS_OUT = 1
     running = False
 
-    def __init__(self, node_exec_path, node_config_content, work_dir, logger, start_up_time=2):
+    def __init__(self, node_exec_path, node_config_content, work_dir, logger, start_up_time=1):
         self.logger = logger
         self.work_dir = os.path.abspath(work_dir)
-        # print("Node | Debug message: work dir:", self.work_dir)
         self.node_exec_path = node_exec_path
+        self.logger.debug(
+            f"{NodeRunner.LOG_PREFIX} - work directory[{self.work_dir}] node executable file[{self.node_exec_path}]")
         if os.path.exists(self.work_dir):
             shutil.rmtree(self.work_dir, ignore_errors=True)
+            self.logger.debug(
+                f"{NodeRunner.LOG_PREFIX} - clean up work directory[{self.work_dir}]")
         os.makedirs(self.work_dir)
 
         self.node_config_file = os.path.join(self.work_dir, "config.json")
         with open(self.node_config_file, 'w') as node_config:
             node_config.write(node_config_content)
+        self.logger.debug(
+            f"{NodeRunner.LOG_PREFIX} - config saved by path[{self.node_config_file}] with content[{node_config_content}]")
 
-        # print("Node | Debug message: config content:", node_config_content)
         self.buffer_file = os.path.join(
             self.work_dir, NodeRunner.BUFFER_FILE_NAME)
         self.start_up_time = start_up_time
+        self.logger.debug(
+            f"{NodeRunner.LOG_PREFIX} - buffer file path[{self.buffer_file}] and start up time[{self.start_up_time}]")
+
+    @property
+    def pid(self):
+        if self.running:
+            return self.process.pid
+        else:
+            return -1
 
     @staticmethod
     def generate_config(*, current_node_id=NodeId(20203, 50051), miner_threads=2, nodes_id_list=[],
                         path_to_database="likelib/database", clean_up_database=True):
-
         config = {"net": {"listen_addr": current_node_id.listen_sync_address,
                           "public_port": current_node_id.sync_port},
                   "rpc": {"address": current_node_id.listen_rpc_address},
@@ -109,21 +133,24 @@ class NodeRunner:
 
     def start(self):
         if self.running:
-            raise Exception("Process already started")
-        
-        self.logger.info(f"start node with work directory {self.work_dir}")
+            raise Exception(
+                f"{NodeRunner.LOG_PREFIX} - Process already started")
+
         self.process = subprocess.Popen(
             [self.node_exec_path, "--config", self.node_config_file], cwd=self.work_dir, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        self.logger.info(
+            f"{NodeRunner.LOG_PREFIX} - start node(pid:{self.process.pid}) with work directory: {self.work_dir}")
 
         if self.process.poll() is None:
-            self.logger.info(f"running node with work directory {self.work_dir}")
-            # print("Node | Debug message: process started")
+            self.logger.info(
+                f"{NodeRunner.LOG_PREFIX} - running node with work directory {self.work_dir}")
             self.running = True
         else:
-            self.logger.info(f"failed running node with work directory {self.work_dir}")
-            # print("Node | Debug message: process failed to start")
+            self.logger.info(
+                f"{NodeRunner.LOG_PREFIX} - failed running node with work directory:{self.work_dir}")
             self.running = False
-            raise Exception("Process failed to start")
+            raise Exception(
+                f"{NodeRunner.LOG_PREFIX} - Process failed to start")
 
         time.sleep(self.start_up_time)
 
@@ -138,13 +165,19 @@ class NodeRunner:
             proc = mp.Process(target=__check_log, args=[
                               self.process.stderr, self.buffer_file])
             proc.start()
-            # can't read all buffer and wait EOF, but process is infinite
+            pid = proc.pid
+            self.logger.debug(
+                f"{NodeRunner.LOG_PREFIX} - start util process with pid:{pid}")
+
+            # can't read all buffer and wait EOF because process is infinite
             proc.join(1)
             if proc.is_alive():
                 proc.kill()
                 proc.join()
             exit_code = proc.exitcode
             proc.close()
+            self.logger.debug(
+                f"{NodeRunner.LOG_PREFIX} - closed util process with pid:{pid}")
 
     def check(self, check_line_fun):
         self._get_buffer()
@@ -159,7 +192,8 @@ class NodeRunner:
                         exit_value = True
             return exit_value
         else:
-            raise Exception("Buffer file was not found")
+            raise Exception(
+                f"{NodeRunner.LOG_PREFIX} - Buffer file was not found")
 
     def __enter__(self):
         self.start()
@@ -170,25 +204,39 @@ class NodeRunner:
 
     def close(self):
         if self.running:
-            self.logger.info(f"close node with work_dir {self.work_dir}")
-            self.process.kill()
+            pid = self.process.pid
+            self.logger.info(
+                f"{NodeRunner.LOG_PREFIX} - try to close node with work_dir {self.work_dir}")
+            self.process.send_signal(signal.SIGINT)
+            try:
+                self.process.wait(timeout=NodeRunner.CLOSE_TIME_PROCESS_OUT)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.logger.info(
+                    f"{NodeRunner.LOG_PREFIX} - kill node with work_dir {self.work_dir}")
             exit_code = self.process.poll()
             self.running = False
-            # print("Node | Debug message: process closed")
+            self.logger.info(
+                f"{NodeRunner.LOG_PREFIX} - closed node(exit code:{exit_code}, pid:{pid}) with work_dir {self.work_dir}")
 
 
 class Client:
     Result = collections.namedtuple('Result', ["success", "message"])
+    LOG_PREFIX = "Client"
 
     def __init__(self, rpc_client_exec_path, work_dir, logger):
         self.logger = logger
         self.work_dir = os.path.abspath(work_dir)
-        # print("Client | Debug message: work dir:", self.work_dir)
         self.rpc_client_exec_path = rpc_client_exec_path
+        self.logger.debug(
+            f"{Client.LOG_PREFIX} - work directory[{self.work_dir}] client executable file[{self.rpc_client_exec_path}]")
+
         if os.path.exists(self.work_dir):
             shutil.rmtree(self.work_dir, ignore_errors=True)
+            self.logger.debug(
+                f"{Client.LOG_PREFIX} - clean up work directory[{self.work_dir}]")
 
-    def __run(self, *, command, parameters, host_id):
+    def __run(self, *, command, parameters, host_id, timeout):
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
 
@@ -196,82 +244,82 @@ class Client:
                         command, "--host", host_id.connect_rpc_address]
         run_commands.extend(parameters)
 
-        # print("Client | Debug message: call string", run_commands)
+        self.logger.info(
+            f"{Client.LOG_PREFIX} - {command} start with parameters [{parameters}] to node address {host_id.connect_rpc_address}")
         try:
-            self.logger.info(f"{command} start with parameters " + f"{parameters} to_node {host_id.listen_sync_address}")
             pipe = subprocess.run(
-                run_commands, cwd=self.work_dir, capture_output=True, timeout=15)
+                run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
         except subprocess.TimeoutExpired:
-            self.logger.info(f"slow command execution {command} {parameters} with node {host_id.listen_sync_address}")
-            traceback_list = traceback.format_stack()
-            log_message = ''
-            for i in traceback_list:
-                if(i.find('TEST_CHECK') > 0):
-                    log_message = i
-                    break
-            raise Exception(f"slow command execution {command} {parameters} with node {host_id.listen_sync_address}\n{log_message}")
+            message = f"{Client.LOG_PREFIX} - slow command execution {command} with parameters [{parameters}] at node {host_id.connect_rpc_address}"
+            self.logger.info(message)
+            raise Exception(message)
 
         if pipe.returncode != 0:
             return Client.Result(not bool(pipe.returncode), pipe.stderr)
 
         return Client.Result(not bool(pipe.returncode), pipe.stdout)
 
-    def test(self, *, host_id):
-        result = self.__run(command="test", parameters=[], host_id=host_id)
-        self.logger.info("test end with parameters []" + f"to_node {host_id.listen_sync_address} with result \"{result.message.decode('utf-8').strip()}\"")
+    def test(self, *, host_id, timeout=1):
+        result = self.__run(command="test", parameters=[], host_id=host_id, timeout=timeout)
+        parsed_result = self.parse_result(result)
+        self.logger.info(
+            f"{Client.LOG_PREFIX} - test end to node address {host_id.connect_rpc_address} with result: \"{parsed_result}\"")
         return result
 
     @staticmethod
     def check_test_result(result):
-        # print("Client | Debug message:", result)
         if result.success and b"Test passed\n" in result.message:
             return True
         else:
-            # print("test check failed:", result.message)
             return False
 
     def run_check_test(self, *, host_id):
         return self.check_test_result(self.test(host_id=host_id))
 
-    def transfer(self, *, from_address, to_address, amount, host_id, wait):
-        result = self.__run(command="transfer", parameters=[
-                            "--from", from_address, "--to", to_address, "--amount", str(amount)], host_id=host_id)
-        self.logger.info("transfer end with parameters " + f" ['--from', '{from_address}', '--to', '{to_address}', '--amount' '{amount}'] to_node {host_id.listen_sync_address} with result \"{result.message.decode('utf-8').strip()}\"")
-        time.sleep(wait // 2)
-        if not result:
-            self.
-        time.sleep(wait - wait // 2)
+    def transfer(self, *, from_address, to_address, amount, host_id, wait, timeout=1):
+        parameters = ["--from", from_address, "--to",
+                      to_address, "--amount", str(amount)]
+        result = self.__run(command="transfer",
+                            parameters=parameters, host_id=host_id, timeout=timeout)
+        parsed_result = self.parse_result(result)
+        self.logger.info(
+            f"{Client.LOG_PREFIX} - transfer end with parameters [{parameters}] to node {host_id.connect_rpc_address} with result: \"{parsed_result}\"")
+        time.sleep(wait)
         return result
 
     @staticmethod
+    def parse_result(result):
+        if result is not None:
+            return result.message.decode('utf-8').strip()
+        else:
+            return ""
+
+    @staticmethod
     def check_transfer_result(result):
-        # print("Client | Debug message:", result)
         if result.success and b"Remote call of transaction -> [Success! Transaction added to queue successfully.]\n" in result.message:
             return True
         else:
-            #print("transfer check failed:", result.message.decode('utf-8'))
             return False
 
     def run_check_transfer(self, *, from_address, to_address, amount, host_id, wait):
         return self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, host_id=host_id, wait=wait))
 
-    def get_balance(self, *, address, host_id):
-        result = self.__run(command="get_balance", parameters=["--address", address], host_id=host_id)
-        self.logger.info("get_balance end with parameters " + f" ['--address', '{address}'] to_node {host_id.listen_sync_address} with result  \"{result.message.decode('utf-8').strip()}\"")
-
+    def get_balance(self, *, address, host_id, timeout=1):
+        result = self.__run(command="get_balance", parameters=[
+                            "--address", address], host_id=host_id, timeout=timeout)
+        parsed_result = self.parse_result(result)
+        self.logger.info(
+            f"{Client.LOG_PREFIX} - get_balance end for address {address} to node address {host_id.connect_rpc_address} with result: \"{parsed_result}\"")
         return result
 
     @staticmethod
     def check_get_balance_result(result, target_balance):
-        # print("Client | Debug message:", result)
         if result.success and (f"Remote call of get_balance -> [{target_balance}]\n").encode('utf8') in result.message:
             return True
         else:
-            #print("get_balance check failed:", result.message.decode('utf-8'))
             return False
 
     def run_check_balance(self, *, address, host_id, target_balance):
-        self.logger.info(f"check balance in address {address} with balance {target_balance} to node {host_id.listen_sync_address}")
         return self.check_get_balance_result(self.get_balance(address=address, host_id=host_id), target_balance)
 
 
@@ -297,19 +345,29 @@ def test_case(registration_test_case_name=""):
             return func(*args, **kargs)
 
         if test_name in __registered_tests.keys():
-            raise Exception("Test with this name is exists")
+            raise Exception(f"Test with this name[{test_name}] is exists")
         __registered_tests[test_name] = test_case_runner
 
         return test_case_runner
     return test_case_registrator
 
 
-# TODO: add regex to run specific test cases
-def run_registered_test_cases(*args, **kargs):
+def run_registered_test_cases(pattern, *args, **kargs):
     success_tests = 0
     failed_tests = 0
+    skipped_tests = 0
 
+    try:
+        matcher = re.compile(pattern)
+    except Exception as e:
+        print(f"Invalid pattern: {e}")
+        exit(1)
+        
     for registered_test_case_name in __registered_tests:
+        if matcher.match(registered_test_case_name) is None:
+            skipped_tests += 1
+            continue
+
         registered_test_case_runner = __registered_tests[registered_test_case_name]
 
         print(f"Test case [{registered_test_case_name}] started.")
@@ -331,7 +389,7 @@ def run_registered_test_cases(*args, **kargs):
                 f"Test case [{registered_test_case_name}] failed. Execute time: {test_case_execute_time}.")
             failed_tests += 1
 
-    all_tests = success_tests + failed_tests
+    all_tests = success_tests + failed_tests + skipped_tests
     print(
-        f"Started test cases: {all_tests}. Passed tests: {success_tests}. Failed tests: {failed_tests}")
+        f"All test cases: {all_tests}. Passed tests: {success_tests}. Failed tests: {failed_tests}. Skipped tests: {skipped_tests}.")
     return failed_tests
