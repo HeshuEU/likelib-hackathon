@@ -29,7 +29,7 @@ bc::Balance BalanceManager::getBalance(const bc::Address& address) const
 bool BalanceManager::checkTransaction(const bc::Transaction& tx) const
 {
     std::shared_lock lk(_rw_mutex);
-    if(_storage.find(tx.getFrom()) == _storage.end() ) {
+    if(_storage.find(tx.getFrom()) == _storage.end()) {
         return false;
     }
     return getBalance(tx.getFrom()) >= tx.getAmount();

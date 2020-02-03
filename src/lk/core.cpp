@@ -5,7 +5,8 @@
 namespace lk
 {
 
-Core::Core(const base::PropertyTree& config) : _config{config}, _blockchain{_config}, _network{_config, *this}
+Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
+    : _config{config}, _blockchain{_config}, _network{_config, *this}, _vault{key_vault}
 {
     LOG_CURRENT_FUNCTION;
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
@@ -91,7 +92,7 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
     std::map<bc::Address, bc::Balance> current_pending_balance;
     {
         std::shared_lock lk(_pending_transactions_mutex);
-        if (_pending_transactions.find(tx)) {
+        if(_pending_transactions.find(tx)) {
             return false;
         }
 
@@ -148,6 +149,12 @@ bc::Balance Core::getBalance(const bc::Address& address) const
 const bc::Block& Core::getTopBlock() const
 {
     return _blockchain.getTopBlock();
+}
+
+
+base::Bytes Core::getThisNodeAddress() const
+{
+    return _vault.getPublicKey().toBytes();
 }
 
 

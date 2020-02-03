@@ -25,33 +25,51 @@ namespace lk
 
 //============================================
 
+PeerInfo PeerInfo::deserialize(base::SerializationIArchive& ia)
+{
+    auto endpoint = net::Endpoint::deserialize(ia);
+    base::Bytes address;
+    ia >> address;
+    return {std::move(endpoint), std::move(address)};
+}
+
+
+void PeerInfo::serialize(base::SerializationOArchive& oa) const
+{
+    oa << endpoint << address;
+}
+
+//============================================
+
 constexpr MessageType HandshakeMessage::getHandledMessageType()
 {
     return MessageType::HANDSHAKE;
 }
 
 
-void HandshakeMessage::serialize(base::SerializationOArchive& oa, const bc::Block& block, std::uint16_t public_port,
-    const std::vector<net::Endpoint>& known_endpoints)
+void HandshakeMessage::serialize(base::SerializationOArchive& oa, const bc::Block& block, const base::Bytes& address,
+    std::uint16_t public_port, const std::vector<PeerInfo>& known_peers)
 {
-    oa << MessageType::HANDSHAKE << block << public_port << known_endpoints;
+    oa << MessageType::HANDSHAKE << block << address << public_port << known_peers;
 }
 
 
 void HandshakeMessage::serialize(base::SerializationOArchive& oa) const
 {
-    serialize(oa, _theirs_top_block, _public_port, _known_endpoints);
+    serialize(oa, _theirs_top_block, _address, _public_port, _known_peers);
 }
 
 
 HandshakeMessage HandshakeMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto top_block = bc::Block::deserialize(ia);
+    base::Bytes address;
+    ia >> address;
     std::uint16_t public_port;
     ia >> public_port;
-    std::vector<net::Endpoint> known_endpoints;
-    ia >> known_endpoints;
-    return HandshakeMessage(std::move(top_block), public_port, std::move(known_endpoints));
+    std::vector<PeerInfo> known_peers;
+    ia >> known_peers;
+    return HandshakeMessage(std::move(top_block), std::move(address), public_port, std::move(known_peers));
 }
 
 
@@ -65,8 +83,8 @@ void HandshakeMessage::handle(Peer& peer, Network& network, Core& core)
         peer.setServerEndpoint(public_ep);
     }
 
-    for(const auto& endpoint : _known_endpoints) {
-        network.checkOutNode(endpoint);
+    for(const auto& peer_info: _known_peers) {
+        network.checkOutNode(peer_info.endpoint, peer_info.address);
     }
 
     if(_theirs_top_block == ours_top_block) {
@@ -96,8 +114,10 @@ void HandshakeMessage::handle(Peer& peer, Network& network, Core& core)
 }
 
 
-HandshakeMessage::HandshakeMessage(bc::Block&& top_block, std::uint16_t public_port, std::vector<net::Endpoint>&& known_endpoints)
-    : _theirs_top_block{std::move(top_block)}, _public_port{public_port}, _known_endpoints{std::move(known_endpoints)}
+HandshakeMessage::HandshakeMessage(bc::Block&& top_block, base::Bytes address, std::uint16_t public_port,
+    std::vector<PeerInfo>&& known_peers)
+    : _theirs_top_block{std::move(top_block)}, _address{std::move(address)}, _public_port{public_port},
+      _known_peers{std::move(known_peers)}
 {}
 
 //============================================
@@ -333,7 +353,7 @@ GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive& ia)
 
 void GetInfoMessage::handle(Peer& peer, Network& network, Core& core)
 {
-    peer.send(serializeMessage<InfoMessage>(core.getTopBlock(), network.allPeersAddresses()));
+    peer.send(serializeMessage<InfoMessage>(core.getTopBlock(), network.allConnectedPeersInfo()));
 }
 
 //============================================
@@ -384,34 +404,38 @@ constexpr MessageType NewNodeMessage::getHandledMessageType()
 }
 
 
-void NewNodeMessage::serialize(base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint)
+void NewNodeMessage::serialize(
+    base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint, const base::Bytes& address)
 {
-    oa << MessageType::NEW_NODE << new_node_endpoint;
+    oa << MessageType::NEW_NODE << new_node_endpoint << address;
 }
 
 
 void NewNodeMessage::serialize(base::SerializationOArchive& oa) const
 {
-    serialize(oa, _new_node_endpoint);
+    serialize(oa, _new_node_endpoint, _address);
 }
 
 
 NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto ep = net::Endpoint::deserialize(ia);
-    return {std::move(ep)};
+    base::Bytes address;
+    ia >> address;
+    return {std::move(ep), std::move(address)};
 }
 
 
 void NewNodeMessage::handle(Peer& peer, Network& network, Core& core)
 {
-    if(network.checkOutNode(_new_node_endpoint)) {
+    if(network.checkOutNode(_new_node_endpoint, _address)) {
         network.broadcast(serializeMessage<NewNodeMessage>(_new_node_endpoint));
     }
 }
 
 
-NewNodeMessage::NewNodeMessage(net::Endpoint&& new_node_endpoint) : _new_node_endpoint{std::move(new_node_endpoint)}
+NewNodeMessage::NewNodeMessage(net::Endpoint&& new_node_endpoint, base::Bytes&& address)
+    : _new_node_endpoint{std::move(new_node_endpoint)}, _address{std::move(address)}
 {}
 
 //============================================
@@ -511,13 +535,13 @@ net::Endpoint Peer::getEndpoint() const
 
 std::optional<net::Endpoint> Peer::getPublicEndpoint() const
 {
-    return _address_for_incoming_connections;
+    return _endpoint_for_incoming_connections;
 }
 
 
 void Peer::setServerEndpoint(net::Endpoint endpoint)
 {
-    _address_for_incoming_connections = std::move(endpoint);
+    _endpoint_for_incoming_connections = std::move(endpoint);
 }
 
 
@@ -525,7 +549,8 @@ void Peer::doHandshake()
 {
     base::SerializationOArchive oa;
     std::uint16_t public_port = _owning_network_object._public_port ? *_owning_network_object._public_port : 0;
-    HandshakeMessage::serialize(oa, _core.getTopBlock(), public_port, _owning_network_object.allPeersAddresses());
+    auto connected_peers_info = _owning_network_object.allConnectedPeersInfo();
+    HandshakeMessage::serialize(oa, _core.getTopBlock(), _core.getThisNodeAddress(), public_port, connected_peers_info);
     _session.send(std::move(oa).getBytes());
 }
 
@@ -576,6 +601,18 @@ void Peer::send(base::Bytes&& data)
     _session.send(std::move(data));
 }
 
+
+std::optional<base::Bytes> Peer::getAddress() const
+{
+    return _address;
+}
+
+
+void Peer::setAddress(base::Bytes address)
+{
+    _address = std::move(address);
+}
+
 //=====================================
 
 Network::HandlerFactory::HandlerFactory(Network& owning_network_object) : _owning_network_object{owning_network_object}
@@ -615,25 +652,31 @@ void Network::removePeer(const Peer& peer)
 {}
 
 
-std::vector<net::Endpoint> Network::allPeersAddresses() const
+std::vector<PeerInfo> Network::allConnectedPeersInfo() const
 {
-    std::vector<net::Endpoint> ret;
+    std::vector<PeerInfo> ret;
     for(const auto& peer: _peers) {
         if(auto server_endpoint = peer.getPublicEndpoint()) {
-            ret.push_back(*std::move(server_endpoint));
+            if(auto address = peer.getAddress()) {
+                ret.push_back(PeerInfo{*std::move(server_endpoint), *std::move(address)});
+            }
         }
     }
     return ret;
 }
 
 
-bool Network::checkOutNode(const net::Endpoint& endpoint)
+bool Network::checkOutNode(const net::Endpoint& endpoint, const base::Bytes& address)
 {
+    if(_core.getThisNodeAddress() == address) {
+        return false;
+    }
+
     if(_host.isConnectedTo(endpoint)) {
         return false;
     }
 
-    for(const auto& peer : _peers) {
+    for(const auto& peer: _peers) {
         if(auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
             return false;
         }

@@ -62,25 +62,28 @@ void dumpDebuggingInfo();
 
 class Logger
 {
-public:
+  public:
     template<typename T>
-    void print(T&& obj) const {
+    void print(T&& obj) const
+    {
         oss << obj;
     }
 
-    ~Logger() {
+    ~Logger()
+    {
         static std::mutex mut;
         mut.lock();
         BOOST_LOG_TRIVIAL(debug) << oss.str();
         mut.unlock();
     }
 
-private:
+  private:
     mutable std::ostringstream oss;
 };
 
 template<typename T>
-const Logger& operator<<(const Logger& logger, T&& obj) {
+const Logger& operator<<(const Logger& logger, T&& obj)
+{
     logger.print(obj);
     return logger;
 }
@@ -93,11 +96,21 @@ const Logger& operator<<(const Logger& logger, T&& obj) {
 //#define LOG_ERROR BOOST_LOG_SEV(logger::get(), Severity::ERROR) << std::this_thread::get_id() << ' '
 //#define LOG_FATAL BOOST_LOG_SEV(logger)
 
-#define LOG_TRACE Logger{}
-#define LOG_DEBUG Logger{}
-#define LOG_INFO Logger{}
-#define LOG_WARNING Logger{}
-#define LOG_ERROR Logger{}
+#define LOG_TRACE \
+    Logger \
+    {}
+#define LOG_DEBUG \
+    Logger \
+    {}
+#define LOG_INFO \
+    Logger \
+    {}
+#define LOG_WARNING \
+    Logger \
+    {}
+#define LOG_ERROR \
+    Logger \
+    {}
 #define LOG_FATAL BOOST_LOG(logger)
 
 #define LOG_CURRENT_FUNCTION LOG_DEBUG << BOOST_CURRENT_FUNCTION << ' '

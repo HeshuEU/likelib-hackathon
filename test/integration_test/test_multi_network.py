@@ -1,5 +1,5 @@
 from tester import Log, NodeRunner, NodeId, Client, TEST_CHECK, test_case
-import concurrent.futures
+import concurrent.futures, time
 
 
 def check_test_received(log_line):
@@ -212,6 +212,7 @@ def main(node_exec_path, rpc_client_exec_path):
             except Exception as e:
                 pid = nodes_map[i].pid
                 print(f"Node in dead lock {pid}")
+                time.sleep(10000)
                 raise Exception(e)
 
         addresses = create_address_list(len(nodes))
