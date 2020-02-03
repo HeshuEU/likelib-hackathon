@@ -226,4 +226,71 @@ BOOST_AUTO_TEST_CASE(ripemd160_hash)
     auto hex_str4 = "9c1185a5c5e9fc54612808977ee8f548b2258d31";
     BOOST_CHECK_EQUAL(sha256_4.toHex(), hex_str4);
     BOOST_CHECK_EQUAL(sha256_4.getBytes().toHex(), hex_str4);
- }
+}
+
+
+BOOST_AUTO_TEST_CASE(ripemd160_serialization)
+{
+    auto target_hash = base::Ripemd160::compute(base::Bytes{"likelib.2"});
+    auto target_hex_view = "cd5cbbaf134e907e8ba58a3fe462b1d48e4157ea";
+
+    BOOST_CHECK_EQUAL(target_hash.toHex(), target_hex_view);
+    BOOST_CHECK_EQUAL(target_hash.getBytes().toHex(), target_hex_view);
+
+    base::SerializationOArchive out;
+    target_hash.serialize(out);
+
+    auto serialized_bytes = out.getBytes();
+    base::SerializationIArchive in(serialized_bytes);
+    auto deserialized_hash = base::Ripemd160::deserialize(in);
+
+    BOOST_CHECK_EQUAL(deserialized_hash, target_hash);
+    BOOST_CHECK_EQUAL(deserialized_hash.toHex(), target_hex_view);
+    BOOST_CHECK_EQUAL(deserialized_hash.getBytes().toHex(), target_hex_view);
+}
+
+
+BOOST_AUTO_TEST_CASE(ripemd160_hex)
+{
+    auto target_hash = base::Ripemd160::compute(base::Bytes{"likelib.2"});
+    auto target_hex_view = "cd5cbbaf134e907e8ba58a3fe462b1d48e4157ea";
+
+    auto hex_view = target_hash.toHex();
+    auto from_hex_hash = base::Ripemd160::fromHex(hex_view);
+
+    BOOST_CHECK_EQUAL(hex_view, target_hex_view);
+    BOOST_CHECK_EQUAL(target_hash, from_hex_hash);
+}
+
+
+BOOST_AUTO_TEST_CASE(ripemd160_multiple_serialization)
+{
+    auto target_hash_1 =
+        base::Ripemd160::compute(base::Bytes{""});
+    auto target_hex_view_1 = "9c1185a5c5e9fc54612808977ee8f548b2258d31";
+
+    BOOST_CHECK_EQUAL(target_hash_1.toHex(), target_hex_view_1);
+    BOOST_CHECK_EQUAL(target_hash_1.getBytes().toHex(), target_hex_view_1);
+
+    auto target_hash_2 = base::Ripemd160::compute(base::Bytes("likelib.2"));
+    auto target_hex_view_2 = "cd5cbbaf134e907e8ba58a3fe462b1d48e4157ea";
+
+    BOOST_CHECK_EQUAL(target_hash_2.toHex(), target_hex_view_2);
+    BOOST_CHECK_EQUAL(target_hash_2.getBytes().toHex(), target_hex_view_2);
+
+    base::SerializationOArchive out;
+    out << target_hash_1 << target_hash_2;
+
+    auto serialized_bytes = out.getBytes();
+    base::SerializationIArchive in(serialized_bytes);
+    auto deserialized_hash_1 = base::Ripemd160::deserialize(in);
+    auto deserialized_hash_2 = base::Ripemd160::deserialize(in);
+
+    BOOST_CHECK_EQUAL(deserialized_hash_1, target_hash_1);
+    BOOST_CHECK_EQUAL(deserialized_hash_1.toHex(), target_hex_view_1);
+    BOOST_CHECK_EQUAL(deserialized_hash_1.getBytes().toHex(), target_hex_view_1);
+
+    BOOST_CHECK_EQUAL(deserialized_hash_2, target_hash_2);
+    BOOST_CHECK_EQUAL(deserialized_hash_2.toHex(), target_hex_view_2);
+    BOOST_CHECK_EQUAL(deserialized_hash_2.getBytes().toHex(), target_hex_view_2);
+}

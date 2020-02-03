@@ -197,7 +197,7 @@ const base::Bytes& Ripemd160::getBytes() const noexcept
 }
 
 
-Ripemd160 Ripemd160::fromHex(const std::string_view& hex_view)
+Ripemd160 Ripemd160::fromHex(const std::string& hex_view)
 {
     auto bytes = Bytes::fromHex(hex_view);
     return Ripemd160(bytes);
@@ -219,7 +219,6 @@ bool Ripemd160::operator!=(const Ripemd160& another) const
 Ripemd160 Ripemd160::compute(const base::Bytes& data)
 {
     base::Bytes ret(RIPEMD160_DIGEST_LENGTH);
-    //std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(), EVP_MD_CTX_free);
     RIPEMD160_CTX context;
     if(1 != RIPEMD160_Init(&context)) {
         RAISE_ERROR(CryptoError, "failed to initialize context for Ripemd160");
@@ -252,9 +251,9 @@ Ripemd160 Ripemd160::deserialize(SerializationIArchive& ia)
 }
 
 
-std::ostream& operator<<(std::ostream& os, const Ripemd160& sha)
+std::ostream& operator<<(std::ostream& os, const Ripemd160& ripemd)
 {
-    return os << sha.getBytes().toHex();
+    return os << ripemd.getBytes().toHex();
 }
 
 //Sha3::Sha3(const Bytes& data) : _bytes(data), _type(getSha3Type(data.size()))

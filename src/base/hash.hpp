@@ -84,14 +84,28 @@ class Sha1
     base::Bytes _bytes;
 };
 
-
 std::ostream& operator<<(std::ostream& os, const Sha1& sha);
+
+} // namespace base
+
+
+namespace std
+{
+template<>
+struct hash<base::Sha1>
+{
+    std::size_t operator()(const base::Sha1& k) const;
+};
+} // namespace std
+
+
+namespace base
+{
 
 class Ripemd160
 {
   public:
     //----------------------------------
-
     Ripemd160(const Ripemd160&) = default;
     Ripemd160(Ripemd160&&) = default;
     Ripemd160(const Bytes& data);
@@ -99,42 +113,36 @@ class Ripemd160
     Ripemd160& operator=(const Ripemd160&) = default;
     Ripemd160& operator=(Ripemd160&&) = default;
     ~Ripemd160() = default;
-
     //----------------------------------
-
     std::string toHex() const;
-
     const base::Bytes& getBytes() const noexcept;
-
     //----------------------------------
-
-    static Ripemd160 fromHex(const std::string_view& hex_view);
-
+    static Ripemd160 fromHex(const std::string& hex_view);
     //----------------------------------
-
     bool operator==(const Ripemd160& another) const;
-
     bool operator!=(const Ripemd160& another) const;
-
     //----------------------------------
-
     static Ripemd160 compute(const base::Bytes& data);
-
     //----------------------------------
-
-    static SerializationOArchive& serialize(SerializationOArchive& oa, const Ripemd160& block);
-    
     SerializationOArchive& serialize(SerializationOArchive& oa) const;
-
     static Ripemd160 deserialize(SerializationIArchive& ia);
-
     //----------------------------------
   private:
     base::Bytes _bytes;
 };
 
-
 std::ostream& operator<<(std::ostream& os, const Ripemd160& sha);
+
+} // namespace base
+
+namespace std
+{
+template<>
+struct hash<base::Ripemd160>
+{
+    std::size_t operator()(const base::Ripemd160& k) const;
+};
+} // namespace std
 
 
 // class Sha3
@@ -187,7 +195,7 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& sha);
 //     //----------------------------------
 
 //     static SerializationOArchive& serialize(SerializationOArchive& oa, const Sha3& block);
-    
+
 //     SerializationOArchive& serialize(SerializationOArchive& oa) const;
 
 //     static Sha3 deserialize(SerializationIArchive& ia);
@@ -201,14 +209,4 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& sha);
 
 // std::ostream& operator<<(std::ostream& os, const Sha3& sha);
 
-} // namespace base
-
-
-namespace std
-{
-template<>
-struct hash<base::Sha1>
-{
-    std::size_t operator()(const base::Sha1& k) const;
-};
-} // namespace std
+//} // namespace base
