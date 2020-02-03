@@ -166,8 +166,8 @@ def main(node_exec_path, rpc_client_exec_path):
                 TEST_CHECK(client.run_check_balance(address=from_address, host_id=j, target_balance = init_amount - amount  + (i - 1) * 100))
 
     except Exception as exs:
-        print(exs)
         close_nodes(nodes)
+        raise exs
         return 1
         
     close_nodes(nodes)
@@ -203,8 +203,8 @@ def main(node_exec_path, rpc_client_exec_path):
                 TEST_CHECK(client.run_check_balance(address=from_address, host_id=j, target_balance = init_amount - amount  + (i - 1) * 100))
 
     except Exception as exs:
-        print(exs)
         close_nodes(nodes)
+        raise exs
         return 1
         
     close_nodes(nodes)
@@ -242,8 +242,8 @@ def main(node_exec_path, rpc_client_exec_path):
             for node_id in nodes_id:
                 TEST_CHECK(client.run_check_balance(address=addresses[i], host_id=node_id, target_balance = init_amount))
     except Exception as exs:
-        print(exs)
         close_nodes(nodes)
+        raise exs
         return 1
         
     close_nodes(nodes)

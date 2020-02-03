@@ -12,15 +12,27 @@ import logging
 import re
 
 
+class CheckFailedException(Exception):
+    pass
+
+
+class TimeOutException(Exception):
+    pass
+
+
 def TEST_CHECK(boolean_value, *, message=""):
     if not boolean_value:
+
         traceback_list = traceback.format_stack()
         log_message = ''
         for i in traceback_list:
             if(i.find('TEST_CHECK') > 0):
                 log_message = i
                 break
-        raise Exception(f"Check failed: {message}'\n'{log_message}")
+        if message and len(message) > 0:
+            raise CheckFailedException(f"Check failed: {message}.\n{log_message}")
+        else:
+            raise CheckFailedException(f"Check failed: {log_message}")
 
 
 def TEST_CHECK_EQUAL(left, right, *, message=""):
@@ -80,9 +92,10 @@ class Log:
 
 
 class NodeRunner:
+    DISTRIBUTOR_ADDRESS = '0' * 32
     BUFFER_FILE_NAME = "temp.lock"
     LOG_PREFIX = "NodeRunner"
-    CLOSE_TIME_PROCESS_OUT = 1
+    CLOSE_TIME_PROCESS_OUT = 2
     running = False
 
     def __init__(self, node_exec_path, node_config_content, work_dir, logger, start_up_time=1):
@@ -252,7 +265,7 @@ class Client:
         except subprocess.TimeoutExpired:
             message = f"{Client.LOG_PREFIX} - slow command execution {command} with parameters [{parameters}] at node {host_id.connect_rpc_address}"
             self.logger.info(message)
-            raise Exception(message)
+            raise TimeOutException(message)
 
         if pipe.returncode != 0:
             return Client.Result(not bool(pipe.returncode), pipe.stderr)
@@ -260,7 +273,8 @@ class Client:
         return Client.Result(not bool(pipe.returncode), pipe.stdout)
 
     def test(self, *, host_id, timeout=1):
-        result = self.__run(command="test", parameters=[], host_id=host_id, timeout=timeout)
+        result = self.__run(command="test", parameters=[],
+                            host_id=host_id, timeout=timeout)
         parsed_result = self.parse_result(result)
         self.logger.info(
             f"{Client.LOG_PREFIX} - test end to node address {host_id.connect_rpc_address} with result: \"{parsed_result}\"")
@@ -273,8 +287,8 @@ class Client:
         else:
             return False
 
-    def run_check_test(self, *, host_id):
-        return self.check_test_result(self.test(host_id=host_id))
+    def run_check_test(self, *, host_id, timeout=1):
+        return self.check_test_result(self.test(host_id=host_id, timeout=timeout))
 
     def transfer(self, *, from_address, to_address, amount, host_id, wait, timeout=1):
         parameters = ["--from", from_address, "--to",
@@ -301,8 +315,8 @@ class Client:
         else:
             return False
 
-    def run_check_transfer(self, *, from_address, to_address, amount, host_id, wait):
-        return self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, host_id=host_id, wait=wait))
+    def run_check_transfer(self, *, from_address, to_address, amount, host_id, wait, timeout=1):
+        return self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, host_id=host_id, wait=wait, timeout=timeout))
 
     def get_balance(self, *, address, host_id, timeout=1):
         result = self.__run(command="get_balance", parameters=[
@@ -319,24 +333,25 @@ class Client:
         else:
             return False
 
-    def run_check_balance(self, *, address, host_id, target_balance):
-        return self.check_get_balance_result(self.get_balance(address=address, host_id=host_id), target_balance)
+    def run_check_balance(self, *, address, host_id, target_balance, timeout=1):
+        return self.check_get_balance_result(self.get_balance(address=address, host_id=host_id, timeout=timeout), target_balance)
 
 
-__registered_tests = dict()
+__enabled_tests = dict()
+__disabled_tests = dict()
 
 
-def test_case(registration_test_case_name=""):
+def test_case(registration_test_case_name=None, disable=False):
     def test_case_registrator(func):
         if registration_test_case_name:
             test_name = registration_test_case_name
         else:
             test_name = func.__name__
-        print(f"Registered test case: {test_name}")
 
         __test_case_work_dir = os.path.join(os.getcwd(), test_name)
 
         def test_case_runner(*args, **kargs):
+            # change work directory for test
             if os.path.exists(__test_case_work_dir):
                 shutil.rmtree(__test_case_work_dir, ignore_errors=True)
             os.makedirs(__test_case_work_dir)
@@ -344,9 +359,15 @@ def test_case(registration_test_case_name=""):
 
             return func(*args, **kargs)
 
-        if test_name in __registered_tests.keys():
+        if test_name in __enabled_tests.keys() or test_name in __disabled_tests.keys():
             raise Exception(f"Test with this name[{test_name}] is exists")
-        __registered_tests[test_name] = test_case_runner
+
+        if disable:
+            print(f"Registered test case {test_name} is disabled")
+            __disabled_tests[test_name] = test_case_runner
+        else:
+            print(f"Registered test case {test_name} is enabled")
+            __enabled_tests[test_name] = test_case_runner
 
         return test_case_runner
     return test_case_registrator
@@ -361,32 +382,35 @@ def run_registered_test_cases(pattern, *args, **kargs):
         matcher = re.compile(pattern)
     except Exception as e:
         print(f"Invalid pattern: {e}")
-        exit(1)
-        
-    for registered_test_case_name in __registered_tests:
+        exit(2)
+
+    print(
+        f"Enabled tests: {len(__enabled_tests)}. Disabled tests: {len(__disabled_tests)}.")
+
+    for registered_test_case_name in __enabled_tests:
         if matcher.match(registered_test_case_name) is None:
             skipped_tests += 1
             continue
 
-        registered_test_case_runner = __registered_tests[registered_test_case_name]
+        registered_test_case_runner = __enabled_tests[registered_test_case_name]
 
-        print(f"Test case [{registered_test_case_name}] started.")
+        print(f"Test case {registered_test_case_name} started.")
 
         test_case_start_time = datetime.datetime.now()
         try:
             return_code = registered_test_case_runner(*args, **kargs)
         except Exception as error:
-            print(f"Catch unexpected exception: {error}")
+            print(error)
             return_code = 2
         test_case_execute_time = datetime.datetime.now() - test_case_start_time
 
         if return_code == 0:
             print(
-                f"Test case [{registered_test_case_name}] success. Execute time: {test_case_execute_time}.")
+                f"Test case {registered_test_case_name} success. Execute time: {test_case_execute_time}.")
             success_tests += 1
         else:
             print(
-                f"Test case [{registered_test_case_name}] failed. Execute time: {test_case_execute_time}.")
+                f"Test case {registered_test_case_name} failed. Execute time: {test_case_execute_time}.")
             failed_tests += 1
 
     all_tests = success_tests + failed_tests + skipped_tests

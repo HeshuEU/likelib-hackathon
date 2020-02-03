@@ -1,4 +1,4 @@
-from tester import Log, NodeRunner, NodeId, Client, TEST_CHECK, test_case
+from tester import Log, NodeRunner, NodeId, Client, TEST_CHECK, test_case, TimeOutException
 import concurrent.futures
 
 
@@ -216,13 +216,13 @@ def main(node_exec_path, rpc_client_exec_path):
             nodes_map[node_ids[i]] = nodes[i]
 
         # test for node initialization
-        for i in node_ids:
+        for node_id in node_ids:
             try:
-                TEST_CHECK(client.run_check_test(host_id=i))
-            except Exception as e:
-                pid = nodes_map[i].pid
-                print(f"Node in dead lock {pid}")
-                raise Exception(e)
+               TEST_CHECK(client.run_check_test(host_id=node_id))
+            except TimeOutException as e:
+                pid = nodes_map[node_id].pid
+                print(f"Node in dead lock pid:{pid}, address: {node_id.connect_sync_address}")
+                raise Exception(str(e))
 
         addresses = create_address_list(len(nodes))
 
@@ -238,10 +238,10 @@ def main(node_exec_path, rpc_client_exec_path):
                 try:
                     TEST_CHECK(client.run_check_balance(
                         address=to_address, host_id=node_id, target_balance=amount))
-                except Exception as e:
+                except TimeOutException as e:
                     pid = nodes_map[node_id].pid
-                    print(f"Node in dead lock {pid}")
-                    raise Exception(e)
+                    print(f"Node in dead lock pid:{pid}, address: {node_id.connect_sync_address}")
+                    raise Exception(str(e))
 
     except Exception as exs:
         print(exs)
