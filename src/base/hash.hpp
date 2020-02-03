@@ -87,54 +87,54 @@ class Sha1
 
 std::ostream& operator<<(std::ostream& os, const Sha1& sha);
 
-// class Ripemd160
-// {
-//   public:
-//     //----------------------------------
+class Ripemd160
+{
+  public:
+    //----------------------------------
 
-//     Ripemd160(const Ripemd160&) = default;
-//     Ripemd160(Ripemd160&&) = default;
-//     Ripemd160(const Bytes& data);
-//     Ripemd160(Bytes&& data);
-//     Ripemd160& operator=(const Ripemd160&) = default;
-//     Ripemd160& operator=(Ripemd160&&) = default;
-//     ~Ripemd160() = default;
+    Ripemd160(const Ripemd160&) = default;
+    Ripemd160(Ripemd160&&) = default;
+    Ripemd160(const Bytes& data);
+    Ripemd160(Bytes&& data);
+    Ripemd160& operator=(const Ripemd160&) = default;
+    Ripemd160& operator=(Ripemd160&&) = default;
+    ~Ripemd160() = default;
 
-//     //----------------------------------
+    //----------------------------------
 
-//     std::string toHex() const;
+    std::string toHex() const;
 
-//     const base::Bytes& getBytes() const noexcept;
+    const base::Bytes& getBytes() const noexcept;
 
-//     //----------------------------------
+    //----------------------------------
 
-//     static Ripemd160 fromHex(const std::string_view& hex_view);
+    static Ripemd160 fromHex(const std::string_view& hex_view);
 
-//     //----------------------------------
+    //----------------------------------
 
-//     bool operator==(const Ripemd160& another) const;
+    bool operator==(const Ripemd160& another) const;
 
-//     bool operator!=(const Ripemd160& another) const;
+    bool operator!=(const Ripemd160& another) const;
 
-//     //----------------------------------
+    //----------------------------------
 
-//     static Ripemd160 compute(const base::Bytes& data);
+    static Ripemd160 compute(const base::Bytes& data);
 
-//     //----------------------------------
+    //----------------------------------
 
-//     static SerializationOArchive& serialize(SerializationOArchive& oa, const Ripemd160& block);
+    static SerializationOArchive& serialize(SerializationOArchive& oa, const Ripemd160& block);
     
-//     SerializationOArchive& serialize(SerializationOArchive& oa) const;
+    SerializationOArchive& serialize(SerializationOArchive& oa) const;
 
-//     static Ripemd160 deserialize(SerializationIArchive& ia);
+    static Ripemd160 deserialize(SerializationIArchive& ia);
 
-//     //----------------------------------
-//   private:
-//     base::Bytes _bytes;
-// };
+    //----------------------------------
+  private:
+    base::Bytes _bytes;
+};
 
 
-// std::ostream& operator<<(std::ostream& os, const Ripemd160& sha);
+std::ostream& operator<<(std::ostream& os, const Ripemd160& sha);
 
 
 // class Sha3

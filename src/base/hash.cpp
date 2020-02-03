@@ -169,96 +169,96 @@ std::ostream& operator<<(std::ostream& os, const Sha1& sha)
 }
 
 
-// Ripemd160::Ripemd160(const Bytes& data) : _bytes(data)
-// {
-//     if(_bytes.size() != RIPEMD160_DIGEST_LENGTH) {
-//         RAISE_ERROR(InvalidArgument, "Not valid bytes size for Ripemd160");
-//     }
-// }
+Ripemd160::Ripemd160(const Bytes& data) : _bytes(data)
+{
+    if(_bytes.size() != RIPEMD160_DIGEST_LENGTH) {
+        RAISE_ERROR(InvalidArgument, "Not valid bytes size for Ripemd160");
+    }
+}
 
 
-// Ripemd160::Ripemd160(Bytes&& data) : _bytes(data)
-// {
-//     if(_bytes.size() != RIPEMD160_DIGEST_LENGTH) {
-//         RAISE_ERROR(InvalidArgument, "Not valid bytes size for Ripemd160");
-//     }
-// }
+Ripemd160::Ripemd160(Bytes&& data) : _bytes(data)
+{
+    if(_bytes.size() != RIPEMD160_DIGEST_LENGTH) {
+        RAISE_ERROR(InvalidArgument, "Not valid bytes size for Ripemd160");
+    }
+}
 
 
-// std::string Ripemd160::toHex() const
-// {
-//     return _bytes.toHex();
-// }
+std::string Ripemd160::toHex() const
+{
+    return _bytes.toHex();
+}
 
 
-// const base::Bytes& Ripemd160::getBytes() const noexcept
-// {
-//     return _bytes;
-// }
+const base::Bytes& Ripemd160::getBytes() const noexcept
+{
+    return _bytes;
+}
 
 
-// Ripemd160 Ripemd160::fromHex(const std::string_view& hex_view)
-// {
-//     auto bytes = Bytes::fromHex(hex_view);
-//     return Ripemd160(bytes);
-// }
+Ripemd160 Ripemd160::fromHex(const std::string_view& hex_view)
+{
+    auto bytes = Bytes::fromHex(hex_view);
+    return Ripemd160(bytes);
+}
 
 
-// bool Ripemd160::operator==(const Ripemd160& another) const
-// {
-//     return getBytes() == another.getBytes();
-// }
+bool Ripemd160::operator==(const Ripemd160& another) const
+{
+    return getBytes() == another.getBytes();
+}
 
 
-// bool Ripemd160::operator!=(const Ripemd160& another) const
-// {
-//     return getBytes() != another.getBytes();
-// }
+bool Ripemd160::operator!=(const Ripemd160& another) const
+{
+    return getBytes() != another.getBytes();
+}
 
 
-// Ripemd160 Ripemd160::compute(const base::Bytes& data)
-// {
-//     base::Bytes ret(RIPEMD160_DIGEST_LENGTH);
-//     std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(), EVP_MD_CTX_free);
-//     if(1 != EVP_DigestInit_ex(context.get(), EVP_ripemd160(), NULL)) {
-//         RAISE_ERROR(CryptoError, "failed to initialize context for Ripemd160");
-//     }
+Ripemd160 Ripemd160::compute(const base::Bytes& data)
+{
+    base::Bytes ret(RIPEMD160_DIGEST_LENGTH);
+    //std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(), EVP_MD_CTX_free);
+    RIPEMD160_CTX context;
+    if(1 != RIPEMD160_Init(&context)) {
+        RAISE_ERROR(CryptoError, "failed to initialize context for Ripemd160");
+    }
 
-//     if(1 != EVP_DigestUpdate(context.get(), data.toArray(), data.size())) {
-//         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
-//     }
+    if(1 != RIPEMD160_Update(&context, data.toArray(), data.size())) {
+        RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
+    }
 
-//     std::unique_ptr<unsigned int> hash_length;
-//     if(1 != EVP_DigestFinal_ex(context.get(), ret.toArray(), hash_length.get())) {
-//         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
-//     }
+    if(1 != RIPEMD160_Final(ret.toArray(), &context)) {
+        RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
+    }
 
-//     ASSERT(ret.size() == *hash_length);
-//     return Ripemd160(ret);
-// }
-
-
-// SerializationOArchive& Ripemd160::serialize(SerializationOArchive& oa) const
-// {
-//     return oa << _bytes;
-// }
+    ASSERT(ret.size() == RIPEMD160_DIGEST_LENGTH);
+    return Ripemd160(ret);
+}
 
 
-// Ripemd160 Ripemd160::deserialize(SerializationIArchive& ia)
-// {
-//     Bytes data;
-//     ia >> data;
-//     return Ripemd160(data);
-// }
+SerializationOArchive& Ripemd160::serialize(SerializationOArchive& oa) const
+{
+    return oa << _bytes;
+}
 
 
-// std::ostream& operator<<(std::ostream& os, const Ripemd160& sha)
-// {
-//     return os << sha.getBytes().toHex();
-// }
+Ripemd160 Ripemd160::deserialize(SerializationIArchive& ia)
+{
+    Bytes data;
+    ia >> data;
+    return Ripemd160(data);
+}
 
-// Sha3::Sha3(const Bytes& data) : _bytes(data), _type(getSha3Type(data.size()))
-// {}
+
+std::ostream& operator<<(std::ostream& os, const Ripemd160& sha)
+{
+    return os << sha.getBytes().toHex();
+}
+
+//Sha3::Sha3(const Bytes& data) : _bytes(data), _type(getSha3Type(data.size()))
+//{}
 
 
 // Sha3::Sha3(Bytes&& data) : _bytes(data), _type(getSha3Type(data.size()))
