@@ -23,7 +23,7 @@ def check_block_add(log_line):
 @test_case("test_transfer")
 def main(node_exec_path, rpc_client_exec_path):
 
-    logger = Log("test_transfer_log")
+    logger = Log("test.log")
     node_id = NodeId(sync_port=20206, rpc_port=50056)
 
     with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id), "node", logger=logger) as node:
@@ -53,7 +53,7 @@ def main(node_exec_path, rpc_client_exec_path):
 @test_case("test_transfer_failed")
 def main(node_exec_path, rpc_client_exec_path):
 
-    logger = Log("test_transfer_log")
+    logger = Log("test.log")
     node_id = NodeId(sync_port=20206, rpc_port=50056)
 
     with NodeRunner(node_exec_path, NodeRunner.generate_config(current_node_id=node_id), "node", logger=logger) as node:
