@@ -145,6 +145,8 @@ struct hash<base::Ripemd160>
 } // namespace std
 
 
+// namespace base
+// {
 // class Sha3
 // {
 //   public:
@@ -209,4 +211,14 @@ struct hash<base::Ripemd160>
 
 // std::ostream& operator<<(std::ostream& os, const Sha3& sha);
 
-//} // namespace base
+// } // namespace base
+
+
+// namespace std
+// {
+// template<>
+// struct hash<base::Sha3>
+// {
+//     std::size_t operator()(const base::Sha3& k) const;
+// };
+// } // namespace std

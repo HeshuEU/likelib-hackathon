@@ -256,8 +256,10 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& ripemd)
     return os << ripemd.getBytes().toHex();
 }
 
-//Sha3::Sha3(const Bytes& data) : _bytes(data), _type(getSha3Type(data.size()))
-//{}
+} // namespace base
+
+// Sha3::Sha3(const Bytes& data) : _bytes(data), _type(getSha3Type(data.size()))
+// {}
 
 
 // Sha3::Sha3(Bytes&& data) : _bytes(data), _type(getSha3Type(data.size()))
@@ -317,18 +319,22 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& ripemd)
 //             if(1 != EVP_DigestInit_ex(context.get(), EVP_sha3_224(), NULL)){
 //                 RAISE_ERROR(CryptoError, "failed to initialize context");
 //             }
+//             break;
 //         case(Sha3::Sha3Type::Sha3Type256):
 //             if(1 != EVP_DigestInit_ex(context.get(), EVP_sha3_256(), NULL)){
 //                 RAISE_ERROR(CryptoError, "failed to initialize context");
 //             }
+//             break;
 //         case(Sha3::Sha3Type::Sha3Type384):
 //             if(1 != EVP_DigestInit_ex(context.get(), EVP_sha3_384(), NULL)){
 //                 RAISE_ERROR(CryptoError, "failed to initialize context");
 //             }
+//             break;
 //         case(Sha3::Sha3Type::Sha3Type512):
 //             if(1 != EVP_DigestInit_ex(context.get(), EVP_sha3_512(), NULL)){
 //                 RAISE_ERROR(CryptoError, "failed to initialize context");
 //             }
+//             break;
 //         default:
 //             RAISE_ERROR(InvalidArgument, "Sha3 type is not valid");
 //     }
@@ -387,7 +393,7 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& ripemd)
 //     return os << sha.getBytes().toHex();
 // }
 
-} // namespace base
+// } // namespace base
 
 
 std::size_t std::hash<base::Sha256>::operator()(const base::Sha256& k) const
