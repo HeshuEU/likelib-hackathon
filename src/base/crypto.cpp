@@ -71,6 +71,19 @@ RsaPublicKey::RsaPublicKey(const base::Bytes& key_word)
 {}
 
 
+RsaPublicKey::RsaPublicKey(const RsaPublicKey& another)
+    : _rsa_key(loadKey(another.toBytes())), _encrypted_message_size(another._encrypted_message_size)
+{}
+
+
+RsaPublicKey& RsaPublicKey::operator=(const RsaPublicKey& another)
+{
+    _rsa_key = loadKey(another.toBytes());
+    _encrypted_message_size = another._encrypted_message_size;
+    return *this;
+}
+
+
 Bytes RsaPublicKey::encrypt(const Bytes& message) const
 {
     if(message.size() > maxEncryptSize()) {
@@ -585,7 +598,7 @@ base::Bytes base64Decode(const base::Bytes& base64_bytes)
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bio = BIO_push(b64, bio);
     auto new_length = BIO_read(bio, ret.toArray(), base64_bytes.size());
-    if(new_length < 1){
+    if(new_length < 1) {
         RAISE_ERROR(CryptoError, "Base64 decode write error");
     }
 
