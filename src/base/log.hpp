@@ -65,14 +65,14 @@ class Logger
 public:
     template<typename T>
     void print(T&& obj) const {
-        static std::mutex mut;
-        mut.lock();
         oss << obj;
-        mut.unlock();
     }
 
     ~Logger() {
+        static std::mutex mut;
+        mut.lock();
         BOOST_LOG_TRIVIAL(debug) << oss.str();
+        mut.unlock();
     }
 
 private:
