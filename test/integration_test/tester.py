@@ -84,12 +84,15 @@ class Log:
 
     def info(self, message):
         self.logger.info(message)
+        self.logger.handlers[0].flush()
 
     def debug(self, message):
         self.logger.debug(message)
+        self.logger.handlers[0].flush()
 
     def error(self, message):
         self.logger.error(message)
+        self.logger.handlers[0].flush()
 
 
 class NodeRunner:

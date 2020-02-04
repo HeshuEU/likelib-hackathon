@@ -26,7 +26,7 @@ void GrpcNodeServer::run()
     builder.RegisterService(&_service);
     _server = builder.BuildAndStart();
     if(selected_port == -1 || selected_port == 0) {
-        _server->Shutdown();
+        // _server->Shutdown();
         RAISE_ERROR(rpc::RpcError, "RPC cannot bind to a selected port");
     }
 }

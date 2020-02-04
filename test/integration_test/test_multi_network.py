@@ -1,5 +1,5 @@
 from tester import Log, NodeRunner, NodeId, Client, TEST_CHECK, test_case, TimeOutException
-import concurrent.futures
+import concurrent.futures, time
 
 
 def check_test_received(log_line):
@@ -161,7 +161,7 @@ def create_address_list(addresses_count):
     return addresses
 
 
-@test_case("test_multi_network_parallel_stress_test")
+@test_case("test_multi_network_parallel_stress_test", True)
 def main(node_exec_path, rpc_client_exec_path):
     logger = Log("test.log")
     start_sync_port = 20230
@@ -212,6 +212,7 @@ def main(node_exec_path, rpc_client_exec_path):
             except TimeOutException as e:
                 pid = nodes_map[node_id].pid
                 print(f"Node in dead lock pid:{pid}, address: {node_id.connect_sync_address}")
+                time.sleep(10000)
                 raise Exception(str(e))
 
         addresses = create_address_list(len(nodes))
@@ -231,6 +232,7 @@ def main(node_exec_path, rpc_client_exec_path):
                 except TimeOutException as e:
                     pid = nodes_map[node_id].pid
                     print(f"Node in dead lock pid:{pid}, address: {node_id.connect_sync_address}")
+                    time.sleep(10000)
                     raise Exception(str(e))
 
     except Exception as exs:
