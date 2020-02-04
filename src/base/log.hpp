@@ -2,10 +2,8 @@
 
 #include <boost/current_function.hpp>
 #include <boost/log/trivial.hpp>
-#include <boost/log/sources/global_logger_storage.hpp>
 #include <boost/log/sources/logger.hpp>
 #include <boost/log/trivial.hpp>
-#include <boost/log/sources/global_logger_storage.hpp>
 #include <boost/log/sources/features.hpp>
 #include <boost/log/sources/threading_models.hpp>
 #include <boost/log/sources/global_logger_storage.hpp>
@@ -71,7 +69,7 @@ class Logger
 
     ~Logger()
     {
-        static std::mutex mut;
+        static std::recursive_mutex mut;
         mut.lock();
         BOOST_LOG_TRIVIAL(debug) << oss.str();
         mut.unlock();
