@@ -267,9 +267,15 @@ class Client:
             pipe = subprocess.run(
                 run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
         except subprocess.TimeoutExpired:
-            message = f"{Client.LOG_PREFIX} - slow command execution {command} with parameters [{parameters}] at node {host_id.connect_rpc_address}"
-            self.logger.info(message)
-            raise TimeOutException(message)
+            self.logger.info(f"First slow command execution {command} with parameters [{parameters}] at node {host_id.connect_rpc_address}")
+            self.logger.info(f"make new {command} with parameters [{parameters}] at node {host_id.connect_rpc_address}")
+            print(f"retrace command {command} with parameters [{parameters}] at node {host_id.connect_rpc_address}")
+            try:
+                pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
+            except subprocess.TimeoutExpired:
+                message = f"{Client.LOG_PREFIX} - slow command execution {command} with parameters [{parameters}] at node {host_id.connect_rpc_address}"
+                self.logger.info(message)
+                raise TimeOutException(message)
 
         if pipe.returncode != 0:
             return Client.Result(not bool(pipe.returncode), pipe.stderr)
