@@ -192,8 +192,6 @@ def main(node_exec_path, rpc_client_exec_path):
             current_thread.start()
             threads.append(current_thread)
 
-        print(f"threads started: {len(threads)}")
-
         for thread in threads:
             thread.join() 
 
