@@ -157,6 +157,13 @@ class NodeTester:
             print(f"{self.name} - is in dead lock. pid {self.pid}, rpc address: {self.id.connect_rpc_address}")
             self.logger.info(message)
             raise TimeOutException(message)
+            # try:
+            #     print(f"{self.name} - recall command {command} with parameters {parameters} at node {self.id.connect_rpc_address}")
+            #     pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
+            # except subprocess.TimeoutExpired:
+            #     message = f"{self.name} - recall client slow command execution {command} with parameters {parameters} at node {self.id.connect_rpc_address}"
+            #     self.logger.info(message)
+            #     raise TimeOutException(message)
 
         if pipe.returncode != 0:
             return NodeTester.Result(not bool(pipe.returncode), pipe.stderr)
