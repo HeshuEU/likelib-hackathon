@@ -71,7 +71,7 @@ class Logger
     {
         static std::recursive_mutex mut;
         mut.lock();
-        BOOST_LOG_TRIVIAL(debug) << oss.str();
+        // BOOST_LOG_TRIVIAL(debug) << oss.str();
         mut.unlock();
     }
 
