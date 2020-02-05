@@ -375,8 +375,7 @@ def run_registered_test_cases(pattern, *args, **kargs):
         print(f"Invalid pattern: {e}")
         exit(2)
 
-    print(
-        f"Enabled tests: {len(__enabled_tests)}. Disabled tests: {len(__disabled_tests)}.")
+    print(f"Enabled tests: {len(__enabled_tests)}. Disabled tests: {len(__disabled_tests)}.")
 
     for registered_test_case_name in __enabled_tests:
         if matcher.match(registered_test_case_name) is None:
@@ -392,15 +391,12 @@ def run_registered_test_cases(pattern, *args, **kargs):
         test_case_execute_time = datetime.datetime.now() - test_case_start_time
 
         if return_code == 0:
-            print(
-                f"Test case {registered_test_case_name} success. Execute time: {test_case_execute_time}.")
+            print(f"Test case {registered_test_case_name} success. Execute time: {test_case_execute_time}.")
             success_tests += 1
         else:
-            print(
-                f"Test case {registered_test_case_name} failed. Execute time: {test_case_execute_time}.")
+            print(f"Test case {registered_test_case_name} failed. Execute time: {test_case_execute_time}.")
             failed_tests += 1
 
     all_tests = success_tests + failed_tests + skipped_tests
-    print(
-        f"All test cases: {all_tests}. Passed tests: {success_tests}. Failed tests: {failed_tests}. Skipped tests: {skipped_tests}.")
+    print(f"All test cases: {all_tests}. Passed tests: {success_tests}. Failed tests: {failed_tests}. Skipped tests: {skipped_tests}.")
     return failed_tests
