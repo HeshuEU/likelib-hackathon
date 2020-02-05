@@ -60,7 +60,7 @@ Unit tests:
 
 
 Integration tests:
-  timeout: 15m
+  timeout: 25m
   stage: integration-tests
   image: heshuby/prepare_build:2019-12-20
   tags:
