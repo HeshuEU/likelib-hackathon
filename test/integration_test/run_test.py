@@ -9,7 +9,6 @@ import test_transfer
 import test_multi_network
 import test_multi_transfer
 
-# TODO: make script multi-platform
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test execution params')
