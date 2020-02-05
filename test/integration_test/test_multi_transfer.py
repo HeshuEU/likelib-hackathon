@@ -155,7 +155,7 @@ def main(node_exec_path, rpc_client_exec_path):
     start_sync_port = 20330
     start_rpc_port = 50180
     node_startup_time = 5
-    transaction_wait = 10
+    transaction_wait = 5
 
     init_amount = 1000
     address_per_nodes = 3

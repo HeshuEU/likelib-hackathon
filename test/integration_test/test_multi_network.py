@@ -87,7 +87,7 @@ def main(node_exec_path, rpc_client_exec_path):
     count_nodes_per_thread = 5
     
     amount = 1000
-    transaction_wait = 10
+    transaction_wait = 5
 
     node_ids = list()
     for i in range(count_threads * count_nodes_per_thread+1):
