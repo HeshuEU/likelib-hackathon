@@ -51,7 +51,7 @@ class RsaPrivateKey
   public:
     //=================
     RsaPrivateKey(const Bytes& key_word);
-    RsaPrivateKey(const RsaPrivateKey& another) = default;
+    RsaPrivateKey(const RsaPrivateKey& another) = delete;
     RsaPrivateKey(RsaPrivateKey&& another) = default;
     RsaPrivateKey& operator=(const RsaPrivateKey& another) = default;
     RsaPrivateKey& operator=(RsaPrivateKey&& another) = default;
