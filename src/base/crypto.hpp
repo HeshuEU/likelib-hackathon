@@ -50,7 +50,6 @@ class RsaPrivateKey
 {
   public:
     //=================
-    RsaPrivateKey() = default;
     RsaPrivateKey(const Bytes& key_word);
     RsaPrivateKey(const RsaPrivateKey& another) = default;
     RsaPrivateKey(RsaPrivateKey&& another) = default;
