@@ -102,7 +102,7 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
     auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
     if(pending_from_account_balance != current_pending_balance.end()) {
         auto current_from_account_balance = _balance_manager.getBalance(tx.getFrom());
-        return ((pending_from_account_balance->second + current_from_account_balance - tx.getAmount()) >= 0);
+        return ((pending_from_account_balance->second + current_from_account_balance) >= tx.getAmount());
     }
     else {
         return _balance_manager.checkTransaction(tx);
