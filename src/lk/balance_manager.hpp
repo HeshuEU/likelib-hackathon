@@ -20,7 +20,7 @@ class BalanceManager
     BalanceManager(BalanceManager&& hash) = default;
 
     BalanceManager& operator=(const BalanceManager& another) = delete;
-    BalanceManager& operator=(BalanceManager&& another) = default;
+    BalanceManager& operator=(BalanceManager&& another) = delete;
     ~BalanceManager() = default;
     //================
     bool checkTransaction(const bc::Transaction& tx) const;
