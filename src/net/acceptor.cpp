@@ -8,11 +8,12 @@ namespace net
 {
 
 Acceptor::Acceptor(ba::io_context& io_context, const Endpoint& listen_endpoint)
-    : _io_context{io_context}, _listen_endpoint{listen_endpoint}, _acceptor{_io_context,
-                                                                      static_cast<ba::ip::tcp::endpoint>(
-                                                                          listen_endpoint)}
+    : _io_context{io_context}, _listen_endpoint{listen_endpoint}, _acceptor{_io_context}
 {
+    _acceptor.open(static_cast<ba::ip::tcp::endpoint>(listen_endpoint).protocol());
     _acceptor.set_option(ba::socket_base::reuse_address(true));
+    _acceptor.bind(static_cast<ba::ip::tcp::endpoint>(listen_endpoint));
+    _acceptor.listen();
 }
 
 

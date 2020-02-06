@@ -224,6 +224,20 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional
 }
 
 
+template<typename U, typename V>
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::pair<U, V>& p)
+{
+    return ia >> p.first >> p.second;
+}
+
+
+template<typename U, typename V>
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::pair<U, V>& p)
+{
+    return oa << p.first << p.second;
+}
+
+
 template<typename T>
 base::Bytes toBytes(const T& value)
 {
