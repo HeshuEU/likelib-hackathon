@@ -1,23 +1,7 @@
-find_package(Protobuf REQUIRED)
-find_package(GRPC REQUIRED)
-find_package(ZLIB REQUIRED)
+set(GLOBAL_PROTOBUF_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/grpc/protobuf/public_rpc.proto)
+set(GLOBAL_OUTPUT_CODE_DIR ${CMAKE_BINARY_DIR}/grpc/gen)
 
-set(PROTOBUF_FILE_NAME public_rpc.proto)
-set(LOCAL_PROTOBUF_DIR grpc/protobuf)
-set(LOCAL_GENERATE_OUTPUT_DIR grpc/gen)
-set(GLOBAL_PROTOBUF_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${LOCAL_PROTOBUF_DIR}/${PROTOBUF_FILE_NAME})
-set(GLOBAL_OUTPUT_CODE_DIR ${CMAKE_BINARY_DIR}/${LOCAL_GENERATE_OUTPUT_DIR})
-set(GLOBAL_PROTOBUF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${LOCAL_PROTOBUF_DIR})
-
-IF(EXISTS ${GLOBAL_OUTPUT_CODE_DIR})
-    file(REMOVE_RECURSE ${GLOBAL_OUTPUT_CODE_DIR})
-ENDIF()
-file(MAKE_DIRECTORY ${GLOBAL_OUTPUT_CODE_DIR})
-find_path(GRPC_CPP_PLUGIN_DIR grpc_cpp_plugin ${_VCPKG_TOOLS_DIRS})
-set(GRPC_CPP_PLUGIN ${GRPC_CPP_PLUGIN_DIR}/grpc_cpp_plugin)
-
-execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${GLOBAL_PROTOBUF_DIR} --grpc_out=${GLOBAL_OUTPUT_CODE_DIR} --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN} ${GLOBAL_PROTOBUF_FILE_PATH})
-execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${GLOBAL_PROTOBUF_DIR} --cpp_out=${GLOBAL_OUTPUT_CODE_DIR} "${GLOBAL_PROTOBUF_FILE_PATH}")
+GRPC_GENERATE_CPP(GENERATED_SOURCES GENERATED_HEADERS ${GLOBAL_OUTPUT_CODE_DIR} ${GLOBAL_PROTOBUF_FILE_PATH})
 
 set(RPC_HEADERS
         grpc/grpc_adapter.hpp
@@ -31,14 +15,11 @@ set(RPC_HEADERS
 set(RPC_SOURCES
         grpc/grpc_adapter.cpp
         grpc/grpc_node_server.cpp
-        grpc/grpc_node_client.cpp)
+        grpc/grpc_node_client.cpp
+        )
 
-include_directories(${GLOBAL_OUTPUT_CODE_DIR})
+add_library(rpc ${RPC_HEADERS} ${RPC_SOURCES} ${GENERATED_HEADERS} ${GENERATED_SOURCES})
 
-file(GLOB GRPC_GENERATED ${GLOBAL_OUTPUT_CODE_DIR}/*.pb.*)
+target_include_directories(rpc PUBLIC ${GLOBAL_OUTPUT_CODE_DIR} ${GRPC_INCLUDE_DIR} ${PROTOBUF_INCLUDE_DIR})
 
-add_library(rpc ${RPC_HEADERS} ${RPC_SOURCES} ${GRPC_GENERATED})
-
-target_include_directories(rpc PUBLIC ${GLOBAL_OUTPUT_CODE_DIR})
-
-target_link_libraries(rpc base bc gRPC::grpc++ gRPC::grpc protobuf::libprotobuf ZLIB::ZLIB)
+target_link_libraries(rpc base bc gRPC::grpc++_unsecure gRPC::grpc++_error_details gRPC::grpc_cronet gRPC::address_sorting gRPC::grpc++_reflection gRPC::grpc_unsecure gRPC::grpcpp_channelz gRPC::gpr gRPC::grpc++ gRPC::grpc gRPC::upb protobuf::libprotobuf cares::cares zlib::zlib)
