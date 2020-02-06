@@ -74,6 +74,27 @@ BOOST_AUTO_TEST_CASE(Rsa_serialization_constructor)
     BOOST_CHECK((msg == dec_msg1) && (msg == dec_msg2));
 }
 
+
+BOOST_AUTO_TEST_CASE(RsaPubKey_constructor_from_file_save_in_file)
+{
+    auto [pub_rsa, priv_rsa] = base::generateKeys(2012);
+    base::RsaPublicKey pub_rsa2(pub_rsa);
+    auto [pub_rsa3, priv_rsa3] = base::generateKeys(2344);
+    pub_rsa3 = pub_rsa;
+
+    BOOST_CHECK(pub_rsa.toBytes() == pub_rsa2.toBytes());
+    BOOST_CHECK(pub_rsa.toBytes() == pub_rsa3.toBytes());
+    BOOST_CHECK(pub_rsa3.toBytes() == pub_rsa2.toBytes());
+
+    base::Bytes msg("RSa_FI1E_TES!");
+    auto enc_msg = priv_rsa.encrypt(msg);
+
+    BOOST_CHECK(pub_rsa.decrypt(enc_msg) == msg);
+    BOOST_CHECK(pub_rsa2.decrypt(enc_msg) == msg);
+    BOOST_CHECK(pub_rsa3.decrypt(enc_msg) == msg);
+}
+
+
 BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_save_in_file)
 {
     auto [pub_rsa, priv_rsa] = base::generateKeys(3738);

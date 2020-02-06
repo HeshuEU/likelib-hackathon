@@ -73,6 +73,19 @@ RsaPublicKey::RsaPublicKey(const base::Bytes& key_word)
 {}
 
 
+RsaPublicKey::RsaPublicKey(const RsaPublicKey& another)
+    : _rsa_key(loadKey(another.toBytes())), _encrypted_message_size(another._encrypted_message_size)
+{}
+
+
+RsaPublicKey& RsaPublicKey::operator=(const RsaPublicKey& another)
+{
+    _rsa_key = loadKey(another.toBytes());
+    _encrypted_message_size = another._encrypted_message_size;
+    return *this;
+}
+
+
 Bytes RsaPublicKey::encrypt(const Bytes& message) const
 {
     if(message.size() > maxEncryptSize()) {

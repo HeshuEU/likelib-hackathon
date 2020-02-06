@@ -17,9 +17,9 @@ class RsaPublicKey
   public:
     //=================
     RsaPublicKey(const Bytes& key_word);
-    RsaPublicKey(const RsaPublicKey& another) = default;
+    RsaPublicKey(const RsaPublicKey& another);
     RsaPublicKey(RsaPublicKey&& another) = default;
-    RsaPublicKey& operator=(const RsaPublicKey& another) = default;
+    RsaPublicKey& operator=(const RsaPublicKey& another);
     RsaPublicKey& operator=(RsaPublicKey&& another) = default;
     //=================
     Bytes encrypt(const Bytes& message) const;
