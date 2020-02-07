@@ -65,7 +65,7 @@ class BaseRpc
         bc::Balance gas, const base::Bytes& message) = 0;
 
     virtual OperationStatus transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-        const bc::Address& to_address, const base::Time& transaction_time) = 0;
+        const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time) = 0;
 };
 
 } // namespace rpc

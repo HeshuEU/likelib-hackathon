@@ -48,6 +48,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 grpc::Status GrpcAdapter::test(
     grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response)
 {
+    LOG_DEBUG << "get RPC call at test method from:" << context->peer();
     try {
         auto status = _service->test(request->interface_version());
         convert(status, response->mutable_status());
@@ -63,6 +64,7 @@ grpc::Status GrpcAdapter::test(
 grpc::Status GrpcAdapter::balance(
     grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response)
 {
+    LOG_DEBUG << "get RPC call at balance method from:" << context->peer();
     try {
         response->set_money(_service->balance(request->address_at_hex()));
     }
@@ -76,10 +78,11 @@ grpc::Status GrpcAdapter::balance(
 grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
     const likelib::TransactionToContractRequest* request, likelib::TransactionToContractResponse* response)
 {
+    LOG_DEBUG << "get RPC call at transaction_to_contract method from:" << context->peer();
     try {
-        auto amount = request->value().money();
-        auto from_address = request->from().address_at_hex();
-        auto to_address = request->to().address_at_hex();
+        auto amount = bc::Balance{request->value().money()};
+        auto from_address = bc::Address{request->from().address_at_hex()};
+        auto to_address = bc::Address{request->to().address_at_hex()};
         auto gas = bc::Balance{request->gas().money()};
         auto creation_time = convert(request->creation_time());
         auto message = base::Bytes::fromHex(request->contract_request().message_at_hex());
@@ -89,6 +92,7 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
         bc::Balance least_gas;
         std::tie(status, contract_response, least_gas) =
             _service->transaction_to_contract(amount, from_address, to_address, creation_time, gas, message);
+
         convert(status, response->mutable_status());
         response->mutable_contract_response()->set_message_at_hex(contract_response.toString());
         response->mutable_gas_left()->set_money(least_gas);
@@ -105,9 +109,10 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
     const ::likelib::TransactionCreationContractRequest* request,
     ::likelib::TransactionCreationContractResponse* response)
 {
+    LOG_DEBUG << "get RPC call at transaction_for_create_contract method from:" << context->peer();
     try {
-        auto amount = request->value().money();
-        auto from_address = request->from().address_at_hex();
+        auto amount = bc::Balance{request->value().money()};
+        auto from_address = bc::Address{request->from().address_at_hex()};
         auto gas = bc::Balance{request->gas().money()};
         auto creation_time = convert(request->creation_time());
         auto contract_code = base::Bytes::fromHex(request->contract().bytecode_at_hex());
@@ -119,6 +124,7 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
         bc::Balance least_gas;
         std::tie(status, contract_address, least_gas) = _service->transaction_creation_contract(
             amount, from_address, creation_time, gas, code_revision, contract_code, initial_message);
+
         convert(status, response->mutable_status());
         response->mutable_contract_address_at_hex()->set_address_at_hex(contract_address.toString());
         response->mutable_gas_left()->set_money(least_gas);
@@ -134,13 +140,15 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
 grpc::Status GrpcAdapter::transaction_to_wallet(grpc::ServerContext* context,
     const likelib::TransactionToAccountRequest* request, likelib::TransactionToAccountResponse* response)
 {
+    LOG_DEBUG << "get RPC call at transaction_to_wallet method from:" << context->peer();
     try {
-        auto from_address = request->from().address_at_hex();
-        auto to_address = request->to().address_at_hex();
-        auto amount = request->value().money();
+        auto amount = bc::Balance{request->value().money()};
+        auto from_address = bc::Address{request->from().address_at_hex()};
+        auto to_address = bc::Address{request->to().address_at_hex()};
+        auto fee = bc::Balance{request->fee().money()};
         auto creation_time = convert(request->creation_time());
 
-        auto status = _service->transaction_to_wallet(amount, from_address, to_address, creation_time);
+        auto status = _service->transaction_to_wallet(amount, from_address, to_address, fee, creation_time);
 
         convert(status, response->mutable_status());
     }

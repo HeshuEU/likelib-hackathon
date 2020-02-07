@@ -68,7 +68,8 @@ message TransactionToAccountRequest {
     Money value = 1;
     Address from = 2;
     Address to = 3;
-    Time creation_time = 4;
+    Money fee = 4;
+    Time creation_time = 5;
 }
 
 message TransactionToAccountResponse {

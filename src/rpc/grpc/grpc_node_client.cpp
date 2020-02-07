@@ -161,7 +161,7 @@ std::tuple<OperationStatus, base::Bytes, bc::Balance> GrpcNodeClient::transactio
 }
 
 OperationStatus GrpcNodeClient::transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, const base::Time& transaction_time)
+    const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time)
 {
     // convert data for request
     likelib::TransactionToAccountRequest request;
@@ -171,6 +171,8 @@ OperationStatus GrpcNodeClient::transaction_to_wallet(bc::Balance amount, const 
     request.mutable_from()->set_address_at_hex(from_address.toString());
 
     request.mutable_to()->set_address_at_hex(to_address.toString());
+
+    request.mutable_fee()->set_money(fee);
 
     fill_time(transaction_time, request.mutable_creation_time());
 

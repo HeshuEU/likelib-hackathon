@@ -32,7 +32,7 @@ class GrpcNodeClient final : BaseRpc
         bc::Balance gas, const base::Bytes& message) override;
 
     OperationStatus transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-        const bc::Address& to_address, const base::Time& transaction_time) override;
+        const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time) override;
 
   private:
     std::unique_ptr<likelib::NodePublicInterface::Stub> _stub;
