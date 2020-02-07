@@ -29,7 +29,8 @@ Build:
       ========================================================================= \033[0m"
   artifacts:
     paths:
-      - build
+      - build_realese
+      - build_debug
     expire_in: 1 week
 
 
