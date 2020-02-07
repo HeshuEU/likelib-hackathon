@@ -91,4 +91,4 @@ Valgrind test:
       echo -e "\033[40;1;42m ========================================================================= 
        ==                          Start memory check                         == \n \
       ========================================================================= \033[0m"
-    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
