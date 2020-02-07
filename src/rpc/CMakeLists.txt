@@ -20,6 +20,6 @@ set(RPC_SOURCES
 
 add_library(rpc ${RPC_HEADERS} ${RPC_SOURCES} ${GENERATED_HEADERS} ${GENERATED_SOURCES})
 
-target_include_directories(rpc PUBLIC ${GLOBAL_OUTPUT_CODE_DIR} ${GRPC_INCLUDE_DIR} ${PROTOBUF_INCLUDE_DIR})
+target_include_directories(rpc PUBLIC ${GLOBAL_OUTPUT_CODE_DIR} ${RPC_MODULE_INCLUDE})
 
-target_link_libraries(rpc base bc gRPC::grpc++_unsecure gRPC::grpc++_error_details gRPC::grpc_cronet gRPC::address_sorting gRPC::grpc++_reflection gRPC::grpc_unsecure gRPC::grpcpp_channelz gRPC::gpr gRPC::grpc++ gRPC::grpc gRPC::upb protobuf::libprotobuf cares::cares zlib::zlib)
+target_link_libraries(rpc base bc gRPC::grpc_module)

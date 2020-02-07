@@ -1,14 +1,14 @@
 function(GRPC_GENERATE_CPP SRCS HDRS DEST)
-    if(NOT ARGN)
+    if (NOT ARGN)
         message(SEND_ERROR "Error: GRPC_GENERATE_CPP() called without any proto files")
         return()
-    endif()
+    endif ()
 
-    list (LENGTH ARGN __ARGS_COUNT)
+    list(LENGTH ARGN __ARGS_COUNT)
     if (${__ARGS_COUNT} GREATER 1)
         message(SEND_ERROR "To much arguments")
         return()
-    endif()
+    endif ()
 
     IF (NOT EXISTS ${DEST})
         file(MAKE_DIRECTORY ${DEST})
@@ -16,7 +16,7 @@ function(GRPC_GENERATE_CPP SRCS HDRS DEST)
 
     set(${SRCS})
     set(${HDRS})
-    foreach(FIL ${ARGN})
+    foreach (FIL ${ARGN})
         get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
         get_filename_component(FIL_WE ${FIL} NAME_WE)
         get_filename_component(FIL_DIR ${FIL} DIRECTORY)
@@ -28,7 +28,7 @@ function(GRPC_GENERATE_CPP SRCS HDRS DEST)
         execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${FIL_DIR} --cpp_out=${DEST} ${ABS_FIL})
         list(APPEND ${SRCS} "${DEST}/${FIL_WE}.pb.cc")
         list(APPEND ${HDRS} "${DEST}/${FIL_WE}.pb.h")
-    endforeach()
+    endforeach ()
 
     set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
     set(${SRCS} ${${SRCS}} PARENT_SCOPE)
@@ -42,8 +42,14 @@ find_path(PROTOBUF_INCLUDE_DIR google/protobuf/service.h)
 mark_as_advanced(PROTOBUF_INCLUDE_DIR)
 
 
+string(COMPARE EQUAL "${CMAKE_BUILD_TYPE}" "Debug" _cmp)
+
 # The Protobuf library
-find_library(PROTOBUF_LIBRARY NAMES protobufd)
+if (_cmp)
+    find_library(PROTOBUF_LIBRARY NAMES protobufd)
+else ()
+    find_library(PROTOBUF_LIBRARY NAMES protobuf)
+endif ()
 mark_as_advanced(PROTOBUF_LIBRARY)
 add_library(protobuf::libprotobuf UNKNOWN IMPORTED)
 set_target_properties(protobuf::libprotobuf PROPERTIES
@@ -212,6 +218,15 @@ set_target_properties(gRPC::grpc_cpp_plugin PROPERTIES
         IMPORTED_LOCATION ${GRPC_CPP_PLUGIN}
         )
 
+
+# Find gRPC Module library
+add_library(gRPC::grpc_module UNKNOWN IMPORTED)
+set_target_properties(gRPC::grpc_module PROPERTIES
+        INTERFACE_LINK_LIBRARIES "gRPC::grpc++_error_details;gRPC::grpcpp_channelz;gRPC::grpc++_unsecure;gRPC::grpc_unsecure;gRPC::address_sorting;gRPC::grpc_cronet;gRPC::upb;gRPC::gpr;gRPC::grpc++_reflection;gRPC::grpc++;gRPC::grpc;zlib::zlib;protobuf::libprotobuf;cares::cares"
+        IMPORTED_LOCATION ${GRPC_GRPC++_LIBRARY}
+        )
+
+set(RPC_MODULE_INCLUDE ${GRPC_INCLUDE_DIR} ${PROTOBUF_INCLUDE_DIR})
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(gRPC DEFAULT_MSG
         GRPC_LIBRARY GRPC_INCLUDE_DIR GRPC_GRPC++_REFLECTION_LIBRARY GRPC_CPP_PLUGIN)
