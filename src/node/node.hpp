@@ -5,22 +5,23 @@
 #include "node/miner.hpp"
 #include "rpc/rpc.hpp"
 #include "node/rpc_service.hpp"
-#include "node/key_vault.hpp"
+#include "base/crypto.hpp"
 
 class Node
 {
   public:
-    Node(const base::PropertyTree& config);
+    explicit Node(const base::PropertyTree& config);
     void run();
 
   private:
     const base::PropertyTree& _config;
+    //---------------------------
+    base::KeyVault _key_vault;
+    //---------------------------
     lk::Core _core;
     std::unique_ptr<rpc::RpcServer> _rpc;
     //---------------------------
     std::unique_ptr<Miner> _miner;
-    //---------------------------
-    crypto::KeyVault _key_vault;
     //---------------------------
     static base::Bytes getMiningComplexity();
     //---------------------------

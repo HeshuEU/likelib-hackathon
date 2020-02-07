@@ -11,12 +11,16 @@ BalanceManager::BalanceManager(const std::map<bc::Address, bc::Balance>& initial
 
 bc::Balance BalanceManager::getBalance(const bc::Address& address) const
 {
+    LOG_CURRENT_FUNCTION << " with address = " << address;
+    LOG_CURRENT_FUNCTION << "acquiring shared lock";
     std::shared_lock lk(_rw_mutex);
     auto it = _storage.find(address);
     if(it == _storage.end()) {
+        LOG_CURRENT_FUNCTION << "address not found, return 0";
         return bc::Balance{0};
     }
     else {
+        LOG_CURRENT_FUNCTION << "return " << it->second;
         return it->second;
     }
 }
@@ -24,8 +28,11 @@ bc::Balance BalanceManager::getBalance(const bc::Address& address) const
 
 bool BalanceManager::checkTransaction(const bc::Transaction& tx) const
 {
-
-    return _storage.find(tx.getFrom()) != _storage.end() && getBalance(tx.getFrom()) >= tx.getAmount();
+    std::shared_lock lk(_rw_mutex);
+    if(_storage.find(tx.getFrom()) == _storage.end()) {
+        return false;
+    }
+    return getBalance(tx.getFrom()) >= tx.getAmount();
 }
 
 

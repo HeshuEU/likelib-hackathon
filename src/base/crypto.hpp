@@ -1,4 +1,8 @@
+#pragma once
+
 #include "base/bytes.hpp"
+#include "base/property_tree.hpp"
+#include "base/serialization.hpp"
 
 #include <openssl/pem.h>
 
@@ -13,9 +17,9 @@ class RsaPublicKey
   public:
     //=================
     RsaPublicKey(const Bytes& key_word);
-    RsaPublicKey(const RsaPublicKey& another) = default;
+    RsaPublicKey(const RsaPublicKey& another);
     RsaPublicKey(RsaPublicKey&& another) = default;
-    RsaPublicKey& operator=(const RsaPublicKey& another) = default;
+    RsaPublicKey& operator=(const RsaPublicKey& another);
     RsaPublicKey& operator=(RsaPublicKey&& another) = default;
     //=================
     Bytes encrypt(const Bytes& message) const;
@@ -27,6 +31,9 @@ class RsaPublicKey
     Bytes toBytes() const;
     void save(const std::filesystem::path& path) const;
     static RsaPublicKey read(const std::filesystem::path& path);
+    //=================
+    static RsaPublicKey deserialize(base::SerializationIArchive& ia);
+    void serialize(base::SerializationOArchive& oa);
     //=================
   private:
     //=================
@@ -122,5 +129,29 @@ class AesKey
 base::Bytes base64Encode(const base::Bytes& bytes);
 
 base::Bytes base64Decode(const base::Bytes& base64_bytes);
+
+
+
+class KeyVault
+{
+  public:
+    KeyVault() = delete;
+    KeyVault(const base::PropertyTree& config);
+    KeyVault(const KeyVault&) = delete;
+    KeyVault(KeyVault&&) = default;
+    KeyVault& operator=(const KeyVault&) = delete;
+    KeyVault& operator=(KeyVault&&) = default;
+    //---------------------------
+    ~KeyVault() = default;
+    //---------------------------
+    const base::RsaPublicKey& getPublicKey() const noexcept;
+    //---------------------------
+  private:
+    //---------------------------
+    std::unique_ptr<base::RsaPublicKey> _public_key;
+    std::unique_ptr<base::RsaPrivateKey> _private_key;
+    //---------------------------
+};
+
 
 } // namespace base

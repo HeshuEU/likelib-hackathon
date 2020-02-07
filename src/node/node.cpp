@@ -2,7 +2,7 @@
 
 #include <functional>
 
-Node::Node(const base::PropertyTree& config) : _config{config}, _core{_config}, _key_vault(_config)
+Node::Node(const base::PropertyTree& config) : _config{config}, _key_vault(_config), _core{_config, _key_vault}
 {
     auto service = std::make_shared<node::GeneralServerService>(_core);
     _rpc = std::make_unique<rpc::RpcServer>(_config.get<std::string>("rpc.address"), service);
@@ -19,8 +19,16 @@ void Node::run()
 {
     _core.run(); // run before all others
 
-    _rpc->run();
-    LOG_INFO << "RPC server started: " << _config.get<std::string>("rpc.address");
+    try {
+        _rpc->run();
+        LOG_INFO << "RPC server started: " << _config.get<std::string>("rpc.address");
+    }
+    catch(const std::exception& e) {
+        LOG_WARNING << "Cannot start RPC server: " << e.what();
+    }
+    catch(...) {
+        LOG_WARNING << "Cannot start RPC server: unknown error";
+    }
 }
 
 
@@ -38,7 +46,7 @@ base::Bytes Node::getMiningComplexity()
 }
 
 
-void Node::onNewTransactionReceived(const bc::Transaction& tx)
+void Node::onNewTransactionReceived(const bc::Transaction&)
 {
     bc::Block block = _core.getBlockTemplate();
     if(!block.getTransactions().isEmpty()) {

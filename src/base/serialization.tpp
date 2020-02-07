@@ -105,24 +105,24 @@ typename std::enable_if<std::is_integral<T>::value, SerializationIArchive&>::typ
         ASSERT(_index + sizeof(T) <= _bytes.size());
 
         v = *reinterpret_cast<const T*>(_bytes.toArray() + _index);
-        if(sizeof(v) == 1) {
+        if constexpr(sizeof(v) == 1) {
             _index++;
         }
-        if(sizeof(v) == 2) {
+        else if constexpr(sizeof(v) == 2) {
             v = ntohs(v);
             _index += 2;
         }
-        else if(sizeof(v) == 4) {
+        else if constexpr(sizeof(v) == 4) {
             v = ntohl(v);
             _index += 4;
         }
-        else if(sizeof(v) == 8) {
+        else if constexpr(sizeof(v) == 8) {
             std::uint32_t a, b;
             *this >> a >> b;
             v = a;
             v = (v << 32) | b;
         }
-        else if(sizeof(v) == 16) {
+        else if constexpr(sizeof(v) == 16) {
             std::uint64_t a, b;
             *this >> a >> b;
             v = a;
@@ -221,6 +221,20 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional
         oa << false;
     }
     return oa;
+}
+
+
+template<typename U, typename V>
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::pair<U, V>& p)
+{
+    return ia >> p.first >> p.second;
+}
+
+
+template<typename U, typename V>
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::pair<U, V>& p)
+{
+    return oa << p.first << p.second;
 }
 
 
