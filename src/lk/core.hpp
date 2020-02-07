@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/property_tree.hpp"
+#include "base/crypto.hpp"
 #include "base/utility.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
@@ -17,7 +18,7 @@ class Core
 {
   public:
     //==================
-    Core(const base::PropertyTree& config);
+    Core(const base::PropertyTree& config, const base::KeyVault& vault);
 
     /**
      *  @brief Stops network, does cleaning and flushing.
@@ -44,9 +45,12 @@ class Core
     //==================
     bc::Block getBlockTemplate() const;
     //==================
+    base::Bytes getThisNodeAddress() const;
+    //==================
   private:
     //==================
     const base::PropertyTree& _config;
+    const base::KeyVault& _vault;
     //==================
     base::Observable<const bc::Block&> _event_block_added;
     base::Observable<const bc::Transaction&> _event_new_pending_transaction;
