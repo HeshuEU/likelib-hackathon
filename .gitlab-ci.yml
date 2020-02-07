@@ -13,15 +13,10 @@ Build:
   script:
     - INSTALL_DIR="/opt"
     - SOURCE_DIR=${PWD}
-    - BUILD_RELEASE_DIR="./build_release"
-    - mkdir -p ${BUILD_RELEASE_DIR}
-    - BUILD_DEBUG_DIR="./build_debug"
-    - mkdir -p ${BUILD_RELEASE_DIR}
-    - cmake -DCMAKE_BUILD_TYPE=Debug -S ${SOURCE_DIR} -B ${BUILD_DEBUG_DIR}
-    - cd ${BUILD_DEBUG_DIR} && make -j$(nproc)
-    - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_RELEASE_DIR}
-    - cd ${BUILD_RELEASE_DIR} && make -j$(nproc)
- 
+    - BUILD_DIR="./build"
+    - mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
+    - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
+    - make -j$(nproc)
     - |
       echo
       echo -e "\033[40;1;42m ========================================================================= 
@@ -29,8 +24,7 @@ Build:
       ========================================================================= \033[0m"
   artifacts:
     paths:
-      - build_realese
-      - build_debug
+      - build
     expire_in: 1 week
 
 
@@ -66,7 +60,7 @@ Unit tests:
 Integration tests:
   timeout: 25m
   stage: integration-tests
-  image: heshuby/prepare_build:2019-12-20
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
@@ -88,7 +82,7 @@ Integration tests:
 
 Valgrind test:
   stage: analyzers
-  image: heshuby/prepare_build:2019-12-20
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
