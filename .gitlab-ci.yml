@@ -1,3 +1,5 @@
+IMAGE_NAME='heshuby/prepare_build:2020-02-07'
+
 stages:
   - build
   - unit-tests
@@ -7,16 +9,16 @@ stages:
 
 Build:
   stage: build
-  image: heshuby/prepare_build:2020-02-07
+  image: $IMAGE_NAME
   tags:
     - docker
   script:
     - INSTALL_DIR="/opt"
     - SOURCE_DIR=${PWD}
     - BUILD_DIR="./build"
-    - mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
+    - mkdir -p ${BUILD_DIR}
     - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
-    - make -j$(nproc)
+    - cd ${BUILD_DIR} && make -j$(nproc)
     - |
       echo
       echo -e "\033[40;1;42m ========================================================================= 
