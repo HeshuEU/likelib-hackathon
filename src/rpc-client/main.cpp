@@ -8,6 +8,7 @@
 #include "base/error.hpp"
 #include "base/hash.hpp"
 #include "base/time.hpp"
+#include "base/property_tree.hpp"
 
 namespace rpc_client
 {
@@ -160,12 +161,14 @@ int transfer(base::SubprogramRouter& router)
     }
 }
 
-int test(base::SubprogramRouter& router)
+int testConnection(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "rpc_config json file path");
     constexpr const char* HOST_OPTION = "host";
     router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
+    constexpr const char* CODE_PATH_OPTION = "code_path";
+    router.optionsParser()->addOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
     router.update();
 
     if(router.optionsParser()->hasOption("help")) {
@@ -222,6 +225,86 @@ int test(base::SubprogramRouter& router)
     }
 }
 
+
+int pushContract(base::SubprogramRouter& router)
+{
+    constexpr const char* CONFIG_OPTION = "config";
+    router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "rpc_config json file path");
+    constexpr const char* HOST_OPTION = "host";
+    router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
+    constexpr const char* CODE_PATH_OPTION = "code";
+    router.optionsParser()->addOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
+    router.update();
+
+    if(router.optionsParser()->hasOption("help")) {
+        std::cout << router.helpMessage() << std::endl;
+        return base::config::EXIT_OK;
+    }
+
+    try {
+        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION)};
+
+        //====================================
+        std::string file_path;
+        if(router.optionsParser()->hasOption(HOST_OPTION)) {
+            file_path = router.optionsParser()->getValue<std::string>(HOST_OPTION);
+        }
+        else {
+            std::cout << "Path to code not set up" << std::endl;
+            return base::config::EXIT_FAIL;
+        }
+        //====================================
+        std::string contract;
+        try {
+            auto compiled_code = base::readConfig(file_path);
+            contract = compiled_code.get<std::string>("object");
+        }
+        catch(const base::InaccessibleFile& er) {
+            std::cout << "File no found by path: " << file_path << std::endl;
+            return base::config::EXIT_FAIL;
+        }
+        catch(const base::ParsingError& er) {
+            std::cout << "File no found by path: " << file_path << std::endl;
+            LOG_ERROR << "[not json valid format]" << er.what();
+            return base::config::EXIT_FAIL;
+        }
+        catch(const base::InvalidArgument& er) {
+            std::cout << "Code not found at file: " << file_path << std::endl;
+            LOG_ERROR << "[no valid data file" << file_path << "]" << er.what();
+            return base::config::EXIT_FAIL;
+        }
+
+
+
+
+
+
+
+        return base::config::EXIT_OK;
+    }
+    catch(const base::ParsingError& er) {
+        std::cerr << "Bad input arguments\n" << router.helpMessage();
+        LOG_ERROR << "[exception in test]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(const rpc::RpcError& er) {
+        std::cerr << "RPC error. " << er.what() << "\n";
+        LOG_ERROR << "[exception in test]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(const base::Error& er) {
+        std::cerr << "Unexpected error." << er.what() << "\n";
+        LOG_ERROR << "[exception in test]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(...) {
+        std::cerr << "Unexpected error.\n";
+        LOG_ERROR << "[unknown exception caught in test]";
+        return base::config::EXIT_FAIL;
+    }
+}
+
+
 int mainProcess(base::SubprogramRouter& router)
 {
     router.optionsParser()->addFlag("version,v", "Print version of program");
@@ -251,7 +334,8 @@ int main(int argc, char** argv)
             "get_balance", "use for get balance from remote by account address", rpc_client::getBalance);
         router.addSubprogram(
             "transfer", "use transfer balance from one address to another address", rpc_client::transfer);
-        router.addSubprogram("test", "use test functions", rpc_client::test);
+        router.addSubprogram("test", "use test functions", rpc_client::testConnection);
+        router.addSubprogram("push_contract", "load smart contract code to ", rpc_client::pushContract);
         return router.process(argc, argv);
     }
     catch(const std::exception& error) {

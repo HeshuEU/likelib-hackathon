@@ -19,15 +19,23 @@ class GrpcNodeClient final : BaseRpc
 
     ~GrpcNodeClient() override = default;
 
+    OperationStatus test(uint32_t api_version) override;
+
     bc::Balance balance(const bc::Address& address) override;
 
-    std::string transaction(bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-        const base::Time& transaction_time) override;
+    std::tuple<OperationStatus, bc::Address, bc::Balance> transaction_creation_contract(bc::Balance amount,
+        const bc::Address& from_address, const base::Time& transaction_time,
+        bc::Balance gas, uint32_t revision, const base::Bytes& code, const base::Bytes& initial_message) override;
 
-    std::string test(const std::string& test_request) override;
+    std::tuple<OperationStatus, base::Bytes, bc::Balance> transaction_to_contract(bc::Balance amount,
+        const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time,
+        bc::Balance gas, const base::Bytes& message) override;
+
+    OperationStatus transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
+        const bc::Address& to_address, const base::Time& transaction_time) override;
 
   private:
-    std::unique_ptr<likelib::Node::Stub> _stub;
+    std::unique_ptr<likelib::NodePublicInterface::Stub> _stub;
 };
 
 } // namespace rpc

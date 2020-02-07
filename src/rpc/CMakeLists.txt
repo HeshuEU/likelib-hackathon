@@ -31,7 +31,8 @@ set(RPC_HEADERS
 set(RPC_SOURCES
         grpc/grpc_adapter.cpp
         grpc/grpc_node_server.cpp
-        grpc/grpc_node_client.cpp)
+        grpc/grpc_node_client.cpp
+        base_rpc.cpp)
 
 include_directories(${GLOBAL_OUTPUT_CODE_DIR})
 
