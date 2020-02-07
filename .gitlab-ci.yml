@@ -7,17 +7,21 @@ stages:
 
 Build:
   stage: build
-  image: heshuby/prepare_build:2019-12-20
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
     - INSTALL_DIR="/opt"
-    - PROJECT_SOURCE_DIR=${PWD}
-    - PROJECT_BUILD_DIR="./build"
-    - mkdir ${PROJECT_BUILD_DIR}
-    - cd ${PROJECT_BUILD_DIR}
-    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
-    - make -j$(nproc)
+    - SOURCE_DIR=${PWD}
+    - BUILD_RELEASE_DIR="./build_release"
+    - mkdir -p ${BUILD_RELEASE_DIR}
+    - BUILD_DEBUG_DIR="./build_debug"
+    - mkdir -p ${BUILD_RELEASE_DIR}
+    - cmake -DCMAKE_BUILD_TYPE=Debug -S ${SOURCE_DIR} -B ${BUILD_DEBUG_DIR}
+    - cd ${BUILD_DEBUG_DIR} && make -j$(nproc)
+    - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_RELEASE_DIR}
+    - cd ${BUILD_RELEASE_DIR} && make -j$(nproc)
+ 
     - |
       echo
       echo -e "\033[40;1;42m ========================================================================= 
@@ -34,7 +38,6 @@ Code quality:
   image: heshuby/prepare_build:2019-12-20
   tags:
     - docker
-  allow_failure: true
   script:
     - cd ./src
     - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
@@ -60,7 +63,7 @@ Unit tests:
 
 
 Integration tests:
-  timeout: 15m
+  timeout: 25m
   stage: integration-tests
   image: heshuby/prepare_build:2019-12-20
   tags:
@@ -77,6 +80,7 @@ Integration tests:
     - cd ${TEST_DIR}
     - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/src/node/node -r ${PROJECT_SOURCE_DIR}/build/src/rpc-client/rpc-client
   artifacts:
+    when: always
     paths:
       - intergation_test_run
     expire_in: 1 week
@@ -92,4 +96,4 @@ Valgrind test:
       echo -e "\033[40;1;42m ========================================================================= 
        ==                          Start memory check                         == \n \
       ========================================================================= \033[0m"
-    - valgrind --leak-check=full --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
