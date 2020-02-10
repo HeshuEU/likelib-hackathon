@@ -72,3 +72,9 @@ search for CMakeLists in current directory and its parent, and will generate CMa
 files. If current and parent folders don't contain CMakeLists.txt, then the path to
 the root of the project, from which ./prepare_build.sh was run, will be used to
 get CMakeLists.
+5. install solidity compiler:
+```
+    sudo add-apt-repository ppa:ethereum/ethereum
+    sudo apt-get update
+    sudo apt-get install solc
+```

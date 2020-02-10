@@ -1,4 +1,5 @@
 #include "parameters_helper.hpp"
+#include "solc.hpp"
 
 #include "rpc/rpc.hpp"
 #include "rpc/error.hpp"
@@ -149,11 +150,13 @@ int transfer(base::SubprogramRouter& router)
             client.transaction_to_wallet(amount, from_address.c_str(), to_address.c_str(), fee, base::Time::now());
 
         if(result) {
-            std::cout << "Remote call of transaction from account to account success -> [" << result.getMessage() << "]" << std::endl;
+            std::cout << "Remote call of transaction from account to account success -> [" << result.getMessage() << "]"
+                      << std::endl;
             return base::config::EXIT_OK;
         }
         else {
-            std::cout << "Remote call of transaction from account to account is failed -> [" << result.getMessage() << "]" << std::endl;
+            std::cout << "Remote call of transaction from account to account is failed -> [" << result.getMessage()
+                      << "]" << std::endl;
             return base::config::EXIT_FAIL;
         }
     }
@@ -361,12 +364,14 @@ int pushContract(base::SubprogramRouter& router)
             amount, from_address, base::Time::now(), gas, revision, contract, message);
 
         if(status) {
-            std::cout << "Remote call of creation smart contract success -> [" << status.getMessage() << "], contract created at ["
-                      << contract_address.toString() << "], gas left[" << gas_left << "]" << std::endl;
+            std::cout << "Remote call of creation smart contract success -> [" << status.getMessage()
+                      << "], contract created at [" << contract_address.toString() << "], gas left[" << gas_left << "]"
+                      << std::endl;
             return base::config::EXIT_OK;
         }
         else {
-            std::cout << "Remote call of creation smart contract is failed -> [" << status.getMessage() << "]" << std::endl;
+            std::cout << "Remote call of creation smart contract is failed -> [" << status.getMessage() << "]"
+                      << std::endl;
             return base::config::EXIT_FAIL;
         }
 
@@ -476,12 +481,13 @@ int messageToContract(base::SubprogramRouter& router)
         rpc::OperationStatus status = rpc::OperationStatus::createFailed();
         base::Bytes contract_response;
         bc::Balance gas_left;
-        std::tie(status, contract_response, gas_left) = client.transaction_to_contract(
-            amount, from_address, to_address, base::Time::now(), gas, message);
+        std::tie(status, contract_response, gas_left) =
+            client.transaction_to_contract(amount, from_address, to_address, base::Time::now(), gas, message);
 
         if(status) {
-            std::cout << "Remote call of smart contract call success -> [" << status.getMessage() << "], contract response["
-                      << contract_response.toHex() << "], gas left[" << gas_left << "]" << std::endl;
+            std::cout << "Remote call of smart contract call success -> [" << status.getMessage()
+                      << "], contract response[" << contract_response.toHex() << "], gas left[" << gas_left << "]"
+                      << std::endl;
             return base::config::EXIT_OK;
         }
         else {
@@ -512,6 +518,71 @@ int messageToContract(base::SubprogramRouter& router)
         return base::config::EXIT_FAIL;
     }
 }
+
+int compileCode(base::SubprogramRouter& router)
+{
+    constexpr const char* COMPILER_COMMAND_OPTION = "compiler_command";
+    router.optionsParser()->addOption<std::string>(COMPILER_COMMAND_OPTION, "compiler call command");
+    constexpr const char* CODE_PATH_OPTION = "code_path";
+    router.optionsParser()->addOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
+    router.update();
+
+    if(router.optionsParser()->hasOption("help")) {
+        std::cout << router.helpMessage() << std::endl;
+        return base::config::EXIT_OK;
+    }
+
+    try {
+        //====================================
+        std::string compiler_command = router.optionsParser()->getValue<std::string>(COMPILER_COMMAND_OPTION);
+        std::string code_file_path = router.optionsParser()->getValue<std::string>(CODE_PATH_OPTION);
+
+        vm::Compiler solc(compiler_command);
+
+        try {
+            auto contracts = solc.compile(code_file_path);
+            if(!contracts) {
+                std::cerr << "Compilation error\n";
+                return base::config::EXIT_FAIL;
+            }
+            std::cout << "compiled contracts:" << std::endl;
+            for(const auto& contract: contracts.value()) {
+                std::cout << contract.getName() << std::endl;
+            }
+        }
+        catch(const base::ParsingError& er) {
+            std::cerr << er;
+            return base::config::EXIT_FAIL;
+        }
+        catch(const base::SystemCallFailed& er) {
+            std::cerr << er;
+            return base::config::EXIT_FAIL;
+        }
+
+        return base::config::EXIT_OK;
+    }
+    catch(const base::ParsingError& er) {
+        std::cerr << "Bad input arguments\n" << router.helpMessage();
+        LOG_ERROR << "[exception in test]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(const rpc::RpcError& er) {
+        std::cerr << "RPC error. " << er.what() << "\n";
+        LOG_ERROR << "[exception in test]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(const base::Error& er) {
+        std::cerr << "Unexpected error." << er.what() << "\n";
+        LOG_ERROR << "[exception in test]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(...) {
+        std::cerr << "Unexpected error.\n";
+        LOG_ERROR << "[unknown exception caught in test]";
+        return base::config::EXIT_FAIL;
+    }
+}
+
 
 
 int mainProcess(base::SubprogramRouter& router)
@@ -544,9 +615,11 @@ int main(int argc, char** argv)
         router.addSubprogram(
             "transfer", "use transfer balance from one address to another address", rpc_client::transfer);
         router.addSubprogram("test", "use test functions", rpc_client::testConnection);
-        router.addSubprogram("push_contract", "load smart contract code to push to blockchain network", rpc_client::pushContract);
-        router.addSubprogram("message_to_contract", "create message to call smart contract ", rpc_client::messageToContract);
-
+        router.addSubprogram(
+            "push_contract", "load smart contract code to push to blockchain network", rpc_client::pushContract);
+        router.addSubprogram(
+            "message_to_contract", "create message to call smart contract ", rpc_client::messageToContract);
+        router.addSubprogram("compile", "compile smart contract ", rpc_client::compileCode);
         return router.process(argc, argv);
     }
     catch(const std::exception& error) {

@@ -35,8 +35,7 @@ extern "C" void signalHandler(int signal)
                  << " (" << strsignal(signal) << ")"
 #endif
                  << '\n'
-                 << boost::stacktrace::stacktrace()
-            ;
+                 << boost::stacktrace::stacktrace();
         std::abort();
     }
 }
