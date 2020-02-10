@@ -36,27 +36,6 @@ void clearLoggerSettings()
     boost::log::core::get()->remove_all_sinks();
 }
 
-void setLogLevel(base::LogLevel logLevel)
-{
-    switch(logLevel) {
-        case base::LogLevel::ALL:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::trace);
-            break;
-        case base::LogLevel::DEBUG:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::debug);
-            break;
-        case base::LogLevel::INFO:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
-            break;
-        case base::LogLevel::WARNING:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::warning);
-            break;
-        case base::LogLevel::ERROR:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::error);
-            break;
-    }
-}
-
 void formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& stream)
 {
     stream << dateAsString() << " | " << rec[boost::log::trivial::severity] << " | "
@@ -74,9 +53,14 @@ void setFileSink()
         boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT);
 
     sink->locked_backend()->auto_flush(true);
-
     sink->set_formatter(&formatter);
 
+    logging::add_file_log(
+        boost::log::keywords::file_name = file_path,                                      
+        boost::log::keywords::rotation_size = 10 * 1024 * 1024,                                   
+        boost::log::keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0),
+        boost::log::keywords::format = "[%TimeStamp%]: %Message%"                                
+    );
     boost::log::core::get()->add_sink(sink);
 }
 
@@ -104,7 +88,7 @@ void disableLogger()
 namespace base
 {
 
-void initLog(base::LogLevel logLevel, size_t mode)
+void initLog(size_t mode)
 {
     clearLoggerSettings();
 
@@ -112,8 +96,6 @@ void initLog(base::LogLevel logLevel, size_t mode)
         disableLogger();
         return;
     }
-
-    setLogLevel(logLevel);
 
     if(mode & base::Sink::STDOUT) {
         setStdoutSink();

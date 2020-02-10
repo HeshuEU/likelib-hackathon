@@ -245,7 +245,7 @@ int mainProcess(base::SubprogramRouter& router)
 int main(int argc, char** argv)
 {
     try {
-        base::initLog(base::LogLevel::ALL, base::Sink::FILE);
+        base::initLog(base::Sink::FILE);
         base::SubprogramRouter router("rpc-client", rpc_client::mainProcess);
         router.addSubprogram(
             "get_balance", "use for get balance from remote by account address", rpc_client::getBalance);
