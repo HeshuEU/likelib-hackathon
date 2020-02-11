@@ -12,7 +12,7 @@ try:
     output = subprocess.check_output(l, stderr=subprocess.STDOUT)
 except Exception as e:
     with open(PATH_TO_LOGS+"clang-error.txt", "w") as f:
-        f.write(str(e.output))
+        f.write(e.output.decode("utf-8"))
     exit(0)
 with open(PATH_TO_LOGS+"clang-output.txt", "at") as f:
     f.write('\n'.join(output))
