@@ -18,6 +18,7 @@ Build:
     - mkdir -p /tmp/logs
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/clang-tidy.py;-checks=*;-header-filter=.*;" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -S ${SOURCE_DIR} -B ${BUILD_DIR}
     - cd ${BUILD_DIR} && make -j$(nproc)
+    - ls /tmp -l && echo && echo && ls /tmp/logs -l 
     - |
       echo
       echo -e "\033[40;1;42m ========================================================================= 
@@ -30,20 +31,20 @@ Build:
     expire_in: 1 week
 
 
-Code quality:
-  stage: analyzers
-  image: heshuby/prepare_build:2019-12-20
-  tags:
-    - docker
-  script:
-    - cd ./src
-    - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Start code quality                         == \n \
-      ========================================================================= \033[0m"
-    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
+#Code quality:
+#  stage: analyzers
+#  image: heshuby/prepare_build:2019-12-20
+#  tags:
+#    - docker
+#  script:
+#    - cd ./src
+#    - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
+#    - |
+#      echo
+#      echo -e "\033[40;1;42m ========================================================================= 
+#       ==                          Start code quality                         == \n \
+#      ========================================================================= \033[0m"
+#    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
 
 
 Unit tests:
