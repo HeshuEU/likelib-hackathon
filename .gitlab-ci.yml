@@ -19,7 +19,7 @@ Build:
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/clang-tidy.py;-checks=*;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR}
     - cd ${BUILD_DIR} && make -j$(nproc)
 #    - ls /tmp -l && echo && echo && ls /tmp/logs -l 
-    - cp -r /tmp/logs ${BUILD_DIR}
+    - cp -r /tmp/logs ${SOURCE_DIR}
     - |
       echo
       echo -e "\033[40;1;42m ========================================================================= 
@@ -28,7 +28,6 @@ Build:
   artifacts:
     paths:
       - build
-      - /tmp/logs
     expire_in: 1 week
 
 
