@@ -15,7 +15,8 @@ Build:
     - SOURCE_DIR=${PWD}
     - BUILD_DIR="./build"
     - mkdir -p ${BUILD_DIR}
-    - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
+    - mkdir -p /tmp/logs
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/clang-tidy.py;-checks=*;-header-filter=.*;" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -S ${SOURCE_DIR} -B ${BUILD_DIR}
     - cd ${BUILD_DIR} && make -j$(nproc)
     - |
       echo
@@ -25,6 +26,7 @@ Build:
   artifacts:
     paths:
       - build
+      - /tmp/logs
     expire_in: 1 week
 
 
