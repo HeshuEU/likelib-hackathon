@@ -27,7 +27,8 @@ extern "C" void signalHandler(int signal)
 {
     if(signal == SIGINT) {
         LOG_INFO << "SIGINT caught. Exit.";
-        std::abort(); // TODO: a clean exit
+        boost::log::core::get()->flush();
+        std::_Exit(1); // TODO: a clean exit
     }
     else {
         LOG_INFO << "Signal caught: " << signal
@@ -35,9 +36,9 @@ extern "C" void signalHandler(int signal)
                  << " (" << strsignal(signal) << ")"
 #endif
                  << '\n'
-                 << boost::stacktrace::stacktrace()
-            ;
-        std::abort();
+                 << boost::stacktrace::stacktrace();
+        boost::log::core::get()->flush();
+        std::_Exit(1);
     }
 }
 
@@ -45,6 +46,7 @@ extern "C" void signalHandler(int signal)
 void atExitHandler()
 {
     LOG_INFO << "Node shutdown";
+    boost::log::core::get()->flush();
 }
 
 } // namespace
@@ -52,7 +54,7 @@ void atExitHandler()
 int main(int argc, char** argv)
 {
     try {
-        base::initLog(base::LogLevel::ALL, base::Sink::STDOUT | base::Sink::FILE);
+        base::initLog(base::Sink::FILE);
         LOG_INFO << "Node startup";
 
         // set up options parser

@@ -68,11 +68,9 @@ template<typename T>
 typename std::enable_if<!std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
     SerializationIArchive& ia, std::vector<T>& v);
 
-
 template<typename T>
 typename std::enable_if<std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
     SerializationIArchive& ia, std::vector<T>& v);
-
 
 template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
@@ -81,9 +79,15 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T
 template<typename T>
 SerializationIArchive& operator>>(SerializationIArchive& ia, std::optional<T>& v);
 
-
 template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v);
+
+
+template<typename U, typename V>
+SerializationIArchive& operator>>(SerializationIArchive& ia, std::pair<U, V>& p);
+
+template<typename U, typename V>
+SerializationOArchive& operator<<(SerializationOArchive& oa, const std::pair<U, V>& p);
 
 
 template<typename T, typename TT = typename std::remove_reference<T>::type,

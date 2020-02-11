@@ -1,22 +1,27 @@
 #pragma once
 
 #include <boost/current_function.hpp>
+#include <boost/log/keywords/severity.hpp>
 #include <boost/log/trivial.hpp>
+#include <boost/log/sources/logger.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/sources/features.hpp>
+#include <boost/log/sources/threading_models.hpp>
+#include <boost/log/sources/global_logger_storage.hpp>
 
 #include <cstddef>
+#include <thread>
+#include <sstream>
+#include <mutex>
+
+namespace logging = boost::log;
+namespace src = boost::log::sources;
+namespace sinks = boost::log::sinks;
+
+BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(logger, src::severity_logger_mt<logging::trivial::severity_level>)
 
 namespace base
 {
-
-enum class LogLevel
-{
-    ALL,
-    DEBUG,
-    INFO,
-    WARNING,
-    ERROR
-};
-
 
 namespace Sink
 {
@@ -26,17 +31,18 @@ namespace Sink
 } // namespace Sink
 
 
-void initLog(LogLevel logLevel = LogLevel::ALL, std::size_t mode = Sink::FILE);
+void initLog(std::size_t mode = Sink::FILE);
 
 void dumpDebuggingInfo();
 
 } // namespace base
 
-#define LOG_TRACE BOOST_LOG_TRIVIAL(trace)
-#define LOG_DEBUG BOOST_LOG_TRIVIAL(debug)
-#define LOG_INFO BOOST_LOG_TRIVIAL(info)
-#define LOG_WARNING BOOST_LOG_TRIVIAL(warning)
-#define LOG_ERROR BOOST_LOG_TRIVIAL(error)
-#define LOG_FATAL BOOST_LOG_TRIVIAL(fatal)
+
+#define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace) << std::this_thread::get_id() << ' '
+#define LOG_DEBUG BOOST_LOG_SEV(logger::get(), logging::trivial::debug) << std::this_thread::get_id() << ' '
+#define LOG_INFO BOOST_LOG_SEV(logger::get(), logging::trivial::info) << std::this_thread::get_id() << ' '
+#define LOG_WARNING BOOST_LOG_SEV(logger::get(), logging::trivial::warning) << std::this_thread::get_id() << ' '
+#define LOG_ERROR BOOST_LOG_SEV(logger::get(), logging::trivial::error) << std::this_thread::get_id() << ' '
+#define LOG_FATAL BOOST_LOG_SEV(logger)
 
 #define LOG_CURRENT_FUNCTION LOG_DEBUG << BOOST_CURRENT_FUNCTION << ' '

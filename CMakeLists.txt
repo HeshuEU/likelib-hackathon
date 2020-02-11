@@ -9,8 +9,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost REQUIRED COMPONENTS system exception log program_options serialization unit_test_framework)
+find_package(Boost REQUIRED COMPONENTS system exception log log_setup program_options serialization unit_test_framework)
 include_directories(${Boost_INCLUDE_DIR})
+
 
 add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
 
