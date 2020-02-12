@@ -38,7 +38,9 @@ void Database::open(Directory const& path)
     else {
         database_options.compression = leveldb::kNoCompression; // no compress data
     }
-    database_options.block_cache = leveldb::NewLRUCache(config::DATABASE_DATA_BLOCK_CACHE_SIZE);
+
+    _cache = std::unique_ptr<leveldb::Cache>(leveldb::NewLRUCache(config::DATABASE_DATA_BLOCK_CACHE_SIZE));
+    database_options.block_cache = _cache.get();
 
     // create database
     leveldb::DB* data_base = nullptr;
