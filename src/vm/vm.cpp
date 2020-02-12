@@ -195,15 +195,15 @@ VM::VM(evmc_vm* vm_instance_ptr, evmc::Host& vm_host) : _vm{vm_instance_ptr}, _h
     auto vm_capabilities = _vm.get_capabilities();
 
     if(vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_EVM1) {
-        LOG_INFO << "EVM compatible with EVM1 instructions" << std::endl;
+        LOG_INFO << "EVM compatible with EVM1 instructions";
     }
 
     if(vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_EWASM) {
-        LOG_INFO << "EVM compatible with EWASM instructions" << std::endl;
+        LOG_INFO << "EVM compatible with EWASM instructions";
     }
 
     if(vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_PRECOMPILES) {
-        LOG_INFO << "EVM compatible with precompiles instructions" << std::endl;
+        LOG_INFO << "EVM compatible with precompiles instructions";
     }
 }
 
