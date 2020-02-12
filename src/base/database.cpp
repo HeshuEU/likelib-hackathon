@@ -32,7 +32,7 @@ void Database::open(Directory const& path)
     database_options.create_if_missing = true;
     database_options.write_buffer_size = config::DATABASE_WRITE_BUFFER_SIZE;
     database_options.block_size = config::DATABASE_DATA_BLOCK_SIZE;
-    if(config::DATABASE_COMPRESS_DATA) {
+    if constexpr(config::DATABASE_COMPRESS_DATA) {
         database_options.compression = leveldb::kSnappyCompression; // fast compression
     }
     else {
