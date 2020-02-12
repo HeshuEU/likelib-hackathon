@@ -40,6 +40,8 @@ class CompiledContract
     void setSignatures(const std::vector<std::pair<base::Bytes, std::string>>& signatures);
     const std::vector<std::pair<base::Bytes, std::string>>& getSignatures() const;
 
+    //TODO messages builder
+
   private:
     std::string _name;
     base::Bytes _runtime_code;
