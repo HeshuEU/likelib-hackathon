@@ -38,8 +38,26 @@ void dumpDebuggingInfo();
 } // namespace base
 
 
-#define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace)
+
+#if defined(CONFIG_IS_DEBUG)
 #define LOG_DEBUG BOOST_LOG_SEV(logger::get(), logging::trivial::debug)
+#else
+
+class NullBuffer
+{};
+
+template<typename T>
+[[maybe_unused]] const NullBuffer& operator<<(const NullBuffer& nb, T&&)
+{
+    return nb;
+}
+
+#define LOG_DEBUG \
+    NullBuffer \
+    {}
+#endif
+
+#define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace)
 #define LOG_INFO BOOST_LOG_SEV(logger::get(), logging::trivial::info)
 #define LOG_WARNING BOOST_LOG_SEV(logger::get(), logging::trivial::warning)
 #define LOG_ERROR BOOST_LOG_SEV(logger::get(), logging::trivial::error)
