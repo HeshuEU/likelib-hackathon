@@ -4,6 +4,7 @@
 #include "base/directory.hpp"
 
 #include <leveldb/db.h>
+#include <leveldb/cache.h>
 
 #include <string>
 #include <filesystem>
