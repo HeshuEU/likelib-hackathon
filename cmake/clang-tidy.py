@@ -13,7 +13,7 @@ try:
 except Exception as e:
     with open(PATH_TO_LOGS+"clang-error.txt", "at") as f:
         f.write(e.output.decode("utf-8"))
-    exit(0)
+    exit(1)
 with open(PATH_TO_LOGS+"clang-output.txt", "at") as f:
     f.write('\n'.join(output))
 
