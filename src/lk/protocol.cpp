@@ -10,7 +10,7 @@ namespace
 template<typename M, typename... Args>
 base::Bytes serializeMessage(Args&&... args)
 {
-    LOG_CURRENT_FUNCTION << lk::enumToString(M::getHandledMessageType());
+    LOG_TRACE << lk::enumToString(M::getHandledMessageType());
     base::SerializationOArchive oa;
     oa << M::getHandledMessageType();
     (oa << ... << std::forward<Args>(args));
@@ -114,8 +114,8 @@ void HandshakeMessage::handle(Peer& peer, Network& network, Core& core)
 }
 
 
-HandshakeMessage::HandshakeMessage(bc::Block&& top_block, base::Bytes address, std::uint16_t public_port,
-    std::vector<PeerInfo>&& known_peers)
+HandshakeMessage::HandshakeMessage(
+    bc::Block&& top_block, base::Bytes address, std::uint16_t public_port, std::vector<PeerInfo>&& known_peers)
     : _theirs_top_block{std::move(top_block)}, _address{std::move(address)}, _public_port{public_port},
       _known_peers{std::move(known_peers)}
 {}
@@ -462,9 +462,7 @@ namespace
 
     template<>
     void runHandleImpl<void>(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core)
-    {
-        return;
-    }
+    {}
 
 
     template<typename... Args>

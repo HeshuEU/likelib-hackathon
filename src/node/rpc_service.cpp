@@ -21,24 +21,8 @@ GeneralServerService::~GeneralServerService()
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     try {
-        LOG_CURRENT_FUNCTION;
         LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_DEBUG << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
-        LOG_WARNING << "Node received in {balance}: address[" << address.toString() << "]";
-        boost::log::core::get()->flush();
-        LOG_DEBUG << "_core addr" << &_core;
-        boost::log::core::get()->flush();
         auto ret = _core.getBalance(address);
-        LOG_TRACE << "Balance request has been successfully executed";
         return ret;
     }
     catch(const std::exception& e) {
@@ -59,10 +43,11 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
                   << to_address.toString() << "], amount[" << amount << "], transaction_time["
                   << transaction_time.getSecondsSinceEpochBeginning() << "]";
 
-        if (_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time))) {
+        if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time))) {
             LOG_TRACE << "Added tx to pending";
             return "Success! Transaction added to queue successfully.";
-        } else {
+        }
+        else {
             LOG_TRACE << "Rejecting tx";
             return "Error! Transaction rejected.";
         }
@@ -82,9 +67,10 @@ std::string GeneralServerService::test(const std::string& test_request)
     try {
         LOG_TRACE << "Node received in {test}: test_request[" << test_request << "]";
         auto our_request = base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST)).toHex();
-        if (our_request == test_request) {
+        if(our_request == test_request) {
             return base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toHex();
-        } else {
+        }
+        else {
             return std::string();
         }
     }
