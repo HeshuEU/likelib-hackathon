@@ -13,15 +13,8 @@ set(VM_SOURCES
         tools.cpp
         )
 
+set(EVMC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/evmc/include)
 
 add_library(vm STATIC ${VM_HEADERS} ${VM_SOURCES})
-set_target_properties(instructions PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${EVMC_INCLUDE_DIR}
-        INTERFACE_LINK_DEPENDS "loader"
-        )
-
-target_include_directories(vm PUBLIC
-        $<BUILD_INTERFACE:${EVMC_INCLUDE_DIR}>$<INSTALL_INTERFACE:include>
-        )
-
-target_link_libraries(vm base loader)
+target_include_directories(vm PUBLIC $<BUILD_INTERFACE:${EVMC_INCLUDE_DIR}>$<INSTALL_INTERFACE:include>)
+target_link_libraries(vm loader)

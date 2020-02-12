@@ -54,10 +54,6 @@ find_package(GrpcCppLib REQUIRED)
 # setting up common include directories
 include_directories(./src)
 
-# todo: remove
-set(EVMC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/evmc/include)
-include_directories(${EVMC_INCLUDE_DIR})
-
 #===========================
 
 add_subdirectory(./src)

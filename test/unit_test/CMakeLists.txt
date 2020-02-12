@@ -21,5 +21,5 @@ set(TEST_SOURCES
         )
 
 add_executable(run_tests ${TEST_SOURCES})
-target_include_directories(run_tests PRIVATE ${PROJECT_SOURCE_DIR}/src/vm/evmc/include)
+
 target_link_libraries(run_tests base net rpc vm lk Boost::unit_test_framework)
