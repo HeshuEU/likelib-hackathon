@@ -19,6 +19,7 @@
 namespace
 {
 
+
 std::string dateAsString()
 {
     std::time_t raw_time;

@@ -1,6 +1,6 @@
 set(BASE_HEADERS
         assert.hpp
-        crypto.hpp
+		crypto.hpp
         big_integer.hpp
         big_integer.tpp
         error.hpp
@@ -41,5 +41,4 @@ set(BASE_SOURCES
         )
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
-
-target_link_libraries(base Boost::log Boost::program_options OpenSSL::SSL dl backtrace leveldb::leveldb)
+target_link_libraries(base Boost::log Boost::log_setup Boost::program_options OpenSSL::SSL dl backtrace leveldb::leveldb)
