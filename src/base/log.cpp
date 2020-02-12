@@ -53,14 +53,9 @@ void setFileSink()
         boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT);
 
     sink->locked_backend()->auto_flush(true);
+    
     sink->set_formatter(&formatter);
 
-    logging::add_file_log(
-        boost::log::keywords::file_name = file_path,                                      
-        boost::log::keywords::rotation_size = 10 * 1024 * 1024,                                   
-        boost::log::keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0),
-        boost::log::keywords::format = "[%TimeStamp%]: %Message%"                                
-    );
     boost::log::core::get()->add_sink(sink);
 }
 

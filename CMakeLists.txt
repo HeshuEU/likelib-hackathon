@@ -51,11 +51,6 @@ find_package(GrpcCppLib REQUIRED)
 
 #==========================
 
-# adding spdlog to project
-find_package(spdlog REQUIRED)
-
-#==========================
-
 # setting up common include directories
 include_directories(./src)
 #===========================

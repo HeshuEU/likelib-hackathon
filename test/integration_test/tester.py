@@ -240,7 +240,7 @@ class NodeTester:
             raise Exception(f"{self.name} - Process already started")
 
         self.__write_config()
-        self.process = subprocess.Popen([self.node_exec_path, "--config", self.node_config_file], cwd=self.work_dir, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        self.process = subprocess.Popen([self.node_exec_path, "--config", self.node_config_file], cwd=self.work_dir, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         self.logger.debug(f"{self.name} - start node(pid:{self.process.pid}) with work directory: {self.work_dir}")
 
         if self.process.poll() is None:

@@ -38,11 +38,11 @@ void dumpDebuggingInfo();
 } // namespace base
 
 
-#define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace) << std::this_thread::get_id() << ' '
-#define LOG_DEBUG BOOST_LOG_SEV(logger::get(), logging::trivial::debug) << std::this_thread::get_id() << ' '
-#define LOG_INFO BOOST_LOG_SEV(logger::get(), logging::trivial::info) << std::this_thread::get_id() << ' '
-#define LOG_WARNING BOOST_LOG_SEV(logger::get(), logging::trivial::warning) << std::this_thread::get_id() << ' '
-#define LOG_ERROR BOOST_LOG_SEV(logger::get(), logging::trivial::error) << std::this_thread::get_id() << ' '
+#define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace)
+#define LOG_DEBUG BOOST_LOG_SEV(logger::get(), logging::trivial::debug)
+#define LOG_INFO BOOST_LOG_SEV(logger::get(), logging::trivial::info)
+#define LOG_WARNING BOOST_LOG_SEV(logger::get(), logging::trivial::warning)
+#define LOG_ERROR BOOST_LOG_SEV(logger::get(), logging::trivial::error)
 #define LOG_FATAL BOOST_LOG_SEV(logger)
 
 #define LOG_CURRENT_FUNCTION LOG_DEBUG << BOOST_CURRENT_FUNCTION << ' '

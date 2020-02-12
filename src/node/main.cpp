@@ -54,7 +54,7 @@ void atExitHandler()
 int main(int argc, char** argv)
 {
     try {
-        base::initLog(base::Sink::FILE);
+        base::initLog(base::Sink::FILE | base::Sink::STDOUT);
         LOG_INFO << "Node startup";
 
         // set up options parser

@@ -3,7 +3,6 @@ boost/1.71.0@conan/stable
 openssl/1.1.1d
 leveldb/1.22.0
 grpc/1.26.0@inexorgame/stable
-spdlog/1.4.2@bincrafters/stable
 
 [options]
 boost:shared=False
