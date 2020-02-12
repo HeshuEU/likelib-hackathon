@@ -1,5 +1,6 @@
 #include "parameters_helper.hpp"
-#include "solc.hpp"
+
+#include "vm/solc.hpp"
 
 #include "rpc/rpc.hpp"
 #include "rpc/error.hpp"
@@ -521,8 +522,6 @@ int messageToContract(base::SubprogramRouter& router)
 
 int compileCode(base::SubprogramRouter& router)
 {
-    constexpr const char* COMPILER_COMMAND_OPTION = "compiler_command";
-    router.optionsParser()->addOption<std::string>(COMPILER_COMMAND_OPTION, "compiler call command");
     constexpr const char* CODE_PATH_OPTION = "code_path";
     router.optionsParser()->addOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
     router.update();
@@ -534,10 +533,9 @@ int compileCode(base::SubprogramRouter& router)
 
     try {
         //====================================
-        std::string compiler_command = router.optionsParser()->getValue<std::string>(COMPILER_COMMAND_OPTION);
         std::string code_file_path = router.optionsParser()->getValue<std::string>(CODE_PATH_OPTION);
 
-        vm::Compiler solc(compiler_command);
+        vm::Solc solc();
 
         try {
             auto contracts = solc.compile(code_file_path);

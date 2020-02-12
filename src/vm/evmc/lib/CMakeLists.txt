@@ -14,7 +14,3 @@ target_link_libraries(evmc_cpp INTERFACE evmc::evmc)
 
 add_subdirectory(instructions)
 add_subdirectory(loader)
-
-if(EVMC_INSTALL)
-    install(TARGETS evmc evmc_cpp EXPORT evmcTargets)
-endif()

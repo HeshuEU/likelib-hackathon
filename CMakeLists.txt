@@ -40,6 +40,13 @@ find_package(leveldb CONFIG REQUIRED)
 
 # setting up common include directories
 include_directories(./src)
+
+# temp
+set(EVMC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/evmc/include)
+message("${EVMC_INCLUDE_DIR}")
+
+include_directories(${EVMC_INCLUDE_DIR})
+
 #===========================
 
 add_subdirectory(./src)

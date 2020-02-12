@@ -2,6 +2,9 @@
 
 #include <evmc/evmc.hpp>
 
+#include <evmc/evmc.h>
+
+
 namespace core
 {
 

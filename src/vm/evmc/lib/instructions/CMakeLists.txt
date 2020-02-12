@@ -8,7 +8,6 @@ add_library(
     instruction_metrics.c
     instruction_names.c
 )
-set(include_dir ${PROJECT_SOURCE_DIR}/include)
 
 add_library(evmc::instructions ALIAS instructions)
 set_target_properties(instructions PROPERTIES
