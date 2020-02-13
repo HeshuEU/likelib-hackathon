@@ -1,6 +1,5 @@
 #include "crypto.hpp"
 
-#include "base/assert.hpp"
 #include "base/error.hpp"
 #include "base/directory.hpp"
 #include "base/log.hpp"
@@ -362,18 +361,19 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 }
 
 
-AesKey::AesKey() : _type(KeyType::K256BIT), _key(generateKey(KeyType::K256BIT)), _iv(generateIv())
+AesKey::AesKey() : _type(KeyType::K256BIT), _key(generateKey(KeyType::K256BIT)), _iv(generateIv(KeyType::K256BIT))
 {}
 
 
-AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv())
+AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
 {}
 
 
 AesKey::AesKey(const Bytes& bytes)
 {
-    static constexpr std::size_t _aes_256_size = 48;
-    static constexpr std::size_t _aes_128_size = 32;
+    // key may be 2 * size iv
+    static constexpr std::size_t _aes_256_size = static_cast<std::size_t>(base::AesKey::KeyType::K256BIT) / 2 * 3;
+    static constexpr std::size_t _aes_128_size = static_cast<std::size_t>(base::AesKey::KeyType::K128BIT) / 2 * 3;
 
     switch(bytes.size()) {
         case _aes_256_size:
@@ -459,9 +459,15 @@ Bytes AesKey::generateKey(KeyType type)
 }
 
 
-Bytes AesKey::generateIv()
+Bytes AesKey::generateIv(KeyType type)
 {
-    return generate_bytes(iv_cbc_size);
+    switch(type) {
+        case KeyType::K256BIT:
+        case KeyType::K128BIT:
+            return generate_bytes(static_cast<std::size_t>(type) / 2);
+        default:
+            RAISE_ERROR(CryptoError, "Unexpected key type");
+    }
 }
 
 
@@ -549,14 +555,15 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
     }
 
     Bytes output_data(data.size() * 2);
-
     int current_data_len = 0;
-    if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size()))
+    if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size())) {
         RAISE_ERROR(CryptoError, "failed to decrypt message");
+    }
     int decrypted_message_len_in_buffer = current_data_len;
 
-    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len))
+    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len)) {
         RAISE_ERROR(CryptoError, "unable to finalize decrypt");
+    }
     decrypted_message_len_in_buffer += current_data_len;
 
     return output_data.takePart(0, decrypted_message_len_in_buffer);
