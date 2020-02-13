@@ -11,8 +11,6 @@
 namespace vm
 {
 
-class Solc;
-
 class CompiledContract
 {
   public:

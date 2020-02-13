@@ -23,4 +23,8 @@ base::Bytes toBalance(evmc_uint256be value);
 
 evmc_uint256be toEvmcUint256(const base::Bytes& data);
 
+base::Bytes encode(const std::string& str);
+
+std::string decodeAsString(const base::Bytes& data);
+
 } // namespace vm

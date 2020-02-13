@@ -94,6 +94,7 @@ Solc::Solc() : _path_to_solc{bp::search_path(_SOLC_NAME)}
 
 std::optional<Contracts> Solc::compile(const std::string& path_to_solidity_code) const
 {
+    // TODO check api parsing errors
     auto full_compilation_output = call_full_compilation_command(path_to_solidity_code);
     auto runtime_compilation_output = call_runtime_compilation_command(path_to_solidity_code);
     auto abi_output = call_abi_command(path_to_solidity_code);
@@ -320,7 +321,7 @@ std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::strin
     std::string current_contract_name;
     std::vector<std::pair<base::Bytes, std::string>> current_contract_members;
     for(size_t i = 0; i < out_put_result_values.size();) {
-        if(out_put_result_values[i].find(".sol:") != std::string::npos) {
+        if(out_put_result_values[i].find(".sol:") != std::string::npos) { // TODO independent separate method
             if(!current_contract_name.empty()) {
                 hashes.push_back({current_contract_name, current_contract_members});
                 current_contract_name.clear();

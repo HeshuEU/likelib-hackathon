@@ -63,4 +63,21 @@ evmc_uint256be toEvmcUint256(const base::Bytes& data)
     return res;
 }
 
+
+base::Bytes encode(const std::string& str)
+{
+    auto str_len_str = std::to_string(str.size());
+
+
+    base::Bytes res(str.size());
+    memcpy(res.toArray(), str.data(), str.size());
+
+
+}
+
+
+std::string decodeAsString(const base::Bytes& data)
+{}
+
+
 } // namespace vm
