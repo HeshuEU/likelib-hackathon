@@ -1,10 +1,11 @@
 #pragma once
 
-#include "bc/address.hpp"
-#include "bc/types.hpp"
-
+#include "base/crypto.hpp"
 #include "base/serialization.hpp"
 #include "base/time.hpp"
+
+#include "bc/address.hpp"
+#include "bc/types.hpp"
 
 namespace bc
 {
@@ -27,7 +28,8 @@ class Transaction
     [[nodiscard]] const bc::Balance& getAmount() const noexcept;
     [[nodiscard]] const base::Time& getTimestamp() const noexcept;
     //=================
-
+    void sign(const base::RsaPrivateKey& priv);
+    bool checkSign(const base::RsaPublicKey& pub) const;
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;
@@ -37,10 +39,15 @@ class Transaction
     void serialize(base::SerializationOArchive& oa) const;
     //=================
   private:
+    //=================
     bc::Address _from;
     bc::Address _to;
     bc::Balance _amount;
     base::Time _timestamp;
+    base::Bytes _sign; // unsigned if empty
+    //=================
+    base::Sha256 hashOfTxData() const;
+    //=================
 };
 
 std::ostream& operator<<(std::ostream& os, const Transaction& tx);

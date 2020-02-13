@@ -76,6 +76,10 @@ bool Core::checkBlock(const bc::Block& b) const
 
 bool Core::checkTransaction(const bc::Transaction& tx) const
 {
+    if(!tx.checkSign(tx.getFrom())) {
+        return false;
+    }
+
     if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
         return false;
     }

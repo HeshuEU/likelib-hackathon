@@ -51,6 +51,31 @@ bool Transaction::operator!=(const Transaction& other) const
 }
 
 
+void Transaction::sign(const base::RsaPrivateKey& priv)
+{
+    auto hash = hashOfTxData();
+    _sign = priv.encrypt(hash.getBytes());
+}
+
+
+bool Transaction::checkSign(const base::RsaPublicKey& pub) const
+{
+    if(_sign.isEmpty()) {
+        return false;
+    }
+    auto hash = hashOfTxData();
+    return hash == pub.decrypt(_sign);
+}
+
+
+base::Sha256 Transaction::hashOfTxData() const
+{
+    base::SerializationOArchive oa;
+    oa << _from << _to << _amount << _timestamp;
+    return base::Sha256::compute(std::move(oa).getBytes());
+}
+
+
 Transaction Transaction::deserialize(base::SerializationIArchive &ia)
 {
     bc::Address from, to;

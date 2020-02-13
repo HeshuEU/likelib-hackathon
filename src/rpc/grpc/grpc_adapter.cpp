@@ -13,10 +13,10 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 
 ::grpc::Status GrpcAdapter::balance(grpc::ServerContext*, const likelib::Address* request, likelib::Money* response)
 {
-    auto address = request->address().c_str();
+    auto hex_address = request->address();
 
     try {
-        response->set_money(_service->balance(address));
+        response->set_money(_service->balance(bc::Address{hex_address}));
     }
     catch(const base::Error& e) {
         LOG_ERROR << e.what();
@@ -28,8 +28,8 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 ::grpc::Status GrpcAdapter::transaction(
     grpc::ServerContext*, const likelib::Transaction* request, likelib::Hash* response)
 {
-    auto from_address = request->from_address().address().c_str();
-    auto to_address = request->to_address().address().c_str();
+    auto from_address = bc::Address(request->from_address().address());
+    auto to_address = bc::Address(request->to_address().address());
     auto amount = request->amount().money();
 
     auto creation_time = static_cast<std::uint_least32_t>(std::stoul(request->creation_time().seconds_from_epoch()));

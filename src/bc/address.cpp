@@ -10,12 +10,8 @@ Address::Address(const char* data_string) : _address(base::Bytes::fromHex(data_s
 {}
 
 
-Address::Address() : _address{}
+Address::Address(base::Sha256 hash) : _address(std::move(hash))
 {}
-
-
-// Address::Address(const base::Sha256& hash) : _hash(hash)
-// {}
 
 
 Address::Address(const std::string& data_string) : _address(base::Bytes::fromHex(data_string))
@@ -34,9 +30,9 @@ bool Address::operator==(const Address& another) const
 }
 
 
-bool operator<(const Address& a, const Address& b)
+bool Address::operator<(const Address& another) const
 {
-    return a.toString() < b.toString();
+    return toString() < another.toString();
 }
 
 
