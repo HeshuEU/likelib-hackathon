@@ -578,7 +578,7 @@ base::Bytes base64Encode(const base::Bytes& bytes)
 
     BIO* bio = BIO_new(BIO_s_mem());
     BIO* b64 = BIO_new(BIO_f_base64());
-    BUF_MEM* bufferPtr = BUF_MEM_new();
+    BUF_MEM* bufferPtr;
 
     bio = BIO_push(b64, bio);
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
@@ -594,7 +594,7 @@ base::Bytes base64Encode(const base::Bytes& bytes)
 
     base::Bytes base64_bytes(std::string(bufferPtr->data, bufferPtr->length));
 
-    free(bufferPtr);
+    BUF_MEM_free(bufferPtr);
     BIO_set_close(bio, BIO_NOCLOSE);
     BIO_free_all(bio);
     return base64_bytes;
