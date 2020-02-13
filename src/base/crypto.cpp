@@ -57,9 +57,9 @@ void writeFile(const std::filesystem::path& path, const base::Bytes& data)
 
 base::Bytes generate_bytes(std::size_t size)
 {
-    std::vector<base::Byte> data(size);
-    RAND_bytes(data.data(), static_cast<int>(size));
-    return base::Bytes(data);
+    base::Bytes data(size);
+    RAND_bytes(data.toArray(), static_cast<int>(size));
+    return data;
 }
 
 } // namespace
@@ -362,19 +362,18 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 }
 
 
-AesKey::AesKey() : _type(KeyType::K256BIT), _key(generateKey(KeyType::K256BIT)), _iv(generateIv(KeyType::K256BIT))
+AesKey::AesKey() : _type(KeyType::K256BIT), _key(generateKey(KeyType::K256BIT)), _iv(generateIv())
 {}
 
 
-AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
+AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv())
 {}
 
 
 AesKey::AesKey(const Bytes& bytes)
 {
-    // key may be 2 * size iv
-    static constexpr std::size_t _aes_256_size = static_cast<std::size_t>(base::AesKey::KeyType::K256BIT) / 2 * 3;
-    static constexpr std::size_t _aes_128_size = static_cast<std::size_t>(base::AesKey::KeyType::K128BIT) / 2 * 3;
+    static constexpr std::size_t _aes_256_size = 48;
+    static constexpr std::size_t _aes_128_size = 32;
 
     switch(bytes.size()) {
         case _aes_256_size:
@@ -460,15 +459,9 @@ Bytes AesKey::generateKey(KeyType type)
 }
 
 
-Bytes AesKey::generateIv(KeyType type)
+Bytes AesKey::generateIv()
 {
-    switch(type) {
-        case KeyType::K256BIT:
-        case KeyType::K128BIT:
-            return generate_bytes(static_cast<std::size_t>(type) / 2);
-        default:
-            RAISE_ERROR(CryptoError, "Unexpected key type");
-    }
+    return generate_bytes(IV_CBC_size);
 }
 
 
@@ -551,24 +544,19 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    LOG_DEBUG << 1;
     if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
-    LOG_DEBUG << 2;
 
     Bytes output_data(data.size() * 2);
-    LOG_DEBUG << 3;
 
     int current_data_len = 0;
     if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size()))
         RAISE_ERROR(CryptoError, "failed to decrypt message");
-    LOG_DEBUG << 4;
     int decrypted_message_len_in_buffer = current_data_len;
 
     if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len))
         RAISE_ERROR(CryptoError, "unable to finalize decrypt");
-    LOG_DEBUG << 5;
     decrypted_message_len_in_buffer += current_data_len;
 
     return output_data.takePart(0, decrypted_message_len_in_buffer);
