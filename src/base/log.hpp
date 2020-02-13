@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/current_function.hpp>
+#include <boost/log/keywords/severity.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/sources/logger.hpp>
 #include <boost/log/trivial.hpp>
@@ -17,31 +18,10 @@ namespace logging = boost::log;
 namespace src = boost::log::sources;
 namespace sinks = boost::log::sinks;
 
-enum Severity
-{
-    TRACE,
-    DEBUG,
-    WARNING,
-    INFO,
-    ERROR,
-    FATAL
-};
-
-// BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(logger, src::logger_mt)
+BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(logger, src::severity_logger_mt<logging::trivial::severity_level>)
 
 namespace base
 {
-
-
-enum class LogLevel
-{
-    ALL,
-    DEBUG,
-    INFO,
-    WARNING,
-    ERROR
-};
-
 
 namespace Sink
 {
@@ -51,64 +31,36 @@ namespace Sink
 } // namespace Sink
 
 
-void initLog(LogLevel logLevel = LogLevel::ALL, std::size_t mode = Sink::FILE);
+void initLog(std::size_t mode = Sink::FILE);
 
 void dumpDebuggingInfo();
 
 } // namespace base
 
 
-class Logger
-{
-  public:
-    template<typename T>
-    void print(T&& obj) const
-    {
-        oss << obj;
-    }
 
-    ~Logger()
-    {
-        static std::recursive_mutex mut;
-        mut.lock();
-        // BOOST_LOG_TRIVIAL(debug) << oss.str();
-        mut.unlock();
-    }
+#if defined(CONFIG_IS_DEBUG)
+#define LOG_DEBUG BOOST_LOG_SEV(logger::get(), logging::trivial::debug)
+#else
 
-  private:
-    mutable std::ostringstream oss;
-};
+class NullBuffer
+{};
 
 template<typename T>
-const Logger& operator<<(const Logger& logger, T&& obj)
+[[maybe_unused]] const NullBuffer& operator<<(const NullBuffer& nb, T&&)
 {
-    logger.print(obj);
-    return logger;
+    return nb;
 }
 
-
-//#define LOG_TRACE BOOST_LOG_SEV(logger::get(), Severity::INFO) << std::this_thread::get_id() << ' '
-//#define LOG_DEBUG BOOST_LOG_SEV(logger::get(), Severity::DEBUG) << std::this_thread::get_id() << ' '
-//#define LOG_INFO BOOST_LOG_SEV(logger::get(), Severity::INFO) << std::this_thread::get_id() << ' '
-//#define LOG_WARNING BOOST_LOG_SEV(logger::get(), Severity::WARNING) << std::this_thread::get_id() << ' '
-//#define LOG_ERROR BOOST_LOG_SEV(logger::get(), Severity::ERROR) << std::this_thread::get_id() << ' '
-//#define LOG_FATAL BOOST_LOG_SEV(logger)
-
-#define LOG_TRACE \
-    Logger \
-    {}
 #define LOG_DEBUG \
-    Logger \
+    NullBuffer \
     {}
-#define LOG_INFO \
-    Logger \
-    {}
-#define LOG_WARNING \
-    Logger \
-    {}
-#define LOG_ERROR \
-    Logger \
-    {}
-#define LOG_FATAL BOOST_LOG(logger)
+#endif
+
+#define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace) << BOOST_CURRENT_FUNCTION << ' '
+#define LOG_INFO BOOST_LOG_SEV(logger::get(), logging::trivial::info)
+#define LOG_WARNING BOOST_LOG_SEV(logger::get(), logging::trivial::warning)
+#define LOG_ERROR BOOST_LOG_SEV(logger::get(), logging::trivial::error)
+#define LOG_FATAL BOOST_LOG_SEV(logger)
 
 #define LOG_CURRENT_FUNCTION LOG_DEBUG << BOOST_CURRENT_FUNCTION << ' '
