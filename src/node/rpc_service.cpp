@@ -34,10 +34,19 @@ rpc::OperationStatus GeneralServerService::test(uint32_t api_version)
 
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
-    LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
-    auto ret = _core.getBalance(address);
-    LOG_TRACE << "Balance request has been successfully executed";
-    return ret;
+    try {
+        LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
+        auto ret = _core.getBalance(address);
+        return ret;
+    }
+    catch(const std::exception& e) {
+        LOG_WARNING << "Exception caught during balance request: " << e.what();
+        return -1;
+    }
+    catch(...) {
+        LOG_WARNING << "Exception caught during balance request: unknown";
+        return -1;
+    }
 }
 
 std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_creation_contract(

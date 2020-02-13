@@ -43,12 +43,12 @@ void Database::open(Directory const& path)
     database_options.block_cache = _cache.get();
 
     // create database
-    leveldb::DB* data_base = nullptr;
-    auto const status = leveldb::DB::Open(database_options, path.string(), &data_base);
-    if(!status.ok() || data_base == nullptr) {
+    leveldb::DB* database = nullptr;
+    auto const status = leveldb::DB::Open(database_options, path.string(), &database);
+    if(!status.ok() || database == nullptr) {
         RAISE_ERROR(base::DatabaseError, "Failed to create database instance.");
     }
-    _database.reset(data_base);
+    _database.reset(database);
 
     // set up guard flag
     _inited = true;
