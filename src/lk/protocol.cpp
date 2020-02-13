@@ -189,8 +189,7 @@ void TransactionMessage::serialize(base::SerializationOArchive& oa) const
 
 TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& ia)
 {
-    bc::Transaction tx;
-    ia >> tx;
+    auto tx = bc::Transaction::deserialize(ia);
     return {std::move(tx)};
 }
 

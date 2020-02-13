@@ -13,8 +13,7 @@ class Transaction
 {
   public:
     //=================
-    Transaction() = default;
-    Transaction(const bc::Address& from, const bc::Address& to, const bc::Balance& amount, const base::Time& timestamp);
+    Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp);
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -23,18 +22,40 @@ class Transaction
 
     ~Transaction() = default;
     //=================
-    const bc::Address& getFrom() const noexcept;
-    const bc::Address& getTo() const noexcept;
-    const bc::Balance& getAmount() const noexcept;
-    const base::Time& getTimestamp() const noexcept;
+    [[nodiscard]] const bc::Address& getFrom() const noexcept;
+    [[nodiscard]] const bc::Address& getTo() const noexcept;
+    [[nodiscard]] const bc::Balance& getAmount() const noexcept;
+    [[nodiscard]] const base::Time& getTimestamp() const noexcept;
     //=================
-    void setFrom(const bc::Address& from);
-    void setTo(const bc::Address& to);
-    void setAmount(const bc::Balance& amount);
-    void setTimestamp(const base::Time& timestamp);
+
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;
+
+    //=================
+    static Transaction deserialize(base::SerializationIArchive& ia);
+    void serialize(base::SerializationOArchive& oa) const;
+    //=================
+  private:
+    bc::Address _from;
+    bc::Address _to;
+    bc::Balance _amount;
+    base::Time _timestamp;
+};
+
+std::ostream& operator<<(std::ostream& os, const Transaction& tx);
+
+
+class TransactionBuilder
+{
+  public:
+    void setFrom(bc::Address from);
+    void setTo(bc::Address to);
+    void setAmount(bc::Balance amount);
+    void setTimestamp(base::Time timestamp);
+
+    [[nodiscard]] Transaction build() const &;
+    [[nodiscard]] Transaction build() &&;
 
   private:
     bc::Address _from;
@@ -42,10 +63,5 @@ class Transaction
     bc::Balance _amount = 1; // TODO: change it later, temporary fix
     base::Time _timestamp;
 };
-
-std::ostream& operator<<(std::ostream& os, const Transaction& tx);
-
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transaction& tx);
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Transaction& tx);
 
 } // namespace bc

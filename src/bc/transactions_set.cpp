@@ -49,7 +49,7 @@ void TransactionsSet::remove(const bc::Transaction& tx)
     if(last_vector_element != it) {
         *it = std::move(*last_vector_element);
     }
-    _txs.resize(_txs.size() - 1);
+    _txs.pop_back();
 }
 
 

@@ -5,9 +5,8 @@
 namespace bc
 {
 
-Transaction::Transaction(
-    const bc::Address& from, const bc::Address& to, const bc::Balance& amount, const base::Time& timestamp)
-    : _from{from}, _to{to}, _amount{amount}, _timestamp(timestamp)
+Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp)
+    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _timestamp{timestamp}
 {
     if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
@@ -39,32 +38,6 @@ const base::Time& Transaction::getTimestamp() const noexcept
 }
 
 
-void Transaction::setFrom(const bc::Address& from)
-{
-    _from = from;
-}
-
-
-void Transaction::setTo(const bc::Address& to)
-{
-    _to = to;
-}
-
-
-void Transaction::setAmount(const bc::Balance& amount)
-{
-    if(amount == 0) {
-        RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
-    }
-    _amount = amount;
-}
-
-
-void Transaction::setTimestamp(const base::Time& timestamp)
-{
-    _timestamp = timestamp;
-}
-
 
 bool Transaction::operator==(const Transaction& other) const
 {
@@ -78,25 +51,21 @@ bool Transaction::operator!=(const Transaction& other) const
 }
 
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transaction& tx)
+Transaction Transaction::deserialize(base::SerializationIArchive &ia)
 {
     bc::Address from, to;
     ia >> from >> to;
-    tx.setFrom(from);
-    tx.setTo(to);
     bc::Balance balance;
     ia >> balance;
-    tx.setAmount(balance);
     ::base::Time timestamp;
     ia >> timestamp;
-    tx.setTimestamp(timestamp);
-    return ia;
+    return {std::move(from), std::move(to), balance, timestamp};
 }
 
 
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Transaction& tx)
+void Transaction::serialize(base::SerializationOArchive &oa) const
 {
-    return oa << tx.getFrom() << tx.getTo() << tx.getAmount() << tx.getTimestamp();
+    oa << _from << _to << _amount << _timestamp;
 }
 
 
@@ -105,5 +74,42 @@ std::ostream& operator<<(std::ostream& os, const Transaction& tx)
     return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount()
               << " timestamp: " << tx.getTimestamp();
 }
+
+
+void TransactionBuilder::setFrom(bc::Address from)
+{
+    _from = std::move(from);
+}
+
+
+void TransactionBuilder::setTo(bc::Address to)
+{
+    _to = std::move(to);
+}
+
+
+void TransactionBuilder::setAmount(bc::Balance amount)
+{
+    _amount = amount;
+}
+
+
+void TransactionBuilder::setTimestamp(base::Time timestamp)
+{
+    _timestamp = timestamp;
+}
+
+
+Transaction TransactionBuilder::build() const &
+{
+    return {_from, _to, _amount, _timestamp};
+}
+
+
+Transaction TransactionBuilder::build() &&
+{
+    return {_from, _to, _amount, _timestamp};
+}
+
 
 } // namespace bc
