@@ -53,7 +53,7 @@ void setFileSink()
         boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT);
 
     sink->locked_backend()->auto_flush(true);
-    
+
     sink->set_formatter(&formatter);
 
     boost::log::core::get()->add_sink(sink);
@@ -69,6 +69,7 @@ void setStdoutSink()
     sink->locked_backend()->auto_flush(true);
 
     sink->set_formatter(&formatter);
+    sink->set_filter(logging::trivial::severity >= logging::trivial::debug);
 
     boost::log::core::get()->add_sink(sink);
 }

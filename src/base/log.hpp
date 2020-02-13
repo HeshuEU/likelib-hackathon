@@ -57,7 +57,7 @@ template<typename T>
     {}
 #endif
 
-#define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace)
+#define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace) << BOOST_CURRENT_FUNCTION << ' '
 #define LOG_INFO BOOST_LOG_SEV(logger::get(), logging::trivial::info)
 #define LOG_WARNING BOOST_LOG_SEV(logger::get(), logging::trivial::warning)
 #define LOG_ERROR BOOST_LOG_SEV(logger::get(), logging::trivial::error)
