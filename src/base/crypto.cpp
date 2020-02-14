@@ -1,6 +1,5 @@
 #include "crypto.hpp"
 
-#include "base/assert.hpp"
 #include "base/error.hpp"
 #include "base/directory.hpp"
 #include "base/log.hpp"
@@ -57,9 +56,9 @@ void writeFile(const std::filesystem::path& path, const base::Bytes& data)
 
 base::Bytes generate_bytes(std::size_t size)
 {
-    std::vector<base::Byte> data(size);
-    RAND_bytes(data.data(), static_cast<int>(size));
-    return base::Bytes(data);
+    base::Bytes data(size);
+    RAND_bytes(data.toArray(), static_cast<int>(size));
+    return data;
 }
 
 } // namespace
@@ -556,14 +555,15 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
     }
 
     Bytes output_data(data.size() * 2);
-
     int current_data_len = 0;
-    if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size()))
+    if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size())) {
         RAISE_ERROR(CryptoError, "failed to decrypt message");
+    }
     int decrypted_message_len_in_buffer = current_data_len;
 
-    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len))
+    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len)) {
         RAISE_ERROR(CryptoError, "unable to finalize decrypt");
+    }
     decrypted_message_len_in_buffer += current_data_len;
 
     return output_data.takePart(0, decrypted_message_len_in_buffer);
