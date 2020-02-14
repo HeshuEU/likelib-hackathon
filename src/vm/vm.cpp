@@ -158,7 +158,7 @@ namespace
 {
     std::filesystem::path getVmPath()
     {
-        static const std::filesystem::path lib_name = "libevmone.so.0.4.0";
+        static const std::filesystem::path lib_name = std::filesystem::absolute("libevmone.so.0.4");
 
         if(std::filesystem::exists(lib_name)) {
             if(std::filesystem::is_symlink(lib_name)) {
