@@ -22,6 +22,10 @@ int getBalance(base::SubprogramRouter& router)
     router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
     constexpr const char* ADDRESS_OPTION = "address";
     router.optionsParser()->addOption<std::string>(ADDRESS_OPTION, "address of target account");
+    constexpr const char* PUBLIC_KEY_OPTION = "pub";
+    router.optionsParser()->addOption<std::string>(PUBLIC_KEY_OPTION, "path to a public key file");
+    constexpr const char* PRIVATE_KEY_OPTION = "priv";
+    router.optionsParser()->addOption<std::string>(PRIVATE_KEY_OPTION, "path to a private key file");
     router.update();
 
     if(router.optionsParser()->hasOption("help")) {
