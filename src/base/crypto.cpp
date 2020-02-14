@@ -57,9 +57,9 @@ void writeFile(const std::filesystem::path& path, const base::Bytes& data)
 
 base::Bytes generate_bytes(std::size_t size)
 {
-    std::vector<base::Byte> data(size);
-    RAND_bytes(data.data(), static_cast<int>(size));
-    return base::Bytes(data);
+    base::Bytes data(size);
+    RAND_bytes(data.toArray(), static_cast<int>(size));
+    return data;
 }
 
 } // namespace
@@ -362,19 +362,18 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
 }
 
 
-AesKey::AesKey() : _type(KeyType::K256BIT), _key(generateKey(KeyType::K256BIT)), _iv(generateIv(KeyType::K256BIT))
+AesKey::AesKey() : _type(KeyType::K256BIT), _key(generateKey(KeyType::K256BIT)), _iv(generateIv())
 {}
 
 
-AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv(type))
+AesKey::AesKey(KeyType type) : _type(type), _key(generateKey(type)), _iv(generateIv())
 {}
 
 
 AesKey::AesKey(const Bytes& bytes)
 {
-    // key may be 2 * size iv
-    static constexpr std::size_t _aes_256_size = static_cast<std::size_t>(base::AesKey::KeyType::K256BIT) / 2 * 3;
-    static constexpr std::size_t _aes_128_size = static_cast<std::size_t>(base::AesKey::KeyType::K128BIT) / 2 * 3;
+    static constexpr std::size_t _aes_256_size = 48;
+    static constexpr std::size_t _aes_128_size = 32;
 
     switch(bytes.size()) {
         case _aes_256_size:
@@ -460,15 +459,9 @@ Bytes AesKey::generateKey(KeyType type)
 }
 
 
-Bytes AesKey::generateIv(KeyType type)
+Bytes AesKey::generateIv()
 {
-    switch(type) {
-        case KeyType::K256BIT:
-        case KeyType::K128BIT:
-            return generate_bytes(static_cast<std::size_t>(type) / 2);
-        default:
-            RAISE_ERROR(CryptoError, "Unexpected key type");
-    }
+    return generate_bytes(iv_cbc_size);
 }
 
 
@@ -576,27 +569,29 @@ base::Bytes base64Encode(const base::Bytes& bytes)
         return base::Bytes();
     }
 
-    BIO* bio = BIO_new(BIO_s_mem());
+    BIO* bio_temp = BIO_new(BIO_s_mem());
     BIO* b64 = BIO_new(BIO_f_base64());
-    BUF_MEM* bufferPtr = BUF_MEM_new();
+    BUF_MEM* bufferPtr = nullptr;
 
-    bio = BIO_push(b64, bio);
-    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-    if(BIO_write(bio, bytes.toArray(), static_cast<int>(bytes.size())) < 1) {
+    std::unique_ptr<BIO, decltype(&::BIO_free_all)> bio(BIO_push(b64, bio_temp), ::BIO_free_all);
+    BIO_set_flags(bio.get(), BIO_FLAGS_BASE64_NO_NL);
+    if(BIO_write(bio.get(), bytes.toArray(), static_cast<int>(bytes.size())) < 1) {
         RAISE_ERROR(CryptoError, "Base64 encode write error");
     }
-    if(BIO_flush(bio) < 1) {
+    if(BIO_flush(bio.get()) < 1) {
         RAISE_ERROR(CryptoError, "Base64 encode flush error");
     }
-    if(BIO_get_mem_ptr(bio, &bufferPtr) < 1) {
+    if(BIO_get_mem_ptr(bio.get(), &bufferPtr) < 1) {
+        if(bufferPtr) {
+            BUF_MEM_free(bufferPtr);
+        }
         RAISE_ERROR(CryptoError, "Get pointer to memory from base64 error");
     }
 
     base::Bytes base64_bytes(std::string(bufferPtr->data, bufferPtr->length));
 
-    free(bufferPtr);
-    BIO_set_close(bio, BIO_NOCLOSE);
-    BIO_free_all(bio);
+    BUF_MEM_free(bufferPtr);
+    BIO_set_close(bio.get(), BIO_NOCLOSE);
     return base64_bytes;
 }
 
@@ -615,12 +610,14 @@ base::Bytes base64Decode(const base::Bytes& base64_bytes)
     bio = BIO_push(b64, bio);
     auto new_length = BIO_read(bio, ret.toArray(), base64_bytes.size());
     if(new_length < 1) {
-        RAISE_ERROR(CryptoError, "Base64 decode write error");
+        BIO_free_all(bio);
+        RAISE_ERROR(CryptoError, "Base64 decode read error");
     }
 
     BIO_free_all(bio);
     return ret.takePart(0, new_length);
 }
+
 
 
 KeyVault::KeyVault(const base::PropertyTree& config)
