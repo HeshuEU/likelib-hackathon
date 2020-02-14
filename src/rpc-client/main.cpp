@@ -53,10 +53,12 @@ int getBalance(base::SubprogramRouter& router)
         }
         //====================================
 
+        LOG_INFO << "GetBalance of address " << account_address;
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
         auto result = client.balance(account_address.c_str());
         std::cout << "Remote call of get_balance -> [" << result << "]" << std::endl;
+        LOG_INFO << "Remote call of get_balance -> [" << result << "]" << std::endl;
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
@@ -146,6 +148,8 @@ int transfer(base::SubprogramRouter& router)
         }
         //====================================
         rpc::RpcClient client(host_address);
+        LOG_INFO << "Transfer from " << from_address << " to " << to_address << " with amount " << amount
+                 << " to rpc server " << host_address;
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         auto result =
             client.transaction_to_wallet(amount, from_address.c_str(), to_address.c_str(), fee, base::Time::now());
@@ -210,6 +214,7 @@ int testConnection(base::SubprogramRouter& router)
             host_address = helper.getValue<std::string>("nodes", "host address");
         }
         //====================================
+        LOG_INFO << "Test connect to rpc server by: " << host_address;
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
 
@@ -217,9 +222,11 @@ int testConnection(base::SubprogramRouter& router)
 
         if(answer) {
             std::cout << "Test passed" << std::endl;
+            LOG_INFO << "Test passed";
         }
         else {
             std::cout << "Test failed" << std::endl;
+            LOG_INFO << "Test failed";
         }
         return base::config::EXIT_OK;
     }
@@ -606,7 +613,7 @@ int mainProcess(base::SubprogramRouter& router)
 int main(int argc, char** argv)
 {
     try {
-        base::initLog(base::LogLevel::ALL, base::Sink::FILE);
+        base::initLog(base::Sink::FILE);
         base::SubprogramRouter router("rpc-client", rpc_client::mainProcess);
         router.addSubprogram(
             "get_balance", "use for get balance from remote by account address", rpc_client::getBalance);
