@@ -111,7 +111,7 @@ class HostImplementation : public evmc::Host
 };
 
 
-BOOST_AUTO_TEST_CASE(vm_base)
+BOOST_AUTO_TEST_CASE(vm_base, *boost::unit_test::disabled())
 {
     const char* source_code = R"V0G0N(
 pragma solidity >=0.4.16 <0.7.0;
@@ -192,7 +192,7 @@ contract Foo {
 }
 
 
-BOOST_AUTO_TEST_CASE(vm_dynamic_params)
+BOOST_AUTO_TEST_CASE(vm_dynamic_params, *boost::unit_test::disabled())
 {
     const char* source_code = R"V0G0N(
 pragma solidity >=0.4.16 <0.7.0;

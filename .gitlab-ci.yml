@@ -7,21 +7,22 @@ stages:
 
 Build:
   stage: build
-  image: ubuntu:19.10
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
-    - ./doc/prepare_build.sh
+    - INSTALL_DIR="/opt"
+    - SOURCE_DIR=${PWD}
     - BUILD_DIR="${PWD}/build"
     - mkdir -p ${BUILD_DIR}
     - mkdir -p /tmp/logs
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${PWD}/cmake/clang-tidy.py;-checks=*;-header-filter=.*;" -S ${PWD} -B ${BUILD_DIR}
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-checks=*;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR}
     - cd ${BUILD_DIR} && make -j$(nproc)
-#    - ls /tmp -l && echo && echo && ls /tmp/logs -l 
+    #    - ls /tmp -l && echo && echo && ls /tmp/logs -l
     - cp -r /tmp/logs ${BUILD_DIR}
     - |
       echo
-      echo -e "\033[40;1;42m ========================================================================= 
+      echo -e "\033[40;1;42m =========================================================================
        ==                          Finish building                            == \n \
       ========================================================================= \033[0m"
   artifacts:
@@ -40,7 +41,7 @@ Build:
 #    - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
 #    - |
 #      echo
-#      echo -e "\033[40;1;42m ========================================================================= 
+#      echo -e "\033[40;1;42m =========================================================================
 #       ==                          Start code quality                         == \n \
 #      ========================================================================= \033[0m"
 #    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
@@ -62,14 +63,13 @@ Unit tests:
 Integration tests:
   timeout: 25m
   stage: integration-tests
-  image: ubuntu:19.10
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
-    - ./doc/prepare_build.sh
     - |
       echo
-      echo -e "\033[40;1;42m ========================================================================= 
+      echo -e "\033[40;1;42m =========================================================================
        ==                          Start integration tests                    == \n \
       ========================================================================= \033[0m"
     - PROJECT_SOURCE_DIR=${PWD}
@@ -85,11 +85,10 @@ Integration tests:
 
 Valgrind test:
   stage: analyzers
-  image: ubuntu:19.10
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
-    - ./doc/prepare_build.sh
     - |
       echo
       echo -e "\033[40;1;42m ========================================================================= 
