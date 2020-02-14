@@ -4,6 +4,8 @@
 #include "base/error.hpp"
 #include "base/directory.hpp"
 #include "base/log.hpp"
+#include "base/hash.hpp"
+#include "base/property_tree.hpp"
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -69,6 +71,19 @@ namespace base
 RsaPublicKey::RsaPublicKey(const base::Bytes& key_word)
     : _rsa_key(loadKey(key_word)), _encrypted_message_size(RSA_size(_rsa_key.get()))
 {}
+
+
+RsaPublicKey::RsaPublicKey(const RsaPublicKey& another)
+    : _rsa_key(loadKey(another.toBytes())), _encrypted_message_size(another._encrypted_message_size)
+{}
+
+
+RsaPublicKey& RsaPublicKey::operator=(const RsaPublicKey& another)
+{
+    _rsa_key = loadKey(another.toBytes());
+    _encrypted_message_size = another._encrypted_message_size;
+    return *this;
+}
 
 
 Bytes RsaPublicKey::encrypt(const Bytes& message) const
@@ -169,6 +184,20 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPublicKey::loadKey(const Bytes& k
         RAISE_ERROR(CryptoError, "Fail to read public RSA key");
     }
     return std::unique_ptr<RSA, decltype(&::RSA_free)>(rsa_key, ::RSA_free);
+}
+
+
+RsaPublicKey RsaPublicKey::deserialize(base::SerializationIArchive& ia)
+{
+    base::Bytes bytes;
+    ia >> bytes;
+    return {bytes};
+}
+
+
+void RsaPublicKey::serialize(base::SerializationOArchive& oa)
+{
+    oa << toBytes();
 }
 
 
@@ -585,12 +614,43 @@ base::Bytes base64Decode(const base::Bytes& base64_bytes)
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bio = BIO_push(b64, bio);
     auto new_length = BIO_read(bio, ret.toArray(), base64_bytes.size());
-    if(new_length < 1){
+    if(new_length < 1) {
         RAISE_ERROR(CryptoError, "Base64 decode write error");
     }
 
     BIO_free_all(bio);
     return ret.takePart(0, new_length);
+}
+
+
+KeyVault::KeyVault(const base::PropertyTree& config)
+{
+    auto public_key_path = config.get<std::string>("keys.public_path");
+    auto private_key_path = config.get<std::string>("keys.private_path");
+
+    if(std::filesystem::exists(public_key_path) && std::filesystem::exists(private_key_path)) {
+        _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::read(public_key_path));
+        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::read(private_key_path));
+    }
+    else {
+        LOG_WARNING << "Key files was not found: public[" << public_key_path << "], private[" << private_key_path
+                    << "].";
+        static constexpr std::size_t rsa_keys_length = 1000;
+        auto keys = base::generateKeys(rsa_keys_length);
+        _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
+        _private_key = std::make_unique<base::RsaPrivateKey>(std::move(keys.second));
+        _public_key->save(public_key_path);
+        _private_key->save(private_key_path);
+        LOG_WARNING << "Generated new key pair and saved by config paths.";
+    }
+    LOG_INFO << "Public key hash: " << base::Sha256::compute(_public_key->toBytes()).toHex();
+    // TODO: maybe implement unload to disk mechanic for private key.
+}
+
+
+const base::RsaPublicKey& KeyVault::getPublicKey() const noexcept
+{
+    return *_public_key;
 }
 
 

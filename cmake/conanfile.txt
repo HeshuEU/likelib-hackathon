@@ -1,0 +1,11 @@
+[requires]
+boost/1.71.0@conan/stable
+openssl/1.1.1d
+leveldb/1.22.0
+grpc/1.26.0@inexorgame/stable
+
+[options]
+boost:shared=False
+
+[generators]
+cmake_paths

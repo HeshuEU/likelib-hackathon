@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/bytes.hpp"
+#include "base/crypto.hpp"
 #include "base/hash.hpp"
 #include "base/utility.hpp"
 #include "bc/block.hpp"
@@ -37,21 +38,35 @@ class Network;
 class Peer;
 
 
+struct PeerInfo
+{
+    net::Endpoint endpoint;
+    base::Bytes address;
+
+    static PeerInfo deserialize(base::SerializationIArchive& ia);
+    void serialize(base::SerializationOArchive& oa) const;
+};
+
+
 class HandshakeMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const bc::Block& block, std::uint16_t public_port, const std::vector<net::Endpoint>& known_endpoints);
+    static void serialize(base::SerializationOArchive& oa, const bc::Block& block, const base::Bytes& address,
+        std::uint16_t public_port, const std::vector<PeerInfo>& known_peers);
     void serialize(base::SerializationOArchive& oa) const;
     static HandshakeMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
   private:
     bc::Block _theirs_top_block;
-    std::uint16_t _public_port; // zero public port states that peer didn't provide information about his public endpoint
-    std::vector<net::Endpoint> _known_endpoints;
+    base::Bytes _address;
+    std::uint16_t
+        _public_port; // zero public port states that peer didn't provide information about his public endpoint
+    std::vector<PeerInfo> _known_peers;
 
-    HandshakeMessage(bc::Block&& top_block, std::uint16_t public_port, std::vector<net::Endpoint>&& known_endpoints);
+    HandshakeMessage(
+        bc::Block&& top_block, base::Bytes address, std::uint16_t public_port, std::vector<PeerInfo>&& known_peers);
 };
 
 
@@ -188,15 +203,17 @@ class NewNodeMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint);
+    static void serialize(
+        base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint, const base::Bytes& address);
     void serialize(base::SerializationOArchive& oa) const;
     static NewNodeMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
   private:
     net::Endpoint _new_node_endpoint;
+    base::Bytes _address;
 
-    NewNodeMessage(net::Endpoint&& new_node_endpoint);
+    NewNodeMessage(net::Endpoint&& new_node_endpoint, base::Bytes&& address);
 };
 
 //============================================
@@ -237,6 +254,9 @@ class Peer
     [[nodiscard]] net::Endpoint getEndpoint() const;
     [[nodiscard]] std::optional<net::Endpoint> getPublicEndpoint() const;
     void setServerEndpoint(net::Endpoint endpoint);
+    //================
+    [[nodiscard]] std::optional<base::Bytes> getAddress() const;
+    void setAddress(base::Bytes address);
     //================
     void setState(State new_state);
     State getState() const noexcept;
@@ -281,7 +301,8 @@ class Peer
     Core& _core;
     //================
     State _state{State::JUST_ESTABLISHED};
-    std::optional<net::Endpoint> _address_for_incoming_connections;
+    std::optional<net::Endpoint> _endpoint_for_incoming_connections;
+    std::optional<base::Bytes> _address;
     //================
     std::forward_list<bc::Block> _sync_blocks;
     //================
@@ -296,8 +317,8 @@ class Network
     //================
     void run();
     //================
-    [[nodiscard]] std::vector<net::Endpoint> allPeersAddresses() const;
-    bool checkOutNode(const net::Endpoint& endpoint);
+    [[nodiscard]] std::vector<PeerInfo> allConnectedPeersInfo() const;
+    bool checkOutNode(const net::Endpoint& endpoint, const base::Bytes& address);
     //================
     void broadcast(const base::Bytes& data);
     //================

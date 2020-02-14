@@ -19,6 +19,7 @@
 namespace
 {
 
+
 std::string dateAsString()
 {
     std::time_t raw_time;
@@ -33,27 +34,6 @@ std::string dateAsString()
 void clearLoggerSettings()
 {
     boost::log::core::get()->remove_all_sinks();
-}
-
-void setLogLevel(base::LogLevel logLevel)
-{
-    switch(logLevel) {
-        case base::LogLevel::ALL:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::trace);
-            break;
-        case base::LogLevel::DEBUG:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::debug);
-            break;
-        case base::LogLevel::INFO:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
-            break;
-        case base::LogLevel::WARNING:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::warning);
-            break;
-        case base::LogLevel::ERROR:
-            boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::error);
-            break;
-    }
 }
 
 void formatter(boost::log::record_view const& rec, boost::log::formatting_ostream& stream)
@@ -89,6 +69,7 @@ void setStdoutSink()
     sink->locked_backend()->auto_flush(true);
 
     sink->set_formatter(&formatter);
+    sink->set_filter(logging::trivial::severity >= logging::trivial::debug);
 
     boost::log::core::get()->add_sink(sink);
 }
@@ -103,7 +84,7 @@ void disableLogger()
 namespace base
 {
 
-void initLog(base::LogLevel logLevel, size_t mode)
+void initLog(size_t mode)
 {
     clearLoggerSettings();
 
@@ -111,8 +92,6 @@ void initLog(base::LogLevel logLevel, size_t mode)
         disableLogger();
         return;
     }
-
-    setLogLevel(logLevel);
 
     if(mode & base::Sink::STDOUT) {
         setStdoutSink();

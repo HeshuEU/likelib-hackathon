@@ -5,9 +5,9 @@
 namespace lk
 {
 
-Core::Core(const base::PropertyTree& config) : _config{config}, _blockchain{_config}, _network{_config, *this}
+Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
+    : _config{config}, _vault{key_vault}, _blockchain{_config}, _network{_config, *this}
 {
-    LOG_CURRENT_FUNCTION;
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
     _balance_manager.updateFromGenesis(getGenesisBlock());
@@ -36,7 +36,6 @@ void Core::run()
 
 bool Core::tryAddBlock(const bc::Block& b)
 {
-    LOG_CURRENT_FUNCTION;
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
         {
             std::shared_lock lk(_pending_transactions_mutex);
@@ -84,7 +83,7 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
     std::map<bc::Address, bc::Balance> current_pending_balance;
     {
         std::shared_lock lk(_pending_transactions_mutex);
-        if (_pending_transactions.find(tx)) {
+        if(_pending_transactions.find(tx)) {
             return false;
         }
 
@@ -94,7 +93,7 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
     auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
     if(pending_from_account_balance != current_pending_balance.end()) {
         auto current_from_account_balance = _balance_manager.getBalance(tx.getFrom());
-        return ((pending_from_account_balance->second + current_from_account_balance - tx.getAmount()) >= 0);
+        return ((pending_from_account_balance->second + current_from_account_balance) >= tx.getAmount());
     }
     else {
         return _balance_manager.checkTransaction(tx);
@@ -104,7 +103,6 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
 
 bc::Block Core::getBlockTemplate() const
 {
-    LOG_CURRENT_FUNCTION;
     const auto& top_block = _blockchain.getTopBlock();
     bc::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
@@ -115,7 +113,6 @@ bc::Block Core::getBlockTemplate() const
 
 bool Core::performTransaction(const bc::Transaction& tx)
 {
-    LOG_CURRENT_FUNCTION << tx;
     if(checkTransaction(tx)) {
         {
             std::unique_lock lk(_pending_transactions_mutex);
@@ -140,9 +137,14 @@ const bc::Block& Core::getTopBlock() const
 }
 
 
+base::Bytes Core::getThisNodeAddress() const
+{
+    return _vault.getPublicKey().toBytes();
+}
+
+
 void Core::updateNewBlock(const bc::Block& block)
 {
-    LOG_CURRENT_FUNCTION << block;
     if(!_is_balance_manager_updated) {
         _balance_manager.updateFromGenesis(block);
         _is_balance_manager_updated = true;

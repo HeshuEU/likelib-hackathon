@@ -7,17 +7,19 @@ stages:
 
 Build:
   stage: build
-  image: heshuby/prepare_build:2019-12-20
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
     - INSTALL_DIR="/opt"
-    - PROJECT_SOURCE_DIR=${PWD}
-    - PROJECT_BUILD_DIR="./build"
-    - mkdir ${PROJECT_BUILD_DIR}
-    - cd ${PROJECT_BUILD_DIR}
-    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
-    - make -j$(nproc)
+    - SOURCE_DIR=${PWD}
+    - BUILD_DIR="${PWD}/build"
+    - mkdir -p ${BUILD_DIR}
+    - mkdir -p /tmp/logs
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-checks=*;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR}
+    - cd ${BUILD_DIR} && make -j$(nproc)
+#    - ls /tmp -l && echo && echo && ls /tmp/logs -l 
+    - cp -r /tmp/logs ${BUILD_DIR}
     - |
       echo
       echo -e "\033[40;1;42m ========================================================================= 
@@ -29,21 +31,20 @@ Build:
     expire_in: 1 week
 
 
-Code quality:
-  stage: analyzers
-  image: heshuby/prepare_build:2019-12-20
-  tags:
-    - docker
-  allow_failure: true
-  script:
-    - cd ./src
-    - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Start code quality                         == \n \
-      ========================================================================= \033[0m"
-    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
+#Code quality:
+#  stage: analyzers
+#  image: heshuby/prepare_build:2019-12-20
+#  tags:
+#    - docker
+#  script:
+#    - cd ./src
+#    - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
+#    - |
+#      echo
+#      echo -e "\033[40;1;42m ========================================================================= 
+#       ==                          Start code quality                         == \n \
+#      ========================================================================= \033[0m"
+#    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
 
 
 Unit tests:
@@ -56,13 +57,13 @@ Unit tests:
       echo -e "\033[40;1;42m =========================================================================
        ==                          Start unit tests                           == \n \
       ========================================================================= \033[0m"
-    - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
 Integration tests:
-  timeout: 15m
+  timeout: 25m
   stage: integration-tests
-  image: heshuby/prepare_build:2019-12-20
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
@@ -75,15 +76,16 @@ Integration tests:
     - TEST_DIR="intergation_test_run"
     - mkdir ${TEST_DIR}
     - cd ${TEST_DIR}
-    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/src/node/node -r ${PROJECT_SOURCE_DIR}/build/src/rpc-client/rpc-client
+    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/bin/node -r ${PROJECT_SOURCE_DIR}/build/bin/rpc-client
   artifacts:
+    when: always
     paths:
       - intergation_test_run
     expire_in: 1 week
 
 Valgrind test:
   stage: analyzers
-  image: heshuby/prepare_build:2019-12-20
+  image: heshuby/prepare_build:2020-02-07
   tags:
     - docker
   script:
@@ -92,4 +94,4 @@ Valgrind test:
       echo -e "\033[40;1;42m ========================================================================= 
        ==                          Start memory check                         == \n \
       ========================================================================= \033[0m"
-    - valgrind --leak-check=full --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
