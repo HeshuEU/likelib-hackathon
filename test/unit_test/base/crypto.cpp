@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit_by_serialized_key)
 
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit)
 {
-    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
+    base::Bytes msg("dfjbvalgecnhq=ygrbnf5xgvidytnwucgfim2y139sv7yx");
     base::AesKey key(base::AesKey::KeyType::K128BIT);
     auto encrypted_data = key.encrypt(msg);
     auto decrypt_target = key.decrypt(encrypted_data);
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit)
 
 BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit_by_serialized_key)
 {
-    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
+    base::Bytes msg("djbvalcnhq=ygrn3f5xvidytwugfim2yx19vyx");
     base::AesKey key(base::AesKey::KeyType::K128BIT);
     auto encrypted_data = key.encrypt(msg);
     auto serialised_key = key.toBytes();
