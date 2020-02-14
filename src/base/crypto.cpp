@@ -461,7 +461,7 @@ Bytes AesKey::generateKey(KeyType type)
 
 Bytes AesKey::generateIv()
 {
-    return generate_bytes(IV_CBC_size);
+    return generate_bytes(iv_cbc_size);
 }
 
 
