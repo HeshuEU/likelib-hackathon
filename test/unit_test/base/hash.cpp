@@ -190,24 +190,28 @@ BOOST_AUTO_TEST_CASE(sha1_multiple_serialization)
     BOOST_CHECK_EQUAL(deserialized_hash_2.getBytes().toHex(), target_hex_view_2);
 }
 
+BOOST_AUTO_TEST_CASE(sha3_hash)
+{
+    auto sha224 = base::Sha3::compute(base::Bytes("3-19Lg3;)3;"), base::Sha3::Sha3Type::Sha3Type224);
+    auto hex_str1 = "415cb72b4679aabbce2666574fc0040e9451366713fb51bf06f5a861";
+    BOOST_CHECK_EQUAL(sha224.toHex(), hex_str1);
+    BOOST_CHECK_EQUAL(sha224.getBytes().toHex(), hex_str1);
 
-// BOOST_AUTO_TEST_CASE(sha3_256_hash)
-// {
-//     auto sha256_2 = base::Sha3::compute(base::Bytes("likelib.2"), base::Sha3::Sha3Type::Sha3Type256);
-//     auto hex_str2 = "62e3a6a603eb661780d4a48b21349070b7003fae7125deec536ed35f04f33ef1";
-//     BOOST_CHECK_EQUAL(sha256_2.toHex(), hex_str2);
-//     BOOST_CHECK_EQUAL(sha256_2.getBytes().toHex(), hex_str2);
+    auto sha256 = base::Sha3::compute(base::Bytes("395sdojtse"), base::Sha3::Sha3Type::Sha3Type256);
+    auto hex_str2 = "83118af0614d2afc3d0ffe1f1ffbb12f1f971ad293c96e2bc6e710cccf65b004";
+    BOOST_CHECK_EQUAL(sha256.toHex(), hex_str2);
+    BOOST_CHECK_EQUAL(sha256.getBytes().toHex(), hex_str2);
 
-//     auto sha256_3 = base::Sha3::compute(base::Bytes("it's third test"), base::Sha3::Sha3Type::Sha3Type256);
-//     auto hex_str3 = "7b10f626fc69151701595993d9b303891f0e3febf9a5ad1bf10368dcfa2a4ed0";
-//     BOOST_CHECK_EQUAL(sha256_3.toHex(), hex_str3);
-//     BOOST_CHECK_EQUAL(sha256_3.getBytes().toHex(), hex_str3);
+    auto sha384 = base::Sha3::compute(base::Bytes("fJ#05M30fc3;"), base::Sha3::Sha3Type::Sha3Type384);
+    auto hex_str3 = "574efa5b544ecc526a9e2d024747eb2a7acc9cb70b404c8f68cde89fd079d1d7b068691b55abe88a7f07f87f4fe682f3";
+    BOOST_CHECK_EQUAL(sha384.toHex(), hex_str3);
+    BOOST_CHECK_EQUAL(sha384.getBytes().toHex(), hex_str3);
 
-//     auto sha256_4 = base::Sha3::compute(base::Bytes(""), base::Sha3::Sha3Type::Sha3Type256);
-//     auto hex_str4 = "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a";
-//     BOOST_CHECK_EQUAL(sha256_4.toHex(), hex_str4);
-//     BOOST_CHECK_EQUAL(sha256_4.getBytes().toHex(), hex_str4);
-// }
+    auto sha512 = base::Sha3::compute(base::Bytes("0L35;'fKw35p0Gk"), base::Sha3::Sha3Type::Sha3Type512);
+    auto hex_str4 = "5132a80abfbcdcea658ec25f1e84886b3771dc5dc247ed71bb9660901ef71038475179d5b420d2cfd5e5d1eaf1b24ea7f46ace5bc676713d2092cc5123d3f835";
+    BOOST_CHECK_EQUAL(sha512.toHex(), hex_str4);
+    BOOST_CHECK_EQUAL(sha512.getBytes().toHex(), hex_str4);
+}
 
 
 BOOST_AUTO_TEST_CASE(ripemd160_hash)
