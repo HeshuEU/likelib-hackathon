@@ -110,12 +110,8 @@ class HostImplementation : public evmc::Host
     }
 };
 
-// const auto path_to_dll =
-//    "/home/siarhei_sadouski/Documents/External projects/evmone/cmake-build-debug/lib/libevmone.so.0.4.0";
-const auto path_to_dll = "/home/siarhei_sadouski/Documents/vm_so_files/origin/libevmone.so.0.4.0";
 
-
-BOOST_AUTO_TEST_CASE(vm_base)
+BOOST_AUTO_TEST_CASE(vm_base, *boost::unit_test::disabled())
 {
     const char* source_code = R"V0G0N(
 pragma solidity >=0.4.16 <0.7.0;
@@ -144,7 +140,7 @@ contract Foo {
     file_descriptor.close();
 
     HostImplementation host{};
-    auto vm_instance = vm::VM::load_from_dll(path_to_dll, host);
+    auto vm_instance = vm::VM::load(host);
 
     vm::Solc solc;
 
@@ -196,7 +192,7 @@ contract Foo {
 }
 
 
-BOOST_AUTO_TEST_CASE(vm_dynamic_params)
+BOOST_AUTO_TEST_CASE(vm_dynamic_params, *boost::unit_test::disabled())
 {
     const char* source_code = R"V0G0N(
 pragma solidity >=0.4.16 <0.7.0;
@@ -215,7 +211,6 @@ contract Foo {
 }
     )V0G0N";
 
-
     std::filesystem::path code_file_path = "vm_dynamic_params.sol";
 
     std::ofstream file_descriptor(code_file_path);
@@ -223,7 +218,7 @@ contract Foo {
     file_descriptor.close();
 
     HostImplementation host{};
-    auto vm_instance = vm::VM::load_from_dll(path_to_dll, host);
+    auto vm_instance = vm::VM::load(host);
 
     vm::Solc solc;
 

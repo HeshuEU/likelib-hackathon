@@ -6,6 +6,8 @@
 
 #include <evmc/loader.h>
 
+#include <filesystem>
+
 namespace vm
 {
 
@@ -152,11 +154,36 @@ base::Bytes ExecuteResult::createdAddress() const
     return toBytes(_data.create_address);
 }
 
+namespace
+{
+    std::filesystem::path getVmPath()
+    {
+        static const std::filesystem::path lib_name = "libevmone.so.0.4.0";
 
-VM VM::load_from_dll(const std::string& path_to_dll, evmc::Host& vm_host)
+        if(std::filesystem::exists(lib_name)) {
+            if(std::filesystem::is_symlink(lib_name)) {
+                std::error_code ec;
+                auto result = std::filesystem::read_symlink(lib_name, ec);
+                if(!ec) {
+                    RAISE_ERROR(base::InaccessibleFile, "Vm library was not found");
+                }
+                return std::filesystem::absolute(result);
+            }
+            else {
+                return std::filesystem::absolute(lib_name);
+            }
+        }
+        else {
+            RAISE_ERROR(base::InaccessibleFile, "Vm library was not found");
+        }
+    }
+} // namespace
+
+VM VM::load(evmc::Host& vm_host)
 {
     evmc_loader_error_code load_error_code;
-    auto vm_ptr = evmc_load_and_create(path_to_dll.c_str(), &load_error_code);
+
+    auto vm_ptr = evmc_load_and_create(getVmPath().c_str(), &load_error_code);
 
     if(load_error_code != EVMC_LOADER_SUCCESS || vm_ptr == nullptr) {
         switch(load_error_code) {

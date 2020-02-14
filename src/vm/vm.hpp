@@ -102,7 +102,7 @@ class VM
     VM& operator=(VM&&) = default;
     ~VM() = default;
 
-    static VM load_from_dll(const std::string& path_to_dll, evmc::Host& vm_host);
+    static VM load(evmc::Host& vm_host);
 
     ExecuteResult execute(const SmartContractMessage& msg);
 
