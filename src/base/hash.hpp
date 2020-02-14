@@ -196,8 +196,6 @@ class Sha3
 
     //----------------------------------
 
-    static SerializationOArchive& serialize(SerializationOArchive& oa, const Sha3& block);
-
     SerializationOArchive& serialize(SerializationOArchive& oa) const;
 
     static Sha3 deserialize(SerializationIArchive& ia);

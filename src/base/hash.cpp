@@ -86,7 +86,16 @@ std::ostream& operator<<(std::ostream& os, const Sha256& sha)
     return os << sha.getBytes().toHex();
 }
 
+} // namespace base
 
+
+std::size_t std::hash<base::Sha256>::operator()(const base::Sha256& k) const
+{
+    return std::hash<base::Bytes>{}(k.getBytes());
+}
+
+namespace base
+{
 Sha1::Sha1(const Bytes& data) : _bytes(data)
 {
     if(_bytes.size() != SHA_DIGEST_LENGTH) {
@@ -168,7 +177,17 @@ std::ostream& operator<<(std::ostream& os, const Sha1& sha)
     return os << sha.getBytes().toHex();
 }
 
+} // namespace base
 
+
+std::size_t std::hash<base::Sha1>::operator()(const base::Sha1& k) const
+{
+    return std::hash<base::Bytes>{}(k.getBytes());
+}
+
+
+namespace base
+{
 Ripemd160::Ripemd160(const Bytes& data) : _bytes(data)
 {
     if(_bytes.size() != RIPEMD160_DIGEST_LENGTH) {
@@ -256,7 +275,17 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& ripemd)
     return os << ripemd.getBytes().toHex();
 }
 
+} // namespace base
 
+
+std::size_t std::hash<base::Ripemd160>::operator()(const base::Ripemd160& k) const
+{
+    return std::hash<base::Bytes>{}(k.getBytes());
+}
+
+
+namespace base
+{
 Sha3::Sha3(const Bytes& data) : _type(getSha3Type(data.size())), _bytes(data)
 {}
 
@@ -395,13 +424,7 @@ std::ostream& operator<<(std::ostream& os, const Sha3& sha)
 } // namespace base
 
 
-std::size_t std::hash<base::Sha256>::operator()(const base::Sha256& k) const
-{
-    return std::hash<base::Bytes>{}(k.getBytes());
-}
-
-
-std::size_t std::hash<base::Sha1>::operator()(const base::Sha1& k) const
+std::size_t std::hash<base::Sha3>::operator()(const base::Sha3& k) const
 {
     return std::hash<base::Bytes>{}(k.getBytes());
 }
