@@ -1,7 +1,7 @@
 #include "hash.hpp"
 
 #include "base/assert.hpp"
-#include "error.hpp"
+#include "base/error.hpp"
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>

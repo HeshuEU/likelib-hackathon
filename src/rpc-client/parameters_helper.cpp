@@ -9,7 +9,7 @@ ParametersHelper::ParametersHelper(const std::filesystem::path& path)
         _config = base::readConfig(path);
     }
     else {
-        std::cout << "Warning. Config was not found." << std::endl;
+        std::cerr << "Warning. Config was not found." << std::endl;
     }
 }
 
