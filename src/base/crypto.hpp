@@ -91,7 +91,7 @@ class AesKey
 
     };
     //=================
-    static constexpr std::size_t iv_cbc_size = 16;
+    static constexpr std::size_t IV_CBC_SIZE = 16;
     //=================
     AesKey();
     AesKey(KeyType type);
@@ -118,7 +118,7 @@ class AesKey
     Bytes _iv;
     //=================
     static Bytes generateKey(KeyType type);
-    static Bytes generateIv();
+    static Bytes generateIv(KeyType type);
     //=================
     Bytes encrypt256Aes(const Bytes& data) const;
     Bytes decrypt256Aes(const Bytes& data) const;
