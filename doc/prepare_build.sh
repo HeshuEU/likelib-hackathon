@@ -2,6 +2,8 @@
 
 INSTALL_DIR="/opt"
 
+apt-get update
+
 # install dependencies
 apt-get install -y gcc g++ make build-essential git wget unzip tar curl \
   valgrind clang-tidy python3.7 python3-pip
