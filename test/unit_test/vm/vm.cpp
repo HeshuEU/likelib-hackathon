@@ -110,9 +110,9 @@ class HostImplementation : public evmc::Host
     }
 };
 
-//const auto path_to_dll =
+// const auto path_to_dll =
 //    "/home/siarhei_sadouski/Documents/External projects/evmone/cmake-build-debug/lib/libevmone.so.0.4.0";
- const auto path_to_dll = "/home/siarhei_sadouski/Documents/vm_so_files/origin/libevmone.so.0.4.0";
+const auto path_to_dll = "/home/siarhei_sadouski/Documents/vm_so_files/origin/libevmone.so.0.4.0";
 
 
 BOOST_AUTO_TEST_CASE(vm_base)
@@ -166,50 +166,31 @@ contract Foo {
 
     vm::SmartContract contract{target_code};
 
-    std::string target_input_1{"0000000000000000000000000000000000000000000000000000000000000001"};
-
-    int64_t gas_for_init = 1000000;
-    auto init_value = base::Bytes::fromHex("0000000000000000000000000000000000000000000000000000000000000001");
-    auto init_input = base::Bytes::fromHex(target_input_1);
-
-    auto init_message = contract.createInitMessage(gas_for_init, source, destination, init_value, init_input);
+    auto target_value_1 = 1u;
+    auto init_message = contract.createInitMessage(100000, source, destination, 1, vm::encode(target_value_1));
     auto res1 = vm_instance.execute(init_message);
     BOOST_CHECK(res1.ok());
 
-
-    int64_t gas_for_message_1 = 1000000;
-    auto value_for_message_1 = base::Bytes::fromHex("0000000000000000000000000000000000000000000000000000000000000000");
-    auto input_for_message_1 = base::Bytes::fromHex("29809703");
-
-    auto message1 =
-        contract.createMessage(gas_for_message_1, source, destination, value_for_message_1, input_for_message_1);
+    auto input_for_message_1 = base::Bytes::fromHex("29809703"); // TODO: remove
+    auto message1 = contract.createMessage(10000, source, destination, 0, input_for_message_1);
     auto res2 = vm_instance.execute(message1);
     BOOST_CHECK(res2.ok());
 
-    BOOST_CHECK_EQUAL(res2.toOutputData().toHex(), target_input_1);
+    BOOST_CHECK_EQUAL(res2.toOutputData(), vm::encode(target_value_1));
 
+    auto target_value_2 = 69u;
 
-    std::string target_input_2{"0000000000000000000000000000000000000000000000000000000000000045"};
-
-    int64_t gas_for_message_2 = 1000000;
-    auto value_for_message_2 = base::Bytes::fromHex("0000000000000000000000000000000000000000000000000000000000000000");
-    auto input_for_message_2 = base::Bytes::fromHex(std::string{"bd70b447"} + target_input_2);
-
-    auto message2 =
-        contract.createMessage(gas_for_message_2, source, destination, value_for_message_2, input_for_message_2);
+    auto input_for_message_2 = base::Bytes::fromHex("bd70b447") + vm::encode(target_value_2);
+    auto message2 = contract.createMessage(10000, source, destination, 0, input_for_message_2);
     auto res3 = vm_instance.execute(message2);
     BOOST_CHECK(res3.ok());
 
-    int64_t gas_for_message_3 = 1000000;
-    auto value_for_message_3 = base::Bytes::fromHex("0000000000000000000000000000000000000000000000000000000000000000");
-    auto input_for_message_3 = base::Bytes::fromHex("29809703");
-
-    auto message3 =
-        contract.createMessage(gas_for_message_3, source, destination, value_for_message_3, input_for_message_3);
+    auto input_for_message_3 = base::Bytes::fromHex("29809703"); // TODO: remove
+    auto message3 = contract.createMessage(10000, source, destination, 0, input_for_message_3);
     auto res4 = vm_instance.execute(message3);
     BOOST_CHECK(res3.ok());
 
-    BOOST_CHECK_EQUAL(res4.toOutputData().toHex(), target_input_2);
+    BOOST_CHECK_EQUAL(res4.toOutputData(), vm::encode(target_value_2));
 
     std::filesystem::remove(code_file_path);
 }
@@ -264,50 +245,31 @@ contract Foo {
 
     vm::SmartContract contract{target_code};
 
-    std::string target_input_1{
-        "000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000036f6e650000000000000000000000000000000000000000000000000000000000"};
+    std::string target_value_1 = "one";
 
-    int64_t gas_for_init = 1000000;
-    auto init_value = base::Bytes::fromHex("0000000000000000000000000000000000000000000000000000000000000000");
-    auto init_input = base::Bytes::fromHex(target_input_1);
-
-    auto init_message = contract.createInitMessage(gas_for_init, source, destination, init_value, init_input);
+    auto init_message =
+        contract.createInitMessage(1000000, source, destination, 0, vm::encode(32u) + vm::encode(target_value_1));
     auto res1 = vm_instance.execute(init_message);
     BOOST_CHECK(res1.ok());
 
-
-    int64_t gas_for_message_1 = 1000000;
-    auto value_for_message_1 = base::Bytes::fromHex("0000000000000000000000000000000000000000000000000000000000000000");
-    auto input_for_message_1 = base::Bytes::fromHex("e21f37ce");
-
-    auto message1 =
-        contract.createMessage(gas_for_message_1, source, destination, value_for_message_1, input_for_message_1);
+    auto message1 = contract.createMessage(1000000, source, destination, 0, base::Bytes::fromHex("e21f37ce"));
     auto res2 = vm_instance.execute(message1);
     BOOST_CHECK(res2.ok());
 
-    BOOST_CHECK_EQUAL(res2.toOutputData().toHex(), target_input_1);
+    BOOST_CHECK_EQUAL(vm::getStringArg(0, res2.toOutputData()), target_value_1);
 
-    std::string target_input_2{"0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000d48656c6c6f2c20776f726c642100000000000000000000000000000000000000"};
+    std::string target_value_2 = "Hello, world";
 
-    int64_t gas_for_message_2 = 1000000;
-    auto value_for_message_2 = base::Bytes::fromHex("0000000000000000000000000000000000000000000000000000000000000000");
-    auto input_for_message_2 = base::Bytes::fromHex(std::string{"3d7403a3"} + target_input_2);
-
-    auto message2 =
-        contract.createMessage(gas_for_message_2, source, destination, value_for_message_2, input_for_message_2);
+    auto message2 = contract.createMessage(1000000, source, destination, 0,
+        base::Bytes::fromHex("3d7403a3") + vm::encode(32u) + vm::encode(target_value_2));
     auto res3 = vm_instance.execute(message2);
     BOOST_CHECK(res3.ok());
 
-    int64_t gas_for_message_3 = 1000000;
-    auto value_for_message_3 = base::Bytes::fromHex("0000000000000000000000000000000000000000000000000000000000000000");
-    auto input_for_message_3 = base::Bytes::fromHex("e21f37ce");
-
-    auto message3 =
-        contract.createMessage(gas_for_message_3, source, destination, value_for_message_3, input_for_message_3);
+    auto message3 = contract.createMessage(1000000, source, destination, 0, base::Bytes::fromHex("e21f37ce"));
     auto res4 = vm_instance.execute(message3);
     BOOST_CHECK(res3.ok());
 
-    BOOST_CHECK_EQUAL(res4.toOutputData().toHex(), target_input_2);
+    BOOST_CHECK_EQUAL(vm::getStringArg(0, res4.toOutputData()), target_value_2);
 
     std::filesystem::remove(code_file_path);
 }

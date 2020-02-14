@@ -22,10 +22,10 @@ class SmartContract
     ~SmartContract() = default;
 
     SmartContractMessage createInitMessage(int64_t gas, base::Bytes& source, const base::Bytes& destination,
-        const base::Bytes& value, const base::Bytes& input) const;
+        const bc::Balance& value, const base::Bytes& input) const;
 
     SmartContractMessage createMessage(int64_t gas, base::Bytes& source, const base::Bytes& destination,
-        const base::Bytes& value, const base::Bytes& input) const;
+        const bc::Balance& value, const base::Bytes& input) const;
 
   private:
     evmc_revision _revision;
@@ -58,7 +58,7 @@ class SmartContractMessage
 
     const base::Bytes& getCode() const;
 
-    base::Bytes getValue() const;
+    bc::Balance getValue() const;
 
     evmc_revision getRevision() const;
 

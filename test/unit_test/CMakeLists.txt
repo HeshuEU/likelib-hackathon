@@ -18,6 +18,7 @@ set(TEST_SOURCES
         lk/balance_manager.cpp
         net/endpoint.cpp
         vm/vm.cpp
+        vm/tools.cpp
         )
 
 add_executable(run_tests ${TEST_SOURCES})

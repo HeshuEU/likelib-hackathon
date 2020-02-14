@@ -11,6 +11,36 @@
 namespace vm
 {
 
+class MethodMessageBuilder
+{
+  public:
+    size_t getArgumentsNumber() const;
+
+    // TODO: make more concrete
+    std::string getArgumentTypeName(size_t position) const;
+
+    void setArgument(size_t position, const base::Bytes& argument);
+
+    base::Bytes compile() const;
+
+  private:
+};
+
+
+class MethodSignature
+{
+  public:
+    const std::string& getSignature() const;
+
+    const base::Bytes& getId() const;
+
+    MethodMessageBuilder makeMessageBuilder() const;
+
+  private:
+};
+
+using Methods = std::vector<MethodSignature>;
+
 class CompiledContract
 {
   public:
@@ -38,7 +68,7 @@ class CompiledContract
     void setSignatures(const std::vector<std::pair<base::Bytes, std::string>>& signatures);
     const std::vector<std::pair<base::Bytes, std::string>>& getSignatures() const;
 
-    //TODO messages builder
+    const Methods& getMethods() const;
 
   private:
     std::string _name;
