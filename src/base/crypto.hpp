@@ -33,7 +33,7 @@ class RsaPublicKey
     static RsaPublicKey read(const std::filesystem::path& path);
     //=================
     static RsaPublicKey deserialize(base::SerializationIArchive& ia);
-    void serialize(base::SerializationOArchive& oa);
+    void serialize(base::SerializationOArchive& oa) const;
     //=================
   private:
     //=================
@@ -78,7 +78,7 @@ class RsaPrivateKey
     //=================
 };
 
-std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size);
+std::pair<RsaPublicKey, RsaPrivateKey> generateKeys();
 
 class AesKey
 {

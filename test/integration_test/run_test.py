@@ -12,8 +12,8 @@ import test_multi_transfer
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test execution params')
-    parser.add_argument('-r', '--rpc_client', type=str, default="rpc-client",
-                        help='rpc-client execution file path')
+    parser.add_argument('-r', '--rpc_client', type=str, default="client",
+                        help='client execution file path')
     parser.add_argument('-n', '--node', type=str, default="node",
                         help='node execution file path')
     parser.add_argument('-t', '--test_names', type=str, default="",

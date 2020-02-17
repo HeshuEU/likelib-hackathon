@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base/crypto.hpp"
 #include "base/hash.hpp"
 #include "base/serialization.hpp"
 
@@ -10,27 +11,28 @@ class Address
 {
   public:
     //=============================
-    Address();
-    explicit Address(const char* address);
-    explicit Address(base::Sha256 hash);
-    explicit Address(const std::string& data_string);
+    Address(base::RsaPublicKey pub);
+    Address(std::string_view hex);
     Address(const Address& another) = default;
     Address(Address&& another) = default;
     Address& operator=(const Address& another) = default;
     Address& operator=(Address&& another) = default;
     ~Address() = default;
     //=============================
-    std::string toString() const;
+    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] const base::RsaPublicKey& getPublicKey() const;
     //=============================
     bool operator==(const Address& another) const;
     bool operator<(const Address& another) const;
     //=============================
+    static Address deserialize(base::SerializationIArchive& ia);
+    void serialize(base::SerializationOArchive& oa) const;
+    //=============================
   private:
-    base::Sha256 _address;
+    base::RsaPublicKey _public_key;
 };
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address& tx);
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx);
+
 
 std::ostream& operator<<(std::ostream& os, const Address& address);
 

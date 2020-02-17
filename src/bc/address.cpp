@@ -3,30 +3,32 @@
 namespace bc
 {
 
-const Address BASE_ADDRESS{"00000000000000000000000000000000"};
+// const Address BASE_ADDRESS{"00000000000000000000000000000000"};
 
 
-Address::Address(const char* data_string) : _address(base::Bytes::fromHex(data_string))
+Address::Address(std::string_view hex) : _public_key{base::Bytes::fromHex(hex)}
 {}
 
 
-Address::Address(base::Sha256 hash) : _address(std::move(hash))
-{}
-
-
-Address::Address(const std::string& data_string) : _address(base::Bytes::fromHex(data_string))
+Address::Address(base::RsaPublicKey pub) : _public_key{std::move(pub)}
 {}
 
 
 std::string Address::toString() const
 {
-    return _address.toHex();
+    return _public_key.toBytes().toHex();
+}
+
+
+const base::RsaPublicKey& Address::getPublicKey() const
+{
+    return _public_key;
 }
 
 
 bool Address::operator==(const Address& another) const
 {
-    return _address == another._address;
+    return _public_key.toBytes() == another._public_key.toBytes();
 }
 
 
@@ -36,18 +38,16 @@ bool Address::operator<(const Address& another) const
 }
 
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address& tx)
+Address Address::deserialize(base::SerializationIArchive& ia)
 {
-    std::string address;
-    ia >> address;
-    tx = Address(address);
-    return ia;
+    auto pub = base::RsaPublicKey::deserialize(ia);
+    return bc::Address{pub};
 }
 
 
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx)
+void Address::serialize(base::SerializationOArchive& oa) const
 {
-    return oa << tx.toString();
+    oa << _public_key;
 }
 
 

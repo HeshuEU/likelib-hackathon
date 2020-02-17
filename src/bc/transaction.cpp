@@ -76,10 +76,10 @@ base::Sha256 Transaction::hashOfTxData() const
 }
 
 
-Transaction Transaction::deserialize(base::SerializationIArchive &ia)
+Transaction Transaction::deserialize(base::SerializationIArchive& ia)
 {
-    bc::Address from, to;
-    ia >> from >> to;
+    auto from = bc::Address::deserialize(ia);
+    auto to = bc::Address::deserialize(ia);
     bc::Balance balance;
     ia >> balance;
     ::base::Time timestamp;
@@ -88,7 +88,7 @@ Transaction Transaction::deserialize(base::SerializationIArchive &ia)
 }
 
 
-void Transaction::serialize(base::SerializationOArchive &oa) const
+void Transaction::serialize(base::SerializationOArchive& oa) const
 {
     oa << _from << _to << _amount << _timestamp;
 }
@@ -127,13 +127,21 @@ void TransactionBuilder::setTimestamp(base::Time timestamp)
 
 Transaction TransactionBuilder::build() const &
 {
-    return {_from, _to, _amount, _timestamp};
+    ASSERT(_from);
+    ASSERT(_to);
+    ASSERT(_amount);
+    ASSERT(_timestamp);
+    return {*_from, *_to, *_amount, *_timestamp};
 }
 
 
 Transaction TransactionBuilder::build() &&
 {
-    return {_from, _to, _amount, _timestamp};
+    ASSERT(_from);
+    ASSERT(_to);
+    ASSERT(_amount);
+    ASSERT(_timestamp);
+    return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_timestamp)};
 }
 
 

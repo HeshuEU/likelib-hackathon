@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-namespace rpc_client
+namespace client
 {
 
 template<typename Type>
@@ -21,11 +21,11 @@ Type ParametersHelper::getValue(const std::string& value_name, const std::string
             return values[0];
         }
 
-        std::cout << "choose one of the proposed options[" << tag << "]:" << std::endl;
+        std::cout << "choose one of the proposed options [" << tag << "]:\n";
         for(std::size_t i = 0; i < values.size(); i++) {
-            std::cout << i + 1 << " - " << values[i] << std::endl;
+            std::cout << i + 1 << " - " << values[i] << '\n';
         }
-        std::cout << values.size() + 1 << " - input other" << std::endl << "chosen option number: ";
+        std::cout << values.size() + 1 << " - input other\n" << "chosen option number: ";
         std::string answer;
         std::cin >> answer;
         std::size_t selected_number = 0;
@@ -56,7 +56,8 @@ template<typename Type>
 Type ParametersHelper::getValueFromStdInput(const std::string& tag)
 {
     try {
-        std::cout << "write [" << tag << "] value: ";
+        std::cout << "enter " << tag << " value: ";
+        std::cout.flush();
         Type answer;
         std::cin >> answer;
         return answer;
@@ -66,4 +67,4 @@ Type ParametersHelper::getValueFromStdInput(const std::string& tag)
     }
 }
 
-} // namespace rpc_client
+} // namespace client

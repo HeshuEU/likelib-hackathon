@@ -19,7 +19,7 @@ const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
-        bc::Address null_address(bc::Address(std::string(32, '0')));
+        bc::Address null_address(base::RsaPublicKey(base::Bytes(32)));
         ret.addTransaction(
             {null_address, null_address, bc::Balance{0xFFFFFFFF}, base::Time::fromSecondsSinceEpochBeginning(0)});
         return ret;
@@ -76,7 +76,7 @@ bool Core::checkBlock(const bc::Block& b) const
 
 bool Core::checkTransaction(const bc::Transaction& tx) const
 {
-    if(!tx.checkSign(tx.getFrom())) {
+    if(!tx.checkSign(tx.getFrom().getPublicKey())) {
         return false;
     }
 
@@ -163,7 +163,6 @@ void Core::subscribeToBlockAddition(decltype(Core::_event_block_added)::Callback
 {
     _event_block_added.subscribe(std::move(callback));
 }
-
 
 
 void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_transaction)::CallbackType callback)

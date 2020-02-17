@@ -25,13 +25,13 @@ base::Bytes readAllFile(const std::filesystem::path& path)
     if(!std::filesystem::exists(path)) {
         RAISE_ERROR(base::InvalidArgument, "the file with this path does not exist");
     }
-    std::ifstream file(path);
+    std::ifstream file(path, std::ifstream::binary);
     file.seekg(0, std::ios::end);
     size_t size = file.tellg();
     std::string buffer(size, ' ');
     file.seekg(0);
     file.read(&buffer[0], size);
-    return base::Bytes::fromHex(buffer);
+    return base::Bytes(buffer);
 }
 
 
@@ -47,11 +47,11 @@ void writeFile(const std::filesystem::path& path, const base::Bytes& data)
         }
     }
 
-    std::ofstream file(path, std::ofstream::trunc);
+    std::ofstream file(path, std::ofstream::binary);
     if(!file.is_open()) {
         RAISE_ERROR(base::InvalidArgument, "Failed to create file.");
     }
-    file << data.toHex();
+    file.write(reinterpret_cast<const char*>(data.toArray()), data.size());
 }
 
 
@@ -195,7 +195,7 @@ RsaPublicKey RsaPublicKey::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void RsaPublicKey::serialize(base::SerializationOArchive& oa)
+void RsaPublicKey::serialize(base::SerializationOArchive& oa) const
 {
     oa << toBytes();
 }
@@ -300,12 +300,10 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& 
 }
 
 
-std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
+std::pair<RsaPublicKey, RsaPrivateKey> generateKeys()
 {
-    static constexpr std::size_t minimal_secure_key_size = 1024;
-    if(keys_size < minimal_secure_key_size) {
-        LOG_WARNING << "using less than " << minimal_secure_key_size << " bits for key generation is not secure";
-    }
+    static constexpr std::size_t KEY_SIZE = 2048;
+
     // create big number for random generation
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
     if(!BN_set_word(bn.get(), RSA_F4)) {
@@ -313,7 +311,7 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t keys_size)
     }
     // create rsa and fill by created big number
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa(RSA_new(), ::RSA_free);
-    if(!RSA_generate_key_ex(rsa.get(), keys_size, bn.get(), nullptr)) {
+    if(!RSA_generate_key_ex(rsa.get(), KEY_SIZE, bn.get(), nullptr)) {
         RAISE_ERROR(Error, "Fail to generate RSA key");
     }
     // ==================
@@ -628,8 +626,7 @@ KeyVault::KeyVault(const base::PropertyTree& config)
     else {
         LOG_WARNING << "Key files was not found: public[" << public_key_path << "], private[" << private_key_path
                     << "].";
-        static constexpr std::size_t rsa_keys_length = 1000;
-        auto keys = base::generateKeys(rsa_keys_length);
+        auto keys = base::generateKeys();
         _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
         _private_key = std::make_unique<base::RsaPrivateKey>(std::move(keys.second));
         _public_key->save(public_key_path);

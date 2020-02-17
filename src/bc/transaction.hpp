@@ -61,14 +61,14 @@ class TransactionBuilder
     void setAmount(bc::Balance amount);
     void setTimestamp(base::Time timestamp);
 
-    [[nodiscard]] Transaction build() const &;
+    [[nodiscard]] Transaction build() const&;
     [[nodiscard]] Transaction build() &&;
 
   private:
-    bc::Address _from;
-    bc::Address _to;
-    bc::Balance _amount = 1; // TODO: change it later, temporary fix
-    base::Time _timestamp;
+    std::optional<bc::Address> _from;
+    std::optional<bc::Address> _to;
+    std::optional<bc::Balance> _amount;
+    std::optional<base::Time> _timestamp;
 };
 
 } // namespace bc
