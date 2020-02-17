@@ -21,4 +21,4 @@ target_link_libraries(vm loader)
 
 # copy evm libs
 file(GLOB EVM_LIB ${CONAN_BIN_DIRS_EVMONE}/*evmone*)
-file(COPY ${ABS_FIL} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/)
+file(COPY ${EVM_LIB} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/)

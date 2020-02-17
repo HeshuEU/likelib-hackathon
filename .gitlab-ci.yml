@@ -7,24 +7,18 @@ stages:
 
 Build:
   stage: build
-  image: heshuby/prepare_build:2020-02-07
+  image: ubuntu:19.10
   tags:
     - docker
   script:
-    - INSTALL_DIR="/opt"
     - SOURCE_DIR=${PWD}
     - BUILD_DIR="${PWD}/build"
+    - ${SOURCE_DIR}/doc/prepare_build.sh
     - mkdir -p ${BUILD_DIR}
     - mkdir -p /tmp/logs
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-checks=*;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR}
     - cd ${BUILD_DIR} && make -j$(nproc)
-    #    - ls /tmp -l && echo && echo && ls /tmp/logs -l
     - cp -r /tmp/logs ${BUILD_DIR}
-    - |
-      echo
-      echo -e "\033[40;1;42m =========================================================================
-       ==                          Finish building                            == \n \
-      ========================================================================= \033[0m"
   artifacts:
     paths:
       - build
@@ -47,51 +41,51 @@ Build:
 #    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
 
 
-Unit tests:
-  stage: unit-tests
-  tags:
-    - docker
-  script:
-    - |
-      echo
-      echo -e "\033[40;1;42m =========================================================================
-       ==                          Start unit tests                           == \n \
-      ========================================================================= \033[0m"
-    - build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
-
-
-Integration tests:
-  timeout: 25m
-  stage: integration-tests
-  image: heshuby/prepare_build:2020-02-07
-  tags:
-    - docker
-  script:
-    - |
-      echo
-      echo -e "\033[40;1;42m =========================================================================
-       ==                          Start integration tests                    == \n \
-      ========================================================================= \033[0m"
-    - PROJECT_SOURCE_DIR=${PWD}
-    - TEST_DIR="intergation_test_run"
-    - mkdir ${TEST_DIR}
-    - cd ${TEST_DIR}
-    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/bin/node -r ${PROJECT_SOURCE_DIR}/build/bin/rpc-client
-  artifacts:
-    when: always
-    paths:
-      - intergation_test_run
-    expire_in: 1 week
-
-Valgrind test:
-  stage: analyzers
-  image: heshuby/prepare_build:2020-02-07
-  tags:
-    - docker
-  script:
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Start memory check                         == \n \
-      ========================================================================= \033[0m"
-    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+#Unit tests:
+#  stage: unit-tests
+#  tags:
+#    - docker
+#  script:
+#    - |
+#      echo
+#      echo -e "\033[40;1;42m =========================================================================
+#       ==                          Start unit tests                           == \n \
+#      ========================================================================= \033[0m"
+#    - build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+#
+#
+#Integration tests:
+#  timeout: 25m
+#  stage: integration-tests
+#  image: heshuby/prepare_build:2020-02-07
+#  tags:
+#    - docker
+#  script:
+#    - |
+#      echo
+#      echo -e "\033[40;1;42m =========================================================================
+#       ==                          Start integration tests                    == \n \
+#      ========================================================================= \033[0m"
+#    - PROJECT_SOURCE_DIR=${PWD}
+#    - TEST_DIR="intergation_test_run"
+#    - mkdir ${TEST_DIR}
+#    - cd ${TEST_DIR}
+#    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/bin/node -r ${PROJECT_SOURCE_DIR}/build/bin/rpc-client
+#  artifacts:
+#    when: always
+#    paths:
+#      - intergation_test_run
+#    expire_in: 1 week
+#
+#Valgrind test:
+#  stage: analyzers
+#  image: heshuby/prepare_build:2020-02-07
+#  tags:
+#    - docker
+#  script:
+#    - |
+#      echo
+#      echo -e "\033[40;1;42m =========================================================================
+#       ==                          Start memory check                         == \n \
+#      ========================================================================= \033[0m"
+#    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
