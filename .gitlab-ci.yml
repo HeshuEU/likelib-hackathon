@@ -12,7 +12,7 @@ Build:
     - docker
   script:
     - SOURCE_DIR=${PWD}
-    - BUILD_DIR="${PWD}/build"
+    - BUILD_DIR="${SOURCE_DIR}/build"
     - ${SOURCE_DIR}/doc/prepare_build.sh
     - mkdir -p ${BUILD_DIR}
     - mkdir -p /tmp/logs
@@ -72,16 +72,13 @@ Unit tests:
 #    paths:
 #      - intergation_test_run
 #    expire_in: 1 week
-#
-#Valgrind test:
-#  stage: analyzers
-#  image: heshuby/prepare_build:2020-02-07
-#  tags:
-#    - docker
-#  script:
-#    - |
-#      echo
-#      echo -e "\033[40;1;42m =========================================================================
-#       ==                          Start memory check                         == \n \
-#      ========================================================================= \033[0m"
-#    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+
+Valgrind test:
+  stage: analyzers
+  image: heshuby/prepare_build:2020-02-07
+  tags:
+    - docker
+  script:
+    - ./doc/prepare_build.sh
+    - cd build/bin
+    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
