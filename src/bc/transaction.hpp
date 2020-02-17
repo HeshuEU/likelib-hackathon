@@ -30,6 +30,7 @@ class Transaction
     //=================
     void sign(const base::RsaPrivateKey& priv);
     bool checkSign(const base::RsaPublicKey& pub) const;
+    [[nodiscard]] std::optional<base::Bytes> getSign() const;
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;

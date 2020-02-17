@@ -68,6 +68,17 @@ bool Transaction::checkSign(const base::RsaPublicKey& pub) const
 }
 
 
+std::optional<base::Bytes> Transaction::getSign() const
+{
+    if(_sign.isEmpty()) {
+        return std::nullopt;
+    }
+    else {
+        return _sign;
+    }
+}
+
+
 base::Sha256 Transaction::hashOfTxData() const
 {
     base::SerializationOArchive oa;

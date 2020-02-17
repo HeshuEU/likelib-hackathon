@@ -8,11 +8,26 @@
 #include "base/error.hpp"
 #include "base/hash.hpp"
 #include "base/time.hpp"
+#include "bc/transaction.hpp"
 
-namespace client
+
+namespace {
+    constexpr char *const DEFAULT_CONFIG_PATH = "config.json";
+    constexpr char *const KEY_FILE_PREFIX = "lkkey";
+}
+
+
+std::filesystem::path makePublicKeyPath(const std::filesystem::path& directory)
 {
+    return directory / KEY_FILE_PREFIX / ".pub";
+}
 
-static constexpr const char* DEFAULT_CONFIG_PATH = "config.json";
+
+std::filesystem::path makePrivateKeyPath(const std::filesystem::path& directory)
+{
+    return directory / KEY_FILE_PREFIX;
+}
+
 
 int getBalance(base::SubprogramRouter& router)
 {
@@ -88,10 +103,8 @@ int transfer(base::SubprogramRouter& router)
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "rpc_config json file path");
     constexpr const char* HOST_OPTION = "host";
     router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
-    constexpr const char* FROM_ADDRESS_OPTION = "from";
-    router.optionsParser()->addOption<std::string>(FROM_ADDRESS_OPTION, "address of \"from\" account");
     constexpr const char* TO_ADDRESS_OPTION = "to";
-    router.optionsParser()->addOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" account");
+    router.optionsParser()->addOption<std::string>(TO_ADDRESS_OPTION, "address of recipient account");
     constexpr const char* AMOUNT_OPTION = "amount";
     router.optionsParser()->addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
     constexpr const char* PRIVATE_KEY_OPTION = "keys";
@@ -115,15 +128,6 @@ int transfer(base::SubprogramRouter& router)
         else {
             host_address = helper.getValue<std::string>("nodes", "host address");
         }
-        //====================================
-        std::string from_address_str;
-        if(router.optionsParser()->hasOption(FROM_ADDRESS_OPTION)) {
-            from_address_str = router.optionsParser()->getValue<std::string>(FROM_ADDRESS_OPTION);
-        }
-        else {
-            from_address_str = helper.getValue<std::string>("addresses", "from account address");
-        }
-        bc::Address from_address{base::RsaPublicKey(base::Bytes::fromHex(from_address_str))};
         //====================================
         std::string to_address_str;
         if(router.optionsParser()->hasOption(TO_ADDRESS_OPTION)) {
@@ -149,14 +153,39 @@ int transfer(base::SubprogramRouter& router)
         else {
             keys_path = helper.getValue<std::filesystem::path>("keys", "path to a directory with keys");
         }
+
+        //====================================
+        auto public_key_path = makePublicKeyPath(keys_path);
+        if(!std::filesystem::exists(public_key_path)) {
+            std::cerr << "Error: public key file not found at " << public_key_path;
+            LOG_ERROR << "error: public key not found by path " << public_key_path;
+            return base::config::EXIT_FAIL;
+        }
+        auto public_key = base::RsaPublicKey::load(public_key_path);
+        bc::Address from_address{std::move(public_key)};
+
+        auto private_key_path = makePrivateKeyPath(keys_path);
+        if(!std::filesystem::exists(private_key_path)) {
+            std::cerr << "Error: private key file not found at " << private_key_path;
+            LOG_ERROR << "error: private key not found by path " << private_key_path;
+            return base::config::EXIT_FAIL;
+        }
+        auto private_key = base::RsaPrivateKey::load(private_key_path);
         //====================================
         rpc::RpcClient client(host_address);
         LOG_INFO << "Transfer from " << from_address << " to " << to_address << " with amount " << amount
                  << " to rpc server " << host_address;
-        LOG_INFO << "Try to connect to rpc server by: " << host_address;
-        base::Bytes sign;
-        auto result = client.transaction(amount, from_address, to_address, base::Time::now(), sign);
-        std::cout << "Remote call of transaction -> [" << result << "]" << std::endl;
+        LOG_INFO << "Try to connect to rpc a server at " << host_address;
+        bc::TransactionBuilder txb;
+        txb.setFrom(std::move(from_address));
+        txb.setTo(std::move(to_address));
+        txb.setAmount(amount);
+        txb.setTimestamp(base::Time::now());
+        auto tx = std::move(txb).build();
+        tx.sign(private_key);
+
+        auto result = client.transaction(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), *tx.getSign());
+        std::cout << result << std::endl;
         LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;
     }
@@ -213,7 +242,7 @@ int test(base::SubprogramRouter& router)
 
         auto data = base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST)).toHex();
         auto answer = client.test(data);
-        LOG_INFO << "Received a responce from rpc server " << host_address << ": " << answer;
+        LOG_INFO << "Received a response from rpc server " << host_address << ": " << answer;
         auto our_answer = base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toHex();
 
         if(answer == our_answer) {
@@ -288,14 +317,14 @@ int generateKeys(base::SubprogramRouter& router)
         std::cout << "Generating key pair at " << path;
         const auto& [pub, priv] = base::generateKeys();
 
-        auto public_path = path / "likelib-key.pub";
+        auto public_path = makePublicKeyPath(path);
         if(std::filesystem::exists(public_path)) {
             std::cerr << public_path << " already exists. Exitting\n";
             LOG_ERROR << public_path << " file already exists";
             return base::config::EXIT_FAIL;
         }
 
-        auto private_path = path / "likelib-key";
+        auto private_path = makePrivateKeyPath(path);
         if(std::filesystem::exists(private_path)) {
             std::cerr << private_path << " already exists. Exitting.\n";
             LOG_ERROR << private_path << " file already exists";
@@ -303,27 +332,28 @@ int generateKeys(base::SubprogramRouter& router)
         }
 
         pub.save(public_path);
-        priv.save(private_path);
-        LOG_INFO << "Generated public key at " << public_path;
-        LOG_INFO << "Generated private key at " << private_path;
         std::cout << "Generated public key at " << public_path;
+        LOG_INFO << "Generated public key at " << public_path;
+
+        priv.save(private_path);
         std::cout << "Generated private key at " << private_path;
+        LOG_INFO << "Generated private key at " << private_path;
 
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
         std::cerr << "Invalid arguments: " << router.helpMessage();
-        LOG_ERROR << "[exception in generate]" << er.what();
+        LOG_ERROR << "!exception in generate" << er.what();
         return base::config::EXIT_FAIL;
     }
     catch(const base::Error& er) {
         std::cerr << "Error: " << er.what() << '\n';
-        LOG_ERROR << "[exception in generate]" << er.what();
+        LOG_ERROR << "!exception in generate" << er.what();
         return base::config::EXIT_FAIL;
     }
     catch(...) {
         std::cerr << "Unexpected error.\n";
-        LOG_ERROR << "[unexpected exception caught in generate]";
+        LOG_ERROR << "!unexpected exception caught in generate";
         return base::config::EXIT_FAIL;
     }
 }
@@ -347,7 +377,6 @@ int mainProcess(base::SubprogramRouter& router)
     return base::config::EXIT_OK;
 }
 
-} // namespace client
 
 int main(int argc, char** argv)
 {

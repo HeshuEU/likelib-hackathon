@@ -30,7 +30,7 @@ class RsaPublicKey
     //=================
     Bytes toBytes() const;
     void save(const std::filesystem::path& path) const;
-    static RsaPublicKey read(const std::filesystem::path& path);
+    static RsaPublicKey load(const std::filesystem::path& path);
     //=================
     static RsaPublicKey deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
@@ -65,7 +65,7 @@ class RsaPrivateKey
     //=================
     Bytes toBytes() const;
     void save(const std::filesystem::path& path) const;
-    static RsaPrivateKey read(const std::filesystem::path& path);
+    static RsaPrivateKey load(const std::filesystem::path& path);
     //=================
   private:
     //=================

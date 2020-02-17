@@ -153,7 +153,7 @@ void RsaPublicKey::save(const std::filesystem::path& path) const
 }
 
 
-RsaPublicKey RsaPublicKey::read(const std::filesystem::path& path)
+RsaPublicKey RsaPublicKey::load(const std::filesystem::path& path)
 {
     return RsaPublicKey(readAllFile(path));
 }
@@ -266,7 +266,7 @@ void RsaPrivateKey::save(const std::filesystem::path& path) const
     writeFile(path, toBytes());
 }
 
-RsaPrivateKey RsaPrivateKey::read(const std::filesystem::path& path)
+RsaPrivateKey RsaPrivateKey::load(const std::filesystem::path& path)
 {
     return RsaPrivateKey(readAllFile(path));
 }
@@ -620,8 +620,8 @@ KeyVault::KeyVault(const base::PropertyTree& config)
     auto private_key_path = config.get<std::string>("keys.private_path");
 
     if(std::filesystem::exists(public_key_path) && std::filesystem::exists(private_key_path)) {
-        _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::read(public_key_path));
-        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::read(private_key_path));
+        _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::load(public_key_path));
+        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::load(private_key_path));
     }
     else {
         LOG_WARNING << "Key files was not found: public[" << public_key_path << "], private[" << private_key_path
