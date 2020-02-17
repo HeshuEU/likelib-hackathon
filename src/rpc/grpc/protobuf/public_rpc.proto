@@ -25,6 +25,11 @@ message Transaction {
     Address from_address = 2;
     Address to_address = 3;
     Time creation_time = 4;
+    Sign sign = 5;
+}
+
+message Sign {
+    string hex_sign = 1;
 }
 
 message Address {

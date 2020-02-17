@@ -30,7 +30,7 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
 }
 
 std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, const base::Time& transaction_time, const std::filesystem::path& keys_path)
+    const bc::Address& to_address, const base::Time& transaction_time, const base::Bytes& sign)
 {
     // convert data for request
     auto request_amount = new likelib::Money();
@@ -46,11 +46,15 @@ std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Addre
     auto seconds_from_epoch = static_cast<std::uint32_t>(transaction_time.getSecondsSinceEpochBeginning());
     request_transaction_time->set_seconds_from_epoch(std::to_string(seconds_from_epoch));
 
+    auto request_sign = new likelib::Sign;
+    request_sign->set_hex_sign(sign.toHex());
+
     likelib::Transaction request;
     request.set_allocated_amount(request_amount);
     request.set_allocated_from_address(request_from_address);
     request.set_allocated_to_address(request_to_address);
     request.set_allocated_creation_time(request_transaction_time);
+    request.set_allocated_sign(request_sign);
 
     // call remote host
     likelib::Hash reply;

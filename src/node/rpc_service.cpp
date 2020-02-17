@@ -36,7 +36,7 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
 }
 
 std::string GeneralServerService::transaction(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, const base::Time& transaction_time)
+    const bc::Address& to_address, const base::Time& transaction_time, const base::Bytes& sign)
 {
     try {
         LOG_TRACE << "Node received in {transaction}: from_address[" << from_address.toString() << "], to_address["

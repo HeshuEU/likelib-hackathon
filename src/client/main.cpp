@@ -154,7 +154,8 @@ int transfer(base::SubprogramRouter& router)
         LOG_INFO << "Transfer from " << from_address << " to " << to_address << " with amount " << amount
                  << " to rpc server " << host_address;
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
-        auto result = client.transaction(amount, from_address, to_address, base::Time::now(), keys_path);
+        base::Bytes sign;
+        auto result = client.transaction(amount, from_address, to_address, base::Time::now(), sign);
         std::cout << "Remote call of transaction -> [" << result << "]" << std::endl;
         LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;
