@@ -3,6 +3,7 @@
 import sys, subprocess
 
 PATH_TO_LOGS="/tmp/logs/"
+LOG_NAME="clang-tidy-output.txt"
 #print(len(sys.argv))
 index = sys.argv.index("-isystem")
 l = sys.argv
@@ -15,12 +16,11 @@ script.close()
 try:
     output = subprocess.check_output(l, stderr=subprocess.STDOUT)
 except Exception as e:
-    with open(PATH_TO_LOGS+"clang-error.txt", "at") as f:
-        for i in l: f.write(i + " ")
-        f.write("\n\n")
+    with open(PATH_TO_LOGS + LOG_NAME, "at") as f:
         f.write(e.output.decode("utf-8"))
-    exit(1)
-with open(PATH_TO_LOGS+"clang-output.txt", "at") as f:
+    open(PATH_TO_LOGS + ".error-flag").close()
+    exit(0)
+with open(PATH_TO_LOGS + LOG_NAME, "at") as f:
     f.write('\n'.join(output))
 
 
