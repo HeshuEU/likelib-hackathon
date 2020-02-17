@@ -4,6 +4,34 @@
 
 #include <limits>
 
+
+namespace
+{
+
+
+class TestDeserializeClass
+{
+  public:
+    TestDeserializeClass() = default;
+    TestDeserializeClass(int value) : _value(value)
+    {}
+
+    static TestDeserializeClass deserialize(base::SerializationIArchive& ia)
+    {
+        int val;
+        ia >> val;
+        return TestDeserializeClass(val);
+    }
+
+    int _value;
+};
+
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TestDeserializeClass& obj)
+{
+    return oa << obj._value;
+}
+} // namespace
+
 BOOST_AUTO_TEST_CASE(serialization_sanity_check1)
 {
     base::SerializationOArchive oa;
@@ -179,4 +207,40 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_enum)
 
     BOOST_CHECK(v1 == base::fromBytes<std::vector<E>>(b1));
     BOOST_CHECK(v2 == base::fromBytes<std::vector<E>>(b2));
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
+{
+    std::vector<TestDeserializeClass> v1, v2, v3;
+    for(std::size_t i = 0; i < 9; i++) {
+        v1.emplace_back(i * 3);
+
+        v2.emplace_back(i * 5);
+        v2.emplace_back(i * 7);
+
+        v3.emplace_back(i * 11);
+        v3.emplace_back(i * 13);
+        v3.emplace_back(i * 17);
+    }
+
+    base::SerializationOArchive oa;
+    oa << v1 << v2 << v3;
+
+    std::vector<TestDeserializeClass> v4, v5, v6;
+    base::SerializationIArchive ia(oa.getBytes());
+    ia >> v4 >> v5 >> v6;
+
+    BOOST_CHECK(v1.size() == v4.size());
+    BOOST_CHECK(v2.size() == v5.size());
+    BOOST_CHECK(v3.size() == v6.size());
+    for(std::size_t i = 0; i < v1.size(); i++) {
+        BOOST_CHECK(v1[i]._value == v4[i]._value);
+    }
+    for(std::size_t i = 0; i < v2.size(); i++) {
+        BOOST_CHECK(v2[i]._value == v5[i]._value);
+    }
+    for(std::size_t i = 0; i < v3.size(); i++) {
+        BOOST_CHECK(v3[i]._value == v6[i]._value);
+    }
 }

@@ -7,6 +7,7 @@
 #include <boost/asio.hpp>
 
 #include <functional>
+#include <iostream>
 
 
 namespace impl
@@ -48,6 +49,31 @@ void chooseSerializationMethod(base::SerializationOArchive& oa, T&& t)
 {
     callRightMethod(oa, std::forward<T>(t), Derived{});
 }
+
+
+template<typename, typename T>
+struct has_deserialize
+{
+    static_assert(std::integral_constant<T, false>::value, "Second template parameter needs to be of function type.");
+};
+
+
+template<typename C, typename Ret, typename... Args>
+struct has_deserialize<C, Ret(Args...)>
+{
+  private:
+    template<typename T>
+    static constexpr auto check(T*) ->
+        typename std::is_same<decltype(std::declval<T>().deserialize(std::declval<Args>()...)), Ret>::type;
+
+    template<typename>
+    static constexpr std::false_type check(...);
+
+    typedef decltype(check<C>(0)) type;
+
+  public:
+    static constexpr bool value = type::value;
+};
 
 
 } // namespace impl
@@ -176,7 +202,12 @@ typename std::enable_if<std::is_default_constructible<T>::value, SerializationIA
     ia >> size;
     v.resize(size);
     for(auto it = v.begin(); it != v.end(); ++it) {
-        ia >> *it;
+        if constexpr(impl::has_deserialize<T, T(base::SerializationIArchive&)>::value) {
+            *it = std::move(T::deserialize(ia));
+        }
+        else {
+            ia >> *it;
+        }
     }
     return ia;
 }
