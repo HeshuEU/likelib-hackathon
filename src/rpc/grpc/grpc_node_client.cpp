@@ -88,8 +88,8 @@ bc::Balance GrpcNodeClient::balance(const bc::Address& address)
 }
 
 std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transaction_creation_contract(bc::Balance amount,
-    const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas, uint32_t revision,
-    const base::Bytes& code, const base::Bytes& initial_message)
+    const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas, const base::Bytes& code,
+    const base::Bytes& initial_message)
 {
     // convert data for request
     likelib::TransactionCreationContractRequest request;
@@ -102,7 +102,6 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
 
     request.mutable_initial_message()->set_message_at_hex(initial_message.toHex());
 
-    request.mutable_contract()->set_revision(revision);
     request.mutable_contract()->set_bytecode_at_hex(code.toHex());
 
     fill_time(transaction_time, request.mutable_creation_time());

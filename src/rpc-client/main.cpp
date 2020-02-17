@@ -261,8 +261,6 @@ int pushContract(base::SubprogramRouter& router)
     router.optionsParser()->addOption<std::string>(HOST_OPTION, "address of host");
     constexpr const char* CODE_PATH_OPTION = "code";
     router.optionsParser()->addOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
-    constexpr const char* CODE_REVISION_OPTION = "code";
-    router.optionsParser()->addOption<std::uint32_t>(CODE_REVISION_OPTION, "revision of compiled code");
     constexpr const char* FROM_ADDRESS_OPTION = "from";
     router.optionsParser()->addOption<std::string>(FROM_ADDRESS_OPTION, "address of \"from\" account");
     constexpr const char* AMOUNT_OPTION = "amount";
@@ -321,14 +319,6 @@ int pushContract(base::SubprogramRouter& router)
             return base::config::EXIT_FAIL;
         }
         //====================================
-        std::uint32_t revision;
-        if(router.optionsParser()->hasOption(CODE_REVISION_OPTION)) {
-            revision = router.optionsParser()->getValue<std::uint32_t>(CODE_REVISION_OPTION);
-        }
-        else {
-            revision = helper.getValue<std::uint32_t>("revision", "code build revision");
-        }
-        //====================================
         std::string from_address;
         if(router.optionsParser()->hasOption(FROM_ADDRESS_OPTION)) {
             from_address = router.optionsParser()->getValue<std::string>(FROM_ADDRESS_OPTION);
@@ -369,7 +359,7 @@ int pushContract(base::SubprogramRouter& router)
         bc::Address contract_address;
         bc::Balance gas_left;
         std::tie(status, contract_address, gas_left) = client.transaction_creation_contract(
-            amount, from_address, base::Time::now(), gas, revision, contract, message);
+            amount, from_address, base::Time::now(), gas, contract, message);
 
         if(status) {
             std::cout << "Remote call of creation smart contract success -> [" << status.getMessage()
@@ -422,8 +412,8 @@ int messageToContract(base::SubprogramRouter& router)
     router.optionsParser()->addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
     constexpr const char* GAS_OPTION = "gas";
     router.optionsParser()->addOption<bc::Balance>(GAS_OPTION, "gas count");
-    constexpr const char* INITIAL_MESSAGE_OPTION = "initial_message";
-    router.optionsParser()->addOption<std::string>(INITIAL_MESSAGE_OPTION, "message for initialize smart contract");
+    constexpr const char* MESSAGE_OPTION = "message";
+    router.optionsParser()->addOption<std::string>(MESSAGE_OPTION, "message for call smart contract");
     router.update();
 
     if(router.optionsParser()->hasOption("help")) {
@@ -475,8 +465,8 @@ int messageToContract(base::SubprogramRouter& router)
         }
         //====================================
         std::string message_data;
-        if(router.optionsParser()->hasOption(INITIAL_MESSAGE_OPTION)) {
-            message_data = router.optionsParser()->getValue<std::string>(INITIAL_MESSAGE_OPTION);
+        if(router.optionsParser()->hasOption(MESSAGE_OPTION)) {
+            message_data = router.optionsParser()->getValue<std::string>(MESSAGE_OPTION);
         }
         else {
             message_data = helper.getValue<std::string>("messages", "compiled message to smart contract");

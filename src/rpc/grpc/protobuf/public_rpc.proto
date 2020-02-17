@@ -85,8 +85,7 @@ message MessageFromContract {
 }
 
 message Contract {
-    uint32 revision = 1;
-    string bytecode_at_hex = 2;
+    string bytecode_at_hex = 1;
 }
 
 message Time {

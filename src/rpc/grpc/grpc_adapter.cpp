@@ -116,14 +116,13 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
         auto gas = bc::Balance{request->gas().money()};
         auto creation_time = convert(request->creation_time());
         auto contract_code = base::Bytes::fromHex(request->contract().bytecode_at_hex());
-        auto code_revision = request->contract().revision();
         auto initial_message = base::Bytes::fromHex(request->initial_message().message_at_hex());
 
         auto status = OperationStatus::createSuccess();
         bc::Address contract_address;
         bc::Balance least_gas;
         std::tie(status, contract_address, least_gas) = _service->transaction_creation_contract(
-            amount, from_address, creation_time, gas, code_revision, contract_code, initial_message);
+            amount, from_address, creation_time, gas, contract_code, initial_message);
 
         convert(status, response->mutable_status());
         response->mutable_contract_address_at_hex()->set_address_at_hex(contract_address.toString());

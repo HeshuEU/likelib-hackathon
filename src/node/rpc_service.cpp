@@ -51,12 +51,12 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
 
 std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_creation_contract(
     bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
-    uint32_t revision, const base::Bytes& code, const base::Bytes& initial_message)
+    const base::Bytes& code, const base::Bytes& initial_message)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString() << "], amount["
-              << amount << "], gas" << gas << "], code[" << code.toHex() << "], revision[" << revision
-              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "], initial_message["
-              << initial_message.toHex() << "]";
+              << amount << "], gas" << gas << "], code[" << code.toHex() << "], transaction_time["
+              << transaction_time.getSecondsSinceEpochBeginning() << "], initial_message[" << initial_message.toHex()
+              << "]";
 
     return {rpc::OperationStatus::createFailed("Function is not support"), bc::Address{}, gas};
 }
