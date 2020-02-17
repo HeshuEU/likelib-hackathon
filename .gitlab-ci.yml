@@ -41,19 +41,15 @@ Build:
 #    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
 
 
-#Unit tests:
-#  stage: unit-tests
-#  tags:
-#    - docker
-#  script:
-#    - |
-#      echo
-#      echo -e "\033[40;1;42m =========================================================================
-#       ==                          Start unit tests                           == \n \
-#      ========================================================================= \033[0m"
-#    - build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
-#
-#
+Unit tests:
+  stage: unit-tests
+  tags:
+    - docker
+  script:
+    - cd build/bin/
+    - ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+
+
 #Integration tests:
 #  timeout: 25m
 #  stage: integration-tests
