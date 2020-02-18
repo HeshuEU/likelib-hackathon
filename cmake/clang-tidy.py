@@ -18,7 +18,7 @@ try:
 except Exception as e:
     with open(PATH_TO_LOGS + LOG_NAME, "at") as f:
         f.write(e.output.decode("utf-8"))
-    open(PATH_TO_LOGS + ".error-flag").close()
+    open(PATH_TO_LOGS + ".error-flag", "w").close()
     exit(0)
 with open(PATH_TO_LOGS + LOG_NAME, "at") as f:
     f.write('\n'.join(output))
