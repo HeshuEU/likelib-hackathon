@@ -17,7 +17,7 @@ class BalanceManager
     explicit BalanceManager() = default;
     explicit BalanceManager(const std::map<bc::Address, bc::Balance>& initial_state);
     BalanceManager(const BalanceManager& hash) = delete;
-    BalanceManager(BalanceManager&& hash) = default;
+    BalanceManager(BalanceManager&& hash) = delete;
 
     BalanceManager& operator=(const BalanceManager& another) = delete;
     BalanceManager& operator=(BalanceManager&& another) = delete;
