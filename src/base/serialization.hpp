@@ -26,6 +26,9 @@ class SerializationIArchive
     typename std::enable_if<std::is_enum<T>::value, SerializationIArchive&>::type operator>>(T& v);
     // TODO: work if some of this types is not defined
     //=================
+    template<typename T>
+    T deserialize();
+    //=================
   private:
     const base::Bytes& _bytes;
     std::size_t _index;
@@ -46,6 +49,9 @@ class SerializationOArchive
     // TODO: work if some of this types is not defined
     //=================
     void clear();
+    //=================
+    template<typename T>
+    void serialize(const T& v);
     //=================
     const base::Bytes& getBytes() const& noexcept;
     base::Bytes&& getBytes() && noexcept;

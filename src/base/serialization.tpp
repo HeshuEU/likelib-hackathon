@@ -76,6 +76,31 @@ struct has_deserialize<C, Ret(Args...)>
 };
 
 
+template<typename, typename T>
+struct has_serialize
+{
+    static_assert(std::integral_constant<T, false>::value, "Second template parameter needs to be of function type.");
+};
+
+
+template<typename C, typename Ret, typename... Args>
+struct has_serialize<C, Ret(Args...)>
+{
+  private:
+    template<typename T>
+    static constexpr auto check(T*) ->
+        typename std::is_same<decltype(std::declval<T>().serialize(std::declval<Args>()...)), Ret>::type;
+
+    template<typename>
+    static constexpr std::false_type check(...);
+
+    typedef decltype(check<C>(0)) type;
+
+  public:
+    static constexpr bool value = type::value;
+};
+
+
 } // namespace impl
 
 
@@ -173,10 +198,38 @@ typename std::enable_if<std::is_enum<T>::value, SerializationIArchive&>::type Se
 
 
 template<typename T>
+T SerializationIArchive::deserialize()
+{
+    if constexpr(impl::has_deserialize<T, T(base::SerializationIArchive&)>::value) {
+        return T::deserialize(*this);
+    }
+    else if constexpr(std::is_default_constructible<T>::value) {
+        T res;
+        (*this) >> res;
+        return res;
+    }
+    else {
+        static_assert(impl::TrickFalse<T>::value, "type is not deserializable");
+    }
+}
+
+
+template<typename T>
 typename std::enable_if<std::is_enum<T>::value, SerializationOArchive&>::type SerializationOArchive::operator<<(
     const T& v)
 {
     return *this << static_cast<typename std::underlying_type<T>::type>(v);
+}
+
+
+template<typename T>
+void SerializationOArchive::serialize(const T& v)
+{
+    if constexpr(impl::has_serialize<T, base::SerializationOArchive&(base::SerializationOArchive&)>::value) {
+        v.serialize(*this);
+        return;
+    }
+    (*this) << v;
 }
 
 
@@ -202,12 +255,7 @@ typename std::enable_if<std::is_default_constructible<T>::value, SerializationIA
     ia >> size;
     v.resize(size);
     for(auto it = v.begin(); it != v.end(); ++it) {
-        if constexpr(impl::has_deserialize<T, T(base::SerializationIArchive&)>::value) {
-            *it = std::move(T::deserialize(ia));
-        }
-        else {
-            ia >> *it;
-        }
+        *it = ia.deserialize<T>();
     }
     return ia;
 }
@@ -218,7 +266,7 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T
 {
     oa << v.size();
     for(const auto& x: v) {
-        oa << x;
+        oa.serialize(x);
     }
     return oa;
 }
@@ -258,14 +306,18 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional
 template<typename U, typename V>
 SerializationIArchive& operator>>(SerializationIArchive& ia, std::pair<U, V>& p)
 {
-    return ia >> p.first >> p.second;
+    p.first = ia.deserialize<U>();
+    p.second = ia.deserialize<V>();
+    return ia;
 }
 
 
 template<typename U, typename V>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::pair<U, V>& p)
 {
-    return oa << p.first << p.second;
+    oa.serialize(p.first);
+    oa.serialize(p.second);
+    return oa;
 }
 
 

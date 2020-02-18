@@ -9,27 +9,28 @@ namespace
 {
 
 
-class TestDeserializeClass
+class TestSerialization
 {
   public:
-    TestDeserializeClass() = default;
-    TestDeserializeClass(int value) : _value(value)
+    TestSerialization() = default;
+    TestSerialization(int value) : _value(value)
     {}
 
-    static TestDeserializeClass deserialize(base::SerializationIArchive& ia)
+    static TestSerialization deserialize(base::SerializationIArchive& ia)
     {
         int val;
         ia >> val;
-        return TestDeserializeClass(val);
+        return TestSerialization(val);
+    }
+
+    base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const
+    {
+        oa << _value;
+        return oa;
     }
 
     int _value;
 };
-
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TestDeserializeClass& obj)
-{
-    return oa << obj._value;
-}
 } // namespace
 
 BOOST_AUTO_TEST_CASE(serialization_sanity_check1)
@@ -212,7 +213,7 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_enum)
 
 BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
 {
-    std::vector<TestDeserializeClass> v1, v2, v3;
+    std::vector<TestSerialization> v1, v2, v3;
     for(std::size_t i = 0; i < 9; i++) {
         v1.emplace_back(i * 3);
 
@@ -227,7 +228,7 @@ BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
     base::SerializationOArchive oa;
     oa << v1 << v2 << v3;
 
-    std::vector<TestDeserializeClass> v4, v5, v6;
+    std::vector<TestSerialization> v4, v5, v6;
     base::SerializationIArchive ia(oa.getBytes());
     ia >> v4 >> v5 >> v6;
 
@@ -243,4 +244,46 @@ BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
     for(std::size_t i = 0; i < v3.size(); i++) {
         BOOST_CHECK(v3[i]._value == v6[i]._value);
     }
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_pair1)
+{
+    std::pair<char, TestSerialization> p1{'6', 123};
+    std::pair<char, TestSerialization> p2{'a', 5};
+    std::pair<char, TestSerialization> p3{'^', 777};
+
+    base::SerializationOArchive oa;
+    oa << p1 << p2 << p3;
+
+    std::pair<char, TestSerialization> p4, p5, p6;
+    base::SerializationIArchive ia(oa.getBytes());
+    ia >> p4 >> p5 >> p6;
+
+    BOOST_CHECK((p1.first == p4.first) && (p1.second._value == p4.second._value));
+    BOOST_CHECK((p2.first == p5.first) && (p2.second._value == p5.second._value));
+    BOOST_CHECK((p3.first == p6.first) && (p3.second._value == p6.second._value));
+}
+
+
+BOOST_AUTO_TEST_CASE(serialization_pair2)
+{
+    TestSerialization p1{123};
+    TestSerialization p2{5};
+    TestSerialization p3{777};
+
+    base::SerializationOArchive oa;
+    oa.serialize(p1);
+    oa.serialize(p2);
+    oa.serialize(p3);
+
+    TestSerialization p4, p5, p6;
+    base::SerializationIArchive ia(oa.getBytes());
+    p4 = ia.deserialize<TestSerialization>();
+    p5 = ia.deserialize<TestSerialization>();
+    p6 = ia.deserialize<TestSerialization>();
+
+    BOOST_CHECK(p1._value == p4._value);
+    BOOST_CHECK(p2._value == p5._value);
+    BOOST_CHECK(p3._value == p6._value);
 }
