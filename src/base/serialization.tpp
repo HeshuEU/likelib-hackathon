@@ -7,7 +7,6 @@
 #include <boost/asio.hpp>
 
 #include <functional>
-#include <iostream>
 
 
 namespace impl
