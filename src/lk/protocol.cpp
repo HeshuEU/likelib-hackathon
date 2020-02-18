@@ -62,13 +62,10 @@ void HandshakeMessage::serialize(base::SerializationOArchive& oa) const
 
 HandshakeMessage HandshakeMessage::deserialize(base::SerializationIArchive& ia)
 {
-    auto top_block = bc::Block::deserialize(ia);
-    base::Bytes address;
-    ia >> address;
-    std::uint16_t public_port;
-    ia >> public_port;
-    std::vector<PeerInfo> known_peers;
-    ia >> known_peers;
+    auto top_block = ia.deserialize<bc::Block>();
+    base::Bytes address = ia.deserialize<base::Bytes>();
+    std::uint16_t public_port = ia.deserialize<std::uint16_t>();
+    auto known_peers = ia.deserialize<std::vector<PeerInfo>>();
     return HandshakeMessage(std::move(top_block), std::move(address), public_port, std::move(known_peers));
 }
 
@@ -381,9 +378,8 @@ void InfoMessage::serialize(base::SerializationOArchive& oa) const
 
 InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 {
-    base::Bytes top_block_hash;
-    std::vector<net::Endpoint> available_peers;
-    ia >> top_block_hash >> available_peers;
+    auto top_block_hash = ia.deserialize<base::Bytes>();
+    auto available_peers = ia.deserialize<std::vector<net::Endpoint>>();
     return {std::move(top_block_hash), std::move(available_peers)};
 }
 

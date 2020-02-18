@@ -69,15 +69,6 @@ SerializationIArchive& operator>>(SerializationIArchive& ia, base::Bytes& v);
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::string& v);
 SerializationIArchive& operator>>(SerializationIArchive& ia, std::string& v);
 
-
-template<typename T>
-typename std::enable_if<!std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
-    SerializationIArchive& ia, std::vector<T>& v);
-
-template<typename T>
-typename std::enable_if<std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
-    SerializationIArchive& ia, std::vector<T>& v);
-
 template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
 

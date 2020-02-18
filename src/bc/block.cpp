@@ -20,16 +20,13 @@ base::SerializationOArchive& Block::serialize(base::SerializationOArchive& oa) c
 
 Block Block::deserialize(base::SerializationIArchive& ia)
 {
-    BlockDepth depth;
-    ia >> depth;
+    BlockDepth depth = ia.deserialize<BlockDepth>();
 
-    NonceInt nonce;
-    ia >> nonce;
+    NonceInt nonce = ia.deserialize<NonceInt>();
 
     auto prev_block_hash = base::Sha256::deserialize(ia);
 
-    TransactionsSet txs;
-    ia >> txs;
+    TransactionsSet txs = ia.deserialize<TransactionsSet>();
 
     Block ret{depth, std::move(prev_block_hash), std::move(txs)};
     ret.setNonce(nonce);

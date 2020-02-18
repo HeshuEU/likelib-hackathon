@@ -100,6 +100,34 @@ struct has_serialize<C, Ret(Args...)>
 };
 
 
+template<typename T>
+class global_deserialize
+{
+    public:
+    T deserialize(base::SerializationIArchive& ia)
+    {
+        T t;
+        ia >> t;
+        return t;
+    }
+};
+
+template<typename T>
+class global_deserialize<std::vector<T>>
+{
+    public:
+    std::vector<T> deserialize(base::SerializationIArchive& ia)
+    {
+        std::vector<T> v;
+        std::size_t size = ia.deserialize<std::size_t>();
+        for(std::size_t i = 0; i < size; i++) {
+            v.push_back(ia.deserialize<T>());
+        }
+        return v;
+    }
+};
+
+
 } // namespace impl
 
 
@@ -202,13 +230,8 @@ T SerializationIArchive::deserialize()
     if constexpr(impl::has_deserialize<T, T(base::SerializationIArchive&)>::value) {
         return T::deserialize(*this);
     }
-    else if constexpr(std::is_default_constructible<T>::value) {
-        T res;
-        (*this) >> res;
-        return res;
-    }
     else {
-        static_assert(impl::TrickFalse<T>::value, "type is not deserializable");
+        return impl::global_deserialize<T>{}.deserialize(*this);
     }
 }
 
@@ -226,37 +249,10 @@ void SerializationOArchive::serialize(const T& v)
 {
     if constexpr(impl::has_serialize<T, base::SerializationOArchive&(base::SerializationOArchive&)>::value) {
         v.serialize(*this);
-        return;
     }
-    (*this) << v;
-}
-
-
-template<typename T>
-typename std::enable_if<!std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
-    SerializationIArchive& ia, std::vector<T>& v)
-{
-    std::size_t size;
-    ia >> size;
-    v.reserve(size);
-    for(std::size_t i = 0; i < size; ++i) {
-        v.push_back(std::move(T::deserialize(ia)));
+    else {
+        (*this) << v;
     }
-    return ia;
-}
-
-
-template<typename T>
-typename std::enable_if<std::is_default_constructible<T>::value, SerializationIArchive&>::type operator>>(
-    SerializationIArchive& ia, std::vector<T>& v)
-{
-    std::size_t size;
-    ia >> size;
-    v.resize(size);
-    for(auto it = v.begin(); it != v.end(); ++it) {
-        *it = ia.deserialize<T>();
-    }
-    return ia;
 }
 
 
@@ -333,8 +329,7 @@ template<typename T>
 T fromBytes(const base::Bytes& bytes)
 {
     SerializationIArchive ia(bytes);
-    T t;
-    ia >> t;
+    T t = ia.deserialize<T>();
     return t;
 }
 

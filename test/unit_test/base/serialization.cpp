@@ -71,8 +71,7 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
     ia >> b;
     BOOST_CHECK(b == bb);
 
-    std::vector<std::string> c;
-    ia >> c;
+    std::vector<std::string> c = ia.deserialize<std::vector<std::string>>();
     BOOST_CHECK(c == cc);
 }
 
@@ -88,11 +87,10 @@ BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
     oa << v1 << v2 << v3 << v4;
 
     base::SerializationIArchive ia(oa.getBytes());
-    std::vector<char> v11;
-    std::vector<int> v22;
-    std::vector<long long> v33;
-    std::vector<unsigned char> v44;
-    ia >> v11 >> v22 >> v33 >> v44;
+    std::vector<char> v11 = ia.deserialize<std::vector<char>>();
+    std::vector<int> v22 = ia.deserialize<std::vector<int>>();
+    std::vector<long long> v33 = ia.deserialize<std::vector<long long>>();
+    std::vector<unsigned char> v44 = ia.deserialize<std::vector<unsigned char>>();
     BOOST_CHECK(v1 == v11);
     BOOST_CHECK(v2 == v22);
     BOOST_CHECK(v3 == v33);
@@ -228,9 +226,10 @@ BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
     base::SerializationOArchive oa;
     oa << v1 << v2 << v3;
 
-    std::vector<TestSerialization> v4, v5, v6;
     base::SerializationIArchive ia(oa.getBytes());
-    ia >> v4 >> v5 >> v6;
+    std::vector<TestSerialization> v4 = ia.deserialize<std::vector<TestSerialization>>();
+    std::vector<TestSerialization> v5 = ia.deserialize<std::vector<TestSerialization>>();
+    std::vector<TestSerialization> v6 = ia.deserialize<std::vector<TestSerialization>>();
 
     BOOST_CHECK(v1.size() == v4.size());
     BOOST_CHECK(v2.size() == v5.size());
