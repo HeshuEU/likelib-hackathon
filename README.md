@@ -67,3 +67,9 @@ Notes on parameters:
 1. Run: " sudo .doc/prepare_build.sh ". It will install conan and his dependencies
 2. To generate CMake files use cmake command. 
 3. To build project use make command
+4. install solidity compiler:
+```
+    sudo add-apt-repository ppa:ethereum/ethereum
+    sudo apt-get update
+    sudo apt-get install solc
+```

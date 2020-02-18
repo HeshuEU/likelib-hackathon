@@ -14,7 +14,7 @@ def main(node_exec_path, rpc_client_exec_path):
         amount = 333
         transaction_wait = 3
         node.run_check_transfer(from_address=NodeTester.DISTRIBUTOR_ADDRESS, to_address=target_address, 
-        amount=amount, wait=transaction_wait)
+        amount=amount, wait=transaction_wait, fee=0)
 
         node.run_check_balance(address=target_address, target_balance=amount)
     return 0

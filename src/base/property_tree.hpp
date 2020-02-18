@@ -28,6 +28,9 @@ class PropertyTree
 };
 
 PropertyTree readConfig(const std::filesystem::path& config_file);
+
+PropertyTree parseJson(const std::string& json_string);
+
 } // namespace base
 
 #include "property_tree.tpp"

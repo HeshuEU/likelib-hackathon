@@ -26,6 +26,13 @@ PropertyTree readConfig(const std::filesystem::path& config_file)
     return ret;
 }
 
+PropertyTree parseJson(const std::string& json_string){
+    std::istringstream input{json_string};
+    boost::property_tree::ptree ret;
+    CLARIFY_ERROR(ParsingError, boost::property_tree::read_json(input, ret), "parsing error");
+    return ret;
+}
+
 bool PropertyTree::hasKey(const std::string& path) const
 {
     return static_cast<bool>(_ptree.get_child_optional(path));
