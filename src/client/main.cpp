@@ -11,15 +11,18 @@
 #include "bc/transaction.hpp"
 
 
-namespace {
-    constexpr char *const DEFAULT_CONFIG_PATH = "config.json";
-    constexpr char *const KEY_FILE_PREFIX = "lkkey";
-}
+namespace
+{
+constexpr const char* const DEFAULT_CONFIG_PATH = "config.json";
+constexpr const char* const KEY_FILE_PREFIX = "lkkey";
+} // namespace
 
 
 std::filesystem::path makePublicKeyPath(const std::filesystem::path& directory)
 {
-    return directory / KEY_FILE_PREFIX / ".pub";
+    auto ret = directory / KEY_FILE_PREFIX;
+    ret.replace_extension(".pub");
+    return ret;
 }
 
 
@@ -45,7 +48,7 @@ int getBalance(base::SubprogramRouter& router)
     }
 
     try {
-        auto config_file_path = router.optionsParser()->getValue<std::filesystem::path>(CONFIG_OPTION);
+        std::filesystem::path config_file_path = router.optionsParser()->getValue<std::string>(CONFIG_OPTION);
         ParametersHelper helper{config_file_path, DEFAULT_CONFIG_PATH};
 
         //====================================
@@ -107,8 +110,8 @@ int transfer(base::SubprogramRouter& router)
     router.optionsParser()->addOption<std::string>(TO_ADDRESS_OPTION, "address of recipient account");
     constexpr const char* AMOUNT_OPTION = "amount";
     router.optionsParser()->addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
-    constexpr const char* PRIVATE_KEY_OPTION = "keys";
-    router.optionsParser()->addOption<std::string>(PRIVATE_KEY_OPTION, "path to a directory with keys");
+    constexpr const char* KEYS_DIRECTORY_OPTION = "keys";
+    router.optionsParser()->addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     router.update();
 
     if(router.optionsParser()->hasOption("help")) {
@@ -117,7 +120,7 @@ int transfer(base::SubprogramRouter& router)
     }
 
     try {
-        auto config_file_path = router.optionsParser()->getValue<std::filesystem::path>(CONFIG_OPTION);
+        std::filesystem::path config_file_path = router.optionsParser()->getValue<std::string>(CONFIG_OPTION);
         ParametersHelper helper{config_file_path, DEFAULT_CONFIG_PATH};
 
         //====================================
@@ -147,11 +150,11 @@ int transfer(base::SubprogramRouter& router)
         }
         //====================================
         std::filesystem::path keys_path;
-        if(router.optionsParser()->hasOption(PRIVATE_KEY_OPTION)) {
-            keys_path = router.optionsParser()->getValue<std::filesystem::path>(PRIVATE_KEY_OPTION);
+        if(router.optionsParser()->hasOption(KEYS_DIRECTORY_OPTION)) {
+            keys_path = router.optionsParser()->getValue<std::string>(KEYS_DIRECTORY_OPTION);
         }
         else {
-            keys_path = helper.getValue<std::filesystem::path>("keys", "path to a directory with keys");
+            keys_path = helper.getValue<std::string>("keys", "path to a directory with keys");
         }
 
         //====================================
@@ -225,7 +228,7 @@ int test(base::SubprogramRouter& router)
     }
 
     try {
-        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION)};
+        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION), DEFAULT_CONFIG_PATH};
 
         //====================================
         std::string host_address;
@@ -282,9 +285,9 @@ int generateKeys(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "config.json file path");
-    constexpr const char* PATH_OPTION = "path";
-    constexpr const char* PATH_OPTION_HINT = "directory in which a key pair will be generated";
-    router.optionsParser()->addOption<std::filesystem::path>(PATH_OPTION, PATH_OPTION_HINT);
+    constexpr const char* KEYS_OPTION = "path";
+    constexpr const char* KEYS_OPTION_HINT = "directory in which a key pair will be generated";
+    router.optionsParser()->addOption<std::string>(KEYS_OPTION, KEYS_OPTION_HINT);
     router.update();
 
     if(router.optionsParser()->hasOption("help")) {
@@ -293,56 +296,57 @@ int generateKeys(base::SubprogramRouter& router)
     }
 
     try {
-        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION)};
+        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION), DEFAULT_CONFIG_PATH};
         //====================================
         std::filesystem::path path;
-        if(router.optionsParser()->hasOption(PATH_OPTION)) {
-            path = router.optionsParser()->getValue<std::string>(PATH_OPTION);
+        if(router.optionsParser()->hasOption(KEYS_OPTION)) {
+            path = router.optionsParser()->getValue<std::string>(KEYS_OPTION);
         }
         else {
-            path = helper.getValue<std::string>("keys_path", PATH_OPTION_HINT);
+            path = helper.getValue<std::string>("keys", KEYS_OPTION_HINT);
         }
         //====================================
 
         if(!std::filesystem::exists(path)) {
-            std::cerr << "Given path does not exist";
+            std::cerr << "Given path does not exist" << std::endl;
             return base::config::EXIT_FAIL;
         }
         else if(!std::filesystem::is_directory(path)) {
-            std::cerr << "Given path is not a directory";
+            std::cerr << "Given path is not a directory" << std::endl;
             return base::config::EXIT_FAIL;
         }
 
         LOG_INFO << "Generating key pair at " << path;
-        std::cout << "Generating key pair at " << path;
+        std::cout << "Generating key pair at " << path << std::endl;
         const auto& [pub, priv] = base::generateKeys();
 
         auto public_path = makePublicKeyPath(path);
         if(std::filesystem::exists(public_path)) {
-            std::cerr << public_path << " already exists. Exitting\n";
+            std::cerr << "Error: " << public_path << " already exists.\n";
             LOG_ERROR << public_path << " file already exists";
             return base::config::EXIT_FAIL;
         }
 
         auto private_path = makePrivateKeyPath(path);
         if(std::filesystem::exists(private_path)) {
-            std::cerr << private_path << " already exists. Exitting.\n";
+            std::cerr << "Error: " << private_path << " already exists.\n";
             LOG_ERROR << private_path << " file already exists";
             return base::config::EXIT_FAIL;
         }
 
         pub.save(public_path);
-        std::cout << "Generated public key at " << public_path;
+        std::cout << "Generated public key at " << public_path << std::endl;
+        std::cout << "Public key: " << pub;
         LOG_INFO << "Generated public key at " << public_path;
 
         priv.save(private_path);
-        std::cout << "Generated private key at " << private_path;
+        std::cout << "Generated private key at " << private_path << std::endl;
         LOG_INFO << "Generated private key at " << private_path;
 
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cerr << "Invalid arguments: " << router.helpMessage();
+        std::cerr << "Invalid arguments: " << router.helpMessage() << '\n';
         LOG_ERROR << "!exception in generate" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -382,13 +386,11 @@ int main(int argc, char** argv)
 {
     try {
         base::initLog(base::Sink::FILE);
-        base::SubprogramRouter router("client", client::mainProcess);
-        router.addSubprogram("generate", "generate the pair of keys", client::generateKeys);
-        router.addSubprogram(
-                "get_balance", "use for get balance from remote by account address", client::getBalance);
-        router.addSubprogram(
-                "transfer", "use transfer balance from one address to another address", client::transfer);
-        router.addSubprogram("test", "use test functions", client::test);
+        base::SubprogramRouter router("client", mainProcess);
+        router.addSubprogram("generate", "generate the pair of keys", generateKeys);
+        router.addSubprogram("get_balance", "use for get balance from remote by account address", getBalance);
+        router.addSubprogram("transfer", "use transfer balance from one address to another address", transfer);
+        router.addSubprogram("test", "use test functions", test);
 
         return router.process(argc, argv);
     }

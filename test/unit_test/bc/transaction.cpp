@@ -121,8 +121,8 @@ BOOST_AUTO_TEST_CASE(transaction_set_all1)
 
 BOOST_AUTO_TEST_CASE(transaction_set_all2)
 {
-    bc::Transaction tx(bc::Address{base::Bytes("vjSSDGHS*#%/fg\f").toHex()}, bc::Address{base::Bytes("()#%sdo#%KGD\n/Skg/dfe").toHex()},
-        821481368, base::Time());
+    bc::Transaction tx(bc::Address{base::Bytes("vjSSDGHS*#%/fg\f").toHex()},
+        bc::Address{base::Bytes("()#%sdo#%KGD\n/Skg/dfe").toHex()}, 821481368, base::Time());
 
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();

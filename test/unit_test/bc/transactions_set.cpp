@@ -122,10 +122,12 @@ BOOST_AUTO_TEST_CASE(transaction_set_inEmpty)
     bc::TransactionsSet tx_set;
     BOOST_CHECK(tx_set.isEmpty());
 
-    tx_set.add(bc::Transaction(bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, base::Time()));
+    tx_set.add(bc::Transaction(
+        bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, base::Time()));
     BOOST_CHECK(!tx_set.isEmpty());
 
-    tx_set.remove(bc::Transaction(bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, base::Time()));
+    tx_set.remove(bc::Transaction(
+        bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, base::Time()));
     BOOST_CHECK(tx_set.isEmpty());
 }
 

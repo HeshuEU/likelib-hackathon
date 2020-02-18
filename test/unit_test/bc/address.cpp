@@ -90,8 +90,8 @@ BOOST_AUTO_TEST_CASE(address_serialization1)
 
 BOOST_AUTO_TEST_CASE(address_serialization2)
 {
-//    bc::Address a1(base::Bytes("Address test 5%$&3495 // \nfg23j").toHex());
-//    auto a2 = base::fromBytes<bc::Address>(base::toBytes(a1));
-//    BOOST_CHECK(a1 == a2);
-// TODO: fix
+    //    bc::Address a1(base::Bytes("Address test 5%$&3495 // \nfg23j").toHex());
+    //    auto a2 = base::fromBytes<bc::Address>(base::toBytes(a1));
+    //    BOOST_CHECK(a1 == a2);
+    // TODO: fix
 }

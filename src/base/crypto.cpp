@@ -201,6 +201,12 @@ void RsaPublicKey::serialize(base::SerializationOArchive& oa) const
 }
 
 
+std::ostream& operator<<(std::ostream& os, const RsaPublicKey& public_key)
+{
+    return os << base::base64Encode(public_key.toBytes());
+}
+
+
 RsaPrivateKey::RsaPrivateKey(const base::Bytes& key_word)
     : _rsa_key(loadKey(key_word)), _encrypted_message_size(RSA_size(_rsa_key.get()))
 {}
@@ -302,7 +308,7 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& 
 
 std::pair<RsaPublicKey, RsaPrivateKey> generateKeys()
 {
-    static constexpr std::size_t KEY_SIZE = 2048;
+    static constexpr std::size_t KEY_SIZE = 1024;
 
     // create big number for random generation
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
@@ -561,10 +567,10 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 }
 
 
-base::Bytes base64Encode(const base::Bytes& bytes)
+std::string base64Encode(const base::Bytes& bytes)
 {
     if(bytes.size() == 0) {
-        return base::Bytes();
+        return "";
     }
 
     BIO* bio = BIO_new(BIO_s_mem());
@@ -583,34 +589,36 @@ base::Bytes base64Encode(const base::Bytes& bytes)
         RAISE_ERROR(CryptoError, "Get pointer to memory from base64 error");
     }
 
-    base::Bytes base64_bytes(std::string(bufferPtr->data, bufferPtr->length));
+    std::string ret(bufferPtr->data, bufferPtr->length);
 
     free(bufferPtr);
     BIO_set_close(bio, BIO_NOCLOSE);
     BIO_free_all(bio);
-    return base64_bytes;
+    return ret;
 }
 
 
-base::Bytes base64Decode(const base::Bytes& base64_bytes)
+base::Bytes base64Decode(std::string_view base64)
 {
-    if(base64_bytes.size() == 0) {
+    auto length = base64.length();
+    if(length == 0) {
         return base::Bytes();
     }
 
     BIO* b64 = BIO_new(BIO_f_base64());
-    BIO* bio = BIO_new_mem_buf(base64_bytes.toArray(), base64_bytes.size());
-    base::Bytes ret(base64_bytes.size());
+    BIO* bio = BIO_new_mem_buf(base64.data(), length);
+    base::Bytes ret(length);
 
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bio = BIO_push(b64, bio);
-    auto new_length = BIO_read(bio, ret.toArray(), base64_bytes.size());
+    auto new_length = BIO_read(bio, ret.toArray(), length);
     if(new_length < 1) {
         RAISE_ERROR(CryptoError, "Base64 decode write error");
     }
 
     BIO_free_all(bio);
-    return ret.takePart(0, new_length);
+    ret.resize(new_length);
+    return ret;
 }
 
 

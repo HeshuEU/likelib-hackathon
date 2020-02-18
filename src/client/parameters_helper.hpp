@@ -4,9 +4,6 @@
 
 #include <filesystem>
 
-namespace client
-{
-
 class ParametersHelper
 {
   public:
@@ -25,7 +22,5 @@ class ParametersHelper
     Type getValueFromStdInput(const std::string& tag);
     //=======================
 };
-
-} // namespace client
 
 #include "parameters_helper.tpp"

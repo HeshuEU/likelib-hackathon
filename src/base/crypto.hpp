@@ -7,6 +7,7 @@
 #include <openssl/pem.h>
 
 #include <filesystem>
+#include <iosfwd>
 #include <memory>
 
 namespace base
@@ -45,6 +46,8 @@ class RsaPublicKey
     static std::unique_ptr<RSA, decltype(&::RSA_free)> loadKey(const Bytes& key_word);
     //=================
 };
+
+std::ostream& operator<<(std::ostream& os, const RsaPublicKey& public_key);
 
 class RsaPrivateKey
 {
@@ -94,19 +97,19 @@ class AesKey
     static constexpr std::size_t iv_cbc_size = 16;
     //=================
     AesKey();
-    AesKey(KeyType type);
-    AesKey(const Bytes& bytes_key);
+    explicit AesKey(KeyType type);
+    explicit AesKey(const Bytes& bytes_key);
     AesKey(const AesKey&) = default;
     AesKey(AesKey&&) = default;
     AesKey& operator=(const AesKey&) = default;
     AesKey& operator=(AesKey&&) = default;
     ~AesKey() = default;
     //=================
-    Bytes toBytes() const;
-    Bytes encrypt(const Bytes& data) const;
-    Bytes decrypt(const Bytes& data) const;
+    [[nodiscard]] Bytes toBytes() const;
+    [[nodiscard]] Bytes encrypt(const Bytes& data) const;
+    [[nodiscard]] Bytes decrypt(const Bytes& data) const;
     //=================
-    std::size_t size() const;
+    [[nodiscard]] std::size_t size() const;
     //=================
     void save(const std::filesystem::path& path);
     static AesKey read(const std::filesystem::path& path);
@@ -120,25 +123,23 @@ class AesKey
     static Bytes generateKey(KeyType type);
     static Bytes generateIv();
     //=================
-    Bytes encrypt256Aes(const Bytes& data) const;
-    Bytes decrypt256Aes(const Bytes& data) const;
-    Bytes encrypt128Aes(const Bytes& data) const;
-    Bytes decrypt128Aes(const Bytes& data) const;
+    [[nodiscard]] Bytes encrypt256Aes(const Bytes& data) const;
+    [[nodiscard]] Bytes decrypt256Aes(const Bytes& data) const;
+    [[nodiscard]] Bytes encrypt128Aes(const Bytes& data) const;
+    [[nodiscard]] Bytes decrypt128Aes(const Bytes& data) const;
     //=================
 };
 
 
-base::Bytes base64Encode(const base::Bytes& bytes);
-
-base::Bytes base64Decode(const base::Bytes& base64_bytes);
-
+std::string base64Encode(const base::Bytes& bytes);
+base::Bytes base64Decode(std::string_view base64);
 
 
 class KeyVault
 {
   public:
     KeyVault() = delete;
-    KeyVault(const base::PropertyTree& config);
+    explicit KeyVault(const base::PropertyTree& config);
     KeyVault(const KeyVault&) = delete;
     KeyVault(KeyVault&&) = default;
     KeyVault& operator=(const KeyVault&) = delete;
@@ -146,7 +147,7 @@ class KeyVault
     //---------------------------
     ~KeyVault() = default;
     //---------------------------
-    const base::RsaPublicKey& getPublicKey() const noexcept;
+    [[nodiscard]] const base::RsaPublicKey& getPublicKey() const noexcept;
     //---------------------------
   private:
     //---------------------------

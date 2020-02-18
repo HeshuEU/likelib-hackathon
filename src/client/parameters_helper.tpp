@@ -4,9 +4,6 @@
 
 #include <iostream>
 
-namespace client
-{
-
 template<typename Type>
 Type ParametersHelper::getValue(const std::string& value_name, const std::string& tag)
 {
@@ -25,7 +22,8 @@ Type ParametersHelper::getValue(const std::string& value_name, const std::string
         for(std::size_t i = 0; i < values.size(); i++) {
             std::cout << i + 1 << " - " << values[i] << '\n';
         }
-        std::cout << values.size() + 1 << " - input other\n" << "chosen option number: ";
+        std::cout << values.size() + 1 << " - input other\n"
+                  << "chosen option number: ";
         std::string answer;
         std::cin >> answer;
         std::size_t selected_number = 0;
@@ -66,5 +64,3 @@ Type ParametersHelper::getValueFromStdInput(const std::string& tag)
         RAISE_ERROR(base::InvalidArgument, "invalid option input");
     }
 }
-
-} // namespace client

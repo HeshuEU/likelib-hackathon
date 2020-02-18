@@ -11,8 +11,7 @@ class Address
 {
   public:
     //=============================
-    Address(base::RsaPublicKey pub);
-    Address(std::string_view hex);
+    Address(const base::RsaPublicKey& pub);
     Address(const Address& another) = default;
     Address(Address&& another) = default;
     Address& operator=(const Address& another) = default;
@@ -20,7 +19,6 @@ class Address
     ~Address() = default;
     //=============================
     [[nodiscard]] std::string toString() const;
-    [[nodiscard]] const base::RsaPublicKey& getPublicKey() const;
     //=============================
     bool operator==(const Address& another) const;
     bool operator<(const Address& another) const;
@@ -29,7 +27,7 @@ class Address
     void serialize(base::SerializationOArchive& oa) const;
     //=============================
   private:
-    base::RsaPublicKey _public_key;
+    std::string _address;
 };
 
 

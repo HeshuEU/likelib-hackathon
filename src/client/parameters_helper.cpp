@@ -1,8 +1,5 @@
 #include "parameters_helper.hpp"
 
-namespace client
-{
-
 ParametersHelper::ParametersHelper(const std::filesystem::path& path, const std::filesystem::path& default_config_path)
 {
     if(std::filesystem::exists(path)) {
@@ -12,5 +9,3 @@ ParametersHelper::ParametersHelper(const std::filesystem::path& path, const std:
         RAISE_ERROR(base::InaccessibleFile, "config was not found by path" + path.string());
     }
 }
-
-} // namespace client

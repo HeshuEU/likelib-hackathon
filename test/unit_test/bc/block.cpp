@@ -6,16 +6,16 @@
 namespace
 {
 
-bc::Transaction trans1{
-    bc::Address{base::Bytes("from1 vjS247DGFSv\n ").toHex()}, bc::Address{base::Bytes("to1 ()#%DSOJ\n").toHex()}, 12398, base::Time()};
-bc::Transaction trans2{
-    bc::Address{base::Bytes("from2 vj^Hs47DGFSv\n ").toHex()}, bc::Address{base::Bytes("to2 ()#%Dsdg\n").toHex()}, 5825285, base::Time::now()};
-bc::Transaction trans3{
-    bc::Address{base::Bytes("from3 vjS2%#&DGF\n ").toHex()}, bc::Address{base::Bytes("to3 ()#%DdfOJ\n").toHex()}, 12245398, base::Time()};
-bc::Transaction trans4{
-    bc::Address{base::Bytes("from4 vjS247sdgFSv\n ").toHex()}, bc::Address{base::Bytes("to4 {#%DSOJ ").toHex()}, 168524347, base::Time()};
-bc::Transaction trans5{
-    bc::Address{base::Bytes("from5 vjS2  DGFSv\n ").toHex()}, bc::Address{base::Bytes("to5 ()#%DSdsJ\n").toHex()}, 1434457, base::Time::now()};
+bc::Transaction trans1{bc::Address{base::Bytes("from1 vjS247DGFSv\n ").toHex()},
+    bc::Address{base::Bytes("to1 ()#%DSOJ\n").toHex()}, 12398, base::Time()};
+bc::Transaction trans2{bc::Address{base::Bytes("from2 vj^Hs47DGFSv\n ").toHex()},
+    bc::Address{base::Bytes("to2 ()#%Dsdg\n").toHex()}, 5825285, base::Time::now()};
+bc::Transaction trans3{bc::Address{base::Bytes("from3 vjS2%#&DGF\n ").toHex()},
+    bc::Address{base::Bytes("to3 ()#%DdfOJ\n").toHex()}, 12245398, base::Time()};
+bc::Transaction trans4{bc::Address{base::Bytes("from4 vjS247sdgFSv\n ").toHex()},
+    bc::Address{base::Bytes("to4 {#%DSOJ ").toHex()}, 168524347, base::Time()};
+bc::Transaction trans5{bc::Address{base::Bytes("from5 vjS2  DGFSv\n ").toHex()},
+    bc::Address{base::Bytes("to5 ()#%DSdsJ\n").toHex()}, 1434457, base::Time::now()};
 
 bc::TransactionsSet getTestSet()
 {
@@ -127,8 +127,8 @@ BOOST_AUTO_TEST_CASE(block_sets)
     bc::Block block(117, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
     auto tx_set = getTestSet();
 
-    bc::Transaction new_trans{
-        bc::Address{base::Bytes("SD#%),/n\' \n").toHex()}, bc::Address{base::Bytes("#(vm496LDF ").toHex()}, 67805678, base::Time()};
+    bc::Transaction new_trans{bc::Address{base::Bytes("SD#%),/n\' \n").toHex()},
+        bc::Address{base::Bytes("#(vm496LDF ").toHex()}, 67805678, base::Time()};
     tx_set.remove(trans3);
     tx_set.remove(trans5);
     tx_set.add(new_trans);
@@ -155,10 +155,10 @@ BOOST_AUTO_TEST_CASE(block_sets)
 BOOST_AUTO_TEST_CASE(block_add_transaction)
 {
     bc::Block block(118, base::Sha256::compute(base::Bytes("#%*(D VASGL/n\n\f asdeGDH#%")), getTestSet());
-    bc::Transaction new_trans1{
-        bc::Address{base::Bytes("SD#%),/n\' \n").toHex()}, bc::Address{base::Bytes("#(vm496LDF ").toHex()}, 67805678, base::Time()};
-    bc::Transaction new_trans2{
-            bc::Address{base::Bytes("(#583 Ks%3\n\\  sf )").toHex()}, bc::Address{base::Bytes("# sd  FS34$").toHex()}, 2078911, base::Time()};
+    bc::Transaction new_trans1{bc::Address{base::Bytes("SD#%),/n\' \n").toHex()},
+        bc::Address{base::Bytes("#(vm496LDF ").toHex()}, 67805678, base::Time()};
+    bc::Transaction new_trans2{bc::Address{base::Bytes("(#583 Ks%3\n\\  sf )").toHex()},
+        bc::Address{base::Bytes("# sd  FS34$").toHex()}, 2078911, base::Time()};
 
     block.addTransaction(new_trans1);
     block.addTransaction(new_trans2);

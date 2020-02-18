@@ -41,6 +41,9 @@ ValueType ProgramOptionsParser::getValue(const std::string& flag_name) const
     catch(const boost::program_options::error& e) {
         RAISE_ERROR(base::InvalidArgument, std::string("Incorrect option type: String"));
     }
+    catch(const std::exception& e) {
+        RAISE_ERROR(base::Error, e.what());
+    }
     catch(...) {
         RAISE_ERROR(base::InvalidArgument, "[unexpected error]");
     }

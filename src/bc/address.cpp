@@ -6,29 +6,23 @@ namespace bc
 // const Address BASE_ADDRESS{"00000000000000000000000000000000"};
 
 
-Address::Address(std::string_view hex) : _public_key{base::Bytes::fromHex(hex)}
-{}
-
-
-Address::Address(base::RsaPublicKey pub) : _public_key{std::move(pub)}
-{}
+Address::Address(const base::RsaPublicKey& pub)
+{
+    auto sha256 = base::Sha256::compute(pub.toBytes());
+    auto ripemd = base::Ripemd160::compute(sha256.getBytes());
+    _address = base::base64Encode(ripemd.getBytes());
+}
 
 
 std::string Address::toString() const
 {
-    return _public_key.toBytes().toHex();
-}
-
-
-const base::RsaPublicKey& Address::getPublicKey() const
-{
-    return _public_key;
+    return _address;
 }
 
 
 bool Address::operator==(const Address& another) const
 {
-    return _public_key.toBytes() == another._public_key.toBytes();
+    return _address == another._address;
 }
 
 

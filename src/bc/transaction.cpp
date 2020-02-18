@@ -136,7 +136,7 @@ void TransactionBuilder::setTimestamp(base::Time timestamp)
 }
 
 
-Transaction TransactionBuilder::build() const &
+Transaction TransactionBuilder::build() const&
 {
     ASSERT(_from);
     ASSERT(_to);
