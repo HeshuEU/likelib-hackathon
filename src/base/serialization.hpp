@@ -70,8 +70,8 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const base::Bytes& 
 
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::string& v);
 
-template<typename T>
-SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
+// template<typename T>
+// SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
 
 
 template<typename T>
@@ -85,11 +85,6 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::pair<U, 
 template<typename T, typename TT = typename std::remove_reference<T>::type,
     bool H = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value>
 typename std::enable_if<H, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t);
-
-
-// template<typename T, typename TT = typename std::remove_reference<T>::type,
-//     bool H = std::is_same<decltype(&TT::deserialize), decltype(&TT::deserialize)>::value>
-// typename std::enable_if<H, SerializationIArchive&>::type operator>>(SerializationIArchive& ia, T&& t);
 
 
 template<typename T>

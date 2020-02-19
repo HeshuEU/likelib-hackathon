@@ -59,7 +59,9 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
     const std::vector<std::string> cc{"a", "b", "c"};
 
     base::SerializationOArchive oa;
-    oa << aa << bb << cc;
+    oa.serialize(aa);
+    oa.serialize(bb);
+    oa.serialize(cc);
 
     base::SerializationIArchive ia(oa.getBytes());
 
@@ -83,7 +85,10 @@ BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
     std::vector<long long> v3{
         20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
     std::vector<unsigned char> v4;
-    oa << v1 << v2 << v3 << v4;
+    oa.serialize(v1);
+    oa.serialize(v2);
+    oa.serialize(v3);
+    oa.serialize(v4);
 
     base::SerializationIArchive ia(oa.getBytes());
     std::vector<char> v11 = ia.deserialize<std::vector<char>>();
@@ -223,7 +228,9 @@ BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
     }
 
     base::SerializationOArchive oa;
-    oa << v1 << v2 << v3;
+    oa.serialize(v1);
+    oa.serialize(v2);
+    oa.serialize(v3);
 
     base::SerializationIArchive ia(oa.getBytes());
     std::vector<TestSerialization> v4 = ia.deserialize<std::vector<TestSerialization>>();

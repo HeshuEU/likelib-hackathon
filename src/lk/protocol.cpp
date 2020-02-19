@@ -12,8 +12,9 @@ base::Bytes serializeMessage(Args&&... args)
 {
     LOG_TRACE << lk::enumToString(M::getHandledMessageType());
     base::SerializationOArchive oa;
-    oa << M::getHandledMessageType();
-    (oa << ... << std::forward<Args>(args));
+    oa.serialize(M::getHandledMessageType());
+    //(oa << ... << std::forward<Args>(args));
+    (oa.serialize(std::forward<Args>(args)),...);
     return std::move(oa).getBytes();
 }
 
@@ -49,7 +50,11 @@ constexpr MessageType HandshakeMessage::getHandledMessageType()
 void HandshakeMessage::serialize(base::SerializationOArchive& oa, const bc::Block& block, const base::Bytes& address,
     std::uint16_t public_port, const std::vector<PeerInfo>& known_peers)
 {
-    oa << MessageType::HANDSHAKE << block << address << public_port << known_peers;
+    oa.serialize(MessageType::HANDSHAKE);
+    oa.serialize(block);
+    oa.serialize(address);
+    oa.serialize(public_port);
+    oa.serialize(known_peers);
 }
 
 
@@ -363,9 +368,9 @@ constexpr MessageType InfoMessage::getHandledMessageType()
 void InfoMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& top_block_hash,
     const std::vector<net::Endpoint>& available_peers)
 {
-    oa << MessageType::INFO;
-    top_block_hash.serialize(oa);
-    oa << available_peers;
+    oa.serialize(MessageType::INFO);
+    oa.serialize(top_block_hash);
+    oa.serialize(available_peers);
 }
 
 

@@ -118,7 +118,8 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transac
 
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TransactionsSet& txs)
 {
-    return oa << txs._txs;
+    oa.serialize(txs._txs);
+    return oa;
 }
 
 

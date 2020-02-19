@@ -184,6 +184,31 @@ struct has_serialize<C, Ret(Args...)>
 };
 
 
+template<typename T>
+class global_serialize
+{
+  public:
+    void serialize(base::SerializationOArchive& oa, const T& v)
+    {
+        oa << v;
+    }
+};
+
+
+template<typename T>
+class global_serialize<std::vector<T>>
+{
+  public:
+    void serialize(base::SerializationOArchive& oa, const std::vector<T>& v)
+    {
+        oa << v.size();
+        for(const auto& x: v) {
+            oa.serialize(x);
+        }
+    }
+};
+
+
 } // namespace impl
 
 
@@ -316,20 +341,20 @@ void SerializationOArchive::serialize(const T& v)
         v.serialize(*this);
     }
     else {
-        (*this) << v;
+        impl::global_serialize<T>{}.serialize(*this, v);
     }
 }
 
 
-template<typename T>
-SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v)
-{
-    oa << v.size();
-    for(const auto& x: v) {
-        oa.serialize(x);
-    }
-    return oa;
-}
+// template<typename T>
+// SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v)
+// {
+//     oa << v.size();
+//     for(const auto& x: v) {
+//         oa.serialize(x);
+//     }
+//     return oa;
+// }
 
 
 template<typename T>
@@ -358,7 +383,7 @@ template<typename T>
 base::Bytes toBytes(const T& value)
 {
     SerializationOArchive oa;
-    oa << value;
+    oa.serialize(value);
     return std::move(std::move(oa).getBytes());
 }
 
@@ -379,14 +404,5 @@ typename std::enable_if<H, SerializationOArchive&>::type operator<<(Serializatio
     std::forward<T>(t).serialize(oa);
     return oa;
 }
-
-
-// template<typename T, typename TT = typename std::remove_reference<T>::type,
-//     bool H = std::is_same<decltype(&TT::deserialize), decltype(&TT::deserialize)>::value>
-// typename std::enable_if<H, SerializationIArchive&>::type operator>>(SerializationIArchive& ia, T&& t)
-// {
-//     t = TT::deserialize(ia);
-//     return ia;
-// }
 
 } // namespace base
