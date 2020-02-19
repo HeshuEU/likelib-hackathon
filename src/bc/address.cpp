@@ -53,23 +53,24 @@ bool Address::operator!=(const Address& another) const
 }
 
 
-bool Address::operator<(const Address& another) const
+bool operator<(const Address& a, const Address& b)
 {
-    return toString() < another.toString();
+    return a.toString() < b.toString();
 }
 
 
-Address Address::deserialize(base::SerializationIArchive& ia)
+base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address& tx)
 {
-    std::string base64_address;
-    ia >> base64_address;
-    return bc::Address{base64_address};
+    std::string address = ia.deserialize<std::string>();
+    tx = Address(address);
+    return ia;
 }
 
 
-void Address::serialize(base::SerializationOArchive& oa) const
+base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx)
 {
-    oa << _address;
+    oa.serialize(tx.toString());
+    return oa;
 }
 
 

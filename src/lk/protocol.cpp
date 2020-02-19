@@ -12,8 +12,9 @@ base::Bytes serializeMessage(Args&&... args)
 {
     LOG_TRACE << lk::enumToString(M::getHandledMessageType());
     base::SerializationOArchive oa;
-    oa << M::getHandledMessageType();
-    (oa << ... << std::forward<Args>(args));
+    oa.serialize(M::getHandledMessageType());
+    //(oa << ... << std::forward<Args>(args));
+    (oa.serialize(std::forward<Args>(args)),...);
     return std::move(oa).getBytes();
 }
 
@@ -28,15 +29,15 @@ namespace lk
 PeerInfo PeerInfo::deserialize(base::SerializationIArchive& ia)
 {
     auto endpoint = net::Endpoint::deserialize(ia);
-    base::Bytes address;
-    ia >> address;
+    base::Bytes address = ia.deserialize<base::Bytes>();
     return {std::move(endpoint), std::move(address)};
 }
 
 
 void PeerInfo::serialize(base::SerializationOArchive& oa) const
 {
-    oa << endpoint << address;
+    oa.serialize(endpoint);
+    oa.serialize(address);
 }
 
 //============================================
@@ -50,7 +51,11 @@ constexpr MessageType HandshakeMessage::getHandledMessageType()
 void HandshakeMessage::serialize(base::SerializationOArchive& oa, const bc::Block& block, const base::Bytes& address,
     std::uint16_t public_port, const std::vector<PeerInfo>& known_peers)
 {
-    oa << MessageType::HANDSHAKE << block << address << public_port << known_peers;
+    oa.serialize(MessageType::HANDSHAKE);
+    oa.serialize(block);
+    oa.serialize(address);
+    oa.serialize(public_port);
+    oa.serialize(known_peers);
 }
 
 
@@ -62,13 +67,10 @@ void HandshakeMessage::serialize(base::SerializationOArchive& oa) const
 
 HandshakeMessage HandshakeMessage::deserialize(base::SerializationIArchive& ia)
 {
-    auto top_block = bc::Block::deserialize(ia);
-    base::Bytes address;
-    ia >> address;
-    std::uint16_t public_port;
-    ia >> public_port;
-    std::vector<PeerInfo> known_peers;
-    ia >> known_peers;
+    auto top_block = ia.deserialize<bc::Block>();
+    base::Bytes address = ia.deserialize<base::Bytes>();
+    std::uint16_t public_port = ia.deserialize<std::uint16_t>();
+    auto known_peers = ia.deserialize<std::vector<PeerInfo>>();
     return HandshakeMessage(std::move(top_block), std::move(address), public_port, std::move(known_peers));
 }
 
@@ -366,9 +368,9 @@ constexpr MessageType InfoMessage::getHandledMessageType()
 void InfoMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& top_block_hash,
     const std::vector<net::Endpoint>& available_peers)
 {
-    oa << MessageType::INFO;
-    top_block_hash.serialize(oa);
-    oa << available_peers;
+    oa.serialize(MessageType::INFO);
+    oa.serialize(top_block_hash);
+    oa.serialize(available_peers);
 }
 
 
@@ -380,9 +382,8 @@ void InfoMessage::serialize(base::SerializationOArchive& oa) const
 
 InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 {
-    base::Bytes top_block_hash;
-    std::vector<net::Endpoint> available_peers;
-    ia >> top_block_hash >> available_peers;
+    auto top_block_hash = ia.deserialize<base::Bytes>();
+    auto available_peers = ia.deserialize<std::vector<net::Endpoint>>();
     return {std::move(top_block_hash), std::move(available_peers)};
 }
 
@@ -406,7 +407,9 @@ constexpr MessageType NewNodeMessage::getHandledMessageType()
 void NewNodeMessage::serialize(
     base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint, const base::Bytes& address)
 {
-    oa << MessageType::NEW_NODE << new_node_endpoint << address;
+    oa.serialize(MessageType::NEW_NODE);
+    oa.serialize(new_node_endpoint);
+    oa.serialize(address);
 }
 
 
@@ -419,8 +422,7 @@ void NewNodeMessage::serialize(base::SerializationOArchive& oa) const
 NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto ep = net::Endpoint::deserialize(ia);
-    base::Bytes address;
-    ia >> address;
+    base::Bytes address = ia.deserialize<base::Bytes>();
     return {std::move(ep), std::move(address)};
 }
 

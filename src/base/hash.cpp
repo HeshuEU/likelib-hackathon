@@ -69,14 +69,14 @@ Sha256 Sha256::compute(const base::Bytes& data)
 
 SerializationOArchive& Sha256::serialize(SerializationOArchive& oa) const
 {
-    return oa << _bytes;
+    oa.serialize(_bytes);
+    return oa;
 }
 
 
 Sha256 Sha256::deserialize(SerializationIArchive& ia)
 {
-    Bytes data;
-    ia >> data;
+    Bytes data = ia.deserialize<base::Bytes>();
     return Sha256(data);
 }
 
@@ -160,14 +160,14 @@ SerializationOArchive& Sha1::serialize(SerializationOArchive& oa, const Sha1& bl
 
 SerializationOArchive& Sha1::serialize(SerializationOArchive& oa) const
 {
-    return oa << _bytes;
+    oa.serialize(_bytes);
+    return oa;
 }
 
 
 Sha1 Sha1::deserialize(SerializationIArchive& ia)
 {
-    Bytes data;
-    ia >> data;
+    Bytes data = ia.deserialize<base::Bytes>();
     return Sha1(data);
 }
 
@@ -258,14 +258,14 @@ Ripemd160 Ripemd160::compute(const base::Bytes& data)
 
 SerializationOArchive& Ripemd160::serialize(SerializationOArchive& oa) const
 {
-    return oa << _bytes;
+    oa.serialize(_bytes);
+    return oa;
 }
 
 
 Ripemd160 Ripemd160::deserialize(SerializationIArchive& ia)
 {
-    Bytes data;
-    ia >> data;
+    Bytes data = ia.deserialize<base::Bytes>();
     return Ripemd160(data);
 }
 
@@ -404,14 +404,14 @@ Sha3::Sha3Type Sha3::getSha3Type(const std::size_t size)
 
 SerializationOArchive& Sha3::serialize(SerializationOArchive& oa) const
 {
-    return oa << _bytes;
+    oa.serialize(_bytes);
+    return oa;
 }
 
 
 Sha3 Sha3::deserialize(SerializationIArchive& ia)
 {
-    Bytes data;
-    ia >> data;
+    Bytes data = ia.deserialize<base::Bytes>();
     return Sha3(data);
 }
 

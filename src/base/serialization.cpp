@@ -4,7 +4,6 @@
 
 #include <utility>
 
-
 namespace base
 {
 
@@ -29,46 +28,6 @@ base::Bytes&& SerializationOArchive::getBytes() && noexcept
 
 SerializationIArchive::SerializationIArchive(const base::Bytes& raw) : _bytes{raw}, _index{0}
 {}
-
-
-SerializationOArchive& operator<<(SerializationOArchive& oa, const base::Bytes& v)
-{
-    oa << v.size();
-    for(Byte b: v.toVector()) {
-        oa << b;
-    }
-    return oa;
-}
-
-
-SerializationIArchive& operator>>(SerializationIArchive& ia, base::Bytes& v)
-{
-    std::size_t size;
-    ia >> size;
-    v.clear();
-    v.reserve(size);
-    for(std::size_t i = 0; i < size; ++i) {
-        Byte b;
-        ia >> b;
-        v.append(b);
-    }
-    return ia;
-}
-
-
-SerializationOArchive& operator<<(SerializationOArchive& oa, const std::string& v)
-{
-    return oa << base::Bytes(v);
-}
-
-
-SerializationIArchive& operator>>(SerializationIArchive& ia, std::string& v)
-{
-    base::Bytes b;
-    ia >> b;
-    v = b.toString();
-    return ia;
-}
 
 
 } // namespace base
