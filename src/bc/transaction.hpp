@@ -10,12 +10,36 @@
 namespace bc
 {
 
+class Sign
+{
+  public:
+    Sign() = default;
+    Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash);
+
+    [[nodiscard]] bool isNull() const noexcept;
+
+    [[nodiscard]] const base::RsaPublicKey& getPublicKey() const;
+    [[nodiscard]] const base::Bytes& getRsaEncryptedHash() const;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Sign deserialize(base::SerializationIArchive& ia);
+
+  private:
+    struct Data
+    {
+        base::RsaPublicKey sender_public_key;
+        base::Bytes rsa_encrypted_hash;
+    };
+
+    std::optional<Data> _data;
+};
+
+
 class Transaction
 {
   public:
     //=================
-    Transaction(
-        bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, base::Bytes sign = base::Bytes{});
+    Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, bc::Sign sign = bc::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -29,9 +53,9 @@ class Transaction
     [[nodiscard]] const bc::Balance& getAmount() const noexcept;
     [[nodiscard]] const base::Time& getTimestamp() const noexcept;
     //=================
-    void sign(const base::RsaPrivateKey& priv);
-    bool checkSign() const;
-    [[nodiscard]] std::optional<base::Bytes> getSign() const;
+    void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
+    [[nodiscard]] bool checkSign() const;
+    [[nodiscard]] const bc::Sign& getSign() const noexcept;
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;
@@ -46,7 +70,7 @@ class Transaction
     bc::Address _to;
     bc::Balance _amount;
     base::Time _timestamp;
-    base::Bytes _sign; // unsigned if empty
+    bc::Sign _sign;
     //=================
     base::Sha256 hashOfTxData() const;
     //=================

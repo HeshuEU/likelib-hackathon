@@ -36,13 +36,14 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
 }
 
 std::string GeneralServerService::transaction(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, const base::Time& transaction_time, const base::Bytes& sign)
+    const bc::Address& to_address, const base::Time& transaction_time, const std::string& base64_sign)
 {
     try {
         LOG_TRACE << "Node received in {transaction}: from_address[" << from_address.toString() << "], to_address["
                   << to_address.toString() << "], amount[" << amount << "], transaction_time["
                   << transaction_time.getSecondsSinceEpochBeginning() << "]";
 
+        auto sign = base::fromBytes<bc::Sign>(base::base64Decode(base64_sign));
         if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time, sign))) {
             LOG_TRACE << "Added tx to pending";
             return "Success! Transaction added to queue successfully.";
@@ -54,11 +55,11 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
     }
     catch(const std::exception& e) {
         LOG_WARNING << "Exception caught during transaction request: " << e.what();
-        return "error";
+        return std::string{"Error: "} + e.what();
     }
     catch(...) {
         LOG_WARNING << "Exception caught during transaction request: unknown";
-        return "error";
+        return "Unexpected error";
     }
 }
 

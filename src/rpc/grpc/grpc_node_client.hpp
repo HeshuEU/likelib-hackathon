@@ -1,9 +1,11 @@
 #pragma once
 
-#include <public_rpc.grpc.pb.h>
-
+#include "base/time.hpp"
+#include "bc/address.hpp"
+#include "bc/transaction.hpp"
 #include "rpc/base_rpc.hpp"
 
+#include <public_rpc.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 
 #include <string>
@@ -22,7 +24,7 @@ class GrpcNodeClient final : BaseRpc
     bc::Balance balance(const bc::Address& address) override;
 
     std::string transaction(bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-        const base::Time& transaction_time, const base::Bytes& sign) override;
+        const base::Time& transaction_time, const std::string& base64_sign) override;
 
     std::string test(const std::string& test_request) override;
 

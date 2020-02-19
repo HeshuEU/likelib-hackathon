@@ -170,9 +170,10 @@ int transfer(base::SubprogramRouter& router)
         txb.setAmount(amount);
         txb.setTimestamp(base::Time::now());
         auto tx = std::move(txb).build();
-        tx.sign(private_key);
+        tx.sign(public_key, private_key);
 
-        auto result = client.transaction(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), *tx.getSign());
+        auto sign = base::base64Encode(base::toBytes(tx.getSign()));
+        auto result = client.transaction(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), sign);
         std::cout << result << std::endl;
         LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;

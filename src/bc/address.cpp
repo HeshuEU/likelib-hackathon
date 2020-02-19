@@ -47,6 +47,12 @@ bool Address::operator==(const Address& another) const
 }
 
 
+bool Address::operator!=(const Address& another) const
+{
+    return !(*this == another);
+}
+
+
 bool Address::operator<(const Address& another) const
 {
     return toString() < another.toString();

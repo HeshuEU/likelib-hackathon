@@ -11,7 +11,7 @@ BalanceManager::BalanceManager(const std::map<bc::Address, bc::Balance>& initial
 
 bc::Balance BalanceManager::getBalance(const bc::Address& address) const
 {
-    LOG_CURRENT_FUNCTION << " with address = " << address;
+    LOG_CURRENT_FUNCTION << "with address = " << address;
     LOG_CURRENT_FUNCTION << "acquiring shared lock";
     std::shared_lock lk(_rw_mutex);
     auto it = _storage.find(address);

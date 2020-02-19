@@ -34,7 +34,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 
     auto creation_time = static_cast<std::uint_least32_t>(std::stoul(request->creation_time().seconds_from_epoch()));
 
-    auto sign = base::Bytes(request->sign().hex_sign());
+    auto sign = request->sign().hex_sign();
     try {
         response->set_hash_string(_service->transaction(
             amount, from_address, to_address, base::Time::fromSecondsSinceEpochBeginning(creation_time), sign));

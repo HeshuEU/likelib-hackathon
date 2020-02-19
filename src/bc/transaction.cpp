@@ -5,8 +5,56 @@
 namespace bc
 {
 
-Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, base::Bytes sign)
-    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _timestamp{timestamp}, _sign{sign}
+Sign::Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash)
+    : _data{Data{std::move(sender_public_key), std::move(rsa_encrypted_hash)}}
+{}
+
+
+bool Sign::isNull() const noexcept
+{
+    return !_data.has_value();
+}
+
+
+const base::RsaPublicKey& Sign::getPublicKey() const
+{
+    if(isNull()) {
+        RAISE_ERROR(base::LogicError, "attemping to get on null bc::Sign");
+    }
+    return _data->sender_public_key;
+}
+
+
+
+const base::Bytes& Sign::getRsaEncryptedHash() const
+{
+    if(isNull()) {
+        RAISE_ERROR(base::LogicError, "attemping to get on null bc::Sign");
+    }
+    return _data->rsa_encrypted_hash;
+}
+
+
+void Sign::serialize(base::SerializationOArchive& oa) const
+{
+    if(!_data) {
+        RAISE_ERROR(base::LogicError, "cannot serialize empty bc::Sign object");
+    }
+    oa << _data->sender_public_key << _data->rsa_encrypted_hash;
+}
+
+
+Sign Sign::deserialize(base::SerializationIArchive& ia)
+{
+    auto sender_rsa_public_key = base::RsaPublicKey::deserialize(ia);
+    base::Bytes rsa_encrypted_hash;
+    ia >> rsa_encrypted_hash;
+    return Sign{std::move(sender_rsa_public_key), std::move(rsa_encrypted_hash)};
+}
+
+
+Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, bc::Sign sign)
+    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _timestamp{timestamp}, _sign{std::move(sign)}
 {
     if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
@@ -51,30 +99,44 @@ bool Transaction::operator!=(const Transaction& other) const
 }
 
 
-void Transaction::sign(const base::RsaPrivateKey& priv)
+void Transaction::sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv)
 {
     auto hash = hashOfTxData();
-    _sign = priv.encrypt(hash.getBytes());
+    base::Bytes rsa_encrypted_hash = priv.encrypt(hash.getBytes());
+    _sign = Sign{std::move(pub), rsa_encrypted_hash};
 }
 
 
 bool Transaction::checkSign() const
 {
-    if(_sign.isEmpty()) {
+    LOG_DEBUG << "checking signature";
+    if(_sign.isNull()) {
+        LOG_DEBUG << "invalid signature";
         return false;
     }
-    return true;
+    else {
+        const auto& pub = _sign.getPublicKey();
+        const auto& enc_hash = _sign.getRsaEncryptedHash();
+        auto derived_addr = bc::Address::fromPublicKey(pub);
+        if(_from != derived_addr) {
+            LOG_DEBUG << "invalid signature";
+            return false;
+        }
+        auto valid_hash = hashOfTxData();
+        if(pub.decrypt(enc_hash) == valid_hash.getBytes()) {
+            LOG_DEBUG << "signature validated! valid hash = " << valid_hash
+                      << " decrypted hash = " << pub.decrypt(enc_hash);
+            return true;
+        }
+        LOG_DEBUG << "invalid signature";
+        return false;
+    }
 }
 
 
-std::optional<base::Bytes> Transaction::getSign() const
+const Sign& Transaction::getSign() const noexcept
 {
-    if(_sign.isEmpty()) {
-        return std::nullopt;
-    }
-    else {
-        return _sign;
-    }
+    return _sign;
 }
 
 
@@ -107,7 +169,7 @@ void Transaction::serialize(base::SerializationOArchive& oa) const
 std::ostream& operator<<(std::ostream& os, const Transaction& tx)
 {
     return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount()
-              << " timestamp: " << tx.getTimestamp();
+              << " timestamp: " << tx.getTimestamp() << "signed: " << (tx.checkSign() ? "true" : "false");
 }
 
 

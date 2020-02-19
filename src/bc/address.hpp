@@ -25,6 +25,7 @@ class Address
     [[nodiscard]] bool isNull() const;
     //=============================
     bool operator==(const Address& another) const;
+    bool operator!=(const Address& another) const;
     bool operator<(const Address& another) const;
     //=============================
     static Address deserialize(base::SerializationIArchive& ia);

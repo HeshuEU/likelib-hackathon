@@ -30,7 +30,7 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
 }
 
 std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, const base::Time& transaction_time, const base::Bytes& sign)
+    const bc::Address& to_address, const base::Time& transaction_time, const std::string& base64_sign)
 {
     // convert data for request
     auto request_amount = new likelib::Money();
@@ -47,7 +47,7 @@ std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Addre
     request_transaction_time->set_seconds_from_epoch(std::to_string(seconds_from_epoch));
 
     auto request_sign = new likelib::Sign;
-    request_sign->set_hex_sign(sign.toHex());
+    request_sign->set_hex_sign(base64_sign);
 
     likelib::Transaction request;
     request.set_allocated_amount(request_amount);
