@@ -28,8 +28,7 @@ namespace lk
 PeerInfo PeerInfo::deserialize(base::SerializationIArchive& ia)
 {
     auto endpoint = net::Endpoint::deserialize(ia);
-    base::Bytes address;
-    ia >> address;
+    base::Bytes address = ia.deserialize<base::Bytes>();
     return {std::move(endpoint), std::move(address)};
 }
 
@@ -416,8 +415,7 @@ void NewNodeMessage::serialize(base::SerializationOArchive& oa) const
 NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto ep = net::Endpoint::deserialize(ia);
-    base::Bytes address;
-    ia >> address;
+    base::Bytes address = ia.deserialize<base::Bytes>();
     return {std::move(ep), std::move(address)};
 }
 

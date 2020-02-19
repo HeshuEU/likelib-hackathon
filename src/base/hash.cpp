@@ -75,8 +75,7 @@ SerializationOArchive& Sha256::serialize(SerializationOArchive& oa) const
 
 Sha256 Sha256::deserialize(SerializationIArchive& ia)
 {
-    Bytes data;
-    ia >> data;
+    Bytes data = ia.deserialize<base::Bytes>();
     return Sha256(data);
 }
 
@@ -166,8 +165,7 @@ SerializationOArchive& Sha1::serialize(SerializationOArchive& oa) const
 
 Sha1 Sha1::deserialize(SerializationIArchive& ia)
 {
-    Bytes data;
-    ia >> data;
+    Bytes data = ia.deserialize<base::Bytes>();
     return Sha1(data);
 }
 
@@ -264,8 +262,7 @@ SerializationOArchive& Ripemd160::serialize(SerializationOArchive& oa) const
 
 Ripemd160 Ripemd160::deserialize(SerializationIArchive& ia)
 {
-    Bytes data;
-    ia >> data;
+    Bytes data = ia.deserialize<base::Bytes>();
     return Ripemd160(data);
 }
 
@@ -410,8 +407,7 @@ SerializationOArchive& Sha3::serialize(SerializationOArchive& oa) const
 
 Sha3 Sha3::deserialize(SerializationIArchive& ia)
 {
-    Bytes data;
-    ia >> data;
+    Bytes data = ia.deserialize<base::Bytes>();
     return Sha3(data);
 }
 

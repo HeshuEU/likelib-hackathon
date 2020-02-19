@@ -189,8 +189,7 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPublicKey::loadKey(const Bytes& k
 
 RsaPublicKey RsaPublicKey::deserialize(base::SerializationIArchive& ia)
 {
-    base::Bytes bytes;
-    ia >> bytes;
+    base::Bytes bytes = ia.deserialize<base::Bytes>();
     return {bytes};
 }
 

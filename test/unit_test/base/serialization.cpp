@@ -67,8 +67,7 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
     ia >> a;
     BOOST_CHECK_EQUAL(a, aa);
 
-    base::Bytes b;
-    ia >> b;
+    base::Bytes b = ia.deserialize<base::Bytes>();
     BOOST_CHECK(b == bb);
 
     std::vector<std::string> c = ia.deserialize<std::vector<std::string>>();
@@ -255,9 +254,10 @@ BOOST_AUTO_TEST_CASE(serialization_pair1)
     base::SerializationOArchive oa;
     oa << p1 << p2 << p3;
 
-    std::pair<char, TestSerialization> p4, p5, p6;
     base::SerializationIArchive ia(oa.getBytes());
-    ia >> p4 >> p5 >> p6;
+    std::pair<char, TestSerialization> p4 = ia.deserialize<char, TestSerialization>();
+    std::pair<char, TestSerialization> p5 = ia.deserialize<char, TestSerialization>();
+    std::pair<char, TestSerialization> p6 = ia.deserialize<char, TestSerialization>();
 
     BOOST_CHECK((p1.first == p4.first) && (p1.second._value == p4.second._value));
     BOOST_CHECK((p2.first == p5.first) && (p2.second._value == p5.second._value));

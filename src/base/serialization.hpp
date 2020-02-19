@@ -28,6 +28,9 @@ class SerializationIArchive
     //=================
     template<typename T>
     T deserialize();
+
+    template<typename U, typename V>
+    std::pair<U, V> deserialize();
     //=================
   private:
     const base::Bytes& _bytes;
@@ -63,25 +66,17 @@ class SerializationOArchive
 
 
 SerializationOArchive& operator<<(SerializationOArchive& oa, const base::Bytes& v);
-SerializationIArchive& operator>>(SerializationIArchive& ia, base::Bytes& v);
 
 
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::string& v);
-SerializationIArchive& operator>>(SerializationIArchive& ia, std::string& v);
 
 template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
 
 
 template<typename T>
-SerializationIArchive& operator>>(SerializationIArchive& ia, std::optional<T>& v);
-
-template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v);
 
-
-template<typename U, typename V>
-SerializationIArchive& operator>>(SerializationIArchive& ia, std::pair<U, V>& p);
 
 template<typename U, typename V>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::pair<U, V>& p);
@@ -92,9 +87,9 @@ template<typename T, typename TT = typename std::remove_reference<T>::type,
 typename std::enable_if<H, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t);
 
 
-template<typename T, typename TT = typename std::remove_reference<T>::type,
-    bool H = std::is_same<decltype(&TT::deserialize), decltype(&TT::deserialize)>::value>
-typename std::enable_if<H, SerializationIArchive&>::type operator>>(SerializationIArchive& ia, T&& t);
+// template<typename T, typename TT = typename std::remove_reference<T>::type,
+//     bool H = std::is_same<decltype(&TT::deserialize), decltype(&TT::deserialize)>::value>
+// typename std::enable_if<H, SerializationIArchive&>::type operator>>(SerializationIArchive& ia, T&& t);
 
 
 template<typename T>

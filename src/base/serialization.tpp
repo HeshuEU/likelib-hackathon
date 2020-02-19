@@ -75,6 +75,90 @@ struct has_deserialize<C, Ret(Args...)>
 };
 
 
+template<typename T>
+class global_deserialize
+{
+  public:
+    T deserialize(base::SerializationIArchive& ia)
+    {
+        T t;
+        ia >> t;
+        return t;
+    }
+};
+
+
+template<typename T>
+class global_deserialize<std::vector<T>>
+{
+  public:
+    std::vector<T> deserialize(base::SerializationIArchive& ia)
+    {
+        std::vector<T> v;
+        std::size_t size = ia.deserialize<std::size_t>();
+        for(std::size_t i = 0; i < size; i++) {
+            v.push_back(ia.deserialize<T>());
+        }
+        return v;
+    }
+};
+
+
+template<typename T>
+class global_deserialize<std::optional<T>>
+{
+  public:
+    std::optional<T> deserialize(base::SerializationIArchive& ia)
+    {
+        bool do_we_have_a_value;
+        ia >> do_we_have_a_value;
+        std::optional<T> v;
+        if(do_we_have_a_value) {
+            T t;
+            ia >> t;
+            v = t;
+        }
+        else {
+            v = std::nullopt;
+        }
+
+        return v;
+    }
+};
+
+
+template<>
+class global_deserialize<base::Bytes>
+{
+  public:
+    base::Bytes deserialize(base::SerializationIArchive& ia)
+    {
+        std::size_t size;
+        ia >> size;
+        base::Bytes bytes(size);
+        for(std::size_t i = 0; i < size; ++i) {
+            base::Byte b;
+            ia >> b;
+            bytes[i] = b;
+        }
+        return bytes;
+    }
+};
+
+
+template<>
+class global_deserialize<std::string>
+{
+  public:
+    std::string deserialize(base::SerializationIArchive& ia)
+    {
+        base::Bytes bytes = ia.deserialize<base::Bytes>();
+        std::string str = bytes.toString();
+        return str;
+    }
+};
+
+
 template<typename, typename T>
 struct has_serialize
 {
@@ -97,34 +181,6 @@ struct has_serialize<C, Ret(Args...)>
 
   public:
     static constexpr bool value = type::value;
-};
-
-
-template<typename T>
-class global_deserialize
-{
-    public:
-    T deserialize(base::SerializationIArchive& ia)
-    {
-        T t;
-        ia >> t;
-        return t;
-    }
-};
-
-template<typename T>
-class global_deserialize<std::vector<T>>
-{
-    public:
-    std::vector<T> deserialize(base::SerializationIArchive& ia)
-    {
-        std::vector<T> v;
-        std::size_t size = ia.deserialize<std::size_t>();
-        for(std::size_t i = 0; i < size; i++) {
-            v.push_back(ia.deserialize<T>());
-        }
-        return v;
-    }
 };
 
 
@@ -236,6 +292,15 @@ T SerializationIArchive::deserialize()
 }
 
 
+template<typename U, typename V>
+std::pair<U, V> SerializationIArchive::deserialize()
+{
+    auto u = deserialize<U>();
+    auto v = deserialize<V>();
+    return {u, v};
+}
+
+
 template<typename T>
 typename std::enable_if<std::is_enum<T>::value, SerializationOArchive&>::type SerializationOArchive::operator<<(
     const T& v)
@@ -268,24 +333,6 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T
 
 
 template<typename T>
-SerializationIArchive& operator>>(SerializationIArchive& ia, std::optional<T>& v)
-{
-    bool do_we_have_a_value;
-    ia >> do_we_have_a_value;
-    if(do_we_have_a_value) {
-        T t;
-        ia >> t;
-        v = t;
-    }
-    else {
-        v = std::nullopt;
-    }
-
-    return ia;
-}
-
-
-template<typename T>
 SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v)
 {
     if(v) {
@@ -295,15 +342,6 @@ SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional
         oa << false;
     }
     return oa;
-}
-
-
-template<typename U, typename V>
-SerializationIArchive& operator>>(SerializationIArchive& ia, std::pair<U, V>& p)
-{
-    p.first = ia.deserialize<U>();
-    p.second = ia.deserialize<V>();
-    return ia;
 }
 
 
@@ -343,12 +381,12 @@ typename std::enable_if<H, SerializationOArchive&>::type operator<<(Serializatio
 }
 
 
-template<typename T, typename TT = typename std::remove_reference<T>::type,
-    bool H = std::is_same<decltype(&TT::deserialize), decltype(&TT::deserialize)>::value>
-typename std::enable_if<H, SerializationIArchive&>::type operator>>(SerializationIArchive& ia, T&& t)
-{
-    t = TT::deserialize(ia);
-    return ia;
-}
+// template<typename T, typename TT = typename std::remove_reference<T>::type,
+//     bool H = std::is_same<decltype(&TT::deserialize), decltype(&TT::deserialize)>::value>
+// typename std::enable_if<H, SerializationIArchive&>::type operator>>(SerializationIArchive& ia, T&& t)
+// {
+//     t = TT::deserialize(ia);
+//     return ia;
+// }
 
 } // namespace base
