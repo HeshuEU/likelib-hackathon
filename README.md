@@ -19,10 +19,7 @@ By default it is config.json file of the following format:
         "127.0.0.1:20204",
         "127.0.0.1:20205"
     ],
-    "keys": {
-        "public_path": "rsa.pub",
-        "private_path": "rsa"
-    },
+    "keys_dir": ".",
     "database": {
         "path": "likelib/database",
         "clean": false
