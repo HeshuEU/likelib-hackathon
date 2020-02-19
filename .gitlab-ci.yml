@@ -28,15 +28,15 @@ Build:
 
 
 Code quality:
-  stage: analyzers
-  image: heshuby/prepare_build:2020-02-07
+  stage: build
+  image: ubuntu:19.10
   tags:
     - docker
   script:
-    - INSTALL_DIR="/opt"
     - SOURCE_DIR=${PWD}
-    - LOG_DIR=${PWD}/clang-tidy-log
-    - BUILD_DIR="${PWD}/build"
+    - LOG_DIR=${SOURCE_DIR}/clang-tidy-log
+    - BUILD_DIR="${SOURCE_DIR}/build"
+    - ${SOURCE_DIR}/doc/prepare_build.sh
     - mkdir -p ${LOG_DIR}
     - mkdir -p ${BUILD_DIR}
     - mkdir -p /tmp/logs
@@ -44,11 +44,6 @@ Code quality:
     - cd ${BUILD_DIR} && make > /dev/null 2>&1 || (cp /tmp/logs/* ${LOG_DIR} && exit 1)
     - cp /tmp/logs/* ${LOG_DIR} && cat ${LOG_DIR}/clang-tidy-output.txt
     - test -f /tmp/logs/.error-flag && exit 1
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Finish code quality                        == \n \
-      ========================================================================= \033[0m"
   artifacts:
     when: always
     paths:
@@ -63,12 +58,9 @@ Unit tests:
   tags:
     - docker
   script:
-    - |
-      echo
-      echo -e "\033[40;1;42m =========================================================================
-       ==                          Start unit tests                           == \n \
-      ========================================================================= \033[0m"
-    - build/bin/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - ./doc/prepare_build.sh
+    - cd build/bin/
+    - ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
 Integration tests:
