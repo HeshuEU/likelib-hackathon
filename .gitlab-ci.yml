@@ -28,7 +28,7 @@ Build:
 
 
 Code quality:
-  stage: build
+  stage: analyzers
   image: ubuntu:19.10
   tags:
     - docker
