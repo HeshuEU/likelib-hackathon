@@ -3,14 +3,35 @@
 namespace bc
 {
 
-// const Address BASE_ADDRESS{"00000000000000000000000000000000"};
+
+Address::Address() : _address{getNullAddressString()}
+{}
 
 
-Address::Address(const base::RsaPublicKey& pub)
+Address Address::fromPublicKey(const base::RsaPublicKey& pub)
 {
     auto sha256 = base::Sha256::compute(pub.toBytes());
     auto ripemd = base::Ripemd160::compute(sha256.getBytes());
-    _address = base::base64Encode(ripemd.getBytes());
+    return Address{base::base64Encode(ripemd.getBytes())};
+}
+
+
+Address::Address(const std::string_view& base64_address) : _address{base64_address}
+{
+    // TODO: check address length
+}
+
+
+const std::string& Address::getNullAddressString()
+{
+    static const std::string null_address(32, '0');
+    return null_address;
+}
+
+
+bool Address::isNull() const
+{
+    return _address == getNullAddressString();
 }
 
 
@@ -34,14 +55,15 @@ bool Address::operator<(const Address& another) const
 
 Address Address::deserialize(base::SerializationIArchive& ia)
 {
-    auto pub = base::RsaPublicKey::deserialize(ia);
-    return bc::Address{pub};
+    std::string base64_address;
+    ia >> base64_address;
+    return bc::Address{base64_address};
 }
 
 
 void Address::serialize(base::SerializationOArchive& oa) const
 {
-    oa << _public_key;
+    oa << _address;
 }
 
 

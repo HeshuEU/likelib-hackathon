@@ -11,7 +11,9 @@ class Address
 {
   public:
     //=============================
-    Address(const base::RsaPublicKey& pub);
+    static Address fromPublicKey(const base::RsaPublicKey& pub);
+    Address();
+    Address(const std::string_view& base64_address);
     Address(const Address& another) = default;
     Address(Address&& another) = default;
     Address& operator=(const Address& another) = default;
@@ -19,6 +21,8 @@ class Address
     ~Address() = default;
     //=============================
     [[nodiscard]] std::string toString() const;
+    //=============================
+    [[nodiscard]] bool isNull() const;
     //=============================
     bool operator==(const Address& another) const;
     bool operator<(const Address& another) const;
@@ -28,12 +32,11 @@ class Address
     //=============================
   private:
     std::string _address;
+
+    static const std::string& getNullAddressString();
 };
 
 
-
 std::ostream& operator<<(std::ostream& os, const Address& address);
-
-extern const Address BASE_ADDRESS;
 
 } // namespace bc

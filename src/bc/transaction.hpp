@@ -14,7 +14,8 @@ class Transaction
 {
   public:
     //=================
-    Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp);
+    Transaction(
+        bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, base::Bytes sign = base::Bytes{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -29,7 +30,7 @@ class Transaction
     [[nodiscard]] const base::Time& getTimestamp() const noexcept;
     //=================
     void sign(const base::RsaPrivateKey& priv);
-    bool checkSign(const base::RsaPublicKey& pub) const;
+    bool checkSign() const;
     [[nodiscard]] std::optional<base::Bytes> getSign() const;
     //=================
     bool operator==(const Transaction& other) const;

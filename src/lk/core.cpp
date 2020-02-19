@@ -19,9 +19,9 @@ const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
-        bc::Address null_address(base::RsaPublicKey(base::Bytes(32)));
-        ret.addTransaction(
-            {null_address, null_address, bc::Balance{0xFFFFFFFF}, base::Time::fromSecondsSinceEpochBeginning(0)});
+        bc::Address null_address;
+        ret.addTransaction({null_address, bc::Address{"EGAl+W5ADLg7vBcQ3svFMsgW2z8="}, bc::Balance{0xFFFFFFFF},
+            base::Time::fromSecondsSinceEpochBeginning(0)});
         return ret;
     }();
     return genesis;
@@ -76,7 +76,7 @@ bool Core::checkBlock(const bc::Block& b) const
 
 bool Core::checkTransaction(const bc::Transaction& tx) const
 {
-    if(!tx.checkSign(tx.getFrom().getPublicKey())) {
+    if(!tx.checkSign()) {
         return false;
     }
 

@@ -624,31 +624,36 @@ base::Bytes base64Decode(std::string_view base64)
 
 KeyVault::KeyVault(const base::PropertyTree& config)
 {
-    auto public_key_path = config.get<std::string>("keys.public_path");
-    auto private_key_path = config.get<std::string>("keys.private_path");
+    std::filesystem::path keys_dir_path = config.get<std::string>("keys_dir");
+    auto public_key_path = base::config::makePublicKeyPath(keys_dir_path);
+    auto private_key_path = base::config::makePrivateKeyPath(keys_dir_path);
 
     if(std::filesystem::exists(public_key_path) && std::filesystem::exists(private_key_path)) {
         _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::load(public_key_path));
         _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::load(private_key_path));
     }
     else {
-        LOG_WARNING << "Key files was not found: public[" << public_key_path << "], private[" << private_key_path
-                    << "].";
+        LOG_INFO << "Key files were not found by path " << keys_dir_path << ". Generating new keypair";
         auto keys = base::generateKeys();
         _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
         _private_key = std::make_unique<base::RsaPrivateKey>(std::move(keys.second));
         _public_key->save(public_key_path);
         _private_key->save(private_key_path);
-        LOG_WARNING << "Generated new key pair and saved by config paths.";
+        LOG_WARNING << "Generated new key pair";
     }
-    LOG_INFO << "Public key hash: " << base::Sha256::compute(_public_key->toBytes()).toHex();
-    // TODO: maybe implement unload to disk mechanic for private key.
+    // TODO: maybe implement unload to disk for private key.
 }
 
 
 const base::RsaPublicKey& KeyVault::getPublicKey() const noexcept
 {
     return *_public_key;
+}
+
+
+const base::RsaPrivateKey& KeyVault::getPrivateKey() const noexcept
+{
+    return *_private_key;
 }
 
 

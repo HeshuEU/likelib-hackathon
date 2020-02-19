@@ -14,22 +14,7 @@
 namespace
 {
 constexpr const char* const DEFAULT_CONFIG_PATH = "config.json";
-constexpr const char* const KEY_FILE_PREFIX = "lkkey";
 } // namespace
-
-
-std::filesystem::path makePublicKeyPath(const std::filesystem::path& directory)
-{
-    auto ret = directory / KEY_FILE_PREFIX;
-    ret.replace_extension(".pub");
-    return ret;
-}
-
-
-std::filesystem::path makePrivateKeyPath(const std::filesystem::path& directory)
-{
-    return directory / KEY_FILE_PREFIX;
-}
 
 
 int getBalance(base::SubprogramRouter& router)
@@ -67,7 +52,7 @@ int getBalance(base::SubprogramRouter& router)
         else {
             account_address_str = helper.getValue<std::string>("addresses", "account address");
         }
-        bc::Address account_address{base::RsaPublicKey(base::Bytes::fromHex(account_address_str))};
+        bc::Address account_address{account_address_str};
         //====================================
 
         LOG_INFO << "GetBalance for address " << account_address;
@@ -139,7 +124,7 @@ int transfer(base::SubprogramRouter& router)
         else {
             to_address_str = helper.getValue<std::string>("addresses", "to account address");
         }
-        bc::Address to_address{base::RsaPublicKey(base::Bytes::fromHex(to_address_str))};
+        bc::Address to_address{to_address_str};
         //====================================
         bc::Balance amount;
         if(router.optionsParser()->hasOption(AMOUNT_OPTION)) {
@@ -158,16 +143,16 @@ int transfer(base::SubprogramRouter& router)
         }
 
         //====================================
-        auto public_key_path = makePublicKeyPath(keys_path);
+        auto public_key_path = base::config::makePublicKeyPath(keys_path);
         if(!std::filesystem::exists(public_key_path)) {
             std::cerr << "Error: public key file not found at " << public_key_path;
             LOG_ERROR << "error: public key not found by path " << public_key_path;
             return base::config::EXIT_FAIL;
         }
         auto public_key = base::RsaPublicKey::load(public_key_path);
-        bc::Address from_address{std::move(public_key)};
+        auto from_address = bc::Address::fromPublicKey(public_key);
 
-        auto private_key_path = makePrivateKeyPath(keys_path);
+        auto private_key_path = base::config::makePrivateKeyPath(keys_path);
         if(!std::filesystem::exists(private_key_path)) {
             std::cerr << "Error: private key file not found at " << private_key_path;
             LOG_ERROR << "error: private key not found by path " << private_key_path;
@@ -320,14 +305,14 @@ int generateKeys(base::SubprogramRouter& router)
         std::cout << "Generating key pair at " << path << std::endl;
         const auto& [pub, priv] = base::generateKeys();
 
-        auto public_path = makePublicKeyPath(path);
+        auto public_path = base::config::makePublicKeyPath(path);
         if(std::filesystem::exists(public_path)) {
             std::cerr << "Error: " << public_path << " already exists.\n";
             LOG_ERROR << public_path << " file already exists";
             return base::config::EXIT_FAIL;
         }
 
-        auto private_path = makePrivateKeyPath(path);
+        auto private_path = base::config::makePrivateKeyPath(path);
         if(std::filesystem::exists(private_path)) {
             std::cerr << "Error: " << private_path << " already exists.\n";
             LOG_ERROR << private_path << " file already exists";
@@ -336,7 +321,7 @@ int generateKeys(base::SubprogramRouter& router)
 
         pub.save(public_path);
         std::cout << "Generated public key at " << public_path << std::endl;
-        std::cout << "Public key: " << pub;
+        std::cout << "Address: " << bc::Address::fromPublicKey(pub) << std::endl;
         LOG_INFO << "Generated public key at " << public_path;
 
         priv.save(private_path);

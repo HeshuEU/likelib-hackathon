@@ -43,7 +43,7 @@ std::string GeneralServerService::transaction(bc::Balance amount, const bc::Addr
                   << to_address.toString() << "], amount[" << amount << "], transaction_time["
                   << transaction_time.getSecondsSinceEpochBeginning() << "]";
 
-        if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time))) {
+        if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time, sign))) {
             LOG_TRACE << "Added tx to pending";
             return "Success! Transaction added to queue successfully.";
         }

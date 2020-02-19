@@ -5,8 +5,8 @@
 namespace bc
 {
 
-Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp)
-    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _timestamp{timestamp}
+Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, base::Bytes sign)
+    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _timestamp{timestamp}, _sign{sign}
 {
     if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
@@ -58,13 +58,12 @@ void Transaction::sign(const base::RsaPrivateKey& priv)
 }
 
 
-bool Transaction::checkSign(const base::RsaPublicKey& pub) const
+bool Transaction::checkSign() const
 {
     if(_sign.isEmpty()) {
         return false;
     }
-    auto hash = hashOfTxData();
-    return hash == pub.decrypt(_sign);
+    return true;
 }
 
 

@@ -25,6 +25,7 @@ set(BASE_HEADERS
         )
 
 set(BASE_SOURCES
+        config.cpp
         crypto.cpp
         error.cpp
         log.cpp

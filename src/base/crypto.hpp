@@ -148,6 +148,7 @@ class KeyVault
     ~KeyVault() = default;
     //---------------------------
     [[nodiscard]] const base::RsaPublicKey& getPublicKey() const noexcept;
+    [[nodiscard]] const base::RsaPrivateKey& getPrivateKey() const noexcept;
     //---------------------------
   private:
     //---------------------------

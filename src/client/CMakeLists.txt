@@ -10,4 +10,4 @@ set(CLIENT_SOURCES
 
 add_executable(client ${CLIENT_HEADERS} ${CLIENT_SOURCES})
 
-target_link_libraries(client rpc base)
+target_link_libraries(client base rpc)
