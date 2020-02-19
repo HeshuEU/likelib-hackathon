@@ -259,7 +259,9 @@ BOOST_AUTO_TEST_CASE(serialization_pair1)
     std::pair<char, TestSerialization> p3{'^', 777};
 
     base::SerializationOArchive oa;
-    oa << p1 << p2 << p3;
+    oa.serialize(p1);
+    oa.serialize(p2);
+    oa.serialize(p3);
 
     base::SerializationIArchive ia(oa.getBytes());
     std::pair<char, TestSerialization> p4 = ia.deserialize<char, TestSerialization>();

@@ -36,7 +36,8 @@ PeerInfo PeerInfo::deserialize(base::SerializationIArchive& ia)
 
 void PeerInfo::serialize(base::SerializationOArchive& oa) const
 {
-    oa << endpoint << address;
+    oa.serialize(endpoint);
+    oa.serialize(address);
 }
 
 //============================================
@@ -407,7 +408,9 @@ constexpr MessageType NewNodeMessage::getHandledMessageType()
 void NewNodeMessage::serialize(
     base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint, const base::Bytes& address)
 {
-    oa << MessageType::NEW_NODE << new_node_endpoint << address;
+    oa.serialize(MessageType::NEW_NODE);
+    oa.serialize(new_node_endpoint);
+    oa.serialize(address);
 }
 
 

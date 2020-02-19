@@ -196,7 +196,7 @@ RsaPublicKey RsaPublicKey::deserialize(base::SerializationIArchive& ia)
 
 void RsaPublicKey::serialize(base::SerializationOArchive& oa)
 {
-    oa << toBytes();
+    oa.serialize(toBytes());
 }
 
 

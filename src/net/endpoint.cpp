@@ -119,7 +119,8 @@ Endpoint Endpoint::deserialize(base::SerializationIArchive& ia)
 
 base::SerializationOArchive& Endpoint::serialize(base::SerializationOArchive& oa) const
 {
-    return oa << toString();
+    oa.serialize(toString());
+    return oa;
 }
 
 } // namespace net

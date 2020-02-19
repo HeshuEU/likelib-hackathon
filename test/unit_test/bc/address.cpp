@@ -86,10 +86,9 @@ BOOST_AUTO_TEST_CASE(address_serialization1)
     std::string address_str = base::Bytes("Address test 5%$&3495 // \nfg23j").toHex();
     bc::Address address1(address_str);
     base::SerializationOArchive oa;
-    oa << address1;
+    oa.serialize(address1);
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Address address2;
-    ia >> address2;
+    bc::Address address2 = ia.deserialize<bc::Address>();
     BOOST_CHECK(address1 == address2);
     BOOST_CHECK(address1.toString() == address_str);
     BOOST_CHECK(address2.toString() == address_str);

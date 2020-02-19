@@ -55,6 +55,9 @@ class SerializationOArchive
     //=================
     template<typename T>
     void serialize(const T& v);
+
+    template<typename U, typename V>
+    void serialize(const std::pair<U, V>& p);
     //=================
     const base::Bytes& getBytes() const& noexcept;
     base::Bytes&& getBytes() && noexcept;
@@ -63,28 +66,6 @@ class SerializationOArchive
   private:
     base::Bytes _bytes;
 };
-
-
-SerializationOArchive& operator<<(SerializationOArchive& oa, const base::Bytes& v);
-
-
-SerializationOArchive& operator<<(SerializationOArchive& oa, const std::string& v);
-
-// template<typename T>
-// SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v);
-
-
-template<typename T>
-SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v);
-
-
-template<typename U, typename V>
-SerializationOArchive& operator<<(SerializationOArchive& oa, const std::pair<U, V>& p);
-
-
-template<typename T, typename TT = typename std::remove_reference<T>::type,
-    bool H = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value>
-typename std::enable_if<H, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t);
 
 
 template<typename T>

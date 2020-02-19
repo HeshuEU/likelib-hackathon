@@ -50,7 +50,8 @@ base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address
 
 base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx)
 {
-    return oa << tx.toString();
+    oa.serialize(tx.toString());
+    return oa;
 }
 
 

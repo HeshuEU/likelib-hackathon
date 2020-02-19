@@ -209,6 +209,47 @@ class global_serialize<std::vector<T>>
 };
 
 
+template<typename T>
+class global_serialize<std::optional<T>>
+{
+  public:
+    void serialize(base::SerializationOArchive& oa, const std::optional<T>& v)
+    {
+        if(v) {
+            oa << true << *v;
+        }
+        else {
+            oa << false;
+        }
+    }
+};
+
+
+template<>
+class global_serialize<base::Bytes>
+{
+  public:
+    void serialize(base::SerializationOArchive& oa, const base::Bytes& bytes)
+    {
+        oa << bytes.size();
+        for(auto b: bytes.toVector()) {
+            oa << b;
+        }
+    }
+};
+
+
+template<>
+class global_serialize<std::string>
+{
+  public:
+    void serialize(base::SerializationOArchive& oa, const std::string& str)
+    {
+        oa.serialize(base::Bytes(str));
+    }
+};
+
+
 } // namespace impl
 
 
@@ -346,36 +387,11 @@ void SerializationOArchive::serialize(const T& v)
 }
 
 
-// template<typename T>
-// SerializationOArchive& operator<<(SerializationOArchive& oa, const std::vector<T>& v)
-// {
-//     oa << v.size();
-//     for(const auto& x: v) {
-//         oa.serialize(x);
-//     }
-//     return oa;
-// }
-
-
-template<typename T>
-SerializationOArchive& operator<<(SerializationOArchive& oa, const std::optional<T>& v)
-{
-    if(v) {
-        oa << true << *v;
-    }
-    else {
-        oa << false;
-    }
-    return oa;
-}
-
-
 template<typename U, typename V>
-SerializationOArchive& operator<<(SerializationOArchive& oa, const std::pair<U, V>& p)
+void SerializationOArchive::serialize(const std::pair<U, V>& p)
 {
-    oa.serialize(p.first);
-    oa.serialize(p.second);
-    return oa;
+    serialize(p.first);
+    serialize(p.second);
 }
 
 
