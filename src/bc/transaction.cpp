@@ -40,15 +40,15 @@ void Sign::serialize(base::SerializationOArchive& oa) const
     if(!_data) {
         RAISE_ERROR(base::LogicError, "cannot serialize empty bc::Sign object");
     }
-    oa << _data->sender_public_key << _data->rsa_encrypted_hash;
+    oa.serialize(_data->sender_public_key);
+    oa.serialize(_data->rsa_encrypted_hash);
 }
 
 
 Sign Sign::deserialize(base::SerializationIArchive& ia)
 {
     auto sender_rsa_public_key = base::RsaPublicKey::deserialize(ia);
-    base::Bytes rsa_encrypted_hash;
-    ia >> rsa_encrypted_hash;
+    auto rsa_encrypted_hash = ia.deserialize<base::Bytes>();
     return Sign{std::move(sender_rsa_public_key), std::move(rsa_encrypted_hash)};
 }
 
@@ -143,7 +143,10 @@ const Sign& Transaction::getSign() const noexcept
 base::Sha256 Transaction::hashOfTxData() const
 {
     base::SerializationOArchive oa;
-    oa << _from << _to << _amount << _timestamp;
+    oa.serialize(_from);
+    oa.serialize(_to);
+    oa.serialize(_amount);
+    oa.serialize(_timestamp);
     return base::Sha256::compute(std::move(oa).getBytes());
 }
 
@@ -162,7 +165,10 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
 
 void Transaction::serialize(base::SerializationOArchive& oa) const
 {
-    oa << _from << _to << _amount << _timestamp;
+    oa.serialize(_from);
+    oa.serialize(_to);
+    oa.serialize(_amount);
+    oa.serialize(_timestamp);
 }
 
 

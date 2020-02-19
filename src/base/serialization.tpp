@@ -412,13 +412,4 @@ T fromBytes(const base::Bytes& bytes)
     return t;
 }
 
-
-template<typename T, typename TT = typename std::remove_reference<T>::type,
-    bool H = std::is_same<decltype(&TT::serialize), decltype(&TT::serialize)>::value>
-typename std::enable_if<H, SerializationOArchive&>::type operator<<(SerializationOArchive& oa, T&& t)
-{
-    std::forward<T>(t).serialize(oa);
-    return oa;
-}
-
 } // namespace base

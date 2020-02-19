@@ -26,7 +26,7 @@ class Block
 
     ~Block() = default;
     //=================
-    base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const;
+    void serialize(base::SerializationOArchive& oa) const;
     [[nodiscard]] static Block deserialize(base::SerializationIArchive& ia);
     //=================
     [[nodiscard]] BlockDepth getDepth() const noexcept;
