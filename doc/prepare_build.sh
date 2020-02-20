@@ -25,4 +25,4 @@ ${SUDO_PREF} apt-get install -y solc || exit 1
 
 pip3 install conan || exit 1
 conan remote remove conan-center || exit 1
-conan remote add heshu http://conan.heshu:9300 False || exit 1
+conan remote add heshu https://conan.heshu.by || exit 1
