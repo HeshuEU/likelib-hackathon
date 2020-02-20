@@ -35,7 +35,9 @@ class Transaction
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;
-
+    base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const;
+    static Transaction deserialize(base::SerializationIArchive& ia);
+    //=================
   private:
     bc::Address _from;
     bc::Address _to;
@@ -44,8 +46,5 @@ class Transaction
 };
 
 std::ostream& operator<<(std::ostream& os, const Transaction& tx);
-
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transaction& tx);
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Transaction& tx);
 
 } // namespace bc

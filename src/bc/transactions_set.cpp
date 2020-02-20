@@ -109,17 +109,18 @@ bool TransactionsSet::operator!=(const TransactionsSet& other) const
 }
 
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, TransactionsSet& txs)
+base::SerializationOArchive& TransactionsSet::serialize(base::SerializationOArchive& oa) const
 {
-    txs._txs = ia.deserialize<std::vector<bc::Transaction>>();
-    return ia;
+    oa.serialize(_txs);
+    return oa;
 }
 
 
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TransactionsSet& txs)
+TransactionsSet TransactionsSet::deserialize(base::SerializationIArchive& ia)
 {
-    oa.serialize(txs._txs);
-    return oa;
+    TransactionsSet tx_set;
+    tx_set._txs = ia.deserialize<std::vector<bc::Transaction>>();
+    return tx_set;
 }
 
 

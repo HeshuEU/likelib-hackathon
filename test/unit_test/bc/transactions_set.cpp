@@ -178,11 +178,10 @@ BOOST_AUTO_TEST_CASE(transactions_set_serialixation)
 {
     auto tx_set = getTestSet();
     base::SerializationOArchive oa;
-    oa << tx_set;
+    oa.serialize(tx_set);
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::TransactionsSet tx_set2;
-    ia >> tx_set2;
+    auto tx_set2 = ia.deserialize<bc::TransactionsSet>();
 
     BOOST_CHECK(tx_set2.find(trans1));
     BOOST_CHECK(tx_set2.find(trans2));

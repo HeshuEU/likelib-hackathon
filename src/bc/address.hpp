@@ -32,15 +32,15 @@ class Address
     bool operator==(const Address& another) const;
 
     friend bool operator<(const Address& another_1, const Address& another_2);
-
+    //=================
+    base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const;
+    static Address deserialize(base::SerializationIArchive& ia);
+    //=================
   private:
     base::Bytes _address;
 };
 
 bool operator<(const Address& a, const Address& b);
-
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address& tx);
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx);
 
 std::ostream& operator<<(std::ostream& os, const Address& address);
 

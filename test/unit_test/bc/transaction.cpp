@@ -148,11 +148,10 @@ BOOST_AUTO_TEST_CASE(transaction_serialization1)
     bc::Transaction tx1;
 
     base::SerializationOArchive oa;
-    oa << tx1;
+    oa.serialize(tx1);
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Transaction tx2;
-    ia >> tx2;
+    auto tx2 = ia.deserialize<bc::Transaction>();
     BOOST_CHECK(tx1 == tx2);
 }
 
@@ -166,10 +165,9 @@ BOOST_AUTO_TEST_CASE(transaction_serialization2)
     bc::Transaction tx1(str_from, str_to, amount, time);
 
     base::SerializationOArchive oa;
-    oa << tx1;
+    oa.serialize(tx1);
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Transaction tx2;
-    ia >> tx2;
+    auto tx2 = ia.deserialize<bc::Transaction>();
     BOOST_CHECK(tx1 == tx2);
 }

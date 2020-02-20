@@ -78,25 +78,23 @@ bool Transaction::operator!=(const Transaction& other) const
 }
 
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Transaction& tx)
+base::SerializationOArchive& Transaction::serialize(base::SerializationOArchive& oa) const
 {
-    bc::Address from, to;
-    ia >> from >> to;
-    tx.setFrom(from);
-    tx.setTo(to);
-    bc::Balance balance;
-    ia >> balance;
-    tx.setAmount(balance);
-    ::base::Time timestamp;
-    ia >> timestamp;
-    tx.setTimestamp(timestamp);
-    return ia;
+    oa.serialize(getFrom());
+    oa.serialize(getTo());
+    oa.serialize(getAmount());
+    oa.serialize(getTimestamp());
+    return oa;
 }
 
 
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Transaction& tx)
+Transaction Transaction::deserialize(base::SerializationIArchive& ia)
 {
-    return oa << tx.getFrom() << tx.getTo() << tx.getAmount() << tx.getTimestamp();
+    auto from = ia.deserialize<bc::Address>();
+    auto to = ia.deserialize<bc::Address>();
+    auto balance = ia.deserialize<bc::Balance>();
+    auto timestamp = ia.deserialize<base::Time>();
+    return Transaction(from, to, balance, timestamp);
 }
 
 
