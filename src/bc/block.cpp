@@ -14,7 +14,11 @@ Block::Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, TransactionsSet
 
 base::SerializationOArchive& Block::serialize(base::SerializationOArchive& oa) const
 {
-    return oa << _depth << _nonce << _prev_block_hash << _txs;
+    oa.serialize(_depth);
+    oa.serialize(_nonce);
+    oa.serialize(_prev_block_hash);
+    oa.serialize(_txs);
+    return oa;
 }
 
 

@@ -34,10 +34,11 @@ PeerInfo PeerInfo::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void PeerInfo::serialize(base::SerializationOArchive& oa) const
+base::SerializationOArchive&  PeerInfo::serialize(base::SerializationOArchive& oa) const
 {
     oa.serialize(endpoint);
     oa.serialize(address);
+    return oa;
 }
 
 //============================================
@@ -132,7 +133,7 @@ constexpr MessageType PingMessage::getHandledMessageType()
 
 void PingMessage::serialize(base::SerializationOArchive& oa)
 {
-    oa << MessageType::PING;
+    oa.serialize(MessageType::PING);
 }
 
 
@@ -156,7 +157,7 @@ constexpr MessageType PongMessage::getHandledMessageType()
 
 void PongMessage::serialize(base::SerializationOArchive& oa)
 {
-    oa << MessageType::PONG;
+    oa.serialize(MessageType::PONG);
 }
 
 
@@ -179,7 +180,8 @@ constexpr MessageType TransactionMessage::getHandledMessageType()
 
 void TransactionMessage::serialize(base::SerializationOArchive& oa, bc::Transaction tx)
 {
-    oa << MessageType::TRANSACTION << tx;
+    oa.serialize(MessageType::TRANSACTION);
+    oa.serialize(tx);
 }
 
 
@@ -214,7 +216,7 @@ constexpr MessageType GetBlockMessage::getHandledMessageType()
 
 void GetBlockMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash)
 {
-    oa << MessageType::GET_BLOCK;
+    oa.serialize(MessageType::GET_BLOCK);
     block_hash.serialize(oa);
 }
 
@@ -257,7 +259,8 @@ constexpr MessageType BlockMessage::getHandledMessageType()
 
 void BlockMessage::serialize(base::SerializationOArchive& oa, const bc::Block& block)
 {
-    oa << MessageType::BLOCK << block;
+    oa.serialize(MessageType::BLOCK);
+    oa.serialize(block);
 }
 
 
@@ -306,7 +309,7 @@ constexpr MessageType BlockNotFoundMessage::getHandledMessageType()
 
 void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash)
 {
-    oa << MessageType::BLOCK_NOT_FOUND;
+    oa.serialize(MessageType::BLOCK_NOT_FOUND);
     block_hash.serialize(oa);
 }
 
@@ -341,7 +344,7 @@ constexpr MessageType GetInfoMessage::getHandledMessageType()
 
 void GetInfoMessage::serialize(base::SerializationOArchive& oa)
 {
-    oa << MessageType::GET_INFO;
+    oa.serialize(MessageType::GET_INFO);
 }
 
 
@@ -477,8 +480,7 @@ namespace
 void MessageProcessor::process(const base::Bytes& raw_message)
 {
     base::SerializationIArchive ia(raw_message);
-    MessageType mt;
-    ia >> mt;
+    auto mt = ia.deserialize<MessageType>();
     LOG_DEBUG << "Processing " << enumToString(mt) << " message";
     runHandle(mt, ia, _peer, _network, _core, _all_message_types);
     LOG_DEBUG << "Processed  " << enumToString(mt) << " message";

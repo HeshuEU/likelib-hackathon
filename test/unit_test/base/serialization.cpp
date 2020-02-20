@@ -18,14 +18,13 @@ class TestSerialization
 
     static TestSerialization deserialize(base::SerializationIArchive& ia)
     {
-        int val;
-        ia >> val;
+        int val = ia.deserialize<int>();
         return TestSerialization(val);
     }
 
     base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const
     {
-        oa << _value;
+        oa.serialize(_value);
         return oa;
     }
 
@@ -37,14 +36,16 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check1)
 {
     base::SerializationOArchive oa;
     std::uint16_t s{0x1234};
-    oa << base::Byte{0x12} << -35 << -7ll << s;
+    oa.serialize(base::Byte{0x12});
+    oa.serialize(-35);
+    oa.serialize(-7ll);
+    oa.serialize(s);
 
     base::SerializationIArchive ia(oa.getBytes());
-    base::Byte a;
-    int b;
-    long long c;
-    std::uint16_t d;
-    ia >> a >> b >> c >> d;
+    auto a = ia.deserialize<base::Byte>();
+    auto b = ia.deserialize<int>();
+    auto c = ia.deserialize<long long>();
+    auto d = ia.deserialize<std::uint16_t>();
     BOOST_CHECK_EQUAL(a, 0x12);
     BOOST_CHECK_EQUAL(b, -35);
     BOOST_CHECK_EQUAL(c, -7);
@@ -65,8 +66,7 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
 
     base::SerializationIArchive ia(oa.getBytes());
 
-    std::uint64_t a;
-    ia >> a;
+    auto a = ia.deserialize<std::uint64_t>();
     BOOST_CHECK_EQUAL(a, aa);
 
     base::Bytes b = ia.deserialize<base::Bytes>();
@@ -112,15 +112,20 @@ BOOST_AUTO_TEST_CASE(serialization_enum)
         D
     };
     base::SerializationOArchive oa;
-    oa << E::A << E::C << E::B << E::D;
+    oa.serialize(E::A);
+    oa.serialize(E::C);
+    oa.serialize(E::B);
+    oa.serialize(E::D);
 
-    E a, b, c, d;
     base::SerializationIArchive ia(oa.getBytes());
-    ia >> a >> c >> b >> d;
+    auto a = ia.deserialize<E>();
+    auto b = ia.deserialize<E>();
+    auto c = ia.deserialize<E>();
+    auto d = ia.deserialize<E>();
 
     BOOST_CHECK(a == E::A);
-    BOOST_CHECK(b == E::B);
-    BOOST_CHECK(c == E::C);
+    BOOST_CHECK(b == E::C);
+    BOOST_CHECK(c == E::B);
     BOOST_CHECK(d == E::D);
 }
 

@@ -44,7 +44,7 @@ struct PeerInfo
     base::Bytes address;
 
     static PeerInfo deserialize(base::SerializationIArchive& ia);
-    void serialize(base::SerializationOArchive& oa) const;
+    base::SerializationOArchive&  serialize(base::SerializationOArchive& oa) const;
 };
 
 
