@@ -38,18 +38,27 @@ const base::Bytes& Sign::getRsaEncryptedHash() const
 void Sign::serialize(base::SerializationOArchive& oa) const
 {
     if(!_data) {
-        RAISE_ERROR(base::LogicError, "cannot serialize empty bc::Sign object");
+        oa.serialize(base::Byte{false});
     }
-    oa.serialize(_data->sender_public_key);
-    oa.serialize(_data->rsa_encrypted_hash);
+    else {
+        oa.serialize(base::Byte{true});
+        oa.serialize(_data->sender_public_key);
+        oa.serialize(_data->rsa_encrypted_hash);
+    }
 }
 
 
 Sign Sign::deserialize(base::SerializationIArchive& ia)
 {
-    auto sender_rsa_public_key = base::RsaPublicKey::deserialize(ia);
-    auto rsa_encrypted_hash = ia.deserialize<base::Bytes>();
-    return Sign{std::move(sender_rsa_public_key), std::move(rsa_encrypted_hash)};
+    auto flag = ia.deserialize<base::Byte>();
+    if(flag) {
+        auto sender_rsa_public_key = base::RsaPublicKey::deserialize(ia);
+        auto rsa_encrypted_hash = ia.deserialize<base::Bytes>();
+        return Sign{std::move(sender_rsa_public_key), std::move(rsa_encrypted_hash)};
+    }
+    else {
+        return Sign{};
+    }
 }
 
 
