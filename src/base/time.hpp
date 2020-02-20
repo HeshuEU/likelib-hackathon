@@ -10,10 +10,6 @@ namespace base
 /// Time util class with second accuracy in measurement
 class Time
 {
-    //=======================
-    friend ::base::SerializationIArchive& operator>>(::base::SerializationIArchive& ia, Time& tx);
-    friend ::base::SerializationOArchive& operator<<(::base::SerializationOArchive& oa, const Time& tx);
-    //==========================
   public:
     /**
      * \brief default constructor which have an epoch january 1, 1970.
@@ -37,14 +33,14 @@ class Time
     static Time fromSecondsSinceEpochBeginning(std::uint_least32_t seconds_from_epoch);
     static Time fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time_point);
     //=====================
+    SerializationOArchive& serialize(SerializationOArchive& oa) const;
+    static Time deserialize(SerializationIArchive& ia);
+    //=====================
   private:
     //=====================
     std::uint_least32_t _seconds_since_epoch_beginning{0};
     //=====================
 };
-
-base::SerializationIArchive& operator>>(::base::SerializationIArchive& ia, Time& tx);
-base::SerializationOArchive& operator<<(::base::SerializationOArchive& oa, const Time& tx);
 
 std::ostream& operator<<(std::ostream& os, const Time& time);
 

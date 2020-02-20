@@ -58,10 +58,9 @@ BOOST_AUTO_TEST_CASE(time_serialization1)
 {
     base::Time time1;
     base::SerializationOArchive oa;
-    oa << time1;
-    base::Time time2;
+    oa.serialize(time1);
     base::SerializationIArchive ia(oa.getBytes());
-    ia >> time2;
+    auto time2 = ia.deserialize<base::Time>();
     BOOST_CHECK(time1 == time2);
 }
 
@@ -70,10 +69,9 @@ BOOST_AUTO_TEST_CASE(time_serialization2)
 {
     base::Time time1(base::Time::now());
     base::SerializationOArchive oa;
-    oa << time1;
-    base::Time time2;
+    oa.serialize(time1);
     base::SerializationIArchive ia(oa.getBytes());
-    ia >> time2;
+    auto time2 = ia.deserialize<base::Time>();
     BOOST_CHECK(time1 == time2);
 }
 

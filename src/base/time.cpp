@@ -54,19 +54,17 @@ Time Time::fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time
 }
 
 
-::base::SerializationIArchive& operator>>(::base::SerializationIArchive& ia, Time& time)
+SerializationOArchive& Time::serialize(SerializationOArchive& oa) const
 {
-    std::uint32_t timestamp;
-    ia >> timestamp;
-    time._seconds_since_epoch_beginning = static_cast<std::uint_least32_t>(timestamp);
-    return ia;
+    oa.serialize(static_cast<std::uint32_t>(_seconds_since_epoch_beginning));
+    return oa;
 }
 
 
-::base::SerializationOArchive& operator<<(::base::SerializationOArchive& oa, const Time& time)
+Time Time::deserialize(SerializationIArchive& ia)
 {
-    oa << static_cast<std::uint32_t>(time._seconds_since_epoch_beginning);
-    return oa;
+    auto timestamp = ia.deserialize<std::uint32_t>();
+    return fromSecondsSinceEpochBeginning(timestamp);
 }
 
 

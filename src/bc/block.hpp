@@ -52,9 +52,6 @@ class Block
 
 std::ostream& operator<<(std::ostream& os, const Block& block);
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block);
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block);
-
 bool operator==(const bc::Block& a, const bc::Block& b);
 bool operator!=(const bc::Block& a, const bc::Block& b);
 

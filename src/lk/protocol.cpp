@@ -132,7 +132,7 @@ constexpr MessageType PingMessage::getHandledMessageType()
 
 void PingMessage::serialize(base::SerializationOArchive& oa)
 {
-    oa << MessageType::PING;
+    oa.serialize(MessageType::PING);
 }
 
 
@@ -156,7 +156,7 @@ constexpr MessageType PongMessage::getHandledMessageType()
 
 void PongMessage::serialize(base::SerializationOArchive& oa)
 {
-    oa << MessageType::PONG;
+    oa.serialize(MessageType::PONG);
 }
 
 
@@ -480,8 +480,7 @@ namespace
 void MessageProcessor::process(const base::Bytes& raw_message)
 {
     base::SerializationIArchive ia(raw_message);
-    MessageType mt;
-    ia >> mt;
+    auto mt = ia.deserialize<MessageType>();
     LOG_DEBUG << "Processing " << enumToString(mt) << " message";
     runHandle(mt, ia, _peer, _network, _core, _all_message_types);
     LOG_DEBUG << "Processed  " << enumToString(mt) << " message";

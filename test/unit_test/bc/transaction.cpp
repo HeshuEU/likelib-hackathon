@@ -5,6 +5,21 @@
 
 BOOST_AUTO_TEST_CASE(transaction_constructor1)
 {
+    bc::Transaction tx1;
+    bc::Transaction tx2;
+    BOOST_CHECK(tx1.getFrom().toString() == "");
+    BOOST_CHECK(tx1.getTo().toString() == "");
+    BOOST_CHECK(tx1.getTimestamp() == base::Time());
+    BOOST_CHECK(tx1.getFrom().toString() == tx2.getFrom().toString());
+    BOOST_CHECK(tx1.getTo().toString() == tx2.getTo().toString());
+    BOOST_CHECK(tx1.getTimestamp() == tx2.getTimestamp());
+    // BOOST_CHECK(tx1.getAmount() == tx2.getAmount());  //TODO: not work now
+    // BOOST_CHECK(tx1 == tx2);  //TODO: not work now
+}
+
+
+BOOST_AUTO_TEST_CASE(transaction_constructor2)
+{
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
     bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
@@ -146,6 +161,19 @@ BOOST_AUTO_TEST_CASE(transaction_set_all2)
 
 BOOST_AUTO_TEST_CASE(transaction_serialization1)
 {
+    bc::Transaction tx1;
+
+    base::SerializationOArchive oa;
+    oa.serialize(tx1);
+
+    base::SerializationIArchive ia(oa.getBytes());
+    auto tx2 = ia.deserialize<bc::Transaction>();
+    BOOST_CHECK(tx1 == tx2);
+}
+
+
+BOOST_AUTO_TEST_CASE(transaction_serialization2)
+{
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
     bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
@@ -155,9 +183,9 @@ BOOST_AUTO_TEST_CASE(transaction_serialization1)
     bc::Transaction tx1(from, to, amount, time);
 
     base::SerializationOArchive oa;
-    oa << tx1;
+    oa.serialize(tx1);
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Transaction tx2 = bc::Transaction::deserialize(ia);
+    auto tx2 = ia.deserialize<bc::Transaction>();
     BOOST_CHECK(tx1 == tx2);
 }

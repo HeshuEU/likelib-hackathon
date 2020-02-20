@@ -202,11 +202,11 @@ BOOST_AUTO_TEST_CASE(block_serialization2)
 
     block1.setNonce(bc::NonceInt(6706744));
     base::SerializationOArchive oa;
-    oa << block1;
+    oa.serialize(block1);
 
     base::SerializationIArchive ia(oa.getBytes());
     bc::Block block2(120, base::Sha256::compute(base::Bytes("")), bc::TransactionsSet());
-    ia >> block2;
+    block2 = ia.deserialize<bc::Block>();
 
     BOOST_CHECK(block2.getPrevBlockHash() == base::Sha256::compute(base::Bytes(str_fro_sha)));
     BOOST_CHECK(block2.getNonce() == bc::NonceInt(6706744));
