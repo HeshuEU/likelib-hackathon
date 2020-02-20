@@ -1,5 +1,5 @@
 from tester import Log, test_case, NodeId, NodeTester, TEST_CHECK, NodePoll
-import threading
+import concurrent.futures
 
 
 @test_case("multi_transfer")
@@ -138,11 +138,7 @@ def node_transfers(node, addresses, transaction_wait):
     for _ in range(len(addresses) * 5):
         pos = (pos + shift) % len(addresses)
         to_address = addresses[pos]
-        try:
-            node.run_check_transfer(from_address=from_address, to_address=to_address, amount=amount, wait=transaction_wait, fee=0, timeout=3)
-        except Exception as e:
-            print(e)
-            exit(1)
+        node.run_check_transfer(from_address=from_address, to_address=to_address, amount=amount, wait=transaction_wait, fee=0, timeout=3)
         from_address = to_address
     
 
@@ -184,16 +180,14 @@ def main(node_exec_path, rpc_client_exec_path):
             for node in pool:
                 node.run_check_balance(address=to_address, target_balance=init_amount)
         
-        threads = []
-        for i in range(len(pool)):
-            first_address_number = i * address_per_nodes
-            last_address_number = (i * address_per_nodes) + address_per_nodes
-            current_thread = threading.Thread(target=node_transfers, args=(pool[i], addresses[first_address_number:last_address_number], transaction_wait))
-            current_thread.start()
-            threads.append(current_thread)
-
-        for thread in threads:
-            thread.join() 
+        with concurrent.futures.ThreadPoolExecutor(len(pool)) as executor:
+            threads = []
+            for i in range(len(pool)):
+                first_address_number = i * address_per_nodes
+                last_address_number = (i * address_per_nodes) + address_per_nodes
+                threads.append(executor.submit(node_transfers, pool[i], addresses[first_address_number:last_address_number], transaction_wait))
+            for i in threads:
+                i.result()
 
         for address in addresses:
             for node in pool:
