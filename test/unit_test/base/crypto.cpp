@@ -104,8 +104,8 @@ BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_save_in_file)
     priv_rsa.save(private_key_path);
     pub_rsa.save(public_key_path);
 
-    auto priv_rsa2 = base::RsaPrivateKey::read(private_key_path);
-    auto pub_rsa2 = base::RsaPublicKey::read(public_key_path);
+    auto priv_rsa2 = base::RsaPrivateKey::load(private_key_path);
+    auto pub_rsa2 = base::RsaPublicKey::load(public_key_path);
 
     base::Bytes msg("RSa_FI1E_TES!");
     auto enc_msg1 = priv_rsa.encrypt(msg);
@@ -214,9 +214,9 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode)
 {
     base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
     auto base64 = base64Encode(target_msg);
-    auto decode_base64 = base64Decode(base64);
+    auto decode_base64 = base::base64Decode(base64);
 
-    BOOST_CHECK(base64.toString() == "ZEZNIzY5MzU2XiMtMDQgIEAjNC0wXgoKNCMwNjMyPS1HRUozZGxzNXMsc3BpKy01KzA=");
+    BOOST_CHECK(base64 == "ZEZNIzY5MzU2XiMtMDQgIEAjNC0wXgoKNCMwNjMyPS1HRUozZGxzNXMsc3BpKy01KzA=");
     BOOST_CHECK(target_msg == decode_base64);
 }
 
@@ -225,9 +225,9 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode_empty)
 {
     base::Bytes target_msg("");
     auto base64 = base64Encode(target_msg);
-    auto decode_base64 = base64Decode(base64);
+    auto decode_base64 = base::base64Decode(base64);
 
-    BOOST_CHECK(base64.toString() == "");
+    BOOST_CHECK(base64 == "");
     BOOST_CHECK(target_msg == decode_base64);
 }
 
@@ -236,8 +236,8 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
 {
     base::Bytes target_msg("1");
     auto base64 = base64Encode(target_msg);
-    auto decode_base64 = base64Decode(base64);
+    auto decode_base64 = base::base64Decode(base64);
 
-    BOOST_CHECK(base64.toString() == "MQ==");
+    BOOST_CHECK(base64 == "MQ==");
     BOOST_CHECK(target_msg == decode_base64);
 }

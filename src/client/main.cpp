@@ -17,8 +17,6 @@
 namespace
 {
 constexpr const char* const DEFAULT_CONFIG_PATH = "config.json";
-
-constexpr const char* DEFAULT_CONFIG_PATH = "config.json";
 constexpr uint32_t API_VERSION = base::config::RPC_PUBLIC_API_VERSION;
 
 } // namespace
@@ -188,9 +186,7 @@ int transfer(base::SubprogramRouter& router)
         txb.setFee(fee);
         auto tx = std::move(txb).build();
         tx.sign(public_key, private_key);
-
-        auto sign = base::base64Encode(base::toBytes(tx.getSign()));
-        auto result = client.transaction_to_wallet(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), sign);
+        auto result = client.transaction_to_wallet(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), tx.getSign());
         std::cout << result << std::endl;
         LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;
@@ -307,7 +303,7 @@ int pushContract(base::SubprogramRouter& router)
     }
 
     try {
-        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION)};
+        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION), DEFAULT_CONFIG_PATH};
         //====================================
         std::string host_address;
         if(router.optionsParser()->hasOption(HOST_OPTION)) {
@@ -389,7 +385,7 @@ int pushContract(base::SubprogramRouter& router)
         bc::Address contract_address;
         bc::Balance gas_left;
         std::tie(status, contract_address, gas_left) = client.transaction_creation_contract(
-            amount, from_address, base::Time::now(), gas, contract, message);
+            amount, bc::Address{from_address}, base::Time::now(), gas, contract, message, bc::Sign{});
 
         if(status) {
             std::cout << "Remote call of creation smart contract success -> [" << status.getMessage()
@@ -452,7 +448,7 @@ int messageToContract(base::SubprogramRouter& router)
     }
 
     try {
-        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION)};
+        ParametersHelper helper{router.optionsParser()->getValue<std::string>(CONFIG_OPTION), DEFAULT_CONFIG_PATH};
         //====================================
         std::string host_address;
         if(router.optionsParser()->hasOption(HOST_OPTION)) {
@@ -506,11 +502,8 @@ int messageToContract(base::SubprogramRouter& router)
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
 
-        rpc::OperationStatus status = rpc::OperationStatus::createFailed();
-        base::Bytes contract_response;
-        bc::Balance gas_left;
-        std::tie(status, contract_response, gas_left) =
-            client.transaction_to_contract(amount, from_address, to_address, base::Time::now(), gas, message);
+        auto[status, contract_response, gas_left] =
+            client.transaction_to_contract(amount, bc::Address{from_address}, bc::Address{to_address}, base::Time::now(), gas, message, bc::Sign{});
 
         if(status) {
             std::cout << "Remote call of smart contract call success -> [" << status.getMessage()
@@ -718,7 +711,7 @@ int main(int argc, char** argv)
         router.addSubprogram("generate", "generate the pair of keys", generateKeys);
         router.addSubprogram("get_balance", "use for get balance from remote by account address", getBalance);
         router.addSubprogram("transfer", "use transfer balance from one address to another address", transfer);
-        router.addSubprogram("test", "use test functions", test);
+        router.addSubprogram("test", "use test functions", testConnection);
         router.addSubprogram("push_contract", "load smart contract code to push to blockchain network", pushContract);
         router.addSubprogram("message_to_contract", "create message to call smart contract ", messageToContract);
         router.addSubprogram("compile", "compile smart contract ", compileCode);

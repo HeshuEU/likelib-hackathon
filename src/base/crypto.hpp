@@ -80,7 +80,7 @@ class RsaPrivateKey
     //=================
 };
 
-std::pair<RsaPublicKey, RsaPrivateKey> generateKeys();
+std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t key_length = 1024);
 
 class AesKey
 {

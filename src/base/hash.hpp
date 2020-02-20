@@ -30,7 +30,7 @@ class Sha256
     //----------------------------------
     static Sha256 compute(const base::Bytes& data);
     //----------------------------------
-    SerializationOArchive& serialize(SerializationOArchive& oa) const;
+    void serialize(SerializationOArchive& oa) const;
     static Sha256 deserialize(SerializationIArchive& ia);
     //----------------------------------
   private:
@@ -76,8 +76,7 @@ class Sha1
     //----------------------------------
     static Sha1 compute(const base::Bytes& data);
     //----------------------------------
-    static SerializationOArchive& serialize(SerializationOArchive& oa, const Sha1& block);
-    SerializationOArchive& serialize(SerializationOArchive& oa) const;
+    void serialize(SerializationOArchive& oa) const;
     static Sha1 deserialize(SerializationIArchive& ia);
     //----------------------------------
   private:
@@ -124,7 +123,7 @@ class Ripemd160
     //----------------------------------
     static Ripemd160 compute(const base::Bytes& data);
     //----------------------------------
-    SerializationOArchive& serialize(SerializationOArchive& oa) const;
+    void serialize(SerializationOArchive& oa) const;
     static Ripemd160 deserialize(SerializationIArchive& ia);
     //----------------------------------
   private:
@@ -196,7 +195,7 @@ class Sha3
 
     //----------------------------------
 
-    SerializationOArchive& serialize(SerializationOArchive& oa) const;
+    void serialize(SerializationOArchive& oa) const;
 
     static Sha3 deserialize(SerializationIArchive& ia);
 

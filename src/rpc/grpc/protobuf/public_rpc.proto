@@ -41,7 +41,7 @@ message TransactionToContractRequest {
     Money gas = 4;
     Time creation_time = 5;
     MessageToContract contract_request = 6;
-    Sign sign = 7;
+    Sign signature = 7;
 }
 
 message TransactionToContractResponse {
@@ -57,13 +57,13 @@ message TransactionCreationContractRequest {
     Money gas = 4;
     MessageToContract initial_message = 5;
     Time creation_time = 6;
-    Sign = 7;
+    Sign signature = 7;
 }
 
 message TransactionCreationContractResponse {
     OperationStatus status = 1;
     Money gas_left = 2;
-    Address contract_address_at_hex = 3;
+    Address contract_address = 3;
 }
 
 message TransactionToAccountRequest {
@@ -72,7 +72,7 @@ message TransactionToAccountRequest {
     Address to = 3;
     Money fee = 4;
     Time creation_time = 5;
-    Sign sign = 6;
+    Sign signature = 6;
 }
 
 message TransactionToAccountResponse {
@@ -80,15 +80,15 @@ message TransactionToAccountResponse {
 }
 
 message MessageToContract {
-    string message_at_hex = 1;
+    string message = 1;
 }
 
 message MessageFromContract {
-    string message_at_hex = 1;
+    string message = 1;
 }
 
 message Contract {
-    string bytecode_at_hex = 1;
+    string bytecode = 1;
 }
 
 message Time {
@@ -105,7 +105,11 @@ message Money {
 }
 
 message Address {
-    string address_at_hex = 1;
+    string address = 1;
+}
+
+message Sign {
+    string signature = 1;
 }
 
 message OperationStatus {

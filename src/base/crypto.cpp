@@ -304,10 +304,8 @@ std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& 
 }
 
 
-std::pair<RsaPublicKey, RsaPrivateKey> generateKeys()
+std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t key_size)
 {
-    static constexpr std::size_t KEY_SIZE = 1024;
-
     // create big number for random generation
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> bn(BN_new(), ::BN_free);
     if(!BN_set_word(bn.get(), RSA_F4)) {
@@ -315,7 +313,7 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys()
     }
     // create rsa and fill by created big number
     std::unique_ptr<RSA, decltype(&::RSA_free)> rsa(RSA_new(), ::RSA_free);
-    if(!RSA_generate_key_ex(rsa.get(), KEY_SIZE, bn.get(), nullptr)) {
+    if(!RSA_generate_key_ex(rsa.get(), key_size, bn.get(), nullptr)) {
         RAISE_ERROR(Error, "Fail to generate RSA key");
     }
     // ==================

@@ -37,7 +37,7 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
 
 std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_creation_contract(
     bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
-    const base::Bytes& code, const base::Bytes& initial_message, const std::string& base64_sign)
+    const base::Bytes& code, const base::Bytes& initial_message, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString() << "], amount["
               << amount << "], gas" << gas << "], code[" << code.toHex() << "], transaction_time["
@@ -49,7 +49,7 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
 
 std::tuple<rpc::OperationStatus, base::Bytes, bc::Balance> GeneralServerService::transaction_to_contract(
     bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-    const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message)
+    const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
@@ -60,14 +60,13 @@ std::tuple<rpc::OperationStatus, base::Bytes, bc::Balance> GeneralServerService:
 }
 
 rpc::OperationStatus GeneralServerService::transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const std::string& base64_sign)
+    const bc::Address& to_address, const base::Time& transaction_time, bc::Balance fee, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_wallet}: from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], fee" << fee
               << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "]";
 
-    auto sign = base::fromBytes<bc::Sign>(base::base64Decode(base64_sign));
-    if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time))) {
+    if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time, fee, signature))) {
         return rpc::OperationStatus::createSuccess("Success! Transaction added to queue successfully.");
     }
     else {

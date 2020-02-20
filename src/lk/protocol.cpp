@@ -179,7 +179,8 @@ constexpr MessageType TransactionMessage::getHandledMessageType()
 
 void TransactionMessage::serialize(base::SerializationOArchive& oa, bc::Transaction tx)
 {
-    oa << MessageType::TRANSACTION << tx;
+    oa.serialize(MessageType::TRANSACTION);
+    oa.serialize(tx);
 }
 
 
@@ -215,7 +216,7 @@ constexpr MessageType GetBlockMessage::getHandledMessageType()
 
 void GetBlockMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash)
 {
-    oa << MessageType::GET_BLOCK;
+    oa.serialize(MessageType::GET_BLOCK);
     block_hash.serialize(oa);
 }
 
@@ -258,7 +259,8 @@ constexpr MessageType BlockMessage::getHandledMessageType()
 
 void BlockMessage::serialize(base::SerializationOArchive& oa, const bc::Block& block)
 {
-    oa << MessageType::BLOCK << block;
+    oa.serialize(MessageType::BLOCK);
+    oa.serialize(block);
 }
 
 
@@ -307,7 +309,7 @@ constexpr MessageType BlockNotFoundMessage::getHandledMessageType()
 
 void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash)
 {
-    oa << MessageType::BLOCK_NOT_FOUND;
+    oa.serialize(MessageType::BLOCK_NOT_FOUND);
     block_hash.serialize(oa);
 }
 
@@ -342,7 +344,7 @@ constexpr MessageType GetInfoMessage::getHandledMessageType()
 
 void GetInfoMessage::serialize(base::SerializationOArchive& oa)
 {
-    oa << MessageType::GET_INFO;
+    oa.serialize(MessageType::GET_INFO);
 }
 
 

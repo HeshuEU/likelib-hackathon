@@ -53,8 +53,8 @@ Sign Sign::deserialize(base::SerializationIArchive& ia)
 }
 
 
-Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, bc::Sign sign)
-    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _timestamp{timestamp}, _sign{std::move(sign)}
+Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, bc::Balance fee, bc::Sign sign)
+    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _timestamp{timestamp}, _fee{fee}, _sign{std::move(sign)}
 {
     if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
@@ -86,10 +86,15 @@ const base::Time& Transaction::getTimestamp() const noexcept
 }
 
 
+const bc::Balance& Transaction::getFee() const noexcept
+{
+    return _fee;
+}
+
 
 bool Transaction::operator==(const Transaction& other) const
 {
-    return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp;
+    return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp && _fee == other._fee;
 }
 
 
@@ -140,35 +145,40 @@ const Sign& Transaction::getSign() const noexcept
 }
 
 
-base::Sha256 Transaction::hashOfTxData() const
+void Transaction::serializeHeader(base::SerializationOArchive& oa) const
 {
-    base::SerializationOArchive oa;
     oa.serialize(_from);
     oa.serialize(_to);
     oa.serialize(_amount);
     oa.serialize(_timestamp);
+    oa.serialize(_fee);
+}
+
+
+base::Sha256 Transaction::hashOfTxData() const
+{
+    base::SerializationOArchive oa;
+    serializeHeader(oa);
     return base::Sha256::compute(std::move(oa).getBytes());
 }
 
 
 Transaction Transaction::deserialize(base::SerializationIArchive& ia)
 {
-    auto from = bc::Address::deserialize(ia);
-    auto to = bc::Address::deserialize(ia);
-    bc::Balance balance;
-    ia >> balance;
-    ::base::Time timestamp;
-    ia >> timestamp;
-    return {std::move(from), std::move(to), balance, timestamp};
+    auto from = ia.deserialize<bc::Address>();
+    auto to = ia.deserialize<bc::Address>();
+    auto balance = ia.deserialize<bc::Balance>();
+    auto timestamp = ia.deserialize<base::Time>();
+    auto fee = ia.deserialize<bc::Balance>();
+    auto sign = ia.deserialize<bc::Sign>();
+    return {std::move(from), std::move(to), balance, timestamp, fee, std::move(sign)};
 }
 
 
 void Transaction::serialize(base::SerializationOArchive& oa) const
 {
-    oa.serialize(_from);
-    oa.serialize(_to);
-    oa.serialize(_amount);
-    oa.serialize(_timestamp);
+    serializeHeader(oa);
+    oa.serialize(_sign);
 }
 
 
@@ -203,13 +213,21 @@ void TransactionBuilder::setTimestamp(base::Time timestamp)
 }
 
 
+void TransactionBuilder::setFee(bc::Balance fee)
+{
+    _fee = fee;
+}
+
+
+
 Transaction TransactionBuilder::build() const&
 {
     ASSERT(_from);
     ASSERT(_to);
     ASSERT(_amount);
     ASSERT(_timestamp);
-    return {*_from, *_to, *_amount, *_timestamp};
+    ASSERT(_fee);
+    return {*_from, *_to, *_amount, *_timestamp, *_fee};
 }
 
 
@@ -219,7 +237,8 @@ Transaction TransactionBuilder::build() &&
     ASSERT(_to);
     ASSERT(_amount);
     ASSERT(_timestamp);
-    return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_timestamp)};
+    ASSERT(_fee);
+    return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_timestamp), std::move(*_fee)};
 }
 
 

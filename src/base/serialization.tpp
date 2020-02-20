@@ -378,7 +378,7 @@ typename std::enable_if<std::is_enum<T>::value, SerializationOArchive&>::type Se
 template<typename T>
 void SerializationOArchive::serialize(const T& v)
 {
-    if constexpr(impl::has_serialize<T, base::SerializationOArchive&(base::SerializationOArchive&)>::value) {
+    if constexpr(impl::has_serialize<T, void(base::SerializationOArchive&)>::value) {
         v.serialize(*this);
     }
     else {

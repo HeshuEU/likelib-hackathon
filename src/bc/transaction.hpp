@@ -39,7 +39,7 @@ class Transaction
 {
   public:
     //=================
-    Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, bc::Sign sign = bc::Sign{});
+    Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, bc::Balance fee, bc::Sign sign = bc::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -52,6 +52,7 @@ class Transaction
     [[nodiscard]] const bc::Address& getTo() const noexcept;
     [[nodiscard]] const bc::Balance& getAmount() const noexcept;
     [[nodiscard]] const base::Time& getTimestamp() const noexcept;
+    [[nodiscard]] const bc::Balance& getFee() const noexcept;
     //=================
     void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
     [[nodiscard]] bool checkSign() const;
@@ -70,8 +71,10 @@ class Transaction
     bc::Address _to;
     bc::Balance _amount;
     base::Time _timestamp;
+    bc::Balance _fee;
     bc::Sign _sign;
     //=================
+    void serializeHeader(base::SerializationOArchive& oa) const;
     base::Sha256 hashOfTxData() const;
     //=================
 };
@@ -86,6 +89,7 @@ class TransactionBuilder
     void setTo(bc::Address to);
     void setAmount(bc::Balance amount);
     void setTimestamp(base::Time timestamp);
+    void setFee(bc::Balance fee);
 
     [[nodiscard]] Transaction build() const&;
     [[nodiscard]] Transaction build() &&;
@@ -95,6 +99,7 @@ class TransactionBuilder
     std::optional<bc::Address> _to;
     std::optional<bc::Balance> _amount;
     std::optional<base::Time> _timestamp;
+    std::optional<bc::Balance> _fee;
 };
 
 } // namespace bc

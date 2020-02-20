@@ -59,18 +59,16 @@ bool operator<(const Address& a, const Address& b)
 }
 
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Address& tx)
+Address Address::deserialize(base::SerializationIArchive& ia)
 {
     std::string address = ia.deserialize<std::string>();
-    tx = Address(address);
-    return ia;
+    return Address(address);
 }
 
 
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Address& tx)
+void Address::serialize(base::SerializationOArchive& oa) const
 {
-    oa.serialize(tx.toString());
-    return oa;
+    oa.serialize(toString());
 }
 
 

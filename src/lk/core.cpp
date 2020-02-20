@@ -21,7 +21,7 @@ const bc::Block& Core::getGenesisBlock()
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address;
         ret.addTransaction({null_address, bc::Address{"EGAl+W5ADLg7vBcQ3svFMsgW2z8="}, bc::Balance{0xFFFFFFFF},
-            base::Time::fromSecondsSinceEpochBeginning(0)});
+            base::Time::fromSecondsSinceEpochBeginning(0), 0});
         return ret;
     }();
     return genesis;

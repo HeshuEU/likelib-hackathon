@@ -80,7 +80,8 @@ BOOST_AUTO_TEST_CASE(sha256_multiple_serialization)
     BOOST_CHECK_EQUAL(target_hash_2.getBytes().toHex(), target_hex_view_2);
 
     base::SerializationOArchive out;
-    out << target_hash_1 << target_hash_2;
+    out.serialize(target_hash_1);
+    out.serialize(target_hash_2);
 
     auto serialized_bytes = out.getBytes();
     base::SerializationIArchive in(serialized_bytes);

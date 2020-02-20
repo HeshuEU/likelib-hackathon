@@ -2,8 +2,6 @@
 
 #include "rpc/error.hpp"
 
-namespace rpc
-{
 
 namespace
 {
@@ -26,11 +24,11 @@ namespace
     {
         switch(status.status()) {
             case ::likelib::OperationStatus_StatusCode_Success:
-                return OperationStatus::createSuccess(status.message());
+                return rpc::OperationStatus::createSuccess(status.message());
             case ::likelib::OperationStatus_StatusCode_Rejected:
-                return OperationStatus::createRejected(status.message());
+                return rpc::OperationStatus::createRejected(status.message());
             case ::likelib::OperationStatus_StatusCode_Failed:
-                return OperationStatus::createFailed(status.message());
+                return rpc::OperationStatus::createFailed(status.message());
             default:
                 RAISE_ERROR(base::ParsingError, "Unexpected status code");
         }
@@ -39,7 +37,11 @@ namespace
 
 } // namespace
 
-rpc::GrpcNodeClient::GrpcNodeClient(const std::string& connect_address)
+
+namespace rpc
+{
+
+GrpcNodeClient::GrpcNodeClient(const std::string& connect_address)
 {
     auto channel_credentials = grpc::InsecureChannelCredentials();
     _stub =
@@ -70,7 +72,7 @@ bc::Balance GrpcNodeClient::balance(const bc::Address& address)
 {
     // convert data for request
     likelib::Address request;
-    request.set_address_at_hex(address.toString());
+    request.set_address(address.toString());
 
     // call remote host
     likelib::Money reply;
@@ -89,20 +91,20 @@ bc::Balance GrpcNodeClient::balance(const bc::Address& address)
 
 std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transaction_creation_contract(bc::Balance amount,
     const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas, const base::Bytes& code,
-    const base::Bytes& initial_message)
+    const base::Bytes& initial_message, const bc::Sign& signature)
 {
     // convert data for request
     likelib::TransactionCreationContractRequest request;
 
     request.mutable_value()->set_money(static_cast<google::protobuf::uint64>(amount));
 
-    request.mutable_from()->set_address_at_hex(from_address.toString());
+    request.mutable_from()->set_address(from_address.toString());
 
     request.mutable_gas()->set_money(static_cast<google::protobuf::uint64>(gas));
 
-    request.mutable_initial_message()->set_message_at_hex(initial_message.toHex());
+    request.mutable_initial_message()->set_message(base::base64Encode(initial_message));
 
-    request.mutable_contract()->set_bytecode_at_hex(code.toHex());
+    request.mutable_contract()->set_bytecode(base::base64Encode(code));
 
     fill_time(transaction_time, request.mutable_creation_time());
 
@@ -114,7 +116,7 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
     // return value if ok
     if(status.ok()) {
         auto converted_status = convert(reply.status());
-        auto contract_address = bc::Address{reply.contract_address_at_hex().address_at_hex()};
+        auto contract_address = bc::Address{reply.contract_address().address()};
         auto gas_left = bc::Balance{reply.gas_left().money()};
         return {converted_status, contract_address, gas_left};
     }
@@ -125,20 +127,20 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
 
 std::tuple<OperationStatus, base::Bytes, bc::Balance> GrpcNodeClient::transaction_to_contract(bc::Balance amount,
     const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time, bc::Balance gas,
-    const base::Bytes& message)
+    const base::Bytes& message, const bc::Sign& signature)
 {
     // convert data for request
     likelib::TransactionToContractRequest request;
 
     request.mutable_value()->set_money(static_cast<google::protobuf::uint64>(amount));
 
-    request.mutable_from()->set_address_at_hex(from_address.toString());
+    request.mutable_from()->set_address(from_address.toString());
 
-    request.mutable_to()->set_address_at_hex(to_address.toString());
+    request.mutable_to()->set_address(to_address.toString());
 
     request.mutable_gas()->set_money(static_cast<google::protobuf::uint64>(gas));
 
-    request.mutable_contract_request()->set_message_at_hex(message.toHex());
+    request.mutable_contract_request()->set_message(base::base64Encode(message));
 
     fill_time(transaction_time, request.mutable_creation_time());
 
@@ -151,7 +153,7 @@ std::tuple<OperationStatus, base::Bytes, bc::Balance> GrpcNodeClient::transactio
     if(status.ok()) {
         auto converted_status = convert(reply.status());
         auto gas_left = bc::Balance{reply.gas_left().money()};
-        auto message_from_contract = base::Bytes::fromHex(reply.contract_response().message_at_hex());
+        auto message_from_contract = base::base64Decode(reply.contract_response().message());
         return {converted_status, message_from_contract, gas_left};
     }
     else {
@@ -160,20 +162,17 @@ std::tuple<OperationStatus, base::Bytes, bc::Balance> GrpcNodeClient::transactio
 }
 
 OperationStatus GrpcNodeClient::transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time)
+    const bc::Address& to_address, const base::Time& transaction_time, bc::Balance fee, const bc::Sign& signature)
 {
     // convert data for request
     likelib::TransactionToAccountRequest request;
 
     request.mutable_value()->set_money(static_cast<google::protobuf::uint64>(amount));
-
-    request.mutable_from()->set_address_at_hex(from_address.toString());
-
-    request.mutable_to()->set_address_at_hex(to_address.toString());
-
+    request.mutable_from()->set_address(from_address.toString());
+    request.mutable_to()->set_address(to_address.toString());
     request.mutable_fee()->set_money(fee);
-
     fill_time(transaction_time, request.mutable_creation_time());
+    request.mutable_signature()->set_signature(base::base64Encode(base::toBytes(signature)));
 
     // call remote host
     likelib::TransactionToAccountResponse reply;
