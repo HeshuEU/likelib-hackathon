@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.13)
 
 project(likelib VERSION 0.1)
 
@@ -53,7 +53,9 @@ find_package(GrpcCppLib REQUIRED)
 
 # setting up common include directories
 include_directories(./src)
+
 #===========================
 
 add_subdirectory(./src)
 add_subdirectory(./test/unit_test)
+

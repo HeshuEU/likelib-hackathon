@@ -9,49 +9,111 @@ option objc_class_prefix = "LKL";
 // Service and messages definitions
 package likelib;
 
-service Node {
+service NodePublicInterface {
+    rpc test (TestRequest) returns (TestResponse) {
+    }
+
     rpc balance (Address) returns (Money) {
     }
 
-    rpc transaction (Transaction) returns (Hash) {
+    rpc transaction_to_contract (TransactionToContractRequest) returns (TransactionToContractResponse) {
     }
 
-    rpc test (TestRequest) returns (TestResponse) {
+    rpc transaction_for_create_contract (TransactionCreationContractRequest) returns (TransactionCreationContractResponse) {
     }
-}
 
-message Transaction {
-    Money amount = 1;
-    Address from_address = 2;
-    Address to_address = 3;
-    Time creation_time = 4;
-    Sign sign = 5;
-}
-
-message Sign {
-    string hex_sign = 1;
-}
-
-message Address {
-    string address = 1;
+    rpc transaction_to_wallet (TransactionToAccountRequest) returns (TransactionToAccountResponse) {
+    }
 }
 
 message TestRequest {
-    string message = 1;
+    uint32 interface_version = 1;
 }
 
 message TestResponse {
-    string message = 1;
+    OperationStatus status = 1;
 }
 
-message Hash {
-    string hash_string = 1;
+message TransactionToContractRequest {
+    Money value = 1;
+    Address from = 2;
+    Address to = 3;
+    Money gas = 4;
+    Time creation_time = 5;
+    MessageToContract contract_request = 6;
+    Sign sign = 7;
+}
+
+message TransactionToContractResponse {
+    OperationStatus status = 1;
+    Money gas_left = 2;
+    MessageFromContract contract_response = 3;
+}
+
+message TransactionCreationContractRequest {
+    Money value = 1;
+    Address from = 2;
+    Contract contract = 3;
+    Money gas = 4;
+    MessageToContract initial_message = 5;
+    Time creation_time = 6;
+    Sign = 7;
+}
+
+message TransactionCreationContractResponse {
+    OperationStatus status = 1;
+    Money gas_left = 2;
+    Address contract_address_at_hex = 3;
+}
+
+message TransactionToAccountRequest {
+    Money value = 1;
+    Address from = 2;
+    Address to = 3;
+    Money fee = 4;
+    Time creation_time = 5;
+    Sign sign = 6;
+}
+
+message TransactionToAccountResponse {
+    OperationStatus status = 1;
+}
+
+message MessageToContract {
+    string message_at_hex = 1;
+}
+
+message MessageFromContract {
+    string message_at_hex = 1;
+}
+
+message Contract {
+    string bytecode_at_hex = 1;
+}
+
+message Time {
+    uint32 day_grigorian = 1;
+    uint32 month_grigorian = 2;
+    uint32 year_grigorian = 3;
+    uint32 hour_utc0 = 4;
+    uint32 minute_utc0 = 5;
+    uint32 second_utc0 = 6;
 }
 
 message Money {
     uint64 money = 1;
 }
 
-message Time {
-    string seconds_from_epoch = 1;
+message Address {
+    string address_at_hex = 1;
+}
+
+message OperationStatus {
+    enum StatusCode {
+        Success = 0;
+        Rejected = 1;
+        Failed = 2;
+    }
+    StatusCode status = 1;
+    string message = 2;
 }

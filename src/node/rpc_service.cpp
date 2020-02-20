@@ -35,53 +35,43 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
     }
 }
 
-std::string GeneralServerService::transaction(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, const base::Time& transaction_time, const std::string& base64_sign)
+std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_creation_contract(
+    bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
+    const base::Bytes& code, const base::Bytes& initial_message, const std::string& base64_sign)
 {
-    try {
-        LOG_TRACE << "Node received in {transaction}: from_address[" << from_address.toString() << "], to_address["
-                  << to_address.toString() << "], amount[" << amount << "], transaction_time["
-                  << transaction_time.getSecondsSinceEpochBeginning() << "]";
+    LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString() << "], amount["
+              << amount << "], gas" << gas << "], code[" << code.toHex() << "], transaction_time["
+              << transaction_time.getSecondsSinceEpochBeginning() << "], initial_message[" << initial_message.toHex()
+              << "]";
 
-        auto sign = base::fromBytes<bc::Sign>(base::base64Decode(base64_sign));
-        if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time, sign))) {
-            LOG_TRACE << "Added tx to pending";
-            return "Success! Transaction added to queue successfully.";
-        }
-        else {
-            LOG_TRACE << "Rejecting tx";
-            return "Error! Transaction rejected.";
-        }
-    }
-    catch(const std::exception& e) {
-        LOG_WARNING << "Exception caught during transaction request: " << e.what();
-        return std::string{"Error: "} + e.what();
-    }
-    catch(...) {
-        LOG_WARNING << "Exception caught during transaction request: unknown";
-        return "Unexpected error";
-    }
+    return {rpc::OperationStatus::createFailed("Function is not supported"), bc::Address{}, gas};
 }
 
-std::string GeneralServerService::test(const std::string& test_request)
+std::tuple<rpc::OperationStatus, base::Bytes, bc::Balance> GeneralServerService::transaction_to_contract(
+    bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
+    const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message)
 {
-    try {
-        LOG_TRACE << "Node received in {test}: test_request[" << test_request << "]";
-        auto our_request = base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_REQUEST)).toHex();
-        if(our_request == test_request) {
-            return base::Sha256::compute(base::Bytes(base::config::RPC_CURRENT_SECRET_TEST_RESPONSE)).toHex();
-        }
-        else {
-            return std::string();
-        }
+    LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString()
+              << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
+              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "], message["
+              << message.toHex() << "]";
+
+    return {rpc::OperationStatus::createFailed("Function is not support"), base::Bytes{}, gas};
+}
+
+rpc::OperationStatus GeneralServerService::transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
+    const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const std::string& base64_sign)
+{
+    LOG_TRACE << "Node received in {transaction_to_wallet}: from_address[" << from_address.toString()
+              << "], to_address[" << to_address.toString() << "], amount[" << amount << "], fee" << fee
+              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "]";
+
+    auto sign = base::fromBytes<bc::Sign>(base::base64Decode(base64_sign));
+    if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time))) {
+        return rpc::OperationStatus::createSuccess("Success! Transaction added to queue successfully.");
     }
-    catch(const std::exception& e) {
-        LOG_WARNING << "Exception caught during test request: " << e.what();
-        return "error";
-    }
-    catch(...) {
-        LOG_WARNING << "Exception caught during test request: unknown";
-        return "error";
+    else {
+        return rpc::OperationStatus::createFailed("Error! Transaction rejected.");
     }
 }
 

@@ -120,7 +120,7 @@ def main(node_exec_path, rpc_client_exec_path):
             for other_node in pool:
                 other_node.run_check_balance(address=to_address, target_balance=0)
 
-            node.run_check_transfer(from_address=NodeTester.DISTRIBUTOR_ADDRESS, to_address=to_address, amount=amount, wait=transaction_wait)
+            node.run_check_transfer(from_address=NodeTester.DISTRIBUTOR_ADDRESS, to_address=to_address, amount=amount, fee=0, wait=transaction_wait)
             for other_node in pool:
                 other_node.run_check_balance(address=to_address, target_balance=amount)
 

@@ -185,8 +185,8 @@ class NodeTester:
     def run_check_test(self, *, timeout=1):
         TEST_CHECK(self.check_test_result(self.test(timeout=timeout)), message=f"fail during connection test to node[{self.name}]")
 
-    def transfer(self, *, from_address, to_address, amount, wait, timeout=1):
-        parameters = ["--from", from_address, "--to", to_address, "--amount", str(amount)]
+    def transfer(self, *, from_address, to_address, amount, wait, fee, timeout=1):
+        parameters = ["--from", from_address, "--to", to_address, "--amount", str(amount), "--fee", str(fee)]
         result = self.__run_client_command(command="transfer", parameters=parameters, timeout=timeout)
         self.logger.info(f"{self.name} - transfer command end with parameters {parameters} to node {self.id.connect_rpc_address} with result: \"{self.parse_result(result)}\"")
         time.sleep(wait)
@@ -194,14 +194,50 @@ class NodeTester:
 
     @staticmethod
     def check_transfer_result(result):
-        if result.success and b"Remote call of transaction -> [Success! Transaction added to queue successfully.]\n" in result.message:
+        if result.success and b"Remote call of transaction from account to account success -> [Success! Transaction added to queue successfully.]\n" in result.message:
             return True
         else:
             return False
 
-    def run_check_transfer(self, *, from_address, to_address, amount, wait, timeout=1):
-        TEST_CHECK(self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, wait=wait, timeout=timeout)), 
-                    message=f"fail during transfer to node[{self.name}], from={from_address}, to={to_address}, amount={amount}")
+    def run_check_transfer(self, *, from_address, to_address, amount, wait, fee, timeout=1):
+        TEST_CHECK(self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, wait=wait, fee=fee, timeout=timeout)),
+                    message=f"fail during transfer to node[{self.name}], from={from_address}, to={to_address}, amount={amount}, fee={fee}")
+
+    def push_contract(self, *, from_address, code, gas, amount, init_message, wait, timeout=1):
+        parameters = ["--from", from_address, "--code", code, "--amount", str(amount), "--gas", str(gas), "--initial_message", init_message]
+        result = self.__run_client_command(command="push_contract", parameters=parameters, timeout=timeout)
+        self.logger.info(f"{self.name} - push_contract command end with parameters {parameters} to node {self.id.connect_rpc_address} with result: \"{self.parse_result(result)}\"")
+        time.sleep(wait)
+        return result
+
+    @staticmethod
+    def check_push_contract(result):
+        if result.success:
+            return True
+        else:
+            return False
+
+    def run_push_contract(self, *, from_address, code, gas, amount, init_message, wait, timeout=1):
+        TEST_CHECK(self.check_transfer_result(self.transfer(from_address=from_address, code=code, amount=amount, wait=wait, gas=gas, init_message=init_message, timeout=timeout)),
+                   message=f"fail during push_contract to node[{self.name}], from={from_address}, code={code}, amount={amount}, gas={gas}, init_message={init_message}")
+
+    def message_to_contract(self, *, from_address, to_address, gas, amount, message, wait, timeout=1):
+        parameters = ["--from", from_address, "--to", to_address, "--amount", str(amount), "--gas", str(gas), "--message", message]
+        result = self.__run_client_command(command="message_to_contract", parameters=parameters, timeout=timeout)
+        self.logger.info(f"{self.name} - message_to_contract command end with parameters {parameters} to node {self.id.connect_rpc_address} with result: \"{self.parse_result(result)}\"")
+        time.sleep(wait)
+        return result
+
+    @staticmethod
+    def check_message_to_contract(result):
+        if result.success:
+            return True
+        else:
+            return False
+
+    def run_message_to_contract(self, *, from_address, to_address, gas, amount, message, wait, timeout=1):
+        TEST_CHECK(self.check_transfer_result(self.transfer(from_address=from_address, to_address=cto_addressode, amount=amount, wait=wait, gas=gas, message=message, timeout=timeout)),
+                   message=f"fail during message_to_contract to node[{self.name}], from={from_address}, to_address={to_address}, amount={amount}, gas={gas}, message={message}")
 
     def get_balance(self, *, address, timeout=1):
         result = self.__run_client_command(command="get_balance", parameters=["--address", address], timeout=timeout)
