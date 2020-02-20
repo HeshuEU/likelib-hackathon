@@ -30,7 +30,7 @@ class TransactionsSet
     [[nodiscard]] bool operator==(const TransactionsSet& other) const;
     [[nodiscard]] bool operator!=(const TransactionsSet& other) const;
     //=================
-    base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const;
+    void serialize(base::SerializationOArchive& oa) const;
     static TransactionsSet deserialize(base::SerializationIArchive& ia);
     //=================
   private:

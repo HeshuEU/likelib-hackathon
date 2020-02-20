@@ -33,7 +33,7 @@ class Time
     static Time fromSecondsSinceEpochBeginning(std::uint_least32_t seconds_from_epoch);
     static Time fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time_point);
     //=====================
-    SerializationOArchive& serialize(SerializationOArchive& oa) const;
+    void serialize(SerializationOArchive& oa) const;
     static Time deserialize(SerializationIArchive& ia);
     //=====================
   private:

@@ -8,15 +8,15 @@ namespace
 {
 
 bc::Transaction trans1{bc::Address{base::Bytes("from1 vjS247DGFSv\n ").toHex()},
-    bc::Address{base::Bytes("to1 ()#%DSOJ\n").toHex()}, 12398, base::Time()};
+    bc::Address{base::Bytes("to1 ()#%DSOJ\n").toHex()}, 12398, base::Time(), 11};
 bc::Transaction trans2{bc::Address{base::Bytes("from2 vj^Hs47DGFSv\n ").toHex()},
-    bc::Address{base::Bytes("to2 ()#%Dsdg\n").toHex()}, 5825285, base::Time::now()};
+    bc::Address{base::Bytes("to2 ()#%Dsdg\n").toHex()}, 5825285, base::Time::now(), 22};
 bc::Transaction trans3{bc::Address{base::Bytes("from3 vjS2%#&DGF\n ").toHex()},
-    bc::Address{base::Bytes("to3 ()#%DdfOJ\n").toHex()}, 12245398, base::Time()};
+    bc::Address{base::Bytes("to3 ()#%DdfOJ\n").toHex()}, 12245398, base::Time(), 33};
 bc::Transaction trans4{bc::Address{base::Bytes("from4 vjS247sdgFSv\n ").toHex()},
-    bc::Address{base::Bytes("to4 {#%DSOJ ").toHex()}, 168524347, base::Time()};
+    bc::Address{base::Bytes("to4 {#%DSOJ ").toHex()}, 168524347, base::Time(), 44};
 bc::Transaction trans5{bc::Address{base::Bytes("from5 vjS2  DGFSv\n ").toHex()},
-    bc::Address{base::Bytes("to5 ()#%DSdsJ\n").toHex()}, 1434457, base::Time::now()};
+    bc::Address{base::Bytes("to5 ()#%DSdsJ\n").toHex()}, 1434457, base::Time::now(), 55};
 
 bc::TransactionsSet getTestSet()
 {
@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE(transactions_set_find)
     BOOST_CHECK(tx_set.find(trans5));
 
     BOOST_CHECK(!tx_set.find(bc::Transaction(
-        trans1.getFrom(), bc::Address{base::Bytes("()#%DSOJ\n").toHex()}, trans1.getAmount(), trans1.getTimestamp())));
-    BOOST_CHECK(!tx_set.find(bc::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), base::Time::now())));
+        trans1.getFrom(), bc::Address{base::Bytes("()#%DSOJ\n").toHex()}, trans1.getAmount(), trans1.getTimestamp(), 0)));
+    BOOST_CHECK(!tx_set.find(bc::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), base::Time::now(), 0)));
 }
 
 
@@ -123,11 +123,11 @@ BOOST_AUTO_TEST_CASE(transaction_set_inEmpty)
     BOOST_CHECK(tx_set.isEmpty());
 
     tx_set.add(bc::Transaction(
-        bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, base::Time()));
+        bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, base::Time(), 0));
     BOOST_CHECK(!tx_set.isEmpty());
 
     tx_set.remove(bc::Transaction(
-        bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, base::Time()));
+        bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, base::Time(), 0));
     BOOST_CHECK(tx_set.isEmpty());
 }
 

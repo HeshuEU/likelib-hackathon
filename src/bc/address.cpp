@@ -53,9 +53,9 @@ bool Address::operator!=(const Address& another) const
 }
 
 
-bool operator<(const Address& a, const Address& b)
+bool Address::operator<(const Address& other) const
 {
-    return a.toString() < b.toString();
+    return toString() < other.toString();
 }
 
 

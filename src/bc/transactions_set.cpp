@@ -109,10 +109,9 @@ bool TransactionsSet::operator!=(const TransactionsSet& other) const
 }
 
 
-base::SerializationOArchive& TransactionsSet::serialize(base::SerializationOArchive& oa) const
+void TransactionsSet::serialize(base::SerializationOArchive& oa) const
 {
     oa.serialize(_txs);
-    return oa;
 }
 
 

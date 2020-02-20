@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base/crypto.hpp"
 #include "base/hash.hpp"
 #include "base/serialization.hpp"
 

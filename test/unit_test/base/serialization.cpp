@@ -22,10 +22,9 @@ class TestSerialization
         return TestSerialization(val);
     }
 
-    base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const
+    void serialize(base::SerializationOArchive& oa) const
     {
         oa.serialize(_value);
-        return oa;
     }
 
     int _value;

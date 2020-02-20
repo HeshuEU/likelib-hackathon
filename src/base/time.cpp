@@ -54,10 +54,9 @@ Time Time::fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time
 }
 
 
-SerializationOArchive& Time::serialize(SerializationOArchive& oa) const
+void Time::serialize(SerializationOArchive& oa) const
 {
     oa.serialize(static_cast<std::uint32_t>(_seconds_since_epoch_beginning));
-    return oa;
 }
 
 

@@ -18,6 +18,23 @@ GeneralServerService::~GeneralServerService()
     LOG_TRACE << "Deleted GeneralServerService";
 }
 
+
+rpc::OperationStatus GeneralServerService::test(uint32_t api_version)
+{
+    LOG_TRACE << "Node received in {test}: test_request[" << api_version << "]";
+    if(base::config::RPC_PUBLIC_API_VERSION == api_version) {
+        return rpc::OperationStatus::createSuccess("RPC api is compatible");
+    }
+    else {
+        if(base::config::RPC_PUBLIC_API_VERSION > api_version) {
+            return rpc::OperationStatus::createFailed("Your RPC api is old.");
+        }
+        return rpc::OperationStatus::createFailed("Not support api version");
+    }
+}
+
+
+
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     try {
