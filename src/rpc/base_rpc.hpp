@@ -68,7 +68,7 @@ class BaseRpc
         bc::Balance gas, const base::Bytes& message, const bc::Sign& signature) = 0;
 
     virtual OperationStatus transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-        const bc::Address& to_address, const base::Time& transaction_time, bc::Balance fee, const bc::Sign& signature) = 0;
+        const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const bc::Sign& signature) = 0;
 
     /// method call remote server method(specified ip address in constructor) with similar params
     /// \param test_request sha256 from secret data request

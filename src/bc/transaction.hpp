@@ -39,7 +39,7 @@ class Transaction
 {
   public:
     //=================
-    Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, bc::Balance fee, bc::Sign sign = bc::Sign{});
+    Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp, bc::Sign sign = bc::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -70,8 +70,8 @@ class Transaction
     bc::Address _from;
     bc::Address _to;
     bc::Balance _amount;
-    base::Time _timestamp;
     bc::Balance _fee;
+    base::Time _timestamp;
     bc::Sign _sign;
     //=================
     void serializeHeader(base::SerializationOArchive& oa) const;

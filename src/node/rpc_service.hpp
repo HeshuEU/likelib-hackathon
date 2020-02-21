@@ -27,7 +27,7 @@ class GeneralServerService : public rpc::BaseRpc
         bc::Balance gas, const base::Bytes& message, const bc::Sign& signature) override;
 
     rpc::OperationStatus transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-        const bc::Address& to_address, const base::Time& transaction_time, bc::Balance fee, const bc::Sign& signature) override;
+        const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const bc::Sign& signature) override;
 
   private:
     lk::Core& _core;

@@ -38,8 +38,8 @@ namespace rpc {
                                                                                       const bc::Sign& signature) override;
 
         OperationStatus transaction_to_wallet(bc::Balance amount, const bc::Address &from_address,
-                                              const bc::Address &to_address, const base::Time &transaction_time,
-                                              bc::Balance fee, const bc::Sign &signature) override;
+                                              const bc::Address &to_address, bc::Balance fee,
+                                              const base::Time &transaction_time, const bc::Sign &signature) override;
 
     private:
         std::unique_ptr<likelib::NodePublicInterface::Stub> _stub;

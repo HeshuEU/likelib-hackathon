@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor1)
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 42;
-    bc::Transaction tx(from, to, amount, time, fee);
+    bc::Transaction tx(from, to, amount, fee, time);
 
     BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
     BOOST_CHECK(tx.getTo() == bc::Address(str_to));
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 123;
-    bc::Transaction tx1(from, to, amount, time, fee);
+    bc::Transaction tx1(from, to, amount, fee, time);
     bc::Transaction tx2(tx1);
 
     BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_move)
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 123;
-    bc::Transaction tx1(from, to, amount, time, fee);
+    bc::Transaction tx1(from, to, amount, fee, time);
     bc::Transaction tx2(std::move(tx1));
 
     BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
@@ -71,8 +71,8 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee{23213213};
-    bc::Transaction tx1(from, to, amount, time, fee);
-    bc::Transaction tx2(from, to, 821481368, time, fee);
+    bc::Transaction tx1(from, to, amount, fee, time);
+    bc::Transaction tx2(from, to, 821481368, fee, time);
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = tx1;
@@ -93,8 +93,8 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee{213213};
-    bc::Transaction tx1(from, to, amount, time, fee);
-    bc::Transaction tx2(from, to, 821481368, time, fee);
+    bc::Transaction tx1(from, to, amount, fee, time);
+    bc::Transaction tx2(from, to, 821481368, fee, time);
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = std::move(tx1);
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(transaction_serialization1)
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 123;
-    bc::Transaction tx1(from, to, amount, time, fee);
+    bc::Transaction tx1(from, to, amount, fee, time);
 
     base::SerializationOArchive oa;
     oa.serialize(tx1);
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(transaction_serialization2)
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee{506};
-    bc::Transaction tx1(from, to, amount, time, fee);
+    bc::Transaction tx1(from, to, amount, fee, time);
 
     base::SerializationOArchive oa;
     oa.serialize(tx1);

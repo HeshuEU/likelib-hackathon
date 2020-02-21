@@ -186,7 +186,10 @@ int transfer(base::SubprogramRouter& router)
         txb.setFee(fee);
         auto tx = std::move(txb).build();
         tx.sign(public_key, private_key);
-        auto result = client.transaction_to_wallet(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), tx.getSign());
+        std::cout << public_key.decrypt(private_key.encrypt(base::Bytes("123123"))) << std::endl;
+        std::cout << "Hash of public key: " << base::Sha256::compute(public_key.toBytes()) << std::endl;
+        std::cout << "Hash of private key: " << base::Sha256::compute(private_key.toBytes()) << std::endl;
+        auto result = client.transaction_to_wallet(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getFee(), tx.getTimestamp(), tx.getSign());
         std::cout << result << std::endl;
         LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;
@@ -659,6 +662,8 @@ int generateKeys(base::SubprogramRouter& router)
         std::cout << "Generated public key at " << public_path << std::endl;
         std::cout << "Address: " << bc::Address::fromPublicKey(pub) << std::endl;
         std::cout << pub.decrypt(priv.encrypt(base::Bytes("123123"))) << std::endl;
+        std::cout << "Hash of public key: " << base::Sha256::compute(pub.toBytes()) << std::endl;
+        std::cout << "Hash of private key: " << base::Sha256::compute(priv.toBytes()) << std::endl;
         LOG_INFO << "Generated public key at " << public_path;
 
         priv.save(private_path);

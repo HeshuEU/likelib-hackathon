@@ -62,8 +62,8 @@ Sign Sign::deserialize(base::SerializationIArchive& ia)
 }
 
 
-Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, base::Time timestamp, bc::Balance fee, bc::Sign sign)
-    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _timestamp{timestamp}, _fee{fee}, _sign{std::move(sign)}
+Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp, bc::Sign sign)
+    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee}, _timestamp{timestamp}, _sign{std::move(sign)}
 {
     if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
@@ -116,33 +116,49 @@ bool Transaction::operator!=(const Transaction& other) const
 void Transaction::sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv)
 {
     auto hash = hashOfTxData();
+    LOG_DEBUG << "----====== SIGN =======-----";
+    LOG_DEBUG << *this;
+    LOG_DEBUG << "Public key hash: " << base::Sha256::compute(pub.toBytes());
+    LOG_DEBUG << "Hash of tx header: " << hash;
     base::Bytes rsa_encrypted_hash = priv.encrypt(hash.getBytes());
+    LOG_DEBUG << "Hash of encrypted hash: " << base::Sha256::compute(rsa_encrypted_hash);
+    LOG_DEBUG << "Decrypted hash: " << pub.decrypt(rsa_encrypted_hash);
     _sign = Sign{std::move(pub), rsa_encrypted_hash};
+    LOG_DEBUG << "=============================";
 }
 
 
 bool Transaction::checkSign() const
 {
-    LOG_DEBUG << "checking signature";
+    LOG_DEBUG << "----====== CHECK SIGN =======-----";
+    LOG_DEBUG << *this;
     if(_sign.isNull()) {
         LOG_DEBUG << "invalid signature";
+        LOG_DEBUG << "=============================";
         return false;
     }
     else {
         const auto& pub = _sign.getPublicKey();
         const auto& enc_hash = _sign.getRsaEncryptedHash();
+        LOG_DEBUG << "Public key hash: " << base::Sha256::compute(pub.toBytes());
+        LOG_DEBUG << "Hash of encrypted hash: " << base::Sha256::compute(enc_hash);
+        LOG_DEBUG << "Decrypted hash: " << pub.decrypt(enc_hash);
         auto derived_addr = bc::Address::fromPublicKey(pub);
         if(_from != derived_addr) {
             LOG_DEBUG << "invalid signature";
+            LOG_DEBUG << "=============================";
             return false;
         }
         auto valid_hash = hashOfTxData();
+        LOG_DEBUG << "Valid hash: " << valid_hash;
         if(pub.decrypt(enc_hash) == valid_hash.getBytes()) {
             LOG_DEBUG << "signature validated! valid hash = " << valid_hash
                       << " decrypted hash = " << pub.decrypt(enc_hash);
+            LOG_DEBUG << "=============================";
             return true;
         }
         LOG_DEBUG << "invalid signature";
+        LOG_DEBUG << "=============================";
         return false;
     }
 }
@@ -159,8 +175,8 @@ void Transaction::serializeHeader(base::SerializationOArchive& oa) const
     oa.serialize(_from);
     oa.serialize(_to);
     oa.serialize(_amount);
-    oa.serialize(_timestamp);
     oa.serialize(_fee);
+    oa.serialize(_timestamp);
 }
 
 
@@ -177,10 +193,10 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
     auto from = ia.deserialize<bc::Address>();
     auto to = ia.deserialize<bc::Address>();
     auto balance = ia.deserialize<bc::Balance>();
-    auto timestamp = ia.deserialize<base::Time>();
     auto fee = ia.deserialize<bc::Balance>();
+    auto timestamp = ia.deserialize<base::Time>();
     auto sign = ia.deserialize<bc::Sign>();
-    return {std::move(from), std::move(to), balance, timestamp, fee, std::move(sign)};
+    return {std::move(from), std::move(to), balance, fee, timestamp, std::move(sign)};
 }
 
 
@@ -193,8 +209,8 @@ void Transaction::serialize(base::SerializationOArchive& oa) const
 
 std::ostream& operator<<(std::ostream& os, const Transaction& tx)
 {
-    return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount()
-              << " timestamp: " << tx.getTimestamp() << "signed: " << (tx.checkSign() ? "true" : "false");
+    return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount() << " fee: " << tx.getFee()
+              << " timestamp: " << tx.getTimestamp();
 }
 
 
@@ -234,9 +250,9 @@ Transaction TransactionBuilder::build() const&
     ASSERT(_from);
     ASSERT(_to);
     ASSERT(_amount);
-    ASSERT(_timestamp);
     ASSERT(_fee);
-    return {*_from, *_to, *_amount, *_timestamp, *_fee};
+    ASSERT(_timestamp);
+    return {*_from, *_to, *_amount, *_fee, *_timestamp};
 }
 
 
@@ -245,9 +261,9 @@ Transaction TransactionBuilder::build() &&
     ASSERT(_from);
     ASSERT(_to);
     ASSERT(_amount);
-    ASSERT(_timestamp);
     ASSERT(_fee);
-    return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_timestamp), std::move(*_fee)};
+    ASSERT(_timestamp);
+    return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_fee), std::move(*_timestamp)};
 }
 
 

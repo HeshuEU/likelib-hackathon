@@ -1,54 +1,57 @@
 #include "grpc_adapter.hpp"
 
-namespace rpc
-{
 
 namespace
 {
 
-    base::Time convert(const likelib::Time& source)
-    {
-        tm utc_tm;
-        utc_tm.tm_year = source.year_grigorian();
-        utc_tm.tm_mon = source.month_grigorian();
-        utc_tm.tm_mday = source.day_grigorian();
-        utc_tm.tm_hour = source.hour_utc0();
-        utc_tm.tm_min = source.minute_utc0();
-        utc_tm.tm_sec = source.second_utc0();
+base::Time convert(const likelib::Time& source)
+{
+    tm utc_tm;
+    utc_tm.tm_year = source.year_grigorian();
+    utc_tm.tm_mon = source.month_grigorian();
+    utc_tm.tm_mday = source.day_grigorian();
+    utc_tm.tm_hour = source.hour_utc0();
+    utc_tm.tm_min = source.minute_utc0();
+    utc_tm.tm_sec = source.second_utc0();
 
-        auto tt = mktime(&utc_tm);
-        return base::Time::fromTimePoint(std::chrono::system_clock::from_time_t(tt));
-    }
+    auto tt = mktime(&utc_tm);
+    return base::Time::fromTimePoint(std::chrono::system_clock::from_time_t(tt));
+}
 
-    void convert(const OperationStatus& source, likelib::OperationStatus* target)
-    {
-        target->set_message(source.getMessage());
-        switch(source.getStatus()) {
-            case OperationStatus::StatusCode::Success:
-                target->set_status(likelib::OperationStatus_StatusCode_Success);
-                break;
-            case OperationStatus::StatusCode::Rejected:
-                target->set_status(likelib::OperationStatus_StatusCode_Rejected);
-                break;
-            case OperationStatus::StatusCode::Failed:
-                target->set_status(likelib::OperationStatus_StatusCode_Failed);
-                break;
-            default:
-                RAISE_ERROR(base::LogicError, "Unexpected status code");
-        }
+void convert(const rpc::OperationStatus& source, likelib::OperationStatus* target)
+{
+    target->set_message(source.getMessage());
+    switch(source.getStatus()) {
+        case rpc::OperationStatus::StatusCode::Success:
+            target->set_status(likelib::OperationStatus_StatusCode_Success);
+            break;
+        case rpc::OperationStatus::StatusCode::Rejected:
+            target->set_status(likelib::OperationStatus_StatusCode_Rejected);
+            break;
+        case rpc::OperationStatus::StatusCode::Failed:
+            target->set_status(likelib::OperationStatus_StatusCode_Failed);
+            break;
+        default:
+            RAISE_ERROR(base::LogicError, "Unexpected status code");
     }
+}
 
 } // namespace
+
+
+namespace rpc
+{
 
 void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 {
     _service = service;
 }
 
+
 grpc::Status GrpcAdapter::test(
     grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response)
 {
-    LOG_DEBUG << "get RPC call at test method from:" << context->peer();
+    LOG_DEBUG << "get RPC call at test method from: " << context->peer();
     try {
         auto status = _service->test(request->interface_version());
         convert(status, response->mutable_status());
@@ -61,10 +64,11 @@ grpc::Status GrpcAdapter::test(
     return ::grpc::Status::OK;
 }
 
+
 grpc::Status GrpcAdapter::balance(
     grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response)
 {
-    LOG_DEBUG << "get RPC call at balance method from:" << context->peer();
+    LOG_DEBUG << "get RPC call at balance method from: " << context->peer();
     try {
         bc::Address query_address{ request->address() };
         response->set_money(_service->balance(query_address));
@@ -76,10 +80,11 @@ grpc::Status GrpcAdapter::balance(
     return ::grpc::Status::OK;
 }
 
+
 grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
     const likelib::TransactionToContractRequest* request, likelib::TransactionToContractResponse* response)
 {
-    LOG_DEBUG << "get RPC call at transaction_to_contract method from:" << context->peer();
+    LOG_DEBUG << "get RPC call at transaction_to_contract method from: " << context->peer();
     try {
         auto amount = bc::Balance{request->value().money()};
         auto from_address = bc::Address{request->from().address()};
@@ -106,11 +111,12 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
     return ::grpc::Status::OK;
 }
 
+
 ::grpc::Status GrpcAdapter::transaction_for_create_contract(::grpc::ServerContext* context,
     const ::likelib::TransactionCreationContractRequest* request,
     ::likelib::TransactionCreationContractResponse* response)
 {
-    LOG_DEBUG << "get RPC call at transaction_for_create_contract method from:" << context->peer();
+    LOG_DEBUG << "get RPC call at transaction_for_create_contract method from: " << context->peer();
     try {
         auto amount = bc::Balance{request->value().money()};
         auto from_address = bc::Address{request->from().address()};
@@ -137,10 +143,11 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
     return ::grpc::Status::OK;
 }
 
+
 grpc::Status GrpcAdapter::transaction_to_wallet(grpc::ServerContext* context,
     const likelib::TransactionToAccountRequest* request, likelib::TransactionToAccountResponse* response)
 {
-    LOG_DEBUG << "get RPC call at transaction_to_wallet method from:" << context->peer();
+    LOG_DEBUG << "get RPC call at transaction_to_wallet method from: " << context->peer();
     try {
         auto amount = bc::Balance{request->value().money()};
         auto from_address = bc::Address{request->from().address()};
@@ -149,7 +156,7 @@ grpc::Status GrpcAdapter::transaction_to_wallet(grpc::ServerContext* context,
         auto creation_time = convert(request->creation_time());
 	    auto signature = base::fromBytes<bc::Sign>(base::base64Decode(request->signature().signature()));
 
-        auto status = _service->transaction_to_wallet(amount, from_address, to_address, creation_time, fee, signature);
+        auto status = _service->transaction_to_wallet(amount, from_address, to_address, fee, creation_time, signature);
 
         convert(status, response->mutable_status());
     }
