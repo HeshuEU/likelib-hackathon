@@ -4,20 +4,6 @@
 namespace
 {
 
-base::Time convert(const likelib::Time& source)
-{
-    tm utc_tm;
-    utc_tm.tm_year = source.year_grigorian();
-    utc_tm.tm_mon = source.month_grigorian();
-    utc_tm.tm_mday = source.day_grigorian();
-    utc_tm.tm_hour = source.hour_utc0();
-    utc_tm.tm_min = source.minute_utc0();
-    utc_tm.tm_sec = source.second_utc0();
-
-    auto tt = mktime(&utc_tm);
-    return base::Time::fromTimePoint(std::chrono::system_clock::from_time_t(tt));
-}
-
 void convert(const rpc::OperationStatus& source, likelib::OperationStatus* target)
 {
     target->set_message(source.getMessage());
@@ -90,7 +76,7 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
         auto from_address = bc::Address{request->from().address()};
         auto to_address = bc::Address{request->to().address()};
         auto gas = bc::Balance{request->gas().money()};
-        auto creation_time = convert(request->creation_time());
+        auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
         auto message = base::base64Decode(request->contract_request().message());
 
         auto status = OperationStatus::createSuccess();
@@ -121,7 +107,7 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
         auto amount = bc::Balance{request->value().money()};
         auto from_address = bc::Address{request->from().address()};
         auto gas = bc::Balance{request->gas().money()};
-        auto creation_time = convert(request->creation_time());
+        auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
         auto contract_code = base::base64Decode(request->contract().bytecode());
         auto initial_message = base::base64Decode(request->initial_message().message());
 
@@ -153,7 +139,7 @@ grpc::Status GrpcAdapter::transaction_to_wallet(grpc::ServerContext* context,
         auto from_address = bc::Address{request->from().address()};
         auto to_address = bc::Address{request->to().address()};
         auto fee = bc::Balance{request->fee().money()};
-        auto creation_time = convert(request->creation_time());
+        auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
 	    auto signature = base::fromBytes<bc::Sign>(base::base64Decode(request->signature().signature()));
 
         auto status = _service->transaction_to_wallet(amount, from_address, to_address, fee, creation_time, signature);

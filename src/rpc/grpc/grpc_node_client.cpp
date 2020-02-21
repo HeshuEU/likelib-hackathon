@@ -6,20 +6,6 @@
 namespace
 {
 
-    void fill_time(const base::Time& source_time, likelib::Time* target_time)
-    {
-        auto time_point = source_time.toTimePoint();
-        time_t tt = std::chrono::system_clock::to_time_t(time_point);
-        tm utc_tm = *gmtime(&tt);
-
-        target_time->set_year_grigorian(utc_tm.tm_year + 1900);
-        target_time->set_month_grigorian(utc_tm.tm_mon + 1);
-        target_time->set_day_grigorian(utc_tm.tm_mday);
-        target_time->set_hour_utc0(utc_tm.tm_hour);
-        target_time->set_minute_utc0(utc_tm.tm_min);
-        target_time->set_second_utc0(utc_tm.tm_sec);
-    }
-
     rpc::OperationStatus convert(const ::likelib::OperationStatus& status)
     {
         switch(status.status()) {
@@ -95,19 +81,13 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
 {
     // convert data for request
     likelib::TransactionCreationContractRequest request;
-
     request.mutable_value()->set_money(static_cast<google::protobuf::uint64>(amount));
-
     request.mutable_from()->set_address(from_address.toString());
-
     request.mutable_gas()->set_money(static_cast<google::protobuf::uint64>(gas));
-
     request.mutable_initial_message()->set_message(base::base64Encode(initial_message));
-
     request.mutable_contract()->set_bytecode(base::base64Encode(code));
-
-    fill_time(transaction_time, request.mutable_creation_time());
-
+    request.mutable_creation_time()->set_since_epoch(base::Time::now().getSecondsSinceEpochBeginning());
+    
     // call remote host
     likelib::TransactionCreationContractResponse reply;
     grpc::ClientContext context;
@@ -131,18 +111,12 @@ std::tuple<OperationStatus, base::Bytes, bc::Balance> GrpcNodeClient::transactio
 {
     // convert data for request
     likelib::TransactionToContractRequest request;
-
     request.mutable_value()->set_money(static_cast<google::protobuf::uint64>(amount));
-
     request.mutable_from()->set_address(from_address.toString());
-
     request.mutable_to()->set_address(to_address.toString());
-
     request.mutable_gas()->set_money(static_cast<google::protobuf::uint64>(gas));
-
     request.mutable_contract_request()->set_message(base::base64Encode(message));
-
-    fill_time(transaction_time, request.mutable_creation_time());
+    request.mutable_creation_time()->set_since_epoch(base::Time::now().getSecondsSinceEpochBeginning());
 
     // call remote host
     likelib::TransactionToContractResponse reply;
@@ -171,7 +145,7 @@ OperationStatus GrpcNodeClient::transaction_to_wallet(bc::Balance amount, const 
     request.mutable_from()->set_address(from_address.toString());
     request.mutable_to()->set_address(to_address.toString());
     request.mutable_fee()->set_money(fee);
-    fill_time(transaction_time, request.mutable_creation_time());
+    request.mutable_creation_time()->set_since_epoch(base::Time::now().getSecondsSinceEpochBeginning());
     request.mutable_signature()->set_signature(base::base64Encode(base::toBytes(signature)));
 
     // call remote host
