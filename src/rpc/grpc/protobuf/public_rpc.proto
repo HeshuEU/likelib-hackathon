@@ -92,12 +92,7 @@ message Contract {
 }
 
 message Time {
-    uint32 day_grigorian = 1;
-    uint32 month_grigorian = 2;
-    uint32 year_grigorian = 3;
-    uint32 hour_utc0 = 4;
-    uint32 minute_utc0 = 5;
-    uint32 second_utc0 = 6;
+    uint64 since_epoch = 1;
 }
 
 message Money {

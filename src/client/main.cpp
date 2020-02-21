@@ -186,7 +186,7 @@ int transfer(base::SubprogramRouter& router)
         txb.setFee(fee);
         auto tx = std::move(txb).build();
         tx.sign(public_key, private_key);
-        auto result = client.transaction_to_wallet(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), tx.getSign());
+        auto result = client.transaction_to_wallet(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getFee(), tx.getTimestamp(), tx.getSign());
         std::cout << result << std::endl;
         LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;
@@ -658,6 +658,9 @@ int generateKeys(base::SubprogramRouter& router)
         pub.save(public_path);
         std::cout << "Generated public key at " << public_path << std::endl;
         std::cout << "Address: " << bc::Address::fromPublicKey(pub) << std::endl;
+        std::cout << pub.decrypt(priv.encrypt(base::Bytes("123123"))) << std::endl;
+        std::cout << "Hash of public key: " << base::Sha256::compute(pub.toBytes()) << std::endl;
+        std::cout << "Hash of private key: " << base::Sha256::compute(priv.toBytes()) << std::endl;
         LOG_INFO << "Generated public key at " << public_path;
 
         priv.save(private_path);
@@ -708,14 +711,13 @@ int main(int argc, char** argv)
     try {
         base::initLog(base::Sink::FILE);
         base::SubprogramRouter router("client", mainProcess);
-        router.addSubprogram("generate", "generate the pair of keys", generateKeys);
+        router.addSubprogram("generate", "generate a pair of keys", generateKeys);
         router.addSubprogram("get_balance", "use for get balance from remote by account address", getBalance);
         router.addSubprogram("transfer", "use transfer balance from one address to another address", transfer);
-        router.addSubprogram("test", "use test functions", testConnection);
+        router.addSubprogram("test", "test RPC connection", testConnection);
         router.addSubprogram("push_contract", "load smart contract code to push to blockchain network", pushContract);
         router.addSubprogram("message_to_contract", "create message to call smart contract ", messageToContract);
         router.addSubprogram("compile", "compile smart contract ", compileCode);
-
 
         return router.process(argc, argv);
     }

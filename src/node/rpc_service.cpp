@@ -77,13 +77,15 @@ std::tuple<rpc::OperationStatus, base::Bytes, bc::Balance> GeneralServerService:
 }
 
 rpc::OperationStatus GeneralServerService::transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, const base::Time& transaction_time, bc::Balance fee, const bc::Sign& signature)
+    const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_wallet}: from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], fee" << fee
               << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "]";
 
-    if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, transaction_time, fee, signature))) {
+    LOG_DEBUG << "Hash of received public key: " << base::Sha256::compute(signature.getPublicKey().toBytes());
+
+    if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, fee, transaction_time, signature))) {
         return rpc::OperationStatus::createSuccess("Success! Transaction added to queue successfully.");
     }
     else {
