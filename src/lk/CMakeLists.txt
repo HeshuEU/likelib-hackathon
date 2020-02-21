@@ -1,11 +1,11 @@
 set(LK_HEADERS
-        balance_manager.hpp
+        account_manager.hpp
         core.hpp
         protocol.hpp
         )
 
 set(LK_SOURCES
-        balance_manager.cpp
+        account_manager.cpp
         core.cpp
         protocol.cpp
         )

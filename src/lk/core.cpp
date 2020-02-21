@@ -10,7 +10,7 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
 {
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
-    _balance_manager.updateFromGenesis(getGenesisBlock());
+    _account_manager.updateFromGenesis(getGenesisBlock());
     _blockchain.load();
 }
 
@@ -65,7 +65,7 @@ bool Core::checkBlock(const bc::Block& b) const
 
     // FIXME: this works wrong if two transactions are both valid, but together are not
     for(const auto& tx: b.getTransactions()) {
-        if(!_balance_manager.checkTransaction(tx)) {
+        if(!_account_manager.checkTransaction(tx)) {
             return false;
         }
     }
@@ -96,11 +96,11 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
 
     auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
     if(pending_from_account_balance != current_pending_balance.end()) {
-        auto current_from_account_balance = _balance_manager.getBalance(tx.getFrom());
+        auto current_from_account_balance = _account_manager.getBalance(tx.getFrom());
         return pending_from_account_balance->second + current_from_account_balance >= tx.getAmount();
     }
     else {
-        return _balance_manager.checkTransaction(tx);
+        return _account_manager.checkTransaction(tx);
     }
 }
 
@@ -131,7 +131,7 @@ bool Core::performTransaction(const bc::Transaction& tx)
 
 bc::Balance Core::getBalance(const bc::Address& address) const
 {
-    return _balance_manager.getBalance(address);
+    return _account_manager.getBalance(address);
 }
 
 
@@ -149,12 +149,12 @@ base::Bytes Core::getThisNodeAddress() const
 
 void Core::updateNewBlock(const bc::Block& block)
 {
-    if(!_is_balance_manager_updated) {
-        _balance_manager.updateFromGenesis(block);
-        _is_balance_manager_updated = true;
+    if(!_is_account_manager_updated) {
+        _account_manager.updateFromGenesis(block);
+        _is_account_manager_updated = true;
     }
     else {
-        _balance_manager.update(block);
+        _account_manager.update(block);
     }
 }
 

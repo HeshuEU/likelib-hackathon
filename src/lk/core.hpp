@@ -5,7 +5,7 @@
 #include "base/utility.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
-#include "lk/balance_manager.hpp"
+#include "lk/account_manager.hpp"
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
 
@@ -55,8 +55,8 @@ class Core
     base::Observable<const bc::Block&> _event_block_added;
     base::Observable<const bc::Transaction&> _event_new_pending_transaction;
     //==================
-    bool _is_balance_manager_updated{false};
-    BalanceManager _balance_manager;
+    bool _is_account_manager_updated{false};
+    AccountManager _account_manager;
     bc::Blockchain _blockchain;
     lk::Network _network;
     //==================

@@ -10,18 +10,18 @@
 namespace lk
 {
 
-class BalanceManager
+class AccountManager
 {
   public:
     //================
-    explicit BalanceManager() = default;
-    explicit BalanceManager(const std::map<bc::Address, bc::Balance>& initial_state);
-    BalanceManager(const BalanceManager& hash) = delete;
-    BalanceManager(BalanceManager&& hash) = delete;
+    explicit AccountManager() = default;
+    explicit AccountManager(const std::map<bc::Address, bc::Balance>& initial_state);
+    AccountManager(const AccountManager& hash) = delete;
+    AccountManager(AccountManager&& hash) = delete;
 
-    BalanceManager& operator=(const BalanceManager& another) = delete;
-    BalanceManager& operator=(BalanceManager&& another) = delete;
-    ~BalanceManager() = default;
+    AccountManager& operator=(const AccountManager& another) = delete;
+    AccountManager& operator=(AccountManager&& another) = delete;
+    ~AccountManager() = default;
     //================
     bool checkTransaction(const bc::Transaction& tx) const;
     void update(const bc::Transaction& tx);

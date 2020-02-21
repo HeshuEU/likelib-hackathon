@@ -1,15 +1,15 @@
-#include "balance_manager.hpp"
+#include "account_manager.hpp"
 
 #include "base/error.hpp"
 
 namespace lk
 {
 
-BalanceManager::BalanceManager(const std::map<bc::Address, bc::Balance>& initial_state) : _storage(initial_state)
+AccountManager::AccountManager(const std::map<bc::Address, bc::Balance>& initial_state) : _storage(initial_state)
 {}
 
 
-bc::Balance BalanceManager::getBalance(const bc::Address& address) const
+bc::Balance AccountManager::getBalance(const bc::Address& address) const
 {
     LOG_CURRENT_FUNCTION << "with address = " << address;
     LOG_CURRENT_FUNCTION << "acquiring shared lock";
@@ -26,7 +26,7 @@ bc::Balance BalanceManager::getBalance(const bc::Address& address) const
 }
 
 
-bool BalanceManager::checkTransaction(const bc::Transaction& tx) const
+bool AccountManager::checkTransaction(const bc::Transaction& tx) const
 {
     std::shared_lock lk(_rw_mutex);
     if(_storage.find(tx.getFrom()) == _storage.end()) {
@@ -36,7 +36,7 @@ bool BalanceManager::checkTransaction(const bc::Transaction& tx) const
 }
 
 
-void BalanceManager::update(const bc::Transaction& tx)
+void AccountManager::update(const bc::Transaction& tx)
 {
     std::unique_lock lk(_rw_mutex);
     auto from_iter = _storage.find(tx.getFrom());
@@ -58,7 +58,7 @@ void BalanceManager::update(const bc::Transaction& tx)
 }
 
 
-void BalanceManager::update(const bc::Block& block)
+void AccountManager::update(const bc::Block& block)
 {
     for(const auto& tx: block.getTransactions()) {
         update(tx);
@@ -66,7 +66,7 @@ void BalanceManager::update(const bc::Block& block)
 }
 
 
-void BalanceManager::updateFromGenesis(const bc::Block& block)
+void AccountManager::updateFromGenesis(const bc::Block& block)
 {
     std::unique_lock lk(_rw_mutex);
     for(const auto& tx: block.getTransactions()) {
