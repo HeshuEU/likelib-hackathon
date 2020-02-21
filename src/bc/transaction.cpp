@@ -25,7 +25,6 @@ const base::RsaPublicKey& Sign::getPublicKey() const
 }
 
 
-
 const base::Bytes& Sign::getRsaEncryptedHash() const
 {
     if(isNull()) {
@@ -116,49 +115,27 @@ bool Transaction::operator!=(const Transaction& other) const
 void Transaction::sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv)
 {
     auto hash = hashOfTxData();
-    LOG_DEBUG << "----====== SIGN =======-----";
-    LOG_DEBUG << *this;
-    LOG_DEBUG << "Public key hash: " << base::Sha256::compute(pub.toBytes());
-    LOG_DEBUG << "Hash of tx header: " << hash;
     base::Bytes rsa_encrypted_hash = priv.encrypt(hash.getBytes());
-    LOG_DEBUG << "Hash of encrypted hash: " << base::Sha256::compute(rsa_encrypted_hash);
-    LOG_DEBUG << "Decrypted hash: " << pub.decrypt(rsa_encrypted_hash);
     _sign = Sign{std::move(pub), rsa_encrypted_hash};
-    LOG_DEBUG << "=============================";
 }
 
 
 bool Transaction::checkSign() const
 {
-    LOG_DEBUG << "----====== CHECK SIGN =======-----";
-    LOG_DEBUG << *this;
     if(_sign.isNull()) {
-        LOG_DEBUG << "invalid signature";
-        LOG_DEBUG << "=============================";
         return false;
     }
     else {
         const auto& pub = _sign.getPublicKey();
         const auto& enc_hash = _sign.getRsaEncryptedHash();
-        LOG_DEBUG << "Public key hash: " << base::Sha256::compute(pub.toBytes());
-        LOG_DEBUG << "Hash of encrypted hash: " << base::Sha256::compute(enc_hash);
-        LOG_DEBUG << "Decrypted hash: " << pub.decrypt(enc_hash);
         auto derived_addr = bc::Address::fromPublicKey(pub);
         if(_from != derived_addr) {
-            LOG_DEBUG << "invalid signature";
-            LOG_DEBUG << "=============================";
             return false;
         }
         auto valid_hash = hashOfTxData();
-        LOG_DEBUG << "Valid hash: " << valid_hash;
         if(pub.decrypt(enc_hash) == valid_hash.getBytes()) {
-            LOG_DEBUG << "signature validated! valid hash = " << valid_hash
-                      << " decrypted hash = " << pub.decrypt(enc_hash);
-            LOG_DEBUG << "=============================";
             return true;
         }
-        LOG_DEBUG << "invalid signature";
-        LOG_DEBUG << "=============================";
         return false;
     }
 }

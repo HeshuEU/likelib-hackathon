@@ -87,7 +87,7 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
     request.mutable_initial_message()->set_message(base::base64Encode(initial_message));
     request.mutable_contract()->set_bytecode(base::base64Encode(code));
     request.mutable_creation_time()->set_since_epoch(base::Time::now().getSecondsSinceEpochBeginning());
-    
+
     // call remote host
     likelib::TransactionCreationContractResponse reply;
     grpc::ClientContext context;
