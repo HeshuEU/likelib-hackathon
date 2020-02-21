@@ -1,4 +1,4 @@
-from tester import Log, test_case, NodeId, NodeTester, TEST_CHECK, NodePoll
+from tester import Address, Log, test_case, NodeId, NodeTester, TEST_CHECK, NodePoll
 import concurrent.futures, time
 
 
@@ -114,14 +114,14 @@ def main(node_exec_path, rpc_client_exec_path):
         for node in pool:
             node.run_check_test()
             
-        addresses = ['0' * (32 - len(str(i))) + str(i) for i in range(1, len(pool))]
+        addresses = [Address(pool[0], f"keys{i}") for i in range(1, len(pool))]
 
         for to_address, node in zip(addresses, pool):
             for other_node in pool:
-                other_node.run_check_balance(address=to_address, target_balance=0)
+                other_node.run_check_balance(address=to_address.address, target_balance=0)
 
-            node.run_check_transfer(from_address=NodeTester.DISTRIBUTOR_ADDRESS, to_address=to_address, amount=amount, fee=0, wait=transaction_wait)
+            node.run_check_transfer(to_address=to_address.address, amount=amount, keys_path=node.DISTRIBUTOR_ADDRESS_PATH, fee=0, wait=transaction_wait)
             for other_node in pool:
-                other_node.run_check_balance(address=to_address, target_balance=amount)
+                other_node.run_check_balance(address=to_address.address, target_balance=amount)
 
     return 0

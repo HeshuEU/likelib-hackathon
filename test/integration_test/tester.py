@@ -98,11 +98,15 @@ class Log:
         for handler in self.logger.handlers:
             handler.flush()
 
+class Address:
+    def __init__(self, node, keys_dir_name):
+        self.key_path = os.path.join(node.work_dir, keys_dir_name)
+        self.address = node.run_check_generate_keys(keys_path=self.key_path, wait=1, timeout=5);
 
 class NodeTester:
     Result = collections.namedtuple('Result', ["success", "message"])
 
-    DISTRIBUTOR_ADDRESS = '0' * 32
+    DISTRIBUTOR_ADDRESS_PATH = os.path.realpath(os.path.join(os.getcwd(), "..", "..", "doc", "base-account-keys"))
 
     def __init__(self, node_exec_path, rpc_client_exec_path, node_id, logger, *, 
                     nodes_id_list=[], miner_threads=2,
@@ -131,10 +135,9 @@ class NodeTester:
                   "rpc": {"address": current_node_id.listen_rpc_address},
                   "miner": {"threads": miner_threads},
                   "nodes": [node_id.connect_sync_address for node_id in nodes_id_list],
+                  "keys_dir": ".",
                   "database": {"path": path_to_database,
-                               "clean": clean_up_database},
-                  "keys": {"public_path": "rsa.pub",
-                           "private_path": "rsa"}
+                               "clean": clean_up_database}
                   }
         return json.dumps(config)
 
@@ -147,6 +150,8 @@ class NodeTester:
 
     def __run_client_command(self, *, command, parameters, timeout):
         run_commands = [self.rpc_client_exec_path, command, "--host", self.id.connect_rpc_address]
+        if command == "generate":
+            run_commands  =[self.rpc_client_exec_path, command]
         run_commands.extend(parameters)
 
         self.logger.info(f"{self.name} - client {command} start with parameters {parameters} to node address {self.id.connect_rpc_address}")
@@ -185,8 +190,41 @@ class NodeTester:
     def run_check_test(self, *, timeout=1):
         TEST_CHECK(self.check_test_result(self.test(timeout=timeout)), message=f"fail during connection test to node[{self.name}]")
 
-    def transfer(self, *, from_address, to_address, amount, wait, fee, timeout=1):
-        parameters = ["--from", from_address, "--to", to_address, "--amount", str(amount), "--fee", str(fee)]
+    def generate_keys(self, *, keys_path, wait, timeout=1):
+        os.makedirs(keys_path)
+        parameters = ["--path", keys_path]
+        result = self.__run_client_command(command="generate", parameters=parameters, timeout=timeout)
+        self.logger.info(f"{self.name} - generate_keys command end with parameters {parameters} to node {self.id.connect_rpc_address} with result: \"{self.parse_result(result)}\"")
+        time.sleep(wait)
+        return result
+
+    @staticmethod
+    def check_generate_keys_result(result):
+        if result.success and b"Generated public key at" in result.message and b"Generated private key at" in result.message:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def get_address(self, result):
+        result_message = self.parse_result(result)
+        str_pattern = "Address: "
+        pos = result_message.find(str_pattern)
+        address_len = 28
+        pos_address_begin = pos + len(str_pattern)
+        pos_address_end = pos_address_begin + address_len
+        return result_message[pos_address_begin : pos_address_end]
+
+
+    def run_check_generate_keys(self, *, keys_path, wait, timeout=1):
+        result = self.generate_keys(keys_path=keys_path, wait=wait,timeout=timeout)
+        TEST_CHECK(self.check_generate_keys_result(result), message=f"fail generate keys with path {keys_path}")
+        address = self.get_address(self, result)
+        return address
+
+
+    def transfer(self, *, to_address, amount, keys_path, fee, wait, timeout=1):
+        parameters = ["--to", to_address, "--amount", str(amount), "--keys", keys_path, "--fee", str(fee)]
         result = self.__run_client_command(command="transfer", parameters=parameters, timeout=timeout)
         self.logger.info(f"{self.name} - transfer command end with parameters {parameters} to node {self.id.connect_rpc_address} with result: \"{self.parse_result(result)}\"")
         time.sleep(wait)
@@ -194,14 +232,14 @@ class NodeTester:
 
     @staticmethod
     def check_transfer_result(result):
-        if result.success and b"Remote call of transaction from account to account success -> [Success! Transaction added to queue successfully.]\n" in result.message:
+        if result.success and b"1" in result.message:
             return True
         else:
             return False
 
-    def run_check_transfer(self, *, from_address, to_address, amount, wait, fee, timeout=1):
-        TEST_CHECK(self.check_transfer_result(self.transfer(from_address=from_address, to_address=to_address, amount=amount, wait=wait, fee=fee, timeout=timeout)),
-                    message=f"fail during transfer to node[{self.name}], from={from_address}, to={to_address}, amount={amount}, fee={fee}")
+    def run_check_transfer(self, *, to_address, amount, keys_path, fee, wait, timeout=1):
+        TEST_CHECK(self.check_transfer_result(self.transfer(to_address=to_address, amount=amount, keys_path=keys_path, fee=fee, wait=wait, timeout=timeout)),
+                    message=f"fail during transfer to node[{self.name}], to={to_address}, amount={amount}, keys_path={keys_path}, fee={fee}")
 
     def push_contract(self, *, from_address, code, gas, amount, init_message, wait, timeout=1):
         parameters = ["--from", from_address, "--code", code, "--amount", str(amount), "--gas", str(gas), "--initial_message", init_message]
@@ -245,14 +283,14 @@ class NodeTester:
         return result
 
     @staticmethod
-    def check_get_balance_result(result, target_balance):
-        if result.success and (f"Remote call of get_balance -> [{target_balance}]\n").encode('utf8') in result.message:
+    def check_get_balance_result(result, address, target_balance):
+        if result.success and (f"balance of {address} is {target_balance}\n").encode('utf8') in result.message:
             return True
         else:
             return False
 
     def run_check_balance(self, *, address, target_balance, timeout=1):
-        TEST_CHECK(self.check_get_balance_result(self.get_balance(address=address, timeout=timeout), target_balance), 
+        TEST_CHECK(self.check_get_balance_result(self.get_balance(address=address, timeout=timeout), address, target_balance), 
                     message=f"fail balance check to node[{self.name}], address={address}, target_balance={target_balance}")
 
     def __write_config(self):
