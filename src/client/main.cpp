@@ -708,14 +708,13 @@ int main(int argc, char** argv)
     try {
         base::initLog(base::Sink::FILE);
         base::SubprogramRouter router("client", mainProcess);
-        router.addSubprogram("generate", "generate the pair of keys", generateKeys);
+        router.addSubprogram("generate", "generate a pair of keys", generateKeys);
         router.addSubprogram("get_balance", "use for get balance from remote by account address", getBalance);
         router.addSubprogram("transfer", "use transfer balance from one address to another address", transfer);
-        router.addSubprogram("test", "use test functions", testConnection);
+        router.addSubprogram("test", "test RPC connection", testConnection);
         router.addSubprogram("push_contract", "load smart contract code to push to blockchain network", pushContract);
         router.addSubprogram("message_to_contract", "create message to call smart contract ", messageToContract);
         router.addSubprogram("compile", "compile smart contract ", compileCode);
-
 
         return router.process(argc, argv);
     }
