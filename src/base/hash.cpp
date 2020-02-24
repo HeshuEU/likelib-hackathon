@@ -58,6 +58,12 @@ bool Sha256::operator!=(const Sha256& another) const
 }
 
 
+bool Sha256::operator<(const Sha256& another) const
+{
+    return getBytes() < another.getBytes();
+}
+
+
 Sha256 Sha256::compute(const base::Bytes& data)
 {
     base::Bytes ret(SHA256_DIGEST_LENGTH);
