@@ -61,8 +61,10 @@ Sign Sign::deserialize(base::SerializationIArchive& ia)
 }
 
 
-Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp, bc::Sign sign)
-    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee}, _timestamp{timestamp}, _sign{std::move(sign)}
+Transaction::Transaction(
+    bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp, bc::Sign sign)
+    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee}, _timestamp{timestamp}, _sign{std::move(
+                                                                                                         sign)}
 {
     if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
@@ -102,7 +104,8 @@ const bc::Balance& Transaction::getFee() const noexcept
 
 bool Transaction::operator==(const Transaction& other) const
 {
-    return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp && _fee == other._fee;
+    return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp &&
+        _fee == other._fee;
 }
 
 
@@ -186,8 +189,8 @@ void Transaction::serialize(base::SerializationOArchive& oa) const
 
 std::ostream& operator<<(std::ostream& os, const Transaction& tx)
 {
-    return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount() << " fee: " << tx.getFee()
-              << " timestamp: " << tx.getTimestamp();
+    return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount()
+              << " fee: " << tx.getFee() << " timestamp: " << tx.getTimestamp();
 }
 
 

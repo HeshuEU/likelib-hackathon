@@ -10,12 +10,36 @@
 namespace lk
 {
 
+
+class AccountState
+{
+  public:
+    std::uint64_t getNonce() const noexcept;
+
+    bc::Balance getBalance() const noexcept;
+    void setBalance(bc::Balance new_balance);
+    void addBalance(bc::Balance delta);
+    void subBalance(bc::Balance delta);
+
+    const base::Bytes& getCode() const noexcept;
+
+    bool checkStorageValue(const base::Sha256& key) const;
+    std::optional<std::reference_wrapper<const base::Bytes>> getStorageValue(const base::Sha256& key) const;
+    void setStorageValue(const base::Sha256& key, base::Bytes value);
+
+  private:
+    std::uint64_t _nonce;
+    bc::Balance _balance;
+    base::Bytes _code;
+    std::map<base::Sha256, base::Bytes> _storage;
+};
+
+
 class AccountManager
 {
   public:
     //================
     explicit AccountManager() = default;
-    explicit AccountManager(const std::map<bc::Address, bc::Balance>& initial_state);
     AccountManager(const AccountManager& hash) = delete;
     AccountManager(AccountManager&& hash) = delete;
 
@@ -31,7 +55,7 @@ class AccountManager
     //================
   private:
     //================
-    std::map<bc::Address, bc::Balance> _storage;
+    std::map<bc::Address, AccountState> _states;
     mutable std::shared_mutex _rw_mutex;
     //================
 };

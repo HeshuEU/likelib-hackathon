@@ -39,7 +39,8 @@ class Transaction
 {
   public:
     //=================
-    Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp, bc::Sign sign = bc::Sign{});
+    Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp,
+        bc::Sign sign = bc::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
