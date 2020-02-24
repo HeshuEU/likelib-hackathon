@@ -6,19 +6,19 @@
 namespace
 {
 
-    rpc::OperationStatus convert(const ::likelib::OperationStatus& status)
-    {
-        switch(status.status()) {
-            case ::likelib::OperationStatus_StatusCode_Success:
-                return rpc::OperationStatus::createSuccess(status.message());
-            case ::likelib::OperationStatus_StatusCode_Rejected:
-                return rpc::OperationStatus::createRejected(status.message());
-            case ::likelib::OperationStatus_StatusCode_Failed:
-                return rpc::OperationStatus::createFailed(status.message());
-            default:
-                RAISE_ERROR(base::ParsingError, "Unexpected status code");
-        }
+rpc::OperationStatus convert(const ::likelib::OperationStatus& status)
+{
+    switch(status.status()) {
+        case ::likelib::OperationStatus_StatusCode_Success:
+            return rpc::OperationStatus::createSuccess(status.message());
+        case ::likelib::OperationStatus_StatusCode_Rejected:
+            return rpc::OperationStatus::createRejected(status.message());
+        case ::likelib::OperationStatus_StatusCode_Failed:
+            return rpc::OperationStatus::createFailed(status.message());
+        default:
+            RAISE_ERROR(base::ParsingError, "Unexpected status code");
     }
+}
 
 
 } // namespace

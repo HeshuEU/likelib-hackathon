@@ -5,11 +5,11 @@
 //#include <random>
 //#include <thread>
 //
-//namespace
+// namespace
 //{
-//bc::Balance balance_each_person = 1000;
+// bc::Balance balance_each_person = 1000;
 //
-//std::map<bc::Address, bc::Balance> initMap()
+// std::map<bc::Address, bc::Balance> initMap()
 //{
 //    std::map<bc::Address, bc::Balance> init_map;
 //    init_map[bc::Add"qwerty").toHex()] = 1000;
@@ -23,10 +23,10 @@
 //    }
 //    return init_map;
 //}
-//std::map<bc::Address, bc::Balance> init_map = initMap();
+// std::map<bc::Address, bc::Balance> init_map = initMap();
 //} // namespace
 //
-//BOOST_AUTO_TEST_CASE(balance_manager_constructor)
+// BOOST_AUTO_TEST_CASE(balance_manager_constructor)
 //{
 //    lk::AccountManager manager(init_map);
 //
@@ -37,7 +37,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(balance_manager_check_transaction)
+// BOOST_AUTO_TEST_CASE(balance_manager_check_transaction)
 //{
 //    lk::AccountManager manager(init_map);
 //
@@ -56,7 +56,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(balance_manager_update_transaction)
+// BOOST_AUTO_TEST_CASE(balance_manager_update_transaction)
 //{
 //    lk::AccountManager manager(init_map);
 //    manager.update(bc::Transaction(base::Bytes("qwerty").toHex(), base::Bytes("okDe").toHex(), 13, base::Time()));
@@ -71,7 +71,7 @@
 //}
 //
 //
-//void testUpdateTransaction(lk::AccountManager& manager, std::size_t sequence_number)
+// void testUpdateTransaction(lk::AccountManager& manager, std::size_t sequence_number)
 //{
 //    constexpr std::size_t count_accounts = 9;
 //    constexpr std::size_t period = 2;
@@ -96,7 +96,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(balance_manager_update_transaction_multithreads)
+// BOOST_AUTO_TEST_CASE(balance_manager_update_transaction_multithreads)
 //{
 //    lk::AccountManager manager(init_map);
 //
@@ -110,14 +110,14 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(balance_manager_update_block)
+// BOOST_AUTO_TEST_CASE(balance_manager_update_block)
 //{
 //    lk::AccountManager manager(init_map);
 //    bc::TransactionsSet transaction_set;
 //
-//    transaction_set.add(bc::Transaction(base::Bytes("qwerty").toHex(), base::Bytes("okDe").toHex(), 13, base::Time()));
-//    transaction_set.add(bc::Transaction(base::Bytes("Andrei").toHex(), base::Bytes("Troia").toHex(), 11, base::Time()));
-//    transaction_set.add(
+//    transaction_set.add(bc::Transaction(base::Bytes("qwerty").toHex(), base::Bytes("okDe").toHex(), 13,
+//    base::Time())); transaction_set.add(bc::Transaction(base::Bytes("Andrei").toHex(), base::Bytes("Troia").toHex(),
+//    11, base::Time())); transaction_set.add(
 //        bc::Transaction(base::Bytes("back_door").toHex(), base::Bytes("Ivan").toHex(), 1, base::Time()));
 //    bc::Block block(123, base::Sha256::compute(base::Bytes("")), std::move(transaction_set));
 //    manager.update(block);
@@ -130,7 +130,7 @@
 //}
 //
 //
-//void testUpdateBlock(lk::AccountManager& manager, std::size_t sequence_number)
+// void testUpdateBlock(lk::AccountManager& manager, std::size_t sequence_number)
 //{
 //    constexpr std::size_t count_accounts = 9;
 //    constexpr std::size_t period = 2;
@@ -162,7 +162,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(balance_manager_update_block_multithreads)
+// BOOST_AUTO_TEST_CASE(balance_manager_update_block_multithreads)
 //{
 //    lk::AccountManager manager(init_map);
 //

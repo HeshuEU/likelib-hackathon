@@ -186,7 +186,8 @@ int transfer(base::SubprogramRouter& router)
         txb.setFee(fee);
         auto tx = std::move(txb).build();
         tx.sign(public_key, private_key);
-        auto result = client.transaction_to_wallet(tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getFee(), tx.getTimestamp(), tx.getSign());
+        auto result = client.transaction_to_wallet(
+            tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getFee(), tx.getTimestamp(), tx.getSign());
         std::cout << result << std::endl;
         LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;
@@ -502,8 +503,8 @@ int messageToContract(base::SubprogramRouter& router)
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
 
-        auto[status, contract_response, gas_left] =
-            client.transaction_to_contract(amount, bc::Address{from_address}, bc::Address{to_address}, base::Time::now(), gas, message, bc::Sign{});
+        auto [status, contract_response, gas_left] = client.transaction_to_contract(
+            amount, bc::Address{from_address}, bc::Address{to_address}, base::Time::now(), gas, message, bc::Sign{});
 
         if(status) {
             std::cout << "Remote call of smart contract call success -> [" << status.getMessage()

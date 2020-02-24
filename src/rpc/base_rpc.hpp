@@ -60,15 +60,16 @@ class BaseRpc
     virtual bc::Balance balance(const bc::Address& address) = 0;
 
     virtual std::tuple<OperationStatus, bc::Address, bc::Balance> transaction_creation_contract(bc::Balance amount,
-        const bc::Address& from_address, const base::Time& transaction_time,
-        bc::Balance gas, const base::Bytes& code, const base::Bytes& initial_message, const bc::Sign& signature) = 0;
+        const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas, const base::Bytes& code,
+        const base::Bytes& initial_message, const bc::Sign& signature) = 0;
 
     virtual std::tuple<OperationStatus, base::Bytes, bc::Balance> transaction_to_contract(bc::Balance amount,
         const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time,
         bc::Balance gas, const base::Bytes& message, const bc::Sign& signature) = 0;
 
     virtual OperationStatus transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-        const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const bc::Sign& signature) = 0;
+        const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time,
+        const bc::Sign& signature) = 0;
 
     /// method call remote server method(specified ip address in constructor) with similar params
     /// \param test_request sha256 from secret data request

@@ -26,7 +26,8 @@ PropertyTree readConfig(const std::filesystem::path& config_file)
     return ret;
 }
 
-PropertyTree parseJson(const std::string& json_string){
+PropertyTree parseJson(const std::string& json_string)
+{
     std::istringstream input{json_string};
     boost::property_tree::ptree ret;
     CLARIFY_ERROR(ParsingError, boost::property_tree::read_json(input, ret), "parsing error");

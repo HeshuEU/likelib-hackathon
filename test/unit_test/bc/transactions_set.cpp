@@ -48,9 +48,10 @@ BOOST_AUTO_TEST_CASE(transactions_set_find)
     BOOST_CHECK(tx_set.find(trans4));
     BOOST_CHECK(tx_set.find(trans5));
 
-    BOOST_CHECK(!tx_set.find(bc::Transaction(
-        trans1.getFrom(), bc::Address{base::Bytes("()#%DSOJ\n").toHex()}, trans1.getAmount(), 0, trans1.getTimestamp())));
-    BOOST_CHECK(!tx_set.find(bc::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), 0, base::Time::now())));
+    BOOST_CHECK(!tx_set.find(bc::Transaction(trans1.getFrom(), bc::Address{base::Bytes("()#%DSOJ\n").toHex()},
+        trans1.getAmount(), 0, trans1.getTimestamp())));
+    BOOST_CHECK(
+        !tx_set.find(bc::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), 0, base::Time::now())));
 }
 
 

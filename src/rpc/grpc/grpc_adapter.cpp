@@ -56,7 +56,7 @@ grpc::Status GrpcAdapter::balance(
 {
     LOG_DEBUG << "get RPC call at balance method from: " << context->peer();
     try {
-        bc::Address query_address{ request->address() };
+        bc::Address query_address{request->address()};
         response->set_money(_service->balance(query_address));
     }
     catch(const base::Error& e) {
@@ -82,8 +82,8 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
         auto status = OperationStatus::createSuccess();
         base::Bytes contract_response;
         bc::Balance least_gas;
-        std::tie(status, contract_response, least_gas) =
-            _service->transaction_to_contract(amount, from_address, to_address, creation_time, gas, message, bc::Sign{});
+        std::tie(status, contract_response, least_gas) = _service->transaction_to_contract(
+            amount, from_address, to_address, creation_time, gas, message, bc::Sign{});
 
         convert(status, response->mutable_status());
         response->mutable_contract_response()->set_message(base::base64Encode(contract_response));
@@ -140,7 +140,7 @@ grpc::Status GrpcAdapter::transaction_to_wallet(grpc::ServerContext* context,
         auto to_address = bc::Address{request->to().address()};
         auto fee = bc::Balance{request->fee().money()};
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
-	    auto signature = base::fromBytes<bc::Sign>(base::base64Decode(request->signature().signature()));
+        auto signature = base::fromBytes<bc::Sign>(base::base64Decode(request->signature().signature()));
 
         auto status = _service->transaction_to_wallet(amount, from_address, to_address, fee, creation_time, signature);
 
