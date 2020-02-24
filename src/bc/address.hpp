@@ -31,6 +31,7 @@ class Address
     static Address deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
     //=============================
+    static constexpr std::size_t ADDRESS_SIZE = 28;
   private:
     std::string _address;
 

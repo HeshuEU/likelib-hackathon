@@ -24,7 +24,7 @@ Address::Address(const std::string_view& base64_address) : _address{base64_addre
 
 const std::string& Address::getNullAddressString()
 {
-    static const std::string null_address(32, '0');
+    static const std::string null_address(ADDRESS_SIZE, '0');
     return null_address;
 }
 
