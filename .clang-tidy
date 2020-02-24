@@ -33,6 +33,7 @@ Checks: >
   modernize-*,
   -modernize-use-auto,
   -modernize-avoid-c-arrays,
+  -modernize-use-nodiscard,
   -modernize-use-trailing-return-type,
   performance-*,
   portability-*,
