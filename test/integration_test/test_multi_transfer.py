@@ -1,4 +1,4 @@
-from tester import Log, test_case, NodeId, NodeTester, TEST_CHECK, NodePoll
+from tester import Address, Log, test_case, NodeId, NodeTester, TEST_CHECK, NodePoll
 import concurrent.futures
 
 
@@ -12,18 +12,17 @@ def main(node_exec_path, rpc_client_exec_path):
 
         with NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=20301, rpc_port=50151), logger, nodes_id_list=[node_1.id, ]) as node_2:
             node_2.run_check_test()
-            target_address = "1" * 32
+            target_address = Address(node_1, "keys1")
 
-            node_1.run_check_balance(address=target_address, target_balance=0)
-            node_2.run_check_balance(address=target_address, target_balance=0)
+            node_1.run_check_balance(address=target_address.address, target_balance=0)
+            node_2.run_check_balance(address=target_address.address, target_balance=0)
 
-            from_address = "0" * 32
             amount = 333
             transaction_wait = 4
-            node_2.run_check_transfer(from_address=from_address, to_address=target_address, amount=amount, wait=transaction_wait, fee=0)
+            node_2.run_check_transfer(to_address=target_address.address, amount=amount, keys_path=node_1.DISTRIBUTOR_ADDRESS_PATH, fee=0, wait=transaction_wait)
 
-            node_2.run_check_balance(address=target_address, target_balance=amount)
-            node_1.run_check_balance(address=target_address, target_balance=amount)
+            node_2.run_check_balance(address=target_address.address, target_balance=amount)
+            node_1.run_check_balance(address=target_address.address, target_balance=amount)
         
     return 0
 
@@ -53,28 +52,28 @@ def main(node_exec_path, rpc_client_exec_path):
             for node in pool:
                 node.run_check_test()
 
-        addresses = ['0' * (32 - len(str(i))) + str(i) for i in range(1, len(pool))]
+        addresses = [Address(pool[0], f"keys{i}") for i in range(1, len(pool))]
         init_amount = 1000
 
         # init addresses with amount
         for to_address in addresses:
-            pool.last.run_check_balance(address=to_address, target_balance=0)
-            pool.last.run_check_transfer(from_address=NodeTester.DISTRIBUTOR_ADDRESS,to_address=to_address, amount=init_amount, wait=transaction_wait, fee=0)
+            pool.last.run_check_balance(address=to_address.address, target_balance=0)
+            pool.last.run_check_transfer(to_address=to_address.address, amount=init_amount, keys_path=node.DISTRIBUTOR_ADDRESS_PATH, fee=0, wait=transaction_wait)
             for node in pool:
-                node.run_check_balance(address=to_address, target_balance=init_amount)
+                node.run_check_balance(address=to_address.address, target_balance=init_amount)
         
         for i in range(1, len(addresses) - 1):
             from_address = addresses[i]
             to_address = addresses[i + 1]
             amount = i * 100
-            pool.last.run_check_transfer(from_address=from_address, to_address=to_address, amount=amount, wait=transaction_wait, fee=0)
+            pool.last.run_check_transfer(to_address=to_address.address, amount=amount, keys_path=from_address.key_path, fee=0, wait=transaction_wait)
             for node in pool:
-                node.run_check_balance(address=to_address, target_balance=amount + init_amount)
+                node.run_check_balance(address=to_address.address, target_balance=amount + init_amount)
         
         first_address = addresses[0]
         first_address_balance = init_amount
         for node in pool:
-                node.run_check_balance(address=first_address, target_balance=first_address_balance)
+                node.run_check_balance(address=first_address.address, target_balance=first_address_balance)
 
     return 0
 
@@ -104,28 +103,28 @@ def main(node_exec_path, rpc_client_exec_path):
             for node in pool:
                 node.run_check_test()
 
-        addresses = ['0' * (32 - len(str(i))) + str(i) for i in range(1, len(pool))]
+        addresses = [Address(pool[0], f"keys{i}") for i in range(1, len(pool))]
         init_amount = 1000
 
         # init addresses with amount
         for to_address in addresses:
-            pool.last.run_check_balance(address=to_address, target_balance=0)
-            pool.last.run_check_transfer(from_address=NodeTester.DISTRIBUTOR_ADDRESS,to_address=to_address, amount=init_amount, wait=transaction_wait, fee=0)
+            pool.last.run_check_balance(address=to_address.address, target_balance=0)
+            pool.last.run_check_transfer(to_address=to_address.address, amount=init_amount, keys_path=node.DISTRIBUTOR_ADDRESS_PATH, fee=0, wait=transaction_wait)
             for node in pool:
-                node.run_check_balance(address=to_address, target_balance=init_amount)
+                node.run_check_balance(address=to_address.address, target_balance=init_amount)
         
         for i in range(1, len(addresses) - 1):
             from_address = addresses[i]
             to_address = addresses[i + 1]
             amount = i * 100
-            pool.last.run_check_transfer(from_address=from_address, to_address=to_address, amount=amount, wait=transaction_wait, fee=0)
+            pool.last.run_check_transfer(to_address=to_address.address, amount=amount, keys_path=from_address.key_path, fee=0, wait=transaction_wait)
             for node in pool:
-                node.run_check_balance(address=to_address, target_balance=amount + init_amount)
+                node.run_check_balance(address=to_address.address, target_balance=amount + init_amount)
         
         first_address = addresses[0]
         first_address_balance = init_amount
         for node in pool:
-                node.run_check_balance(address=first_address, target_balance=first_address_balance)
+                node.run_check_balance(address=first_address.address, target_balance=first_address_balance)
 
     return 0
 
@@ -138,7 +137,7 @@ def node_transfers(node, addresses, transaction_wait):
     for _ in range(len(addresses) * 5):
         pos = (pos + shift) % len(addresses)
         to_address = addresses[pos]
-        node.run_check_transfer(from_address=from_address, to_address=to_address, amount=amount, wait=transaction_wait, fee=0, timeout=3)
+        node.run_check_transfer(to_address=to_address.address, amount=amount, keys_path=from_address.key_path, fee=0, wait=transaction_wait, timeout=3)
         from_address = to_address
     
 
@@ -151,7 +150,7 @@ def main(node_exec_path, rpc_client_exec_path):
     start_sync_port = 20330
     start_rpc_port = 50180
     node_startup_time = 5
-    transaction_wait = 5
+    transaction_wait = 8
 
     init_amount = 1000
     address_per_nodes = 3
@@ -171,14 +170,14 @@ def main(node_exec_path, rpc_client_exec_path):
             for node in pool:
                 node.run_check_test()
 
-        addresses = ['0' * (32 - len(str(i))) + str(i) for i in range(1, count_nodes * address_per_nodes + 1)]
+        addresses = [Address(pool[0], f"keys{i}") for i in range(1, count_nodes * address_per_nodes + 1)]
 
         # init addresses with amount
         for to_address in addresses:
-            pool.last.run_check_balance(address=to_address, target_balance=0)
-            pool.last.run_check_transfer(from_address=NodeTester.DISTRIBUTOR_ADDRESS,to_address=to_address, amount=init_amount, fee=0, wait=transaction_wait)
+            pool.last.run_check_balance(address=to_address.address, target_balance=0)
+            pool.last.run_check_transfer(to_address=to_address.address, amount=init_amount, keys_path=node.DISTRIBUTOR_ADDRESS_PATH, fee=0, wait=transaction_wait)
             for node in pool:
-                node.run_check_balance(address=to_address, target_balance=init_amount)
+                node.run_check_balance(address=to_address.address, target_balance=init_amount)
         
         with concurrent.futures.ThreadPoolExecutor(len(pool)) as executor:
             threads = []
@@ -191,6 +190,6 @@ def main(node_exec_path, rpc_client_exec_path):
 
         for address in addresses:
             for node in pool:
-                node.run_check_balance(address=address, target_balance = init_amount)
+                node.run_check_balance(address=address.address, target_balance = init_amount)
 
     return 0
