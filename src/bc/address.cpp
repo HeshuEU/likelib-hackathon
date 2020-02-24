@@ -18,7 +18,10 @@ Address Address::fromPublicKey(const base::RsaPublicKey& pub)
 
 Address::Address(const std::string_view& base64_address) : _address{base64_address}
 {
-    // TODO: check address length
+    //TODO:check string is base64
+    if(base64_address.size() != ADDRESS_SIZE){
+        RAISE_ERROR(base::InvalidArgument, "the invalid size of string for the Address");
+    }
 }
 
 

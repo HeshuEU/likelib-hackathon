@@ -7,16 +7,16 @@
 namespace
 {
 
-bc::Transaction trans1{bc::Address{base::Bytes("from1 vjS247DGFSv\n ").toHex()},
-    bc::Address{base::Bytes("to1 ()#%DSOJ\n").toHex()}, 12398, 11, base::Time()};
-bc::Transaction trans2{bc::Address{base::Bytes("from2 vj^Hs47DGFSv\n ").toHex()},
-    bc::Address{base::Bytes("to2 ()#%Dsdg\n").toHex()}, 5825285, 22, base::Time::now()};
-bc::Transaction trans3{bc::Address{base::Bytes("from3 vjS2%#&DGF\n ").toHex()},
-    bc::Address{base::Bytes("to3 ()#%DdfOJ\n").toHex()}, 12245398, 33, base::Time()};
-bc::Transaction trans4{bc::Address{base::Bytes("from4 vjS247sdgFSv\n ").toHex()},
-    bc::Address{base::Bytes("to4 {#%DSOJ ").toHex()}, 168524347, 44, base::Time()};
-bc::Transaction trans5{bc::Address{base::Bytes("from5 vjS2  DGFSv\n ").toHex()},
-    bc::Address{base::Bytes("to5 ()#%DSdsJ\n").toHex()}, 1434457, 55, base::Time::now()};
+bc::Transaction trans1{bc::Address::fromPublicKey(base::generateKeys().first),
+    bc::Address::fromPublicKey(base::generateKeys().first), 12398, 11, base::Time()};
+bc::Transaction trans2{bc::Address::fromPublicKey(base::generateKeys().first),
+    bc::Address::fromPublicKey(base::generateKeys().first), 5825285, 22, base::Time::now()};
+bc::Transaction trans3{bc::Address::fromPublicKey(base::generateKeys().first),
+    bc::Address::fromPublicKey(base::generateKeys().first), 12245398, 33, base::Time()};
+bc::Transaction trans4{bc::Address::fromPublicKey(base::generateKeys().first),
+    bc::Address::fromPublicKey(base::generateKeys().first), 168524347, 44, base::Time()};
+bc::Transaction trans5{bc::Address::fromPublicKey(base::generateKeys().first),
+    bc::Address::fromPublicKey(base::generateKeys().first), 1434457, 55, base::Time::now()};
 
 bc::TransactionsSet getTestSet()
 {
@@ -48,9 +48,10 @@ BOOST_AUTO_TEST_CASE(transactions_set_find)
     BOOST_CHECK(tx_set.find(trans4));
     BOOST_CHECK(tx_set.find(trans5));
 
-    BOOST_CHECK(!tx_set.find(bc::Transaction(
-        trans1.getFrom(), bc::Address{base::Bytes("()#%DSOJ\n").toHex()}, trans1.getAmount(), 0, trans1.getTimestamp())));
-    BOOST_CHECK(!tx_set.find(bc::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), 0, base::Time::now())));
+    BOOST_CHECK(!tx_set.find(bc::Transaction(trans1.getFrom(), bc::Address::fromPublicKey(base::generateKeys().first),
+        trans1.getAmount(), 0, trans1.getTimestamp())));
+    BOOST_CHECK(
+        !tx_set.find(bc::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), 0, base::Time::now())));
 }
 
 
@@ -120,14 +121,14 @@ BOOST_AUTO_TEST_CASE(transactions_set_remove_set2)
 BOOST_AUTO_TEST_CASE(transaction_set_inEmpty)
 {
     bc::TransactionsSet tx_set;
+    auto from = bc::Address::fromPublicKey(base::generateKeys().first);
+    auto to = bc::Address::fromPublicKey(base::generateKeys().first);
     BOOST_CHECK(tx_set.isEmpty());
 
-    tx_set.add(bc::Transaction(
-        bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, 0, base::Time()));
+    tx_set.add(bc::Transaction(from, to, 111, 0, base::Time()));
     BOOST_CHECK(!tx_set.isEmpty());
 
-    tx_set.remove(bc::Transaction(
-        bc::Address{base::Bytes("1").toHex()}, bc::Address{base::Bytes("2").toHex()}, 111, 0, base::Time()));
+    tx_set.remove(bc::Transaction(from, to, 111, 0, base::Time()));
     BOOST_CHECK(tx_set.isEmpty());
 }
 

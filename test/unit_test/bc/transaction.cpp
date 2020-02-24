@@ -5,17 +5,15 @@
 
 BOOST_AUTO_TEST_CASE(transaction_constructor1)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    bc::Address from{str_from};
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
-    bc::Address to{str_to};
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 42;
     bc::Transaction tx(from, to, amount, fee, time);
 
-    BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
-    BOOST_CHECK(tx.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx.getTo().toString() == to.toString());
     BOOST_CHECK(tx.getTimestamp() == time);
     BOOST_CHECK(tx.getAmount() == amount);
     BOOST_CHECK(tx.getFee() == fee);
@@ -24,18 +22,16 @@ BOOST_AUTO_TEST_CASE(transaction_constructor1)
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    bc::Address from{str_from};
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
-    bc::Address to{str_to};
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 123;
     bc::Transaction tx1(from, to, amount, fee, time);
     bc::Transaction tx2(tx1);
 
-    BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
-    BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx2.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx2.getTo().toString() == to.toString());
     BOOST_CHECK(tx2.getTimestamp() == time);
     BOOST_CHECK(tx2.getAmount() == amount);
     BOOST_CHECK(tx2.getFee() == fee);
@@ -44,18 +40,16 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_move)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    bc::Address from{str_from};
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
-    bc::Address to{str_to};
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 123;
     bc::Transaction tx1(from, to, amount, fee, time);
     bc::Transaction tx2(std::move(tx1));
 
-    BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
-    BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx2.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx2.getTo().toString() == to.toString());
     BOOST_CHECK(tx2.getTimestamp() == time);
     BOOST_CHECK(tx2.getAmount() == amount);
     BOOST_CHECK(tx2.getFee() == fee);
@@ -64,10 +58,8 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_move)
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    bc::Address from{str_from};
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
-    bc::Address to{str_to};
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee{23213213};
@@ -76,8 +68,8 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = tx1;
-    BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
-    BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx2.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx2.getTo().toString() == to.toString());
     BOOST_CHECK(tx2.getTimestamp() == time);
     BOOST_CHECK(tx2.getAmount() == amount);
     BOOST_CHECK(tx2.getFee() == fee);
@@ -86,10 +78,8 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    bc::Address from{str_from};
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
-    bc::Address to{str_to};
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee{213213};
@@ -98,8 +88,8 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = std::move(tx1);
-    BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
-    BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx2.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx2.getTo().toString() == to.toString());
     BOOST_CHECK(tx2.getTimestamp() == time);
     BOOST_CHECK(tx2.getAmount() == amount);
     BOOST_CHECK(tx2.getFee() == fee);
@@ -108,24 +98,23 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 
 BOOST_AUTO_TEST_CASE(transaction_set_all1)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    bc::Address from{str_from};
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 150;
     bc::TransactionBuilder txb;
 
-    txb.setFrom(bc::Address(str_from));
-    txb.setTo(bc::Address(str_to));
+    txb.setFrom(from);
+    txb.setTo(to);
     txb.setTimestamp(time);
     txb.setAmount(amount);
     txb.setFee(fee);
 
     auto tx = std::move(txb).build();
 
-    BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
-    BOOST_CHECK(tx.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx.getTo().toString() == to.toString());
     BOOST_CHECK(tx.getTimestamp() == time);
     BOOST_CHECK(tx.getAmount() == amount);
     BOOST_CHECK(tx.getFee() == fee);
@@ -134,23 +123,23 @@ BOOST_AUTO_TEST_CASE(transaction_set_all1)
 
 BOOST_AUTO_TEST_CASE(transaction_set_all2)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee{229};
 
     bc::TransactionBuilder txb;
-    txb.setFrom(bc::Address(str_from));
-    txb.setTo(bc::Address(str_to));
+    txb.setFrom(from);
+    txb.setTo(to);
     txb.setTimestamp(time);
     txb.setAmount(amount);
     txb.setFee(fee);
 
     auto tx1 = txb.build();
 
-    BOOST_CHECK(tx1.getFrom() == bc::Address(str_from));
-    BOOST_CHECK(tx1.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx1.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx1.getTo().toString() == to.toString());
     BOOST_CHECK(tx1.getTimestamp() == time);
     BOOST_CHECK(tx1.getAmount() == amount);
     BOOST_CHECK(tx1.getFee() == fee);
@@ -159,10 +148,8 @@ BOOST_AUTO_TEST_CASE(transaction_set_all2)
 
 BOOST_AUTO_TEST_CASE(transaction_serialization1)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    bc::Address from{str_from};
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
-    bc::Address to{str_to};
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee = 123;
@@ -179,10 +166,8 @@ BOOST_AUTO_TEST_CASE(transaction_serialization1)
 
 BOOST_AUTO_TEST_CASE(transaction_serialization2)
 {
-    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
-    bc::Address from{str_from};
-    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
-    bc::Address to{str_to};
+    bc::Address from = bc::Address::fromPublicKey(base::generateKeys().first);
+    bc::Address to = bc::Address::fromPublicKey(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
     bc::Balance fee{506};
