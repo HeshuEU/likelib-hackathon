@@ -39,6 +39,12 @@ const base::Bytes& Sha256::getBytes() const noexcept
 }
 
 
+Sha256 Sha256::null()
+{
+    return Sha256(base::Bytes(SHA256_DIGEST_LENGTH));
+}
+
+
 Sha256 Sha256::fromHex(const std::string& hex_view)
 {
     auto bytes = Bytes::fromHex(hex_view);

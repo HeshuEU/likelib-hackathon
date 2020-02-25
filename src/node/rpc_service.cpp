@@ -85,7 +85,7 @@ rpc::OperationStatus GeneralServerService::transaction_to_wallet(bc::Balance amo
 
     LOG_DEBUG << "Hash of received public key: " << base::Sha256::compute(signature.getPublicKey().toBytes());
 
-    if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, fee, transaction_time, signature))) {
+    if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, fee, transaction_time, base::Sha256::null(), signature))) {
         return rpc::OperationStatus::createSuccess("Success! Transaction added to queue successfully.");
     }
     else {

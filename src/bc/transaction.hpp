@@ -40,7 +40,7 @@ class Transaction
   public:
     //=================
     Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp,
-        bc::Sign sign = bc::Sign{});
+        base::Sha256 code_hash, bc::Sign sign = bc::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -54,6 +54,7 @@ class Transaction
     [[nodiscard]] const bc::Balance& getAmount() const noexcept;
     [[nodiscard]] const base::Time& getTimestamp() const noexcept;
     [[nodiscard]] const bc::Balance& getFee() const noexcept;
+    [[nodiscard]] const base::Sha256& getCodeHash() const noexcept;
     //=================
     void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
     [[nodiscard]] bool checkSign() const;
@@ -73,6 +74,7 @@ class Transaction
     bc::Balance _amount;
     bc::Balance _fee;
     base::Time _timestamp;
+    base::Sha256 _code_hash;
     bc::Sign _sign;
     //=================
     void serializeHeader(base::SerializationOArchive& oa) const;
@@ -91,6 +93,7 @@ class TransactionBuilder
     void setAmount(bc::Balance amount);
     void setTimestamp(base::Time timestamp);
     void setFee(bc::Balance fee);
+    void setCodeHash(base::Sha256 code_hash);
 
     [[nodiscard]] Transaction build() const&;
     [[nodiscard]] Transaction build() &&;
@@ -101,6 +104,7 @@ class TransactionBuilder
     std::optional<bc::Balance> _amount;
     std::optional<base::Time> _timestamp;
     std::optional<bc::Balance> _fee;
+    std::optional<base::Sha256> _code_hash;
 };
 
 } // namespace bc

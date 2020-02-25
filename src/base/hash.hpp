@@ -23,6 +23,7 @@ class Sha256
     std::string toHex() const;
     const base::Bytes& getBytes() const noexcept;
     //----------------------------------
+    static Sha256 null();
     static Sha256 fromHex(const std::string& hex_view);
     //----------------------------------
     bool operator==(const Sha256& another) const;

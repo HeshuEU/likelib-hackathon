@@ -23,7 +23,7 @@ const bc::Block& Core::getGenesisBlock()
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address;
         ret.addTransaction({null_address, bc::Address{"UTpE8/SckOrfV4Fn/Gi3jmLEOVI="}, bc::Balance{0xFFFFFFFF}, 0,
-            base::Time::fromSecondsSinceEpochBeginning(0)});
+                            base::Time::fromSecondsSinceEpochBeginning(0), base::Sha256::null()});
         return ret;
     }();
     return genesis;
