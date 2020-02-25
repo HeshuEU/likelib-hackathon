@@ -12,4 +12,4 @@ set(LK_SOURCES
 
 add_library(lk ${LK_SOURCES} ${LK_HEADERS})
 
-target_link_libraries(lk base bc net)
+target_link_libraries(lk base bc net vm)

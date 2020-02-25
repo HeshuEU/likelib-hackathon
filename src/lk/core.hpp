@@ -8,8 +8,11 @@
 #include "lk/account_manager.hpp"
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
+#include "vm/host.hpp"
+#include "vm/vm.hpp"
 
 #include <shared_mutex>
+#include <vm/host.hpp>
 
 namespace lk
 {
@@ -62,6 +65,9 @@ class Core
     //==================
     bc::TransactionsSet _pending_transactions;
     mutable std::shared_mutex _pending_transactions_mutex;
+    //==================
+    vm::HostImplementation _host_impl;
+    vm::VM _vm;
     //==================
     static const bc::Block& getGenesisBlock();
     void updateNewBlock(const bc::Block& block);

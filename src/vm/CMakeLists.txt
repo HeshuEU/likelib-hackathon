@@ -2,12 +2,14 @@ add_subdirectory(evmc)
 
 set(VM_HEADERS
         error.hpp
+        host.hpp
         vm.hpp
         messages.hpp
         tools.hpp
         )
 
 set(VM_SOURCES
+        host.cpp
         vm.cpp
         messages.cpp
         tools.cpp

@@ -1,12 +1,14 @@
 #include "core.hpp"
 
 #include "base/log.hpp"
+#include "vm/host.hpp"
 
 namespace lk
 {
 
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
-    : _config{config}, _vault{key_vault}, _blockchain{_config}, _network{_config, *this}
+    : _config{config}, _vault{key_vault}, _blockchain{_config}, _network{_config, *this},
+      _host_impl{}, _vm{vm::VM::load(_host_impl)}
 {
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
