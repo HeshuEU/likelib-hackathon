@@ -56,6 +56,7 @@ class AccountManager
   private:
     //================
     std::map<bc::Address, AccountState> _states;
+    std::map<base::Sha256, base::Bytes> _code_db;
     mutable std::shared_mutex _rw_mutex;
     //================
 };

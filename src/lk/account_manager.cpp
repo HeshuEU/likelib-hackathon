@@ -98,22 +98,26 @@ bool AccountManager::checkTransaction(const bc::Transaction& tx) const
 
 void AccountManager::update(const bc::Transaction& tx)
 {
-    std::unique_lock lk(_rw_mutex);
-    auto from_iter = _states.find(tx.getFrom());
+    if(tx.getCodeHash() == base::Sha256::null()) {
+        std::unique_lock lk(_rw_mutex);
+        auto from_iter = _states.find(tx.getFrom());
 
-    if(from_iter == _states.end() || from_iter->second.getBalance() < tx.getAmount()) {
-        RAISE_ERROR(base::LogicError, "account doesn't have enough funds to perform the operation");
-    }
+        if (from_iter == _states.end() || from_iter->second.getBalance() < tx.getAmount()) {
+            RAISE_ERROR(base::LogicError, "account doesn't have enough funds to perform the operation");
+        }
 
-    auto& from_state = from_iter->second;
-    from_state.subBalance(tx.getAmount());
-    if(auto to_iter = _states.find(tx.getTo()); to_iter != _states.end()) {
-        to_iter->second.addBalance(tx.getAmount());
+        auto &from_state = from_iter->second;
+        from_state.subBalance(tx.getAmount());
+        if (auto to_iter = _states.find(tx.getTo()); to_iter != _states.end()) {
+            to_iter->second.addBalance(tx.getAmount());
+        } else {
+            AccountState to_state;
+            to_state.setBalance(tx.getAmount());
+            _states.insert({tx.getTo(), std::move(to_state)});
+        }
     }
     else {
-        AccountState to_state;
-        to_state.setBalance(tx.getAmount());
-        _states.insert({tx.getTo(), std::move(to_state)});
+        std::unique_lock lk(_rw_mutex);
     }
 }
 
