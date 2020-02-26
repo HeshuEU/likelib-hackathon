@@ -3,6 +3,8 @@
 #include "base/log.hpp"
 #include "vm/host.hpp"
 
+#include <algorithm>
+#include <iterator>
 
 namespace
 {
@@ -12,6 +14,15 @@ bc::Address ethAddressToNative(const evmc::address& addr)
     base::Bytes raw_address(addr.bytes, 20);
     bc::Address address(raw_address);
     return address;
+}
+
+
+evmc::bytes32 bytesToEthBytes32(const base::Bytes& bytes) {
+    evmc::bytes32 ret;
+    for(std::size_t i = 0; i < bytes.size(); ++i) {
+        ret.bytes[i] = bytes[i];
+    }
+    return ret;
 }
 
 }
@@ -112,7 +123,7 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
 
     auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
     if(pending_from_account_balance != current_pending_balance.end()) {
-        auto current_from_account_balance = _account_manager.getBalance(tx.getFrom());
+        auto current_from_account_balance = _account_manager.getAccount(tx.getFrom()).getBalance();
         return pending_from_account_balance->second + current_from_account_balance >= tx.getAmount();
     }
     else {
@@ -147,7 +158,7 @@ bool Core::performTransaction(const bc::Transaction& tx)
 
 bc::Balance Core::getBalance(const bc::Address& address) const
 {
-    return _account_manager.getBalance(address);
+    return _account_manager.getAccount(address).getBalance();
 }
 
 
@@ -195,6 +206,7 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 
 //=====================================
 
+
 bool Core::account_exists(const evmc::address& addr) const noexcept
 {
     auto address = ethAddressToNative(addr);
@@ -206,13 +218,46 @@ evmc::bytes32 Core::get_storage(const evmc::address& addr, const evmc::bytes32& 
 {
     auto address = ethAddressToNative(addr);
     base::Bytes key(ethKey.bytes, 32);
-    return _account_manager.getAccount(address).getStorageValue(key);
+    auto storage_value = _account_manager.getAccount(address).getStorageValue(key).data;
+    return bytesToEthBytes32(storage_value);
 }
 
 
 evmc_storage_status Core::set_storage(
-        const evmc::address& addr, const evmc::bytes32& key, const evmc::bytes32& value) noexcept
-{}
+        const evmc::address& addr, const evmc::bytes32& ekey, const evmc::bytes32& evalue) noexcept
+{
+    static const base::Bytes NULL_VALUE(32);
+    auto address = ethAddressToNative(addr);
+    base::Bytes key(ekey.bytes, 32);
+    base::Bytes new_value(evalue.bytes, 32);
+
+    auto& account_state = _account_manager.getAccount(address);
+
+    if(!account_state.checkStorageValue(key)) {
+        if(new_value == NULL_VALUE) {
+            return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
+        }
+        else {
+            account_state.setStorageValue(key, new_value);
+            return evmc_storage_status::EVMC_STORAGE_ADDED;
+        }
+    }
+    else {
+        auto old_storage_data = account_state.getStorageValue(key);
+        const auto& old_value = old_storage_data.data;
+
+        account_state.setStorageValue(key, new_value);
+        if(old_value == new_value) {
+            return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
+        }
+        else if(new_value == NULL_VALUE) {
+            return evmc_storage_status::EVMC_STORAGE_DELETED;
+        }
+        else {
+            return evmc_storage_status::EVMC_STORAGE_MODIFIED;
+        }
+    }
+}
 
 
 evmc::uint256be Core::get_balance(const evmc::address& addr) const noexcept
@@ -220,7 +265,7 @@ evmc::uint256be Core::get_balance(const evmc::address& addr) const noexcept
     auto address = ethAddressToNative(addr);
     auto balance = getBalance(address);
     evmc::uint256be ret;
-    for(int i = 0; i < 32; ++i) ret.bytes[i] = 0;
+    std::fill(std::begin(ret.bytes), std::end(ret.bytes), 0);
     for(int i = sizeof(balance) * 8; i >= 0; --i) {
         ret.bytes[i] = balance & 0xFF;
         balance >>= 8;
@@ -232,17 +277,31 @@ evmc::uint256be Core::get_balance(const evmc::address& addr) const noexcept
 size_t Core::get_code_size(const evmc::address& addr) const noexcept
 {
     auto address = ethAddressToNative(addr);
-    
+    auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
+    return _account_manager.getCode(account_code_hash).size();
 }
 
 
 evmc::bytes32 Core::get_code_hash(const evmc::address& addr) const noexcept
-{}
+{
+    auto address = ethAddressToNative(addr);
+    auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
+    return bytesToEthBytes32(account_code_hash.getBytes());
+}
 
 
 size_t Core::copy_code(
         const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const noexcept
-{}
+{
+    auto address = ethAddressToNative(addr);
+    auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
+    const auto& code = _account_manager.getCode(account_code_hash);
+    std::size_t bytes_to_copy = std::min(buffer_size, code.size() - code_offset);
+    for(std::size_t i = 0; i < bytes_to_copy; ++i) {
+        buffer_data[i] = code[code_offset + i];
+    }
+    return bytes_to_copy;
+}
 
 
 void Core::selfdestruct(const evmc::address& addr, const evmc::address& beneficiary) noexcept

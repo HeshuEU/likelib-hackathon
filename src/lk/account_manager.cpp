@@ -13,6 +13,12 @@ std::uint64_t AccountState::getNonce() const noexcept
 }
 
 
+void AccountState::incNonce() noexcept
+{
+    ++_nonce;
+}
+
+
 bc::Balance AccountState::getBalance() const noexcept
 {
     return _balance;
@@ -58,10 +64,10 @@ bool AccountState::checkStorageValue(const base::Sha256& key) const
 }
 
 
-std::optional<std::reference_wrapper<const base::Bytes>> AccountState::getStorageValue(const base::Sha256& key) const
+AccountState::StorageData AccountState::getStorageValue(const base::Sha256& key) const
 {
     if(auto it = _storage.find(key); it == _storage.end()) {
-        return std::nullopt;
+        RAISE_ERROR(base::LogicError, "value was not found by a given key");
     }
     else {
         return it->second;
@@ -71,12 +77,10 @@ std::optional<std::reference_wrapper<const base::Bytes>> AccountState::getStorag
 
 void AccountState::setStorageValue(const base::Sha256& key, base::Bytes value)
 {
-    _storage[key] = std::move(value);
+    StorageData& sd = _storage[key];
+    sd.data = std::move(value);
+    sd.was_modified = true;
 }
-
-
-AccountManager::AccountManager(Core& core) : _core{core}
-{}
 
 
 void AccountManager::newAccount(const bc::Address& address, base::Bytes associated_code)
@@ -101,15 +105,39 @@ bool AccountManager::hasAccount(const bc::Address& address) const
 }
 
 
-bc::Balance AccountManager::getAccount(const bc::Address& address) const
+const AccountState& AccountManager::getAccount(const bc::Address& address) const
 {
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
     if(it == _states.end()) {
-        return bc::Balance{0};
+        RAISE_ERROR(base::LogicError, "cannot find given account");
     }
     else {
-        return it->second.getBalance();
+        return it->second;
+    }
+}
+
+
+AccountState& AccountManager::getAccount(const bc::Address& address)
+{
+    std::shared_lock lk(_rw_mutex);
+    auto it = _states.find(address);
+    if(it == _states.end()) {
+        RAISE_ERROR(base::LogicError, "cannot find given account");
+    }
+    else {
+        return it->second;
+    }
+}
+
+
+const base::Bytes& AccountManager::getCode(const base::Sha256& hash) const
+{
+    if(auto it = _code_db.find(hash); it == _code_db.end()) {
+        RAISE_ERROR(base::LogicError, "cannot find given hash in codes db");
+    }
+    else {
+        return it->second;
     }
 }
 
@@ -120,7 +148,7 @@ bool AccountManager::checkTransaction(const bc::Transaction& tx) const
     if(_states.find(tx.getFrom()) == _states.end()) {
         return false;
     }
-    return getBalance(tx.getFrom()) >= tx.getAmount();
+    return getAccount(tx.getFrom()).getBalance() >= tx.getAmount();
 }
 
 
@@ -146,7 +174,7 @@ void AccountManager::update(const bc::Transaction& tx)
     }
     else { // smart-contract TODO: divide on creation and call
         std::unique_lock lk(_rw_mutex);
-        auto& vm = _core.getVm();
+        //auto& vm = _core.getVm();
         auto contract = vm::SmartContract(base::Bytes());
     }
 }

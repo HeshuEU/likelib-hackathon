@@ -117,6 +117,17 @@ std::optional<Block> Blockchain::findBlock(const base::Sha256& block_hash) const
 }
 
 
+std::optional<base::Sha256> Blockchain::findBlockHashByDepth(bc::BlockDepth depth) const
+{
+    std::shared_lock lk(_blocks_mutex);
+    if(auto it = _blocks_by_depth.find(depth); it != _blocks_by_depth.end()) {
+        return it->second;
+    else {
+        return std::nullopt;
+    }
+}
+
+
 std::optional<bc::Transaction> Blockchain::findTransaction(const base::Sha256& tx_hash) const
 {
     std::shared_lock lk(_blocks_mutex);

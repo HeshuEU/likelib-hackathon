@@ -124,6 +124,7 @@ bool Transaction::operator!=(const Transaction& other) const
 void Transaction::sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv)
 {
     auto hash = hashOfTxData();
+    // TODO: do a better elliptic curve signature
     base::Bytes rsa_encrypted_hash = priv.encrypt(hash.getBytes());
     _sign = Sign{std::move(pub), rsa_encrypted_hash};
 }
