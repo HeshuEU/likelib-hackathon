@@ -22,6 +22,12 @@ Address::Address(const std::string_view& base64_address) : _address{base64_addre
 }
 
 
+Address::Address(const base::Bytes& raw_address) : _address{base::base64Encode(raw_address)}
+{
+    // TODO: check address length
+}
+
+
 const std::string& Address::getNullAddressString()
 {
     static const std::string null_address(32, '0');

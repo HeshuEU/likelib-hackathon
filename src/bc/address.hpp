@@ -14,6 +14,7 @@ class Address
     static Address fromPublicKey(const base::RsaPublicKey& pub);
     Address();
     Address(const std::string_view& base64_address);
+    Address(const base::Bytes& raw);
     Address(const Address& another) = default;
     Address(Address&& another) = default;
     Address& operator=(const Address& another) = default;
