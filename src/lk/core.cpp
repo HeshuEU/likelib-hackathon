@@ -3,12 +3,26 @@
 #include "base/log.hpp"
 #include "vm/host.hpp"
 
+
+namespace
+{
+
+bc::Address ethAddressToNative(const evmc::address& addr)
+{
+    base::Bytes raw_address(addr.bytes, 20);
+    bc::Address address(raw_address);
+    return address;
+}
+
+}
+
+
 namespace lk
 {
 
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
     : _config{config}, _vault{key_vault}, _blockchain{_config}, _network{_config, *this},
-      _host_impl{}, _vm{vm::VM::load(_host_impl)}
+      _vm{vm::VM::load(*this)}
 {
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
@@ -143,6 +157,12 @@ const bc::Block& Core::getTopBlock() const
 }
 
 
+vm::VM& Core::getVm()
+{
+    return _vm;
+}
+
+
 base::Bytes Core::getThisNodeAddress() const
 {
     return _vault.getPublicKey().toBytes();
@@ -171,6 +191,81 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 {
     _event_new_pending_transaction.subscribe(std::move(callback));
 }
+
+
+//=====================================
+
+bool Core::account_exists(const evmc::address& addr) const noexcept
+{
+    auto address = ethAddressToNative(addr);
+    return _account_manager.hasAccount(address)
+}
+
+
+evmc::bytes32 Core::get_storage(const evmc::address& addr, const evmc::bytes32& ethKey) const noexcept
+{
+    auto address = ethAddressToNative(addr);
+    base::Bytes key(ethKey.bytes, 32);
+    return _account_manager.getAccount(address).getStorageValue(key);
+}
+
+
+evmc_storage_status Core::set_storage(
+        const evmc::address& addr, const evmc::bytes32& key, const evmc::bytes32& value) noexcept
+{}
+
+
+evmc::uint256be Core::get_balance(const evmc::address& addr) const noexcept
+{
+    auto address = ethAddressToNative(addr);
+    auto balance = getBalance(address);
+    evmc::uint256be ret;
+    for(int i = 0; i < 32; ++i) ret.bytes[i] = 0;
+    for(int i = sizeof(balance) * 8; i >= 0; --i) {
+        ret.bytes[i] = balance & 0xFF;
+        balance >>= 8;
+    }
+    return ret;
+}
+
+
+size_t Core::get_code_size(const evmc::address& addr) const noexcept
+{
+    auto address = ethAddressToNative(addr);
+    
+}
+
+
+evmc::bytes32 Core::get_code_hash(const evmc::address& addr) const noexcept
+{}
+
+
+size_t Core::copy_code(
+        const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const noexcept
+{}
+
+
+void Core::selfdestruct(const evmc::address& addr, const evmc::address& beneficiary) noexcept
+{}
+
+
+evmc::result Core::call(const evmc_message& msg) noexcept
+{}
+
+
+evmc_tx_context Core::get_tx_context() const noexcept
+{}
+
+
+evmc::bytes32 Core::get_block_hash(int64_t block_number) const noexcept
+{}
+
+
+void Core::emit_log(const evmc::address& addr, const uint8_t* data, size_t data_size,
+                                  const evmc::bytes32 topics[], size_t num_topics) noexcept
+{}
+
+//===========================
 
 
 } // namespace lk

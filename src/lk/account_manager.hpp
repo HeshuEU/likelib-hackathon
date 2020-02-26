@@ -21,7 +21,8 @@ class AccountState
     void addBalance(bc::Balance delta);
     void subBalance(bc::Balance delta);
 
-    const base::Bytes& getCode() const noexcept;
+    const base::Sha256& getCodeHash() const noexcept;
+    void setCodeHash(base::Sha256 code_hash);
 
     bool checkStorageValue(const base::Sha256& key) const;
     std::optional<std::reference_wrapper<const base::Bytes>> getStorageValue(const base::Sha256& key) const;
@@ -30,7 +31,7 @@ class AccountState
   private:
     std::uint64_t _nonce;
     bc::Balance _balance;
-    base::Bytes _code;
+    base::Sha256 _code_hash{ base::Sha256::null() };
     std::map<base::Sha256, base::Bytes> _storage;
 };
 
@@ -39,7 +40,7 @@ class AccountManager
 {
   public:
     //================
-    explicit AccountManager() = default;
+    explicit AccountManager(Core& core);
     AccountManager(const AccountManager& hash) = delete;
     AccountManager(AccountManager&& hash) = delete;
 
@@ -47,14 +48,18 @@ class AccountManager
     AccountManager& operator=(AccountManager&& another) = delete;
     ~AccountManager() = default;
     //================
+    void newAccount(const bc::Address& address, base::Bytes associated_code);
+    bool hasAccount(const bc::Address& address) const;
+    //================
     bool checkTransaction(const bc::Transaction& tx) const;
     void update(const bc::Transaction& tx);
     void update(const bc::Block& block);
     void updateFromGenesis(const bc::Block& block);
-    bc::Balance getBalance(const bc::Address& address) const;
+    const AccountState& getAccount(const bc::Address& address) const;
     //================
   private:
     //================
+    Core& _core;
     std::map<bc::Address, AccountState> _states;
     std::map<base::Sha256, base::Bytes> _code_db;
     mutable std::shared_mutex _rw_mutex;

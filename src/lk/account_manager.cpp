@@ -1,6 +1,7 @@
 #include "account_manager.hpp"
 
 #include "base/error.hpp"
+#include "lk/core.hpp"
 
 namespace lk
 {
@@ -24,7 +25,6 @@ void AccountState::setBalance(bc::Balance new_balance)
 }
 
 
-
 void AccountState::addBalance(bc::Balance delta)
 {
     _balance += delta;
@@ -40,9 +40,15 @@ void AccountState::subBalance(bc::Balance delta)
 }
 
 
-const base::Bytes& AccountState::getCode() const noexcept
+const base::Sha256& AccountState::getCodeHash() const noexcept
 {
-    return _code;
+    return _code_hash;
+}
+
+
+void AccountState::setCodeHash(base::Sha256 code_hash)
+{
+    _code_hash = std::move(code_hash);
 }
 
 
@@ -69,18 +75,40 @@ void AccountState::setStorageValue(const base::Sha256& key, base::Bytes value)
 }
 
 
-bc::Balance AccountManager::getBalance(const bc::Address& address) const
+AccountManager::AccountManager(Core& core) : _core{core}
+{}
+
+
+void AccountManager::newAccount(const bc::Address& address, base::Bytes associated_code)
 {
-    LOG_CURRENT_FUNCTION << "with address = " << address;
-    LOG_CURRENT_FUNCTION << "acquiring shared lock";
+    if(hasAccount(address)) {
+        RAISE_ERROR(base::LogicError, "address already exists");
+    }
+    auto code_hash = (associated_code.isEmpty() ? base::Sha256::null() : base::Sha256::compute(associated_code));
+    if(auto it = _code_db.find(code_hash); it == _code_db.end()) {
+        _code_db[code_hash] = std::move(associated_code);
+    }
+
+    AccountState state;
+    state.setCodeHash(code_hash);
+    _states[address] = std::move(state);
+}
+
+
+bool AccountManager::hasAccount(const bc::Address& address) const
+{
+    return _states.find(address) != _states.end();
+}
+
+
+bc::Balance AccountManager::getAccount(const bc::Address& address) const
+{
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
     if(it == _states.end()) {
-        LOG_CURRENT_FUNCTION << "address not found, return 0";
         return bc::Balance{0};
     }
     else {
-        LOG_CURRENT_FUNCTION << "return " << it->second.getBalance();
         return it->second.getBalance();
     }
 }
@@ -98,7 +126,7 @@ bool AccountManager::checkTransaction(const bc::Transaction& tx) const
 
 void AccountManager::update(const bc::Transaction& tx)
 {
-    if(tx.getCodeHash() == base::Sha256::null()) {
+    if(tx.getCodeHash() == base::Sha256::null()) { // ordinary tx
         std::unique_lock lk(_rw_mutex);
         auto from_iter = _states.find(tx.getFrom());
 
@@ -116,8 +144,10 @@ void AccountManager::update(const bc::Transaction& tx)
             _states.insert({tx.getTo(), std::move(to_state)});
         }
     }
-    else {
+    else { // smart-contract TODO: divide on creation and call
         std::unique_lock lk(_rw_mutex);
+        auto& vm = _core.getVm();
+        auto contract = vm::SmartContract(base::Bytes());
     }
 }
 
