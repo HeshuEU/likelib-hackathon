@@ -36,14 +36,13 @@ message TestResponse {
 //=====================================
 
 message TransactionMessageCallRequest {
-    uint64 nonce = 1;
-    Address from = 2;
-    Address to = 3;
-    Money value = 4;
-    Money gas = 5;
-    Time creation_time = 6;
-    string data = 7;
-    string signature = 8;
+    Address from = 1;
+    Address to = 2;
+    Money value = 3;
+    Money gas = 4;
+    Time creation_time = 5;
+    string data = 6;
+    string signature = 7;
 }
 
 message TransactionMessageCallResponse {
@@ -55,14 +54,13 @@ message TransactionMessageCallResponse {
 //=====================================
 
 message TransactionCreateContractRequest {
-    uint64 nonce = 1;
-    Address from = 2;
-    Money value = 3;
-    Money gas = 4;
-    Time creation_time = 5;
-    string contract_code = 6;
-    string init = 7;
-    string signature = 8;
+    Address from = 1;
+    Money value = 2;
+    Money gas = 3;
+    Time creation_time = 4;
+    string contract_code = 5;
+    string init = 6;
+    string signature = 7;
 }
 
 message TransactionCreateContractResponse {
