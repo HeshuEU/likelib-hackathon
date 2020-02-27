@@ -304,9 +304,7 @@ size_t Core::copy_code(
     auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
     const auto& code = _account_manager.getCode(account_code_hash);
     std::size_t bytes_to_copy = std::min(buffer_size, code.size() - code_offset);
-    for(std::size_t i = 0; i < bytes_to_copy; ++i) {
-        buffer_data[i] = code[code_offset + i];
-    }
+    std::copy(code.toArray() + code_offset, code.toArray() + code_offset + bytes_to_copy, buffer_data);
     return bytes_to_copy;
 }
 
