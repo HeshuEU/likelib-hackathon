@@ -4,10 +4,4 @@ namespace vm
 {
 
 
-HostImplementation::HostImplementation()
-{}
-
-
-
-
 } // namespace vm
