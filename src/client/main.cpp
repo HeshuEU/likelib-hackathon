@@ -186,8 +186,8 @@ int transfer(base::SubprogramRouter& router)
         txb.setFee(fee);
         auto tx = std::move(txb).build();
         tx.sign(public_key, private_key);
-        auto result = client.transaction_to_wallet(
-            tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getFee(), tx.getTimestamp(), tx.getSign());
+        auto [status, result, gas_left] = client.transaction_message_call(
+            tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
         std::cout << result << std::endl;
         LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;
@@ -280,7 +280,7 @@ int testConnection(base::SubprogramRouter& router)
 }
 
 
-int pushContract(base::SubprogramRouter& router)
+int createContract(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "rpc_config json file path");
@@ -325,11 +325,10 @@ int pushContract(base::SubprogramRouter& router)
                 return base::config::EXIT_FAIL;
             }
         }
-        base::Bytes contract;
+        std::string contract;
         try {
             auto compiled_code = base::readConfig(file_path);
-            auto contract_data = compiled_code.get<std::string>("object");
-            contract = base::Bytes::fromHex(contract_data);
+            contract = compiled_code.get<std::string>("object");
         }
         catch(const base::InaccessibleFile& er) {
             std::cout << "File no found by path: " << file_path << std::endl;
@@ -370,22 +369,18 @@ int pushContract(base::SubprogramRouter& router)
             gas = helper.getValue<bc::Balance>("gas", "gas count to evaluate contract initialization");
         }
         //====================================
-        std::string message_data;
+        std::string message;
         if(router.optionsParser()->hasOption(INITIAL_MESSAGE_OPTION)) {
-            message_data = router.optionsParser()->getValue<std::string>(INITIAL_MESSAGE_OPTION);
+            message = router.optionsParser()->getValue<std::string>(INITIAL_MESSAGE_OPTION);
         }
         else {
-            message_data = helper.getValue<std::string>("messages", "message for initialization smart contract");
+            message = helper.getValue<std::string>("messages", "message for initialization smart contract");
         }
-        base::Bytes message = base::Bytes::fromHex(message_data);
         //====================================
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
 
-        rpc::OperationStatus status = rpc::OperationStatus::createFailed();
-        bc::Address contract_address;
-        bc::Balance gas_left;
-        std::tie(status, contract_address, gas_left) = client.transaction_creation_contract(
+        auto [status, contract_address, gas_left] = client.transaction_create_contract(
             amount, bc::Address{from_address}, base::Time::now(), gas, contract, message, bc::Sign{});
 
         if(status) {
@@ -425,7 +420,7 @@ int pushContract(base::SubprogramRouter& router)
 }
 
 
-int messageToContract(base::SubprogramRouter& router)
+int messageCall(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
     router.optionsParser()->addOption<std::string>(CONFIG_OPTION, DEFAULT_CONFIG_PATH, "rpc_config json file path");
@@ -491,25 +486,23 @@ int messageToContract(base::SubprogramRouter& router)
             gas = helper.getValue<bc::Balance>("gas", "gas count to evaluate contract message");
         }
         //====================================
-        std::string message_data;
+        std::string message;
         if(router.optionsParser()->hasOption(MESSAGE_OPTION)) {
-            message_data = router.optionsParser()->getValue<std::string>(MESSAGE_OPTION);
+            message = router.optionsParser()->getValue<std::string>(MESSAGE_OPTION);
         }
         else {
-            message_data = helper.getValue<std::string>("messages", "compiled message to smart contract");
+            message = helper.getValue<std::string>("messages", "compiled message to smart contract");
         }
-        base::Bytes message = base::Bytes::fromHex(message_data);
         //====================================
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
 
-        auto [status, contract_response, gas_left] = client.transaction_to_contract(
+        auto [status, contract_response, gas_left] = client.transaction_message_call(
             amount, bc::Address{from_address}, bc::Address{to_address}, base::Time::now(), gas, message, bc::Sign{});
 
         if(status) {
             std::cout << "Remote call of smart contract call success -> [" << status.getMessage()
-                      << "], contract response[" << contract_response.toHex() << "], gas left[" << gas_left << "]"
-                      << std::endl;
+                      << "], contract response[" << contract_response << "], gas left[" << gas_left << "]" << std::endl;
             return base::config::EXIT_OK;
         }
         else {
@@ -716,9 +709,9 @@ int main(int argc, char** argv)
         router.addSubprogram("get_balance", "use for get balance from remote by account address", getBalance);
         router.addSubprogram("transfer", "use transfer balance from one address to another address", transfer);
         router.addSubprogram("test", "test RPC connection", testConnection);
-        router.addSubprogram("push_contract", "load smart contract code to push to blockchain network", pushContract);
-        router.addSubprogram("message_to_contract", "create message to call smart contract ", messageToContract);
-        router.addSubprogram("compile", "compile smart contract ", compileCode);
+        router.addSubprogram("create_contract", "deploy a smart contract", createContract);
+        router.addSubprogram("message_call", "create message to call smart contract", messageCall);
+        router.addSubprogram("compile", "compile smart contract", compileCode);
 
         return router.process(argc, argv);
     }

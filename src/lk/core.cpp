@@ -48,7 +48,8 @@ const bc::Block& Core::getGenesisBlock()
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address;
         ret.addTransaction({null_address, bc::Address{"UTpE8/SckOrfV4Fn/Gi3jmLEOVI="}, bc::Balance{0xFFFFFFFF}, 0,
-            base::Time::fromSecondsSinceEpochBeginning(0), base::Sha256::null(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}});
+            base::Time::fromSecondsSinceEpochBeginning(0), base::Sha256::null(), bc::Transaction::Type::MESSAGE_CALL,
+            base::Bytes{}});
         return ret;
     }();
     return genesis;
@@ -360,21 +361,15 @@ void Core::emit_log(const evmc::address& addr, const uint8_t* data, size_t data_
 
 //===========================
 
-void Core::createContract(bc::Balance amount,
-                    const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas, const base::Bytes& code,
-                    const base::Bytes& initial_message, const bc::Sign& signature)
-{
-
-}
+void Core::createContract(bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time,
+    bc::Balance gas, const base::Bytes& code, const base::Bytes& initial_message, const bc::Sign& signature)
+{}
 
 
 
-void Core::callMessage(bc::Balance amount,
-                 const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time,
-                 bc::Balance gas, const base::Bytes& message, const bc::Sign& signature)
-{
-
-}
+void Core::callMessage(bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
+    const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message, const bc::Sign& signature)
+{}
 
 
 //===========================

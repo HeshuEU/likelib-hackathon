@@ -67,8 +67,8 @@ grpc::Status GrpcAdapter::balance(
 }
 
 
-grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
-    const likelib::TransactionToContractRequest* request, likelib::TransactionToContractResponse* response)
+grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
+    const likelib::TransactionMessageCallRequest* request, likelib::TransactionMessageCallResponse* response)
 {
     LOG_DEBUG << "get RPC call at transaction_to_contract method from: " << context->peer();
     try {
@@ -77,16 +77,16 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
         auto to_address = bc::Address{request->to().address()};
         auto gas = bc::Balance{request->gas().money()};
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
-        auto message = base::base64Decode(request->contract_request().message());
+        auto data = request->data();
 
         auto status = OperationStatus::createSuccess();
-        base::Bytes contract_response;
+        std::string contract_response;
         bc::Balance least_gas;
-        std::tie(status, contract_response, least_gas) = _service->transaction_to_contract(
-            amount, from_address, to_address, creation_time, gas, message, bc::Sign{});
+        std::tie(status, contract_response, least_gas) =
+            _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, bc::Sign{});
 
         convert(status, response->mutable_status());
-        response->mutable_contract_response()->set_message(base::base64Encode(contract_response));
+        response->set_contract_response(contract_response);
         response->mutable_gas_left()->set_money(least_gas);
     }
     catch(const base::Error& e) {
@@ -98,9 +98,8 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
 }
 
 
-::grpc::Status GrpcAdapter::transaction_for_create_contract(::grpc::ServerContext* context,
-    const ::likelib::TransactionCreationContractRequest* request,
-    ::likelib::TransactionCreationContractResponse* response)
+::grpc::Status GrpcAdapter::create_contract(::grpc::ServerContext* context,
+    const ::likelib::TransactionCreateContractRequest* request, ::likelib::TransactionCreateContractResponse* response)
 {
     LOG_DEBUG << "get RPC call at transaction_for_create_contract method from: " << context->peer();
     try {
@@ -108,43 +107,18 @@ grpc::Status GrpcAdapter::transaction_to_contract(grpc::ServerContext* context,
         auto from_address = bc::Address{request->from().address()};
         auto gas = bc::Balance{request->gas().money()};
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
-        auto contract_code = base::base64Decode(request->contract().bytecode());
-        auto initial_message = base::base64Decode(request->initial_message().message());
+        auto contract_code = request->contract_code();
+        auto init = request->init();
 
         auto status = OperationStatus::createSuccess();
         bc::Address contract_address;
         bc::Balance least_gas;
-        std::tie(status, contract_address, least_gas) = _service->transaction_creation_contract(
-            amount, from_address, creation_time, gas, contract_code, initial_message, bc::Sign{});
+        std::tie(status, contract_address, least_gas) = _service->transaction_create_contract(
+            amount, from_address, creation_time, gas, contract_code, init, bc::Sign{});
 
         convert(status, response->mutable_status());
         response->mutable_contract_address()->set_address(contract_address.toString());
         response->mutable_gas_left()->set_money(least_gas);
-    }
-    catch(const base::Error& e) {
-        LOG_ERROR << e.what();
-        return ::grpc::Status::CANCELLED;
-    }
-
-    return ::grpc::Status::OK;
-}
-
-
-grpc::Status GrpcAdapter::transaction_to_wallet(grpc::ServerContext* context,
-    const likelib::TransactionToAccountRequest* request, likelib::TransactionToAccountResponse* response)
-{
-    LOG_DEBUG << "get RPC call at transaction_to_wallet method from: " << context->peer();
-    try {
-        auto amount = bc::Balance{request->value().money()};
-        auto from_address = bc::Address{request->from().address()};
-        auto to_address = bc::Address{request->to().address()};
-        auto fee = bc::Balance{request->fee().money()};
-        auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
-        auto signature = base::fromBytes<bc::Sign>(base::base64Decode(request->signature().signature()));
-
-        auto status = _service->transaction_to_wallet(amount, from_address, to_address, fee, creation_time, signature);
-
-        convert(status, response->mutable_status());
     }
     catch(const base::Error& e) {
         LOG_ERROR << e.what();

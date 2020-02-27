@@ -52,57 +52,39 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
     }
 }
 
-std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_creation_contract(
+std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_create_contract(
     bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
-    const base::Bytes& code, const base::Bytes& initial_message, const bc::Sign& signature)
+    const std::string& contract_code, const std::string& init, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString() << "], amount["
-              << amount << "], gas" << gas << "], code[" << code.toHex() << "], transaction_time["
-              << transaction_time.getSecondsSinceEpochBeginning() << "], initial_message[" << initial_message.toHex()
-              << "]";
+              << amount << "], gas" << gas << "], code[" << contract_code << "], transaction_time["
+              << transaction_time.getSecondsSinceEpochBeginning() << "], initial_message[" << init << "]";
 
-    if(_core.createContract(from_address, amount, gas, transaction_time, bc::Transaction::Type::MESSAGE_CALL, initial_message, signature))
+    /*if(_core.createContract(from_address, amount, gas, transaction_time, bc::Transaction::Type::MESSAGE_CALL, init,
+    signature))
     {
 
-    }
+    }*/
 
     return {rpc::OperationStatus::createFailed("Function is not supported"), bc::Address{}, gas};
 }
 
-std::tuple<rpc::OperationStatus, base::Bytes, bc::Balance> GeneralServerService::transaction_to_contract(
+
+std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService::transaction_message_call(
     bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-    const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message, const bc::Sign& signature)
+    const base::Time& transaction_time, bc::Balance gas, const std::string& message, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
-              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "], message["
-              << message.toHex() << "]";
+              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "], message[" << message
+              << "]";
 
-    if(_core.callMessage(bc::Transaction(from_address, to_address, amount, gas, transaction_time, base::Sha256::null(),
-                                         bc::Transaction::Type::MESSAGE_CALL, message, signature))) {
+    /*if(_core.callMessage(bc::Transaction(from_address, to_address, amount, gas, transaction_time,
+    base::Sha256::null(), bc::Transaction::Type::MESSAGE_CALL, message, signature))) {
 
-    }
+    }*/
 
-    return {rpc::OperationStatus::createFailed("Function is not support"), base::Bytes{}, gas};
-}
-
-rpc::OperationStatus GeneralServerService::transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const bc::Sign& signature)
-{
-    LOG_TRACE << "Node received in {transaction_to_wallet}: from_address[" << from_address.toString()
-              << "], to_address[" << to_address.toString() << "], amount[" << amount << "], fee" << fee
-              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "]";
-
-    LOG_DEBUG << "Hash of received public key: " << base::Sha256::compute(signature.getPublicKey().toBytes());
-
-    if(_core.performTransaction(
-           bc::Transaction(from_address, to_address, amount, fee, transaction_time, base::Sha256::null(),
-                   bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}, signature))) {
-        return rpc::OperationStatus::createSuccess("Success! Transaction added to queue successfully.");
-    }
-    else {
-        return rpc::OperationStatus::createFailed("Error! Transaction rejected.");
-    }
+    return {rpc::OperationStatus::createFailed("Function is not support"), std::string{}, gas};
 }
 
 } // namespace node

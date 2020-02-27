@@ -51,12 +51,10 @@ class Core : public evmc::Host
     base::Bytes getThisNodeAddress() const;
     //==================
     vm::VM& getVm();
-    void createContract(bc::Balance amount,
-                         const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas, const base::Bytes& code,
-                         const base::Bytes& initial_message, const bc::Sign& signature);
-    void callMessage(bc::Balance amount,
-                     const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time,
-                     bc::Balance gas, const base::Bytes& message, const bc::Sign& signature);
+    void createContract(bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time,
+        bc::Balance gas, const base::Bytes& code, const base::Bytes& initial_message, const bc::Sign& signature);
+    void callMessage(bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
+        const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message, const bc::Sign& signature);
     //==================
     bool account_exists(const evmc::address& addr) const noexcept override;
 

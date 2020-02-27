@@ -21,6 +21,9 @@ class Sign
     [[nodiscard]] const base::RsaPublicKey& getPublicKey() const;
     [[nodiscard]] const base::Bytes& getRsaEncryptedHash() const;
 
+    static Sign fromBase64(const std::string& base64_signature);
+    std::string toBase64() const;
+
     void serialize(base::SerializationOArchive& oa) const;
     static Sign deserialize(base::SerializationIArchive& ia);
 
