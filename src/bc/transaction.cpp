@@ -61,10 +61,10 @@ Sign Sign::deserialize(base::SerializationIArchive& ia)
 }
 
 
-Transaction::Transaction(
-    bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp, base::Sha256 code_hash, bc::Sign sign)
-    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee}, _timestamp{timestamp}, _code_hash{std::move(code_hash)},
-      _sign{std::move(sign)}
+Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp,
+    base::Sha256 code_hash, bc::Sign sign)
+    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee}, _timestamp{timestamp},
+      _code_hash{std::move(code_hash)}, _sign{std::move(sign)}
 {
     if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
@@ -258,7 +258,8 @@ Transaction TransactionBuilder::build() &&
     ASSERT(_fee);
     ASSERT(_timestamp);
     ASSERT(_code_hash);
-    return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_fee), std::move(*_timestamp), std::move(*_code_hash)};
+    return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_fee), std::move(*_timestamp),
+        std::move(*_code_hash)};
 }
 
 

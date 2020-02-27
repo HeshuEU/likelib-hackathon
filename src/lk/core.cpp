@@ -17,7 +17,8 @@ bc::Address ethAddressToNative(const evmc::address& addr)
 }
 
 
-evmc::bytes32 bytesToEthBytes32(const base::Bytes& bytes) {
+evmc::bytes32 bytesToEthBytes32(const base::Bytes& bytes)
+{
     evmc::bytes32 ret;
     for(std::size_t i = 0; i < bytes.size(); ++i) {
         ret.bytes[i] = bytes[i];
@@ -25,15 +26,14 @@ evmc::bytes32 bytesToEthBytes32(const base::Bytes& bytes) {
     return ret;
 }
 
-}
+} // namespace
 
 
 namespace lk
 {
 
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
-    : _config{config}, _vault{key_vault}, _blockchain{_config}, _network{_config, *this},
-      _vm{vm::VM::load(*this)}
+    : _config{config}, _vault{key_vault}, _blockchain{_config}, _network{_config, *this}, _vm{vm::VM::load(*this)}
 {
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
@@ -48,7 +48,7 @@ const bc::Block& Core::getGenesisBlock()
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address;
         ret.addTransaction({null_address, bc::Address{"UTpE8/SckOrfV4Fn/Gi3jmLEOVI="}, bc::Balance{0xFFFFFFFF}, 0,
-                            base::Time::fromSecondsSinceEpochBeginning(0), base::Sha256::null()});
+            base::Time::fromSecondsSinceEpochBeginning(0), base::Sha256::null()});
         return ret;
     }();
     return genesis;
@@ -226,7 +226,7 @@ evmc::bytes32 Core::get_storage(const evmc::address& addr, const evmc::bytes32& 
 
 
 evmc_storage_status Core::set_storage(
-        const evmc::address& addr, const evmc::bytes32& ekey, const evmc::bytes32& evalue) noexcept
+    const evmc::address& addr, const evmc::bytes32& ekey, const evmc::bytes32& evalue) noexcept
 {
     LOG_DEBUG << "Core::set_storage";
     static const base::Bytes NULL_VALUE(32);
@@ -296,8 +296,8 @@ evmc::bytes32 Core::get_code_hash(const evmc::address& addr) const noexcept
 }
 
 
-size_t Core::copy_code(
-        const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const noexcept
+size_t Core::copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
+    noexcept
 {
     LOG_DEBUG << "Core::copy_code";
     auto address = ethAddressToNative(addr);
@@ -335,8 +335,8 @@ evmc::bytes32 Core::get_block_hash(int64_t block_number) const noexcept
 }
 
 
-void Core::emit_log(const evmc::address& addr, const uint8_t* data, size_t data_size,
-                                  const evmc::bytes32 topics[], size_t num_topics) noexcept
+void Core::emit_log(const evmc::address& addr, const uint8_t* data, size_t data_size, const evmc::bytes32 topics[],
+    size_t num_topics) noexcept
 {
     LOG_DEBUG << "Core::emit_log";
     LOG_WARNING << "emit_log is denied. For more information, see docs";

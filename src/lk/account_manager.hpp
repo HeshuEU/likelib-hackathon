@@ -41,7 +41,7 @@ class AccountState
   private:
     std::uint64_t _nonce;
     bc::Balance _balance;
-    base::Sha256 _code_hash{ base::Sha256::null() };
+    base::Sha256 _code_hash{base::Sha256::null()};
     std::map<base::Sha256, StorageData> _storage;
 };
 

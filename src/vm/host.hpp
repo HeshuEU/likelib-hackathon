@@ -4,12 +4,8 @@
 
 namespace lk
 {
-    class Core;
+class Core;
 }
 
 namespace vm
-{
-
-
-
-} // namespace vm
+{} // namespace vm

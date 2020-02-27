@@ -158,15 +158,16 @@ void AccountManager::update(const bc::Transaction& tx)
         std::unique_lock lk(_rw_mutex);
         auto from_iter = _states.find(tx.getFrom());
 
-        if (from_iter == _states.end() || from_iter->second.getBalance() < tx.getAmount()) {
+        if(from_iter == _states.end() || from_iter->second.getBalance() < tx.getAmount()) {
             RAISE_ERROR(base::LogicError, "account doesn't have enough funds to perform the operation");
         }
 
-        auto &from_state = from_iter->second;
+        auto& from_state = from_iter->second;
         from_state.subBalance(tx.getAmount());
-        if (auto to_iter = _states.find(tx.getTo()); to_iter != _states.end()) {
+        if(auto to_iter = _states.find(tx.getTo()); to_iter != _states.end()) {
             to_iter->second.addBalance(tx.getAmount());
-        } else {
+        }
+        else {
             AccountState to_state;
             to_state.setBalance(tx.getAmount());
             _states.insert({tx.getTo(), std::move(to_state)});
@@ -174,7 +175,7 @@ void AccountManager::update(const bc::Transaction& tx)
     }
     else { // smart-contract TODO: divide on creation and call
         std::unique_lock lk(_rw_mutex);
-        //auto& vm = _core.getVm();
+        // auto& vm = _core.getVm();
         auto contract = vm::SmartContract(base::Bytes());
     }
 }

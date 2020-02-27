@@ -1,7 +1,4 @@
 #include "host.hpp"
 
 namespace vm
-{
-
-
-} // namespace vm
+{} // namespace vm
