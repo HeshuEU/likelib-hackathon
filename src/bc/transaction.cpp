@@ -62,9 +62,9 @@ Sign Sign::deserialize(base::SerializationIArchive& ia)
 
 
 Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp,
-    base::Sha256 code_hash, bc::Sign sign)
+    base::Sha256 code_hash, Transaction::Type transaction_type, base::Bytes data, bc::Sign sign)
     : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee}, _timestamp{timestamp},
-      _code_hash{std::move(code_hash)}, _sign{std::move(sign)}
+      _code_hash{std::move(code_hash)}, _tx_type{transaction_type}, _data{std::move(data)}, _sign{std::move(sign)}
 {
     if(_amount == 0) {
         RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
@@ -111,7 +111,7 @@ const base::Sha256& Transaction::getCodeHash() const noexcept
 bool Transaction::operator==(const Transaction& other) const
 {
     return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp &&
-        _fee == other._fee;
+        _fee == other._fee && _tx_type == other._tx_type && _data == other._data;
 }
 
 
@@ -164,6 +164,9 @@ void Transaction::serializeHeader(base::SerializationOArchive& oa) const
     oa.serialize(_amount);
     oa.serialize(_fee);
     oa.serialize(_timestamp);
+    oa.serialize(_code_hash);
+    oa.serialize(_tx_type);
+    oa.serialize(_data);
 }
 
 
@@ -183,8 +186,10 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
     auto fee = ia.deserialize<bc::Balance>();
     auto timestamp = ia.deserialize<base::Time>();
     auto code_hash = ia.deserialize<base::Sha256>();
+    auto tx_type = ia.deserialize<Type>();
+    auto data = ia.deserialize<base::Bytes>();
     auto sign = ia.deserialize<bc::Sign>();
-    return {std::move(from), std::move(to), balance, fee, timestamp, std::move(code_hash), std::move(sign)};
+    return {std::move(from), std::move(to), balance, fee, timestamp, std::move(code_hash), tx_type, std::move(data), std::move(sign)};
 }
 
 
@@ -246,7 +251,9 @@ Transaction TransactionBuilder::build() const&
     ASSERT(_fee);
     ASSERT(_timestamp);
     ASSERT(_code_hash);
-    return {*_from, *_to, *_amount, *_fee, *_timestamp, *_code_hash};
+    ASSERT(_tx_type);
+    ASSERT(_data);
+    return {*_from, *_to, *_amount, *_fee, *_timestamp, *_code_hash, *_tx_type, *_data};
 }
 
 
@@ -259,7 +266,7 @@ Transaction TransactionBuilder::build() &&
     ASSERT(_timestamp);
     ASSERT(_code_hash);
     return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_fee), std::move(*_timestamp),
-        std::move(*_code_hash)};
+        std::move(*_code_hash), std::move(*_tx_type), std::move(*_data)};
 }
 
 

@@ -61,6 +61,11 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
               << transaction_time.getSecondsSinceEpochBeginning() << "], initial_message[" << initial_message.toHex()
               << "]";
 
+    if(_core.createContract(from_address, amount, gas, transaction_time, bc::Transaction::Type::MESSAGE_CALL, initial_message, signature))
+    {
+
+    }
+
     return {rpc::OperationStatus::createFailed("Function is not supported"), bc::Address{}, gas};
 }
 
@@ -72,6 +77,11 @@ std::tuple<rpc::OperationStatus, base::Bytes, bc::Balance> GeneralServerService:
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
               << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "], message["
               << message.toHex() << "]";
+
+    if(_core.callMessage(bc::Transaction(from_address, to_address, amount, gas, transaction_time, base::Sha256::null(),
+                                         bc::Transaction::Type::MESSAGE_CALL, message, signature))) {
+
+    }
 
     return {rpc::OperationStatus::createFailed("Function is not support"), base::Bytes{}, gas};
 }
@@ -86,7 +96,8 @@ rpc::OperationStatus GeneralServerService::transaction_to_wallet(bc::Balance amo
     LOG_DEBUG << "Hash of received public key: " << base::Sha256::compute(signature.getPublicKey().toBytes());
 
     if(_core.performTransaction(
-           bc::Transaction(from_address, to_address, amount, fee, transaction_time, base::Sha256::null(), signature))) {
+           bc::Transaction(from_address, to_address, amount, fee, transaction_time, base::Sha256::null(),
+                   bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}, signature))) {
         return rpc::OperationStatus::createSuccess("Success! Transaction added to queue successfully.");
     }
     else {

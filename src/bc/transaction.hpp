@@ -39,8 +39,14 @@ class Transaction
 {
   public:
     //=================
+    enum class Type : std::uint8_t
+    {
+        MESSAGE_CALL,
+        CONTRACT_CREATION,
+    };
+    //=================
     Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp,
-        base::Sha256 code_hash, bc::Sign sign = bc::Sign{});
+        base::Sha256 code_hash, Type transaction_type, base::Bytes data, bc::Sign sign = bc::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -75,6 +81,8 @@ class Transaction
     bc::Balance _fee;
     base::Time _timestamp;
     base::Sha256 _code_hash;
+    Type _tx_type;
+    base::Bytes _data;
     bc::Sign _sign;
     //=================
     void serializeHeader(base::SerializationOArchive& oa) const;
@@ -94,6 +102,8 @@ class TransactionBuilder
     void setTimestamp(base::Time timestamp);
     void setFee(bc::Balance fee);
     void setCodeHash(base::Sha256 code_hash);
+    void setTransactionType(Transaction::Type transaction_type);
+    void setData(base::Bytes data);
 
     [[nodiscard]] Transaction build() const&;
     [[nodiscard]] Transaction build() &&;
@@ -105,6 +115,8 @@ class TransactionBuilder
     std::optional<base::Time> _timestamp;
     std::optional<bc::Balance> _fee;
     std::optional<base::Sha256> _code_hash;
+    std::optional<Transaction::Type> _tx_type;
+    std::optional<base::Bytes> _data;
 };
 
 } // namespace bc
