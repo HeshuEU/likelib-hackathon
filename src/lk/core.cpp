@@ -309,9 +309,15 @@ size_t Core::copy_code(const evmc::address& addr, size_t code_offset, uint8_t* b
 }
 
 
-void Core::selfdestruct(const evmc::address& addr, const evmc::address& beneficiary) noexcept
+void Core::selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept
 {
     LOG_DEBUG << "Core::selfdestruct";
+    auto address = ethAddressToNative(eaddr);
+    auto account = _account_manager.getAccount(address);
+    auto beneficiary_address = ethAddressToNative(ebeneficiary);
+    auto beneficiary_account = _account_manager.getAccount(beneficiary_address);
+
+    // TODO: transfer the rest of money to a beneficiary account
 }
 
 
@@ -324,6 +330,16 @@ evmc::result Core::call(const evmc_message& msg) noexcept
 evmc_tx_context Core::get_tx_context() const noexcept
 {
     LOG_DEBUG << "Core::get_tx_context";
+
+    evmc_tx_context ret;
+    std::fill(std::begin(ret.tx_gas_price.bytes), std::end(ret.tx_gas_price.bytes), 0);
+    ret.block_number = 228;
+    ret.block_timestamp = base::Time::now().getSecondsSinceEpochBeginning();
+    ret.block_gas_limit = 228;
+    std::fill(std::begin(ret.block_difficulty.bytes), std::end(ret.block_difficulty.bytes), 0);
+    ret.block_difficulty.bytes[2] = 0x28;
+
+    return ret;
 }
 
 
