@@ -34,7 +34,7 @@ SmartContract::SmartContract(const base::Bytes& contract_code) : _revision(EVMC_
 {}
 
 
-SmartContractMessage SmartContract::createInitMessage(int64_t gas, base::Bytes& source, const base::Bytes& destination,
+SmartContractMessage SmartContract::createInitMessage(int64_t gas, const bc::Address& source, const bc::Address& destination,
     const bc::Balance& value, const base::Bytes& input) const
 {
     SmartContractMessage message{_revision};
@@ -42,15 +42,15 @@ SmartContractMessage SmartContract::createInitMessage(int64_t gas, base::Bytes& 
     message._message.kind = evmc_call_kind::EVMC_CALL;
     message._message.depth = 0;
     message._message.gas = gas;
-    message._message.sender = toAddress(source);
-    message._message.destination = toAddress(destination);
+    message._message.sender = toEthAddress(source);
+    message._message.destination = toEthAddress(destination);
     message._message.value = toEvmcUint256(value);
     message._message.create2_salt = evmc_bytes32();
     return message;
 }
 
 
-SmartContractMessage SmartContract::createMessage(int64_t gas, base::Bytes& source, const base::Bytes& destination,
+SmartContractMessage SmartContract::createMessage(int64_t gas, const bc::Address& source, const bc::Address& destination,
     const bc::Balance& value, const base::Bytes& input) const
 {
     SmartContractMessage message{_revision};
@@ -58,8 +58,8 @@ SmartContractMessage SmartContract::createMessage(int64_t gas, base::Bytes& sour
     message._message.kind = evmc_call_kind::EVMC_CALL;
     message._message.depth = 0;
     message._message.gas = gas;
-    message._message.sender = toAddress(source);
-    message._message.destination = toAddress(destination);
+    message._message.sender = toEthAddress(source);
+    message._message.destination = toEthAddress(destination);
     message._message.value = toEvmcUint256(value);
     message._message.create2_salt = evmc_bytes32();
     message._input_data = input;
@@ -179,7 +179,7 @@ namespace
     }
 } // namespace
 
-VM VM::load(evmc::Host& vm_host)
+Vm Vm::load(evmc::Host& vm_host)
 {
     evmc_loader_error_code load_error_code;
 
@@ -204,14 +204,14 @@ VM VM::load(evmc::Host& vm_host)
 }
 
 
-ExecuteResult VM::execute(const SmartContractMessage& msg)
+ExecuteResult Vm::execute(const SmartContractMessage& msg)
 {
     auto res = _vm.execute(_host, msg.getRevision(), msg.getMessage(), msg.getCode().toArray(), msg.getCode().size());
     return ExecuteResult{std::move(res)};
 }
 
 
-VM::VM(evmc_vm* vm_instance_ptr, evmc::Host& vm_host) : _vm{vm_instance_ptr}, _host{vm_host}
+Vm::Vm(evmc_vm* vm_instance_ptr, evmc::Host& vm_host) : _vm{vm_instance_ptr}, _host{vm_host}
 {
     LOG_INFO << "Created EVM name: " << _vm.name() << ", version:" << _vm.version();
 

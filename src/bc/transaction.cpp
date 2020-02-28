@@ -123,6 +123,18 @@ const base::Sha256& Transaction::getCodeHash() const noexcept
 }
 
 
+Transaction::Type Transaction::getType() const noexcept
+{
+    return _tx_type;
+}
+
+
+const base::Bytes& Transaction::getData() const noexcept
+{
+    return _data;
+}
+
+
 bool Transaction::operator==(const Transaction& other) const
 {
     return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp &&

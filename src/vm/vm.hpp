@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/bytes.hpp"
-
+#include "bc/address.hpp"
 #include "bc/types.hpp"
 
 #include <evmc/evmc.hpp>
@@ -21,10 +21,10 @@ class SmartContract
     SmartContract& operator=(SmartContract&&) = default;
     ~SmartContract() = default;
 
-    SmartContractMessage createInitMessage(int64_t gas, base::Bytes& source, const base::Bytes& destination,
+    SmartContractMessage createInitMessage(int64_t gas, const bc::Address& source, const bc::Address& destination,
         const bc::Balance& value, const base::Bytes& input) const;
 
-    SmartContractMessage createMessage(int64_t gas, base::Bytes& source, const base::Bytes& destination,
+    SmartContractMessage createMessage(int64_t gas, const bc::Address& source, const bc::Address& destination,
         const bc::Balance& value, const base::Bytes& input) const;
 
   private:
@@ -45,21 +45,13 @@ class SmartContractMessage
     ~SmartContractMessage() = default;
 
     const evmc_message& getMessage() const;
-
     int64_t getGas() const;
-
     base::Bytes getDestination() const;
-
     base::Bytes getSender() const;
-
     base::Bytes toInputData() const;
-
     base::Bytes getCreate2Salt() const;
-
     const base::Bytes& getCode() const;
-
     bc::Balance getValue() const;
-
     evmc_revision getRevision() const;
 
   private:
@@ -93,21 +85,21 @@ class ExecuteResult
 };
 
 
-class VM
+class Vm
 {
   public:
-    VM(const VM&) = delete;
-    VM(VM&&) = default;
-    VM& operator=(const VM&) = delete;
-    VM& operator=(VM&&) = default;
-    ~VM() = default;
+    Vm(const Vm&) = delete;
+    Vm(Vm&&) = default;
+    Vm& operator=(const Vm&) = delete;
+    Vm& operator=(Vm&&) = default;
+    ~Vm() = default;
 
-    static VM load(evmc::Host& vm_host);
+    static Vm load(evmc::Host& vm_host);
 
     ExecuteResult execute(const SmartContractMessage& msg);
 
   private:
-    VM(evmc_vm* vm_instance_ptr, evmc::Host& vm_host);
+    Vm(evmc_vm* vm_instance_ptr, evmc::Host& vm_host);
 
     evmc::VM _vm;
     evmc::Host& _host;

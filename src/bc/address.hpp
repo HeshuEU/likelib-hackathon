@@ -11,7 +11,10 @@ class Address
 {
   public:
     //=============================
+    static constexpr std::size_t BYTE_LENGTH = 20;
+    //=============================
     static Address fromPublicKey(const base::RsaPublicKey& pub);
+    //=============================
     Address();
     Address(const std::string_view& base64_address);
     Address(const base::Bytes& raw);

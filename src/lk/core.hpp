@@ -50,11 +50,12 @@ class Core : public evmc::Host
     //==================
     base::Bytes getThisNodeAddress() const;
     //==================
-    vm::VM& getVm();
+    /*vm::VM& getVm();
     void createContract(bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time,
         bc::Balance gas, const base::Bytes& code, const base::Bytes& initial_message, const bc::Sign& signature);
     void callMessage(bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
         const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message, const bc::Sign& signature);
+    */
     //==================
     bool account_exists(const evmc::address& addr) const noexcept override;
 
@@ -99,13 +100,14 @@ class Core : public evmc::Host
     bc::TransactionsSet _pending_transactions;
     mutable std::shared_mutex _pending_transactions_mutex;
     //==================
-    vm::VM _vm;
-    //==================
     static const bc::Block& getGenesisBlock();
     void updateNewBlock(const bc::Block& block);
     //==================
     bool checkBlock(const bc::Block& block) const;
     bool checkTransaction(const bc::Transaction& tx) const;
+    //==================
+    void doContractCreation(const bc::Transaction& tx);
+    void doMessageCall(const bc::Transaction& tx);
     //==================
   public:
     //==================

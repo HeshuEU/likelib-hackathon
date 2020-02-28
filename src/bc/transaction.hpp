@@ -62,6 +62,8 @@ class Transaction
     [[nodiscard]] const bc::Address& getTo() const noexcept;
     [[nodiscard]] const bc::Balance& getAmount() const noexcept;
     [[nodiscard]] const base::Time& getTimestamp() const noexcept;
+    [[nodiscard]] Type getType() const noexcept;
+    [[nodiscard]] const base::Bytes& getData() const noexcept;
     [[nodiscard]] const bc::Balance& getFee() const noexcept;
     [[nodiscard]] const base::Sha256& getCodeHash() const noexcept;
     //=================
