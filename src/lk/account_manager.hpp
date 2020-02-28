@@ -61,6 +61,8 @@ class AccountManager
     void newAccount(const bc::Address& address, base::Bytes associated_code);
     bool hasAccount(const bc::Address& address) const;
     //================
+    bc::Address newContract(const bc::Address& account_address, base::Bytes associated_code);
+    //================
     bool checkTransaction(const bc::Transaction& tx) const;
     void update(const bc::Transaction& tx);
     void update(const bc::Block& block);

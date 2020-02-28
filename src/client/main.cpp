@@ -294,7 +294,7 @@ int createContract(base::SubprogramRouter& router)
     router.optionsParser()->addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
     constexpr const char* GAS_OPTION = "gas";
     router.optionsParser()->addOption<bc::Balance>(GAS_OPTION, "gas count");
-    constexpr const char* INITIAL_MESSAGE_OPTION = "initial_message";
+    constexpr const char* INITIAL_MESSAGE_OPTION = "init";
     router.optionsParser()->addOption<std::string>(INITIAL_MESSAGE_OPTION, "message for initialize smart contract");
     router.update();
 

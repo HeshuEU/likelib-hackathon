@@ -27,8 +27,7 @@ const bc::Block& Core::getGenesisBlock()
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
         bc::Address null_address;
         ret.addTransaction({null_address, bc::Address{"UTpE8/SckOrfV4Fn/Gi3jmLEOVI="}, bc::Balance{0xFFFFFFFF}, 0,
-            base::Time::fromSecondsSinceEpochBeginning(0), base::Sha256::null(), bc::Transaction::Type::MESSAGE_CALL,
-            base::Bytes{}});
+            base::Time::fromSecondsSinceEpochBeginning(0), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}});
         return ret;
     }();
     return genesis;
@@ -163,7 +162,7 @@ void Core::updateNewBlock(const bc::Block& block)
         _is_account_manager_updated = true;
     }
     else {
-        for(const auto& tx : block.getTransactions()) {
+        for(const auto& tx: block.getTransactions()) {
             if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
                 doContractCreation(tx);
             }
@@ -180,24 +179,33 @@ void Core::updateNewBlock(const bc::Block& block)
 
 void Core::doContractCreation(const bc::Transaction& tx)
 {
+    base::SerializationIArchive ia(tx.getData());
+    auto contract_data = ia.deserialize<bc::ContractInitData>();
+
+    vm::SmartContract contract(contract_data.getCode());
     auto vm = vm::Vm::load(*this);
-    vm::SmartContract contract(tx.getData()); // TEMPORARY!!!!!11111
-    auto message = contract.createInitMessage(tx.getFee(), tx.getFrom(), ----, tx.getAmount(), -----);
-    //auto result = vm.execute(message);
+    bc::Address contract_address = _account_manager.newContract(tx.getFrom(), contract_data.getCode());
+    auto message = contract.createInitMessage(
+        tx.getFee(), tx.getFrom(), contract_address, tx.getAmount(), contract_data.getInit());
+    auto result = vm.execute(message);
 }
 
 
 void Core::doMessageCall(const bc::Transaction& tx)
 {
-    if(tx.getCodeHash() == base::Sha256::null()) {
+    auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
+
+    if(code_hash == base::Sha256::null()) {
         // just transfer
         _account_manager.update(tx);
         return;
     }
 
     // if we're here -- do a call to a contract
+    auto code = _account_manager.getCode(code_hash);
+
     auto vm = vm::Vm::load(*this);
-    vm::SmartContract contract(_account_manager.getCode(tx.getCodeHash()));
+    vm::SmartContract contract(code);
     auto message = contract.createMessage(tx.getFee(), tx.getFrom(), tx.getTo(), tx.getAmount(), tx.getData());
     auto result = vm.execute(message);
 }
@@ -338,7 +346,6 @@ evmc::result Core::call(const evmc_message& msg) noexcept
     bc::Balance fee = msg.gas;
     bc::Address from = vm::toNativeAddress(msg.sender);
     bc::Address to = vm::toNativeAddress(msg.destination);
-
 }
 
 

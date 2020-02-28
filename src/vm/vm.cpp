@@ -34,8 +34,8 @@ SmartContract::SmartContract(const base::Bytes& contract_code) : _revision(EVMC_
 {}
 
 
-SmartContractMessage SmartContract::createInitMessage(int64_t gas, const bc::Address& source, const bc::Address& destination,
-    const bc::Balance& value, const base::Bytes& input) const
+SmartContractMessage SmartContract::createInitMessage(int64_t gas, const bc::Address& source,
+    const bc::Address& destination, const bc::Balance& value, const base::Bytes& input) const
 {
     SmartContractMessage message{_revision};
     message._contract_code = _contract_code + input;
@@ -50,8 +50,8 @@ SmartContractMessage SmartContract::createInitMessage(int64_t gas, const bc::Add
 }
 
 
-SmartContractMessage SmartContract::createMessage(int64_t gas, const bc::Address& source, const bc::Address& destination,
-    const bc::Balance& value, const base::Bytes& input) const
+SmartContractMessage SmartContract::createMessage(int64_t gas, const bc::Address& source,
+    const bc::Address& destination, const bc::Balance& value, const base::Bytes& input) const
 {
     SmartContractMessage message{_revision};
     message._contract_code = getRuntimeCode(_contract_code);

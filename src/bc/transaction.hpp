@@ -49,7 +49,7 @@ class Transaction
     };
     //=================
     Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp,
-        base::Sha256 code_hash, Type transaction_type, base::Bytes data, bc::Sign sign = bc::Sign{});
+        Type transaction_type, base::Bytes data, bc::Sign sign = bc::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -65,7 +65,6 @@ class Transaction
     [[nodiscard]] Type getType() const noexcept;
     [[nodiscard]] const base::Bytes& getData() const noexcept;
     [[nodiscard]] const bc::Balance& getFee() const noexcept;
-    [[nodiscard]] const base::Sha256& getCodeHash() const noexcept;
     //=================
     void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
     [[nodiscard]] bool checkSign() const;
@@ -85,7 +84,6 @@ class Transaction
     bc::Balance _amount;
     bc::Balance _fee;
     base::Time _timestamp;
-    base::Sha256 _code_hash;
     Type _tx_type;
     base::Bytes _data;
     bc::Sign _sign;
@@ -98,6 +96,26 @@ class Transaction
 std::ostream& operator<<(std::ostream& os, const Transaction& tx);
 
 
+class ContractInitData
+{
+  public:
+    ContractInitData(base::Bytes code, base::Bytes init);
+
+    void setCode(base::Bytes code);
+    void setInit(base::Bytes init);
+
+    const base::Bytes& getCode() const noexcept;
+    const base::Bytes& getInit() const noexcept;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static ContractInitData deserialize(base::SerializationIArchive& ia);
+
+  private:
+    base::Bytes _code;
+    base::Bytes _init;
+};
+
+
 class TransactionBuilder
 {
   public:
@@ -106,9 +124,9 @@ class TransactionBuilder
     void setAmount(bc::Balance amount);
     void setTimestamp(base::Time timestamp);
     void setFee(bc::Balance fee);
-    void setCodeHash(base::Sha256 code_hash);
     void setTransactionType(Transaction::Type transaction_type);
     void setData(base::Bytes data);
+    void setSign(bc::Sign sign);
 
     [[nodiscard]] Transaction build() const&;
     [[nodiscard]] Transaction build() &&;
@@ -119,9 +137,9 @@ class TransactionBuilder
     std::optional<bc::Balance> _amount;
     std::optional<base::Time> _timestamp;
     std::optional<bc::Balance> _fee;
-    std::optional<base::Sha256> _code_hash;
     std::optional<Transaction::Type> _tx_type;
     std::optional<base::Bytes> _data;
+    std::optional<bc::Sign> _sign;
 };
 
 } // namespace bc

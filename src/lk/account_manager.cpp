@@ -105,6 +105,19 @@ bool AccountManager::hasAccount(const bc::Address& address) const
 }
 
 
+bc::Address AccountManager::newContract(const bc::Address& address, base::Bytes associated_code)
+{
+    auto& account = getAccount(address);
+    auto nonce = account.getNonce() + 1;
+    account.incNonce();
+    auto bytes_address = base::toBytes(address);
+    bytes_address[0] = (bytes_address[0] + nonce) & 0xFF; // TEMPORARILY!!
+    auto account_address = bc::Address(bytes_address);
+    newAccount(account_address, associated_code);
+    return account_address;
+}
+
+
 const AccountState& AccountManager::getAccount(const bc::Address& address) const
 {
     std::shared_lock lk(_rw_mutex);
@@ -171,6 +184,7 @@ void AccountManager::update(const bc::Transaction& tx)
         to_state.setBalance(tx.getAmount());
         _states.insert({tx.getTo(), std::move(to_state)});
     }
+    from_state.incNonce();
 }
 
 
