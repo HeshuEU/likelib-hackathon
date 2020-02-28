@@ -12,6 +12,10 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 
+#include <include/secp256k1.h>
+#include <include/secp256k1_recovery.h>
+// #include <src/modules/recovery/main_impl.h>
+
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -655,5 +659,26 @@ const base::RsaPrivateKey& KeyVault::getPrivateKey() const noexcept
     return *_private_key;
 }
 
+
+Secp256PrivateKey::Secp256PrivateKey() : _secp_key(generate_bytes(SECP256PRIVATEKEYSIZE))
+{
+    std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
+        secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
+    if(secp256k1_ec_seckey_verify(context.get(), _secp_key.toArray()) == 0) {
+        RAISE_ERROR(base::CryptoError, "error create secp_key");
+    }
+}
+
+
+base::Bytes Secp256PrivateKey::sign_transaction(const base::Bytes& transaction_hash) const
+{
+    std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
+        secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
+    secp256k1_ecdsa_recoverable_signature recoverable_signature;
+    if(secp256k1_ecdsa_sign_recoverable(context.get(), &recoverable_signature, transaction_hash.toArray(),
+           _secp_key.toArray(), nullptr, nullptr) == 0) {
+    }
+    return base::Bytes(recoverable_signature.data, 65);
+}
 
 } // namespace base

@@ -19,7 +19,7 @@ include_directories("/usr/lib/gcc/x86_64-linux-gnu/9/include/")
 # add conan package manager
 include(cmake/conan.cmake)
 conan_cmake_run(CONANFILE cmake/conanfile.txt BASIC_SETUP CMAKE_TARGETS BUILD missing)
-
+SET(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 #==========================
 
 # adding cmake modules
@@ -48,6 +48,11 @@ find_package(leveldb CONFIG REQUIRED)
 
 # adding GrpcLib and ProtoC to project. For details see cmake/FindGrpcCppLib.cmake
 find_package(GrpcCppLib REQUIRED)
+
+#==========================
+
+find_package(Secp256k1 REQUIRED)
+include_directories(${SECP256K1_INCLUDE_DIR})
 
 #==========================
 

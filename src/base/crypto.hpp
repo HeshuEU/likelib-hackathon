@@ -157,4 +157,57 @@ class KeyVault
 };
 
 
+class Secp256PrivateKey
+{
+  public:
+    Secp256PrivateKey();
+    Secp256PrivateKey(const Secp256PrivateKey&) = delete;
+    Secp256PrivateKey(Secp256PrivateKey&& other) = default;
+    Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
+    Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
+    //---------------------------
+    base::Bytes sign_transaction(const base::Bytes& transaction_hash) const;
+    static constexpr std::size_t SECP256PRIVATEKEYSIZE = 32;
+
+  private:
+    base::Bytes _secp_key;
+};
+
+
+class Secp256PublicKey
+{
+  public:
+    Secp256PublicKey(const Secp256PrivateKey& private_key);
+    Secp256PublicKey(const Secp256PublicKey&) = default;
+    Secp256PublicKey(Secp256PublicKey&& other) = default;
+    Secp256PublicKey& operator=(const Secp256PublicKey&) = default;
+    Secp256PublicKey& operator=(Secp256PublicKey&& other) = default;
+    //---------------------------
+    bool verify_signature(const base::Bytes signature, const base::Bytes& transaction_hash) const;
+    //---------------------------
+    bool operator==(const Secp256PublicKey& other) const;
+    //---------------------------
+    base::Bytes toBytes() const;
+    static constexpr std::size_t SECP256PUBLICKEYSIZE = 64;
+
+  private:
+    base::Bytes _secp_key;
+};
+
+
+// class Secp256Keys
+// {
+//   public:
+//     Secp256Keys();
+//     Secp256Keys(const Secp256Keys&) = delete;
+//     Secp256Keys(Secp256Keys&& other) = default;
+//     Secp256Keys& operator=(const Secp256Keys&) = delete;
+//     Secp256Keys& operator=(Secp256Keys&& other) = default;
+//     base::Bytes sign_transaction(const base::Bytes& transaction_hash);
+
+//   private:
+//     base::Bytes _private_key;
+//     base::Bytes _public_key;
+// };
+
 } // namespace base

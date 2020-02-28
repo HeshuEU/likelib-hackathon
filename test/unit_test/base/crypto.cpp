@@ -3,6 +3,7 @@
 #include <openssl/evp.h>
 
 #include <base/crypto.hpp>
+#include <secp256k1.h>
 
 BOOST_AUTO_TEST_CASE(Rsa_pub_encrypt_priv_decrypt_check)
 {
@@ -240,4 +241,12 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
 
     BOOST_CHECK(base64 == "MQ==");
     BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+#include <secp256k1.h>
+BOOST_AUTO_TEST_CASE(secp256)
+{
+    auto cont = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+    secp256k1_context_destroy(cont);
 }
