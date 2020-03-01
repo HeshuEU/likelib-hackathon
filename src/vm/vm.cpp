@@ -127,29 +127,29 @@ SmartContractMessage::SmartContractMessage(evmc_revision revision) : _message{},
 {}
 
 
-ExecuteResult::ExecuteResult(evmc::result&& data) : _data(std::move(data))
+ExecutionResult::ExecutionResult(evmc::result&& data) : _data(std::move(data))
 {}
 
 
-bool ExecuteResult::ok() const noexcept
+bool ExecutionResult::ok() const noexcept
 {
     return _data.status_code == evmc_status_code::EVMC_SUCCESS;
 }
 
 
-base::Bytes ExecuteResult::toOutputData() const
+base::Bytes ExecutionResult::toOutputData() const
 {
     return copy(_data.output_data, _data.output_size);
 }
 
 
-int64_t ExecuteResult::gasLeft() const
+int64_t ExecutionResult::gasLeft() const
 {
     return _data.gas_left;
 }
 
 
-base::Bytes ExecuteResult::createdAddress() const
+base::Bytes ExecutionResult::createdAddress() const
 {
     return toBytes(_data.create_address);
 }
@@ -204,10 +204,10 @@ Vm Vm::load(evmc::Host& vm_host)
 }
 
 
-ExecuteResult Vm::execute(const SmartContractMessage& msg)
+ExecutionResult Vm::execute(const SmartContractMessage& msg)
 {
     auto res = _vm.execute(_host, msg.getRevision(), msg.getMessage(), msg.getCode().toArray(), msg.getCode().size());
-    return ExecuteResult{std::move(res)};
+    return ExecutionResult{std::move(res)};
 }
 
 

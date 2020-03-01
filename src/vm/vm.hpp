@@ -64,15 +64,15 @@ class SmartContractMessage
 };
 
 
-class ExecuteResult
+class ExecutionResult
 {
   public:
-    ExecuteResult(evmc::result&& data);
-    ExecuteResult(ExecuteResult&&) = default;
-    ExecuteResult(const ExecuteResult&) = delete;
-    ExecuteResult& operator=(ExecuteResult&&) = default;
-    ExecuteResult& operator=(const ExecuteResult&) = delete;
-    ~ExecuteResult() = default;
+    ExecutionResult(evmc::result&& data);
+    ExecutionResult(ExecutionResult&&) = default;
+    ExecutionResult(const ExecutionResult&) = delete;
+    ExecutionResult& operator=(ExecutionResult&&) = default;
+    ExecutionResult& operator=(const ExecutionResult&) = delete;
+    ~ExecutionResult() = default;
 
     bool ok() const noexcept;
 
@@ -96,7 +96,7 @@ class Vm
 
     static Vm load(evmc::Host& vm_host);
 
-    ExecuteResult execute(const SmartContractMessage& msg);
+    ExecutionResult execute(const SmartContractMessage& msg);
 
   private:
     Vm(evmc_vm* vm_instance_ptr, evmc::Host& vm_host);
