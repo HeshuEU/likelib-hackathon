@@ -331,7 +331,7 @@ int createContract(base::SubprogramRouter& router)
             contract = compiled_code.get<std::string>("object");
         }
         catch(const base::InaccessibleFile& er) {
-            std::cout << "File no found by path: " << file_path << std::endl;
+            std::cout << "File not found by path: " << file_path << std::endl;
             return base::config::EXIT_FAIL;
         }
         catch(const base::ParsingError& er) {

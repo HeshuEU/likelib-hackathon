@@ -67,7 +67,7 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
     bc::TransactionBuilder txb;
     txb.setTransactionType(bc::Transaction::Type::CONTRACT_CREATION);
     txb.setFrom(from_address);
-    // txb.setTo(SOME_NULL_ADDRESS)?
+    txb.setTo(from_address); // just a placeholder. TODO: a better thing, maybe NULL-address
     txb.setAmount(amount);
     txb.setFee(gas);
 
@@ -78,11 +78,12 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
 
     auto tx = std::move(txb).build();
 
-    if(_core.performTransaction(tx)) {
-        return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), bc::Address{}, gas};
+    try {
+        auto contract_address = _core.createContract(tx);
+        return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), contract_address, gas};
     }
-    else {
-        return {rpc::OperationStatus::createFailed("Function is not supported"), bc::Address{}, gas};
+    catch(const std::exception& e) {
+        return {rpc::OperationStatus::createFailed("Error occurred"), bc::Address{}, gas};
     }
 }
 

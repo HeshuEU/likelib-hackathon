@@ -40,6 +40,7 @@ class Core : public evmc::Host
     //==================
     bc::Balance getBalance(const bc::Address& address) const;
     //==================
+    bc::Address createContract(bc::Transaction tx);
     bool performTransaction(const bc::Transaction& tx);
     //==================
     bool tryAddBlock(const bc::Block& b);
@@ -106,7 +107,7 @@ class Core : public evmc::Host
     bool checkBlock(const bc::Block& block) const;
     bool checkTransaction(const bc::Transaction& tx) const;
     //==================
-    void doContractCreation(const bc::Transaction& tx);
+    bc::Address doContractCreation(const bc::Transaction& tx);
     void doMessageCall(const bc::Transaction& tx);
     //==================
   public:

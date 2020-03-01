@@ -121,6 +121,12 @@ bc::Block Core::getBlockTemplate() const
 }
 
 
+bc::Address Core::createContract(bc::Transaction tx)
+{
+    return doContractCreation(tx);
+}
+
+
 bool Core::performTransaction(const bc::Transaction& tx)
 {
     ASSERT(tx.getType() == bc::Transaction::Type::MESSAGE_CALL);
@@ -177,7 +183,7 @@ void Core::updateNewBlock(const bc::Block& block)
 }
 
 
-void Core::doContractCreation(const bc::Transaction& tx)
+bc::Address Core::doContractCreation(const bc::Transaction& tx)
 {
     base::SerializationIArchive ia(tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();
@@ -188,6 +194,7 @@ void Core::doContractCreation(const bc::Transaction& tx)
     auto message = contract.createInitMessage(
         tx.getFee(), tx.getFrom(), contract_address, tx.getAmount(), contract_data.getInit());
     auto result = vm.execute(message);
+    return contract_address;
 }
 
 
