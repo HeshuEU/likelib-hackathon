@@ -178,6 +178,14 @@ const Sign& Transaction::getSign() const noexcept
 }
 
 
+base::Sha256 Transaction::hashOfTxData() const
+{
+    base::SerializationOArchive oa;
+    serializeHeader(oa);
+    return base::Sha256::compute(std::move(oa).getBytes());
+}
+
+
 void Transaction::serializeHeader(base::SerializationOArchive& oa) const
 {
     oa.serialize(_from);
@@ -190,14 +198,6 @@ void Transaction::serializeHeader(base::SerializationOArchive& oa) const
 }
 
 
-base::Sha256 Transaction::hashOfTxData() const
-{
-    base::SerializationOArchive oa;
-    serializeHeader(oa);
-    return base::Sha256::compute(std::move(oa).getBytes());
-}
-
-
 Transaction Transaction::deserialize(base::SerializationIArchive& ia)
 {
     auto from = ia.deserialize<bc::Address>();
@@ -205,7 +205,6 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
     auto balance = ia.deserialize<bc::Balance>();
     auto fee = ia.deserialize<bc::Balance>();
     auto timestamp = ia.deserialize<base::Time>();
-    auto code_hash = ia.deserialize<base::Sha256>();
     auto tx_type = ia.deserialize<Type>();
     auto data = ia.deserialize<base::Bytes>();
     auto sign = ia.deserialize<bc::Sign>();
