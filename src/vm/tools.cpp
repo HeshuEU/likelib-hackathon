@@ -172,7 +172,7 @@ bc::Address toNativeAddress(const evmc::address& addr)
 evmc::address toEthAddress(const bc::Address& address)
 {
     evmc::address ret;
-    auto byte_address = base::toBytes(address);
+    auto byte_address = address.getBytes();
     ASSERT(byte_address.size() == std::size(ret.bytes));
     std::copy(byte_address.toArray(), byte_address.toArray() + byte_address.size(), ret.bytes);
     return ret;

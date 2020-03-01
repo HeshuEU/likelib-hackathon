@@ -159,7 +159,7 @@ bool Transaction::checkSign() const
     else {
         const auto& pub = _sign.getPublicKey();
         const auto& enc_hash = _sign.getRsaEncryptedHash();
-        auto derived_addr = bc::Address::fromPublicKey(pub);
+        auto derived_addr = bc::Address(pub);
         if(_from != derived_addr) {
             return false;
         }

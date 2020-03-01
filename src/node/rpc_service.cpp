@@ -84,18 +84,18 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
         return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), contract_address, gas};
     }
     catch(const std::exception& e) {
-        return {rpc::OperationStatus::createFailed(std::string{"Error occurred"} + e.what()), bc::Address{}, gas};
+        return {rpc::OperationStatus::createFailed(std::string{"Error occurred"} + e.what()), bc::Address::null(), gas};
     }
 }
 
 
 std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService::transaction_message_call(
     bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-    const base::Time& transaction_time, bc::Balance gas, const std::string& hex_message, const bc::Sign& signature)
+    const base::Time& timestamp, bc::Balance gas, const std::string& hex_message, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
-              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "], message["
+              << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message["
               << hex_message << "]";
 
 
@@ -107,16 +107,18 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
     txb.setTo(to_address);
     txb.setAmount(amount);
     txb.setFee(gas);
+    txb.setTimestamp(timestamp);
     txb.setData(message);
     txb.setSign(signature);
 
     auto tx = std::move(txb).build();
 
-    if(_core.performTransaction(tx)) {
-        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), std::string{}, gas};
+    try {
+        auto result = _core.messageCall(tx);
+        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toOutputData().toString(), result.gasLeft()};
     }
-    else {
-        return {rpc::OperationStatus::createFailed("Function is not support"), std::string{}, gas};
+    catch(const std::exception& e) {
+        return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()), std::string{}, gas};
     }
 }
 

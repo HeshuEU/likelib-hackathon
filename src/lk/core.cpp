@@ -25,9 +25,13 @@ const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
         bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
-        bc::Address null_address;
-        ret.addTransaction({null_address, bc::Address{"UTpE8/SckOrfV4Fn/Gi3jmLEOVI="}, bc::Balance{0xFFFFFFFF}, 0,
-            base::Time::fromSecondsSinceEpochBeginning(0), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}});
+        bc::Address from{bc::Address::null()};
+        bc::Address to{"UTpE8/SckOrfV4Fn/Gi3jmLEOVI="};
+        bc::Balance amount{0xFFFFFFFF};
+        bc::Balance fee{0};
+        auto timestamp = base::Time::fromSecondsSinceEpochBeginning(0);
+
+        ret.addTransaction({from, to, amount, fee, timestamp, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}});
         return ret;
     }();
     return genesis;
@@ -127,6 +131,12 @@ bc::Address Core::createContract(bc::Transaction tx)
 }
 
 
+vm::ExecutionResult Core::messageCall(bc::Transaction tx)
+{
+    return doMessageCall(tx);
+}
+
+
 bool Core::performTransaction(const bc::Transaction& tx)
 {
     ASSERT(tx.getType() == bc::Transaction::Type::MESSAGE_CALL);
@@ -198,14 +208,12 @@ bc::Address Core::doContractCreation(const bc::Transaction& tx)
 }
 
 
-void Core::doMessageCall(const bc::Transaction& tx)
+vm::ExecutionResult Core::doMessageCall(const bc::Transaction& tx)
 {
     auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
 
     if(code_hash == base::Sha256::null()) {
-        // just transfer
-        _account_manager.update(tx);
-        return;
+        RAISE_ERROR(base::InvalidArgument, "cannot process transfer transaction");
     }
 
     // if we're here -- do a call to a contract
@@ -214,7 +222,8 @@ void Core::doMessageCall(const bc::Transaction& tx)
     auto vm = vm::Vm::load(*this);
     vm::SmartContract contract(code);
     auto message = contract.createMessage(tx.getFee(), tx.getFrom(), tx.getTo(), tx.getAmount(), tx.getData());
-    auto result = vm.execute(message);
+    auto ret = vm.execute(message);
+    return ret;
 }
 
 

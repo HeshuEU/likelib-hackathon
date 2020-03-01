@@ -110,7 +110,7 @@ bc::Address AccountManager::newContract(const bc::Address& address, base::Bytes 
     auto& account = getAccount(address);
     auto nonce = account.getNonce() + 1;
     account.incNonce();
-    auto bytes_address = base::toBytes(address);
+    auto bytes_address = address.getBytes();
     bytes_address[0] = (bytes_address[0] + nonce) & 0xFF; // TEMPORARILY!!
     auto account_address = bc::Address(bytes_address);
     newAccount(account_address, associated_code);

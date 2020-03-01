@@ -110,10 +110,7 @@ grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
         auto contract_code = request->contract_code();
         auto init = request->init();
 
-        auto status = OperationStatus::createSuccess();
-        bc::Address contract_address;
-        bc::Balance least_gas;
-        std::tie(status, contract_address, least_gas) = _service->transaction_create_contract(
+        auto [status, contract_address, least_gas] = _service->transaction_create_contract(
             amount, from_address, creation_time, gas, contract_code, init, bc::Sign{});
 
         convert(status, response->mutable_status());

@@ -90,6 +90,7 @@ int getBalance(base::SubprogramRouter& router)
     }
 }
 
+
 int transfer(base::SubprogramRouter& router)
 {
     constexpr const char* CONFIG_OPTION = "config";
@@ -164,7 +165,7 @@ int transfer(base::SubprogramRouter& router)
             return base::config::EXIT_FAIL;
         }
         auto public_key = base::RsaPublicKey::load(public_key_path);
-        auto from_address = bc::Address::fromPublicKey(public_key);
+        auto from_address = bc::Address(public_key);
 
         auto private_key_path = base::config::makePrivateKeyPath(keys_path);
         if(!std::filesystem::exists(private_key_path)) {
@@ -213,6 +214,7 @@ int transfer(base::SubprogramRouter& router)
         return base::config::EXIT_FAIL;
     }
 }
+
 
 int testConnection(base::SubprogramRouter& router)
 {
@@ -429,7 +431,7 @@ int messageCall(base::SubprogramRouter& router)
     constexpr const char* FROM_ADDRESS_OPTION = "from";
     router.optionsParser()->addOption<std::string>(FROM_ADDRESS_OPTION, "address of \"from\" account");
     constexpr const char* TO_ADDRESS_OPTION = "to";
-    router.optionsParser()->addOption<std::string>(FROM_ADDRESS_OPTION, "address of \"to\" contract");
+    router.optionsParser()->addOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" contract");
     constexpr const char* AMOUNT_OPTION = "amount";
     router.optionsParser()->addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
     constexpr const char* GAS_OPTION = "gas";
@@ -533,6 +535,7 @@ int messageCall(base::SubprogramRouter& router)
         return base::config::EXIT_FAIL;
     }
 }
+
 
 int compileCode(base::SubprogramRouter& router)
 {
@@ -651,7 +654,7 @@ int generateKeys(base::SubprogramRouter& router)
 
         pub.save(public_path);
         std::cout << "Generated public key at " << public_path << std::endl;
-        std::cout << "Address: " << bc::Address::fromPublicKey(pub) << std::endl;
+        std::cout << "Address: " << bc::Address(pub) << std::endl;
         std::cout << pub.decrypt(priv.encrypt(base::Bytes("123123"))) << std::endl;
         std::cout << "Hash of public key: " << base::Sha256::compute(pub.toBytes()) << std::endl;
         std::cout << "Hash of private key: " << base::Sha256::compute(priv.toBytes()) << std::endl;

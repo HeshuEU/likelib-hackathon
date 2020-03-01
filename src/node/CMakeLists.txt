@@ -17,4 +17,4 @@ set(NODE_SOURCES
 
 add_executable(node ${NODE_SOURCES} ${NODE_HEADERS})
 
-target_link_libraries(node base net bc lk rpc)
+target_link_libraries(node base net bc lk rpc dl backtrace)
