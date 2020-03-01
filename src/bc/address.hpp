@@ -13,11 +13,9 @@ class Address
     //=============================
     static constexpr std::size_t BYTE_LENGTH = 20;
     //=============================
-    static Address fromPublicKey(const base::RsaPublicKey& pub);
-    //=============================
-    Address();
-    Address(const std::string_view& base64_address);
-    Address(const base::Bytes& raw);
+    explicit Address(const std::string_view& base64_address);
+    explicit Address(base::Bytes raw);
+    explicit Address(const base::RsaPublicKey& pub);
     Address(const Address& another) = default;
     Address(Address&& another) = default;
     Address& operator=(const Address& another) = default;
@@ -25,7 +23,9 @@ class Address
     ~Address() = default;
     //=============================
     [[nodiscard]] std::string toString() const;
+    const base::Bytes& getBytes() const noexcept;
     //=============================
+    static const Address& null();
     [[nodiscard]] bool isNull() const;
     //=============================
     bool operator==(const Address& another) const;
@@ -36,9 +36,7 @@ class Address
     void serialize(base::SerializationOArchive& oa) const;
     //=============================
   private:
-    std::string _address;
-
-    static const std::string& getNullAddressString();
+    base::Bytes _address;
 };
 
 

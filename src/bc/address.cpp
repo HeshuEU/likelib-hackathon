@@ -4,44 +4,54 @@ namespace bc
 {
 
 
-Address::Address() : _address{getNullAddressString()}
-{}
-
-
-Address Address::fromPublicKey(const base::RsaPublicKey& pub)
+Address::Address(const base::RsaPublicKey& pub)
 {
     auto sha256 = base::Sha256::compute(pub.toBytes());
     auto ripemd = base::Ripemd160::compute(sha256.getBytes());
-    return Address{base::base64Encode(ripemd.getBytes())};
+    ASSERT(ripemd.getBytes().size() == BYTE_LENGTH);
+    _address = ripemd.getBytes();
 }
 
 
-Address::Address(const std::string_view& base64_address) : _address{base64_address}
+Address::Address(const std::string_view& base64_address)
 {
+    _address = base::base64Decode(base64_address);
+    if(_address.size() != BYTE_LENGTH) {
+        RAISE_ERROR(base::InvalidArgument, "invalid base64 string");
+    }
     // TODO: check address length
 }
 
 
-Address::Address(const base::Bytes& raw_address) : _address{base::base64Encode(raw_address)}
+Address::Address(base::Bytes raw_address)
 {
-    // TODO: check address length
+    if(raw_address.size() != BYTE_LENGTH) {
+        RAISE_ERROR(base::InvalidArgument, "invalid bytes length");
+    }
+    _address = std::move(raw_address);
 }
 
 
-const std::string& Address::getNullAddressString()
+const Address& Address::null()
 {
-    static const std::string null_address(32, '0');
+    static const Address null_address{base::Bytes(Address::BYTE_LENGTH)};
     return null_address;
 }
 
 
 bool Address::isNull() const
 {
-    return _address == getNullAddressString();
+    return *this == null();
 }
 
 
 std::string Address::toString() const
+{
+    return base::base64Encode(_address);
+}
+
+
+const base::Bytes& Address::getBytes() const noexcept
 {
     return _address;
 }
@@ -67,14 +77,14 @@ bool Address::operator<(const Address& other) const
 
 Address Address::deserialize(base::SerializationIArchive& ia)
 {
-    std::string address = ia.deserialize<std::string>();
-    return Address(address);
+    auto address_bytes = ia.deserialize<base::Bytes>();
+    return Address(address_bytes);
 }
 
 
 void Address::serialize(base::SerializationOArchive& oa) const
 {
-    oa.serialize(toString());
+    oa.serialize(_address);
 }
 
 
