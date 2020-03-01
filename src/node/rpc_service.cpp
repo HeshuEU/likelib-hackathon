@@ -54,12 +54,12 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
 }
 
 std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_create_contract(
-    bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
+    bc::Balance amount, const bc::Address& from_address, const base::Time& timestamp, bc::Balance gas,
     const std::string& hex_contract_code, const std::string& hex_init, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString() << "], amount["
-              << amount << "], gas" << gas << "], code[" << hex_contract_code << "], transaction_time["
-              << transaction_time.getSecondsSinceEpochBeginning() << "], initial_message[" << hex_init << "]";
+              << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
+              << timestamp.getSecondsSinceEpochBeginning() << "], initial_message[" << hex_init << "]";
 
     auto contract_code = base::Bytes::fromHex(hex_contract_code);
     auto init = base::Bytes::fromHex(hex_init);
@@ -70,6 +70,7 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
     txb.setTo(from_address); // just a placeholder. TODO: a better thing, maybe NULL-address
     txb.setAmount(amount);
     txb.setFee(gas);
+    txb.setTimestamp(timestamp);
 
     bc::ContractInitData data(std::move(contract_code), std::move(init));
     txb.setData(base::toBytes(data));
@@ -83,7 +84,7 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
         return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), contract_address, gas};
     }
     catch(const std::exception& e) {
-        return {rpc::OperationStatus::createFailed("Error occurred"), bc::Address{}, gas};
+        return {rpc::OperationStatus::createFailed(std::string{"Error occurred"} + e.what()), bc::Address{}, gas};
     }
 }
 
