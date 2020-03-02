@@ -3,6 +3,7 @@
 #include "base/bytes.hpp"
 #include "base/property_tree.hpp"
 #include "base/serialization.hpp"
+#include <base/hash.hpp>
 
 #include <openssl/pem.h>
 
@@ -161,12 +162,19 @@ class Secp256PrivateKey
 {
   public:
     Secp256PrivateKey();
+    Secp256PrivateKey(const base::Bytes& private_key_bytes);
     Secp256PrivateKey(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey(Secp256PrivateKey&& other) = default;
     Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
     //---------------------------
-    base::Bytes signTransaction(const base::Bytes& transaction_hash) const;
+    base::Bytes signTransaction(const base::Sha256& transaction_hash) const;
+    //---------------------------
+    void save(const std::filesystem::path& path) const;
+    static Secp256PrivateKey load(const std::filesystem::path& path);
+    //---------------------------
+    static Secp256PrivateKey deserialize(base::SerializationIArchive& ia);
+    void serialize(base::SerializationOArchive& oa) const;
     //---------------------------
     base::Bytes getBytes() const;
     static constexpr std::size_t SECP256PRIVATEKEYSIZE = 32;
@@ -186,7 +194,13 @@ class Secp256PublicKey
     Secp256PublicKey& operator=(const Secp256PublicKey&) = default;
     Secp256PublicKey& operator=(Secp256PublicKey&& other) = default;
     //---------------------------
-    bool verifySignature(const base::Bytes signature, const base::Bytes& transaction_hash) const;
+    bool verifySignature(const base::Bytes signature, const base::Sha256& transaction_hash) const;
+    //---------------------------
+    void save(const std::filesystem::path& path) const;
+    static Secp256PublicKey load(const std::filesystem::path& path);
+    //---------------------------
+    static Secp256PublicKey deserialize(base::SerializationIArchive& ia);
+    void serialize(base::SerializationOArchive& oa) const;
     //---------------------------
     bool operator==(const Secp256PublicKey& other) const;
     //---------------------------
@@ -198,19 +212,6 @@ class Secp256PublicKey
 };
 
 
-// class Secp256Keys
-// {
-//   public:
-//     Secp256Keys();
-//     Secp256Keys(const Secp256Keys&) = delete;
-//     Secp256Keys(Secp256Keys&& other) = default;
-//     Secp256Keys& operator=(const Secp256Keys&) = delete;
-//     Secp256Keys& operator=(Secp256Keys&& other) = default;
-//     base::Bytes sign_transaction(const base::Bytes& transaction_hash);
-
-//   private:
-//     base::Bytes _private_key;
-//     base::Bytes _public_key;
-// };
+std::pair<Secp256PublicKey, Secp256PrivateKey> generateSecp256Keys();
 
 } // namespace base
