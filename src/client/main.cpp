@@ -322,7 +322,7 @@ int createContract(base::SubprogramRouter& router)
         }
         else {
             file_path = helper.getValue<std::string>("code_paths", "path to compiled smart contract");
-            if(file_path.size() == 0) {
+            if(file_path.empty()) {
                 std::cout << "Path to code not set up" << std::endl;
                 return base::config::EXIT_FAIL;
             }
@@ -550,7 +550,7 @@ int compileCode(base::SubprogramRouter& router)
 
     try {
         //====================================
-        std::string code_file_path = router.optionsParser()->getValue<std::string>(CODE_PATH_OPTION);
+        auto code_file_path = router.optionsParser()->getValue<std::string>(CODE_PATH_OPTION);
 
         vm::Solc solc;
 
