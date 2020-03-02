@@ -11,7 +11,6 @@
 #include "vm/vm.hpp"
 
 #include <shared_mutex>
-#include <vm/host.hpp>
 
 namespace lk
 {
