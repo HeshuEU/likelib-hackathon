@@ -1,7 +1,6 @@
 #include "core.hpp"
 
 #include "base/log.hpp"
-#include "vm/host.hpp"
 #include "vm/tools.hpp"
 
 #include <algorithm>
