@@ -9,7 +9,7 @@ if not "-isystem" in sys.argv:
     sys.argv.append("-isystem")
 index = sys.argv.index("-isystem")
 l = sys.argv
-l = l[:index + 1] + ["/usr/lib/gcc/x86_64-linux-gnu/9/include/", "-isystem"] + l[index + 1: ]
+#l = l[:index + 1] + ["/usr/lib/gcc/x86_64-linux-gnu/9/include/", "-isystem"] + l[index + 1: ]
 l[0] = "/usr/bin/clang-tidy"
 script = open(PATH_TO_LOGS+"run-clang-tidy.sh","at")
 for i in l: script.write(i + " ")
