@@ -344,7 +344,7 @@ size_t Core::copy_code(const evmc::address& addr, size_t code_offset, uint8_t* b
     auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
     const auto& code = _account_manager.getCode(account_code_hash);
     std::size_t bytes_to_copy = std::min(buffer_size, code.size() - code_offset);
-    std::copy(code.toArray() + code_offset, code.toArray() + code_offset + bytes_to_copy, buffer_data);
+    std::copy_n(code.toArray() + code_offset, bytes_to_copy, buffer_data);
     return bytes_to_copy;
 }
 
@@ -394,8 +394,7 @@ evmc::bytes32 Core::get_block_hash(int64_t block_number) const noexcept
 }
 
 
-void Core::emit_log(const evmc::address& addr, const uint8_t* data, size_t data_size, const evmc::bytes32 topics[],
-    size_t num_topics) noexcept
+void Core::emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept
 {
     LOG_DEBUG << "Core::emit_log";
     LOG_WARNING << "emit_log is denied. For more information, see docs";
