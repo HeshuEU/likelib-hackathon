@@ -655,7 +655,6 @@ int generateKeys(base::SubprogramRouter& router)
         pub.save(public_path);
         std::cout << "Generated public key at " << public_path << std::endl;
         std::cout << "Address: " << bc::Address(pub) << std::endl;
-        std::cout << pub.decrypt(priv.encrypt(base::Bytes("123123"))) << std::endl;
         std::cout << "Hash of public key: " << base::Sha256::compute(pub.toBytes()) << std::endl;
         std::cout << "Hash of private key: " << base::Sha256::compute(priv.toBytes()) << std::endl;
         LOG_INFO << "Generated public key at " << public_path;
