@@ -376,7 +376,7 @@ int createContract(base::SubprogramRouter& router)
             message = router.optionsParser()->getValue<std::string>(INITIAL_MESSAGE_OPTION);
         }
         else {
-            message = helper.getValue<std::string>("messages", "message for initialization smart contract");
+            message = "";//helper.getValue<std::string>("messages", "message for initialization smart contract");
         }
         //====================================
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
