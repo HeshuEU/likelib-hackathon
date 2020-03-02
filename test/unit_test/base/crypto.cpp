@@ -244,9 +244,17 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
 }
 
 
-#include <secp256k1.h>
-BOOST_AUTO_TEST_CASE(secp256)
+#include <iostream>
+#include <base/hash.hpp>
+
+BOOST_AUTO_TEST_CASE(secp256_sign_verify)
 {
-    auto cont = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
-    secp256k1_context_destroy(cont);
+    base::Secp256PrivateKey priv_key;
+    base::Secp256PublicKey pub_key(priv_key);
+    base::Secp256PrivateKey priv_key2;
+    base::Secp256PublicKey pub_key2(priv_key2);
+    auto hash = base::Sha256::compute(base::Bytes("111"));
+    auto signature = priv_key.signTransaction(hash.getBytes());
+    bool is = pub_key2.verifySignature(signature, hash.getBytes());
+    std::cout << is << std::endl;
 }

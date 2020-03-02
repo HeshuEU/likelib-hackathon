@@ -166,7 +166,9 @@ class Secp256PrivateKey
     Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
     //---------------------------
-    base::Bytes sign_transaction(const base::Bytes& transaction_hash) const;
+    base::Bytes signTransaction(const base::Bytes& transaction_hash) const;
+    //---------------------------
+    base::Bytes getBytes() const;
     static constexpr std::size_t SECP256PRIVATEKEYSIZE = 32;
 
   private:
@@ -178,16 +180,17 @@ class Secp256PublicKey
 {
   public:
     Secp256PublicKey(const Secp256PrivateKey& private_key);
+    Secp256PublicKey(const base::Bytes& public_key_bytes);
     Secp256PublicKey(const Secp256PublicKey&) = default;
     Secp256PublicKey(Secp256PublicKey&& other) = default;
     Secp256PublicKey& operator=(const Secp256PublicKey&) = default;
     Secp256PublicKey& operator=(Secp256PublicKey&& other) = default;
     //---------------------------
-    bool verify_signature(const base::Bytes signature, const base::Bytes& transaction_hash) const;
+    bool verifySignature(const base::Bytes signature, const base::Bytes& transaction_hash) const;
     //---------------------------
     bool operator==(const Secp256PublicKey& other) const;
     //---------------------------
-    base::Bytes toBytes() const;
+    base::Bytes getBytes() const;
     static constexpr std::size_t SECP256PUBLICKEYSIZE = 64;
 
   private:
