@@ -3,6 +3,7 @@
 #include "base/bytes.hpp"
 #include "base/property_tree.hpp"
 #include "base/serialization.hpp"
+#include <base/hash.hpp>
 
 #include <openssl/pem.h>
 
@@ -156,5 +157,61 @@ class KeyVault
     //---------------------------
 };
 
+
+class Secp256PrivateKey
+{
+  public:
+    Secp256PrivateKey();
+    Secp256PrivateKey(const base::Bytes& private_key_bytes);
+    Secp256PrivateKey(const Secp256PrivateKey&) = delete;
+    Secp256PrivateKey(Secp256PrivateKey&& other) = default;
+    Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
+    Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
+    //---------------------------
+    base::Bytes sign(const base::Bytes& bytes) const;
+    //---------------------------
+    void save(const std::filesystem::path& path) const;
+    static Secp256PrivateKey load(const std::filesystem::path& path);
+    //---------------------------
+    static Secp256PrivateKey deserialize(base::SerializationIArchive& ia);
+    void serialize(base::SerializationOArchive& oa) const;
+    //---------------------------
+    base::Bytes getBytes() const;
+    static constexpr std::size_t SECP256PRIVATEKEYSIZE = 32;
+
+  private:
+    base::Bytes _secp_key;
+};
+
+
+class Secp256PublicKey
+{
+  public:
+    Secp256PublicKey(const Secp256PrivateKey& private_key);
+    Secp256PublicKey(const base::Bytes& public_key_bytes);
+    Secp256PublicKey(const Secp256PublicKey&) = default;
+    Secp256PublicKey(Secp256PublicKey&& other) = default;
+    Secp256PublicKey& operator=(const Secp256PublicKey&) = default;
+    Secp256PublicKey& operator=(Secp256PublicKey&& other) = default;
+    //---------------------------
+    bool verifySignature(const base::Bytes signature, const base::Bytes& bytes) const;
+    //---------------------------
+    void save(const std::filesystem::path& path) const;
+    static Secp256PublicKey load(const std::filesystem::path& path);
+    //---------------------------
+    static Secp256PublicKey deserialize(base::SerializationIArchive& ia);
+    void serialize(base::SerializationOArchive& oa) const;
+    //---------------------------
+    bool operator==(const Secp256PublicKey& other) const;
+    //---------------------------
+    base::Bytes getBytes() const;
+    static constexpr std::size_t SECP256PUBLICKEYSIZE = 64;
+
+  private:
+    base::Bytes _secp_key;
+};
+
+
+std::pair<Secp256PublicKey, Secp256PrivateKey> generateSecp256Keys();
 
 } // namespace base
