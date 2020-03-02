@@ -203,7 +203,12 @@ bc::Address Core::doContractCreation(const bc::Transaction& tx)
     bc::Address contract_address = _account_manager.newContract(tx.getFrom(), contract_data.getCode());
     auto message = contract.createInitMessage(
         tx.getFee(), tx.getFrom(), contract_address, tx.getAmount(), contract_data.getInit());
-    auto result = vm.execute(message);
+    if(auto result = vm.execute(message); result.ok()) {
+
+    }
+    else {
+        RAISE_ERROR(base::Error, "invalid result");
+    }
     return contract_address;
 }
 
