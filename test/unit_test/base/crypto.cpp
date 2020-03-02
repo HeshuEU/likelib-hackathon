@@ -247,8 +247,8 @@ BOOST_AUTO_TEST_CASE(secp256_sign_verify)
 {
     auto [pub_key, priv_key] = base::generateSecp256Keys();
     auto hash = base::Sha256::compute(base::Bytes("111"));
-    auto signature = priv_key.signTransaction(hash);
-    BOOST_CHECK(pub_key.verifySignature(signature, hash));
+    auto signature = priv_key.sign(hash.getBytes());
+    BOOST_CHECK(pub_key.verifySignature(signature, hash.getBytes()));
 }
 
 
@@ -259,8 +259,8 @@ BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_copy)
     auto priv_key2{std::move(priv_key)};
     auto hash = base::Sha256::compute(base::Bytes("222"));
 
-    auto signature = priv_key2.signTransaction(hash);
-    BOOST_CHECK(pub_key2.verifySignature(signature, hash));
+    auto signature = priv_key2.sign(hash.getBytes());
+    BOOST_CHECK(pub_key2.verifySignature(signature, hash.getBytes()));
 }
 
 
@@ -271,14 +271,14 @@ BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_bytes_copy)
     base::Secp256PrivateKey priv_key2{priv_key.getBytes()};
     auto hash = base::Sha256::compute(base::Bytes("333"));
 
-    auto signature1 = priv_key.signTransaction(hash);
-    auto signature2 = priv_key2.signTransaction(hash);
+    auto signature1 = priv_key.sign(hash.getBytes());
+    auto signature2 = priv_key2.sign(hash.getBytes());
 
-    BOOST_CHECK(pub_key2.verifySignature(signature1, hash));
-    BOOST_CHECK(pub_key2.verifySignature(signature2, hash));
+    BOOST_CHECK(pub_key2.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key2.verifySignature(signature2, hash.getBytes()));
 
-    BOOST_CHECK(pub_key.verifySignature(signature1, hash));
-    BOOST_CHECK(pub_key.verifySignature(signature2, hash));
+    BOOST_CHECK(pub_key.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key.verifySignature(signature2, hash.getBytes()));
 }
 
 
@@ -288,14 +288,14 @@ BOOST_AUTO_TEST_CASE(secp256_sign_verify_with_another_key)
     auto [pub_key2, priv_key2] = base::generateSecp256Keys();
     auto hash = base::Sha256::compute(base::Bytes("444"));
 
-    auto signature1 = priv_key1.signTransaction(hash);
-    auto signature2 = priv_key2.signTransaction(hash);
+    auto signature1 = priv_key1.sign(hash.getBytes());
+    auto signature2 = priv_key2.sign(hash.getBytes());
 
-    BOOST_CHECK(pub_key1.verifySignature(signature1, hash));
-    BOOST_CHECK(pub_key2.verifySignature(signature2, hash));
+    BOOST_CHECK(pub_key1.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key2.verifySignature(signature2, hash.getBytes()));
 
-    BOOST_CHECK(!pub_key2.verifySignature(signature1, hash));
-    BOOST_CHECK(!pub_key1.verifySignature(signature2, hash));
+    BOOST_CHECK(!pub_key2.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(!pub_key1.verifySignature(signature2, hash.getBytes()));
 }
 
 
@@ -312,14 +312,14 @@ BOOST_AUTO_TEST_CASE(secp256_save_load)
     auto pub_key2 = base::Secp256PublicKey::load(public_key_path);
     auto hash = base::Sha256::compute(base::Bytes("555"));
 
-    auto signature1 = priv_key1.signTransaction(hash);
-    auto signature2 = priv_key2.signTransaction(hash);
+    auto signature1 = priv_key1.sign(hash.getBytes());
+    auto signature2 = priv_key2.sign(hash.getBytes());
 
-    BOOST_CHECK(pub_key2.verifySignature(signature1, hash));
-    BOOST_CHECK(pub_key2.verifySignature(signature2, hash));
+    BOOST_CHECK(pub_key2.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key2.verifySignature(signature2, hash.getBytes()));
 
-    BOOST_CHECK(pub_key1.verifySignature(signature1, hash));
-    BOOST_CHECK(pub_key1.verifySignature(signature2, hash));
+    BOOST_CHECK(pub_key1.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key1.verifySignature(signature2, hash.getBytes()));
 
     std::filesystem::remove(private_key_path);
     std::filesystem::remove(public_key_path);
@@ -339,12 +339,12 @@ BOOST_AUTO_TEST_CASE(secp256_serialization)
     auto priv_key2 = ia.deserialize<base::Secp256PrivateKey>();
     auto hash = base::Sha256::compute(base::Bytes("667"));
 
-    auto signature1 = priv_key1.signTransaction(hash);
-    auto signature2 = priv_key2.signTransaction(hash);
+    auto signature1 = priv_key1.sign(hash.getBytes());
+    auto signature2 = priv_key2.sign(hash.getBytes());
 
-    BOOST_CHECK(pub_key2.verifySignature(signature1, hash));
-    BOOST_CHECK(pub_key2.verifySignature(signature2, hash));
+    BOOST_CHECK(pub_key2.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key2.verifySignature(signature2, hash.getBytes()));
 
-    BOOST_CHECK(pub_key1.verifySignature(signature1, hash));
-    BOOST_CHECK(pub_key1.verifySignature(signature2, hash));
+    BOOST_CHECK(pub_key1.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key1.verifySignature(signature2, hash.getBytes()));
 }

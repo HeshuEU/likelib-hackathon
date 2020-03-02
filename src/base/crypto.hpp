@@ -168,7 +168,7 @@ class Secp256PrivateKey
     Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
     //---------------------------
-    base::Bytes signTransaction(const base::Sha256& transaction_hash) const;
+    base::Bytes sign(const base::Bytes& bytes) const;
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PrivateKey load(const std::filesystem::path& path);
@@ -194,7 +194,7 @@ class Secp256PublicKey
     Secp256PublicKey& operator=(const Secp256PublicKey&) = default;
     Secp256PublicKey& operator=(Secp256PublicKey&& other) = default;
     //---------------------------
-    bool verifySignature(const base::Bytes signature, const base::Sha256& transaction_hash) const;
+    bool verifySignature(const base::Bytes signature, const base::Bytes& bytes) const;
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PublicKey load(const std::filesystem::path& path);

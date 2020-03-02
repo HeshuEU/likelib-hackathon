@@ -678,12 +678,12 @@ Secp256PrivateKey::Secp256PrivateKey(const base::Bytes& private_key_bytes) : _se
 }
 
 
-base::Bytes Secp256PrivateKey::signTransaction(const base::Sha256& transaction_hash) const
+base::Bytes Secp256PrivateKey::sign(const base::Bytes& bytes) const
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
-    if(secp256k1_ecdsa_sign_recoverable(context.get(), &recoverable_signature, transaction_hash.getBytes().toArray(),
+    if(secp256k1_ecdsa_sign_recoverable(context.get(), &recoverable_signature, bytes.toArray(),
            _secp_key.toArray(), nullptr, nullptr) == 0) {
         RAISE_ERROR(base::CryptoError, "error signing transaction");
     }
@@ -743,14 +743,14 @@ Secp256PublicKey::Secp256PublicKey(const base::Bytes& public_key_bytes) : _secp_
 }
 
 
-bool Secp256PublicKey::verifySignature(const base::Bytes signature, const base::Sha256& transaction_hash) const
+bool Secp256PublicKey::verifySignature(const base::Bytes signature, const base::Bytes& bytes) const
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
     secp256k1_pubkey pubkey;
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
     memcpy(recoverable_signature.data, signature.toArray(), signature.size());
-    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, transaction_hash.getBytes().toArray()) ==
+    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.toArray()) ==
         0) {
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
