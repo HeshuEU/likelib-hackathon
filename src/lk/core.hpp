@@ -8,7 +8,6 @@
 #include "lk/account_manager.hpp"
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
-#include "vm/host.hpp"
 #include "vm/vm.hpp"
 
 #include <shared_mutex>
