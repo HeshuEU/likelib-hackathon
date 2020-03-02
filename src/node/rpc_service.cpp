@@ -115,7 +115,7 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
 
     try {
         auto result = _core.messageCall(tx);
-        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toOutputData().toString(), result.gasLeft()};
+        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toOutputData().toHex(), result.gasLeft()};
     }
     catch(const std::exception& e) {
         return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()), std::string{}, gas};
