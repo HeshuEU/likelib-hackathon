@@ -45,9 +45,10 @@ BOOST_AUTO_TEST_CASE(block_constructor1)
     BOOST_CHECK(block_tx_set.find(trans4));
     BOOST_CHECK(block_tx_set.find(trans5));
 
-    BOOST_CHECK(!block_tx_set.find(bc::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp())));
     BOOST_CHECK(
-        !block_tx_set.find(bc::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now())));
+        !block_tx_set.find(bc::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp())));
+    BOOST_CHECK(!block_tx_set.find(
+        bc::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now())));
 }
 
 
@@ -66,9 +67,10 @@ BOOST_AUTO_TEST_CASE(block_constructor2)
     BOOST_CHECK(block_tx_set.find(trans4));
     BOOST_CHECK(block_tx_set.find(trans5));
 
-    BOOST_CHECK(!block_tx_set.find(bc::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp())));
     BOOST_CHECK(
-        !block_tx_set.find(bc::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now())));
+        !block_tx_set.find(bc::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp())));
+    BOOST_CHECK(!block_tx_set.find(
+        bc::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now())));
 }
 
 
@@ -91,9 +93,10 @@ BOOST_AUTO_TEST_CASE(block_operator_equal)
     BOOST_CHECK(block_tx_set.find(trans4));
     BOOST_CHECK(block_tx_set.find(trans5));
 
-    BOOST_CHECK(!block_tx_set.find(bc::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp())));
     BOOST_CHECK(
-        !block_tx_set.find(bc::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now())));
+        !block_tx_set.find(bc::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp())));
+    BOOST_CHECK(!block_tx_set.find(
+        bc::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now())));
 }
 
 
@@ -116,9 +119,10 @@ BOOST_AUTO_TEST_CASE(block_operator_move)
     BOOST_CHECK(block_tx_set.find(trans4));
     BOOST_CHECK(block_tx_set.find(trans5));
 
-    BOOST_CHECK(!block_tx_set.find(bc::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp())));
     BOOST_CHECK(
-        !block_tx_set.find(bc::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now())));
+        !block_tx_set.find(bc::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp())));
+    BOOST_CHECK(!block_tx_set.find(
+        bc::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now())));
 }
 
 

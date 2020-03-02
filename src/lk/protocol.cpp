@@ -14,7 +14,7 @@ base::Bytes serializeMessage(Args&&... args)
     base::SerializationOArchive oa;
     oa.serialize(M::getHandledMessageType());
     //(oa << ... << std::forward<Args>(args));
-    (oa.serialize(std::forward<Args>(args)),...);
+    (oa.serialize(std::forward<Args>(args)), ...);
     return std::move(oa).getBytes();
 }
 

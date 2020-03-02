@@ -6,7 +6,7 @@
 namespace vm
 {
 
-  class VmError : public base::Error
+class VmError : public base::Error
 {
     using Error::Error;
 };

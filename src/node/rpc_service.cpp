@@ -13,6 +13,7 @@ GeneralServerService::GeneralServerService(lk::Core& core) : _core{core}
     LOG_TRACE << "Created GeneralServerService";
 }
 
+
 GeneralServerService::~GeneralServerService()
 {
     LOG_TRACE << "Deleted GeneralServerService";
@@ -52,44 +53,72 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
     }
 }
 
-std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_creation_contract(
-    bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
-    const base::Bytes& code, const base::Bytes& initial_message, const bc::Sign& signature)
+std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_create_contract(
+    bc::Balance amount, const bc::Address& from_address, const base::Time& timestamp, bc::Balance gas,
+    const std::string& hex_contract_code, const std::string& hex_init, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString() << "], amount["
-              << amount << "], gas" << gas << "], code[" << code.toHex() << "], transaction_time["
-              << transaction_time.getSecondsSinceEpochBeginning() << "], initial_message[" << initial_message.toHex()
-              << "]";
+              << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
+              << timestamp.getSecondsSinceEpochBeginning() << "], initial_message[" << hex_init << "]";
 
-    return {rpc::OperationStatus::createFailed("Function is not supported"), bc::Address{}, gas};
+    auto contract_code = base::Bytes::fromHex(hex_contract_code);
+    auto init = base::Bytes::fromHex(hex_init);
+
+    bc::TransactionBuilder txb;
+    txb.setTransactionType(bc::Transaction::Type::CONTRACT_CREATION);
+    txb.setFrom(from_address);
+    txb.setTo(from_address); // just a placeholder. TODO: a better thing, maybe NULL-address
+    txb.setAmount(amount);
+    txb.setFee(gas);
+    txb.setTimestamp(timestamp);
+
+    bc::ContractInitData data(std::move(contract_code), std::move(init));
+    txb.setData(base::toBytes(data));
+
+    txb.setSign(signature);
+
+    auto tx = std::move(txb).build();
+
+    try {
+        auto contract_address = _core.createContract(tx);
+        return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), contract_address, gas};
+    }
+    catch(const std::exception& e) {
+        return {rpc::OperationStatus::createFailed(std::string{"Error occurred"} + e.what()), bc::Address::null(), gas};
+    }
 }
 
-std::tuple<rpc::OperationStatus, base::Bytes, bc::Balance> GeneralServerService::transaction_to_contract(
+
+std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService::transaction_message_call(
     bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-    const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message, const bc::Sign& signature)
+    const base::Time& timestamp, bc::Balance gas, const std::string& hex_message, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
-              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "], message["
-              << message.toHex() << "]";
+              << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message["
+              << hex_message << "]";
 
-    return {rpc::OperationStatus::createFailed("Function is not support"), base::Bytes{}, gas};
-}
 
-rpc::OperationStatus GeneralServerService::transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const bc::Sign& signature)
-{
-    LOG_TRACE << "Node received in {transaction_to_wallet}: from_address[" << from_address.toString()
-              << "], to_address[" << to_address.toString() << "], amount[" << amount << "], fee" << fee
-              << "], transaction_time[" << transaction_time.getSecondsSinceEpochBeginning() << "]";
+    auto message = base::Bytes::fromHex(hex_message);
 
-    LOG_DEBUG << "Hash of received public key: " << base::Sha256::compute(signature.getPublicKey().toBytes());
+    bc::TransactionBuilder txb;
+    txb.setTransactionType(bc::Transaction::Type::MESSAGE_CALL);
+    txb.setFrom(from_address);
+    txb.setTo(to_address);
+    txb.setAmount(amount);
+    txb.setFee(gas);
+    txb.setTimestamp(timestamp);
+    txb.setData(message);
+    txb.setSign(signature);
 
-    if(_core.performTransaction(bc::Transaction(from_address, to_address, amount, fee, transaction_time, signature))) {
-        return rpc::OperationStatus::createSuccess("Success! Transaction added to queue successfully.");
+    auto tx = std::move(txb).build();
+
+    try {
+        auto result = _core.messageCall(tx);
+        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toOutputData().toHex(), result.gasLeft()};
     }
-    else {
-        return rpc::OperationStatus::createFailed("Error! Transaction rejected.");
+    catch(const std::exception& e) {
+        return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()), std::string{}, gas};
     }
 }
 

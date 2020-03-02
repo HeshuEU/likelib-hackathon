@@ -136,13 +136,9 @@ size_t decodeAsSizeT(const base::Bytes& data)
     }
 
     auto real_part = data.takePart(data.size() - sizeof(size_t), data.size());
-
     std::reverse(real_part.toArray(), real_part.toArray() + real_part.size());
-
     size_t value;
-
     memcpy(&value, real_part.toArray(), real_part.size());
-
     return value;
 }
 
@@ -162,6 +158,24 @@ base::Bytes encode(uint16_t value)
 base::Bytes encode(uint8_t value)
 {
     return detail::encode(value);
+}
+
+
+bc::Address toNativeAddress(const evmc::address& addr)
+{
+    base::Bytes raw_address(addr.bytes, bc::Address::BYTE_LENGTH);
+    bc::Address address(raw_address);
+    return address;
+}
+
+
+evmc::address toEthAddress(const bc::Address& address)
+{
+    evmc::address ret;
+    auto byte_address = address.getBytes();
+    ASSERT(byte_address.size() == std::size(ret.bytes));
+    std::copy(byte_address.toArray(), byte_address.toArray() + byte_address.size(), ret.bytes);
+    return ret;
 }
 
 

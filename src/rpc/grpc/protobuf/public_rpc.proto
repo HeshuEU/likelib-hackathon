@@ -16,15 +16,14 @@ service NodePublicInterface {
     rpc balance (Address) returns (Money) {
     }
 
-    rpc transaction_to_contract (TransactionToContractRequest) returns (TransactionToContractResponse) {
+    rpc message_call (TransactionMessageCallRequest) returns (TransactionMessageCallResponse) {
     }
 
-    rpc transaction_for_create_contract (TransactionCreationContractRequest) returns (TransactionCreationContractResponse) {
-    }
-
-    rpc transaction_to_wallet (TransactionToAccountRequest) returns (TransactionToAccountResponse) {
+    rpc create_contract (TransactionCreateContractRequest) returns (TransactionCreateContractResponse) {
     }
 }
+
+//=====================================
 
 message TestRequest {
     uint32 interface_version = 1;
@@ -34,58 +33,43 @@ message TestResponse {
     OperationStatus status = 1;
 }
 
-message TransactionToContractRequest {
-    Money value = 1;
-    Address from = 2;
-    Address to = 3;
+//=====================================
+
+message TransactionMessageCallRequest {
+    Address from = 1;
+    Address to = 2;
+    Money value = 3;
     Money gas = 4;
     Time creation_time = 5;
-    MessageToContract contract_request = 6;
-    Sign signature = 7;
+    string data = 6;
+    string signature = 7;
 }
 
-message TransactionToContractResponse {
+message TransactionMessageCallResponse {
     OperationStatus status = 1;
     Money gas_left = 2;
-    MessageFromContract contract_response = 3;
+    string contract_response = 3;
 }
 
-message TransactionCreationContractRequest {
-    Money value = 1;
-    Address from = 2;
-    Contract contract = 3;
-    Money gas = 4;
-    MessageToContract initial_message = 5;
-    Time creation_time = 6;
-    Sign signature = 7;
+//=====================================
+
+message TransactionCreateContractRequest {
+    Address from = 1;
+    Money value = 2;
+    Money gas = 3;
+    Time creation_time = 4;
+    string contract_code = 5;
+    string init = 6;
+    string signature = 7;
 }
 
-message TransactionCreationContractResponse {
+message TransactionCreateContractResponse {
     OperationStatus status = 1;
     Money gas_left = 2;
     Address contract_address = 3;
 }
 
-message TransactionToAccountRequest {
-    Money value = 1;
-    Address from = 2;
-    Address to = 3;
-    Money fee = 4;
-    Time creation_time = 5;
-    Sign signature = 6;
-}
-
-message TransactionToAccountResponse {
-    OperationStatus status = 1;
-}
-
-message MessageToContract {
-    string message = 1;
-}
-
-message MessageFromContract {
-    string message = 1;
-}
+//=====================================
 
 message Contract {
     string bytecode = 1;
@@ -103,8 +87,8 @@ message Address {
     string address = 1;
 }
 
-message Sign {
-    string signature = 1;
+message Signature {
+    string raw = 1;
 }
 
 message OperationStatus {

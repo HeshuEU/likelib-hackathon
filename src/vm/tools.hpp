@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/bytes.hpp"
-
+#include "bc/address.hpp"
 #include "bc/types.hpp"
 
 #include <evmc/evmc.hpp>
@@ -38,5 +38,9 @@ base::Bytes encode(uint32_t value);
 base::Bytes encode(uint16_t value);
 
 base::Bytes encode(uint8_t value);
+
+bc::Address toNativeAddress(const evmc::address& addr);
+
+evmc::address toEthAddress(const bc::Address& address);
 
 } // namespace vm
