@@ -24,7 +24,7 @@ class ProgramOptionsParser
     /// Add optional option that will as flag check by hasOption
     /// \param flag name. example: "useGpu,g". Such option may be set by: -g or --useGpu.
     /// \param help message to describe flag meaning. Will be show if set --help options.
-    void addFlag(const std::string& flag, const std::string& help);
+    void addFlag(const char* flag, const char* help);
 
     /// Add optional option that will be interpreted only as std::string and need to get by
     /// ProgramOptionsParser::getString call. \param flag name. example: "hash,h". Such option may be set by: -h or
@@ -53,7 +53,7 @@ class ProgramOptionsParser
     /// \return exit code of sub process defined by createSubParser or ok.
     /// \throw base::ParsingError if options has now valid format or has options/value that was not be set to parser.
     /// \throw base::InvalidArgument if argument is not an option and sub command not found
-    void process(int argc, char** argv);
+    void process(int argc, const char* const* argv);
 
     /// generate help message for options defined previously
     /// \return help message

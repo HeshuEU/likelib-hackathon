@@ -1,11 +1,14 @@
 set(CLIENT_HEADERS
-        parameters_helper.hpp
-        parameters_helper.tpp
+        actions.hpp
+        config.hpp
+        utility.hpp
+        utility.tpp
         )
 
 set(CLIENT_SOURCES
-        parameters_helper.cpp
+        actions.cpp
         main.cpp
+        utility.cpp
         )
 
 add_executable(client ${CLIENT_HEADERS} ${CLIENT_SOURCES})

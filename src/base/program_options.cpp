@@ -7,17 +7,20 @@ namespace base
 
 namespace po = boost::program_options;
 
+
 ProgramOptionsParser::ProgramOptionsParser() : _options_description("Allowed options")
 {
     addFlag("help", "Print help message");
 }
 
-void ProgramOptionsParser::addFlag(const std::string& flag, const std::string& help)
+
+void ProgramOptionsParser::addFlag(const char* flag, const char* help)
 {
-    _options_description.add_options()(flag.c_str(), help.c_str());
+    _options_description.add_options()(flag, help);
 }
 
-void ProgramOptionsParser::process(int argc, char** argv)
+
+void ProgramOptionsParser::process(int argc, const char* const * argv)
 {
     try {
         auto parsed_options = ::boost::program_options::parse_command_line(argc, argv, _options_description);
@@ -29,6 +32,7 @@ void ProgramOptionsParser::process(int argc, char** argv)
     }
 }
 
+
 std::string ProgramOptionsParser::helpMessage() const
 {
     std::stringstream ss;
@@ -36,10 +40,12 @@ std::string ProgramOptionsParser::helpMessage() const
     return ss.str();
 }
 
+
 bool ProgramOptionsParser::hasOption(const std::string& flag_name) const
 {
     return _options.find(flag_name) != _options.end();
 }
+
 
 bool ProgramOptionsParser::empty() const
 {
