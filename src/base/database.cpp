@@ -32,21 +32,23 @@ void Database::open(Directory const& path)
     database_options.create_if_missing = true;
     database_options.write_buffer_size = config::DATABASE_WRITE_BUFFER_SIZE;
     database_options.block_size = config::DATABASE_DATA_BLOCK_SIZE;
-    if(config::DATABASE_COMPRESS_DATA) {
+    if constexpr(config::DATABASE_COMPRESS_DATA) {
         database_options.compression = leveldb::kSnappyCompression; // fast compression
     }
     else {
         database_options.compression = leveldb::kNoCompression; // no compress data
     }
-    database_options.block_cache = leveldb::NewLRUCache(config::DATABASE_DATA_BLOCK_CACHE_SIZE);
+
+    _cache = std::unique_ptr<leveldb::Cache>(leveldb::NewLRUCache(config::DATABASE_DATA_BLOCK_CACHE_SIZE));
+    database_options.block_cache = _cache.get();
 
     // create database
-    leveldb::DB* data_base = nullptr;
-    auto const status = leveldb::DB::Open(database_options, path.string(), &data_base);
-    if(!status.ok() || data_base == nullptr) {
+    leveldb::DB* database = nullptr;
+    auto const status = leveldb::DB::Open(database_options, path.string(), &database);
+    if(!status.ok() || database == nullptr) {
         RAISE_ERROR(base::DatabaseError, "Failed to create database instance.");
     }
-    _database.reset(data_base);
+    _database.reset(database);
 
     // set up guard flag
     _inited = true;

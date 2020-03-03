@@ -9,44 +9,94 @@ option objc_class_prefix = "LKL";
 // Service and messages definitions
 package likelib;
 
-service Node {
+service NodePublicInterface {
+    rpc test (TestRequest) returns (TestResponse) {
+    }
+
     rpc balance (Address) returns (Money) {
     }
 
-    rpc transaction (Transaction) returns (Hash) {
+    rpc message_call (TransactionMessageCallRequest) returns (TransactionMessageCallResponse) {
     }
 
-    rpc test (TestRequest) returns (TestResponse) {
+    rpc create_contract (TransactionCreateContractRequest) returns (TransactionCreateContractResponse) {
     }
 }
 
-message Transaction {
-    Money amount = 1;
-    Address from_address = 2;
-    Address to_address = 3;
-    Time creation_time = 4;
-}
-
-message Address {
-    string address = 1;
-}
+//=====================================
 
 message TestRequest {
-    string message = 1;
+    uint32 interface_version = 1;
 }
 
 message TestResponse {
-    string message = 1;
+    OperationStatus status = 1;
 }
 
-message Hash {
-    string hash_string = 1;
+//=====================================
+
+message TransactionMessageCallRequest {
+    Address from = 1;
+    Address to = 2;
+    Money value = 3;
+    Money gas = 4;
+    Time creation_time = 5;
+    string data = 6;
+    string signature = 7;
+}
+
+message TransactionMessageCallResponse {
+    OperationStatus status = 1;
+    Money gas_left = 2;
+    string contract_response = 3;
+}
+
+//=====================================
+
+message TransactionCreateContractRequest {
+    Address from = 1;
+    Money value = 2;
+    Money gas = 3;
+    Time creation_time = 4;
+    string contract_code = 5;
+    string init = 6;
+    string signature = 7;
+}
+
+message TransactionCreateContractResponse {
+    OperationStatus status = 1;
+    Money gas_left = 2;
+    Address contract_address = 3;
+}
+
+//=====================================
+
+message Contract {
+    string bytecode = 1;
+}
+
+message Time {
+    uint64 since_epoch = 1;
 }
 
 message Money {
     uint64 money = 1;
 }
 
-message Time {
-    string seconds_from_epoch = 1;
+message Address {
+    string address = 1;
+}
+
+message Signature {
+    string raw = 1;
+}
+
+message OperationStatus {
+    enum StatusCode {
+        Success = 0;
+        Rejected = 1;
+        Failed = 2;
+    }
+    StatusCode status = 1;
+    string message = 2;
 }

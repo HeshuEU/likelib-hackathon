@@ -49,7 +49,7 @@ void TransactionsSet::remove(const bc::Transaction& tx)
     if(last_vector_element != it) {
         *it = std::move(*last_vector_element);
     }
-    _txs.resize(_txs.size() - 1);
+    _txs.pop_back();
 }
 
 
@@ -109,15 +109,17 @@ bool TransactionsSet::operator!=(const TransactionsSet& other) const
 }
 
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, TransactionsSet& txs)
+void TransactionsSet::serialize(base::SerializationOArchive& oa) const
 {
-    return ia >> txs._txs;
+    oa.serialize(_txs);
 }
 
 
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TransactionsSet& txs)
+TransactionsSet TransactionsSet::deserialize(base::SerializationIArchive& ia)
 {
-    return oa << txs._txs;
+    TransactionsSet tx_set;
+    tx_set._txs = ia.deserialize<std::vector<bc::Transaction>>();
+    return tx_set;
 }
 
 

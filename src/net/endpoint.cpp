@@ -112,15 +112,14 @@ std::ostream& operator<<(std::ostream& os, const Endpoint& endpoint)
 
 Endpoint Endpoint::deserialize(base::SerializationIArchive& ia)
 {
-    std::string ip_with_port;
-    ia >> ip_with_port;
+    std::string ip_with_port = ia.deserialize<std::string>();
     return {ip_with_port};
 }
 
 
-base::SerializationOArchive& Endpoint::serialize(base::SerializationOArchive& oa) const
+void Endpoint::serialize(base::SerializationOArchive& oa) const
 {
-    return oa << toString();
+    oa.serialize(toString());
 }
 
 } // namespace net

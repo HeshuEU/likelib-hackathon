@@ -29,12 +29,12 @@ class TransactionsSet
 
     [[nodiscard]] bool operator==(const TransactionsSet& other) const;
     [[nodiscard]] bool operator!=(const TransactionsSet& other) const;
-
+    //=================
+    void serialize(base::SerializationOArchive& oa) const;
+    static TransactionsSet deserialize(base::SerializationIArchive& ia);
+    //=================
   private:
     std::vector<Transaction> _txs;
-
-    friend base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, TransactionsSet& txs);
-    friend base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const TransactionsSet& txs);
 };
 
 

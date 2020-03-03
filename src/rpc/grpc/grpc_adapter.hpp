@@ -17,11 +17,11 @@ namespace rpc
 
 /// Class implement receive gRPC messages and call similar method from LogicService instance and send answers or error
 /// messages
-class GrpcAdapter final : public likelib::Node::Service
+class GrpcAdapter final : public likelib::NodePublicInterface::Service
 {
   public:
     /// default constructor
-    explicit GrpcAdapter();
+    explicit GrpcAdapter() = default;
 
     /// default destructor
     ~GrpcAdapter() override = default;
@@ -32,14 +32,17 @@ class GrpcAdapter final : public likelib::Node::Service
   private:
     std::shared_ptr<BaseRpc> _service;
 
-    ::grpc::Status balance(
+    grpc::Status test(
+        grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response) override;
+
+    grpc::Status balance(
         grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response) override;
 
-    ::grpc::Status transaction(
-        grpc::ServerContext* context, const likelib::Transaction* request, likelib::Hash* response) override;
+    grpc::Status message_call(grpc::ServerContext* context, const likelib::TransactionMessageCallRequest* request,
+        likelib::TransactionMessageCallResponse* response) override;
 
-    ::grpc::Status test(
-        grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response) override;
+    grpc::Status create_contract(grpc::ServerContext* context, const likelib::TransactionCreateContractRequest* request,
+        likelib::TransactionCreateContractResponse* response) override;
 };
 
 } // namespace rpc

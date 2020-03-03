@@ -4,6 +4,7 @@
 #include "base/directory.hpp"
 
 #include <leveldb/db.h>
+#include <leveldb/cache.h>
 
 #include <string>
 #include <filesystem>
@@ -24,8 +25,8 @@ class Database
     //======================
     void open(Directory const& path);
     //======================
-    std::optional<Bytes> get(const Bytes& key) const;
-    bool exists(const Bytes& key) const;
+    [[nodiscard]] std::optional<Bytes> get(const Bytes& key) const;
+    [[nodiscard]] bool exists(const Bytes& key) const;
     void put(const Bytes& key, const Bytes& value);
     void remove(const Bytes& key);
     //======================
@@ -35,6 +36,8 @@ class Database
     std::unique_ptr<leveldb::DB> _database;
     leveldb::ReadOptions _read_options;
     leveldb::WriteOptions _write_options;
+
+    std::unique_ptr<leveldb::Cache> _cache;
     //=====================
     void checkStatus() const;
     //=====================

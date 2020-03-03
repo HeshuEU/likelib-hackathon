@@ -115,6 +115,12 @@ std::size_t Bytes::capacity() const
 }
 
 
+bool Bytes::isEmpty() const noexcept
+{
+    return _raw.empty();
+}
+
+
 void Bytes::shrinkToFit()
 {
     _raw.shrink_to_fit();

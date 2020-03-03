@@ -2,13 +2,59 @@
 
 #include "rpc/error.hpp"
 
-rpc::GrpcNodeClient::GrpcNodeClient(const std::string& connect_address)
+
+namespace
 {
-    auto channel_credentials = grpc::InsecureChannelCredentials();
-    _stub = std::make_unique<likelib::Node::Stub>(grpc::CreateChannel(connect_address, channel_credentials));
+
+rpc::OperationStatus convert(const ::likelib::OperationStatus& status)
+{
+    switch(status.status()) {
+        case ::likelib::OperationStatus_StatusCode_Success:
+            return rpc::OperationStatus::createSuccess(status.message());
+        case ::likelib::OperationStatus_StatusCode_Rejected:
+            return rpc::OperationStatus::createRejected(status.message());
+        case ::likelib::OperationStatus_StatusCode_Failed:
+            return rpc::OperationStatus::createFailed(status.message());
+        default:
+            RAISE_ERROR(base::ParsingError, "Unexpected status code");
+    }
 }
 
-bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
+
+} // namespace
+
+
+namespace rpc
+{
+
+GrpcNodeClient::GrpcNodeClient(const std::string& connect_address)
+{
+    auto channel_credentials = grpc::InsecureChannelCredentials();
+    _stub =
+        std::make_unique<likelib::NodePublicInterface::Stub>(grpc::CreateChannel(connect_address, channel_credentials));
+}
+
+OperationStatus GrpcNodeClient::test(uint32_t api_version)
+{
+    // convert data for request
+    likelib::TestRequest request;
+    request.set_interface_version(api_version);
+
+    // call remote host
+    likelib::TestResponse reply;
+    grpc::ClientContext context;
+    grpc::Status status = _stub->test(&context, request, &reply);
+
+    // return value if ok
+    if(status.ok()) {
+        return convert(reply.status());
+    }
+    else {
+        throw RpcError(status.error_message());
+    }
+}
+
+bc::Balance GrpcNodeClient::balance(const bc::Address& address)
 {
     // convert data for request
     likelib::Address request;
@@ -29,61 +75,66 @@ bc::Balance rpc::GrpcNodeClient::balance(const bc::Address& address)
     }
 }
 
-std::string rpc::GrpcNodeClient::transaction(bc::Balance amount, const bc::Address& from_address,
-    const bc::Address& to_address, const base::Time& transaction_time)
+std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transaction_create_contract(bc::Balance amount,
+    const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
+    const std::string& contract_code, const std::string& init, const bc::Sign& signature)
 {
     // convert data for request
-    auto request_amount = new likelib::Money();
-    request_amount->set_money(static_cast<google::protobuf::uint64>(amount));
-
-    auto request_from_address = new likelib::Address();
-    request_from_address->set_address(from_address.toString());
-
-    auto request_to_address = new likelib::Address;
-    request_to_address->set_address(to_address.toString());
-
-    auto request_transaction_time = new likelib::Time;
-    auto seconds_from_epoch = static_cast<std::uint32_t>(transaction_time.getSecondsSinceEpochBeginning());
-    request_transaction_time->set_seconds_from_epoch(std::to_string(seconds_from_epoch));
-
-    likelib::Transaction request;
-    request.set_allocated_amount(request_amount);
-    request.set_allocated_from_address(request_from_address);
-    request.set_allocated_to_address(request_to_address);
-    request.set_allocated_creation_time(request_transaction_time);
+    likelib::TransactionCreateContractRequest request;
+    request.mutable_value()->set_money(static_cast<google::protobuf::uint64>(amount));
+    request.mutable_from()->set_address(from_address.toString());
+    request.mutable_gas()->set_money(static_cast<google::protobuf::uint64>(gas));
+    request.set_init(init);
+    request.set_contract_code(contract_code);
+    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpochBeginning());
+    request.set_signature(signature.toBase64());
 
     // call remote host
-    likelib::Hash reply;
+    likelib::TransactionCreateContractResponse reply;
     grpc::ClientContext context;
-    grpc::Status status = _stub->transaction(&context, request, &reply);
+    grpc::Status status = _stub->create_contract(&context, request, &reply);
 
     // return value if ok
     if(status.ok()) {
-        auto result = reply.hash_string();
-        return result;
+        auto converted_status = convert(reply.status());
+        auto contract_address = bc::Address{reply.contract_address().address()};
+        auto gas_left = bc::Balance{reply.gas_left().money()};
+        return {converted_status, contract_address, gas_left};
     }
     else {
         throw RpcError(status.error_message());
     }
 }
 
-std::string rpc::GrpcNodeClient::test(const std::string& test_request)
+std::tuple<OperationStatus, std::string, bc::Balance> GrpcNodeClient::transaction_message_call(bc::Balance amount,
+    const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time, bc::Balance gas,
+    const std::string& data, const bc::Sign& signature)
 {
     // convert data for request
-    likelib::TestRequest request;
-    request.set_message(test_request);
+    likelib::TransactionMessageCallRequest request;
+    request.mutable_value()->set_money(static_cast<google::protobuf::uint64>(amount));
+    request.mutable_from()->set_address(from_address.toString());
+    request.mutable_to()->set_address(to_address.toString());
+    request.mutable_gas()->set_money(static_cast<google::protobuf::uint64>(gas));
+    request.set_data(data);
+    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpochBeginning());
+    request.set_signature(signature.toBase64());
 
     // call remote host
-    likelib::TestResponse reply;
+    likelib::TransactionMessageCallResponse reply;
     grpc::ClientContext context;
-    grpc::Status status = _stub->test(&context, request, &reply);
+    grpc::Status status = _stub->message_call(&context, request, &reply);
 
     // return value if ok
     if(status.ok()) {
-        auto result = reply.message();
-        return result;
+        auto converted_status = convert(reply.status());
+        auto gas_left = bc::Balance{reply.gas_left().money()};
+        auto message_from_contract = reply.contract_response();
+        return {converted_status, message_from_contract, gas_left};
     }
     else {
         throw RpcError(status.error_message());
     }
 }
+
+} // namespace rpc

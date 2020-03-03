@@ -4,7 +4,6 @@ set(NODE_HEADERS
         rpc_service.hpp
         miner.hpp
         node.hpp
-        key_vault.hpp
         )
 
 set(NODE_SOURCES
@@ -14,9 +13,8 @@ set(NODE_SOURCES
         miner.cpp
         node.cpp
         main.cpp
-        key_vault.cpp
         )
 
 add_executable(node ${NODE_SOURCES} ${NODE_HEADERS})
 
-target_link_libraries(node base net bc lk rpc)
+target_link_libraries(node base net bc lk rpc dl backtrace)

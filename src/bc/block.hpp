@@ -26,7 +26,7 @@ class Block
 
     ~Block() = default;
     //=================
-    base::SerializationOArchive& serialize(base::SerializationOArchive& oa) const;
+    void serialize(base::SerializationOArchive& oa) const;
     [[nodiscard]] static Block deserialize(base::SerializationIArchive& ia);
     //=================
     [[nodiscard]] BlockDepth getDepth() const noexcept;
@@ -51,9 +51,6 @@ class Block
 };
 
 std::ostream& operator<<(std::ostream& os, const Block& block);
-
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block);
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block);
 
 bool operator==(const bc::Block& a, const bc::Block& b);
 bool operator!=(const bc::Block& a, const bc::Block& b);

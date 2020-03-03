@@ -4,14 +4,11 @@
 
 #include <filesystem>
 
-namespace rpc_client
-{
-
 class ParametersHelper
 {
   public:
     //=====================
-    ParametersHelper(const std::filesystem::path& path);
+    ParametersHelper(const std::filesystem::path& path, const std::filesystem::path& default_config_path);
     //========================
     template<typename Type>
     Type getValue(const std::string& value_name, const std::string& tag);
@@ -25,7 +22,5 @@ class ParametersHelper
     Type getValueFromStdInput(const std::string& tag);
     //=======================
 };
-
-} // namespace rpc_client
 
 #include "parameters_helper.tpp"

@@ -5,74 +5,74 @@
 
 BOOST_AUTO_TEST_CASE(transaction_constructor1)
 {
-    bc::Transaction tx1;
-    bc::Transaction tx2;
-    BOOST_CHECK(tx1.getFrom().toString() == "");
-    BOOST_CHECK(tx1.getTo().toString() == "");
-    BOOST_CHECK(tx1.getTimestamp() == base::Time());
-    BOOST_CHECK(tx1.getFrom().toString() == tx2.getFrom().toString());
-    BOOST_CHECK(tx1.getTo().toString() == tx2.getTo().toString());
-    BOOST_CHECK(tx1.getTimestamp() == tx2.getTimestamp());
-    // BOOST_CHECK(tx1.getAmount() == tx2.getAmount());  //TODO: not work now
-    // BOOST_CHECK(tx1 == tx2);  //TODO: not work now
-}
-
-
-BOOST_AUTO_TEST_CASE(transaction_constructor2)
-{
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address to{str_to};
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx(str_from, str_to, amount, time);
+    bc::Balance fee = 42;
+    bc::Transaction tx(from, to, amount, fee, time);
 
     BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
     BOOST_CHECK(tx.getTo() == bc::Address(str_to));
     BOOST_CHECK(tx.getTimestamp() == time);
     BOOST_CHECK(tx.getAmount() == amount);
+    BOOST_CHECK(tx.getFee() == fee);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
 {
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address to{str_to};
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(str_from, str_to, amount, time);
+    bc::Balance fee = 123;
+    bc::Transaction tx1(from, to, amount, fee, time);
     bc::Transaction tx2(tx1);
 
     BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
     BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
     BOOST_CHECK(tx2.getTimestamp() == time);
     BOOST_CHECK(tx2.getAmount() == amount);
+    BOOST_CHECK(tx2.getFee() == fee);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_move)
 {
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address to{str_to};
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(str_from, str_to, amount, time);
+    bc::Balance fee = 123;
+    bc::Transaction tx1(from, to, amount, fee, time);
     bc::Transaction tx2(std::move(tx1));
 
     BOOST_CHECK(tx2.getFrom() == bc::Address(str_from));
     BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
     BOOST_CHECK(tx2.getTimestamp() == time);
     BOOST_CHECK(tx2.getAmount() == amount);
+    BOOST_CHECK(tx2.getFee() == fee);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 {
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address to{str_to};
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(str_from, str_to, amount, time);
-    bc::Transaction tx2(str_from, str_to, 821481368, time);
+    bc::Balance fee{23213213};
+    bc::Transaction tx1(from, to, amount, fee, time);
+    bc::Transaction tx2(from, to, 821481368, fee, time);
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = tx1;
@@ -80,17 +80,21 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
     BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
     BOOST_CHECK(tx2.getTimestamp() == time);
     BOOST_CHECK(tx2.getAmount() == amount);
+    BOOST_CHECK(tx2.getFee() == fee);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 {
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address to{str_to};
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(str_from, str_to, amount, time);
-    bc::Transaction tx2(str_from, str_to, 821481368, time);
+    bc::Balance fee{213213};
+    bc::Transaction tx1(from, to, amount, fee, time);
+    bc::Transaction tx2(from, to, 821481368, fee, time);
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = std::move(tx1);
@@ -98,61 +102,77 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
     BOOST_CHECK(tx2.getTo() == bc::Address(str_to));
     BOOST_CHECK(tx2.getTimestamp() == time);
     BOOST_CHECK(tx2.getAmount() == amount);
+    BOOST_CHECK(tx2.getFee() == fee);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_set_all1)
 {
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx;
+    bc::Balance fee = 150;
+    bc::TransactionBuilder txb;
 
-    tx.setFrom(bc::Address(str_from));
-    tx.setTo(bc::Address(str_to));
-    tx.setTimestamp(time);
-    tx.setAmount(amount);
+    txb.setFrom(bc::Address(str_from));
+    txb.setTo(bc::Address(str_to));
+    txb.setTimestamp(time);
+    txb.setAmount(amount);
+    txb.setFee(fee);
+
+    auto tx = std::move(txb).build();
 
     BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
     BOOST_CHECK(tx.getTo() == bc::Address(str_to));
     BOOST_CHECK(tx.getTimestamp() == time);
     BOOST_CHECK(tx.getAmount() == amount);
+    BOOST_CHECK(tx.getFee() == fee);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_set_all2)
 {
-    bc::Transaction tx(base::Bytes("vjSSDGHS*#%/fg\f").toHex(), base::Bytes("()#%sdo#%KGD\n/Skg/dfe").toHex(),
-        821481368, base::Time());
-
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
+    bc::Balance fee{229};
 
-    tx.setFrom(bc::Address(str_from));
-    tx.setTo(bc::Address(str_to));
-    tx.setTimestamp(time);
-    tx.setAmount(amount);
+    bc::TransactionBuilder txb;
+    txb.setFrom(bc::Address(str_from));
+    txb.setTo(bc::Address(str_to));
+    txb.setTimestamp(time);
+    txb.setAmount(amount);
+    txb.setFee(fee);
 
-    BOOST_CHECK(tx.getFrom() == bc::Address(str_from));
-    BOOST_CHECK(tx.getTo() == bc::Address(str_to));
-    BOOST_CHECK(tx.getTimestamp() == time);
-    BOOST_CHECK(tx.getAmount() == amount);
+    auto tx1 = txb.build();
+
+    BOOST_CHECK(tx1.getFrom() == bc::Address(str_from));
+    BOOST_CHECK(tx1.getTo() == bc::Address(str_to));
+    BOOST_CHECK(tx1.getTimestamp() == time);
+    BOOST_CHECK(tx1.getAmount() == amount);
+    BOOST_CHECK(tx1.getFee() == fee);
 }
 
 
 BOOST_AUTO_TEST_CASE(transaction_serialization1)
 {
-    bc::Transaction tx1;
+    std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    bc::Address from{str_from};
+    std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address to{str_to};
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Balance fee = 123;
+    bc::Transaction tx1(from, to, amount, fee, time);
 
     base::SerializationOArchive oa;
-    oa << tx1;
+    oa.serialize(tx1);
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Transaction tx2;
-    ia >> tx2;
+    auto tx2 = ia.deserialize<bc::Transaction>();
     BOOST_CHECK(tx1 == tx2);
 }
 
@@ -160,16 +180,18 @@ BOOST_AUTO_TEST_CASE(transaction_serialization1)
 BOOST_AUTO_TEST_CASE(transaction_serialization2)
 {
     std::string str_from = base::Bytes("vjS#%(247DGFSMKv\n sdf?//").toHex();
+    bc::Address from{str_from};
     std::string str_to = base::Bytes("()#%9vdmLDSOJ\n\n\\/Skg/dfe").toHex();
+    bc::Address to{str_to};
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Transaction tx1(str_from, str_to, amount, time);
+    bc::Balance fee{506};
+    bc::Transaction tx1(from, to, amount, fee, time);
 
     base::SerializationOArchive oa;
-    oa << tx1;
+    oa.serialize(tx1);
 
     base::SerializationIArchive ia(oa.getBytes());
-    bc::Transaction tx2;
-    ia >> tx2;
+    auto tx2 = ia.deserialize<bc::Transaction>();
     BOOST_CHECK(tx1 == tx2);
 }

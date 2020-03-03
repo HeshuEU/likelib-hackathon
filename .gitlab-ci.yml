@@ -7,89 +7,87 @@ stages:
 
 Build:
   stage: build
-  image: heshuby/prepare_build:2019-12-20
+  image: ubuntu:19.10
   tags:
     - docker
   script:
     - INSTALL_DIR="/opt"
-    - PROJECT_SOURCE_DIR=${PWD}
-    - PROJECT_BUILD_DIR="./build"
-    - mkdir ${PROJECT_BUILD_DIR}
-    - cd ${PROJECT_BUILD_DIR}
-    - cmake ${PROJECT_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
-    - make -j$(nproc)
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Finish building                            == \n \
-      ========================================================================= \033[0m"
+    - SOURCE_DIR=${PWD}
+    - BUILD_DIR="${SOURCE_DIR}/build"
+    - ${SOURCE_DIR}/doc/prepare_build.sh
+    - mkdir -p ${BUILD_DIR}
+    - mkdir -p /tmp/logs
+    - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
+    - cd ${BUILD_DIR} && make -j$(nproc)
+    - cp -r /tmp/logs ${BUILD_DIR}
   artifacts:
     paths:
       - build
     expire_in: 1 week
 
 
+
 Code quality:
   stage: analyzers
-  image: heshuby/prepare_build:2019-12-20
+  image: ubuntu:19.10
   tags:
     - docker
-  allow_failure: true
   script:
-    - cd ./src
-    - INCLUDE="-isystem/opt/vcpkg/installed/x64-linux/include -I${PWD} -isystem../build/grpc/gen -std=c++17"
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Start code quality                         == \n \
-      ========================================================================= \033[0m"
-    - clang-tidy $(find . -name "*.cpp") -header-filter=.* -- ${INCLUDE}
+    - SOURCE_DIR=${PWD}
+    - LOG_DIR=${SOURCE_DIR}/clang-tidy-log
+    - BUILD_DIR="${SOURCE_DIR}/build"
+    - ${SOURCE_DIR}/doc/prepare_build.sh
+    - mkdir -p ${LOG_DIR}
+    - mkdir -p ${BUILD_DIR}
+    - mkdir -p /tmp/logs
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR} > /dev/null 2>&1
+    - cd ${BUILD_DIR} && make > /dev/null 2>&1 || (cp /tmp/logs/* ${LOG_DIR} && exit 1)
+    - cp /tmp/logs/* ${LOG_DIR} && cat ${LOG_DIR}/clang-tidy-output.txt
+    - test -f /tmp/logs/.error-flag && exit 1
+  artifacts:
+    when: always
+    paths:
+      - clang-tidy-log
+    expire_in: 1 week
+
 
 
 Unit tests:
   stage: unit-tests
+  image: ubuntu:19.10
   tags:
     - docker
   script:
-    - |
-      echo
-      echo -e "\033[40;1;42m =========================================================================
-       ==                          Start unit tests                           == \n \
-      ========================================================================= \033[0m"
-    - build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - ./doc/prepare_build.sh
+    - cd build/bin/
+    - ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
 Integration tests:
-  timeout: 15m
+  timeout: 45m
   stage: integration-tests
-  image: heshuby/prepare_build:2019-12-20
+  image: ubuntu:19.10
   tags:
     - docker
   script:
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Start integration tests                    == \n \
-      ========================================================================= \033[0m"
+    - ./doc/prepare_build.sh
     - PROJECT_SOURCE_DIR=${PWD}
     - TEST_DIR="intergation_test_run"
     - mkdir ${TEST_DIR}
     - cd ${TEST_DIR}
-    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/src/node/node -r ${PROJECT_SOURCE_DIR}/build/src/rpc-client/rpc-client
+    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/bin/node -r ${PROJECT_SOURCE_DIR}/build/bin/client
   artifacts:
+    when: always
     paths:
       - intergation_test_run
     expire_in: 1 week
 
 Valgrind test:
   stage: analyzers
-  image: heshuby/prepare_build:2019-12-20
+  image: ubuntu:19.10
   tags:
     - docker
   script:
-    - |
-      echo
-      echo -e "\033[40;1;42m ========================================================================= 
-       ==                          Start memory check                         == \n \
-      ========================================================================= \033[0m"
-    - valgrind --leak-check=full --show-leak-kinds=all build/test/unit_test/run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - ./doc/prepare_build.sh
+    - cd build/bin
+    - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
