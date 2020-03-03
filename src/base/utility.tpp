@@ -27,9 +27,9 @@ void Observable<Args...>::unsubscribe(std::size_t Id)
         iter != _observers.end()) {
         _observers.erase(iter);
     }
-    // else {
-    //     RAISE_ERROR(InvalidArgument, "There is no Callback with an Id"); //TODO: not declared
-    // }
+    else {
+        RAISE_ERROR(base::InvalidArgument, "There is no Callback with an Id");
+    }
 }
 
 

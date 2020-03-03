@@ -1,7 +1,5 @@
 #pragma once
 
-#include "base/utility.hpp"
-
 #include <boost/current_function.hpp>
 
 #include <exception>
