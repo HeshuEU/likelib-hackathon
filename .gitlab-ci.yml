@@ -4,6 +4,10 @@ stages:
   - integration-tests
   - analyzers
 
+default:
+  before_script:
+    - ls -l
+    - ./doc/prepare_build.sh
 
 Build:
   stage: build
