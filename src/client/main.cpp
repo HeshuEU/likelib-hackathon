@@ -11,15 +11,15 @@
 
 int mainProcess(base::SubprogramRouter& router)
 {
-    router.getOptionsParser()->addFlag("version,v", "Print version of program");
+    router.getOptionsParser().addFlag("version,v", "Print version of program");
     router.update();
 
-    if(router.getOptionsParser()->hasOption("help") || router.getOptionsParser()->empty()) {
+    if(router.getOptionsParser().hasOption("help") || router.getOptionsParser()->empty()) {
         std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
 
-    if(router.getOptionsParser()->hasOption("version")) {
+    if(router.getOptionsParser().hasOption("version")) {
         std::cout << "Likelib2 client " << config::VERSION << std::endl;
         return base::config::EXIT_OK;
     }

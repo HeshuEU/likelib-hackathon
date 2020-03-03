@@ -17,47 +17,174 @@
 #include <string>
 
 
-int getBalance(base::SubprogramRouter& router)
-{
-    constexpr const char* CONFIG_OPTION = "config";
-    router.getOptionsParser().addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
-    constexpr const char* HOST_OPTION = "host";
-    router.getOptionsParser().addOption<std::string>(HOST_OPTION, "address of host");
-    constexpr const char* ADDRESS_OPTION = "address";
-    router.getOptionsParser().addOption<std::string>(ADDRESS_OPTION, "address of target account");
-    router.update();
+//====================================
 
-    if(router.getOptionsParser().hasOption("help")) {
-        std::cout << router.helpMessage() << std::endl;
+ActionBase::ActionBase(base::SubprogramRouter& router) : _router{router}
+{}
+
+
+int ActionBase::run()
+{
+    setupOptionsParser(_router.getOptionsParser());
+    _router.update();
+
+    if(_router.getOptionsParser().hasOption("help")) {
+        std::cout << _router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
 
+    if(auto ret = loadOptions(_router.getOptionsParser()); ret != base::config::EXIT_OK) {
+        return ret;
+    }
+    if(auto ret = execute(); ret != base::config::EXIT_OK) {
+        return ret;
+    }
+
+    return base::config::EXIT_OK;
+}
+
+//====================================
+
+void ActionTransfer::setupOptionsParser(base::ProgramOptionsParser& parser)
+{
+    parser.addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
+    parser.addOption<std::string>(HOST_OPTION, "address of host");
+    parser.addOption<std::string>(TO_ADDRESS_OPTION, "address of recipient account");
+    parser.addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
+    parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
+    parser.addOption<bc::Balance>(FEE_OPTION, "fee count");
+}
+
+
+int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser) {
+    std::filesystem::path config_file_path = parser.getValue<std::string>(CONFIG_OPTION);
+
+    //====================================
+    if(parser.hasOption(HOST_OPTION)) {
+        _host_address = parser.getValue<std::string>(HOST_OPTION);
+    }
+    //====================================
+    std::string to_address_str;
+    if(parser.hasOption(TO_ADDRESS_OPTION)) {
+        to_address_str = parser.getValue<std::string>(TO_ADDRESS_OPTION);
+    }
+    _to_address = bc::Address{to_address_str};
+    //====================================
+    if(parser.hasOption(AMOUNT_OPTION)) {
+        _amount = parser.getValue<bc::Balance>(AMOUNT_OPTION);
+    }
+    //====================================
+    if(parser.hasOption(FEE_OPTION)) {
+        _fee = parser.getValue<bc::Balance>(FEE_OPTION);
+    }
+    //====================================
+    if(parser.hasOption(KEYS_DIRECTORY_OPTION)) {
+        _keys_path = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
+    }
+    //====================================
+    auto public_key_path = base::config::makePublicKeyPath(_keys_path);
+    if(!std::filesystem::exists(public_key_path)) {
+        std::cerr << "Error: public key file not found at " << public_key_path;
+        LOG_ERROR << "error: public key not found by path " << public_key_path;
+        return base::config::EXIT_FAIL;
+    }
+    _public_key = base::RsaPublicKey::load(public_key_path);
+    _from_address = bc::Address(*_public_key);
+
+    auto private_key_path = base::config::makePrivateKeyPath(_keys_path);
+    if(!std::filesystem::exists(private_key_path)) {
+        std::cerr << "Error: private key file not found at " << private_key_path;
+        LOG_ERROR << "error: private key not found by path " << private_key_path;
+        return base::config::EXIT_FAIL;
+    }
+    _private_key = base::RsaPrivateKey::load(private_key_path);
+
+    return base::config::EXIT_OK;
+}
+
+
+int ActionTransfer::execute()
+{
     try {
-        std::filesystem::path config_file_path = router.getOptionsParser().getValue<std::string>(CONFIG_OPTION);
-
-        //====================================
-        std::string host_address;
-        if(router.getOptionsParser().hasOption(HOST_OPTION)) {
-            host_address = router.getOptionsParser().getValue<std::string>(HOST_OPTION);
-        }
-        //====================================
-        std::string account_address_str;
-        if(router.getOptionsParser().hasOption(ADDRESS_OPTION)) {
-            account_address_str = router.getOptionsParser().getValue<std::string>(ADDRESS_OPTION);
-        }
-        bc::Address account_address{account_address_str};
-        //====================================
-
-        LOG_INFO << "GetBalance for address " << account_address;
-        LOG_INFO << "Trying to connect to rpc server at " << host_address;
-        rpc::RpcClient client(host_address);
-        auto result = client.balance(account_address);
-        std::cout << "balance of " << account_address << " is " << result << std::endl;
-        LOG_INFO << "Remote call of getBalance(" << account_address << ") -> [" << result << "]";
+        rpc::RpcClient client(_host_address);
+        LOG_INFO << "Transfer from " << _from_address << " to " << _to_address << " with amount " << _amount
+            << " to rpc server " << _host_address;
+        LOG_INFO << "Try to connect to rpc a server at " << _host_address;
+        bc::TransactionBuilder txb;
+        txb.setFrom(std::move(_from_address));
+        txb.setTo(std::move(_to_address));
+        txb.setAmount(_amount);
+        txb.setTimestamp(base::Time::now());
+        txb.setFee(_fee);
+        auto tx = std::move(txb).build();
+        tx.sign(*_public_key, *_private_key);
+        auto [status, result, gas_left] = client.transaction_message_call(
+                tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
+        std::cout << result << std::endl;
+        LOG_INFO << "Remote call of transaction -> [" << result << "]";
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cerr << "Bad input arguments.\n" << router.helpMessage();
+        std::cerr << "Bad input arguments.\n" << _router.helpMessage();
+        LOG_ERROR << "[exception in getBalance]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(const rpc::RpcError& er) {
+        std::cerr << "RPC error. " << er.what() << "\n";
+        LOG_ERROR << "[exception in getBalance]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(const base::Error& er) {
+        std::cerr << "Unexpected error." << er.what() << "\n";
+        LOG_ERROR << "[exception in test]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(...) {
+        std::cerr << "Unexpected error.\n";
+        LOG_ERROR << "[unknown exception caught in test]";
+        return base::config::EXIT_FAIL;
+    }
+}
+
+
+//====================================
+
+void ActionGetBalance::setupOptionsParser(base::ProgramOptionsParser& parser)
+{
+    parser.addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
+    parser.addOption<std::string>(HOST_OPTION, "address of host");
+    parser.addOption<std::string>(ADDRESS_OPTION, "address of target account");
+}
+
+
+int ActionGetBalance::loadOptions(const base::ProgramOptionsParser& parser)
+{
+    std::string host_address;
+    if(parser.hasOption(HOST_OPTION)) {
+        host_address = parser.getValue<std::string>(HOST_OPTION);
+    }
+    //====================================
+    std::string account_address_str;
+    if(parser.hasOption(ADDRESS_OPTION)) {
+        account_address_str = parser.getValue<std::string>(ADDRESS_OPTION);
+    }
+    _account_address = bc::Address{account_address_str};
+}
+
+
+int ActionGetBalance::execute()
+{
+    try {
+        LOG_INFO << "GetBalance for address " << _account_address;
+        LOG_INFO << "Trying to connect to rpc server at " << _host_address;
+        rpc::RpcClient client(_host_address);
+        auto result = client.balance(_account_address);
+        std::cout << "balance of " << _account_address << " is " << result << std::endl;
+        LOG_INFO << "Remote call of getBalance(" << _account_address << ") -> [" << result << "]";
+        return base::config::EXIT_OK;
+    }
+    catch(const base::ParsingError& er) {
+        std::cerr << "Bad input arguments.\n" << _router.helpMessage();
         LOG_ERROR << "[exception in getBalance]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -78,141 +205,29 @@ int getBalance(base::SubprogramRouter& router)
     }
 }
 
+//====================================
 
-int transfer(base::SubprogramRouter& router)
+void ActionTestConnection::setupOptionsParser(base::ProgramOptionsParser& parser)
 {
-    constexpr const char* CONFIG_OPTION = "config";
-    router.getOptionsParser().addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
-    constexpr const char* HOST_OPTION = "host";
-    router.getOptionsParser().addOption<std::string>(HOST_OPTION, "address of host");
-    constexpr const char* TO_ADDRESS_OPTION = "to";
-    router.getOptionsParser().addOption<std::string>(TO_ADDRESS_OPTION, "address of recipient account");
-    constexpr const char* AMOUNT_OPTION = "amount";
-    router.getOptionsParser().addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
-    constexpr const char* KEYS_DIRECTORY_OPTION = "keys";
-    router.getOptionsParser().addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
-    constexpr const char* FEE_OPTION = "fee";
-    router.getOptionsParser().addOption<bc::Balance>(FEE_OPTION, "fee count");
-    router.update();
+    parser.addOption<std::string>(HOST_OPTION, "address of host");
+}
 
-    if(router.getOptionsParser().hasOption("help")) {
-        std::cout << router.helpMessage() << std::endl;
-        return base::config::EXIT_OK;
-    }
 
-    try {
-        std::filesystem::path config_file_path = router.getOptionsParser().getValue<std::string>(CONFIG_OPTION);
-
-        //====================================
-        std::string host_address;
-        if(router.getOptionsParser().hasOption(HOST_OPTION)) {
-            host_address = router.getOptionsParser().getValue<std::string>(HOST_OPTION);
-        }
-        //====================================
-        std::string to_address_str;
-        if(router.getOptionsParser().hasOption(TO_ADDRESS_OPTION)) {
-            to_address_str = router.getOptionsParser().getValue<std::string>(TO_ADDRESS_OPTION);
-        }
-        bc::Address to_address{to_address_str};
-        //====================================
-        bc::Balance amount;
-        if(router.getOptionsParser().hasOption(AMOUNT_OPTION)) {
-            amount = router.getOptionsParser().getValue<bc::Balance>(AMOUNT_OPTION);
-        }
-        //====================================
-        bc::Balance fee;
-        if(router.getOptionsParser().hasOption(FEE_OPTION)) {
-            fee = router.getOptionsParser().getValue<bc::Balance>(FEE_OPTION);
-        }
-        //====================================
-        std::filesystem::path keys_path;
-        if(router.getOptionsParser().hasOption(KEYS_DIRECTORY_OPTION)) {
-            keys_path = router.getOptionsParser().getValue<std::string>(KEYS_DIRECTORY_OPTION);
-        }
-        //====================================
-        auto public_key_path = base::config::makePublicKeyPath(keys_path);
-        if(!std::filesystem::exists(public_key_path)) {
-            std::cerr << "Error: public key file not found at " << public_key_path;
-            LOG_ERROR << "error: public key not found by path " << public_key_path;
-            return base::config::EXIT_FAIL;
-        }
-        auto public_key = base::RsaPublicKey::load(public_key_path);
-        auto from_address = bc::Address(public_key);
-
-        auto private_key_path = base::config::makePrivateKeyPath(keys_path);
-        if(!std::filesystem::exists(private_key_path)) {
-            std::cerr << "Error: private key file not found at " << private_key_path;
-            LOG_ERROR << "error: private key not found by path " << private_key_path;
-            return base::config::EXIT_FAIL;
-        }
-        auto private_key = base::RsaPrivateKey::load(private_key_path);
-        //====================================
-        rpc::RpcClient client(host_address);
-        LOG_INFO << "Transfer from " << from_address << " to " << to_address << " with amount " << amount
-                 << " to rpc server " << host_address;
-        LOG_INFO << "Try to connect to rpc a server at " << host_address;
-        bc::TransactionBuilder txb;
-        txb.setFrom(std::move(from_address));
-        txb.setTo(std::move(to_address));
-        txb.setAmount(amount);
-        txb.setTimestamp(base::Time::now());
-        txb.setFee(fee);
-        auto tx = std::move(txb).build();
-        tx.sign(public_key, private_key);
-        auto [status, result, gas_left] = client.transaction_message_call(
-                tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
-        std::cout << result << std::endl;
-        LOG_INFO << "Remote call of transaction -> [" << result << "]";
-        return base::config::EXIT_OK;
-    }
-    catch(const base::ParsingError& er) {
-        std::cerr << "Bad input arguments.\n" << router.helpMessage();
-        LOG_ERROR << "[exception in getBalance]" << er.what();
-        return base::config::EXIT_FAIL;
-    }
-    catch(const rpc::RpcError& er) {
-        std::cerr << "RPC error. " << er.what() << "\n";
-        LOG_ERROR << "[exception in getBalance]" << er.what();
-        return base::config::EXIT_FAIL;
-    }
-    catch(const base::Error& er) {
-        std::cerr << "Unexpected error." << er.what() << "\n";
-        LOG_ERROR << "[exception in test]" << er.what();
-        return base::config::EXIT_FAIL;
-    }
-    catch(...) {
-        std::cerr << "Unexpected error.\n";
-        LOG_ERROR << "[unknown exception caught in test]";
-        return base::config::EXIT_FAIL;
+int ActionTestConnection::loadOptions(const base::ProgramOptionsParser& parser)
+{
+    std::string host_address;
+    if(_router.getOptionsParser().hasOption(HOST_OPTION)) {
+        host_address = parser.getValue<std::string>(HOST_OPTION);
     }
 }
 
 
-int testConnection(base::SubprogramRouter& router)
+int ActionTestConnection::execute()
 {
-    constexpr const char* CONFIG_OPTION = "config";
-    router.getOptionsParser().addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
-    constexpr const char* HOST_OPTION = "host";
-    router.getOptionsParser().addOption<std::string>(HOST_OPTION, "address of host");
-    constexpr const char* CODE_PATH_OPTION = "code_path";
-    router.getOptionsParser().addOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
-    router.update();
-
-    if(router.getOptionsParser().hasOption("help")) {
-        std::cout << router.helpMessage() << std::endl;
-        return base::config::EXIT_OK;
-    }
-
     try {
-        //====================================
-        std::string host_address;
-        if(router.getOptionsParser().hasOption(HOST_OPTION)) {
-            host_address = router.getOptionsParser().getValue<std::string>(HOST_OPTION);
-        }
-        //====================================
-        LOG_INFO << "Test connect to rpc server by: " << host_address;
-        LOG_INFO << "Try to connect to rpc server by: " << host_address;
-        rpc::RpcClient client(host_address);
+        LOG_INFO << "Test connect to rpc server by: " << _host_address;
+        LOG_INFO << "Try to connect to rpc server by: " << _host_address;
+        rpc::RpcClient client(_host_address);
 
         auto answer = client.test(config::API_VERSION);
 
@@ -227,7 +242,7 @@ int testConnection(base::SubprogramRouter& router)
         return base::config::EXIT_OK;
     }
     catch(const base::ParsingError& er) {
-        std::cerr << "Bad input arguments\n" << router.helpMessage();
+        std::cerr << "Bad input arguments\n" << _router.helpMessage();
         LOG_ERROR << "[exception in test]" << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -248,90 +263,86 @@ int testConnection(base::SubprogramRouter& router)
     }
 }
 
+//====================================
 
-int createContract(base::SubprogramRouter& router)
+void ActionCreateContract::setupOptionsParser(base::ProgramOptionsParser& parser)
 {
-    constexpr const char* CONFIG_OPTION = "config";
-    router.getOptionsParser().addOption<std::string>(CONFIG_OPTION, "rpc_config json file path");
-    constexpr const char* HOST_OPTION = "host";
-    router.getOptionsParser().addOption<std::string>(HOST_OPTION, "address of host");
-    constexpr const char* CODE_PATH_OPTION = "code";
-    router.getOptionsParser().addOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
-    constexpr const char* FROM_ADDRESS_OPTION = "from";
-    router.getOptionsParser().addOption<std::string>(FROM_ADDRESS_OPTION, "address of \"from\" account");
-    constexpr const char* AMOUNT_OPTION = "amount";
-    router.getOptionsParser().addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
-    constexpr const char* GAS_OPTION = "gas";
-    router.getOptionsParser().addOption<bc::Balance>(GAS_OPTION, "gas count");
-    constexpr const char* INITIAL_MESSAGE_OPTION = "init";
-    router.getOptionsParser().addOption<std::string>(INITIAL_MESSAGE_OPTION, "message for initialize smart contract");
-    router.update();
+    parser.addOption<std::string>(HOST_OPTION, "address of host");
+    parser.addOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
+    parser.addOption<std::string>(FROM_ADDRESS_OPTION, "address of \"from\" account");
+    parser.addOption<bc::Balance>(AMOUNT_OPTION, "amount count");
+    parser.addOption<bc::Balance>(GAS_OPTION, "gas count");
+    parser.addOption<std::string>(INITIAL_MESSAGE_OPTION, "message for initialize smart contract");
+}
 
-    if(router.getOptionsParser().hasOption("help")) {
-        std::cout << router.helpMessage() << std::endl;
-        return base::config::EXIT_OK;
+
+int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
+{
+    if(parser.hasOption(HOST_OPTION)) {
+        _host_address = parser.getValue<std::string>(HOST_OPTION);
+    }
+    //====================================
+    std::string file_path;
+    if(parser.hasOption(CODE_PATH_OPTION)) {
+        file_path = parser.getValue<std::string>(CODE_PATH_OPTION);
+    }
+    else {
+        if(file_path.empty()) {
+            std::cout << "Path to code not set up" << std::endl;
+            return base::config::EXIT_FAIL;
+        }
+    }
+    std::string contract;
+    try {
+        auto compiled_code = base::readConfig(file_path);
+        contract = compiled_code.get<std::string>("object");
+    }
+    catch(const base::InaccessibleFile& er) {
+        std::cout << "File not found by path: " << file_path << std::endl;
+        return base::config::EXIT_FAIL;
+    }
+    catch(const base::ParsingError& er) {
+        std::cout << "File no found by path: " << file_path << std::endl;
+        LOG_ERROR << "[not json valid format]" << er.what();
+        return base::config::EXIT_FAIL;
+    }
+    catch(const base::InvalidArgument& er) {
+        std::cout << "Code not found at file: " << file_path << std::endl;
+        LOG_ERROR << "[no valid data file" << file_path << "]" << er.what();
+        return base::config::EXIT_FAIL;
     }
 
+    //====================================
+    std::string from_address;
+    if(parser.hasOption(FROM_ADDRESS_OPTION)) {
+        from_address = parser.getValue<std::string>(FROM_ADDRESS_OPTION);
+    }
+    //====================================
+    bc::Balance amount;
+    if(parser.hasOption(AMOUNT_OPTION)) {
+        amount = parser.getValue<bc::Balance>(AMOUNT_OPTION);
+    }
+    //====================================
+    bc::Balance gas;
+    if(parser.hasOption(GAS_OPTION)) {
+        gas = parser.getValue<bc::Balance>(GAS_OPTION);
+    }
+    //====================================
+    std::string message;
+    if(parser.hasOption(INITIAL_MESSAGE_OPTION)) {
+        message = parser.getValue<std::string>(INITIAL_MESSAGE_OPTION);
+    }
+    else {
+        message = "";//helper.getValue<std::string>("messages", "message for initialization smart contract");
+    }
+    //====================================
+
+    return base::config::EXIT_OK;
+}
+
+
+int ActionCreateContract::execute() {
     try {
-        //====================================
-        std::string host_address;
-        if(router.getOptionsParser().hasOption(HOST_OPTION)) {
-            host_address = router.getOptionsParser().getValue<std::string>(HOST_OPTION);
-        }
-        //====================================
-        std::string file_path;
-        if(router.getOptionsParser().hasOption(CODE_PATH_OPTION)) {
-            file_path = router.getOptionsParser().getValue<std::string>(CODE_PATH_OPTION);
-        }
-        else {
-            if(file_path.empty()) {
-                std::cout << "Path to code not set up" << std::endl;
-                return base::config::EXIT_FAIL;
-            }
-        }
-        std::string contract;
-        try {
-            auto compiled_code = base::readConfig(file_path);
-            contract = compiled_code.get<std::string>("object");
-        }
-        catch(const base::InaccessibleFile& er) {
-            std::cout << "File not found by path: " << file_path << std::endl;
-            return base::config::EXIT_FAIL;
-        }
-        catch(const base::ParsingError& er) {
-            std::cout << "File no found by path: " << file_path << std::endl;
-            LOG_ERROR << "[not json valid format]" << er.what();
-            return base::config::EXIT_FAIL;
-        }
-        catch(const base::InvalidArgument& er) {
-            std::cout << "Code not found at file: " << file_path << std::endl;
-            LOG_ERROR << "[no valid data file" << file_path << "]" << er.what();
-            return base::config::EXIT_FAIL;
-        }
-        //====================================
-        std::string from_address;
-        if(router.getOptionsParser().hasOption(FROM_ADDRESS_OPTION)) {
-            from_address = router.getOptionsParser().getValue<std::string>(FROM_ADDRESS_OPTION);
-        }
-        //====================================
-        bc::Balance amount;
-        if(router.getOptionsParser().hasOption(AMOUNT_OPTION)) {
-            amount = router.getOptionsParser().getValue<bc::Balance>(AMOUNT_OPTION);
-        }
-        //====================================
-        bc::Balance gas;
-        if(router.getOptionsParser().hasOption(GAS_OPTION)) {
-            gas = router.getOptionsParser().getValue<bc::Balance>(GAS_OPTION);
-        }
-        //====================================
-        std::string message;
-        if(router.getOptionsParser().hasOption(INITIAL_MESSAGE_OPTION)) {
-            message = router.getOptionsParser().getValue<std::string>(INITIAL_MESSAGE_OPTION);
-        }
-        else {
-            message = "";//helper.getValue<std::string>("messages", "message for initialization smart contract");
-        }
-        //====================================
         LOG_INFO << "Try to connect to rpc server by: " << host_address;
         rpc::RpcClient client(host_address);
 
