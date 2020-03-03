@@ -823,30 +823,22 @@ static constexpr int8_t mapBase58[256] = {
 
 base::Bytes base58Decode(std::string_view base58)
 {
-    // Skip leading spaces.
     std::size_t current_pos = 0;
-    while(current_pos != base58.size() && base58[current_pos] == ' ') {
-        current_pos++;
-    }
-    // Skip and count leading '1's.
     std::size_t zeroes_count = 0;
     std::size_t length = 0;
     while(base58[current_pos] == '1') {
         zeroes_count++;
         current_pos++;
     }
-    // Allocate enough space in big-endian base256 representation.
-    std::vector<unsigned char> b256((base58.size() - current_pos) * 733 / 1000 + 1); // log(58) / log(256), rounded up.
-    // Process the characters.
-    while(current_pos != base58.size() && base58[current_pos] != ' ') {
-        // Decode base58 character
+
+    std::vector<unsigned char> b256((base58.size() - current_pos) * 733 / 1000 + 1); // log(58) / log(256)
+    while(current_pos != base58.size()) {
         auto carry = static_cast<int>(mapBase58[static_cast<std::int8_t>(base58[current_pos])]);
-        if(carry == -1) { // Invalid b58 character
-            RAISE_ERROR(base::InvalidArgument, "Invalid string for decode base58");
+        if(carry == -1) {
+            RAISE_ERROR(base::InvalidArgument, "Invalid base58 string");
         }
         std::size_t i = 0;
-        for(std::vector<unsigned char>::reverse_iterator it = b256.rbegin();
-            (carry != 0 || i < length) && (it != b256.rend()); ++it, ++i) {
+        for(auto it = b256.rbegin(); (carry != 0 || i < length) && (it != b256.rend()); ++it, ++i) {
             carry += 58 * (*it);
             *it = carry % 256;
             carry /= 256;
@@ -854,16 +846,8 @@ base::Bytes base58Decode(std::string_view base58)
         length = i;
         current_pos++;
     }
-    // Skip trailing spaces.
-    while(base58[current_pos] == ' ') {
-        current_pos++;
-    }
-    if(current_pos != base58.size()) {
-        RAISE_ERROR(base::InvalidArgument, "Invalid string for decode base58");
-    }
-    // Skip leading zeroes in b256.
-    auto it = b256.begin() + (b256.size() - length);
 
+    auto it = b256.begin() + (b256.size() - length);
     base::Bytes ret_bytes(std::vector<base::Byte>(zeroes_count, 0x00));
     while(it != b256.end()) {
         ret_bytes.append(*(it++));
@@ -873,7 +857,6 @@ base::Bytes base58Decode(std::string_view base58)
 
 std::string base58Encode(const base::Bytes& bytes)
 {
-    // Skip & count leading zeroes.
     std::size_t current_pos = 0;
     std::size_t zeroes_count = 0;
     std::size_t length = 0;
@@ -882,14 +865,11 @@ std::string base58Encode(const base::Bytes& bytes)
         zeroes_count++;
     }
 
-    base::Bytes b58(bytes.size() * 138 / 100 + 1); // log(256) / log(58), rounded up.
-    // Process the bytes.
+    base::Bytes b58(bytes.size() * 138 / 100 + 1); // log(256) / log(58)
     while(current_pos != bytes.size()) {
         auto carry = static_cast<std::size_t>(bytes[current_pos]);
         std::size_t i = 0;
-        // Apply "b58 = b58 * 256 + ch".
-        for(std::vector<base::Byte>::reverse_iterator it = b58.toVector().rbegin();
-            (carry != 0 || i < length) && (it != b58.toVector().rend()); it++, i++) {
+        for(auto it = b58.toVector().rbegin(); (carry != 0 || i < length) && (it != b58.toVector().rend()); it++, i++) {
             carry += 256 * (*it);
             *it = carry % 58;
             carry /= 58;
@@ -897,7 +877,6 @@ std::string base58Encode(const base::Bytes& bytes)
         length = i;
         current_pos++;
     }
-    // Skip leading zeroes in base58 result.
     auto it = b58.toVector().begin() + (b58.size() - length);
     while(it != b58.toVector().end() && *it == 0) {
         it++;
