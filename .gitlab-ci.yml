@@ -4,10 +4,6 @@ stages:
   - integration-tests
   - analyzers
 
-default:
-  before_script:
-    - ls -l
-    - ./doc/prepare_build.sh
 
 Build:
   stage: build
@@ -64,7 +60,7 @@ Unit tests:
   script:
     - ./doc/prepare_build.sh
     - cd build/bin/
-    - ls || ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
+    - ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
 Integration tests:
