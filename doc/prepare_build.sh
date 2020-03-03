@@ -12,7 +12,7 @@ ${SUDO_PREF} apt-get update || exit 1
 ${SUDO_PREF} apt-get dist-upgrade -y || exit 1
 ${SUDO_PREF} apt-get update || exit 1
 
-${SUDO_PREF} apt-get install -y build-essential gcc g++ make cmake || exit 1
+cmake --version || (${SUDO_PREF} apt-get install -y build-essential gcc g++ make cmake || exit 1)
 
 ${SUDO_PREF} apt-get install -y git wget unzip tar curl valgrind clang-tidy python3.7 python3-pip || exit 1
 
