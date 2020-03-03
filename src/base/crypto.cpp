@@ -566,64 +566,6 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 }
 
 
-std::string base64Encode(const base::Bytes& bytes)
-{
-    if(bytes.size() == 0) {
-        return "";
-    }
-
-    BIO* bio_temp = BIO_new(BIO_s_mem());
-    BIO* b64 = BIO_new(BIO_f_base64());
-    BUF_MEM* bufferPtr = nullptr;
-
-    std::unique_ptr<BIO, decltype(&::BIO_free_all)> bio(BIO_push(b64, bio_temp), ::BIO_free_all);
-    BIO_set_flags(bio.get(), BIO_FLAGS_BASE64_NO_NL);
-    if(BIO_write(bio.get(), bytes.toArray(), static_cast<int>(bytes.size())) < 1) {
-        RAISE_ERROR(CryptoError, "Base64 encode write error");
-    }
-    if(BIO_flush(bio.get()) < 1) {
-        RAISE_ERROR(CryptoError, "Base64 encode flush error");
-    }
-    if(BIO_get_mem_ptr(bio.get(), &bufferPtr) < 1) {
-        if(bufferPtr) {
-            BUF_MEM_free(bufferPtr);
-        }
-        RAISE_ERROR(CryptoError, "Get pointer to memory from base64 error");
-    }
-
-    std::string base64_bytes(bufferPtr->data, bufferPtr->length);
-
-    BUF_MEM_free(bufferPtr);
-    BIO_set_close(bio.get(), BIO_NOCLOSE);
-    return base64_bytes;
-}
-
-
-base::Bytes base64Decode(std::string_view base64)
-{
-    auto length = base64.length();
-    if(length == 0) {
-        return base::Bytes();
-    }
-
-    BIO* b64 = BIO_new(BIO_f_base64());
-    BIO* bio = BIO_new_mem_buf(base64.data(), length);
-    base::Bytes ret(length);
-
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-    bio = BIO_push(b64, bio);
-    auto new_length = BIO_read(bio, ret.toArray(), length);
-    if(new_length < 1) {
-        BIO_free_all(bio);
-        RAISE_ERROR(CryptoError, "Base64 decode read error");
-    }
-
-    BIO_free_all(bio);
-    ret.resize(new_length);
-    return ret;
-}
-
-
 KeyVault::KeyVault(const base::PropertyTree& config)
 {
     std::filesystem::path keys_dir_path = config.get<std::string>("keys_dir");
@@ -682,8 +624,8 @@ base::Bytes Secp256PrivateKey::sign(const base::Bytes& bytes) const
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
-    if(secp256k1_ecdsa_sign_recoverable(context.get(), &recoverable_signature, bytes.toArray(),
-           _secp_key.toArray(), nullptr, nullptr) == 0) {
+    if(secp256k1_ecdsa_sign_recoverable(
+           context.get(), &recoverable_signature, bytes.toArray(), _secp_key.toArray(), nullptr, nullptr) == 0) {
         RAISE_ERROR(base::CryptoError, "error signing transaction");
     }
     return base::Bytes(recoverable_signature.data, 65);
@@ -749,8 +691,7 @@ bool Secp256PublicKey::verifySignature(const base::Bytes signature, const base::
     secp256k1_pubkey pubkey;
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
     memcpy(recoverable_signature.data, signature.toArray(), signature.size());
-    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.toArray()) ==
-        0) {
+    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.toArray()) == 0) {
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
     base::Bytes signature_pubkey(pubkey.data, SECP256PUBLICKEYSIZE);
@@ -799,6 +740,155 @@ std::pair<Secp256PublicKey, Secp256PrivateKey> generateSecp256Keys()
 {
     Secp256PrivateKey priv_key;
     return std::pair{Secp256PublicKey{priv_key}, Secp256PrivateKey{std::move(priv_key)}};
+}
+
+
+std::string base64Encode(const base::Bytes& bytes)
+{
+    if(bytes.size() == 0) {
+        return "";
+    }
+
+    BIO* bio_temp = BIO_new(BIO_s_mem());
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BUF_MEM* bufferPtr = nullptr;
+
+    std::unique_ptr<BIO, decltype(&::BIO_free_all)> bio(BIO_push(b64, bio_temp), ::BIO_free_all);
+    BIO_set_flags(bio.get(), BIO_FLAGS_BASE64_NO_NL);
+    if(BIO_write(bio.get(), bytes.toArray(), static_cast<int>(bytes.size())) < 1) {
+        RAISE_ERROR(CryptoError, "Base64 encode write error");
+    }
+    if(BIO_flush(bio.get()) < 1) {
+        RAISE_ERROR(CryptoError, "Base64 encode flush error");
+    }
+    if(BIO_get_mem_ptr(bio.get(), &bufferPtr) < 1) {
+        if(bufferPtr) {
+            BUF_MEM_free(bufferPtr);
+        }
+        RAISE_ERROR(CryptoError, "Get pointer to memory from base64 error");
+    }
+
+    std::string base64_bytes(bufferPtr->data, bufferPtr->length);
+
+    BUF_MEM_free(bufferPtr);
+    BIO_set_close(bio.get(), BIO_NOCLOSE);
+    return base64_bytes;
+}
+
+
+base::Bytes base64Decode(std::string_view base64)
+{
+    auto length = base64.length();
+    if(length == 0) {
+        return base::Bytes();
+    }
+
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BIO* bio = BIO_new_mem_buf(base64.data(), length);
+    base::Bytes ret(length);
+
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    bio = BIO_push(b64, bio);
+    auto new_length = BIO_read(bio, ret.toArray(), length);
+    if(new_length < 1) {
+        BIO_free_all(bio);
+        RAISE_ERROR(CryptoError, "Base64 decode read error");
+    }
+
+    BIO_free_all(bio);
+    ret.resize(new_length);
+    return ret;
+}
+
+
+static constexpr char pszBase58[59] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+static constexpr int8_t mapBase58[256] = {
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1, 0, 1, 2, 3, 4, 5, 6,  7, 8,-1,-1,-1,-1,-1,-1,
+     -1, 9,10,11,12,13,14,15, 16,-1,17,18,19,20,21,-1,
+     22,23,24,25,26,27,28,29, 30,31,32,-1,-1,-1,-1,-1,
+     -1,33,34,35,36,37,38,39, 40,41,42,43,-1,44,45,46,
+     47,48,49,50,51,52,53,54, 55,56,57,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+ };
+
+base::Bytes base58Decode(std::string_view base58)
+{
+    std::size_t current_pos = 0;
+    std::size_t zeroes_count = 0;
+    std::size_t length = 0;
+    while(base58[current_pos] == '1') {
+        zeroes_count++;
+        current_pos++;
+    }
+
+    std::vector<unsigned char> b256((base58.size() - current_pos) * 733 / 1000 + 1); // log(58) / log(256)
+    while(current_pos != base58.size()) {
+        auto carry = static_cast<int>(mapBase58[static_cast<std::int8_t>(base58[current_pos])]);
+        if(carry == -1) {
+            RAISE_ERROR(base::InvalidArgument, "Invalid base58 string");
+        }
+        std::size_t i = 0;
+        for(auto it = b256.rbegin(); (carry != 0 || i < length) && (it != b256.rend()); ++it, ++i) {
+            carry += 58 * (*it);
+            *it = carry % 256;
+            carry /= 256;
+        }
+        length = i;
+        current_pos++;
+    }
+
+    auto it = b256.begin() + (b256.size() - length);
+    base::Bytes ret_bytes(std::vector<base::Byte>(zeroes_count, 0x00));
+    while(it != b256.end()) {
+        ret_bytes.append(*(it++));
+    }
+    return ret_bytes;
+}
+
+std::string base58Encode(const base::Bytes& bytes)
+{
+    std::size_t current_pos = 0;
+    std::size_t zeroes_count = 0;
+    std::size_t length = 0;
+    while(current_pos != bytes.size() && bytes[current_pos] == 0) {
+        current_pos++;
+        zeroes_count++;
+    }
+
+    base::Bytes b58(bytes.size() * 138 / 100 + 1); // log(256) / log(58)
+    while(current_pos != bytes.size()) {
+        auto carry = static_cast<std::size_t>(bytes[current_pos]);
+        std::size_t i = 0;
+        for(auto it = b58.toVector().rbegin(); (carry != 0 || i < length) && (it != b58.toVector().rend()); it++, i++) {
+            carry += 256 * (*it);
+            *it = carry % 58;
+            carry /= 58;
+        }
+        length = i;
+        current_pos++;
+    }
+    auto it = b58.toVector().begin() + (b58.size() - length);
+    while(it != b58.toVector().end() && *it == 0) {
+        it++;
+    }
+
+    std::string str;
+    str.reserve(zeroes_count + (b58.toVector().end() - it));
+    str.assign(zeroes_count, '1');
+    while(it != b58.toVector().end()) {
+        str += pszBase58[*(it++)];
+    }
+    return str;
 }
 
 } // namespace base

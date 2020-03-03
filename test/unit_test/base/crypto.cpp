@@ -210,39 +210,6 @@ BOOST_AUTO_TEST_CASE(aes_serialization_256bit)
 }
 
 
-BOOST_AUTO_TEST_CASE(base64_encode_decode)
-{
-    base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
-    auto base64 = base64Encode(target_msg);
-    auto decode_base64 = base::base64Decode(base64);
-
-    BOOST_CHECK(base64 == "ZEZNIzY5MzU2XiMtMDQgIEAjNC0wXgoKNCMwNjMyPS1HRUozZGxzNXMsc3BpKy01KzA=");
-    BOOST_CHECK(target_msg == decode_base64);
-}
-
-
-BOOST_AUTO_TEST_CASE(base64_encode_decode_empty)
-{
-    base::Bytes target_msg("");
-    auto base64 = base64Encode(target_msg);
-    auto decode_base64 = base::base64Decode(base64);
-
-    BOOST_CHECK(base64 == "");
-    BOOST_CHECK(target_msg == decode_base64);
-}
-
-
-BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
-{
-    base::Bytes target_msg("1");
-    auto base64 = base64Encode(target_msg);
-    auto decode_base64 = base::base64Decode(base64);
-
-    BOOST_CHECK(base64 == "MQ==");
-    BOOST_CHECK(target_msg == decode_base64);
-}
-
-
 BOOST_AUTO_TEST_CASE(secp256_sign_verify)
 {
     auto [pub_key, priv_key] = base::generateSecp256Keys();
@@ -347,4 +314,58 @@ BOOST_AUTO_TEST_CASE(secp256_serialization)
 
     BOOST_CHECK(pub_key1.verifySignature(signature1, hash.getBytes()));
     BOOST_CHECK(pub_key1.verifySignature(signature2, hash.getBytes()));
+}
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode)
+{
+    base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base::base64Decode(base64);
+
+    BOOST_CHECK(base64 == "ZEZNIzY5MzU2XiMtMDQgIEAjNC0wXgoKNCMwNjMyPS1HRUozZGxzNXMsc3BpKy01KzA=");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode_empty)
+{
+    base::Bytes target_msg("");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base::base64Decode(base64);
+
+    BOOST_CHECK(base64 == "");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
+{
+    base::Bytes target_msg("1");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base::base64Decode(base64);
+
+    BOOST_CHECK(base64 == "MQ==");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base58_encode_decode)
+{
+    base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
+    auto base58 = base::base58Encode(target_msg);
+    auto decode_base58 = base::base58Decode(base58);
+    BOOST_CHECK(base58 == "2EfFY3oougxD9wQVN97fY9zmUuz3dEFnxDzbG8Xga34ArAY8nvx9hhsdtaUYze8CiDABR");
+    BOOST_CHECK(decode_base58.toString() == target_msg.toString());
+}
+
+
+BOOST_AUTO_TEST_CASE(base58_encode_decode_empty)
+{
+    base::Bytes target_msg("");
+    auto base64 = base58Encode(target_msg);
+    auto decode_base64 = base::base58Decode(base64);
+
+    BOOST_CHECK(base64 == "");
+    BOOST_CHECK(target_msg == decode_base64);
 }
