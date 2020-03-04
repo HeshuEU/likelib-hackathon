@@ -24,10 +24,10 @@ void stdOutPrintLine(const Args&... args) {
 
 template<typename... Args>
 void printError(const Args&... args) {
-    stdErrPrintLine("Error:", std::forward<Args>(args)...);
+    impl::stdErrPrintLine("Error:", args...);
 }
 
 template<typename... Args>
 void printUnexpectedError(const Args&... args) {
-    stdErrPrintLine("Unexpected error:", std::forward<Args>(args)...);
+    impl::stdErrPrintLine("Unexpected error:", args...);
 }
