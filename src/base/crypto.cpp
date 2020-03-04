@@ -58,8 +58,7 @@ void writeFile(const std::filesystem::path& path, const base::Bytes& data)
 }
 
 
-// generates a cryptographically safe byte sequence.
-// see issue 93
+// generates a cryptographically safe byte sequence, see issue 93
 base::Bytes generate_bytes(std::size_t size)
 {
     base::Bytes data(size);
