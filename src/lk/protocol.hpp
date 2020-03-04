@@ -17,7 +17,7 @@ namespace lk
 //================
 
 // clang-format off
-    DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, unsigned char,
+    DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
                                               (NOT_AVAILABLE)
                                                       (HANDSHAKE)
                                                       (PING)
