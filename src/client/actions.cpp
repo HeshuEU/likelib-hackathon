@@ -160,7 +160,12 @@ int ActionTransfer::execute()
     auto [status, result, gas_left] = client.transaction_message_call(
             tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
 
-    std::cout << result << std::endl;
+    if(status) {
+        std::cout << "Transaction successfully performed";
+    }
+    else {
+        std::cerr << "Transaction failed with message: " << status.getMessage() << std::endl;
+    }
 
     LOG_INFO << "Remote call of transfer -> [" << result << "]";
     return base::config::EXIT_OK;
@@ -191,6 +196,7 @@ int ActionGetBalance::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
     _account_address = bc::Address{parser.getValue<std::string>(ADDRESS_OPTION)};
+    return base::config::EXIT_OK;
 }
 
 
@@ -228,6 +234,7 @@ void ActionTestConnection::setupOptionsParser(base::ProgramOptionsParser& parser
 int ActionTestConnection::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
+    return base::config::EXIT_OK;
 }
 
 
