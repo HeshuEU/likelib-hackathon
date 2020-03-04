@@ -131,10 +131,6 @@ class AesKey
 };
 
 
-std::string base64Encode(const base::Bytes& bytes);
-base::Bytes base64Decode(std::string_view base64);
-
-
 class KeyVault
 {
   public:
@@ -210,6 +206,13 @@ class Secp256PublicKey
   private:
     base::Bytes _secp_key;
 };
+
+
+std::string base64Encode(const base::Bytes& bytes);
+base::Bytes base64Decode(std::string_view base64);
+
+std::string base58Encode(const base::Bytes& bytes);
+base::Bytes base58Decode(std::string_view base58);
 
 
 std::pair<Secp256PublicKey, Secp256PrivateKey> generateSecp256Keys();

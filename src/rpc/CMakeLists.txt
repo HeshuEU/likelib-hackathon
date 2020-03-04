@@ -19,10 +19,11 @@ set(RPC_SOURCES
         base_rpc.cpp
         )
 
-include_directories(${GLOBAL_OUTPUT_CODE_DIR})
+include_directories(SYSTEM ${GLOBAL_OUTPUT_CODE_DIR})
 
 add_library(rpc ${RPC_HEADERS} ${RPC_SOURCES} ${GENERATED_HEADERS} ${GENERATED_SOURCES})
 
-target_include_directories(rpc PUBLIC ${GLOBAL_OUTPUT_CODE_DIR} ${RPC_MODULE_INCLUDE})
+target_include_directories(rpc SYSTEM PUBLIC ${GLOBAL_OUTPUT_CODE_DIR})
+target_include_directories(rpc PUBLIC ${RPC_MODULE_INCLUDE})
 
 target_link_libraries(rpc base bc gRPC::grpc_module)
