@@ -67,7 +67,7 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
     bc::TransactionBuilder txb;
     txb.setType(bc::Transaction::Type::CONTRACT_CREATION);
     txb.setFrom(from_address);
-    txb.setTo(from_address); // just a placeholder. TODO: a better thing, maybe NULL-address
+    txb.setTo(bc::Address::null());
     txb.setAmount(amount);
     txb.setFee(gas);
     txb.setTimestamp(timestamp);
@@ -79,9 +79,12 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
 
     auto tx = std::move(txb).build();
 
+    LOG_DEBUG << tx;
+
     try {
-        auto contract_address = _core.createContract(tx);
-        return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), contract_address, gas};
+        auto contract_address = _core.addPendingTransaction(tx);
+        // return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), contract_address, gas};
+        return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), bc::Address::null(), 42};
     }
     catch(const std::exception& e) {
         return {rpc::OperationStatus::createFailed(std::string{"Error occurred"} + e.what()), bc::Address::null(), gas};
@@ -114,8 +117,12 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
     auto tx = std::move(txb).build();
 
     try {
-        auto result = _core.messageCall(tx);
-        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toOutputData().toHex(), result.gasLeft()};
+        auto result = _core.addPendingTransaction(tx);
+        if(!result) {
+            return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "}), std::string{}, gas};
+        }
+        //return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toOutputData().toHex(), result.gasLeft()};
+        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), "228", 43};
     }
     catch(const std::exception& e) {
         return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()), std::string{}, gas};

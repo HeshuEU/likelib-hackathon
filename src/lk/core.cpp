@@ -43,6 +43,21 @@ void Core::run()
 }
 
 
+bool Core::addPendingTransaction(const bc::Transaction& tx)
+{
+    LOG_DEBUG << "Add pending tx";
+    if(checkTransaction(tx)) {
+        {
+            std::unique_lock lk(_pending_transactions_mutex);
+            _pending_transactions.add(tx);
+        }
+        _event_new_pending_transaction.notify(tx);
+        return true;
+    }
+    return false;
+}
+
+
 bool Core::tryAddBlock(const bc::Block& b)
 {
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
@@ -50,7 +65,8 @@ bool Core::tryAddBlock(const bc::Block& b)
             std::shared_lock lk(_pending_transactions_mutex);
             _pending_transactions.remove(b.getTransactions());
         }
-        updateNewBlock(b);
+        LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
+        applyBlockTransactions(b);
         _event_block_added.notify(b);
         return true;
     }
@@ -86,6 +102,7 @@ bool Core::checkBlock(const bc::Block& b) const
 bool Core::checkTransaction(const bc::Transaction& tx) const
 {
     if(!tx.checkSign()) {
+        LOG_DEBUG << "Failed signature verification";
         return false;
     }
 
@@ -105,7 +122,7 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
 
     auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
     if(pending_from_account_balance != current_pending_balance.end()) {
-        auto current_from_account_balance = _account_manager.getAccount(tx.getFrom()).getBalance();
+        auto current_from_account_balance = _account_manager.getBalance(tx.getFrom());
         return pending_from_account_balance->second + current_from_account_balance >= tx.getAmount();
     }
     else {
@@ -124,37 +141,9 @@ bc::Block Core::getBlockTemplate() const
 }
 
 
-bc::Address Core::createContract(bc::Transaction tx)
-{
-    return doContractCreation(tx);
-}
-
-
-vm::ExecutionResult Core::messageCall(bc::Transaction tx)
-{
-    return doMessageCall(tx);
-}
-
-
-bool Core::performTransaction(const bc::Transaction& tx)
-{
-    ASSERT(tx.getType() == bc::Transaction::Type::MESSAGE_CALL);
-
-    if(checkTransaction(tx)) {
-        {
-            std::unique_lock lk(_pending_transactions_mutex);
-            _pending_transactions.add(tx);
-        }
-        _event_new_pending_transaction.notify(tx);
-        return true;
-    }
-    return false;
-}
-
-
 bc::Balance Core::getBalance(const bc::Address& address) const
 {
-    return _account_manager.getAccount(address).getBalance();
+    return _account_manager.getBalance(address);
 }
 
 
@@ -170,7 +159,7 @@ base::Bytes Core::getThisNodeAddress() const
 }
 
 
-void Core::updateNewBlock(const bc::Block& block)
+void Core::applyBlockTransactions(const bc::Block& block)
 {
     if(!_is_account_manager_updated) {
         _account_manager.updateFromGenesis(block);
@@ -178,16 +167,28 @@ void Core::updateNewBlock(const bc::Block& block)
     }
     else {
         for(const auto& tx: block.getTransactions()) {
-            if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
-                doContractCreation(tx);
-            }
-            else if(tx.getType() == bc::Transaction::Type::MESSAGE_CALL) {
-                doMessageCall(tx);
-            }
-            else {
-                // TODO: do something, not just throw an exception, because state must be reverted in that case
-            }
+            tryPerformTransaction(tx);
         }
+    }
+}
+
+
+bool Core::tryPerformTransaction(const bc::Transaction& tx)
+{
+    if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
+        try {
+            auto result = doContractCreation(tx);
+            LOG_DEBUG << "Contract creation result: " << result.getBytes().toHex();
+        }
+        catch(const base::Error&) {
+            return false;
+        }
+        return true;
+    }
+    else {
+        auto result = doMessageCall(tx);
+        LOG_DEBUG << "Message call result: " << result.toOutputData().toHex();
+        return true;
     }
 }
 
@@ -200,10 +201,15 @@ bc::Address Core::doContractCreation(const bc::Transaction& tx)
     vm::SmartContract contract(contract_data.getCode());
     auto vm = vm::Vm::load(*this);
     bc::Address contract_address = _account_manager.newContract(tx.getFrom(), contract_data.getCode());
+    LOG_DEBUG << "Deploying smart contract at address " << contract_address;
+    if(tx.getAmount() != 0) {
+        if(!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
+            RAISE_ERROR(base::Error, "cannot transfer money");
+        }
+    }
     auto message = contract.createInitMessage(
         tx.getFee(), tx.getFrom(), contract_address, tx.getAmount(), contract_data.getInit());
     if(auto result = vm.execute(message); result.ok()) {
-
     }
     else {
         RAISE_ERROR(base::Error, "invalid result");
@@ -216,18 +222,20 @@ vm::ExecutionResult Core::doMessageCall(const bc::Transaction& tx)
 {
     auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
 
-    if(code_hash == base::Sha256::null()) {
-        RAISE_ERROR(base::InvalidArgument, "cannot process transfer transaction");
+    if(!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
+        RAISE_ERROR(base::Error, "cannot transfer money");
     }
 
-    // if we're here -- do a call to a contract
-    auto code = _account_manager.getCode(code_hash);
+    if(code_hash != base::Sha256::null()) {
+        // if we're here -- do a call to a contract
+        auto code = _account_manager.getCode(code_hash);
 
-    auto vm = vm::Vm::load(*this);
-    vm::SmartContract contract(code);
-    auto message = contract.createMessage(tx.getFee(), tx.getFrom(), tx.getTo(), tx.getAmount(), tx.getData());
-    auto ret = vm.execute(message);
-    return ret;
+        auto vm = vm::Vm::load(*this);
+        vm::SmartContract contract(code);
+        auto message = contract.createMessage(tx.getFee(), tx.getFrom(), tx.getTo(), tx.getAmount(), tx.getData());
+        auto ret = vm.execute(message);
+        return ret;
+    }
 }
 
 

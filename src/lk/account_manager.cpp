@@ -123,7 +123,7 @@ const AccountState& AccountManager::getAccount(const bc::Address& address) const
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
     if(it == _states.end()) {
-        RAISE_ERROR(base::LogicError, "cannot find given account");
+        RAISE_ERROR(base::InvalidArgument, "cannot getAccount for non-existent account");
     }
     else {
         return it->second;
@@ -136,10 +136,22 @@ AccountState& AccountManager::getAccount(const bc::Address& address)
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
     if(it == _states.end()) {
-        RAISE_ERROR(base::LogicError, "cannot find given account");
+        AccountState state; // TODO: lazy creation
+        return _states[address] = state;
     }
     else {
         return it->second;
+    }
+}
+
+
+bc::Balance AccountManager::getBalance(const bc::Address& account_address) const
+{
+    if(hasAccount(account_address)) {
+        return getAccount(account_address).getBalance();
+    }
+    else {
+        return 0;
     }
 }
 
@@ -162,6 +174,26 @@ bool AccountManager::checkTransaction(const bc::Transaction& tx) const
         return false;
     }
     return getAccount(tx.getFrom()).getBalance() >= tx.getAmount();
+}
+
+
+bool AccountManager::tryTransferMoney(const bc::Address& from, const bc::Address& to, bc::Balance amount)
+{
+    if(!hasAccount(from)) {
+        return false;
+    }
+    auto& from_account = getAccount(from);
+    if(from_account.getBalance() < amount) {
+        return false;
+    }
+    if(!hasAccount(to)) {
+        newAccount(to, {});
+    }
+    auto& to_account = getAccount(to);
+
+    from_account.subBalance(amount);
+    to_account.addBalance(amount);
+    return true;
 }
 
 

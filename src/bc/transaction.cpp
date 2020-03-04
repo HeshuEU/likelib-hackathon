@@ -63,7 +63,8 @@ Sign Sign::deserialize(base::SerializationIArchive& ia)
 
 Sign Sign::fromBase64(const std::string& base64_signature)
 {
-    base::SerializationIArchive ia(base::base64Decode(base64_signature));
+    const auto& signature_bytes = base::base64Decode(base64_signature);
+    base::SerializationIArchive ia(signature_bytes);
     return deserialize(ia);
 }
 
@@ -202,13 +203,13 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
 {
     auto from = ia.deserialize<bc::Address>();
     auto to = ia.deserialize<bc::Address>();
-    auto balance = ia.deserialize<bc::Balance>();
+    auto amount = ia.deserialize<bc::Balance>();
     auto fee = ia.deserialize<bc::Balance>();
     auto timestamp = ia.deserialize<base::Time>();
     auto tx_type = ia.deserialize<Type>();
     auto data = ia.deserialize<base::Bytes>();
     auto sign = ia.deserialize<bc::Sign>();
-    return {std::move(from), std::move(to), balance, fee, timestamp, tx_type, std::move(data), std::move(sign)};
+    return {std::move(from), std::move(to), amount, fee, timestamp, tx_type, std::move(data), std::move(sign)};
 }
 
 
@@ -343,6 +344,8 @@ Transaction TransactionBuilder::build() &&
     ASSERT(_amount);
     ASSERT(_fee);
     ASSERT(_timestamp);
+    ASSERT(_tx_type);
+    ASSERT(_data);
 
     if(_sign) {
         return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_fee), std::move(*_timestamp),

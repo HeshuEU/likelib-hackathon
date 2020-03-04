@@ -199,7 +199,7 @@ TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& 
 
 void TransactionMessage::handle(Peer& peer, Network& network, Core& core)
 {
-    core.performTransaction(_tx);
+    core.addPendingTransaction(_tx);
 }
 
 

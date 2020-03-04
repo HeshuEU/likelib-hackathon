@@ -148,11 +148,13 @@ int ActionTransfer::execute()
     LOG_INFO << "Trying to connect to rpc a server at " << _host_address;
 
     bc::TransactionBuilder txb;
+    txb.setType(bc::Transaction::Type::MESSAGE_CALL);
     txb.setFrom(std::move(from_address));
     txb.setTo(std::move(_to_address));
     txb.setAmount(_amount);
     txb.setTimestamp(base::Time::now());
     txb.setFee(_fee);
+    txb.setData({});
     auto tx = std::move(txb).build();
 
     tx.sign(pub, priv);
@@ -311,6 +313,7 @@ int ActionCreateContract::execute() {
     txb.setType(bc::Transaction::Type::CONTRACT_CREATION);
     txb.setAmount(_amount);
     txb.setFrom(std::move(from_address));
+    txb.setTo(bc::Address::null());
     txb.setTimestamp(base::Time::now());
     txb.setFee(_gas);
 
@@ -319,6 +322,8 @@ int ActionCreateContract::execute() {
 
     auto tx = std::move(txb).build();
     tx.sign(pub, priv);
+
+    std::cout << tx << std::endl;
 
     LOG_INFO << "Trying to connect to rpc server by: " << _host_address;
     rpc::RpcClient client(_host_address);
@@ -387,6 +392,7 @@ int ActionMessageCall::execute()
     txb.setType(bc::Transaction::Type::MESSAGE_CALL);
     txb.setAmount(_amount);
     txb.setFrom(std::move(from_address));
+    txb.setTo(std::move(_to_address));
     txb.setTimestamp(base::Time::now());
     txb.setFee(_gas);
     txb.setData(base::Bytes::fromHex(_message));
@@ -398,7 +404,7 @@ int ActionMessageCall::execute()
     rpc::RpcClient client(_host_address);
 
     auto [status, contract_response, gas_left] = client.transaction_message_call(
-            tx.getAmount(), bc::Address::null(), bc::Address{_to_address}, tx.getTimestamp(), tx.getFee(), _message, tx.getSign());
+            tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), _message, tx.getSign());
 
     if(status) {
         std::cout << "Remote call of smart contract call success -> [" << status.getMessage()

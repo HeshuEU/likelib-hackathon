@@ -1,7 +1,5 @@
 #include "serialization.hpp"
 
-#include "boost/asio.hpp" // includes htons and other
-
 #include <utility>
 
 namespace base

@@ -39,8 +39,8 @@ class AccountState
     void setStorageValue(const base::Sha256& key, base::Bytes value);
     //============================
   private:
-    std::uint64_t _nonce;
-    bc::Balance _balance;
+    std::uint64_t _nonce{0};
+    bc::Balance _balance{0};
     base::Sha256 _code_hash{base::Sha256::null()};
     std::map<base::Sha256, StorageData> _storage;
 };
@@ -63,13 +63,17 @@ class AccountManager
     //================
     bc::Address newContract(const bc::Address& account_address, base::Bytes associated_code);
     //================
+    bool tryTransferMoney(const bc::Address& from, const bc::Address& to, bc::Balance amount);
+    //================
     bool checkTransaction(const bc::Transaction& tx) const;
     void update(const bc::Transaction& tx);
     void update(const bc::Block& block);
     void updateFromGenesis(const bc::Block& block);
     //================
-    const AccountState& getAccount(const bc::Address& address) const;
+    const AccountState& getAccount(const bc::Address& account_address) const;
     AccountState& getAccount(const bc::Address& address);
+    //================
+    bc::Balance getBalance(const bc::Address& account) const;
     //================
     const base::Bytes& getCode(const base::Sha256& hash) const;
     //================

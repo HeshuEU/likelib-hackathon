@@ -67,37 +67,6 @@ grpc::Status GrpcAdapter::balance(
 }
 
 
-grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
-    const likelib::TransactionMessageCallRequest* request, likelib::TransactionMessageCallResponse* response)
-{
-    LOG_DEBUG << "get RPC call at transaction_to_contract method from: " << context->peer();
-    try {
-        auto amount = bc::Balance{request->value().money()};
-        auto from_address = bc::Address{request->from().address()};
-        auto to_address = bc::Address{request->to().address()};
-        auto gas = bc::Balance{request->gas().money()};
-        auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
-        auto data = request->data();
-
-        auto status = OperationStatus::createSuccess();
-        std::string contract_response;
-        bc::Balance least_gas;
-        std::tie(status, contract_response, least_gas) =
-            _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, bc::Sign{});
-
-        convert(status, response->mutable_status());
-        response->set_contract_response(contract_response);
-        response->mutable_gas_left()->set_money(least_gas);
-    }
-    catch(const base::Error& e) {
-        LOG_ERROR << e.what();
-        return ::grpc::Status::CANCELLED;
-    }
-
-    return ::grpc::Status::OK;
-}
-
-
 ::grpc::Status GrpcAdapter::create_contract(::grpc::ServerContext* context,
     const ::likelib::TransactionCreateContractRequest* request, ::likelib::TransactionCreateContractResponse* response)
 {
@@ -109,12 +78,45 @@ grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
         auto contract_code = request->contract_code();
         auto init = request->init();
+        auto sign = bc::Sign::fromBase64(request->signature());
 
         auto [status, contract_address, least_gas] = _service->transaction_create_contract(
-            amount, from_address, creation_time, gas, contract_code, init, bc::Sign{});
+            amount, from_address, creation_time, gas, contract_code, init, sign);
 
         convert(status, response->mutable_status());
         response->mutable_contract_address()->set_address(contract_address.toString());
+        response->mutable_gas_left()->set_money(least_gas);
+    }
+    catch(const base::Error& e) {
+        LOG_ERROR << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+
+    return ::grpc::Status::OK;
+}
+
+
+grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
+                                       const likelib::TransactionMessageCallRequest* request, likelib::TransactionMessageCallResponse* response)
+{
+    LOG_DEBUG << "get RPC call at transaction_to_contract method from: " << context->peer();
+    try {
+        auto amount = bc::Balance{request->value().money()};
+        auto from_address = bc::Address{request->from().address()};
+        auto to_address = bc::Address{request->to().address()};
+        auto gas = bc::Balance{request->gas().money()};
+        auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
+        auto data = request->data();
+        auto sign = bc::Sign::fromBase64(request->signature());
+
+        auto status = OperationStatus::createSuccess();
+        std::string contract_response;
+        bc::Balance least_gas;
+        std::tie(status, contract_response, least_gas) =
+            _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, sign);
+
+        convert(status, response->mutable_status());
+        response->set_contract_response(contract_response);
         response->mutable_gas_left()->set_money(least_gas);
     }
     catch(const base::Error& e) {
