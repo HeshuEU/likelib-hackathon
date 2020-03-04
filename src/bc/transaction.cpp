@@ -305,9 +305,9 @@ void TransactionBuilder::setSign(bc::Sign sign)
 }
 
 
-void TransactionBuilder::setTransactionType(Transaction::Type transaction_type)
+void TransactionBuilder::setType(Transaction::Type type)
 {
-    _tx_type = transaction_type;
+    _tx_type = type;
 }
 
 

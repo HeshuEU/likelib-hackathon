@@ -65,7 +65,7 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
     auto init = base::Bytes::fromHex(hex_init);
 
     bc::TransactionBuilder txb;
-    txb.setTransactionType(bc::Transaction::Type::CONTRACT_CREATION);
+    txb.setType(bc::Transaction::Type::CONTRACT_CREATION);
     txb.setFrom(from_address);
     txb.setTo(from_address); // just a placeholder. TODO: a better thing, maybe NULL-address
     txb.setAmount(amount);
@@ -102,7 +102,7 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
     auto message = base::Bytes::fromHex(hex_message);
 
     bc::TransactionBuilder txb;
-    txb.setTransactionType(bc::Transaction::Type::MESSAGE_CALL);
+    txb.setType(bc::Transaction::Type::MESSAGE_CALL);
     txb.setFrom(from_address);
     txb.setTo(to_address);
     txb.setAmount(amount);

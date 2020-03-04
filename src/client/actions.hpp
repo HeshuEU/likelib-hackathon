@@ -44,13 +44,10 @@ public:
 private:
     //====================================
     std::string _host_address;
-    bc::Address _from_address{bc::Address::null()};
     bc::Address _to_address{bc::Address::null()};
     bc::Balance _amount;
     bc::Balance _fee;
-    std::filesystem::path _keys_path;
-    std::optional<base::RsaPublicKey> _public_key;
-    std::optional<base::RsaPrivateKey> _private_key;
+    std::filesystem::path _keys_dir;
     //====================================
  };
 
@@ -107,7 +104,7 @@ public:
 private:
     //====================================
     std::string _host_address;
-    bc::Address _from_address{bc::Address::null()};
+    std::filesystem::path _keys_dir;
     bc::Balance _amount;
     bc::Balance _gas;
     std::string _compiled_contract;
@@ -133,6 +130,7 @@ private:
     bc::Address _to_address{bc::Address::null()};
     bc::Balance _amount;
     bc::Balance _gas;
+    std::filesystem::path _keys_dir;
     std::string _message;
     //====================================
 };
@@ -169,6 +167,6 @@ public:
     //====================================
 private:
     //====================================
-    std::filesystem::path _keys_directory_path;
+    std::filesystem::path _keys_dir;
     //====================================
 };
