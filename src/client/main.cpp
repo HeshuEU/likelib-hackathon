@@ -14,7 +14,7 @@ int mainProcess(base::SubprogramRouter& router)
     router.getOptionsParser().addFlag("version,v", "Print version of program");
     router.update();
 
-    if(router.getOptionsParser().hasOption("help") || router.getOptionsParser()->empty()) {
+    if(router.getOptionsParser().hasOption("help") || router.getOptionsParser().empty()) {
         std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
@@ -28,18 +28,26 @@ int mainProcess(base::SubprogramRouter& router)
 }
 
 
+template<typename T>
+int run(base::SubprogramRouter& router)
+{
+    T action(router);
+    return action.run();
+}
+
+
 int main(int argc, char** argv)
 {
     try {
         base::initLog(base::Sink::FILE);
         base::SubprogramRouter router("client", mainProcess);
-        router.addSubprogram("generate", "generate a pair of keys", generateKeys);
-        router.addSubprogram("get_balance", "use for get balance from remote by account address", getBalance);
-        router.addSubprogram("transfer", "use transfer balance from one address to another address", transfer);
-        router.addSubprogram("test", "test RPC connection", testConnection);
-        router.addSubprogram("create_contract", "deploy a smart contract", createContract);
-        router.addSubprogram("message_call", "create message to call smart contract", messageCall);
-        router.addSubprogram("compile", "compile smart contract", compileCode);
+        router.addSubprogram("generate", "generate a pair of keys", run<ActionGenerateKeys>);
+        router.addSubprogram("get_balance", "use for get balance from remote by account address", run<ActionGetBalance>);
+        router.addSubprogram("transfer", "use transfer balance from one address to another address", run<ActionTransfer>);
+        router.addSubprogram("test", "test RPC connection", run<ActionTestConnection>);
+        router.addSubprogram("create_contract", "deploy a smart contract", run<ActionCreateContract>);
+        router.addSubprogram("message_call", "create message to call smart contract", run<ActionMessageCall>);
+        router.addSubprogram("compile", "compile smart contract", run<ActionCompile>);
         return router.process(argc, argv);
     }
     catch(const std::exception& error) {

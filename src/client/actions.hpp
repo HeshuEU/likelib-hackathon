@@ -8,15 +8,7 @@
 #include "rpc/rpc.hpp"
 
 #include <iostream>
-
-
-int testConnection(base::SubprogramRouter& router);
-int getBalance(base::SubprogramRouter& router);
-int transfer(base::SubprogramRouter& router);
-int createContract(base::SubprogramRouter& router);
-int messageCall(base::SubprogramRouter& router);
-int compileCode(base::SubprogramRouter& router);
-int generateKeys(base::SubprogramRouter& router);
+#include <string_view>
 
 
 class ActionBase
@@ -26,6 +18,7 @@ public:
     explicit ActionBase(base::SubprogramRouter& router);
     virtual ~ActionBase() = default;
     //====================================
+    virtual const std::string_view& getName() const = 0;
     virtual void setupOptionsParser(base::ProgramOptionsParser& parser) = 0;
     virtual int loadOptions(const base::ProgramOptionsParser& parser) = 0;
     virtual int execute() = 0;
@@ -40,17 +33,15 @@ protected:
 class ActionTransfer : public ActionBase
 {
 public:
+    //====================================
+    explicit ActionTransfer(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
     void setupOptionsParser(base::ProgramOptionsParser& parser) override;
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
-private:
     //====================================
-    static constexpr const char* CONFIG_OPTION = "config";
-    static constexpr const char* HOST_OPTION = "host";
-    static constexpr const char* TO_ADDRESS_OPTION = "to";
-    static constexpr const char* AMOUNT_OPTION = "amount";
-    static constexpr const char* KEYS_DIRECTORY_OPTION = "keys";
-    static constexpr const char* FEE_OPTION = "fee";
+private:
     //====================================
     std::string _host_address;
     bc::Address _from_address{bc::Address::null()};
@@ -67,14 +58,15 @@ private:
 class ActionGetBalance : public ActionBase
 {
 public:
+    //====================================
+    explicit ActionGetBalance(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
     void setupOptionsParser(base::ProgramOptionsParser& parser) override;
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
-private:
     //====================================
-    static constexpr const char* CONFIG_OPTION = "config";
-    static constexpr const char* HOST_OPTION = "host";
-    static constexpr const char* ADDRESS_OPTION = "address";
+private:
     //====================================
     std::string _host_address;
     bc::Address _account_address{bc::Address::null()};
@@ -85,16 +77,15 @@ private:
 class ActionTestConnection : public ActionBase
 {
 public:
+    //====================================
+    explicit ActionTestConnection(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
     void setupOptionsParser(base::ProgramOptionsParser& parser) override;
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
-private:
     //====================================
-    static constexpr const char* HOST_OPTION = "host";
-    static constexpr const char* CODE_PATH_OPTION = "code";
-    static constexpr const char* AMOUNT_OPTION = "amount";
-    static constexpr const char* GAS_OPTION = "gas";
-    static constexpr const char* INITIAL_MESSAGE_OPTION = "init";
+private:
     //====================================
     std::string _host_address;
     bc::Address _account_address{bc::Address::null()};
@@ -105,14 +96,79 @@ private:
 class ActionCreateContract : public ActionBase
 {
 public:
+    //====================================
+    explicit ActionCreateContract(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
     void setupOptionsParser(base::ProgramOptionsParser& parser) override;
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
+    //====================================
 private:
     //====================================
-    static constexpr const char* HOST_OPTION = "host";
+    std::string _host_address;
+    bc::Address _from_address{bc::Address::null()};
+    bc::Balance _amount;
+    bc::Balance _gas;
+    std::string _compiled_contract;
+    std::string _message;
+    //====================================
+};
+
+
+class ActionMessageCall : public ActionBase
+{
+public:
+    //====================================
+    explicit ActionMessageCall(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+private:
     //====================================
     std::string _host_address;
-    bc::Address _account_address{bc::Address::null()};
+    bc::Address _to_address{bc::Address::null()};
+    bc::Balance _amount;
+    bc::Balance _gas;
+    std::string _message;
+    //====================================
+};
+
+
+class ActionCompile : public ActionBase
+{
+public:
+    //====================================
+    explicit ActionCompile(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+private:
+    //====================================
+    std::filesystem::path _code_file_path;
+    //====================================
+};
+
+
+class ActionGenerateKeys : public ActionBase
+{
+public:
+    //====================================
+    explicit ActionGenerateKeys(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+private:
+    //====================================
+    std::filesystem::path _keys_directory_path;
     //====================================
 };
