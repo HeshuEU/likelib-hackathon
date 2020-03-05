@@ -1,10 +1,10 @@
 [requires]
-boost/1.72.0
-openssl/1.1.1d
-leveldb/1.22.0
-grpc/1.26.0@inexorgame/stable
-evmone/0.4.0
-secp256k1/1.0@my/stable
+boost/1.72.0@heshu/stable
+openssl/1.1.1d@heshu/stable
+leveldb/1.22.0@heshu/stable
+grpc/1.26.0@heshu/stable
+evmone/0.4.0@heshu/stable
+secp256k1/1.0@heshu/stable
 
 [options]
 boost:shared=False
