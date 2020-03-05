@@ -27,10 +27,6 @@ class SerializationIArchive
     template<typename U, typename V>
     std::pair<U, V> deserialize();
 
-    // template<typename T>
-    // T change_order(const T& value);
-
-    // static bool isBigEndian();
     //=================
   private:
     const base::Bytes& _bytes;
