@@ -16,6 +16,7 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
     _account_manager.updateFromGenesis(getGenesisBlock());
+    _is_account_manager_updated = true;
     _blockchain.load();
 }
 
@@ -45,9 +46,9 @@ void Core::run()
 
 bool Core::addPendingTransaction(const bc::Transaction& tx)
 {
-    LOG_DEBUG << "Add pending tx";
     if(checkTransaction(tx)) {
         {
+            LOG_DEBUG << "Adding tx to pending";
             std::unique_lock lk(_pending_transactions_mutex);
             _pending_transactions.add(tx);
         }
