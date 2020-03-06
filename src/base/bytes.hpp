@@ -122,6 +122,18 @@ class FixedBytes
     std::array<Byte, S> _array;
 };
 
+
+std::string base64Encode(const base::Bytes& bytes);
+base::Bytes base64Decode(std::string_view base64);
+
+std::string base58Encode(const base::Bytes& bytes);
+base::Bytes base58Decode(std::string_view base58);
+
+template<typename T>
+[[nodiscard]] std::string toHex(const T& bytes);
+template<typename T>
+[[nodiscard]] T fromHex(const std::string_view& hex_view);
+
 } // namespace base
 
 namespace std
