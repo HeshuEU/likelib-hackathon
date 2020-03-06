@@ -60,6 +60,7 @@ class AccountManager
     //================
     void newAccount(const bc::Address& address, base::Bytes associated_code);
     bool hasAccount(const bc::Address& address) const;
+    bool deleteAccount(const bc::Address& address);
     //================
     bc::Address newContract(const bc::Address& account_address, base::Bytes associated_code);
     //================

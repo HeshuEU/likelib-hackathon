@@ -365,16 +365,38 @@ void Core::selfdestruct(const evmc::address& eaddr, const evmc::address& ebenefi
     auto beneficiary_address = vm::toNativeAddress(ebeneficiary);
     auto beneficiary_account = _account_manager.getAccount(beneficiary_address);
 
-    // TODO: transfer the rest of money to a beneficiary account
+    _account_manager.tryTransferMoney(address, beneficiary_address, account.getBalance());
+    _account_manager.deleteAccount(address);
 }
 
 
 evmc::result Core::call(const evmc_message& msg) noexcept
 {
     LOG_DEBUG << "Core::call";
+
+    bc::TransactionBuilder txb;
+
+    txb.setType(bc::Transaction::Type::MESSAGE_CALL);
+
     bc::Balance fee = msg.gas;
+    txb.setFee(fee);
+
     bc::Address from = vm::toNativeAddress(msg.sender);
+    txb.setFrom(std::move(from));
+
     bc::Address to = vm::toNativeAddress(msg.destination);
+    txb.setTo(std::move(to));
+
+    bc::Balance amount = vm::toBalance(msg.value);
+    txb.setAmount(amount);
+
+    base::Bytes data(msg.input_data, msg.input_size);
+    txb.setData(data);
+
+    auto tx = std::move(txb).build();
+    auto result = doMessageCall(tx);
+
+    return result.getResult();
 }
 
 

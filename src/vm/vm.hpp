@@ -80,6 +80,8 @@ class ExecutionResult
     int64_t gasLeft() const;
     base::Bytes createdAddress() const;
 
+    evmc::result getResult() noexcept;
+
   private:
     evmc::result _data;
 };

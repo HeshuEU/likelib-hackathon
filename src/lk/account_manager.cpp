@@ -105,6 +105,18 @@ bool AccountManager::hasAccount(const bc::Address& address) const
 }
 
 
+bool AccountManager::deleteAccount(const bc::Address& address)
+{
+    if(auto it = _states.find(address); it != _states.end()) {
+        _states.erase(it);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+
 bc::Address AccountManager::newContract(const bc::Address& address, base::Bytes associated_code)
 {
     auto& account = getAccount(address);

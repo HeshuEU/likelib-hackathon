@@ -154,6 +154,13 @@ base::Bytes ExecutionResult::createdAddress() const
     return toBytes(_data.create_address);
 }
 
+
+evmc::result ExecutionResult::getResult() noexcept
+{
+    return std::move(_data);
+}
+
+
 namespace
 {
     std::filesystem::path getVmPath()
