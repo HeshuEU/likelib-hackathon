@@ -26,6 +26,7 @@ class SerializationIArchive
 
     template<typename U, typename V>
     std::pair<U, V> deserialize();
+
     //=================
   private:
     const base::Bytes& _bytes;
@@ -63,6 +64,14 @@ base::Bytes toBytes(const T& value);
 
 template<typename T>
 T fromBytes(const base::Bytes& bytes);
+
+
+template<typename T>
+T nativeToBig(const T& value) noexcept;
+
+
+template<typename T>
+T bigToNative(const T& value) noexcept;
 
 
 } // namespace base
