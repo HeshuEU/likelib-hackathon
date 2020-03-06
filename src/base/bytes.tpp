@@ -41,8 +41,13 @@ FixedBytes<S>::FixedBytes(const Byte* bytes, std::size_t length)
 
 
 template<std::size_t S>
-FixedBytes<S>::FixedBytes(std::initializer_list<Byte> l) : _array(l)
-{}
+FixedBytes<S>::FixedBytes(std::initializer_list<Byte> l)
+{
+    auto min_size = std::min(S, l.size());
+    for(std::size_t i = 0; i < min_size; i++){
+        _array[i] = l.begin()[i];
+    }
+}
 
 
 template<std::size_t S>

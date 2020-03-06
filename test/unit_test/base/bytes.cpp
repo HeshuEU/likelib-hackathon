@@ -219,7 +219,7 @@ BOOST_AUTO_TEST_CASE(bytes_relation_check)
 }
 
 
-BOOST_AUTO_TEST_CASE(fixed_constructor_define_constructor)
+BOOST_AUTO_TEST_CASE(fixed_bytes_storage_check)
 {
     base::FixedBytes<111> fb1;
     for(std::size_t i = 0; i < fb1.size(); ++i) {
@@ -232,4 +232,57 @@ BOOST_AUTO_TEST_CASE(fixed_constructor_define_constructor)
     }
 
     BOOST_CHECK(all_equal);
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_constructor_from_array_of_chars)
+{
+    base::FixedBytes<111> fb1;
+    for(std::size_t i = 0; i < fb1.size(); i++) {
+        fb1[i] = (static_cast<base::Byte>(i ^ 3));
+    }
+    auto c_str = fb1.toArray();
+    base::FixedBytes<111> fb2(c_str, fb1.size() + 10);
+
+    BOOST_CHECK(fb2.size() == fb1.size());
+    bool res = true;
+    for(std::size_t i = 0; i < fb1.size(); i++) {
+        res = res && (fb2[i] == c_str[i]);
+    }
+    BOOST_CHECK(res);
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_constructor_from_vector)
+{
+    std::vector<base::Byte> b(111);
+    for(std::size_t i = 0; i < b.size(); i++) {
+        b[i] = (static_cast<base::Byte>(i ^ 3));
+    }
+
+    base::FixedBytes<111> fb(b);
+
+    BOOST_CHECK(fb.size() == b.size());
+    bool res = true;
+    for(std::size_t i = 0; i < fb.size(); i++) {
+        res = res && (b[i] == fb[i]);
+    }
+    BOOST_CHECK(res);
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_string_ctor)
+{
+    base::FixedBytes<12> b1{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30, 0x02};
+    base::FixedBytes<12> b2("LIKELIB\t2.0\x02");
+    BOOST_CHECK(b1 == b2);
+    BOOST_CHECK(b1.toString() == b2.toString());
+    BOOST_CHECK(b1.toString() == "LIKELIB\t2.0\x02");
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_to_hex)
+{
+    base::FixedBytes<5> bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
+    BOOST_CHECK_EQUAL(bytes.toHex(), "01ff02fe00");
 }
