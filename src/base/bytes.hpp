@@ -2,6 +2,7 @@
 
 #include "types.hpp"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
@@ -81,6 +82,45 @@ class Bytes
 base::Bytes operator+(const base::Bytes& a, const base::Bytes& b);
 
 std::ostream& operator<<(std::ostream& os, const Bytes& bytes);
+
+template<std::size_t S>
+class FixedBytes
+{
+  public:
+    FixedBytes() = default;
+    explicit FixedBytes(const std::vector<Byte>& bytes);
+    explicit FixedBytes(const std::string& str);
+    FixedBytes(const Byte* bytes, std::size_t length);
+    FixedBytes(std::initializer_list<Byte> l);
+    FixedBytes(const FixedBytes&) = default;
+    FixedBytes(FixedBytes&&) = default;
+    FixedBytes& operator=(const FixedBytes&) = default;
+    FixedBytes& operator=(FixedBytes&&) = default;
+    ~FixedBytes() = default;
+    //==============
+    Byte& operator[](std::size_t index);
+    const Byte& operator[](std::size_t index) const;
+    //==============
+    [[nodiscard]] std::size_t size() const noexcept;
+    //==============
+    [[nodiscard]] const Byte* toArray() const;
+    [[nodiscard]] Byte* toArray();
+    //==============
+    [[nodiscard]] std::string toHex() const;
+    [[nodiscard]] std::string toString() const;
+    //==============
+    [[nodiscard]] bool operator==(const FixedBytes& another) const;
+    [[nodiscard]] bool operator!=(const FixedBytes& another) const;
+
+    // lexicographical compare
+    [[nodiscard]] bool operator<(const FixedBytes& another) const;
+    [[nodiscard]] bool operator>(const FixedBytes& another) const;
+    [[nodiscard]] bool operator<=(const FixedBytes& another) const;
+    [[nodiscard]] bool operator>=(const FixedBytes& another) const;
+    //==============
+  private:
+    std::array<Byte, S> _array;
+};
 
 } // namespace base
 

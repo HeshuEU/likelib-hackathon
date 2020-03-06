@@ -217,3 +217,19 @@ BOOST_AUTO_TEST_CASE(bytes_relation_check)
     BOOST_CHECK(b1 > b3);
     BOOST_CHECK(b1 < b4);
 }
+
+
+BOOST_AUTO_TEST_CASE(fixed_constructor_define_constructor)
+{
+    base::FixedBytes<111> fb1;
+    for(std::size_t i = 0; i < fb1.size(); ++i) {
+        fb1[i] = static_cast<base::Byte>(i ^ 3);
+    }
+
+    bool all_equal = true;
+    for(std::size_t i = 0; i < fb1.size(); ++i) {
+        all_equal = all_equal && (static_cast<base::Byte>(i ^ 3) == fb1[i]);
+    }
+
+    BOOST_CHECK(all_equal);
+}
