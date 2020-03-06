@@ -38,18 +38,29 @@ Bytes::Bytes(I begin, I end) : _raw(begin, end)
 
 
 template<std::size_t S>
+FixedBytes<S>::FixedBytes()
+{
+    static_assert(S > 0, "FixedBytes length must be longet than 0");
+}
+
+
+template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::vector<Byte>& bytes)
 {
-    auto min_size = std::min(S, bytes.size());
-    std::copy_n(bytes.begin(), min_size, _array.begin());
+    if(S < bytes.size() || bytes.size() == 0) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
+    }
+    std::copy_n(bytes.begin(), S, _array.begin());
 }
 
 
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::string& str)
 {
-    auto min_size = std::min(S, str.size());
-    for(std::size_t i = 0; i < min_size; i++) {
+    if(S < str.size() || str.size() == 0) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid string size for FixedBytes");
+    }
+    for(std::size_t i = 0; i < S; i++) {
         _array[i] = static_cast<Byte>(str[i]);
     }
 }
@@ -58,16 +69,20 @@ FixedBytes<S>::FixedBytes(const std::string& str)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(const Byte* bytes, std::size_t length)
 {
-    auto min_size = std::min(S, length);
-    std::copy_n(bytes, min_size, _array.begin());
+    if(S < length || length == 0) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
+    }
+    std::copy_n(bytes, S, _array.begin());
 }
 
 
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(std::initializer_list<Byte> l)
 {
-    auto min_size = std::min(S, l.size());
-    for(std::size_t i = 0; i < min_size; i++) {
+    if(S < l.size() || l.size() == 0) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid initializer list size for FixedBytes");
+    }
+    for(std::size_t i = 0; i < S; i++) {
         _array[i] = l.begin()[i];
     }
 }
@@ -99,7 +114,6 @@ std::size_t FixedBytes<S>::size() const noexcept
 template<std::size_t S>
 const Byte* FixedBytes<S>::toArray() const
 {
-    // TODO if s==0 can not be return nullptr
     return _array.data();
 }
 
@@ -107,7 +121,6 @@ const Byte* FixedBytes<S>::toArray() const
 template<std::size_t S>
 Byte* FixedBytes<S>::toArray()
 {
-    // TODO if s==0 can not be return nullptr
     return _array.data();
 }
 

@@ -87,7 +87,7 @@ template<std::size_t S>
 class FixedBytes
 {
   public:
-    FixedBytes() = default;
+    FixedBytes();
     explicit FixedBytes(const std::vector<Byte>& bytes);
     explicit FixedBytes(const std::string& str);
     FixedBytes(const Byte* bytes, std::size_t length);
@@ -131,6 +131,7 @@ base::Bytes base58Decode(std::string_view base58);
 
 template<typename T>
 [[nodiscard]] std::string toHex(const T& bytes);
+
 template<typename T>
 [[nodiscard]] T fromHex(const std::string_view& hex_view);
 
