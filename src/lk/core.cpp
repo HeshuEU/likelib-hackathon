@@ -59,6 +59,43 @@ bool Core::addPendingTransaction(const bc::Transaction& tx)
 }
 
 
+void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
+{
+    if(!checkTransaction(tx)) {
+        RAISE_ERROR(base::InvalidArgument, "invalid transaction");
+    }
+
+    std::condition_variable cv;
+    std::mutex mt;
+    bool is_tx_mined = false;
+
+    auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](const bc::Block& block){
+        if(block.getTransactions().find(tx)) {
+            is_tx_mined = true;
+            cv.notify_all();
+        }
+    });
+
+    addPendingTransaction(tx);
+
+    std::unique_lock lk(mt);
+    cv.wait(lk, [&is_tx_mined]{return is_tx_mined;});
+    _event_block_added.unsubscribe(id);
+}
+
+
+base::Bytes Core::getTransactionOutput(const base::Sha256& tx)
+{
+    std::shared_lock lk(_tx_outputs_mutex);
+    if(auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
+        return it->second;
+    }
+    else {
+        return {};
+    }
+}
+
+
 bool Core::tryAddBlock(const bc::Block& b)
 {
     if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
@@ -176,10 +213,18 @@ void Core::applyBlockTransactions(const bc::Block& block)
 
 bool Core::tryPerformTransaction(const bc::Transaction& tx)
 {
+    auto hash = base::Sha256::compute(base::toBytes(tx)).getBytes();
     if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
         try {
-            auto result = doContractCreation(tx);
-            LOG_DEBUG << "Contract creation result: " << result.getBytes().toHex();
+            auto [address, result] = doContractCreation(tx);
+            LOG_DEBUG << "Contract created at " << address << " with output = " << result.toHex();
+            base::SerializationOArchive oa;
+            oa.serialize(address);
+            oa.serialize(result);
+            {
+                std::unique_lock lk(_tx_outputs_mutex);
+                _tx_outputs[hash] = std::move(oa).getBytes();
+            }
         }
         catch(const base::Error&) {
             return false;
@@ -188,13 +233,17 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx)
     }
     else {
         auto result = doMessageCall(tx);
-        LOG_DEBUG << "Message call result: " << result.toOutputData().toHex();
+        LOG_DEBUG << "Message call result: " << result.toHex();
+        {
+            std::unique_lock lk(_tx_outputs_mutex);
+            _tx_outputs[hash] = base::toBytes(result);
+        }
         return true;
     }
 }
 
 
-bc::Address Core::doContractCreation(const bc::Transaction& tx)
+std::pair<bc::Address, base::Bytes> Core::doContractCreation(const bc::Transaction& tx)
 {
     base::SerializationIArchive ia(tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();
@@ -211,15 +260,15 @@ bc::Address Core::doContractCreation(const bc::Transaction& tx)
     auto message = contract.createInitMessage(
         tx.getFee(), tx.getFrom(), contract_address, tx.getAmount(), contract_data.getInit());
     if(auto result = vm.execute(message); result.ok()) {
+        return {contract_address, std::move(result.toOutputData())};
     }
     else {
         RAISE_ERROR(base::Error, "invalid result");
     }
-    return contract_address;
 }
 
 
-vm::ExecutionResult Core::doMessageCall(const bc::Transaction& tx)
+base::Bytes Core::doMessageCall(const bc::Transaction& tx)
 {
     auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
 
@@ -235,7 +284,10 @@ vm::ExecutionResult Core::doMessageCall(const bc::Transaction& tx)
         vm::SmartContract contract(code);
         auto message = contract.createMessage(tx.getFee(), tx.getFrom(), tx.getTo(), tx.getAmount(), tx.getData());
         auto ret = vm.execute(message);
-        return ret;
+        return ret.toOutputData();
+    }
+    else {
+        _account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount());
     }
 }
 
@@ -396,7 +448,8 @@ evmc::result Core::call(const evmc_message& msg) noexcept
     auto tx = std::move(txb).build();
     auto result = doMessageCall(tx);
 
-    return result.getResult();
+    // return result;
+    // return evmc::make_result(evmc::result::)
 }
 
 

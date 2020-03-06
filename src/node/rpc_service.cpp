@@ -82,12 +82,22 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
     LOG_DEBUG << tx;
 
     try {
-        auto contract_address = _core.addPendingTransaction(tx);
-        // return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), contract_address, gas};
-        return {rpc::OperationStatus::createSuccess("Contract was successfully deployed"), bc::Address::null(), 42};
+        _core.addPendingTransactionAndWait(tx);
+        auto hash = base::Sha256::compute(base::toBytes(tx)).getBytes();
+        auto raw_output = _core.getTransactionOutput(hash);
+        base::SerializationIArchive ia(std::move(raw_output));
+        auto contract_address = ia.deserialize<bc::Address>();
+        auto output = ia.deserialize<base::Bytes>();
+
+        std::string ret_str{"Contract was successfully deployed"};
+        if(!output.isEmpty()) {
+            ret_str += " with output: ";
+            ret_str += output.toHex();
+        }
+        return {rpc::OperationStatus::createSuccess(ret_str), contract_address, 0x228};
     }
     catch(const std::exception& e) {
-        return {rpc::OperationStatus::createFailed(std::string{"Error occurred"} + e.what()), bc::Address::null(), gas};
+        return {rpc::OperationStatus::createFailed(std::string{"Error occurred: "} + e.what()), bc::Address::null(), gas};
     }
 }
 
@@ -117,12 +127,10 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
     auto tx = std::move(txb).build();
 
     try {
-        auto result = _core.addPendingTransaction(tx);
-        if(!result) {
-            return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "}), std::string{}, gas};
-        }
-        //return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toOutputData().toHex(), result.gasLeft()};
-        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), "228", 43};
+        _core.addPendingTransactionAndWait(tx);
+        auto hash = base::Sha256::compute(base::toBytes(tx)).getBytes();
+        auto result = _core.getTransactionOutput(hash);
+        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toHex(), 0x228};
     }
     catch(const std::exception& e) {
         return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()), std::string{}, gas};

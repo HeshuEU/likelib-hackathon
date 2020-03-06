@@ -39,6 +39,8 @@ class Core : public evmc::Host
     bc::Balance getBalance(const bc::Address& address) const;
     //==================
     bool addPendingTransaction(const bc::Transaction& tx);
+    void addPendingTransactionAndWait(const bc::Transaction& tx);
+    base::Bytes getTransactionOutput(const base::Sha256& tx_hash);
     //==================
     bool tryAddBlock(const bc::Block& b);
     std::optional<bc::Block> findBlock(const base::Sha256& hash) const;
@@ -88,6 +90,9 @@ class Core : public evmc::Host
     bc::Blockchain _blockchain;
     lk::Network _network;
     //==================
+    std::unordered_map<base::Sha256, base::Bytes> _tx_outputs;
+    mutable std::shared_mutex _tx_outputs_mutex;
+    //==================
     bc::TransactionsSet _pending_transactions;
     mutable std::shared_mutex _pending_transactions_mutex;
     //==================
@@ -98,8 +103,8 @@ class Core : public evmc::Host
     bool checkTransaction(const bc::Transaction& tx) const;
     //==================
     bool tryPerformTransaction(const bc::Transaction& tx);
-    bc::Address doContractCreation(const bc::Transaction& tx);
-    vm::ExecutionResult doMessageCall(const bc::Transaction& tx);
+    std::pair<bc::Address, base::Bytes> doContractCreation(const bc::Transaction& tx);
+    base::Bytes doMessageCall(const bc::Transaction& tx);
     //==================
   public:
     //==================
