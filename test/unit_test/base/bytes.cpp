@@ -286,3 +286,16 @@ BOOST_AUTO_TEST_CASE(fixed_bytes_to_hex)
     base::FixedBytes<5> bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
     BOOST_CHECK_EQUAL(bytes.toHex(), "01ff02fe00");
 }
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_serializatin)
+{
+    base::FixedBytes<6> fb1{"Fiasko"};
+    base::SerializationOArchive oa;
+
+    oa.serialize(fb1);
+    base::SerializationIArchive ia(oa.getBytes());
+    auto fb2 = ia.deserialize<base::FixedBytes<6>>();
+
+    BOOST_CHECK(fb1 == fb2);
+}

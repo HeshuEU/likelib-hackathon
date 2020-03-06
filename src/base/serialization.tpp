@@ -164,6 +164,22 @@ class global_deserialize<std::optional<T>>
 };
 
 
+template<std::size_t S>
+class global_deserialize<base::FixedBytes<S>>
+{
+  public:
+    base::FixedBytes<S> deserialize(base::SerializationIArchive& ia, const base::Bytes&, std::size_t&)
+    {
+        base::FixedBytes<S> fb;
+        for(std::size_t i = 0; i < S; ++i) {
+            auto b = ia.deserialize<base::Byte>();
+            fb[i] = b;
+        }
+        return fb;
+    }
+};
+
+
 template<>
 class global_deserialize<base::Bytes>
 {
@@ -289,6 +305,19 @@ class global_serialize<std::optional<T>>
         }
         else {
             oa.serialize(false);
+        }
+    }
+};
+
+
+template<std::size_t S>
+class global_serialize<base::FixedBytes<S>>
+{
+  public:
+    void serialize(base::SerializationOArchive& oa, const base::FixedBytes<S>& fb, base::Bytes&)
+    {
+        for(std::size_t i = 0; i < S; i++) {
+            oa.serialize(fb[i]);
         }
     }
 };
