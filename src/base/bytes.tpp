@@ -40,7 +40,9 @@ Bytes::Bytes(I begin, I end) : _raw(begin, end)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes()
 {
-    static_assert(S > 0, "FixedBytes length must be longet than 0");
+    if(S == 0){
+        RAISE_ERROR(base::InvalidArgument, "FixedBytes length must be longet than 0");
+    }
 }
 
 
