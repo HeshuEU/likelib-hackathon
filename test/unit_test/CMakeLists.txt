@@ -15,7 +15,6 @@ set(TEST_SOURCES
         bc/block.cpp
         bc/transaction.cpp
         bc/transactions_set.cpp
-        lk/balance_manager.cpp
         net/endpoint.cpp
         vm/vm.cpp
         vm/tools.cpp
