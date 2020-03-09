@@ -17,7 +17,7 @@ Build:
     - ${SOURCE_DIR}/doc/prepare_build.sh
     - mkdir -p ${BUILD_DIR}
     - mkdir -p /tmp/logs
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-checks=*;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR}
+    - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
     - cd ${BUILD_DIR} && make -j$(nproc)
     - cp -r /tmp/logs ${BUILD_DIR}
   artifacts:

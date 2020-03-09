@@ -18,16 +18,13 @@ class GeneralServerService : public rpc::BaseRpc
 
     bc::Balance balance(const bc::Address& address) override;
 
-    std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> transaction_creation_contract(bc::Balance amount,
-        const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas, const base::Bytes& code,
-        const base::Bytes& initial_message, const bc::Sign& signature) override;
+    virtual std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> transaction_create_contract(bc::Balance amount,
+        const bc::Address& from_address, const base::Time& timestamp, bc::Balance gas,
+        const std::string& contract_code, const std::string& init, const bc::Sign& signature) override;
 
-    std::tuple<rpc::OperationStatus, base::Bytes, bc::Balance> transaction_to_contract(bc::Balance amount,
-        const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time,
-        bc::Balance gas, const base::Bytes& message, const bc::Sign& signature) override;
-
-    rpc::OperationStatus transaction_to_wallet(bc::Balance amount, const bc::Address& from_address,
-        const bc::Address& to_address, bc::Balance fee, const base::Time& transaction_time, const bc::Sign& signature) override;
+    virtual std::tuple<rpc::OperationStatus, std::string, bc::Balance> transaction_message_call(bc::Balance amount,
+        const bc::Address& from_address, const bc::Address& to_address, const base::Time& timestamp,
+        bc::Balance gas, const std::string& message, const bc::Sign& signature) override;
 
   private:
     lk::Core& _core;

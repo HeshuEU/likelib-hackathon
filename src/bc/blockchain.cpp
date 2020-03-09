@@ -93,6 +93,7 @@ bool Blockchain::tryAddBlock(const Block& block)
         }
         else {
             inserted_block = _blocks.insert({hash, block}).first;
+            _blocks_by_depth.insert({block.getDepth(), hash});
             pushForwardToPersistentStorage(hash, block);
             _top_level_block_hash = hash;
         }
@@ -109,6 +110,18 @@ std::optional<Block> Blockchain::findBlock(const base::Sha256& block_hash) const
 {
     std::shared_lock lk(_blocks_mutex);
     if(auto it = _blocks.find(block_hash); it != _blocks.end()) {
+        return it->second;
+    }
+    else {
+        return std::nullopt;
+    }
+}
+
+
+std::optional<base::Sha256> Blockchain::findBlockHashByDepth(bc::BlockDepth depth) const
+{
+    std::shared_lock lk(_blocks_mutex);
+    if(auto it = _blocks_by_depth.find(depth); it != _blocks_by_depth.end()) {
         return it->second;
     }
     else {
@@ -182,7 +195,7 @@ std::optional<Block> Blockchain::findBlockAtPersistentStorage(const base::Sha256
 
 std::vector<base::Sha256> Blockchain::createAllBlockHashesListAtPersistentStorage() const
 {
-    std::vector<::base::Sha256> all_blocks_hashes{};
+    std::vector<base::Sha256> all_blocks_hashes{};
     auto last_block_hash = getLastBlockHashAtPersistentStorage();
     if(last_block_hash) {
         base::Sha256 current_block_hash = last_block_hash.value();

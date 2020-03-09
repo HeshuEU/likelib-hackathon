@@ -38,16 +38,11 @@ class GrpcAdapter final : public likelib::NodePublicInterface::Service
     grpc::Status balance(
         grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response) override;
 
-    grpc::Status transaction_to_contract(grpc::ServerContext* context,
-        const likelib::TransactionToContractRequest* request,
-        likelib::TransactionToContractResponse* response) override;
+    grpc::Status message_call(grpc::ServerContext* context, const likelib::TransactionMessageCallRequest* request,
+        likelib::TransactionMessageCallResponse* response) override;
 
-    grpc::Status transaction_for_create_contract(grpc::ServerContext* context,
-        const likelib::TransactionCreationContractRequest* request,
-        likelib::TransactionCreationContractResponse* response) override;
-
-    grpc::Status transaction_to_wallet(grpc::ServerContext* context,
-        const likelib::TransactionToAccountRequest* request, likelib::TransactionToAccountResponse* response) override;
+    grpc::Status create_contract(grpc::ServerContext* context, const likelib::TransactionCreateContractRequest* request,
+        likelib::TransactionCreateContractResponse* response) override;
 };
 
 } // namespace rpc

@@ -12,6 +12,9 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 
+#include <include/secp256k1.h>
+#include <include/secp256k1_recovery.h>
+
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -55,6 +58,7 @@ void writeFile(const std::filesystem::path& path, const base::Bytes& data)
 }
 
 
+// generates a cryptographically safe byte sequence, see issue 93
 base::Bytes generate_bytes(std::size_t size)
 {
     base::Bytes data(size);
@@ -563,6 +567,183 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 }
 
 
+KeyVault::KeyVault(const base::PropertyTree& config)
+{
+    std::filesystem::path keys_dir_path = config.get<std::string>("keys_dir");
+    auto public_key_path = base::config::makePublicKeyPath(keys_dir_path);
+    auto private_key_path = base::config::makePrivateKeyPath(keys_dir_path);
+
+    if(std::filesystem::exists(public_key_path) && std::filesystem::exists(private_key_path)) {
+        _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::load(public_key_path));
+        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::load(private_key_path));
+    }
+    else {
+        LOG_INFO << "Key files were not found by path " << keys_dir_path << ". Generating new keypair";
+        auto keys = base::generateKeys();
+        _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
+        _private_key = std::make_unique<base::RsaPrivateKey>(std::move(keys.second));
+        _public_key->save(public_key_path);
+        _private_key->save(private_key_path);
+        LOG_WARNING << "Generated new key pair";
+    }
+    // TODO: maybe implement unload to disk for private key.
+}
+
+
+const base::RsaPublicKey& KeyVault::getPublicKey() const noexcept
+{
+    return *_public_key;
+}
+
+
+const base::RsaPrivateKey& KeyVault::getPrivateKey() const noexcept
+{
+    return *_private_key;
+}
+
+
+Secp256PrivateKey::Secp256PrivateKey() : _secp_key(generate_bytes(SECP256PRIVATEKEYSIZE))
+{
+    std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
+        secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
+    if(secp256k1_ec_seckey_verify(context.get(), _secp_key.toArray()) == 0) {
+        RAISE_ERROR(base::CryptoError, "error create secp_key");
+    }
+}
+
+
+Secp256PrivateKey::Secp256PrivateKey(const base::Bytes& private_key_bytes) : _secp_key(private_key_bytes)
+{
+    if(private_key_bytes.size() != SECP256PRIVATEKEYSIZE) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid size of bytes for Secp256PrivateKey");
+    }
+}
+
+
+base::Bytes Secp256PrivateKey::sign(const base::Bytes& bytes) const
+{
+    std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
+        secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
+    secp256k1_ecdsa_recoverable_signature recoverable_signature;
+    if(secp256k1_ecdsa_sign_recoverable(
+           context.get(), &recoverable_signature, bytes.toArray(), _secp_key.toArray(), nullptr, nullptr) == 0) {
+        RAISE_ERROR(base::CryptoError, "error signing transaction");
+    }
+    return base::Bytes(recoverable_signature.data, 65);
+}
+
+
+
+void Secp256PrivateKey::save(const std::filesystem::path& path) const
+{
+    writeFile(path, _secp_key);
+}
+
+
+Secp256PrivateKey Secp256PrivateKey::load(const std::filesystem::path& path)
+{
+    return Secp256PrivateKey(readAllFile(path));
+}
+
+
+Secp256PrivateKey Secp256PrivateKey::deserialize(base::SerializationIArchive& ia)
+{
+    base::Bytes bytes = ia.deserialize<base::Bytes>();
+    return {bytes};
+}
+
+
+void Secp256PrivateKey::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(_secp_key);
+}
+
+
+base::Bytes Secp256PrivateKey::getBytes() const
+{
+    return _secp_key;
+}
+
+
+Secp256PublicKey::Secp256PublicKey(const Secp256PrivateKey& private_key) : _secp_key(SECP256PUBLICKEYSIZE)
+{
+    std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
+        secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
+    secp256k1_pubkey pubkey;
+    if(secp256k1_ec_pubkey_create(context.get(), &pubkey, private_key.getBytes().toArray()) == 0) {
+        RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
+    }
+    _secp_key = base::Bytes(pubkey.data, SECP256PUBLICKEYSIZE);
+}
+
+
+Secp256PublicKey::Secp256PublicKey(const base::Bytes& public_key_bytes) : _secp_key(public_key_bytes)
+{
+    if(public_key_bytes.size() != SECP256PUBLICKEYSIZE) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid size of bytes for Secp256PublicKey");
+    }
+}
+
+
+bool Secp256PublicKey::verifySignature(const base::Bytes signature, const base::Bytes& bytes) const
+{
+    std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
+        secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
+    secp256k1_pubkey pubkey;
+    secp256k1_ecdsa_recoverable_signature recoverable_signature;
+    memcpy(recoverable_signature.data, signature.toArray(), signature.size());
+    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.toArray()) == 0) {
+        RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
+    }
+    base::Bytes signature_pubkey(pubkey.data, SECP256PUBLICKEYSIZE);
+    return _secp_key == signature_pubkey;
+}
+
+
+void Secp256PublicKey::save(const std::filesystem::path& path) const
+{
+    writeFile(path, _secp_key);
+}
+
+
+Secp256PublicKey Secp256PublicKey::load(const std::filesystem::path& path)
+{
+    return Secp256PublicKey(readAllFile(path));
+}
+
+
+Secp256PublicKey Secp256PublicKey::deserialize(base::SerializationIArchive& ia)
+{
+    base::Bytes bytes = ia.deserialize<base::Bytes>();
+    return {bytes};
+}
+
+
+void Secp256PublicKey::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(_secp_key);
+}
+
+
+bool Secp256PublicKey::operator==(const Secp256PublicKey& other) const
+{
+    return _secp_key == other._secp_key;
+}
+
+
+base::Bytes Secp256PublicKey::getBytes() const
+{
+    return _secp_key;
+}
+
+
+std::pair<Secp256PublicKey, Secp256PrivateKey> generateSecp256Keys()
+{
+    Secp256PrivateKey priv_key;
+    return std::pair{Secp256PublicKey{priv_key}, Secp256PrivateKey{std::move(priv_key)}};
+}
+
+
 std::string base64Encode(const base::Bytes& bytes)
 {
     if(bytes.size() == 0) {
@@ -621,39 +802,94 @@ base::Bytes base64Decode(std::string_view base64)
 }
 
 
-KeyVault::KeyVault(const base::PropertyTree& config)
-{
-    std::filesystem::path keys_dir_path = config.get<std::string>("keys_dir");
-    auto public_key_path = base::config::makePublicKeyPath(keys_dir_path);
-    auto private_key_path = base::config::makePrivateKeyPath(keys_dir_path);
+static constexpr char pszBase58[59] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+static constexpr int8_t mapBase58[256] = {
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1, 0, 1, 2, 3, 4, 5, 6,  7, 8,-1,-1,-1,-1,-1,-1,
+     -1, 9,10,11,12,13,14,15, 16,-1,17,18,19,20,21,-1,
+     22,23,24,25,26,27,28,29, 30,31,32,-1,-1,-1,-1,-1,
+     -1,33,34,35,36,37,38,39, 40,41,42,43,-1,44,45,46,
+     47,48,49,50,51,52,53,54, 55,56,57,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+ };
 
-    if(std::filesystem::exists(public_key_path) && std::filesystem::exists(private_key_path)) {
-        _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::load(public_key_path));
-        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::load(private_key_path));
+base::Bytes base58Decode(std::string_view base58)
+{
+    std::size_t current_pos = 0;
+    std::size_t zeroes_count = 0;
+    std::size_t length = 0;
+    while(base58[current_pos] == '1') {
+        zeroes_count++;
+        current_pos++;
     }
-    else {
-        LOG_INFO << "Key files were not found by path " << keys_dir_path << ". Generating new keypair";
-        auto keys = base::generateKeys();
-        _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
-        _private_key = std::make_unique<base::RsaPrivateKey>(std::move(keys.second));
-        _public_key->save(public_key_path);
-        _private_key->save(private_key_path);
-        LOG_WARNING << "Generated new key pair";
+
+    std::vector<unsigned char> b256((base58.size() - current_pos) * 733 / 1000 + 1); // log(58) / log(256)
+    while(current_pos != base58.size()) {
+        auto carry = static_cast<int>(mapBase58[static_cast<std::int8_t>(base58[current_pos])]);
+        if(carry == -1) {
+            RAISE_ERROR(base::InvalidArgument, "Invalid base58 string");
+        }
+        std::size_t i = 0;
+        for(auto it = b256.rbegin(); (carry != 0 || i < length) && (it != b256.rend()); ++it, ++i) {
+            carry += 58 * (*it);
+            *it = carry % 256;
+            carry /= 256;
+        }
+        length = i;
+        current_pos++;
     }
-    // TODO: maybe implement unload to disk for private key.
+
+    auto it = b256.begin() + (b256.size() - length);
+    base::Bytes ret_bytes(std::vector<base::Byte>(zeroes_count, 0x00));
+    while(it != b256.end()) {
+        ret_bytes.append(*(it++));
+    }
+    return ret_bytes;
 }
 
-
-const base::RsaPublicKey& KeyVault::getPublicKey() const noexcept
+std::string base58Encode(const base::Bytes& bytes)
 {
-    return *_public_key;
+    std::size_t current_pos = 0;
+    std::size_t zeroes_count = 0;
+    std::size_t length = 0;
+    while(current_pos != bytes.size() && bytes[current_pos] == 0) {
+        current_pos++;
+        zeroes_count++;
+    }
+
+    base::Bytes b58(bytes.size() * 138 / 100 + 1); // log(256) / log(58)
+    while(current_pos != bytes.size()) {
+        auto carry = static_cast<std::size_t>(bytes[current_pos]);
+        std::size_t i = 0;
+        for(auto it = b58.toVector().rbegin(); (carry != 0 || i < length) && (it != b58.toVector().rend()); it++, i++) {
+            carry += 256 * (*it);
+            *it = carry % 58;
+            carry /= 58;
+        }
+        length = i;
+        current_pos++;
+    }
+    auto it = b58.toVector().begin() + (b58.size() - length);
+    while(it != b58.toVector().end() && *it == 0) {
+        it++;
+    }
+
+    std::string str;
+    str.reserve(zeroes_count + (b58.toVector().end() - it));
+    str.assign(zeroes_count, '1');
+    while(it != b58.toVector().end()) {
+        str += pszBase58[*(it++)];
+    }
+    return str;
 }
-
-
-const base::RsaPrivateKey& KeyVault::getPrivateKey() const noexcept
-{
-    return *_private_key;
-}
-
 
 } // namespace base

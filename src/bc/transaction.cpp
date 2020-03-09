@@ -61,12 +61,29 @@ Sign Sign::deserialize(base::SerializationIArchive& ia)
 }
 
 
-Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp, bc::Sign sign)
-    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee}, _timestamp{timestamp}, _sign{std::move(sign)}
+Sign Sign::fromBase64(const std::string& base64_signature)
 {
-    if(_amount == 0) {
-        RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
-    }
+    base::SerializationIArchive ia(base::base64Decode(base64_signature));
+    return deserialize(ia);
+}
+
+
+std::string Sign::toBase64() const
+{
+    base::SerializationOArchive oa;
+    serialize(oa);
+    return base::base64Encode(oa.getBytes());
+}
+
+
+Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp,
+    Transaction::Type transaction_type, base::Bytes data, bc::Sign sign)
+    : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee},
+      _timestamp{timestamp}, _tx_type{transaction_type}, _data{std::move(data)}, _sign{std::move(sign)}
+{
+//    if(_amount == 0) {
+//        RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
+//    }
 }
 
 
@@ -100,9 +117,22 @@ const bc::Balance& Transaction::getFee() const noexcept
 }
 
 
+Transaction::Type Transaction::getType() const noexcept
+{
+    return _tx_type;
+}
+
+
+const base::Bytes& Transaction::getData() const noexcept
+{
+    return _data;
+}
+
+
 bool Transaction::operator==(const Transaction& other) const
 {
-    return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp && _fee == other._fee;
+    return _amount == other._amount && _from == other._from && _to == other._to && _timestamp == other._timestamp &&
+        _fee == other._fee && _tx_type == other._tx_type && _data == other._data;
 }
 
 
@@ -115,6 +145,7 @@ bool Transaction::operator!=(const Transaction& other) const
 void Transaction::sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv)
 {
     auto hash = hashOfTxData();
+    // TODO: do a better elliptic curve signature
     base::Bytes rsa_encrypted_hash = priv.encrypt(hash.getBytes());
     _sign = Sign{std::move(pub), rsa_encrypted_hash};
 }
@@ -128,7 +159,7 @@ bool Transaction::checkSign() const
     else {
         const auto& pub = _sign.getPublicKey();
         const auto& enc_hash = _sign.getRsaEncryptedHash();
-        auto derived_addr = bc::Address::fromPublicKey(pub);
+        auto derived_addr = bc::Address(pub);
         if(_from != derived_addr) {
             return false;
         }
@@ -147,6 +178,14 @@ const Sign& Transaction::getSign() const noexcept
 }
 
 
+base::Sha256 Transaction::hashOfTxData() const
+{
+    base::SerializationOArchive oa;
+    serializeHeader(oa);
+    return base::Sha256::compute(std::move(oa).getBytes());
+}
+
+
 void Transaction::serializeHeader(base::SerializationOArchive& oa) const
 {
     oa.serialize(_from);
@@ -154,14 +193,8 @@ void Transaction::serializeHeader(base::SerializationOArchive& oa) const
     oa.serialize(_amount);
     oa.serialize(_fee);
     oa.serialize(_timestamp);
-}
-
-
-base::Sha256 Transaction::hashOfTxData() const
-{
-    base::SerializationOArchive oa;
-    serializeHeader(oa);
-    return base::Sha256::compute(std::move(oa).getBytes());
+    oa.serialize(_tx_type);
+    oa.serialize(_data);
 }
 
 
@@ -172,8 +205,10 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
     auto balance = ia.deserialize<bc::Balance>();
     auto fee = ia.deserialize<bc::Balance>();
     auto timestamp = ia.deserialize<base::Time>();
+    auto tx_type = ia.deserialize<Type>();
+    auto data = ia.deserialize<base::Bytes>();
     auto sign = ia.deserialize<bc::Sign>();
-    return {std::move(from), std::move(to), balance, fee, timestamp, std::move(sign)};
+    return {std::move(from), std::move(to), balance, fee, timestamp, tx_type, std::move(data), std::move(sign)};
 }
 
 
@@ -186,8 +221,51 @@ void Transaction::serialize(base::SerializationOArchive& oa) const
 
 std::ostream& operator<<(std::ostream& os, const Transaction& tx)
 {
-    return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount() << " fee: " << tx.getFee()
-              << " timestamp: " << tx.getTimestamp();
+    return os << "from: " << tx.getFrom() << " to: " << tx.getTo() << " amount: " << tx.getAmount()
+              << " fee: " << tx.getFee() << " timestamp: " << tx.getTimestamp();
+}
+
+
+ContractInitData::ContractInitData(base::Bytes code, base::Bytes init) : _code{std::move(code)}, _init{std::move(init)}
+{}
+
+
+void ContractInitData::setCode(base::Bytes code)
+{
+    _code = std::move(code);
+}
+
+
+void ContractInitData::setInit(base::Bytes init)
+{
+    _init = std::move(init);
+}
+
+
+const base::Bytes& ContractInitData::getCode() const noexcept
+{
+    return _code;
+}
+
+
+const base::Bytes& ContractInitData::getInit() const noexcept
+{
+    return _init;
+}
+
+
+void ContractInitData::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(_code);
+    oa.serialize(_init);
+}
+
+
+ContractInitData ContractInitData::deserialize(base::SerializationIArchive& ia)
+{
+    auto code = ia.deserialize<base::Bytes>();
+    auto init = ia.deserialize<base::Bytes>();
+    return {std::move(code), std::move(init)};
 }
 
 
@@ -221,6 +299,23 @@ void TransactionBuilder::setFee(bc::Balance fee)
 }
 
 
+void TransactionBuilder::setSign(bc::Sign sign)
+{
+    _sign = std::move(sign);
+}
+
+
+void TransactionBuilder::setTransactionType(Transaction::Type transaction_type)
+{
+    _tx_type = transaction_type;
+}
+
+
+void TransactionBuilder::setData(base::Bytes data)
+{
+    _data = std::move(data);
+}
+
 
 Transaction TransactionBuilder::build() const&
 {
@@ -229,7 +324,15 @@ Transaction TransactionBuilder::build() const&
     ASSERT(_amount);
     ASSERT(_fee);
     ASSERT(_timestamp);
-    return {*_from, *_to, *_amount, *_fee, *_timestamp};
+    ASSERT(_tx_type);
+    ASSERT(_data);
+
+    if(_sign) {
+        return {*_from, *_to, *_amount, *_fee, *_timestamp, *_tx_type, *_data, *_sign};
+    }
+    else {
+        return {*_from, *_to, *_amount, *_fee, *_timestamp, *_tx_type, *_data};
+    }
 }
 
 
@@ -240,7 +343,15 @@ Transaction TransactionBuilder::build() &&
     ASSERT(_amount);
     ASSERT(_fee);
     ASSERT(_timestamp);
-    return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_fee), std::move(*_timestamp)};
+
+    if(_sign) {
+        return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_fee), std::move(*_timestamp),
+            std::move(*_tx_type), std::move(*_data), std::move(*_sign)};
+    }
+    else {
+        return {std::move(*_from), std::move(*_to), std::move(*_amount), std::move(*_fee), std::move(*_timestamp),
+            std::move(*_tx_type), std::move(*_data)};
+    }
 }
 
 

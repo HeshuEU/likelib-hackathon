@@ -23,10 +23,12 @@ class Sha256
     std::string toHex() const;
     const base::Bytes& getBytes() const noexcept;
     //----------------------------------
+    static Sha256 null();
     static Sha256 fromHex(const std::string& hex_view);
     //----------------------------------
     bool operator==(const Sha256& another) const;
     bool operator!=(const Sha256& another) const;
+    bool operator<(const Sha256& another) const;
     //----------------------------------
     static Sha256 compute(const base::Bytes& data);
     //----------------------------------
@@ -146,6 +148,7 @@ struct hash<base::Ripemd160>
 
 namespace base
 {
+
 class Sha3
 {
   public:
@@ -158,7 +161,6 @@ class Sha3
         Sha3Type512 = 64
     };
     //----------------------------------
-
     Sha3(const Sha3&) = default;
     Sha3(Sha3&&) = default;
     Sha3(const Bytes& data);
@@ -166,39 +168,22 @@ class Sha3
     Sha3& operator=(const Sha3&) = default;
     Sha3& operator=(Sha3&&) = default;
     ~Sha3() = default;
-
     //----------------------------------
-
     std::string toHex() const;
-
     const base::Bytes& getBytes() const noexcept;
-
     Sha3::Sha3Type getType() const noexcept;
-
     std::size_t size() const noexcept;
-
     //----------------------------------
-
     static Sha3 fromHex(const std::string_view& hex_view);
-
     //----------------------------------
-
     bool operator==(const Sha3& another) const;
-
     bool operator!=(const Sha3& another) const;
-
     //----------------------------------
-
     static Sha3 compute(const base::Bytes& data, Sha3Type type);
-
     static Sha3::Sha3Type getSha3Type(const std::size_t size);
-
     //----------------------------------
-
     void serialize(SerializationOArchive& oa) const;
-
     static Sha3 deserialize(SerializationIArchive& ia);
-
     //----------------------------------
   private:
     Sha3Type _type;

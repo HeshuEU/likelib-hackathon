@@ -5,6 +5,7 @@
 #include "base/assert.hpp"
 
 #include <boost/asio.hpp>
+#include <boost/endian/conversion.hpp>
 
 #include <functional>
 
@@ -83,35 +84,15 @@ class global_deserialize
     {
         if constexpr(std::is_integral<T>::value) {
             T v;
-            static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8 || sizeof(v) == 16,
+            static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8,
                 "this integral type is not serializable");
 
             ASSERT(_index + sizeof(T) <= _bytes.size());
 
             v = *reinterpret_cast<const T*>(_bytes.toArray() + _index);
-            if constexpr(sizeof(v) == 1) {
-                _index++;
-            }
-            else if constexpr(sizeof(v) == 2) {
-                v = ntohs(v);
-                _index += 2;
-            }
-            else if constexpr(sizeof(v) == 4) {
-                v = ntohl(v);
-                _index += 4;
-            }
-            else if constexpr(sizeof(v) == 8) {
-                auto a = ia.deserialize<std::uint32_t>();
-                auto b = ia.deserialize<std::uint32_t>();
-                v = a;
-                v = (v << 32) | b;
-            }
-            else if constexpr(sizeof(v) == 16) {
-                auto a = ia.deserialize<std::uint64_t>();
-                auto b = ia.deserialize<std::uint64_t>();
-                *this >> a >> b;
-                v = a;
-                v = (v << 64) | b;
+            _index += sizeof(v);
+            if constexpr(sizeof(v) != 1) {
+                v = base::nativeToBig(v);
             }
             return v;
         }
@@ -226,31 +207,15 @@ class global_serialize
     void serialize(base::SerializationOArchive& oa, const T& v, base::Bytes& _bytes)
     {
         if constexpr(std::is_integral<T>::value) {
-            static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8 || sizeof(v) == 16,
+            static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8,
                 "this integral type is not serializable");
 
-            if constexpr(sizeof(v) == 1) {
+            if constexpr(sizeof(v) != 1) {
+                auto t = base::bigToNative(v);
+                _bytes.append(reinterpret_cast<base::Byte*>(&t), sizeof(v));
+            }
+            else {
                 _bytes.append(static_cast<base::Byte>(v));
-            }
-            else if constexpr(sizeof(v) == 2) {
-                auto t = htons(v);
-                _bytes.append(reinterpret_cast<base::Byte*>(&t), 2);
-            }
-            else if constexpr(sizeof(v) == 4) {
-                auto t = htonl(v);
-                _bytes.append(reinterpret_cast<base::Byte*>(&t), 4);
-            }
-            else if constexpr(sizeof(v) == 8) {
-                std::uint32_t a = static_cast<std::uint32_t>(v >> 32);
-                std::uint32_t b = static_cast<std::uint32_t>(v & 0xFFFFFFFF);
-                oa.serialize(a);
-                oa.serialize(b);
-            }
-            else if constexpr(sizeof(v) == 16) {
-                std::uint64_t b = v & 0xFFFFFFFFFFFFFFFF;
-                std::uint64_t a = (v ^ b) >> 64;
-                oa.serialize(a);
-                oa.serialize(b);
             }
         }
         else if constexpr(std::is_enum<T>::value) {
@@ -381,6 +346,20 @@ T fromBytes(const base::Bytes& bytes)
     SerializationIArchive ia(bytes);
     T t = ia.deserialize<T>();
     return t;
+}
+
+
+template<typename T>
+T nativeToBig(const T& value) noexcept
+{
+    return boost::endian::native_to_big(value);
+}
+
+
+template<typename T>
+T bigToNative(const T& value) noexcept
+{
+    return boost::endian::big_to_native(value);
 }
 
 } // namespace base

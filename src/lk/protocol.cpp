@@ -14,7 +14,7 @@ base::Bytes serializeMessage(Args&&... args)
     base::SerializationOArchive oa;
     oa.serialize(M::getHandledMessageType());
     //(oa << ... << std::forward<Args>(args));
-    (oa.serialize(std::forward<Args>(args)),...);
+    (oa.serialize(std::forward<Args>(args)), ...);
     return std::move(oa).getBytes();
 }
 
@@ -217,7 +217,7 @@ constexpr MessageType GetBlockMessage::getHandledMessageType()
 void GetBlockMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash)
 {
     oa.serialize(MessageType::GET_BLOCK);
-    block_hash.serialize(oa);
+    oa.serialize(block_hash);
 }
 
 
@@ -310,7 +310,7 @@ constexpr MessageType BlockNotFoundMessage::getHandledMessageType()
 void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash)
 {
     oa.serialize(MessageType::BLOCK_NOT_FOUND);
-    block_hash.serialize(oa);
+    oa.serialize(block_hash);
 }
 
 

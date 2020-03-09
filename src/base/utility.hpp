@@ -39,11 +39,13 @@ class Observable
   public:
     using CallbackType = std::function<void(Args...)>;
 
-    void subscribe(CallbackType callback);
+    std::size_t subscribe(CallbackType callback);
+    void unsubscribe(std::size_t Id);
     void notify(Args... args);
 
   private:
-    std::vector<CallbackType> _observers;
+    std::vector<std::pair<CallbackType, std::size_t>> _observers;
+    std::size_t _next_id = 0;
 };
 
 #define TYPE_NAME(t) boost::typeindex::type_id<t>().pretty_name()

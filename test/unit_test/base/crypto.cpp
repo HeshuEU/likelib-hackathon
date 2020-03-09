@@ -210,6 +210,113 @@ BOOST_AUTO_TEST_CASE(aes_serialization_256bit)
 }
 
 
+BOOST_AUTO_TEST_CASE(secp256_sign_verify)
+{
+    auto [pub_key, priv_key] = base::generateSecp256Keys();
+    auto hash = base::Sha256::compute(base::Bytes("111"));
+    auto signature = priv_key.sign(hash.getBytes());
+    BOOST_CHECK(pub_key.verifySignature(signature, hash.getBytes()));
+}
+
+
+BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_copy)
+{
+    auto [pub_key, priv_key] = base::generateSecp256Keys();
+    auto pub_key2{pub_key};
+    auto priv_key2{std::move(priv_key)};
+    auto hash = base::Sha256::compute(base::Bytes("222"));
+
+    auto signature = priv_key2.sign(hash.getBytes());
+    BOOST_CHECK(pub_key2.verifySignature(signature, hash.getBytes()));
+}
+
+
+BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_bytes_copy)
+{
+    auto [pub_key, priv_key] = base::generateSecp256Keys();
+    base::Secp256PublicKey pub_key2{pub_key.getBytes()};
+    base::Secp256PrivateKey priv_key2{priv_key.getBytes()};
+    auto hash = base::Sha256::compute(base::Bytes("333"));
+
+    auto signature1 = priv_key.sign(hash.getBytes());
+    auto signature2 = priv_key2.sign(hash.getBytes());
+
+    BOOST_CHECK(pub_key2.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key2.verifySignature(signature2, hash.getBytes()));
+
+    BOOST_CHECK(pub_key.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key.verifySignature(signature2, hash.getBytes()));
+}
+
+
+BOOST_AUTO_TEST_CASE(secp256_sign_verify_with_another_key)
+{
+    auto [pub_key1, priv_key1] = base::generateSecp256Keys();
+    auto [pub_key2, priv_key2] = base::generateSecp256Keys();
+    auto hash = base::Sha256::compute(base::Bytes("444"));
+
+    auto signature1 = priv_key1.sign(hash.getBytes());
+    auto signature2 = priv_key2.sign(hash.getBytes());
+
+    BOOST_CHECK(pub_key1.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key2.verifySignature(signature2, hash.getBytes()));
+
+    BOOST_CHECK(!pub_key2.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(!pub_key1.verifySignature(signature2, hash.getBytes()));
+}
+
+
+BOOST_AUTO_TEST_CASE(secp256_save_load)
+{
+    auto [pub_key1, priv_key1] = base::generateSecp256Keys();
+    std::filesystem::path private_key_path{"ssh/rsa.priv"};
+    std::filesystem::path public_key_path{"ssh/rsa.pub"};
+
+    priv_key1.save(private_key_path);
+    pub_key1.save(public_key_path);
+
+    auto priv_key2 = base::Secp256PrivateKey::load(private_key_path);
+    auto pub_key2 = base::Secp256PublicKey::load(public_key_path);
+    auto hash = base::Sha256::compute(base::Bytes("555"));
+
+    auto signature1 = priv_key1.sign(hash.getBytes());
+    auto signature2 = priv_key2.sign(hash.getBytes());
+
+    BOOST_CHECK(pub_key2.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key2.verifySignature(signature2, hash.getBytes()));
+
+    BOOST_CHECK(pub_key1.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key1.verifySignature(signature2, hash.getBytes()));
+
+    std::filesystem::remove(private_key_path);
+    std::filesystem::remove(public_key_path);
+}
+
+
+BOOST_AUTO_TEST_CASE(secp256_serialization)
+{
+    auto [pub_key1, priv_key1] = base::generateSecp256Keys();
+
+    base::SerializationOArchive oa;
+    oa.serialize(pub_key1);
+    oa.serialize(priv_key1);
+
+    base::SerializationIArchive ia(oa.getBytes());
+    auto pub_key2 = ia.deserialize<base::Secp256PublicKey>();
+    auto priv_key2 = ia.deserialize<base::Secp256PrivateKey>();
+    auto hash = base::Sha256::compute(base::Bytes("667"));
+
+    auto signature1 = priv_key1.sign(hash.getBytes());
+    auto signature2 = priv_key2.sign(hash.getBytes());
+
+    BOOST_CHECK(pub_key2.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key2.verifySignature(signature2, hash.getBytes()));
+
+    BOOST_CHECK(pub_key1.verifySignature(signature1, hash.getBytes()));
+    BOOST_CHECK(pub_key1.verifySignature(signature2, hash.getBytes()));
+}
+
+
 BOOST_AUTO_TEST_CASE(base64_encode_decode)
 {
     base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
@@ -239,5 +346,26 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
     auto decode_base64 = base::base64Decode(base64);
 
     BOOST_CHECK(base64 == "MQ==");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base58_encode_decode)
+{
+    base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
+    auto base58 = base::base58Encode(target_msg);
+    auto decode_base58 = base::base58Decode(base58);
+    BOOST_CHECK(base58 == "2EfFY3oougxD9wQVN97fY9zmUuz3dEFnxDzbG8Xga34ArAY8nvx9hhsdtaUYze8CiDABR");
+    BOOST_CHECK(decode_base58.toString() == target_msg.toString());
+}
+
+
+BOOST_AUTO_TEST_CASE(base58_encode_decode_empty)
+{
+    base::Bytes target_msg("");
+    auto base64 = base58Encode(target_msg);
+    auto decode_base64 = base::base58Decode(base64);
+
+    BOOST_CHECK(base64 == "");
     BOOST_CHECK(target_msg == decode_base64);
 }
