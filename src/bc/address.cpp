@@ -19,7 +19,6 @@ Address::Address(const std::string_view& base58_address)
     if(_address.size() != BYTE_LENGTH) {
         RAISE_ERROR(base::InvalidArgument, "invalid base58 string");
     }
-    // TODO: check address length
 }
 
 
