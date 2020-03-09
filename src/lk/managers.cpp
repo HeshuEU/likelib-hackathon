@@ -1,4 +1,4 @@
-#include "account_manager.hpp"
+#include "managers.hpp"
 
 #include "base/error.hpp"
 #include "lk/core.hpp"
@@ -248,6 +248,24 @@ void AccountManager::updateFromGenesis(const bc::Block& block)
         state.setBalance(tx.getAmount());
         _states.insert({tx.getTo(), std::move(state)});
     }
+}
+
+
+std::optional< std::reference_wrapper<const base::Bytes> > CodeManager::getCode(const base::Sha256& hash) const
+{
+    if(auto it = _code_db.find(hash); it == _code_db.end()) {
+        return std::nullopt;
+    }
+    else {
+        return it->second;
+    }
+}
+
+
+void CodeManager::saveCode(base::Bytes code)
+{
+    auto hash = base::Sha256::compute(code);
+    _code_db.insert({std::move(hash), std::move(code)});
 }
 
 } // namespace lk

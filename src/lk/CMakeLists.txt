@@ -1,11 +1,13 @@
 set(LK_HEADERS
-        account_manager.hpp
+        contract_runner.hpp
+        managers.hpp
         core.hpp
         protocol.hpp
         )
 
 set(LK_SOURCES
-        account_manager.cpp
+        contract_runner.cpp
+        managers.cpp
         core.cpp
         protocol.cpp
         )

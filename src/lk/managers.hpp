@@ -76,14 +76,23 @@ class AccountManager
     //================
     bc::Balance getBalance(const bc::Address& account) const;
     //================
-    const base::Bytes& getCode(const base::Sha256& hash) const;
     //================
   private:
     //================
     std::map<bc::Address, AccountState> _states;
-    std::map<base::Sha256, base::Bytes> _code_db;
     mutable std::shared_mutex _rw_mutex;
     //================
 };
+
+
+class CodeManager
+{
+public:
+    std::optional< std::reference_wrapper<const base::Bytes> > getCode(const base::Sha256& hash) const;
+    void saveCode(base::Bytes code);
+private:
+    std::map<base::Sha256, base::Bytes> _code_db;
+};
+
 
 } // namespace lk
