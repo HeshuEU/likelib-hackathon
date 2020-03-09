@@ -3,6 +3,8 @@
 #include "base/assert.hpp"
 #include "base/error.hpp"
 
+#include <openssl/pem.h>
+
 #include <boost/container_hash/hash.hpp>
 
 #include <iterator>
@@ -159,15 +161,7 @@ const std::vector<Byte>& Bytes::toVector() const noexcept
 
 std::string Bytes::toHex() const
 {
-    static constexpr const char HEX_DIGITS[] = "0123456789abcdef";
-    // since every byte is represented by 2 hex digits, we do * 2
-    std::string ret(_raw.size() * 2, static_cast<char>(0));
-    std::size_t index = 0;
-    for(const auto& c: _raw) {
-        ret[index++] = HEX_DIGITS[c >> 4];
-        ret[index++] = HEX_DIGITS[c & 0xF];
-    }
-    return ret;
+    return base::toHex(*this);
 }
 
 
@@ -179,6 +173,12 @@ std::string Bytes::toString() const
         ret[index++] = static_cast<char>(c);
     }
     return ret;
+}
+
+
+Bytes Bytes::fromHex(const std::string_view& hex_view)
+{
+    return base::fromHex<Bytes>(hex_view);
 }
 
 
@@ -231,45 +231,154 @@ std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
 }
 
 
-namespace
+std::string base64Encode(const base::Bytes& bytes)
 {
-
-    std::size_t hexToInt(char hex)
-    {
-        if('0' <= hex && hex <= '9') {
-            return hex - '0';
-        }
-        else if('a' <= hex && hex <= 'f') {
-            return hex - 'a' + 10;
-        }
-        else if('A' <= hex && hex <= 'F') {
-            return hex - 'A' + 10;
-        }
-        else {
-            RAISE_ERROR(base::InvalidArgument, "Non hex symbol.");
-        }
+    if(bytes.size() == 0) {
+        return "";
     }
 
-} // namespace
+    BIO* bio_temp = BIO_new(BIO_s_mem());
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BUF_MEM* bufferPtr = nullptr;
 
-
-Bytes Bytes::fromHex(const std::string_view& hex_view)
-{
-    if(hex_view.size() % 2 != 0) {
-        RAISE_ERROR(InvalidArgument, "Invalid string length. Odd line length.");
+    std::unique_ptr<BIO, decltype(&::BIO_free_all)> bio(BIO_push(b64, bio_temp), ::BIO_free_all);
+    BIO_set_flags(bio.get(), BIO_FLAGS_BASE64_NO_NL);
+    if(BIO_write(bio.get(), bytes.toArray(), static_cast<int>(bytes.size())) < 1) {
+        RAISE_ERROR(CryptoError, "Base64 encode write error");
+    }
+    if(BIO_flush(bio.get()) < 1) {
+        RAISE_ERROR(CryptoError, "Base64 encode flush error");
+    }
+    if(BIO_get_mem_ptr(bio.get(), &bufferPtr) < 1) {
+        if(bufferPtr) {
+            BUF_MEM_free(bufferPtr);
+        }
+        RAISE_ERROR(CryptoError, "Get pointer to memory from base64 error");
     }
 
-    auto bytes_size = hex_view.size() / 2;
-    std::vector<Byte> bytes(bytes_size);
-    for(std::size_t current_symbol_index = 0; current_symbol_index < bytes_size; current_symbol_index++) {
-        auto index = current_symbol_index * 2;
-        auto high_part = hexToInt(hex_view[index]);
-        auto low_part = hexToInt(hex_view[index + 1]);
-        bytes[current_symbol_index] = (high_part << 4) + low_part;
-    }
+    std::string base64_bytes(bufferPtr->data, bufferPtr->length);
 
-    return Bytes(bytes);
+    BUF_MEM_free(bufferPtr);
+    BIO_set_close(bio.get(), BIO_NOCLOSE);
+    return base64_bytes;
 }
+
+
+base::Bytes base64Decode(std::string_view base64)
+{
+    auto length = base64.length();
+    if(length == 0) {
+        return base::Bytes();
+    }
+
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BIO* bio = BIO_new_mem_buf(base64.data(), length);
+    base::Bytes ret(length);
+
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    bio = BIO_push(b64, bio);
+    auto new_length = BIO_read(bio, ret.toArray(), length);
+    if(new_length < 1) {
+        BIO_free_all(bio);
+        RAISE_ERROR(CryptoError, "Base64 decode read error");
+    }
+
+    BIO_free_all(bio);
+    ret.resize(new_length);
+    return ret;
+}
+
+
+static constexpr char pszBase58[59] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+static constexpr int8_t mapBase58[256] = {
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1, 0, 1, 2, 3, 4, 5, 6,  7, 8,-1,-1,-1,-1,-1,-1,
+     -1, 9,10,11,12,13,14,15, 16,-1,17,18,19,20,21,-1,
+     22,23,24,25,26,27,28,29, 30,31,32,-1,-1,-1,-1,-1,
+     -1,33,34,35,36,37,38,39, 40,41,42,43,-1,44,45,46,
+     47,48,49,50,51,52,53,54, 55,56,57,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+ };
+
+base::Bytes base58Decode(std::string_view base58)
+{
+    std::size_t current_pos = 0;
+    std::size_t zeroes_count = 0;
+    std::size_t length = 0;
+    while(base58[current_pos] == '1') {
+        zeroes_count++;
+        current_pos++;
+    }
+
+    std::vector<unsigned char> b256((base58.size() - current_pos) * 733 / 1000 + 1); // log(58) / log(256)
+    while(current_pos != base58.size()) {
+        auto carry = static_cast<int>(mapBase58[static_cast<std::int8_t>(base58[current_pos])]);
+        if(carry == -1) {
+            RAISE_ERROR(base::InvalidArgument, "Invalid base58 string");
+        }
+        std::size_t i = 0;
+        for(auto it = b256.rbegin(); (carry != 0 || i < length) && (it != b256.rend()); ++it, ++i) {
+            carry += 58 * (*it);
+            *it = carry % 256;
+            carry /= 256;
+        }
+        length = i;
+        current_pos++;
+    }
+
+    auto it = b256.begin() + (b256.size() - length);
+    base::Bytes ret_bytes(std::vector<base::Byte>(zeroes_count, 0x00));
+    while(it != b256.end()) {
+        ret_bytes.append(*(it++));
+    }
+    return ret_bytes;
+}
+
+std::string base58Encode(const base::Bytes& bytes)
+{
+    std::size_t current_pos = 0;
+    std::size_t zeroes_count = 0;
+    std::size_t length = 0;
+    while(current_pos != bytes.size() && bytes[current_pos] == 0) {
+        current_pos++;
+        zeroes_count++;
+    }
+
+    base::Bytes b58(bytes.size() * 138 / 100 + 1); // log(256) / log(58)
+    while(current_pos != bytes.size()) {
+        auto carry = static_cast<std::size_t>(bytes[current_pos]);
+        std::size_t i = 0;
+        for(auto it = b58.toVector().rbegin(); (carry != 0 || i < length) && (it != b58.toVector().rend()); it++, i++) {
+            carry += 256 * (*it);
+            *it = carry % 58;
+            carry /= 58;
+        }
+        length = i;
+        current_pos++;
+    }
+    auto it = b58.toVector().begin() + (b58.size() - length);
+    while(it != b58.toVector().end() && *it == 0) {
+        it++;
+    }
+
+    std::string str;
+    str.reserve(zeroes_count + (b58.toVector().end() - it));
+    str.assign(zeroes_count, '1');
+    while(it != b58.toVector().end()) {
+        str += pszBase58[*(it++)];
+    }
+    return str;
+}
+
 
 } // namespace base
 
