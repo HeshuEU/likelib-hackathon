@@ -217,3 +217,139 @@ BOOST_AUTO_TEST_CASE(bytes_relation_check)
     BOOST_CHECK(b1 > b3);
     BOOST_CHECK(b1 < b4);
 }
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_storage_check)
+{
+    base::FixedBytes<111> fb1;
+    for(std::size_t i = 0; i < fb1.size(); ++i) {
+        fb1[i] = static_cast<base::Byte>(i ^ 3);
+    }
+
+    bool all_equal = true;
+    for(std::size_t i = 0; i < fb1.size(); ++i) {
+        all_equal = all_equal && (static_cast<base::Byte>(i ^ 3) == fb1[i]);
+    }
+
+    BOOST_CHECK(all_equal);
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_constructor_from_array_of_chars)
+{
+    base::FixedBytes<111> fb1;
+    for(std::size_t i = 0; i < fb1.size(); i++) {
+        fb1[i] = (static_cast<base::Byte>(i ^ 3));
+    }
+    auto c_str = fb1.toArray();
+    base::FixedBytes<111> fb2(c_str, fb1.size());
+
+    BOOST_CHECK(fb2.size() == fb1.size());
+    bool res = true;
+    for(std::size_t i = 0; i < fb1.size(); i++) {
+        res = res && (fb2[i] == c_str[i]);
+    }
+    BOOST_CHECK(res);
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_constructor_from_vector)
+{
+    std::vector<base::Byte> b(111);
+    for(std::size_t i = 0; i < b.size(); i++) {
+        b[i] = (static_cast<base::Byte>(i ^ 3));
+    }
+
+    base::FixedBytes<111> fb(b);
+
+    BOOST_CHECK(fb.size() == b.size());
+    bool res = true;
+    for(std::size_t i = 0; i < fb.size(); i++) {
+        res = res && (b[i] == fb[i]);
+    }
+    BOOST_CHECK(res);
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_string_ctor)
+{
+    base::FixedBytes<12> b1{0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30, 0x02};
+    base::FixedBytes<12> b2("LIKELIB\t2.0\x02");
+    BOOST_CHECK(b1 == b2);
+    BOOST_CHECK(b1.toString() == b2.toString());
+    BOOST_CHECK(b1.toString() == "LIKELIB\t2.0\x02");
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_to_hex)
+{
+    base::FixedBytes<5> bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
+    BOOST_CHECK_EQUAL(bytes.toHex(), "01ff02fe00");
+}
+
+
+BOOST_AUTO_TEST_CASE(fixed_bytes_serializatin)
+{
+    base::FixedBytes<6> fb1{"Fiasko"};
+    base::SerializationOArchive oa;
+
+    oa.serialize(fb1);
+    base::SerializationIArchive ia(oa.getBytes());
+    auto fb2 = ia.deserialize<base::FixedBytes<6>>();
+
+    BOOST_CHECK(fb1 == fb2);
+}
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode)
+{
+    base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base::base64Decode(base64);
+
+    BOOST_CHECK(base64 == "ZEZNIzY5MzU2XiMtMDQgIEAjNC0wXgoKNCMwNjMyPS1HRUozZGxzNXMsc3BpKy01KzA=");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode_empty)
+{
+    base::Bytes target_msg("");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base::base64Decode(base64);
+
+    BOOST_CHECK(base64 == "");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
+{
+    base::Bytes target_msg("1");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base::base64Decode(base64);
+
+    BOOST_CHECK(base64 == "MQ==");
+    BOOST_CHECK(target_msg == decode_base64);
+}
+
+
+BOOST_AUTO_TEST_CASE(base58_encode_decode)
+{
+    base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
+    auto base58 = base::base58Encode(target_msg);
+    auto decode_base58 = base::base58Decode(base58);
+    BOOST_CHECK(base58 == "2EfFY3oougxD9wQVN97fY9zmUuz3dEFnxDzbG8Xga34ArAY8nvx9hhsdtaUYze8CiDABR");
+    BOOST_CHECK(decode_base58.toString() == target_msg.toString());
+}
+
+
+BOOST_AUTO_TEST_CASE(base58_encode_decode_empty)
+{
+    base::Bytes target_msg("");
+    auto base64 = base58Encode(target_msg);
+    auto decode_base64 = base::base58Decode(base64);
+
+    BOOST_CHECK(base64 == "");
+    BOOST_CHECK(target_msg == decode_base64);
+}
