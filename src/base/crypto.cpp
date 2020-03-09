@@ -9,7 +9,6 @@
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
-#include <openssl/pem.h>
 #include <openssl/rand.h>
 
 #include <include/secp256k1.h>
