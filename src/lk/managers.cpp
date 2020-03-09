@@ -251,7 +251,7 @@ void AccountManager::updateFromGenesis(const bc::Block& block)
 }
 
 
-std::optional< std::reference_wrapper<const base::Bytes> > CodeManager::getCode(const base::Sha256& hash) const
+std::optional<std::reference_wrapper<const base::Bytes>> CodeManager::getCode(const base::Sha256& hash) const
 {
     if(auto it = _code_db.find(hash); it == _code_db.end()) {
         return std::nullopt;

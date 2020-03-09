@@ -82,9 +82,9 @@ Transaction::Transaction(bc::Address from, bc::Address to, bc::Balance amount, b
     : _from{std::move(from)}, _to{std::move(to)}, _amount{amount}, _fee{fee},
       _timestamp{timestamp}, _tx_type{transaction_type}, _data{std::move(data)}, _sign{std::move(sign)}
 {
-//    if(_amount == 0) {
-//        RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
-//    }
+    //    if(_amount == 0) {
+    //        RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
+    //    }
 }
 
 

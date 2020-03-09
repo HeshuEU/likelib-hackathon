@@ -97,19 +97,19 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
         return {rpc::OperationStatus::createSuccess(ret_str), contract_address, 0x228};
     }
     catch(const std::exception& e) {
-        return {rpc::OperationStatus::createFailed(std::string{"Error occurred: "} + e.what()), bc::Address::null(), gas};
+        return {
+            rpc::OperationStatus::createFailed(std::string{"Error occurred: "} + e.what()), bc::Address::null(), gas};
     }
 }
 
 
 std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService::transaction_message_call(
-    bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-    const base::Time& timestamp, bc::Balance gas, const std::string& hex_message, const bc::Sign& signature)
+    bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address, const base::Time& timestamp,
+    bc::Balance gas, const std::string& hex_message, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
-              << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message["
-              << hex_message << "]";
+              << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message[" << hex_message << "]";
 
 
     auto message = base::Bytes::fromHex(hex_message);
@@ -133,7 +133,8 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
         return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toHex(), 0x228};
     }
     catch(const std::exception& e) {
-        return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()), std::string{}, gas};
+        return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()),
+            std::string{}, gas};
     }
 }
 

@@ -1,12 +1,12 @@
 set(LK_HEADERS
-        contract_runner.hpp
+        eth_adapter.hpp
         managers.hpp
         core.hpp
         protocol.hpp
         )
 
 set(LK_SOURCES
-        contract_runner.cpp
+        eth_adapter.cpp
         managers.cpp
         core.cpp
         protocol.cpp

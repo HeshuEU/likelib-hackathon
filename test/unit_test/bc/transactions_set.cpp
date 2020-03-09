@@ -7,16 +7,16 @@
 namespace
 {
 
-bc::Transaction trans1{bc::Address(base::generateKeys().first),
-    bc::Address(base::generateKeys().first), 12398, 11, base::Time(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
-bc::Transaction trans2{bc::Address(base::generateKeys().first),
-    bc::Address(base::generateKeys().first), 5825285, 22, base::Time::now(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
-bc::Transaction trans3{bc::Address(base::generateKeys().first),
-    bc::Address(base::generateKeys().first), 12245398, 33, base::Time(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
-bc::Transaction trans4{bc::Address(base::generateKeys().first),
-    bc::Address(base::generateKeys().first), 168524347, 44, base::Time(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
-bc::Transaction trans5{bc::Address(base::generateKeys().first),
-    bc::Address(base::generateKeys().first), 1434457, 55, base::Time::now(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
+bc::Transaction trans1{bc::Address(base::generateKeys().first), bc::Address(base::generateKeys().first), 12398, 11,
+    base::Time(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
+bc::Transaction trans2{bc::Address(base::generateKeys().first), bc::Address(base::generateKeys().first), 5825285, 22,
+    base::Time::now(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
+bc::Transaction trans3{bc::Address(base::generateKeys().first), bc::Address(base::generateKeys().first), 12245398, 33,
+    base::Time(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
+bc::Transaction trans4{bc::Address(base::generateKeys().first), bc::Address(base::generateKeys().first), 168524347, 44,
+    base::Time(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
+bc::Transaction trans5{bc::Address(base::generateKeys().first), bc::Address(base::generateKeys().first), 1434457, 55,
+    base::Time::now(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}};
 
 bc::TransactionsSet getTestSet()
 {
@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(transactions_set_find)
 
     BOOST_CHECK(!tx_set.find(bc::Transaction(trans1.getFrom(), bc::Address(base::generateKeys().first),
         trans1.getAmount(), 0, trans1.getTimestamp(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{})));
-    BOOST_CHECK(
-        !tx_set.find(bc::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), 0, base::Time::now(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{})));
+    BOOST_CHECK(!tx_set.find(bc::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), 0, base::Time::now(),
+        bc::Transaction::Type::MESSAGE_CALL, base::Bytes{})));
 }
 
 

@@ -42,8 +42,10 @@ int main(int argc, char** argv)
         base::initLog(base::Sink::FILE);
         base::SubprogramRouter router("client", mainProcess);
         router.addSubprogram("generate", "generate a pair of keys", run<ActionGenerateKeys>);
-        router.addSubprogram("get_balance", "use for get balance from remote by account address", run<ActionGetBalance>);
-        router.addSubprogram("transfer", "use transfer balance from one address to another address", run<ActionTransfer>);
+        router.addSubprogram(
+            "get_balance", "use for get balance from remote by account address", run<ActionGetBalance>);
+        router.addSubprogram(
+            "transfer", "use transfer balance from one address to another address", run<ActionTransfer>);
         router.addSubprogram("test", "test RPC connection", run<ActionTestConnection>);
         router.addSubprogram("create_contract", "deploy a smart contract", run<ActionCreateContract>);
         router.addSubprogram("message_call", "create message to call smart contract", run<ActionMessageCall>);

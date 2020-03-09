@@ -69,7 +69,7 @@ void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
     std::mutex mt;
     bool is_tx_mined = false;
 
-    auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](const bc::Block& block){
+    auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](const bc::Block& block) {
         if(block.getTransactions().find(tx)) {
             is_tx_mined = true;
             cv.notify_all();
@@ -79,7 +79,9 @@ void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
     addPendingTransaction(tx);
 
     std::unique_lock lk(mt);
-    cv.wait(lk, [&is_tx_mined]{return is_tx_mined;});
+    cv.wait(lk, [&is_tx_mined] {
+        return is_tx_mined;
+    });
     _event_block_added.unsubscribe(id);
 }
 
@@ -289,7 +291,7 @@ base::Bytes Core::doMessageCall(const bc::Transaction& tx)
         }
         else {
             const auto& code = *c;
-            ContractRunner runner(code, _account_manager, _code_manager);
+            EthAdapter runner(code, _account_manager, _code_manager);
             runner.messageCall(tx.getFee(), tx.getFrom(), tx.getTo(), tx.getAmount(), tx.getData());
 
             auto message = contract.createMessage();

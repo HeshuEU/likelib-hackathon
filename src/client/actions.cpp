@@ -21,34 +21,35 @@
 
 namespace
 {
-    constexpr const char* HOST_OPTION = "host";
-    constexpr const char* TO_ADDRESS_OPTION = "to";
-    constexpr const char* AMOUNT_OPTION = "amount";
-    constexpr const char* KEYS_DIRECTORY_OPTION = "keys";
-    constexpr const char* FEE_OPTION = "fee";
-    constexpr const char* ADDRESS_OPTION = "address";
-    constexpr const char* CODE_PATH_OPTION = "code";
-    constexpr const char* GAS_OPTION = "gas";
-    constexpr const char* INITIAL_MESSAGE_OPTION = "init";
-    constexpr const char* MESSAGE_OPTION = "message for call smart contract";
+constexpr const char* HOST_OPTION = "host";
+constexpr const char* TO_ADDRESS_OPTION = "to";
+constexpr const char* AMOUNT_OPTION = "amount";
+constexpr const char* KEYS_DIRECTORY_OPTION = "keys";
+constexpr const char* FEE_OPTION = "fee";
+constexpr const char* ADDRESS_OPTION = "address";
+constexpr const char* CODE_PATH_OPTION = "code";
+constexpr const char* GAS_OPTION = "gas";
+constexpr const char* INITIAL_MESSAGE_OPTION = "init";
+constexpr const char* MESSAGE_OPTION = "message for call smart contract";
 
-    std::pair<base::RsaPublicKey, base::RsaPrivateKey> loadKeys(const std::filesystem::path& dir)
-    {
-        auto public_key_path = base::config::makePublicKeyPath(dir);
-        if(!std::filesystem::exists(public_key_path)) {
-            RAISE_ERROR(base::InaccessibleFile, "cannot find public key file by path \"" + public_key_path.string() + '\"');
-        }
-        auto public_key = base::RsaPublicKey::load(public_key_path);
-
-        auto private_key_path = base::config::makePrivateKeyPath(dir);
-        if(!std::filesystem::exists(private_key_path)) {
-            RAISE_ERROR(base::InaccessibleFile, "cannot find private key file by path \"" + private_key_path.string() + '\"');
-        }
-        auto private_key = base::RsaPrivateKey::load(private_key_path);
-
-        return {std::move(public_key), std::move(private_key)};
+std::pair<base::RsaPublicKey, base::RsaPrivateKey> loadKeys(const std::filesystem::path& dir)
+{
+    auto public_key_path = base::config::makePublicKeyPath(dir);
+    if(!std::filesystem::exists(public_key_path)) {
+        RAISE_ERROR(base::InaccessibleFile, "cannot find public key file by path \"" + public_key_path.string() + '\"');
     }
+    auto public_key = base::RsaPublicKey::load(public_key_path);
+
+    auto private_key_path = base::config::makePrivateKeyPath(dir);
+    if(!std::filesystem::exists(private_key_path)) {
+        RAISE_ERROR(
+            base::InaccessibleFile, "cannot find private key file by path \"" + private_key_path.string() + '\"');
+    }
+    auto private_key = base::RsaPrivateKey::load(private_key_path);
+
+    return {std::move(public_key), std::move(private_key)};
 }
+} // namespace
 
 //====================================
 
@@ -56,20 +57,21 @@ ActionBase::ActionBase(base::SubprogramRouter& router) : _router{router}
 {}
 
 
-int ActionBase::run() {
+int ActionBase::run()
+{
     try {
         setupOptionsParser(_router.getOptionsParser());
         _router.update();
 
-        if (_router.getOptionsParser().hasOption("help")) {
+        if(_router.getOptionsParser().hasOption("help")) {
             std::cout << _router.helpMessage() << std::endl;
             return base::config::EXIT_OK;
         }
 
-        if (auto ret = loadOptions(_router.getOptionsParser()); ret != base::config::EXIT_OK) {
+        if(auto ret = loadOptions(_router.getOptionsParser()); ret != base::config::EXIT_OK) {
             return ret;
         }
-        if (auto ret = execute(); ret != base::config::EXIT_OK) {
+        if(auto ret = execute(); ret != base::config::EXIT_OK) {
             return ret;
         }
     }
@@ -104,8 +106,7 @@ int ActionBase::run() {
 
 //====================================
 
-ActionTransfer::ActionTransfer(base::SubprogramRouter& router)
-    : ActionBase{router}
+ActionTransfer::ActionTransfer(base::SubprogramRouter& router) : ActionBase{router}
 {}
 
 
@@ -126,7 +127,8 @@ void ActionTransfer::setupOptionsParser(base::ProgramOptionsParser& parser)
 }
 
 
-int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser) {
+int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser)
+{
     _host_address = parser.getValue<std::string>(HOST_OPTION);
     _to_address = bc::Address{parser.getValue<std::string>(TO_ADDRESS_OPTION)};
     _amount = parser.getValue<bc::Balance>(AMOUNT_OPTION);
@@ -138,13 +140,13 @@ int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser) {
 
 int ActionTransfer::execute()
 {
-    auto[pub, priv] = loadKeys(_keys_dir);
+    auto [pub, priv] = loadKeys(_keys_dir);
     auto from_address = bc::Address(pub);
 
     rpc::RpcClient client(_host_address);
 
     LOG_INFO << "Transfer from " << from_address << " to " << _to_address << " with amount " << _amount
-        << " to rpc server " << _host_address;
+             << " to rpc server " << _host_address;
     LOG_INFO << "Trying to connect to rpc a server at " << _host_address;
 
     bc::TransactionBuilder txb;
@@ -160,7 +162,7 @@ int ActionTransfer::execute()
     tx.sign(pub, priv);
 
     auto [status, result, gas_left] = client.transaction_message_call(
-            tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
+        tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
 
     if(status) {
         std::cout << "Transaction successfully performed";
@@ -175,8 +177,7 @@ int ActionTransfer::execute()
 
 //====================================
 
-ActionGetBalance::ActionGetBalance(base::SubprogramRouter& router)
-        : ActionBase{router}
+ActionGetBalance::ActionGetBalance(base::SubprogramRouter& router) : ActionBase{router}
 {}
 
 
@@ -215,8 +216,7 @@ int ActionGetBalance::execute()
 
 //====================================
 
-ActionTestConnection::ActionTestConnection(base::SubprogramRouter& router)
-        : ActionBase{router}
+ActionTestConnection::ActionTestConnection(base::SubprogramRouter& router) : ActionBase{router}
 {}
 
 
@@ -261,8 +261,7 @@ int ActionTestConnection::execute()
 
 //====================================
 
-ActionCreateContract::ActionCreateContract(base::SubprogramRouter& router)
-        : ActionBase{router}
+ActionCreateContract::ActionCreateContract(base::SubprogramRouter& router) : ActionBase{router}
 {}
 
 
@@ -305,8 +304,9 @@ int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
 }
 
 
-int ActionCreateContract::execute() {
-    auto[pub, priv] = loadKeys(_keys_dir);
+int ActionCreateContract::execute()
+{
+    auto [pub, priv] = loadKeys(_keys_dir);
     auto from_address = bc::Address(pub);
 
     bc::TransactionBuilder txb;
@@ -328,7 +328,7 @@ int ActionCreateContract::execute() {
     LOG_INFO << "Trying to connect to rpc server by: " << _host_address;
     rpc::RpcClient client(_host_address);
     auto [status, contract_address, gas_left] = client.transaction_create_contract(
-            tx.getAmount(), tx.getFrom(), tx.getTimestamp(), tx.getFee(), _compiled_contract, _message, tx.getSign());
+        tx.getAmount(), tx.getFrom(), tx.getTimestamp(), tx.getFee(), _compiled_contract, _message, tx.getSign());
 
     if(status) {
         std::cout << "Remote call of creation smart contract success -> [" << status.getMessage()
@@ -337,8 +337,7 @@ int ActionCreateContract::execute() {
         return base::config::EXIT_OK;
     }
     else {
-        std::cout << "Remote call of creation smart contract is failed -> [" << status.getMessage() << "]"
-                  << std::endl;
+        std::cout << "Remote call of creation smart contract is failed -> [" << status.getMessage() << "]" << std::endl;
         return base::config::EXIT_FAIL;
     }
 
@@ -348,8 +347,7 @@ int ActionCreateContract::execute() {
 
 //====================================
 
-ActionMessageCall::ActionMessageCall(base::SubprogramRouter& router)
-        : ActionBase{router}
+ActionMessageCall::ActionMessageCall(base::SubprogramRouter& router) : ActionBase{router}
 {}
 
 
@@ -385,7 +383,7 @@ int ActionMessageCall::loadOptions(const base::ProgramOptionsParser& parser)
 
 int ActionMessageCall::execute()
 {
-    auto[pub, priv] = loadKeys(_keys_dir);
+    auto [pub, priv] = loadKeys(_keys_dir);
     auto from_address = bc::Address(pub);
 
     bc::TransactionBuilder txb;
@@ -404,11 +402,11 @@ int ActionMessageCall::execute()
     rpc::RpcClient client(_host_address);
 
     auto [status, contract_response, gas_left] = client.transaction_message_call(
-            tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), _message, tx.getSign());
+        tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), _message, tx.getSign());
 
     if(status) {
-        std::cout << "Remote call of smart contract call success -> [" << status.getMessage()
-                  << "], contract response[" << contract_response << "], gas left[" << gas_left << "]" << std::endl;
+        std::cout << "Remote call of smart contract call success -> [" << status.getMessage() << "], contract response["
+                  << contract_response << "], gas left[" << gas_left << "]" << std::endl;
         return base::config::EXIT_OK;
     }
     else {
@@ -421,8 +419,7 @@ int ActionMessageCall::execute()
 
 //====================================
 
-ActionCompile::ActionCompile(base::SubprogramRouter& router)
-        : ActionBase{router}
+ActionCompile::ActionCompile(base::SubprogramRouter& router) : ActionBase{router}
 {}
 
 
@@ -475,8 +472,7 @@ int ActionCompile::execute()
 
 //====================================
 
-ActionGenerateKeys::ActionGenerateKeys(base::SubprogramRouter& router)
-        : ActionBase{router}
+ActionGenerateKeys::ActionGenerateKeys(base::SubprogramRouter& router) : ActionBase{router}
 {}
 
 

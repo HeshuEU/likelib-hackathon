@@ -14,7 +14,7 @@
 namespace lk
 {
 
-class ContractRunner;
+class EthAdapter;
 
 class Core
 {
@@ -54,7 +54,7 @@ class Core
     //==================
   private:
     //==================
-    friend class lk::ContractRunner;
+    friend class lk::EthAdapter;
     //==================
     const base::PropertyTree& _config;
     const base::KeyVault& _vault;

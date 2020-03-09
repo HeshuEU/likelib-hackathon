@@ -13,7 +13,7 @@
 
 class ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionBase(base::SubprogramRouter& router);
     virtual ~ActionBase() = default;
@@ -25,14 +25,14 @@ public:
     //====================================
     int run();
     //====================================
-protected:
+  protected:
     base::SubprogramRouter& _router;
 };
 
 
 class ActionTransfer : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionTransfer(base::SubprogramRouter& router);
     //====================================
@@ -41,7 +41,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::string _host_address;
     bc::Address _to_address{bc::Address::null()};
@@ -49,12 +49,12 @@ private:
     bc::Balance _fee;
     std::filesystem::path _keys_dir;
     //====================================
- };
+};
 
 
 class ActionGetBalance : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionGetBalance(base::SubprogramRouter& router);
     //====================================
@@ -63,7 +63,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::string _host_address;
     bc::Address _account_address{bc::Address::null()};
@@ -73,7 +73,7 @@ private:
 
 class ActionTestConnection : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionTestConnection(base::SubprogramRouter& router);
     //====================================
@@ -82,7 +82,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::string _host_address;
     bc::Address _account_address{bc::Address::null()};
@@ -92,7 +92,7 @@ private:
 
 class ActionCreateContract : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionCreateContract(base::SubprogramRouter& router);
     //====================================
@@ -101,7 +101,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::string _host_address;
     std::filesystem::path _keys_dir;
@@ -115,7 +115,7 @@ private:
 
 class ActionMessageCall : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionMessageCall(base::SubprogramRouter& router);
     //====================================
@@ -124,7 +124,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::string _host_address;
     bc::Address _to_address{bc::Address::null()};
@@ -138,7 +138,7 @@ private:
 
 class ActionCompile : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionCompile(base::SubprogramRouter& router);
     //====================================
@@ -147,7 +147,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::filesystem::path _code_file_path;
     //====================================
@@ -156,7 +156,7 @@ private:
 
 class ActionGenerateKeys : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionGenerateKeys(base::SubprogramRouter& router);
     //====================================
@@ -165,7 +165,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::filesystem::path _keys_dir;
     //====================================

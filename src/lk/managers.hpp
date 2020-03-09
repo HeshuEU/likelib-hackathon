@@ -87,10 +87,11 @@ class AccountManager
 
 class CodeManager
 {
-public:
-    std::optional< std::reference_wrapper<const base::Bytes> > getCode(const base::Sha256& hash) const;
+  public:
+    std::optional<std::reference_wrapper<const base::Bytes>> getCode(const base::Sha256& hash) const;
     void saveCode(base::Bytes code);
-private:
+
+  private:
     std::map<base::Sha256, base::Bytes> _code_db;
 };
 

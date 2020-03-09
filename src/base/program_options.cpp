@@ -20,7 +20,7 @@ void ProgramOptionsParser::addFlag(const char* flag, const char* help)
 }
 
 
-void ProgramOptionsParser::process(int argc, const char* const * argv)
+void ProgramOptionsParser::process(int argc, const char* const* argv)
 {
     try {
         auto parsed_options = ::boost::program_options::parse_command_line(argc, argv, _options_description);

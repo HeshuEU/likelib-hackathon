@@ -36,6 +36,7 @@ class Address
     void serialize(base::SerializationOArchive& oa) const;
     //=============================
     static constexpr std::size_t ADDRESS_SIZE = 28;
+
   private:
     base::Bytes _address;
 };

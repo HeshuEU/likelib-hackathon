@@ -80,8 +80,8 @@ grpc::Status GrpcAdapter::balance(
         auto init = request->init();
         auto sign = bc::Sign::fromBase64(request->signature());
 
-        auto [status, contract_address, least_gas] = _service->transaction_create_contract(
-            amount, from_address, creation_time, gas, contract_code, init, sign);
+        auto [status, contract_address, least_gas] =
+            _service->transaction_create_contract(amount, from_address, creation_time, gas, contract_code, init, sign);
 
         convert(status, response->mutable_status());
         response->mutable_contract_address()->set_address(contract_address.toString());
@@ -97,7 +97,7 @@ grpc::Status GrpcAdapter::balance(
 
 
 grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
-                                       const likelib::TransactionMessageCallRequest* request, likelib::TransactionMessageCallResponse* response)
+    const likelib::TransactionMessageCallRequest* request, likelib::TransactionMessageCallResponse* response)
 {
     LOG_DEBUG << "get RPC call at transaction_to_contract method from: " << context->peer();
     try {
