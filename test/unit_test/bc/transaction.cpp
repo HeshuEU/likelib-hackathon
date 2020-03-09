@@ -96,53 +96,18 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 }
 
 
-BOOST_AUTO_TEST_CASE(transaction_set_all1)
+BOOST_AUTO_TEST_CASE(transaction_sign)
 {
-    bc::Address from = bc::Address(base::generateKeys().first);
+    auto [pub_key, priv_key] = base::generateKeys();
+    bc::Address from = bc::Address(pub_key);
     bc::Address to = bc::Address(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Balance fee = 150;
-    bc::TransactionBuilder txb;
+    bc::Balance fee = 42;
+    bc::Transaction tx(from, to, amount, fee, time, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{});
+    tx.sign(pub_key, priv_key);
 
-    txb.setFrom(from);
-    txb.setTo(to);
-    txb.setTimestamp(time);
-    txb.setAmount(amount);
-    txb.setFee(fee);
-
-    auto tx = std::move(txb).build();
-
-    BOOST_CHECK(tx.getFrom().toString() == from.toString());
-    BOOST_CHECK(tx.getTo().toString() == to.toString());
-    BOOST_CHECK(tx.getTimestamp() == time);
-    BOOST_CHECK(tx.getAmount() == amount);
-    BOOST_CHECK(tx.getFee() == fee);
-}
-
-
-BOOST_AUTO_TEST_CASE(transaction_set_all2)
-{
-    bc::Address from = bc::Address(base::generateKeys().first);
-    bc::Address to = bc::Address(base::generateKeys().first);
-    bc::Balance amount = 1239823409;
-    auto time = base::Time::now();
-    bc::Balance fee{229};
-
-    bc::TransactionBuilder txb;
-    txb.setFrom(from);
-    txb.setTo(to);
-    txb.setTimestamp(time);
-    txb.setAmount(amount);
-    txb.setFee(fee);
-
-    auto tx1 = txb.build();
-
-    BOOST_CHECK(tx1.getFrom().toString() == from.toString());
-    BOOST_CHECK(tx1.getTo().toString() == to.toString());
-    BOOST_CHECK(tx1.getTimestamp() == time);
-    BOOST_CHECK(tx1.getAmount() == amount);
-    BOOST_CHECK(tx1.getFee() == fee);
+    BOOST_CHECK(tx.checkSign());
 }
 
 
@@ -179,4 +144,54 @@ BOOST_AUTO_TEST_CASE(transaction_serialization2)
     base::SerializationIArchive ia(oa.getBytes());
     auto tx2 = ia.deserialize<bc::Transaction>();
     BOOST_CHECK(tx1 == tx2);
+}
+
+
+BOOST_AUTO_TEST_CASE(transaction_builder_set_all1)
+{
+    bc::Address from = bc::Address(base::generateKeys().first);
+    bc::Address to = bc::Address(base::generateKeys().first);
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Balance fee = 150;
+    bc::TransactionBuilder txb;
+
+    txb.setFrom(from);
+    txb.setTo(to);
+    txb.setTimestamp(time);
+    txb.setAmount(amount);
+    txb.setFee(fee);
+
+    auto tx = std::move(txb).build();
+
+    BOOST_CHECK(tx.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx.getTo().toString() == to.toString());
+    BOOST_CHECK(tx.getTimestamp() == time);
+    BOOST_CHECK(tx.getAmount() == amount);
+    BOOST_CHECK(tx.getFee() == fee);
+}
+
+
+BOOST_AUTO_TEST_CASE(transaction_builder_set_all2)
+{
+    bc::Address from = bc::Address(base::generateKeys().first);
+    bc::Address to = bc::Address(base::generateKeys().first);
+    bc::Balance amount = 1239823409;
+    auto time = base::Time::now();
+    bc::Balance fee{229};
+
+    bc::TransactionBuilder txb;
+    txb.setFrom(from);
+    txb.setTo(to);
+    txb.setTimestamp(time);
+    txb.setAmount(amount);
+    txb.setFee(fee);
+
+    auto tx1 = txb.build();
+
+    BOOST_CHECK(tx1.getFrom().toString() == from.toString());
+    BOOST_CHECK(tx1.getTo().toString() == to.toString());
+    BOOST_CHECK(tx1.getTimestamp() == time);
+    BOOST_CHECK(tx1.getAmount() == amount);
+    BOOST_CHECK(tx1.getFee() == fee);
 }

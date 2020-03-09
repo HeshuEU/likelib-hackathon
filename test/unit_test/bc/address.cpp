@@ -2,6 +2,13 @@
 
 #include "bc/address.hpp"
 
+
+BOOST_AUTO_TEST_CASE(address_null)
+{
+    auto null = bc::Address::null();
+    BOOST_CHECK(null.isNull());
+}
+
 BOOST_AUTO_TEST_CASE(address_constructor_fromPublicKey)
 {
     bc::Address target_address(base::generateKeys().first);
@@ -25,6 +32,17 @@ BOOST_AUTO_TEST_CASE(address_constructor_from_string)
     auto [pub_key, priv_key] = base::generateKeys();
     bc::Address address1(pub_key);
     bc::Address address2(address1.toString());
+    BOOST_CHECK(address1 == address2);
+    BOOST_CHECK(address1.toString() == address2.toString());
+    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_SIZE);
+}
+
+
+BOOST_AUTO_TEST_CASE(address_constructor_from_bytes)
+{
+    auto [pub_key, priv_key] = base::generateKeys();
+    bc::Address address1(pub_key);
+    bc::Address address2(address1.getBytes());
     BOOST_CHECK(address1 == address2);
     BOOST_CHECK(address1.toString() == address2.toString());
     BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_SIZE);
