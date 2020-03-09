@@ -58,7 +58,7 @@ class AccountManager
     AccountManager& operator=(AccountManager&& another) = delete;
     ~AccountManager() = default;
     //================
-    void newAccount(const bc::Address& address, base::Bytes associated_code);
+    void newAccount(const bc::Address& address, base::Sha256 code_hash);
     bool hasAccount(const bc::Address& address) const;
     bool deleteAccount(const bc::Address& address);
     //================

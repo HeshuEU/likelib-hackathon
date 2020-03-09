@@ -5,6 +5,7 @@
 #include "base/utility.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
+#include "lk/eth_adapter.hpp"
 #include "lk/managers.hpp"
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
@@ -50,7 +51,7 @@ class Core
     //==================
     bc::Block getBlockTemplate() const;
     //==================
-    base::Bytes getThisNodeAddress() const;
+    const bc::Address& getThisNodeAddress() const noexcept;
     //==================
   private:
     //==================
@@ -58,6 +59,7 @@ class Core
     //==================
     const base::PropertyTree& _config;
     const base::KeyVault& _vault;
+    const bc::Address _this_node_address;
     //==================
     base::Observable<const bc::Block&> _event_block_added;
     base::Observable<const bc::Transaction&> _event_new_pending_transaction;
@@ -67,6 +69,8 @@ class Core
     CodeManager _code_manager;
     bc::Blockchain _blockchain;
     lk::Network _network;
+    //==================
+    lk::EthAdapter _eth_adapter;
     //==================
     std::unordered_map<base::Sha256, base::Bytes> _tx_outputs;
     mutable std::shared_mutex _tx_outputs_mutex;
@@ -80,9 +84,9 @@ class Core
     bool checkBlock(const bc::Block& block) const;
     bool checkTransaction(const bc::Transaction& tx) const;
     //==================
-    bool tryPerformTransaction(const bc::Transaction& tx);
-    std::pair<bc::Address, base::Bytes> doContractCreation(const bc::Transaction& tx);
-    base::Bytes doMessageCall(const bc::Transaction& tx);
+    bool tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx);
+    std::pair<bc::Address, base::Bytes> doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx);
+    base::Bytes doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx);
     //==================
   public:
     //==================

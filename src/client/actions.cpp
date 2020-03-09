@@ -539,3 +539,65 @@ int ActionGenerateKeys::execute()
 
     return base::config::EXIT_OK;
 }
+
+//====================================
+
+ActionKeysInfo::ActionKeysInfo(base::SubprogramRouter& router) : ActionBase{router}
+{}
+
+
+const std::string_view& ActionKeysInfo::getName() const
+{
+    static const std::string_view name = "KeysInfo";
+    return name;
+}
+
+
+void ActionKeysInfo::setupOptionsParser(base::ProgramOptionsParser& parser)
+{
+    parser.addRequiredOption<std::string>(KEYS_DIRECTORY_OPTION, "directory with a key pair");
+}
+
+
+int ActionKeysInfo::loadOptions(const base::ProgramOptionsParser& parser)
+{
+    _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
+
+    if(!std::filesystem::exists(_keys_dir)) {
+        std::cerr << "Given path does not exist" << std::endl;
+        return base::config::EXIT_FAIL;
+    }
+    else if(!std::filesystem::is_directory(_keys_dir)) {
+        std::cerr << "Given path is not a directory" << std::endl;
+        return base::config::EXIT_FAIL;
+    }
+
+    return base::config::EXIT_OK;
+}
+
+
+int ActionKeysInfo::execute()
+{
+    auto public_path = base::config::makePublicKeyPath(_keys_dir);
+    if(!std::filesystem::exists(public_path)) {
+        std::cerr << "Error: " << public_path << " doesn't exist.\n";
+        LOG_ERROR << public_path << " file not exists";
+        return base::config::EXIT_FAIL;
+    }
+
+    auto private_path = base::config::makePrivateKeyPath(_keys_dir);
+    if(!std::filesystem::exists(private_path)) {
+        std::cerr << "Error: " << private_path << " doesn't exist.\n";
+        LOG_ERROR << private_path << " file not exists";
+        return base::config::EXIT_FAIL;
+    }
+
+    auto pub = base::RsaPublicKey::load(public_path);
+    auto priv = base::RsaPrivateKey::load(private_path);
+
+    std::cout << "Address: " << bc::Address(pub) << std::endl;
+    std::cout << "Sha256 hash of public key: " << base::Sha256::compute(pub.toBytes()) << std::endl;
+    std::cout << "Sha256 hash of private key: " << base::Sha256::compute(priv.toBytes()) << std::endl;
+
+    return base::config::EXIT_OK;
+}

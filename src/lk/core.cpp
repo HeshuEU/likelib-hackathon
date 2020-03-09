@@ -11,7 +11,8 @@ namespace lk
 {
 
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
-    : _config{config}, _vault{key_vault}, _blockchain{_config}, _network{_config, *this}
+    : _config{config}, _vault{key_vault}, _this_node_address{_vault.getPublicKey()},
+      _blockchain{_config}, _network{_config, *this}, _eth_adapter{*this, _account_manager, _code_manager}
 {
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
@@ -24,12 +25,13 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
 const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
-        bc::Block ret{0, base::Sha256(base::Bytes(32)), {}};
+        auto timestamp = base::Time::fromSecondsSinceEpochBeginning(1583789617);
+
+        bc::Block ret{0, base::Sha256(base::Bytes(32)), timestamp, bc::Address::null(), {}};
         bc::Address from{bc::Address::null()};
-        bc::Address to{"UTpE8/SckOrfV4Fn/Gi3jmLEOVI="};
+        bc::Address to{"4ZpSBJsEVgiZKQu32t5eeDBfMZJD"};
         bc::Balance amount{0xFFFFFFFF};
         bc::Balance fee{0};
-        auto timestamp = base::Time::fromSecondsSinceEpochBeginning(0);
 
         ret.addTransaction({from, to, amount, fee, timestamp, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}});
         return ret;
@@ -183,7 +185,7 @@ bc::Block Core::getBlockTemplate() const
     bc::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
     std::shared_lock lk(_pending_transactions_mutex);
-    return bc::Block{depth, prev_hash, _pending_transactions};
+    return bc::Block{depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions};
 }
 
 
@@ -199,9 +201,9 @@ const bc::Block& Core::getTopBlock() const
 }
 
 
-base::Bytes Core::getThisNodeAddress() const
+const bc::Address& Core::getThisNodeAddress() const noexcept
 {
-    return _vault.getPublicKey().toBytes();
+    return _this_node_address;
 }
 
 
@@ -213,18 +215,18 @@ void Core::applyBlockTransactions(const bc::Block& block)
     }
     else {
         for(const auto& tx: block.getTransactions()) {
-            tryPerformTransaction(tx);
+            tryPerformTransaction(tx, block);
         }
     }
 }
 
 
-bool Core::tryPerformTransaction(const bc::Transaction& tx)
+bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
     auto hash = base::Sha256::compute(base::toBytes(tx)).getBytes();
     if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
         try {
-            auto [address, result] = doContractCreation(tx);
+            auto [address, result] = doContractCreation(tx, block_where_tx);
             LOG_DEBUG << "Contract created at " << address << " with output = " << result.toHex();
             base::SerializationOArchive oa;
             oa.serialize(address);
@@ -240,7 +242,7 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx)
         return true;
     }
     else {
-        auto result = doMessageCall(tx);
+        auto result = doMessageCall(tx, block_where_tx);
         LOG_DEBUG << "Message call result: " << result.toHex();
         {
             std::unique_lock lk(_tx_outputs_mutex);
@@ -251,13 +253,13 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx)
 }
 
 
-std::pair<bc::Address, base::Bytes> Core::doContractCreation(const bc::Transaction& tx)
+std::pair<bc::Address, base::Bytes> Core::doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
     base::SerializationIArchive ia(tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();
 
-    vm::SmartContract contract(contract_data.getCode());
-    auto vm = vm::Vm::load(*this);
+    _code_manager.saveCode(contract_data.getCode());
+
     bc::Address contract_address = _account_manager.newContract(tx.getFrom(), contract_data.getCode());
     LOG_DEBUG << "Deploying smart contract at address " << contract_address;
     if(tx.getAmount() != 0) {
@@ -265,18 +267,12 @@ std::pair<bc::Address, base::Bytes> Core::doContractCreation(const bc::Transacti
             RAISE_ERROR(base::Error, "cannot transfer money");
         }
     }
-    auto message = contract.createInitMessage(
-        tx.getFee(), tx.getFrom(), contract_address, tx.getAmount(), contract_data.getInit());
-    if(auto result = vm.execute(message); result.ok()) {
-        return {contract_address, result.toOutputData()};
-    }
-    else {
-        RAISE_ERROR(base::Error, "invalid result");
-    }
+
+    return _eth_adapter.createContract(contract_address, tx, block_where_tx);
 }
 
 
-base::Bytes Core::doMessageCall(const bc::Transaction& tx)
+base::Bytes Core::doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
     auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
 
@@ -286,21 +282,11 @@ base::Bytes Core::doMessageCall(const bc::Transaction& tx)
 
     if(code_hash != base::Sha256::null()) {
         // if we're here -- do a call to a contract
-        if(auto c = _code_manager.getCode(code_hash); !c) {
-            RAISE_ERROR(base::Error, "cannot find code by hash");
-        }
-        else {
-            const auto& code = *c;
-            EthAdapter runner(code, _account_manager, _code_manager);
-            runner.messageCall(tx.getFee(), tx.getFrom(), tx.getTo(), tx.getAmount(), tx.getData());
-
-            auto message = contract.createMessage();
-            auto ret = vm.execute(message);
-            return ret.toOutputData();
-        }
+        return _eth_adapter.call(tx, block_where_tx);
     }
     else {
         _account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount());
+        return {};
     }
 }
 

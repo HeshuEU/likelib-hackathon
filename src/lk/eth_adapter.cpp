@@ -7,19 +7,19 @@
 
 namespace lk
 {
-class EthAdapter::ContractRunnerImpl : public evmc::Host
+class EthAdapter::EthHost : public evmc::Host
 {
   public:
-    ContractRunnerImpl(base::Bytes code, lk::Core& core, const bc::Transaction& associated_tx,
-        const bc::Block& associated_block, lk::AccountManager& account_manager, lk::CodeManager& code_manager)
-        : _core{core}, _associated_tx{associated_tx}, _associated_block{associated_block},
-          _account_manager{account_manager}, _code_manager{code_manager},
-          _smart_contract{std::move(code)}, _vm{vm::Vm::load(*this)}
+    EthHost(lk::Core& core, lk::AccountManager& account_manager, lk::CodeManager& code_manager)
+        : _core{core}, _account_manager{account_manager}, _code_manager{code_manager}
     {}
 
 
     bool account_exists(const evmc::address& addr) const noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::account_exists";
         auto address = vm::toNativeAddress(addr);
         return _account_manager.hasAccount(address);
@@ -28,6 +28,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
 
     evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& ethKey) const noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::get_storage";
         auto address = vm::toNativeAddress(addr);
         base::Bytes key(ethKey.bytes, 32);
@@ -39,6 +42,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
     evmc_storage_status set_storage(
         const evmc::address& addr, const evmc::bytes32& ekey, const evmc::bytes32& evalue) noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::set_storage";
         static const base::Bytes NULL_VALUE(32);
         auto address = vm::toNativeAddress(addr);
@@ -76,6 +82,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
 
     evmc::uint256be get_balance(const evmc::address& addr) const noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::get_balance";
         auto address = vm::toNativeAddress(addr);
         auto balance = _account_manager.getBalance(address);
@@ -91,6 +100,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
 
     size_t get_code_size(const evmc::address& addr) const noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::get_code_size";
         auto address = vm::toNativeAddress(addr);
         auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
@@ -106,6 +118,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
 
     evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::get_code_hash";
         auto address = vm::toNativeAddress(addr);
         auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
@@ -116,6 +131,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
     size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
         noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::copy_code";
         auto address = vm::toNativeAddress(addr);
         auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
@@ -134,6 +152,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
 
     void selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::selfdestruct";
         auto address = vm::toNativeAddress(eaddr);
         auto account = _account_manager.getAccount(address);
@@ -147,6 +168,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
 
     evmc::result call(const evmc_message& msg) noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::call";
 
         bc::TransactionBuilder txb;
@@ -169,7 +193,7 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
         txb.setData(data);
 
         auto tx = std::move(txb).build();
-        auto result = _core.doMessageCall(tx);
+        auto result = _core.doMessageCall(tx, *_associated_block);
 
         // return result;
         // return evmc::make_result(evmc::result::)
@@ -178,14 +202,17 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
 
     evmc_tx_context get_tx_context() const noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::get_tx_context";
 
         evmc_tx_context ret;
         std::fill(std::begin(ret.tx_gas_price.bytes), std::end(ret.tx_gas_price.bytes), 0);
-        ret.tx_origin = vm::toEthAddress(_associated_tx.getFrom());
-        ret.block_number = _associated_block.getDepth();
-        ret.block_timestamp = _associated_block.getTimestamp();
-        ret.block_coinbase = _associated_block.getMiner();
+        ret.tx_origin = vm::toEthAddress(_associated_tx->getFrom());
+        ret.block_number = _associated_block->getDepth();
+        ret.block_timestamp = _associated_block->getTimestamp().getSecondsSinceEpochBeginning();
+        ret.block_coinbase = vm::toEthAddress(_associated_block->getCoinbase());
         // ret.block_gas_limit
         std::fill(std::begin(ret.block_difficulty.bytes), std::end(ret.block_difficulty.bytes), 0);
         ret.block_difficulty.bytes[2] = 0x28;
@@ -196,6 +223,9 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
 
     evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override
     {
+        ASSERT(_associated_tx);
+        ASSERT(_associated_block);
+
         LOG_DEBUG << "Core::get_block_hash";
         auto hash = _core.findBlockHash(block_number);
         return vm::toEvmcBytes32(hash->getBytes());
@@ -208,22 +238,73 @@ class EthAdapter::ContractRunnerImpl : public evmc::Host
         LOG_WARNING << "emit_log is denied. For more information, see docs";
     }
 
+    //===================================
+    void setContext(const bc::Transaction* associated_transaction, const bc::Block* associated_block)
+    {
+        ASSERT(associated_transaction);
+        ASSERT(associated_block);
 
+        _associated_tx = associated_transaction;
+        _associated_block = associated_block;
+    }
+    //===================================
   private:
-    const bc::Transaction& _associated_tx;
-    const bc::Block& _associated_block;
+    const bc::Transaction* _associated_tx{nullptr};
+    const bc::Block* _associated_block{nullptr};
     lk::Core& _core;
     lk::AccountManager& _account_manager;
     lk::CodeManager& _code_manager;
-    vm::SmartContract _smart_contract;
-    vm::Vm _vm;
 };
 
 
-EthAdapter::EthAdapter(base::Bytes code, Core& core, const bc::Transaction& associated_tx,
-    const bc::Block& associated_block, AccountManager& account_manager, CodeManager& code_manager)
-    : _impl{std::make_unique<ContractRunnerImpl>(
-          std::move(code), core, associated_tx, associated_block, account_manager, code_manager)}
+EthAdapter::EthAdapter(Core& core, AccountManager& account_manager, CodeManager& code_manager)
+    : _eth_host{std::make_unique<EthHost>(core, account_manager, code_manager)}, _vm{vm::Vm::load(*_eth_host.get())},
+      _core{core}, _account_manager{account_manager}, _code_manager{code_manager}
 {}
+
+
+EthAdapter::~EthAdapter() = default;
+
+
+std::pair<bc::Address, base::Bytes> EthAdapter::createContract(const bc::Address& contract_address, const bc::Transaction& associated_tx, const bc::Block& associated_block)
+{
+    std::lock_guard lk(_execution_mutex);
+
+    base::SerializationIArchive ia(associated_tx.getData());
+    auto contract_data = ia.deserialize<bc::ContractInitData>();
+
+    vm::SmartContract contract(contract_data.getCode());
+    auto message = contract.createInitMessage(associated_tx.getFee(), associated_tx.getFrom(), contract_address,
+                                              associated_tx.getAmount(), contract_data.getInit());
+
+    _eth_host->setContext(&associated_tx, &associated_block);
+    if(auto result = _vm.execute(message); result.ok()) {
+        return {contract_address, result.toOutputData()};
+    }
+    else {
+        RAISE_ERROR(base::Error, "invalid result");
+    }
+}
+
+
+base::Bytes EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
+{
+    std::lock_guard lk(_execution_mutex);
+
+    auto code_hash = _account_manager.getAccount(associated_tx.getTo()).getCodeHash();
+
+    if(auto code_opt = _code_manager.getCode(code_hash); !code_opt) {
+        RAISE_ERROR(base::Error, "cannot find code by hash");
+    }
+    else {
+        vm::SmartContract contract(*code_opt);
+        auto message = contract.createMessage(associated_tx.getFee(), associated_tx.getFrom(), associated_tx.getTo(), associated_tx.getAmount(), associated_tx.getData());
+
+        _eth_host->setContext(&associated_tx, &associated_block);
+        auto ret = _vm.execute(message);
+        return ret.toOutputData();
+    }
+}
+
 
 } // namespace lk

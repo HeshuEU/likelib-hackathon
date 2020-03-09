@@ -42,6 +42,7 @@ int main(int argc, char** argv)
         base::initLog(base::Sink::FILE);
         base::SubprogramRouter router("client", mainProcess);
         router.addSubprogram("generate", "generate a pair of keys", run<ActionGenerateKeys>);
+        router.addSubprogram("keys_info", "show info on keys", run<ActionKeysInfo>);
         router.addSubprogram(
             "get_balance", "use for get balance from remote by account address", run<ActionGetBalance>);
         router.addSubprogram(

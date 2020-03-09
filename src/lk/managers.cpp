@@ -83,14 +83,10 @@ void AccountState::setStorageValue(const base::Sha256& key, base::Bytes value)
 }
 
 
-void AccountManager::newAccount(const bc::Address& address, base::Bytes associated_code)
+void AccountManager::newAccount(const bc::Address& address, base::Sha256 code_hash)
 {
     if(hasAccount(address)) {
         RAISE_ERROR(base::LogicError, "address already exists");
-    }
-    auto code_hash = (associated_code.isEmpty() ? base::Sha256::null() : base::Sha256::compute(associated_code));
-    if(auto it = _code_db.find(code_hash); it == _code_db.end()) {
-        _code_db[code_hash] = std::move(associated_code);
     }
 
     AccountState state;
@@ -168,17 +164,6 @@ bc::Balance AccountManager::getBalance(const bc::Address& account_address) const
 }
 
 
-const base::Bytes& AccountManager::getCode(const base::Sha256& hash) const
-{
-    if(auto it = _code_db.find(hash); it == _code_db.end()) {
-        RAISE_ERROR(base::LogicError, "cannot find given hash in codes db");
-    }
-    else {
-        return it->second;
-    }
-}
-
-
 bool AccountManager::checkTransaction(const bc::Transaction& tx) const
 {
     std::shared_lock lk(_rw_mutex);
@@ -199,7 +184,7 @@ bool AccountManager::tryTransferMoney(const bc::Address& from, const bc::Address
         return false;
     }
     if(!hasAccount(to)) {
-        newAccount(to, {});
+        newAccount(to, base::Sha256::null());
     }
     auto& to_account = getAccount(to);
 

@@ -170,3 +170,21 @@ class ActionGenerateKeys : public ActionBase
     std::filesystem::path _keys_dir;
     //====================================
 };
+
+
+class ActionKeysInfo : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionKeysInfo(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::filesystem::path _keys_dir;
+    //====================================
+};
