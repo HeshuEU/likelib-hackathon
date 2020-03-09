@@ -13,11 +13,11 @@ Address::Address(const base::RsaPublicKey& pub)
 }
 
 
-Address::Address(const std::string_view& base64_address)
+Address::Address(const std::string_view& base58_address)
 {
-    _address = base::base64Decode(base64_address);
+    _address = base::base58Decode(base58_address);
     if(_address.size() != BYTE_LENGTH) {
-        RAISE_ERROR(base::InvalidArgument, "invalid base64 string");
+        RAISE_ERROR(base::InvalidArgument, "invalid base58 string");
     }
     // TODO: check address length
 }
@@ -47,7 +47,7 @@ bool Address::isNull() const
 
 std::string Address::toString() const
 {
-    return base::base64Encode(_address);
+    return base::base58Encode(_address);
 }
 
 

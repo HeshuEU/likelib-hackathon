@@ -100,20 +100,6 @@ bool operator!=(const bc::Block& a, const bc::Block& b)
 }
 
 
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block)
-{
-    block = Block::deserialize(ia);
-    return ia;
-}
-
-
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block)
-{
-    block.serialize(oa);
-    return oa;
-}
-
-
 std::ostream& operator<<(std::ostream& os, const Block& block)
 {
     return os << base::Sha256::compute(base::toBytes(block));
