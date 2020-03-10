@@ -158,13 +158,13 @@ void Blockchain::pushForwardToPersistentStorage(const base::Sha256& block_hash, 
     auto block_data = base::toBytes(block);
     {
         std::lock_guard lk(_database_rw_mutex);
-        if(_database.exists(toBytes(DataType::BLOCK, block_hash.getBytes()))) {
+        if(_database.exists(toBytes(DataType::BLOCK, block_hash.getBytes().toBytes()))) {
             return;
         }
-        _database.put(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
+        _database.put(toBytes(DataType::BLOCK, block_hash.getBytes().toBytes()), block_data);
         _database.put(
-            toBytes(DataType::PREVIOUS_BLOCK_HASH, block_hash.getBytes()), block.getPrevBlockHash().getBytes());
-        _database.put(LAST_BLOCK_HASH_KEY, block_hash.getBytes());
+            toBytes(DataType::PREVIOUS_BLOCK_HASH, block_hash.getBytes().toBytes()), block.getPrevBlockHash().getBytes().toBytes());
+        _database.put(LAST_BLOCK_HASH_KEY, block_hash.getBytes().toBytes());
     }
 }
 
@@ -184,7 +184,7 @@ std::optional<base::Sha256> Blockchain::getLastBlockHashAtPersistentStorage() co
 std::optional<Block> Blockchain::findBlockAtPersistentStorage(const base::Sha256& block_hash) const
 {
     std::shared_lock lk(_database_rw_mutex);
-    auto block_data = _database.get(toBytes(DataType::BLOCK, block_hash.getBytes()));
+    auto block_data = _database.get(toBytes(DataType::BLOCK, block_hash.getBytes().toBytes()));
     if(!block_data) {
         return std::nullopt;
     }
@@ -204,7 +204,7 @@ std::vector<base::Sha256> Blockchain::createAllBlockHashesListAtPersistentStorag
         while(current_block_hash != base::Bytes(32)) {
             all_blocks_hashes.push_back(current_block_hash);
             auto previous_block_hash_data =
-                _database.get(toBytes(DataType::PREVIOUS_BLOCK_HASH, current_block_hash.getBytes()));
+                _database.get(toBytes(DataType::PREVIOUS_BLOCK_HASH, current_block_hash.getBytes().toBytes()));
             ASSERT(previous_block_hash_data);
             current_block_hash = base::Sha256(std::move(previous_block_hash_data.value()));
         }

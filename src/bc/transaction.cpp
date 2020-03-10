@@ -146,7 +146,7 @@ void Transaction::sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv)
 {
     auto hash = hashOfTxData();
     // TODO: do a better elliptic curve signature
-    base::Bytes rsa_encrypted_hash = priv.encrypt(hash.getBytes());
+    base::Bytes rsa_encrypted_hash = priv.encrypt(hash.getBytes().toBytes());
     _sign = Sign{std::move(pub), rsa_encrypted_hash};
 }
 
@@ -164,7 +164,7 @@ bool Transaction::checkSign() const
             return false;
         }
         auto valid_hash = hashOfTxData();
-        if(pub.decrypt(enc_hash) == valid_hash.getBytes()) {
+        if(pub.decrypt(enc_hash) == valid_hash.getBytes().toBytes()) {
             return true;
         }
         return false;

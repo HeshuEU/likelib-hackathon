@@ -332,7 +332,7 @@ evmc::bytes32 Core::get_code_hash(const evmc::address& addr) const noexcept
     LOG_DEBUG << "Core::get_code_hash";
     auto address = vm::toNativeAddress(addr);
     auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
-    return vm::toEvmcBytes32(account_code_hash.getBytes());
+    return vm::toEvmcBytes32(account_code_hash.getBytes().toBytes());
 }
 
 
@@ -390,7 +390,7 @@ evmc::bytes32 Core::get_block_hash(int64_t block_number) const noexcept
 {
     LOG_DEBUG << "Core::get_block_hash";
     auto hash = *_blockchain.findBlockHashByDepth(block_number);
-    return vm::toEvmcBytes32(hash.getBytes());
+    return vm::toEvmcBytes32(hash.getBytes().toBytes());
 }
 
 

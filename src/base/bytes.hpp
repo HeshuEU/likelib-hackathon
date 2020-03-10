@@ -131,6 +131,7 @@ class FixedBytes
     std::array<Byte, S> _array;
 };
 
+//TODO: add comparison operators for Bytes and FixedBytes
 
 std::string base64Encode(const base::Bytes& bytes);
 base::Bytes base64Decode(std::string_view base64);

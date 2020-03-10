@@ -13,7 +13,7 @@ namespace base
 
 Sha256::Sha256(const Bytes& data) : _bytes(data)
 {
-    if(_bytes.size() != SHA256_DIGEST_LENGTH) {
+    if(_bytes.size() != SHA256SIZE) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size");
     }
 }
@@ -21,10 +21,18 @@ Sha256::Sha256(const Bytes& data) : _bytes(data)
 
 Sha256::Sha256(Bytes&& data) : _bytes(data)
 {
-    if(_bytes.size() != SHA256_DIGEST_LENGTH) {
+    if(_bytes.size() != SHA256SIZE) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size");
     }
 }
+
+
+Sha256::Sha256(const FixedBytes<Sha256::SHA256SIZE>& data) : _bytes(data)
+{}
+
+
+Sha256::Sha256(FixedBytes<Sha256::SHA256SIZE>&& data) : _bytes(data)
+{}
 
 
 std::string Sha256::toHex() const
@@ -33,7 +41,7 @@ std::string Sha256::toHex() const
 }
 
 
-const base::Bytes& Sha256::getBytes() const noexcept
+const base::FixedBytes<Sha256::SHA256SIZE>& Sha256::getBytes() const noexcept
 {
     return _bytes;
 }
@@ -41,7 +49,7 @@ const base::Bytes& Sha256::getBytes() const noexcept
 
 Sha256 Sha256::null()
 {
-    return Sha256(base::Bytes(SHA256_DIGEST_LENGTH));
+    return Sha256(base::Bytes(SHA256SIZE));
 }
 
 
@@ -72,9 +80,8 @@ bool Sha256::operator<(const Sha256& another) const
 
 Sha256 Sha256::compute(const base::Bytes& data)
 {
-    base::Bytes ret(SHA256_DIGEST_LENGTH);
+    base::FixedBytes<SHA256SIZE> ret;
     SHA256(data.toArray(), data.size(), ret.toArray());
-    ASSERT(ret.size() == SHA256_DIGEST_LENGTH);
     return Sha256(ret);
 }
 
@@ -87,8 +94,7 @@ void Sha256::serialize(SerializationOArchive& oa) const
 
 Sha256 Sha256::deserialize(SerializationIArchive& ia)
 {
-    Bytes data = ia.deserialize<base::Bytes>();
-    return Sha256(data);
+    return Sha256(ia.deserialize<FixedBytes<SHA256SIZE>>());
 }
 
 
@@ -102,14 +108,14 @@ std::ostream& operator<<(std::ostream& os, const Sha256& sha)
 
 std::size_t std::hash<base::Sha256>::operator()(const base::Sha256& k) const
 {
-    return std::hash<base::Bytes>{}(k.getBytes());
+    return std::hash<base::Bytes>{}(k.getBytes().toBytes());
 }
 
 namespace base
 {
 Sha1::Sha1(const Bytes& data) : _bytes(data)
 {
-    if(_bytes.size() != SHA_DIGEST_LENGTH) {
+    if(_bytes.size() != SHA1SIZE) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size");
     }
 }
@@ -117,10 +123,18 @@ Sha1::Sha1(const Bytes& data) : _bytes(data)
 
 Sha1::Sha1(Bytes&& data) : _bytes(data)
 {
-    if(_bytes.size() != SHA_DIGEST_LENGTH) {
+    if(_bytes.size() != SHA1SIZE) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size");
     }
 }
+
+
+Sha1::Sha1(const FixedBytes<Sha1::SHA1SIZE>& data) : _bytes(data)
+{}
+
+
+Sha1::Sha1(FixedBytes<Sha1::SHA1SIZE>&& data) : _bytes(data)
+{}
 
 
 std::string Sha1::toHex() const
@@ -129,7 +143,7 @@ std::string Sha1::toHex() const
 }
 
 
-const base::Bytes& Sha1::getBytes() const noexcept
+const base::FixedBytes<Sha1::SHA1SIZE>& Sha1::getBytes() const noexcept
 {
     return _bytes;
 }
@@ -137,8 +151,7 @@ const base::Bytes& Sha1::getBytes() const noexcept
 
 Sha1 Sha1::fromHex(const std::string_view& hex_view)
 {
-    auto bytes = Bytes::fromHex(hex_view);
-    return Sha1(bytes);
+    return Sha1(Bytes::fromHex(hex_view));
 }
 
 
@@ -156,9 +169,8 @@ bool Sha1::operator!=(const Sha1& another) const
 
 Sha1 Sha1::compute(const base::Bytes& data)
 {
-    base::Bytes ret(SHA_DIGEST_LENGTH);
+    base::FixedBytes<SHA1SIZE> ret;
     SHA1(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray()));
-    ASSERT(ret.size() == SHA_DIGEST_LENGTH);
     return Sha1(ret);
 }
 
@@ -171,8 +183,7 @@ void Sha1::serialize(SerializationOArchive& oa) const
 
 Sha1 Sha1::deserialize(SerializationIArchive& ia)
 {
-    Bytes data = ia.deserialize<base::Bytes>();
-    return Sha1(data);
+    return Sha1(ia.deserialize<base::FixedBytes<SHA1SIZE>>());
 }
 
 
@@ -186,7 +197,7 @@ std::ostream& operator<<(std::ostream& os, const Sha1& sha)
 
 std::size_t std::hash<base::Sha1>::operator()(const base::Sha1& k) const
 {
-    return std::hash<base::Bytes>{}(k.getBytes());
+    return std::hash<base::Bytes>{}(k.getBytes().toBytes());
 }
 
 
@@ -194,7 +205,7 @@ namespace base
 {
 Ripemd160::Ripemd160(const Bytes& data) : _bytes(data)
 {
-    if(_bytes.size() != RIPEMD160_DIGEST_LENGTH) {
+    if(_bytes.size() != RIPEMD160SIZE) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size for Ripemd160");
     }
 }
@@ -202,10 +213,18 @@ Ripemd160::Ripemd160(const Bytes& data) : _bytes(data)
 
 Ripemd160::Ripemd160(Bytes&& data) : _bytes(data)
 {
-    if(_bytes.size() != RIPEMD160_DIGEST_LENGTH) {
+    if(_bytes.size() != RIPEMD160SIZE) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size for Ripemd160");
     }
 }
+
+
+Ripemd160::Ripemd160(const FixedBytes<Ripemd160::RIPEMD160SIZE>& data) : _bytes(data)
+{}
+
+
+Ripemd160::Ripemd160(FixedBytes<Ripemd160::RIPEMD160SIZE>&& data) : _bytes(data)
+{}
 
 
 std::string Ripemd160::toHex() const
@@ -214,7 +233,7 @@ std::string Ripemd160::toHex() const
 }
 
 
-const base::Bytes& Ripemd160::getBytes() const noexcept
+const base::FixedBytes<Ripemd160::RIPEMD160SIZE>& Ripemd160::getBytes() const noexcept
 {
     return _bytes;
 }
@@ -222,8 +241,7 @@ const base::Bytes& Ripemd160::getBytes() const noexcept
 
 Ripemd160 Ripemd160::fromHex(const std::string& hex_view)
 {
-    auto bytes = Bytes::fromHex(hex_view);
-    return Ripemd160(bytes);
+    return Ripemd160(Bytes::fromHex(hex_view));
 }
 
 
@@ -241,7 +259,7 @@ bool Ripemd160::operator!=(const Ripemd160& another) const
 
 Ripemd160 Ripemd160::compute(const base::Bytes& data)
 {
-    base::Bytes ret(RIPEMD160_DIGEST_LENGTH);
+    base::FixedBytes<RIPEMD160SIZE> ret;
     RIPEMD160_CTX context;
     if(1 != RIPEMD160_Init(&context)) {
         RAISE_ERROR(CryptoError, "failed to initialize context for Ripemd160");
@@ -254,8 +272,6 @@ Ripemd160 Ripemd160::compute(const base::Bytes& data)
     if(1 != RIPEMD160_Final(ret.toArray(), &context)) {
         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
     }
-
-    ASSERT(ret.size() == RIPEMD160_DIGEST_LENGTH);
     return Ripemd160(ret);
 }
 
@@ -268,8 +284,7 @@ void Ripemd160::serialize(SerializationOArchive& oa) const
 
 Ripemd160 Ripemd160::deserialize(SerializationIArchive& ia)
 {
-    Bytes data = ia.deserialize<base::Bytes>();
-    return Ripemd160(data);
+    return Ripemd160(ia.deserialize<base::FixedBytes<RIPEMD160SIZE>>());
 }
 
 
@@ -283,7 +298,7 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& ripemd)
 
 std::size_t std::hash<base::Ripemd160>::operator()(const base::Ripemd160& k) const
 {
-    return std::hash<base::Bytes>{}(k.getBytes());
+    return std::hash<base::Bytes>{}(k.getBytes().toBytes());
 }
 
 

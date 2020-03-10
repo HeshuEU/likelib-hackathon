@@ -197,7 +197,7 @@ void MinerWorker::worker()
                 while(last_read_version == _common_state.getVersion()) {
                     auto attempting_nonce = mt();
                     b.setNonce(attempting_nonce);
-                    if(base::Sha256::compute(base::toBytes(b)).getBytes() < complexity) {
+                    if(base::Sha256::compute(base::toBytes(b)).getBytes().toBytes() < complexity) {
                         _common_state.callHandlerAndDrop(std::move(data.block_to_mine).value());
                     }
                 }

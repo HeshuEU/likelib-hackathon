@@ -168,7 +168,7 @@ class Secp256PrivateKey
     Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
     //---------------------------
-    base::FixedBytes<SECP256SIGNATURESIZE> sign(const base::Bytes& bytes) const; // TODO: bytes must be with size 32
+    base::FixedBytes<SECP256SIGNATURESIZE> sign(const base::FixedBytes<32>& bytes) const; // TODO: name 32
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PrivateKey load(const std::filesystem::path& path);
@@ -197,7 +197,7 @@ class Secp256PublicKey
     Secp256PublicKey& operator=(Secp256PublicKey&& other) = default;
     //---------------------------
     bool verifySignature(const base::FixedBytes<Secp256PrivateKey::SECP256SIGNATURESIZE> signature,
-        const base::Bytes& bytes) const; // TODO: bytes must be with size 32
+        const base::FixedBytes<32>& bytes) const; // TODO: name 32
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PublicKey load(const std::filesystem::path& path);
