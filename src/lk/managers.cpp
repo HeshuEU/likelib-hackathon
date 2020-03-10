@@ -1,7 +1,6 @@
 #include "managers.hpp"
 
 #include "base/error.hpp"
-#include "lk/core.hpp"
 
 namespace lk
 {
@@ -90,7 +89,7 @@ void AccountManager::newAccount(const bc::Address& address, base::Sha256 code_ha
     }
 
     AccountState state;
-    state.setCodeHash(code_hash);
+    state.setCodeHash(std::move(code_hash));
     _states[address] = std::move(state);
 }
 
@@ -121,7 +120,7 @@ bc::Address AccountManager::newContract(const bc::Address& address, base::Sha256
     auto bytes_address = address.getBytes();
     bytes_address[0] = (bytes_address[0] + nonce) & 0xFF; // TEMPORARILY!!
     auto account_address = bc::Address(bytes_address);
-    newAccount(account_address, associated_code_hash);
+    newAccount(account_address, std::move(associated_code_hash));
     return account_address;
 }
 
