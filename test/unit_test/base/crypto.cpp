@@ -292,7 +292,6 @@ BOOST_AUTO_TEST_CASE(secp256_save_load)
     std::filesystem::remove(public_key_path);
 }
 
-
 BOOST_AUTO_TEST_CASE(secp256_serialization)
 {
     auto [pub_key1, priv_key1] = base::generateSecp256Keys();
@@ -302,6 +301,7 @@ BOOST_AUTO_TEST_CASE(secp256_serialization)
     oa.serialize(priv_key1);
 
     base::SerializationIArchive ia(oa.getBytes());
+    
     auto pub_key2 = ia.deserialize<base::Secp256PublicKey>();
     auto priv_key2 = ia.deserialize<base::Secp256PrivateKey>();
     auto hash = base::Sha256::compute(base::Bytes("667"));

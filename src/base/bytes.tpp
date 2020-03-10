@@ -32,6 +32,10 @@ std::size_t hexToInt(char hex)
 namespace base
 {
 
+template<std::size_t S>
+Bytes::Bytes(const FixedBytes<S>& bytes) : _raw(bytes.toArray(), S)
+{}
+
 template<typename I>
 Bytes::Bytes(I begin, I end) : _raw(begin, end)
 {}
@@ -52,6 +56,17 @@ FixedBytes<S>::FixedBytes(const std::vector<Byte>& bytes)
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes.begin(), S, _array.begin());
+}
+
+
+template<std::size_t S>
+FixedBytes<S>::FixedBytes(const Bytes& bytes)
+{
+    static_assert(S != 0, "FixedBytes length must be longet than 0");
+    if(S < bytes.size() || bytes.size() == 0) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
+    }
+    std::copy_n(bytes.toVector().begin(), S, _array.begin());
 }
 
 
@@ -126,6 +141,13 @@ template<std::size_t S>
 Byte* FixedBytes<S>::toArray()
 {
     return _array.data();
+}
+
+
+template<std::size_t S>
+Bytes FixedBytes<S>::toBytes() const
+{
+    return Bytes(toArray(), S);
 }
 
 

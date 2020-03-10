@@ -12,6 +12,9 @@
 namespace base
 {
 
+template<std::size_t S>
+class FixedBytes;
+
 
 class Bytes
 {
@@ -23,6 +26,10 @@ class Bytes
     explicit Bytes(const std::string& s);
     Bytes(const Byte* bytes, std::size_t length);
     Bytes(std::initializer_list<Byte> l);
+
+    template<std::size_t S>
+    explicit Bytes(const FixedBytes<S>& bytes);
+
     Bytes(const Bytes&) = default;
     Bytes(Bytes&&) = default;
     Bytes& operator=(const Bytes&) = default;
@@ -89,6 +96,7 @@ class FixedBytes
   public:
     FixedBytes();
     explicit FixedBytes(const std::vector<Byte>& bytes);
+    explicit FixedBytes(const Bytes& bytes);
     explicit FixedBytes(const std::string& str);
     FixedBytes(const Byte* bytes, std::size_t length);
     FixedBytes(std::initializer_list<Byte> l);
@@ -105,6 +113,7 @@ class FixedBytes
     //==============
     [[nodiscard]] const Byte* toArray() const;
     [[nodiscard]] Byte* toArray();
+    [[nodiscard]] Bytes toBytes() const;
     //==============
     [[nodiscard]] std::string toHex() const;
     [[nodiscard]] std::string toString() const;

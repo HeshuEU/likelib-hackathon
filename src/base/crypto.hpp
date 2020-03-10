@@ -118,7 +118,7 @@ class AesKey
     //=================
     KeyType _type;
     Bytes _key;
-    Bytes _iv;
+    FixedBytes<16> _iv;
     //=================
     static Bytes generateKey(KeyType type);
     static Bytes generateIv();
@@ -157,14 +157,18 @@ class KeyVault
 class Secp256PrivateKey
 {
   public:
+    static constexpr std::size_t SECP256PRIVATEKEYSIZE = 32;
+    static constexpr std::size_t SECP256SIGNATURESIZE = 65;
+    //---------------------------
     Secp256PrivateKey();
     Secp256PrivateKey(const base::Bytes& private_key_bytes);
+    Secp256PrivateKey(const base::FixedBytes<SECP256PRIVATEKEYSIZE>& private_key_bytes);
     Secp256PrivateKey(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey(Secp256PrivateKey&& other) = default;
     Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
     //---------------------------
-    base::Bytes sign(const base::Bytes& bytes) const;
+    base::FixedBytes<SECP256SIGNATURESIZE> sign(const base::Bytes& bytes) const; // TODO: bytes must be with size 32
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PrivateKey load(const std::filesystem::path& path);
@@ -172,25 +176,28 @@ class Secp256PrivateKey
     static Secp256PrivateKey deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
     //---------------------------
-    base::Bytes getBytes() const;
-    static constexpr std::size_t SECP256PRIVATEKEYSIZE = 32;
+    base::FixedBytes<SECP256PRIVATEKEYSIZE> getBytes() const;
 
   private:
-    base::Bytes _secp_key;
+    base::FixedBytes<SECP256PRIVATEKEYSIZE> _secp_key;
 };
 
 
 class Secp256PublicKey
 {
   public:
+    static constexpr std::size_t SECP256PUBLICKEYSIZE = 64;
+    //---------------------------
     Secp256PublicKey(const Secp256PrivateKey& private_key);
     Secp256PublicKey(const base::Bytes& public_key_bytes);
+    Secp256PublicKey(const base::FixedBytes<SECP256PUBLICKEYSIZE>& public_key_bytes);
     Secp256PublicKey(const Secp256PublicKey&) = default;
     Secp256PublicKey(Secp256PublicKey&& other) = default;
     Secp256PublicKey& operator=(const Secp256PublicKey&) = default;
     Secp256PublicKey& operator=(Secp256PublicKey&& other) = default;
     //---------------------------
-    bool verifySignature(const base::Bytes signature, const base::Bytes& bytes) const;
+    bool verifySignature(const base::FixedBytes<Secp256PrivateKey::SECP256SIGNATURESIZE> signature,
+        const base::Bytes& bytes) const; // TODO: bytes must be with size 32
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PublicKey load(const std::filesystem::path& path);
@@ -200,11 +207,10 @@ class Secp256PublicKey
     //---------------------------
     bool operator==(const Secp256PublicKey& other) const;
     //---------------------------
-    base::Bytes getBytes() const;
-    static constexpr std::size_t SECP256PUBLICKEYSIZE = 64;
+    base::FixedBytes<SECP256PUBLICKEYSIZE> getBytes() const;
 
   private:
-    base::Bytes _secp_key;
+    base::FixedBytes<SECP256PUBLICKEYSIZE> _secp_key;
 };
 
 
