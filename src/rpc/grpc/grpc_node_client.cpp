@@ -75,6 +75,27 @@ bc::Balance GrpcNodeClient::balance(const bc::Address& address)
     }
 }
 
+
+Info GrpcNodeClient::info()
+{
+    likelib::InfoRequest request;
+
+    // call remote host
+    likelib::InfoResponse reply;
+    grpc::ClientContext context;
+    grpc::Status status = _stub->info(&context, request, &reply);
+
+    // return value if ok
+    if(status.ok()) {
+        Info ret{base::Sha256(base::base64Decode(reply.top_block_hash())), 0};
+        return ret;
+    }
+    else {
+        throw RpcError(status.error_message());
+    }
+}
+
+
 std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transaction_create_contract(bc::Balance amount,
     const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
     const std::string& contract_code, const std::string& init, const bc::Sign& signature)

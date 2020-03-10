@@ -16,6 +16,9 @@ service NodePublicInterface {
     rpc balance (Address) returns (Money) {
     }
 
+    rpc info (InfoRequest) returns (InfoResponse) {
+    }
+
     rpc message_call (TransactionMessageCallRequest) returns (TransactionMessageCallResponse) {
     }
 
@@ -31,6 +34,15 @@ message TestRequest {
 
 message TestResponse {
     OperationStatus status = 1;
+}
+
+//=====================================
+
+message InfoRequest {
+}
+
+message InfoResponse {
+    string top_block_hash = 1;
 }
 
 //=====================================

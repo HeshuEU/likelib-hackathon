@@ -188,3 +188,21 @@ class ActionKeysInfo : public ActionBase
     std::filesystem::path _keys_dir;
     //====================================
 };
+
+
+class ActionInfo : public ActionBase
+{
+public:
+    //====================================
+    explicit ActionInfo(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+private:
+    //====================================
+    std::string _host_address;
+    //====================================
+};

@@ -35,7 +35,6 @@ rpc::OperationStatus GeneralServerService::test(uint32_t api_version)
 }
 
 
-
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     try {
@@ -52,6 +51,19 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
         return -1;
     }
 }
+
+
+rpc::Info GeneralServerService::info()
+{
+    try {
+        auto hash = base::Sha256::compute(base::toBytes(_core.getTopBlock()));
+        return {hash, 0};
+    }
+    catch(const std::exception& e) {
+        return {base::Sha256::null(), 0};
+    }
+}
+
 
 std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_create_contract(
     bc::Balance amount, const bc::Address& from_address, const base::Time& timestamp, bc::Balance gas,

@@ -601,3 +601,40 @@ int ActionKeysInfo::execute()
 
     return base::config::EXIT_OK;
 }
+
+
+//====================================
+
+ActionInfo::ActionInfo(base::SubprogramRouter& router) : ActionBase{router}
+{}
+
+
+const std::string_view& ActionInfo::getName() const
+{
+    static const std::string_view name = "Info";
+    return name;
+}
+
+
+void ActionInfo::setupOptionsParser(base::ProgramOptionsParser& parser)
+{
+    parser.addRequiredOption<std::string>(HOST_OPTION, "address of host");
+}
+
+
+int ActionInfo::loadOptions(const base::ProgramOptionsParser& parser)
+{
+    _host_address = parser.getValue<std::string>(HOST_OPTION);
+    return base::config::EXIT_OK;
+}
+
+
+int ActionInfo::execute()
+{
+    LOG_INFO << "Trying to connect to rpc server at " << _host_address;
+    rpc::RpcClient client(_host_address);
+    auto result = client.info();
+    std::cout << "Top block hash: " << result.top_block_hash << std::endl;
+    LOG_INFO << "Remote call of Info: " << result.top_block_hash;
+    return base::config::EXIT_OK;
+}

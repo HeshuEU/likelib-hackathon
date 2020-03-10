@@ -47,6 +47,14 @@ class OperationStatus
     std::string _message;
 };
 
+
+struct Info
+{
+    base::Sha256 top_block_hash;
+    std::size_t peers_number;
+};
+
+
 class BaseRpc
 {
   public:
@@ -65,6 +73,8 @@ class BaseRpc
     /// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
     /// exception during processing on server instance)
     virtual OperationStatus test(uint32_t api_version) = 0;
+
+    virtual Info info() = 0;
 
     virtual std::tuple<OperationStatus, bc::Address, bc::Balance> transaction_create_contract(bc::Balance amount,
         const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,

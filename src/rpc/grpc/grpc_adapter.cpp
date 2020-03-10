@@ -37,7 +37,7 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 grpc::Status GrpcAdapter::test(
     grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response)
 {
-    LOG_DEBUG << "get RPC call at test method from: " << context->peer();
+    LOG_DEBUG << "received RPC call at test method from: " << context->peer();
     try {
         auto status = _service->test(request->interface_version());
         convert(status, response->mutable_status());
@@ -54,7 +54,7 @@ grpc::Status GrpcAdapter::test(
 grpc::Status GrpcAdapter::balance(
     grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response)
 {
-    LOG_DEBUG << "get RPC call at balance method from: " << context->peer();
+    LOG_DEBUG << "received RPC call at balance method from: " << context->peer();
     try {
         bc::Address query_address{request->address()};
         response->set_money(_service->balance(query_address));
@@ -67,10 +67,25 @@ grpc::Status GrpcAdapter::balance(
 }
 
 
+grpc::Status GrpcAdapter::info(
+        grpc::ServerContext* context, const likelib::InfoRequest*, likelib::InfoResponse* response)
+{
+    LOG_DEBUG << "received RPC call at balance method from: " << context->peer();
+    try {
+        response->set_top_block_hash(base::base64Encode(_service->info().top_block_hash.getBytes()));
+    }
+    catch(const base::Error& e) {
+        LOG_ERROR << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    return ::grpc::Status::OK;
+}
+
+
 ::grpc::Status GrpcAdapter::create_contract(::grpc::ServerContext* context,
     const ::likelib::TransactionCreateContractRequest* request, ::likelib::TransactionCreateContractResponse* response)
 {
-    LOG_DEBUG << "get RPC call at transaction_for_create_contract method from: " << context->peer();
+    LOG_DEBUG << "received RPC call at transaction_for_create_contract method from: " << context->peer();
     try {
         auto amount = bc::Balance{request->value().money()};
         auto from_address = bc::Address{request->from().address()};
@@ -99,7 +114,7 @@ grpc::Status GrpcAdapter::balance(
 grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
     const likelib::TransactionMessageCallRequest* request, likelib::TransactionMessageCallResponse* response)
 {
-    LOG_DEBUG << "get RPC call at transaction_to_contract method from: " << context->peer();
+    LOG_DEBUG << "received RPC call at transaction_to_contract method from: " << context->peer();
     try {
         auto amount = bc::Balance{request->value().money()};
         auto from_address = bc::Address{request->from().address()};

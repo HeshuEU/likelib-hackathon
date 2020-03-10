@@ -23,6 +23,8 @@ class GrpcNodeClient final : BaseRpc
 
     bc::Balance balance(const bc::Address& address) override;
 
+    Info info() override;
+
     std::tuple<OperationStatus, bc::Address, bc::Balance> transaction_create_contract(bc::Balance amount,
         const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
         const std::string& contract_code, const std::string& init, const bc::Sign& signature) override;
