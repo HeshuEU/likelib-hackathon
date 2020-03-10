@@ -11,20 +11,20 @@ namespace base
 class Sha256
 {
   public:
-    static constexpr std::size_t SHA256SIZE = 32;
+    static constexpr std::size_t SHA256_SIZE = 32;
     //----------------------------------
     Sha256(const Sha256&) = default;
     Sha256(Sha256&&) = default;
     Sha256(const Bytes& data);
     Sha256(Bytes&& data);
-    Sha256(const FixedBytes<SHA256SIZE>& data);
-    Sha256(FixedBytes<SHA256SIZE>&& data);
+    Sha256(const FixedBytes<SHA256_SIZE>& data);
+    Sha256(FixedBytes<SHA256_SIZE>&& data);
     Sha256& operator=(const Sha256&) = default;
     Sha256& operator=(Sha256&&) = default;
     ~Sha256() = default;
     //----------------------------------
     std::string toHex() const;
-    const base::FixedBytes<SHA256SIZE>& getBytes() const noexcept;
+    const base::FixedBytes<SHA256_SIZE>& getBytes() const noexcept;
     //----------------------------------
     static Sha256 null();
     static Sha256 fromHex(const std::string& hex_view);
@@ -39,7 +39,7 @@ class Sha256
     static Sha256 deserialize(SerializationIArchive& ia);
     //----------------------------------
   private:
-    base::FixedBytes<SHA256SIZE> _bytes;
+    base::FixedBytes<SHA256_SIZE> _bytes;
 };
 
 std::ostream& operator<<(std::ostream& os, const Sha256& sha);
@@ -62,20 +62,20 @@ namespace base
 class Sha1
 {
   public:
-    static constexpr std::size_t SHA1SIZE = 20;
+    static constexpr std::size_t SHA1_SIZE = 20;
     //----------------------------------
     Sha1(const Sha1&) = default;
     Sha1(Sha1&&) = default;
     Sha1(const Bytes& data);
     Sha1(Bytes&& data);
-    Sha1(const FixedBytes<SHA1SIZE>& data);
-    Sha1(FixedBytes<SHA1SIZE>&& data);
+    Sha1(const FixedBytes<SHA1_SIZE>& data);
+    Sha1(FixedBytes<SHA1_SIZE>&& data);
     Sha1& operator=(const Sha1&) = default;
     Sha1& operator=(Sha1&&) = default;
     ~Sha1() = default;
     //----------------------------------
     std::string toHex() const;
-    const base::FixedBytes<SHA1SIZE>& getBytes() const noexcept;
+    const base::FixedBytes<SHA1_SIZE>& getBytes() const noexcept;
     //----------------------------------
     static Sha1 fromHex(const std::string_view& hex_view);
     //----------------------------------
@@ -88,7 +88,7 @@ class Sha1
     static Sha1 deserialize(SerializationIArchive& ia);
     //----------------------------------
   private:
-    base::FixedBytes<SHA1SIZE> _bytes;
+    base::FixedBytes<SHA1_SIZE> _bytes;
 };
 
 std::ostream& operator<<(std::ostream& os, const Sha1& sha);
@@ -112,20 +112,20 @@ namespace base
 class Ripemd160
 {
   public:
-    static constexpr std::size_t RIPEMD160SIZE = 20;
+    static constexpr std::size_t RIPEMD160_SIZE = 20;
     //----------------------------------
     Ripemd160(const Ripemd160&) = default;
     Ripemd160(Ripemd160&&) = default;
     Ripemd160(const Bytes& data);
     Ripemd160(Bytes&& data);
-    Ripemd160(const FixedBytes<RIPEMD160SIZE>& data);
-    Ripemd160(FixedBytes<RIPEMD160SIZE>&& data);
+    Ripemd160(const FixedBytes<RIPEMD160_SIZE>& data);
+    Ripemd160(FixedBytes<RIPEMD160_SIZE>&& data);
     Ripemd160& operator=(const Ripemd160&) = default;
     Ripemd160& operator=(Ripemd160&&) = default;
     ~Ripemd160() = default;
     //----------------------------------
     std::string toHex() const;
-    const base::FixedBytes<RIPEMD160SIZE>& getBytes() const noexcept;
+    const base::FixedBytes<RIPEMD160_SIZE>& getBytes() const noexcept;
     //----------------------------------
     static Ripemd160 fromHex(const std::string& hex_view);
     //----------------------------------
@@ -138,7 +138,7 @@ class Ripemd160
     static Ripemd160 deserialize(SerializationIArchive& ia);
     //----------------------------------
   private:
-    base::FixedBytes<RIPEMD160SIZE> _bytes;
+    base::FixedBytes<RIPEMD160_SIZE> _bytes;
 };
 
 std::ostream& operator<<(std::ostream& os, const Ripemd160& sha);
