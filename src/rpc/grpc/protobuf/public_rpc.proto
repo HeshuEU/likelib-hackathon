@@ -19,6 +19,9 @@ service NodePublicInterface {
     rpc info (InfoRequest) returns (InfoResponse) {
     }
 
+    rpc get_block (GetBlockRequest) returns (GetBlockResponse) {
+    }
+
     rpc message_call (TransactionMessageCallRequest) returns (TransactionMessageCallResponse) {
     }
 
@@ -43,6 +46,15 @@ message InfoRequest {
 
 message InfoResponse {
     string top_block_hash = 1;
+}
+
+//=====================================
+
+message GetBlockRequest {
+    string block_hash = 1;
+}
+
+message GetBlockResponse {
 }
 
 //=====================================

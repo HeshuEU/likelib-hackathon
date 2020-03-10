@@ -127,6 +127,7 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
     }
 }
 
+
 std::tuple<OperationStatus, std::string, bc::Balance> GrpcNodeClient::transaction_message_call(bc::Balance amount,
     const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time, bc::Balance gas,
     const std::string& data, const bc::Sign& signature)
