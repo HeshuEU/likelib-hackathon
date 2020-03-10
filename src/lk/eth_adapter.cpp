@@ -34,7 +34,7 @@ class EthAdapter::EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_storage";
         auto address = vm::toNativeAddress(addr);
         base::Bytes key(ethKey.bytes, 32);
-        auto storage_value = _account_manager.getAccount(address).getStorageValue(key).data;
+        auto storage_value = _account_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
         return vm::toEvmcBytes32(storage_value);
     }
 
@@ -48,7 +48,7 @@ class EthAdapter::EthHost : public evmc::Host
         LOG_DEBUG << "Core::set_storage";
         static const base::Bytes NULL_VALUE(32);
         auto address = vm::toNativeAddress(addr);
-        base::Bytes key(ekey.bytes, 32);
+        auto key = base::Sha256(base::Bytes(ekey.bytes, 32));
         base::Bytes new_value(evalue.bytes, 32);
 
         auto& account_state = _account_manager.getAccount(address);

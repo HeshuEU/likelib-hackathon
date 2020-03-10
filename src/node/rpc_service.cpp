@@ -83,7 +83,7 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
 
     try {
         _core.addPendingTransactionAndWait(tx);
-        auto hash = base::Sha256::compute(base::toBytes(tx)).getBytes();
+        auto hash = base::Sha256::compute(base::toBytes(tx));
         auto raw_output = _core.getTransactionOutput(hash);
         base::SerializationIArchive ia(std::move(raw_output));
         auto contract_address = ia.deserialize<bc::Address>();
@@ -128,7 +128,7 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
 
     try {
         _core.addPendingTransactionAndWait(tx);
-        auto hash = base::Sha256::compute(base::toBytes(tx)).getBytes();
+        auto hash = base::Sha256::compute(base::toBytes(tx));
         auto result = _core.getTransactionOutput(hash);
         return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toHex(), 0x228};
     }

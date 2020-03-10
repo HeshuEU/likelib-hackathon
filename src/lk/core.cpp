@@ -29,7 +29,7 @@ const bc::Block& Core::getGenesisBlock()
 
         bc::Block ret{0, base::Sha256(base::Bytes(32)), timestamp, bc::Address::null(), {}};
         bc::Address from{bc::Address::null()};
-        bc::Address to{"4ZpSBJsEVgiZKQu32t5eeDBfMZJD"};
+        bc::Address to{"28dpzpURpyqqLoWrEhnHrajndeCq"};
         bc::Balance amount{0xFFFFFFFF};
         bc::Balance fee{0};
 
@@ -223,7 +223,7 @@ void Core::applyBlockTransactions(const bc::Block& block)
 
 bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
-    auto hash = base::Sha256::compute(base::toBytes(tx)).getBytes();
+    auto hash = base::Sha256::compute(base::toBytes(tx));
     if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
         try {
             auto [address, result] = doContractCreation(tx, block_where_tx);
@@ -258,9 +258,10 @@ std::pair<bc::Address, base::Bytes> Core::doContractCreation(const bc::Transacti
     base::SerializationIArchive ia(tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();
 
+    auto hash = base::Sha256::compute(contract_data.getCode());
     _code_manager.saveCode(contract_data.getCode());
 
-    bc::Address contract_address = _account_manager.newContract(tx.getFrom(), contract_data.getCode());
+    bc::Address contract_address = _account_manager.newContract(tx.getFrom(), hash);
     LOG_DEBUG << "Deploying smart contract at address " << contract_address;
     if(tx.getAmount() != 0) {
         if(!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {

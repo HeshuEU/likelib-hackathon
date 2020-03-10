@@ -113,7 +113,7 @@ bool AccountManager::deleteAccount(const bc::Address& address)
 }
 
 
-bc::Address AccountManager::newContract(const bc::Address& address, base::Bytes associated_code)
+bc::Address AccountManager::newContract(const bc::Address& address, base::Sha256 associated_code_hash)
 {
     auto& account = getAccount(address);
     auto nonce = account.getNonce() + 1;
@@ -121,7 +121,7 @@ bc::Address AccountManager::newContract(const bc::Address& address, base::Bytes 
     auto bytes_address = address.getBytes();
     bytes_address[0] = (bytes_address[0] + nonce) & 0xFF; // TEMPORARILY!!
     auto account_address = bc::Address(bytes_address);
-    newAccount(account_address, associated_code);
+    newAccount(account_address, associated_code_hash);
     return account_address;
 }
 

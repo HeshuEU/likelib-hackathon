@@ -13,7 +13,7 @@ class Address
     //=============================
     static constexpr std::size_t BYTE_LENGTH = 20;
     //=============================
-    explicit Address(const std::string_view& base64_address);
+    explicit Address(const std::string_view& base58_address);
     explicit Address(base::Bytes raw);
     explicit Address(const base::RsaPublicKey& pub);
     Address(const Address& another) = default;
@@ -35,7 +35,6 @@ class Address
     static Address deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
     //=============================
-    static constexpr std::size_t ADDRESS_SIZE = 28;
 
   private:
     base::Bytes _address;

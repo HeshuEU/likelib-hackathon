@@ -62,7 +62,7 @@ class AccountManager
     bool hasAccount(const bc::Address& address) const;
     bool deleteAccount(const bc::Address& address);
     //================
-    bc::Address newContract(const bc::Address& account_address, base::Bytes associated_code);
+    bc::Address newContract(const bc::Address& account_address, base::Sha256 associated_code_hash);
     //================
     bool tryTransferMoney(const bc::Address& from, const bc::Address& to, bc::Balance amount);
     //================
