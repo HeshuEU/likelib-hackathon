@@ -43,14 +43,14 @@ class Bytes
 
     Bytes& append(const Bytes& bytes);
     //==============
-    [[nodiscard]] std::size_t size() const noexcept;
+    std::size_t size() const noexcept;
     //==============
     void clear();
     void resize(std::size_t new_size);
     void reserve(std::size_t reserve_size);
-    [[nodiscard]] std::size_t capacity() const;
+    std::size_t capacity() const;
     void shrinkToFit();
-    [[nodiscard]] bool isEmpty() const noexcept;
+    bool isEmpty() const noexcept;
     //==============
     [[nodiscard]] const Byte* toArray() const;
     [[nodiscard]] Byte* toArray();
@@ -65,14 +65,14 @@ class Bytes
     //==============
     [[nodiscard]] static Bytes fromHex(const std::string_view& hex_view);
     //==============
-    [[nodiscard]] bool operator==(const Bytes& another) const;
-    [[nodiscard]] bool operator!=(const Bytes& another) const;
+    bool operator==(const Bytes& another) const;
+    bool operator!=(const Bytes& another) const;
 
     // lexicographical compare
-    [[nodiscard]] bool operator<(const Bytes& another) const;
-    [[nodiscard]] bool operator>(const Bytes& another) const;
-    [[nodiscard]] bool operator<=(const Bytes& another) const;
-    [[nodiscard]] bool operator>=(const Bytes& another) const;
+    bool operator<(const Bytes& another) const;
+    bool operator>(const Bytes& another) const;
+    bool operator<=(const Bytes& another) const;
+    bool operator>=(const Bytes& another) const;
     //==============
 
   private:
@@ -101,7 +101,7 @@ class FixedBytes
     Byte& operator[](std::size_t index);
     const Byte& operator[](std::size_t index) const;
     //==============
-    [[nodiscard]] std::size_t size() const noexcept;
+    std::size_t size() const noexcept;
     //==============
     [[nodiscard]] const Byte* toArray() const;
     [[nodiscard]] Byte* toArray();
@@ -109,14 +109,14 @@ class FixedBytes
     [[nodiscard]] std::string toHex() const;
     [[nodiscard]] std::string toString() const;
     //==============
-    [[nodiscard]] bool operator==(const FixedBytes& another) const;
-    [[nodiscard]] bool operator!=(const FixedBytes& another) const;
+    bool operator==(const FixedBytes& another) const;
+    bool operator!=(const FixedBytes& another) const;
 
     // lexicographical compare
-    [[nodiscard]] bool operator<(const FixedBytes& another) const;
-    [[nodiscard]] bool operator>(const FixedBytes& another) const;
-    [[nodiscard]] bool operator<=(const FixedBytes& another) const;
-    [[nodiscard]] bool operator>=(const FixedBytes& another) const;
+    bool operator<(const FixedBytes& another) const;
+    bool operator>(const FixedBytes& another) const;
+    bool operator<=(const FixedBytes& another) const;
+    bool operator>=(const FixedBytes& another) const;
     //==============
   private:
     std::array<Byte, S> _array;

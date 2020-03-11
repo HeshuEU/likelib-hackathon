@@ -26,7 +26,7 @@ class Address
     const base::Bytes& getBytes() const noexcept;
     //=============================
     static const Address& null();
-    [[nodiscard]] bool isNull() const;
+    bool isNull() const;
     //=============================
     bool operator==(const Address& another) const;
     bool operator!=(const Address& another) const;

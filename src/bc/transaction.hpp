@@ -16,10 +16,10 @@ class Sign
     Sign() = default;
     Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash);
 
-    [[nodiscard]] bool isNull() const noexcept;
+    bool isNull() const noexcept;
 
-    [[nodiscard]] const base::RsaPublicKey& getPublicKey() const;
-    [[nodiscard]] const base::Bytes& getRsaEncryptedHash() const;
+    const base::RsaPublicKey& getPublicKey() const;
+    const base::Bytes& getRsaEncryptedHash() const;
 
     static Sign fromBase64(const std::string& base64_signature);
     std::string toBase64() const;
@@ -58,17 +58,17 @@ class Transaction
 
     ~Transaction() = default;
     //=================
-    [[nodiscard]] const bc::Address& getFrom() const noexcept;
-    [[nodiscard]] const bc::Address& getTo() const noexcept;
-    [[nodiscard]] const bc::Balance& getAmount() const noexcept;
-    [[nodiscard]] const base::Time& getTimestamp() const noexcept;
-    [[nodiscard]] Type getType() const noexcept;
-    [[nodiscard]] const base::Bytes& getData() const noexcept;
-    [[nodiscard]] const bc::Balance& getFee() const noexcept;
+    const bc::Address& getFrom() const noexcept;
+    const bc::Address& getTo() const noexcept;
+    const bc::Balance& getAmount() const noexcept;
+    const base::Time& getTimestamp() const noexcept;
+    Type getType() const noexcept;
+    const base::Bytes& getData() const noexcept;
+    const bc::Balance& getFee() const noexcept;
     //=================
     void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
-    [[nodiscard]] bool checkSign() const;
-    [[nodiscard]] const bc::Sign& getSign() const noexcept;
+    bool checkSign() const;
+    const bc::Sign& getSign() const noexcept;
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;

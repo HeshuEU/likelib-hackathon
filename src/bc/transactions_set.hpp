@@ -17,18 +17,18 @@ class TransactionsSet
     [[nodiscard]] std::optional<Transaction> find(const base::Sha256& hash) const;
     void remove(const Transaction& tx);
     void remove(const TransactionsSet& other);
-    [[nodiscard]] bool isEmpty() const;
+    bool isEmpty() const;
 
-    [[nodiscard]] std::size_t size() const;
+    std::size_t size() const;
 
-    [[nodiscard]] std::vector<Transaction>::const_iterator begin() const;
-    [[nodiscard]] std::vector<Transaction>::const_iterator end() const;
+    std::vector<Transaction>::const_iterator begin() const;
+    std::vector<Transaction>::const_iterator end() const;
 
-    [[nodiscard]] std::vector<Transaction>::iterator begin();
-    [[nodiscard]] std::vector<Transaction>::iterator end();
+    std::vector<Transaction>::iterator begin();
+    std::vector<Transaction>::iterator end();
 
-    [[nodiscard]] bool operator==(const TransactionsSet& other) const;
-    [[nodiscard]] bool operator!=(const TransactionsSet& other) const;
+    bool operator==(const TransactionsSet& other) const;
+    bool operator!=(const TransactionsSet& other) const;
     //=================
     void serialize(base::SerializationOArchive& oa) const;
     static TransactionsSet deserialize(base::SerializationIArchive& ia);

@@ -23,8 +23,8 @@ class Time
     //====================
     ~Time() = default;
     //====================
-    [[nodiscard]] std::uint_least32_t getSecondsSinceEpochBeginning() const;
-    [[nodiscard]] std::chrono::time_point<std::chrono::system_clock> toTimePoint() const;
+    std::uint_least32_t getSecondsSinceEpochBeginning() const;
+    std::chrono::time_point<std::chrono::system_clock> toTimePoint() const;
     //====================
     bool operator==(const Time& other) const;
     bool operator!=(const Time& other) const;

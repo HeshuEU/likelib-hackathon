@@ -251,11 +251,11 @@ class Peer
     //================
     Peer(Network& owning_network_object, net::Session& session, Core& _core);
     //================
-    [[nodiscard]] net::Endpoint getEndpoint() const;
-    [[nodiscard]] std::optional<net::Endpoint> getPublicEndpoint() const;
+    net::Endpoint getEndpoint() const;
+    std::optional<net::Endpoint> getPublicEndpoint() const;
     void setServerEndpoint(net::Endpoint endpoint);
     //================
-    [[nodiscard]] std::optional<base::Bytes> getAddress() const;
+    std::optional<base::Bytes> getAddress() const;
     void setAddress(base::Bytes address);
     //================
     void setState(State new_state);
@@ -263,7 +263,7 @@ class Peer
     //================
     void addSyncBlock(bc::Block block);
     bool applySyncs();
-    [[nodiscard]] const std::forward_list<bc::Block>& getSyncBlocks() const noexcept;
+    const std::forward_list<bc::Block>& getSyncBlocks() const noexcept;
     //================
     [[nodiscard]] std::unique_ptr<net::Handler> createHandler();
     //================
