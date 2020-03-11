@@ -1,7 +1,6 @@
-#include "account_manager.hpp"
+#include "managers.hpp"
 
 #include "base/error.hpp"
-#include "lk/core.hpp"
 
 namespace lk
 {
@@ -83,18 +82,14 @@ void AccountState::setStorageValue(const base::Sha256& key, base::Bytes value)
 }
 
 
-void AccountManager::newAccount(const bc::Address& address, base::Bytes associated_code)
+void AccountManager::newAccount(const bc::Address& address, base::Sha256 code_hash)
 {
     if(hasAccount(address)) {
         RAISE_ERROR(base::LogicError, "address already exists");
     }
-    auto code_hash = (associated_code.isEmpty() ? base::Sha256::null() : base::Sha256::compute(associated_code));
-    if(auto it = _code_db.find(code_hash); it == _code_db.end()) {
-        _code_db[code_hash] = std::move(associated_code);
-    }
 
     AccountState state;
-    state.setCodeHash(code_hash);
+    state.setCodeHash(std::move(code_hash));
     _states[address] = std::move(state);
 }
 
@@ -105,7 +100,19 @@ bool AccountManager::hasAccount(const bc::Address& address) const
 }
 
 
-bc::Address AccountManager::newContract(const bc::Address& address, base::Bytes associated_code)
+bool AccountManager::deleteAccount(const bc::Address& address)
+{
+    if(auto it = _states.find(address); it != _states.end()) {
+        _states.erase(it);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+
+bc::Address AccountManager::newContract(const bc::Address& address, base::Sha256 associated_code_hash)
 {
     auto& account = getAccount(address);
     auto nonce = account.getNonce() + 1;
@@ -113,7 +120,7 @@ bc::Address AccountManager::newContract(const bc::Address& address, base::Bytes 
     auto bytes_address = address.getBytes();
     bytes_address[0] = (bytes_address[0] + nonce) & 0xFF; // TEMPORARILY!!
     auto account_address = bc::Address(bytes_address);
-    newAccount(account_address, associated_code);
+    newAccount(account_address, std::move(associated_code_hash));
     return account_address;
 }
 
@@ -123,7 +130,7 @@ const AccountState& AccountManager::getAccount(const bc::Address& address) const
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
     if(it == _states.end()) {
-        RAISE_ERROR(base::LogicError, "cannot find given account");
+        RAISE_ERROR(base::InvalidArgument, "cannot getAccount for non-existent account");
     }
     else {
         return it->second;
@@ -136,7 +143,8 @@ AccountState& AccountManager::getAccount(const bc::Address& address)
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
     if(it == _states.end()) {
-        RAISE_ERROR(base::LogicError, "cannot find given account");
+        AccountState state; // TODO: lazy creation
+        return _states[address] = state;
     }
     else {
         return it->second;
@@ -144,13 +152,13 @@ AccountState& AccountManager::getAccount(const bc::Address& address)
 }
 
 
-const base::Bytes& AccountManager::getCode(const base::Sha256& hash) const
+bc::Balance AccountManager::getBalance(const bc::Address& account_address) const
 {
-    if(auto it = _code_db.find(hash); it == _code_db.end()) {
-        RAISE_ERROR(base::LogicError, "cannot find given hash in codes db");
+    if(hasAccount(account_address)) {
+        return getAccount(account_address).getBalance();
     }
     else {
-        return it->second;
+        return 0;
     }
 }
 
@@ -162,6 +170,26 @@ bool AccountManager::checkTransaction(const bc::Transaction& tx) const
         return false;
     }
     return getAccount(tx.getFrom()).getBalance() >= tx.getAmount();
+}
+
+
+bool AccountManager::tryTransferMoney(const bc::Address& from, const bc::Address& to, bc::Balance amount)
+{
+    if(!hasAccount(from)) {
+        return false;
+    }
+    auto& from_account = getAccount(from);
+    if(from_account.getBalance() < amount) {
+        return false;
+    }
+    if(!hasAccount(to)) {
+        newAccount(to, base::Sha256::null());
+    }
+    auto& to_account = getAccount(to);
+
+    from_account.subBalance(amount);
+    to_account.addBalance(amount);
+    return true;
 }
 
 
@@ -204,6 +232,24 @@ void AccountManager::updateFromGenesis(const bc::Block& block)
         state.setBalance(tx.getAmount());
         _states.insert({tx.getTo(), std::move(state)});
     }
+}
+
+
+std::optional<std::reference_wrapper<const base::Bytes>> CodeManager::getCode(const base::Sha256& hash) const
+{
+    if(auto it = _code_db.find(hash); it == _code_db.end()) {
+        return std::nullopt;
+    }
+    else {
+        return it->second;
+    }
+}
+
+
+void CodeManager::saveCode(base::Bytes code)
+{
+    auto hash = base::Sha256::compute(code);
+    _code_db.insert({std::move(hash), std::move(code)});
 }
 
 } // namespace lk

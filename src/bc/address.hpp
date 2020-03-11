@@ -12,9 +12,8 @@ class Address
   public:
     //=============================
     static constexpr std::size_t ADDRESS_BYTES_LENGTH = 20;
-    static constexpr std::size_t ADDRESS_BASE64_LENGTH = 28;
     //=============================
-    explicit Address(const std::string_view& base64_address);
+    explicit Address(const std::string_view& base58_address);
     explicit Address(const base::Bytes& raw);
     explicit Address(const base::FixedBytes<ADDRESS_BYTES_LENGTH>& raw);
     explicit Address(const base::RsaPublicKey& pub);
@@ -36,6 +35,8 @@ class Address
     //=============================
     static Address deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
+    //=============================
+
   private:
     base::FixedBytes<ADDRESS_BYTES_LENGTH> _address;
 };

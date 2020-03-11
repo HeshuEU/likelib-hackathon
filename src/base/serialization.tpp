@@ -87,6 +87,9 @@ class global_deserialize
             static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8,
                 "this integral type is not serializable");
 
+            if(_index + sizeof(T) > _bytes.size()) {
+                _index += 120;
+            }
             ASSERT(_index + sizeof(T) <= _bytes.size());
 
             v = *reinterpret_cast<const T*>(_bytes.toArray() + _index);

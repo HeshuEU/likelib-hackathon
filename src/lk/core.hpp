@@ -5,19 +5,19 @@
 #include "base/utility.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
-#include "lk/account_manager.hpp"
+#include "lk/eth_adapter.hpp"
+#include "lk/managers.hpp"
 #include "lk/protocol.hpp"
 #include "net/host.hpp"
-#include "vm/host.hpp"
-#include "vm/vm.hpp"
 
 #include <shared_mutex>
-#include <vm/host.hpp>
 
 namespace lk
 {
 
-class Core : public evmc::Host
+class EthAdapter;
+
+class Core
 {
   public:
     //==================
@@ -28,7 +28,7 @@ class Core : public evmc::Host
      *
      *  @threadsafe
      */
-    ~Core() override = default;
+    ~Core() = default;
     //==================
     /**
      *  @brief Loads blockchain from disk and runs networking.
@@ -40,76 +40,53 @@ class Core : public evmc::Host
     //==================
     bc::Balance getBalance(const bc::Address& address) const;
     //==================
-    bc::Address createContract(bc::Transaction tx);
-    vm::ExecutionResult messageCall(bc::Transaction tx);
-    bool performTransaction(const bc::Transaction& tx);
+    bool addPendingTransaction(const bc::Transaction& tx);
+    void addPendingTransactionAndWait(const bc::Transaction& tx);
+    base::Bytes getTransactionOutput(const base::Sha256& tx_hash);
     //==================
     bool tryAddBlock(const bc::Block& b);
     std::optional<bc::Block> findBlock(const base::Sha256& hash) const;
+    std::optional<base::Sha256> findBlockHash(const bc::BlockDepth& depth) const;
     const bc::Block& getTopBlock() const;
     //==================
     bc::Block getBlockTemplate() const;
     //==================
-    base::Bytes getThisNodeAddress() const;
-    //==================
-    /*vm::VM& getVm();
-    void createContract(bc::Balance amount, const bc::Address& from_address, const base::Time& transaction_time,
-        bc::Balance gas, const base::Bytes& code, const base::Bytes& initial_message, const bc::Sign& signature);
-    void callMessage(bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-        const base::Time& transaction_time, bc::Balance gas, const base::Bytes& message, const bc::Sign& signature);
-    */
-    //==================
-    bool account_exists(const evmc::address& addr) const noexcept override;
-
-    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& key) const noexcept override;
-
-    evmc_storage_status set_storage(
-        const evmc::address& addr, const evmc::bytes32& key, const evmc::bytes32& value) noexcept override;
-
-    evmc::uint256be get_balance(const evmc::address& addr) const noexcept override;
-
-    size_t get_code_size(const evmc::address& addr) const noexcept override;
-
-    evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override;
-
-    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-        noexcept override;
-
-    void selfdestruct(const evmc::address& addr, const evmc::address& beneficiary) noexcept override;
-
-    evmc::result call(const evmc_message& msg) noexcept override;
-
-    evmc_tx_context get_tx_context() const noexcept override;
-
-    evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override;
-
-    void emit_log(const evmc::address& addr, const uint8_t* data, size_t data_size, const evmc::bytes32 topics[],
-        size_t num_topics) noexcept override;
+    const bc::Address& getThisNodeAddress() const noexcept;
     //==================
   private:
     //==================
+    friend class lk::EthAdapter;
+    //==================
     const base::PropertyTree& _config;
     const base::KeyVault& _vault;
+    const bc::Address _this_node_address;
     //==================
     base::Observable<const bc::Block&> _event_block_added;
     base::Observable<const bc::Transaction&> _event_new_pending_transaction;
     //==================
     bool _is_account_manager_updated{false};
     AccountManager _account_manager;
+    CodeManager _code_manager;
     bc::Blockchain _blockchain;
     lk::Network _network;
+    //==================
+    lk::EthAdapter _eth_adapter;
+    //==================
+    std::unordered_map<base::Sha256, base::Bytes> _tx_outputs;
+    mutable std::shared_mutex _tx_outputs_mutex;
     //==================
     bc::TransactionsSet _pending_transactions;
     mutable std::shared_mutex _pending_transactions_mutex;
     //==================
     static const bc::Block& getGenesisBlock();
-    void updateNewBlock(const bc::Block& block);
+    void applyBlockTransactions(const bc::Block& block);
     //==================
     bool checkBlock(const bc::Block& block) const;
     bool checkTransaction(const bc::Transaction& tx) const;
     //==================
-    bc::Address doContractCreation(const bc::Transaction& tx);
-    vm::ExecutionResult doMessageCall(const bc::Transaction& tx);
+    bool tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx);
+    std::pair<bc::Address, base::Bytes> doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx);
+    base::Bytes doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx);
     //==================
   public:
     //==================

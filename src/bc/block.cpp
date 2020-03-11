@@ -7,8 +7,8 @@
 namespace bc
 {
 
-Block::Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, TransactionsSet txs)
-    : _depth{depth}, _prev_block_hash{std::move(prev_block_hash)}, _txs(std::move(txs))
+Block::Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, base::Time timestamp, bc::Address coinbase, TransactionsSet txs)
+    : _depth{depth}, _prev_block_hash{std::move(prev_block_hash)}, _timestamp{std::move(timestamp)}, _coinbase{std::move(coinbase)}, _txs(std::move(txs))
 {}
 
 
@@ -17,17 +17,21 @@ void Block::serialize(base::SerializationOArchive& oa) const
     oa.serialize(_depth);
     oa.serialize(_nonce);
     oa.serialize(_prev_block_hash);
+    oa.serialize(_timestamp);
+    oa.serialize(_coinbase);
     oa.serialize(_txs);
 }
 
 
 Block Block::deserialize(base::SerializationIArchive& ia)
 {
-    BlockDepth depth = ia.deserialize<BlockDepth>();
-    NonceInt nonce = ia.deserialize<NonceInt>();
-    auto prev_block_hash = base::Sha256::deserialize(ia);
-    TransactionsSet txs = ia.deserialize<TransactionsSet>();
-    Block ret{depth, std::move(prev_block_hash), std::move(txs)};
+    auto depth = ia.deserialize<BlockDepth>();
+    auto nonce = ia.deserialize<NonceInt>();
+    auto prev_block_hash = ia.deserialize<base::Sha256>();
+    auto timestamp = ia.deserialize<base::Time>();
+    auto coinbase = ia.deserialize<bc::Address>();
+    auto txs = ia.deserialize<TransactionsSet>();
+    Block ret{depth, std::move(prev_block_hash), std::move(timestamp), std::move(coinbase), std::move(txs)};
     ret.setNonce(nonce);
     return ret;
 }
@@ -69,6 +73,18 @@ void Block::setNonce(NonceInt nonce) noexcept
 }
 
 
+const base::Time& Block::getTimestamp() const noexcept
+{
+    return _timestamp;
+}
+
+
+const bc::Address& Block::getCoinbase() const noexcept
+{
+    return _coinbase;
+}
+
+
 void Block::setPrevBlockHash(const base::Sha256& prev_block_hash)
 {
     _prev_block_hash = prev_block_hash;
@@ -90,27 +106,14 @@ void Block::addTransaction(const Transaction& tx)
 bool operator==(const bc::Block& a, const bc::Block& b)
 {
     return a.getDepth() == b.getDepth() && a.getNonce() == b.getNonce() &&
-        a.getPrevBlockHash() == b.getPrevBlockHash() && a.getTransactions() == b.getTransactions();
+        a.getPrevBlockHash() == b.getPrevBlockHash() && a.getTimestamp() == b.getTimestamp() && a.getCoinbase() == b.getCoinbase() &&
+        a.getTransactions() == b.getTransactions();
 }
 
 
 bool operator!=(const bc::Block& a, const bc::Block& b)
 {
     return !(a == b);
-}
-
-
-base::SerializationIArchive& operator>>(base::SerializationIArchive& ia, Block& block)
-{
-    block = Block::deserialize(ia);
-    return ia;
-}
-
-
-base::SerializationOArchive& operator<<(base::SerializationOArchive& oa, const Block& block)
-{
-    block.serialize(oa);
-    return oa;
 }
 
 

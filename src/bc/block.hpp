@@ -16,7 +16,7 @@ class Block
 {
   public:
     //=================
-    Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, TransactionsSet txs);
+    Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, base::Time timestamp, bc::Address coinbase, TransactionsSet txs);
 
     Block(const Block&) = default;
     Block(Block&&) = default;
@@ -33,6 +33,8 @@ class Block
     const base::Sha256& getPrevBlockHash() const;
     const TransactionsSet& getTransactions() const;
     NonceInt getNonce() const noexcept;
+    const base::Time& getTimestamp() const noexcept;
+    const bc::Address& getCoinbase() const noexcept;
     //=================
     void setDepth(BlockDepth depth) noexcept;
     void setNonce(NonceInt nonce) noexcept;
@@ -44,8 +46,9 @@ class Block
     //=================
     bc::BlockDepth _depth;
     NonceInt _nonce;
-
     base::Sha256 _prev_block_hash;
+    base::Time _timestamp;
+    bc::Address _coinbase;
     TransactionsSet _txs;
     //=================
 };

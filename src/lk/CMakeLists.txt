@@ -1,11 +1,13 @@
 set(LK_HEADERS
-        account_manager.hpp
+        eth_adapter.hpp
+        managers.hpp
         core.hpp
         protocol.hpp
         )
 
 set(LK_SOURCES
-        account_manager.cpp
+        eth_adapter.cpp
+        managers.cpp
         core.cpp
         protocol.cpp
         )

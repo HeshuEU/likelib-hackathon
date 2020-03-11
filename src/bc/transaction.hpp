@@ -124,7 +124,7 @@ class TransactionBuilder
     void setAmount(bc::Balance amount);
     void setTimestamp(base::Time timestamp);
     void setFee(bc::Balance fee);
-    void setTransactionType(Transaction::Type transaction_type);
+    void setType(Transaction::Type type);
     void setData(base::Bytes data);
     void setSign(bc::Sign sign);
 

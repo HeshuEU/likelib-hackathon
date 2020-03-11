@@ -41,7 +41,7 @@ class Peer;
 struct PeerInfo
 {
     net::Endpoint endpoint;
-    base::Bytes address;
+    bc::Address address;
 
     static PeerInfo deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
@@ -52,7 +52,7 @@ class HandshakeMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const bc::Block& block, const base::Bytes& address,
+    static void serialize(base::SerializationOArchive& oa, const bc::Block& block, const bc::Address& address,
         std::uint16_t public_port, const std::vector<PeerInfo>& known_peers);
     void serialize(base::SerializationOArchive& oa) const;
     static HandshakeMessage deserialize(base::SerializationIArchive& ia);
@@ -60,13 +60,13 @@ class HandshakeMessage
 
   private:
     bc::Block _theirs_top_block;
-    base::Bytes _address;
+    bc::Address _address;
     std::uint16_t
         _public_port; // zero public port states that peer didn't provide information about his public endpoint
     std::vector<PeerInfo> _known_peers;
 
     HandshakeMessage(
-        bc::Block&& top_block, base::Bytes address, std::uint16_t public_port, std::vector<PeerInfo>&& known_peers);
+        bc::Block&& top_block, bc::Address address, std::uint16_t public_port, std::vector<PeerInfo>&& known_peers);
 };
 
 
@@ -204,16 +204,16 @@ class NewNodeMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(
-        base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint, const base::Bytes& address);
+        base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint, const bc::Address& address);
     void serialize(base::SerializationOArchive& oa) const;
     static NewNodeMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
 
   private:
     net::Endpoint _new_node_endpoint;
-    base::Bytes _address;
+    bc::Address _address;
 
-    NewNodeMessage(net::Endpoint&& new_node_endpoint, base::Bytes&& address);
+    NewNodeMessage(net::Endpoint&& new_node_endpoint, bc::Address&& address);
 };
 
 //============================================
@@ -251,19 +251,19 @@ class Peer
     //================
     Peer(Network& owning_network_object, net::Session& session, Core& _core);
     //================
-    net::Endpoint getEndpoint() const;
-    std::optional<net::Endpoint> getPublicEndpoint() const;
+    [[nodiscard]] net::Endpoint getEndpoint() const;
+    [[nodiscard]] std::optional<net::Endpoint> getPublicEndpoint() const;
     void setServerEndpoint(net::Endpoint endpoint);
     //================
-    std::optional<base::Bytes> getAddress() const;
-    void setAddress(base::Bytes address);
+    std::optional<bc::Address> getAddress() const;
+    void setAddress(bc::Address address);
     //================
     void setState(State new_state);
     State getState() const noexcept;
     //================
     void addSyncBlock(bc::Block block);
     bool applySyncs();
-    const std::forward_list<bc::Block>& getSyncBlocks() const noexcept;
+    [[nodiscard]] const std::forward_list<bc::Block>& getSyncBlocks() const noexcept;
     //================
     [[nodiscard]] std::unique_ptr<net::Handler> createHandler();
     //================
@@ -302,7 +302,7 @@ class Peer
     //================
     State _state{State::JUST_ESTABLISHED};
     std::optional<net::Endpoint> _endpoint_for_incoming_connections;
-    std::optional<base::Bytes> _address;
+    std::optional<bc::Address> _address;
     //================
     std::forward_list<bc::Block> _sync_blocks;
     //================
@@ -318,7 +318,7 @@ class Network
     void run();
     //================
     [[nodiscard]] std::vector<PeerInfo> allConnectedPeersInfo() const;
-    bool checkOutNode(const net::Endpoint& endpoint, const base::Bytes& address);
+    bool checkOutNode(const net::Endpoint& endpoint, const bc::Address& address);
     //================
     void broadcast(const base::Bytes& data);
     //================

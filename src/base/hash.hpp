@@ -15,7 +15,7 @@ class Sha256
     //----------------------------------
     Sha256(const Sha256&) = default;
     Sha256(Sha256&&) = default;
-    Sha256(const Bytes& data);
+    explicit Sha256(const Bytes& data);
     Sha256(Bytes&& data);
     Sha256(const FixedBytes<SHA256_SIZE>& data);
     Sha256(FixedBytes<SHA256_SIZE>&& data);

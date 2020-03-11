@@ -37,7 +37,8 @@
 //     evmc_storage_status set_storage(
 //         const evmc::address& addr, const evmc::bytes32& key, const evmc::bytes32& value) noexcept override
 //     {
-//         std::cout << "set_storage method call: address[" << vm::toBytes(addr).toHex() << "], key[" << vm::toBytes(key)
+//         std::cout << "set_storage method call: address[" << vm::toBytes(addr).toHex() << "], key[" <<
+//         vm::toBytes(key)
 //                   << "], value[" << vm::toBytes(value) << "].\n";
 //         auto f = _storage.find(key);
 //         if(f != _storage.end()) {
@@ -84,7 +85,8 @@
 
 //     evmc::result call(const evmc_message& msg) noexcept override
 //     {
-//         std::cout << "call method call: snd[" << vm::toBytes(msg.sender) << "], dest[" << vm::toBytes(msg.destination)
+//         std::cout << "call method call: snd[" << vm::toBytes(msg.sender) << "], dest[" <<
+//         vm::toBytes(msg.destination)
 //                   << "].\n";
 //         evmc::result res{evmc_status_code::EVMC_SUCCESS, 0, nullptr, 0};
 //         return res;
