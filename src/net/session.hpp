@@ -29,10 +29,10 @@ class Session
     explicit Session(std::unique_ptr<Connection> connection);
     ~Session();
     //==================
-    [[nodiscard]] bool isActive() const;
-    [[nodiscard]] bool isClosed() const;
+    bool isActive() const;
+    bool isClosed() const;
     //==================
-    [[nodiscard]] std::size_t getId() const;
+    std::size_t getId() const;
     //==================
     void setHandler(std::unique_ptr<Handler> handler);
     //==================

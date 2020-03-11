@@ -29,10 +29,10 @@ class Block
     void serialize(base::SerializationOArchive& oa) const;
     [[nodiscard]] static Block deserialize(base::SerializationIArchive& ia);
     //=================
-    [[nodiscard]] BlockDepth getDepth() const noexcept;
-    [[nodiscard]] const base::Sha256& getPrevBlockHash() const;
-    [[nodiscard]] const TransactionsSet& getTransactions() const;
-    [[nodiscard]] NonceInt getNonce() const noexcept;
+    BlockDepth getDepth() const noexcept;
+    const base::Sha256& getPrevBlockHash() const;
+    const TransactionsSet& getTransactions() const;
+    NonceInt getNonce() const noexcept;
     //=================
     void setDepth(BlockDepth depth) noexcept;
     void setNonce(NonceInt nonce) noexcept;

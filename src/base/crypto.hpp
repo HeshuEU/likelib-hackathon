@@ -109,7 +109,7 @@ class AesKey
     [[nodiscard]] Bytes encrypt(const Bytes& data) const;
     [[nodiscard]] Bytes decrypt(const Bytes& data) const;
     //=================
-    [[nodiscard]] std::size_t size() const;
+    std::size_t size() const;
     //=================
     void save(const std::filesystem::path& path);
     static AesKey read(const std::filesystem::path& path);
@@ -143,8 +143,8 @@ class KeyVault
     //---------------------------
     ~KeyVault() = default;
     //---------------------------
-    [[nodiscard]] const base::RsaPublicKey& getPublicKey() const noexcept;
-    [[nodiscard]] const base::RsaPrivateKey& getPrivateKey() const noexcept;
+    const base::RsaPublicKey& getPublicKey() const noexcept;
+    const base::RsaPrivateKey& getPrivateKey() const noexcept;
     //---------------------------
   private:
     //---------------------------

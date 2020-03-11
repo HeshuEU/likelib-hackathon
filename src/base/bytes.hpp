@@ -50,14 +50,14 @@ class Bytes
 
     Bytes& append(const Bytes& bytes);
     //==============
-    [[nodiscard]] std::size_t size() const noexcept;
+    std::size_t size() const noexcept;
     //==============
     void clear();
     void resize(std::size_t new_size);
     void reserve(std::size_t reserve_size);
-    [[nodiscard]] std::size_t capacity() const;
+    std::size_t capacity() const;
     void shrinkToFit();
-    [[nodiscard]] bool isEmpty() const noexcept;
+    bool isEmpty() const noexcept;
     //==============
     [[nodiscard]] const Byte* toArray() const;
     [[nodiscard]] Byte* toArray();
@@ -65,16 +65,21 @@ class Bytes
     [[nodiscard]] std::vector<Byte>& toVector() noexcept;
     [[nodiscard]] const std::vector<Byte>& toVector() const noexcept;
     //==============
+
+    [[nodiscard]] std::string toHex() const;
+
     [[nodiscard]] std::string toString() const;
     //==============
-    [[nodiscard]] bool operator==(const Bytes& another) const;
-    [[nodiscard]] bool operator!=(const Bytes& another) const;
+    [[nodiscard]] static Bytes fromHex(const std::string_view& hex_view);
+    //==============
+    bool operator==(const Bytes& another) const;
+    bool operator!=(const Bytes& another) const;
 
     // lexicographical compare
-    [[nodiscard]] bool operator<(const Bytes& another) const;
-    [[nodiscard]] bool operator>(const Bytes& another) const;
-    [[nodiscard]] bool operator<=(const Bytes& another) const;
-    [[nodiscard]] bool operator>=(const Bytes& another) const;
+    bool operator<(const Bytes& another) const;
+    bool operator>(const Bytes& another) const;
+    bool operator<=(const Bytes& another) const;
+    bool operator>=(const Bytes& another) const;
     //==============
 
   private:
@@ -91,7 +96,6 @@ class FixedBytes
   public:
     FixedBytes();
     explicit FixedBytes(const std::vector<Byte>& bytes);
-    explicit FixedBytes(const Bytes& bytes);
     explicit FixedBytes(const std::string& str);
     FixedBytes(const Byte* bytes, std::size_t length);
     FixedBytes(std::initializer_list<Byte> l);
@@ -104,30 +108,27 @@ class FixedBytes
     Byte& operator[](std::size_t index);
     const Byte& operator[](std::size_t index) const;
     //==============
-    [[nodiscard]] std::size_t size() const noexcept;
+    std::size_t size() const noexcept;
     //==============
-    [[nodiscard]] const Byte* getData() const;
-    [[nodiscard]] Byte* getData();
-    [[nodiscard]] const std::array<Byte, S>& toArray() const noexcept;
-    [[nodiscard]] std::array<Byte, S>& toArray() noexcept;
-    [[nodiscard]] Bytes toBytes() const;
+    [[nodiscard]] const Byte* toArray() const;
+    [[nodiscard]] Byte* toArray();
     //==============
+    [[nodiscard]] std::string toHex() const;
     [[nodiscard]] std::string toString() const;
     //==============
-    [[nodiscard]] bool operator==(const FixedBytes& another) const;
-    [[nodiscard]] bool operator!=(const FixedBytes& another) const;
+    bool operator==(const FixedBytes& another) const;
+    bool operator!=(const FixedBytes& another) const;
 
     // lexicographical compare
-    [[nodiscard]] bool operator<(const FixedBytes& another) const;
-    [[nodiscard]] bool operator>(const FixedBytes& another) const;
-    [[nodiscard]] bool operator<=(const FixedBytes& another) const;
-    [[nodiscard]] bool operator>=(const FixedBytes& another) const;
+    bool operator<(const FixedBytes& another) const;
+    bool operator>(const FixedBytes& another) const;
+    bool operator<=(const FixedBytes& another) const;
+    bool operator>=(const FixedBytes& another) const;
     //==============
   private:
     std::array<Byte, S> _array;
 };
 
-// TODO: add comparison operators for Bytes and FixedBytes
 
 std::string base64Encode(const base::Bytes& bytes);
 base::Bytes base64Decode(std::string_view base64);
@@ -149,13 +150,6 @@ template<>
 struct hash<base::Bytes>
 {
     std::size_t operator()(const base::Bytes& k) const;
-};
-
-
-template<std::size_t S>
-struct hash<base::FixedBytes<S>>
-{
-    std::size_t operator()(const base::FixedBytes<S>& k) const;
 };
 } // namespace std
 
