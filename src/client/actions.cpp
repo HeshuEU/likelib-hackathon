@@ -171,7 +171,7 @@ int ActionTransfer::execute()
         tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
 
     if(status) {
-        std::cout << "Transaction successfully performed";
+        std::cout << "Transaction successfully performed" << std::endl;
     }
     else {
         std::cerr << "Transaction failed with message: " << status.getMessage() << std::endl;
