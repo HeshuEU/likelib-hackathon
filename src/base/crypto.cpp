@@ -472,7 +472,7 @@ Bytes AesKey::encrypt256Aes(const Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -497,7 +497,7 @@ base::Bytes AesKey::decrypt256Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -522,7 +522,7 @@ base::Bytes AesKey::encrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -547,7 +547,7 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -605,7 +605,7 @@ Secp256PrivateKey::Secp256PrivateKey() : _secp_key(generate_bytes(SECP256_PRIVAT
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
-    if(secp256k1_ec_seckey_verify(context.get(), _secp_key.toArray()) == 0) {
+    if(secp256k1_ec_seckey_verify(context.get(), _secp_key.getData()) == 0) {
         RAISE_ERROR(base::CryptoError, "error create secp_key");
     }
 }
@@ -630,7 +630,7 @@ base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> Secp256PrivateKey::s
         secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
     if(secp256k1_ecdsa_sign_recoverable(
-           context.get(), &recoverable_signature, bytes.toArray(), _secp_key.toArray(), nullptr, nullptr) == 0) {
+           context.get(), &recoverable_signature, bytes.getData(), _secp_key.getData(), nullptr, nullptr) == 0) {
         RAISE_ERROR(base::CryptoError, "error signing transaction");
     }
     return base::FixedBytes<SECP256_SIGNATURE_SIZE>(recoverable_signature.data, SECP256_SIGNATURE_SIZE);
@@ -674,7 +674,7 @@ Secp256PublicKey::Secp256PublicKey(const Secp256PrivateKey& private_key)
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
     secp256k1_pubkey pubkey;
-    if(secp256k1_ec_pubkey_create(context.get(), &pubkey, private_key.getBytes().toArray()) == 0) {
+    if(secp256k1_ec_pubkey_create(context.get(), &pubkey, private_key.getBytes().getData()) == 0) {
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
     _secp_key = base::FixedBytes<64>(pubkey.data, SECP256_PUBLIC_KEY_SIZE);
@@ -701,8 +701,8 @@ bool Secp256PublicKey::verifySignature(
         secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
     secp256k1_pubkey pubkey;
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
-    memcpy(recoverable_signature.data, signature.toArray(), Secp256PrivateKey::SECP256_SIGNATURE_SIZE);
-    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.toArray()) == 0) {
+    memcpy(recoverable_signature.data, signature.getData(), Secp256PrivateKey::SECP256_SIGNATURE_SIZE);
+    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.getData()) == 0) {
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
     base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> signature_pubkey(pubkey.data, SECP256_PUBLIC_KEY_SIZE);

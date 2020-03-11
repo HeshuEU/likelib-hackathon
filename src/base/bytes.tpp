@@ -5,6 +5,8 @@
 #include "base/assert.hpp"
 #include "base/error.hpp"
 
+#include <boost/container_hash/hash.hpp>
+
 #include <algorithm>
 
 
@@ -33,7 +35,7 @@ namespace base
 {
 
 template<std::size_t S>
-Bytes::Bytes(const FixedBytes<S>& bytes) : _raw(bytes.toArray(), S)
+Bytes::Bytes(const FixedBytes<S>& bytes) : _raw(bytes.getData(), S)
 {}
 
 template<typename I>
@@ -126,28 +128,42 @@ const Byte& FixedBytes<S>::operator[](std::size_t index) const
 template<std::size_t S>
 std::size_t FixedBytes<S>::size() const noexcept
 {
-    return _array.size();
+    return S;
 }
 
 
 template<std::size_t S>
-const Byte* FixedBytes<S>::toArray() const
+const Byte* FixedBytes<S>::getData() const
 {
     return _array.data();
 }
 
 
 template<std::size_t S>
-Byte* FixedBytes<S>::toArray()
+Byte* FixedBytes<S>::getData()
 {
     return _array.data();
+}
+
+
+template<std::size_t S>
+const std::array<Byte, S>& FixedBytes<S>::toArray() const noexcept
+{
+    return _array;
+}
+
+
+template<std::size_t S>
+std::array<Byte, S>& FixedBytes<S>::toArray() noexcept
+{
+    return _array;
 }
 
 
 template<std::size_t S>
 Bytes FixedBytes<S>::toBytes() const
 {
-    return Bytes(toArray(), S);
+    return Bytes(getData(), S);
 }
 
 
@@ -248,8 +264,13 @@ T fromHex(const std::string_view& hex_view)
 } // namespace base
 
 
-// template<std::size_t S>
-// std::size_t std::hash<base::FixedBytes<S>>::operator()(const base::FixedBytes<S>& k) const
-// {
-//     return boost::hash_value(k.toBytes().toVector());
-// }
+template<std::size_t S>
+std::size_t std::hash<base::FixedBytes<S>>::operator()(const base::FixedBytes<S>& k) const
+{
+    /*
+        This hash function is not intended for general use, and isn't guaranteed to be equal 
+        during separate runs of a program - so please don't use it for any persistent 
+        storage or communication.
+    */
+    return boost::hash<decltype(k.toArray())>{}(k.toArray());
+}

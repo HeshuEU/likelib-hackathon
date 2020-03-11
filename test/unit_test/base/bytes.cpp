@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(fixed_bytes_constructor_from_array_of_chars)
     for(std::size_t i = 0; i < fb1.size(); i++) {
         fb1[i] = (static_cast<base::Byte>(i ^ 3));
     }
-    auto c_str = fb1.toArray();
+    auto c_str = fb1.getData();
     base::FixedBytes<111> fb2(c_str, fb1.size());
 
     BOOST_CHECK(fb2.size() == fb1.size());

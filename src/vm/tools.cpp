@@ -71,7 +71,7 @@ evmc::bytes32 toEvmcBytes32(const base::Bytes& data)
 evmc::bytes32 toEvmcBytes32(const base::FixedBytes<32>& data)
 {
     evmc::bytes32 res;
-    memcpy(res.bytes, data.toArray(), 32);
+    memcpy(res.bytes, data.getData(), 32);
     return res;
 }
 
@@ -182,7 +182,7 @@ evmc::address toEthAddress(const bc::Address& address)
     evmc::address ret;
     auto byte_address = address.getBytes();
     ASSERT(byte_address.size() == std::size(ret.bytes));
-    std::copy(byte_address.toArray(), byte_address.toArray() + byte_address.size(), ret.bytes);
+    std::copy(byte_address.getData(), byte_address.getData() + byte_address.size(), ret.bytes);
     return ret;
 }
 

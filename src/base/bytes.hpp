@@ -111,8 +111,10 @@ class FixedBytes
     //==============
     [[nodiscard]] std::size_t size() const noexcept;
     //==============
-    [[nodiscard]] const Byte* toArray() const;
-    [[nodiscard]] Byte* toArray();
+    [[nodiscard]] const Byte* getData() const;
+    [[nodiscard]] Byte* getData();
+    [[nodiscard]] const std::array<Byte, S>& toArray() const noexcept;
+    [[nodiscard]] std::array<Byte, S>& toArray() noexcept;
     [[nodiscard]] Bytes toBytes() const;
     //==============
     [[nodiscard]] std::string toHex() const;
@@ -131,7 +133,7 @@ class FixedBytes
     std::array<Byte, S> _array;
 };
 
-//TODO: add comparison operators for Bytes and FixedBytes
+// TODO: add comparison operators for Bytes and FixedBytes
 
 std::string base64Encode(const base::Bytes& bytes);
 base::Bytes base64Decode(std::string_view base64);

@@ -81,7 +81,7 @@ bool Sha256::operator<(const Sha256& another) const
 Sha256 Sha256::compute(const base::Bytes& data)
 {
     base::FixedBytes<SHA256_SIZE> ret;
-    SHA256(data.toArray(), data.size(), ret.toArray());
+    SHA256(data.toArray(), data.size(), ret.getData());
     return Sha256(ret);
 }
 
@@ -108,7 +108,7 @@ std::ostream& operator<<(std::ostream& os, const Sha256& sha)
 
 std::size_t std::hash<base::Sha256>::operator()(const base::Sha256& k) const
 {
-    return std::hash<base::Bytes>{}(k.getBytes().toBytes());
+    return std::hash<base::FixedBytes<base::Sha256::SHA256_SIZE>>{}(k.getBytes());
 }
 
 namespace base
@@ -170,7 +170,7 @@ bool Sha1::operator!=(const Sha1& another) const
 Sha1 Sha1::compute(const base::Bytes& data)
 {
     base::FixedBytes<SHA1_SIZE> ret;
-    SHA1(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.toArray()));
+    SHA1(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.getData()));
     return Sha1(ret);
 }
 
@@ -197,7 +197,7 @@ std::ostream& operator<<(std::ostream& os, const Sha1& sha)
 
 std::size_t std::hash<base::Sha1>::operator()(const base::Sha1& k) const
 {
-    return std::hash<base::Bytes>{}(k.getBytes().toBytes());
+    return std::hash<base::FixedBytes<base::Sha1::SHA1_SIZE>>{}(k.getBytes());
 }
 
 
@@ -269,7 +269,7 @@ Ripemd160 Ripemd160::compute(const base::Bytes& data)
         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
     }
 
-    if(1 != RIPEMD160_Final(ret.toArray(), &context)) {
+    if(1 != RIPEMD160_Final(ret.getData(), &context)) {
         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
     }
     return Ripemd160(ret);
@@ -298,7 +298,7 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& ripemd)
 
 std::size_t std::hash<base::Ripemd160>::operator()(const base::Ripemd160& k) const
 {
-    return std::hash<base::Bytes>{}(k.getBytes().toBytes());
+    return std::hash<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>{}(k.getBytes());
 }
 
 

@@ -8,7 +8,7 @@ template<std::size_t S>
 Sha256 Sha256::compute(const FixedBytes<S>& data)
 {
     base::FixedBytes<SHA256_SIZE> ret;
-    SHA256(data.toArray(), S, ret.toArray());
+    SHA256(data.getData(), S, ret.getData());
     return Sha256(ret);
 }
 
@@ -17,7 +17,7 @@ template<std::size_t S>
 Sha1 Sha1::compute(const FixedBytes<S>& data)
 {
     base::FixedBytes<SHA1_SIZE> ret;
-    SHA1(data.toArray(), S, reinterpret_cast<unsigned char*>(ret.toArray()));
+    SHA1(data.getData(), S, reinterpret_cast<unsigned char*>(ret.getData()));
     return Sha1(ret);
 }
 
@@ -31,11 +31,11 @@ Ripemd160 Ripemd160::compute(const FixedBytes<S>& data)
         RAISE_ERROR(CryptoError, "failed to initialize context for Ripemd160");
     }
 
-    if(1 != RIPEMD160_Update(&context, data.toArray(), S)) {
+    if(1 != RIPEMD160_Update(&context, data.getData(), S)) {
         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
     }
 
-    if(1 != RIPEMD160_Final(ret.toArray(), &context)) {
+    if(1 != RIPEMD160_Final(ret.getData(), &context)) {
         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
     }
     return Ripemd160(ret);

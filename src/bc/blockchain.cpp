@@ -30,7 +30,7 @@ base::Bytes toBytes(DataType type, const base::FixedBytes<S>& key)
 {
     base::Bytes data;
     data.append(static_cast<base::Byte>(type));
-    data.append(key.toArray(), S);
+    data.append(key.getData(), S);
     return data;
 }
 
