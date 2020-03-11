@@ -682,6 +682,7 @@ int ActionGetBlock::execute()
         << "\tDepth: " << block.getDepth() << '\n'
         << "\tTimestamp: " << block.getTimestamp() << '\n'
         << "\tCoinbase: " << block.getCoinbase() << '\n'
+        << "\tPrevious block hash: " << block.getPrevBlockHash().toHex() << '\n'
         << "\tNumber of transactions: " << block.getTransactions().size() << std::endl;
 
     std::size_t tx_index = 0;
