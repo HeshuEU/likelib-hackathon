@@ -189,7 +189,7 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_runtime_compilation_
         auto delimiter_pos = path.find(':');
         auto source_file = path.substr(0, delimiter_pos);
         auto contract_name = path.substr(delimiter_pos + 1, path.size());
-        auto bytecode = base::Bytes::fromHex(out_put_result_values[current_data_index]);
+        auto bytecode = base::fromHex<base::Bytes>(out_put_result_values[current_data_index]);
         contracts_byte_codes.push_back({std::move(contract_name), std::move(bytecode)});
     }
 
@@ -222,7 +222,7 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_com
         auto delimiter_pos = path.find(':');
         auto source_file = path.substr(0, delimiter_pos);
         auto contract_name = path.substr(delimiter_pos + 1, path.size());
-        auto bytecode = base::Bytes::fromHex(out_put_result_values[current_data_index]);
+        auto bytecode = base::fromHex<base::Bytes>(out_put_result_values[current_data_index]);
         contracts_byte_codes.push_back({std::move(contract_name), std::move(bytecode)});
     }
 
@@ -333,7 +333,7 @@ std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::strin
             current_contract_name = path.substr(delimiter_pos + 1, path.size());
             i++;
         }
-        auto hash = base::Bytes::fromHex(out_put_result_values[i].substr(0, out_put_result_values[i].size() - 1));
+        auto hash = base::fromHex<base::Bytes>(out_put_result_values[i].substr(0, out_put_result_values[i].size() - 1));
         i++;
         auto signature = out_put_result_values[i];
         i++;

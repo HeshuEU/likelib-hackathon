@@ -61,8 +61,8 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
               << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
               << timestamp.getSecondsSinceEpochBeginning() << "], initial_message[" << hex_init << "]";
 
-    auto contract_code = base::Bytes::fromHex(hex_contract_code);
-    auto init = base::Bytes::fromHex(hex_init);
+    auto contract_code = base::fromHex<base::Bytes>(hex_contract_code);
+    auto init = base::fromHex<base::Bytes>(hex_init);
 
     bc::TransactionBuilder txb;
     txb.setTransactionType(bc::Transaction::Type::CONTRACT_CREATION);
@@ -90,16 +90,15 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
 
 
 std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService::transaction_message_call(
-    bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address,
-    const base::Time& timestamp, bc::Balance gas, const std::string& hex_message, const bc::Sign& signature)
+    bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address, const base::Time& timestamp,
+    bc::Balance gas, const std::string& hex_message, const bc::Sign& signature)
 {
     LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
-              << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message["
-              << hex_message << "]";
+              << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message[" << hex_message << "]";
 
 
-    auto message = base::Bytes::fromHex(hex_message);
+    auto message = base::fromHex<base::Bytes>(hex_message);
 
     bc::TransactionBuilder txb;
     txb.setTransactionType(bc::Transaction::Type::MESSAGE_CALL);
@@ -115,10 +114,12 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
 
     try {
         auto result = _core.messageCall(tx);
-        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toOutputData().toHex(), result.gasLeft()};
+        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"),
+            base::toHex<base::Bytes>(result.toOutputData()), result.gasLeft()};
     }
     catch(const std::exception& e) {
-        return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()), std::string{}, gas};
+        return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()),
+            std::string{}, gas};
     }
 }
 

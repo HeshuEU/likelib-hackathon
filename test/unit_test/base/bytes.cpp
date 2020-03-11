@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(bytes_intializer_list_constructor)
 BOOST_AUTO_TEST_CASE(bytes_to_hex)
 {
     base::Bytes bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
-    BOOST_CHECK_EQUAL(bytes.toHex(), "01ff02fe00");
+    BOOST_CHECK_EQUAL(base::toHex<base::Bytes>(bytes), "01ff02fe00");
 }
 
 
@@ -199,10 +199,10 @@ BOOST_AUTO_TEST_CASE(bytes_from_hex)
 {
     base::Bytes target_bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
     auto target_hex = "01ff02fe00";
-    auto hex_view = target_bytes.toHex();
+    auto hex_view = base::toHex<base::Bytes>(target_bytes);
     BOOST_CHECK_EQUAL(hex_view, target_hex);
 
-    auto from_hex_bytes = base::Bytes::fromHex(target_hex);
+    auto from_hex_bytes = base::fromHex<base::Bytes>(target_hex);
     BOOST_CHECK_EQUAL(from_hex_bytes, target_bytes);
 }
 
@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE(fixed_bytes_string_ctor)
 BOOST_AUTO_TEST_CASE(fixed_bytes_to_hex)
 {
     base::FixedBytes<5> bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
-    BOOST_CHECK_EQUAL(bytes.toHex(), "01ff02fe00");
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<5>>(bytes), "01ff02fe00");
 }
 
 

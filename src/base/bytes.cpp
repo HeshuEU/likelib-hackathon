@@ -159,12 +159,6 @@ const std::vector<Byte>& Bytes::toVector() const noexcept
 }
 
 
-std::string Bytes::toHex() const
-{
-    return base::toHex(*this);
-}
-
-
 std::string Bytes::toString() const
 {
     std::string ret(_raw.size(), static_cast<char>(0));
@@ -173,12 +167,6 @@ std::string Bytes::toString() const
         ret[index++] = static_cast<char>(c);
     }
     return ret;
-}
-
-
-Bytes Bytes::fromHex(const std::string_view& hex_view)
-{
-    return base::fromHex<Bytes>(hex_view);
 }
 
 
@@ -227,7 +215,7 @@ base::Bytes operator+(const base::Bytes& a, const base::Bytes& b)
 
 std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
 {
-    return os << bytes.toHex();
+    return os << toHex<Bytes>(bytes);
 }
 
 

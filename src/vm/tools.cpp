@@ -78,7 +78,7 @@ evmc::bytes32 toEvmcBytes32(const base::FixedBytes<32>& data)
 
 bc::Balance toBalance(evmc_uint256be value)
 {
-    auto val = toBytes(value).toHex();
+    auto val = base::toHex<base::Bytes>(toBytes(value));
     char* end;
     return std::strtoull(val.c_str(), &end, 16);
 }

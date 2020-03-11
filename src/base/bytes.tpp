@@ -168,13 +168,6 @@ Bytes FixedBytes<S>::toBytes() const
 
 
 template<std::size_t S>
-std::string FixedBytes<S>::toHex() const
-{
-    return base::toHex(*this);
-}
-
-
-template<std::size_t S>
 std::string FixedBytes<S>::toString() const
 {
     std::string ret(S, static_cast<char>(0));
@@ -259,7 +252,7 @@ T fromHex(const std::string_view& hex_view)
         bytes[current_symbol_index] = (high_part << 4) + low_part;
     }
 
-    return Bytes(bytes);
+    return T(bytes);
 }
 } // namespace base
 

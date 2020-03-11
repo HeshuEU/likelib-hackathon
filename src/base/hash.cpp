@@ -37,7 +37,7 @@ Sha256::Sha256(FixedBytes<Sha256::SHA256_SIZE>&& data) : _bytes(data)
 
 std::string Sha256::toHex() const
 {
-    return _bytes.toHex();
+    return base::toHex<FixedBytes<SHA256_SIZE>>(_bytes);
 }
 
 
@@ -55,8 +55,7 @@ Sha256 Sha256::null()
 
 Sha256 Sha256::fromHex(const std::string& hex_view)
 {
-    auto bytes = Bytes::fromHex(hex_view);
-    return Sha256(bytes);
+    return Sha256(base::fromHex<Bytes>(hex_view));
 }
 
 
@@ -100,7 +99,7 @@ Sha256 Sha256::deserialize(SerializationIArchive& ia)
 
 std::ostream& operator<<(std::ostream& os, const Sha256& sha)
 {
-    return os << sha.getBytes().toHex();
+    return os << toHex<FixedBytes<Sha256::SHA256_SIZE>>(sha.getBytes());
 }
 
 } // namespace base
@@ -139,7 +138,7 @@ Sha1::Sha1(FixedBytes<Sha1::SHA1_SIZE>&& data) : _bytes(data)
 
 std::string Sha1::toHex() const
 {
-    return _bytes.toHex();
+    return base::toHex<FixedBytes<SHA1_SIZE>>(_bytes);
 }
 
 
@@ -151,7 +150,7 @@ const base::FixedBytes<Sha1::SHA1_SIZE>& Sha1::getBytes() const noexcept
 
 Sha1 Sha1::fromHex(const std::string_view& hex_view)
 {
-    return Sha1(Bytes::fromHex(hex_view));
+    return Sha1(base::fromHex<Bytes>(hex_view));
 }
 
 
@@ -189,7 +188,7 @@ Sha1 Sha1::deserialize(SerializationIArchive& ia)
 
 std::ostream& operator<<(std::ostream& os, const Sha1& sha)
 {
-    return os << sha.getBytes().toHex();
+    return os << base::toHex<FixedBytes<Sha1::SHA1_SIZE>>(sha.getBytes());
 }
 
 } // namespace base
@@ -229,7 +228,7 @@ Ripemd160::Ripemd160(FixedBytes<Ripemd160::RIPEMD160_SIZE>&& data) : _bytes(data
 
 std::string Ripemd160::toHex() const
 {
-    return _bytes.toHex();
+    return base::toHex<FixedBytes<Ripemd160::RIPEMD160_SIZE>>(_bytes);
 }
 
 
@@ -241,7 +240,7 @@ const base::FixedBytes<Ripemd160::RIPEMD160_SIZE>& Ripemd160::getBytes() const n
 
 Ripemd160 Ripemd160::fromHex(const std::string& hex_view)
 {
-    return Ripemd160(Bytes::fromHex(hex_view));
+    return Ripemd160(base::fromHex<Bytes>(hex_view));
 }
 
 
@@ -290,7 +289,7 @@ Ripemd160 Ripemd160::deserialize(SerializationIArchive& ia)
 
 std::ostream& operator<<(std::ostream& os, const Ripemd160& ripemd)
 {
-    return os << ripemd.getBytes().toHex();
+    return os << ripemd.toHex();
 }
 
 } // namespace base
@@ -314,7 +313,7 @@ Sha3::Sha3(Bytes&& data) : _type(getSha3Type(data.size())), _bytes(data)
 
 std::string Sha3::toHex() const
 {
-    return _bytes.toHex();
+    return base::toHex<Bytes>(_bytes);
 }
 
 
@@ -338,7 +337,7 @@ std::size_t Sha3::size() const noexcept
 
 Sha3 Sha3::fromHex(const std::string_view& hex_view)
 {
-    auto bytes = Bytes::fromHex(hex_view);
+    auto bytes = base::fromHex<Bytes>(hex_view);
     return Sha3(bytes);
 }
 
@@ -435,7 +434,7 @@ Sha3 Sha3::deserialize(SerializationIArchive& ia)
 
 std::ostream& operator<<(std::ostream& os, const Sha3& sha)
 {
-    return os << sha.getBytes().toHex();
+    return os << toHex<Bytes>(sha.getBytes());
 }
 
 } // namespace base

@@ -65,12 +65,7 @@ class Bytes
     [[nodiscard]] std::vector<Byte>& toVector() noexcept;
     [[nodiscard]] const std::vector<Byte>& toVector() const noexcept;
     //==============
-
-    [[nodiscard]] std::string toHex() const;
-
     [[nodiscard]] std::string toString() const;
-    //==============
-    [[nodiscard]] static Bytes fromHex(const std::string_view& hex_view);
     //==============
     [[nodiscard]] bool operator==(const Bytes& another) const;
     [[nodiscard]] bool operator!=(const Bytes& another) const;
@@ -117,7 +112,6 @@ class FixedBytes
     [[nodiscard]] std::array<Byte, S>& toArray() noexcept;
     [[nodiscard]] Bytes toBytes() const;
     //==============
-    [[nodiscard]] std::string toHex() const;
     [[nodiscard]] std::string toString() const;
     //==============
     [[nodiscard]] bool operator==(const FixedBytes& another) const;
