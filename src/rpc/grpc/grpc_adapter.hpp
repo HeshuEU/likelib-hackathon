@@ -36,7 +36,7 @@ class GrpcAdapter final : public likelib::NodePublicInterface::Service
         grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response) override;
 
     grpc::Status balance(
-        grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response) override;
+        grpc::ServerContext* context, const likelib::Address* request, likelib::CurrencyAmount* response) override;
 
     grpc::Status info(grpc::ServerContext* context, const likelib::InfoRequest* request, likelib::InfoResponse* response) override;
 

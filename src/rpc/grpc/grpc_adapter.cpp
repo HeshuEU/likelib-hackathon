@@ -52,12 +52,12 @@ grpc::Status GrpcAdapter::test(
 
 
 grpc::Status GrpcAdapter::balance(
-    grpc::ServerContext* context, const likelib::Address* request, likelib::Money* response)
+    grpc::ServerContext* context, const likelib::Address* request, likelib::CurrencyAmount* response)
 {
     LOG_DEBUG << "received RPC call at balance method from: " << context->peer();
     try {
         bc::Address query_address{request->address()};
-        response->set_money(_service->balance(query_address));
+        response->set_value(_service->balance(query_address));
     }
     catch(const base::Error& e) {
         LOG_ERROR << e.what();
@@ -93,6 +93,18 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context, const likelib:
         response->set_previous_block_hash(block.getPrevBlockHash().toHex());
         response->mutable_coinbase()->set_address(block.getCoinbase().toString());
         response->mutable_timestamp()->set_since_epoch(block.getTimestamp().getSecondsSinceEpochBeginning());
+
+        for(const auto& tx: block.getTransactions()) {
+            likelib::Transaction tv;
+            tv.mutable_from()->set_address(tx.getFrom().toString());
+            tv.mutable_to()->set_address(tx.getTo().toString());
+            tv.mutable_value()->set_value(tx.getAmount());
+            tv.mutable_gas()->set_value(tx.getFee());
+            tv.mutable_creation_time()->set_since_epoch(tx.getTimestamp().getSecondsSinceEpochBeginning());
+            tv.set_data(base::base64Encode(tx.getData()));
+            tv.set_signature(tx.getSign().toBase64());
+            response->mutable_transactions()->Add(std::move(tv));
+        }
     }
     catch(const base::Error& e) {
         LOG_ERROR << e.what();
@@ -107,9 +119,9 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context, const likelib:
 {
     LOG_DEBUG << "received RPC call at transaction_for_create_contract method from: " << context->peer();
     try {
-        auto amount = bc::Balance{request->value().money()};
+        auto amount = bc::Balance{request->value().value()};
         auto from_address = bc::Address{request->from().address()};
-        auto gas = bc::Balance{request->gas().money()};
+        auto gas = bc::Balance{request->fee().value()};
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
         auto contract_code = request->contract_code();
         auto init = request->init();
@@ -120,7 +132,7 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context, const likelib:
 
         convert(status, response->mutable_status());
         response->mutable_contract_address()->set_address(contract_address.toString());
-        response->mutable_gas_left()->set_money(least_gas);
+        response->mutable_gas_left()->set_value(least_gas);
     }
     catch(const base::Error& e) {
         LOG_ERROR << e.what();
@@ -136,10 +148,10 @@ grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
 {
     LOG_DEBUG << "received RPC call at transaction_to_contract method from: " << context->peer();
     try {
-        auto amount = bc::Balance{request->value().money()};
+        auto amount = bc::Balance{request->value().value()};
         auto from_address = bc::Address{request->from().address()};
         auto to_address = bc::Address{request->to().address()};
-        auto gas = bc::Balance{request->gas().money()};
+        auto gas = bc::Balance{request->fee().value()};
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
         auto data = request->data();
         auto sign = bc::Sign::fromBase64(request->signature());
@@ -152,7 +164,7 @@ grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
 
         convert(status, response->mutable_status());
         response->set_contract_response(contract_response);
-        response->mutable_gas_left()->set_money(least_gas);
+        response->mutable_gas_left()->set_value(least_gas);
     }
     catch(const base::Error& e) {
         LOG_ERROR << e.what();

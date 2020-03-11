@@ -678,9 +678,25 @@ int ActionGetBlock::execute()
     LOG_INFO << "Trying to connect to rpc server at " << _host_address;
     rpc::RpcClient client(_host_address);
     auto block = client.get_block(_block_hash);
-    std::cout << "Block " << _block_hash << '\n'
-        << "Depth: " << block.getDepth() << '\n'
-        << "Timestamp: " << block.getTimestamp() << '\n'
-        << "Coinbase: " << block.getCoinbase() << std::endl;
+    std::cout << "Block hash " << _block_hash << '\n'
+        << "\tDepth: " << block.getDepth() << '\n'
+        << "\tTimestamp: " << block.getTimestamp() << '\n'
+        << "\tCoinbase: " << block.getCoinbase() << '\n'
+        << "\tNumber of transactions: " << block.getTransactions().size() << std::endl;
+
+    std::size_t tx_index = 0;
+    for(const auto& tx : block.getTransactions()) {
+        std::cout << "\t\tTransaction #" << ++tx_index << '\n'
+            << "\t\tType: " << (tx.getTo() == bc::Address::null() ? "contract creation" : "message call") << '\n'
+            << "\t\tFrom: " << tx.getFrom().toString() << '\n'
+            << "\t\tTo: " << tx.getTo().toString() << '\n'
+            << "\t\tValue: " << tx.getAmount() << '\n'
+            << "\t\tFee: " << tx.getFee() << '\n'
+            << "\t\tTimestamp: " << tx.getTimestamp() << '\n'
+            << "\t\tData: " << (tx.getData().isEmpty() ? "<empty>" : base::toHex(tx.getData())) << '\n'
+            << "\t\tSignature: " << (tx.checkSign() ? "verified" : "bad signature") << std::endl;
+    }
+    std::cout.flush();
+
     return base::config::EXIT_OK;
 }
