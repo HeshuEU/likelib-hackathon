@@ -1,6 +1,6 @@
 set(BASE_HEADERS
         assert.hpp
-		crypto.hpp
+	crypto.hpp
         big_integer.hpp
         big_integer.tpp
         error.hpp
@@ -14,10 +14,12 @@ set(BASE_HEADERS
         property_tree.tpp
         bytes.hpp
         hash.hpp
+        hash.tpp
         program_options.hpp
         program_options.tpp
         timer.hpp
         database.hpp
+        database.tpp
         serialization.hpp
         serialization.tpp
         time.hpp

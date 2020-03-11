@@ -5,6 +5,8 @@
 #include "base/assert.hpp"
 #include "base/error.hpp"
 
+#include <boost/container_hash/hash.hpp>
+
 #include <algorithm>
 
 
@@ -32,6 +34,10 @@ std::size_t hexToInt(char hex)
 namespace base
 {
 
+template<std::size_t S>
+Bytes::Bytes(const FixedBytes<S>& bytes) : _raw(bytes.getData(), S)
+{}
+
 template<typename I>
 Bytes::Bytes(I begin, I end) : _raw(begin, end)
 {}
@@ -48,7 +54,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::vector<Byte>& bytes)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < bytes.size() || bytes.size() == 0) {
+    if(S != bytes.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes.begin(), S, _array.begin());
@@ -56,10 +62,21 @@ FixedBytes<S>::FixedBytes(const std::vector<Byte>& bytes)
 
 
 template<std::size_t S>
+FixedBytes<S>::FixedBytes(const Bytes& bytes)
+{
+    static_assert(S != 0, "FixedBytes length must be longet than 0");
+    if(S != bytes.size()) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
+    }
+    std::copy_n(bytes.toVector().begin(), S, _array.begin());
+}
+
+
+template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::string& str)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < str.size() || str.size() == 0) {
+    if(S != str.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid string size for FixedBytes");
     }
     for(std::size_t i = 0; i < S; i++) {
@@ -72,7 +89,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const Byte* bytes, std::size_t length)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < length || length == 0) {
+    if(S != length) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes, S, _array.begin());
@@ -83,7 +100,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(std::initializer_list<Byte> l)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < l.size() || l.size() == 0) {
+    if(S != l.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid initializer list size for FixedBytes");
     }
     for(std::size_t i = 0; i < S; i++) {
@@ -111,28 +128,42 @@ const Byte& FixedBytes<S>::operator[](std::size_t index) const
 template<std::size_t S>
 std::size_t FixedBytes<S>::size() const noexcept
 {
-    return _array.size();
+    return S;
 }
 
 
 template<std::size_t S>
-const Byte* FixedBytes<S>::toArray() const
+const Byte* FixedBytes<S>::getData() const
 {
     return _array.data();
 }
 
 
 template<std::size_t S>
-Byte* FixedBytes<S>::toArray()
+Byte* FixedBytes<S>::getData()
 {
     return _array.data();
 }
 
 
 template<std::size_t S>
-std::string FixedBytes<S>::toHex() const
+const std::array<Byte, S>& FixedBytes<S>::toArray() const noexcept
 {
-    return base::toHex(*this);
+    return _array;
+}
+
+
+template<std::size_t S>
+std::array<Byte, S>& FixedBytes<S>::toArray() noexcept
+{
+    return _array;
+}
+
+
+template<std::size_t S>
+Bytes FixedBytes<S>::toBytes() const
+{
+    return Bytes(getData(), S);
 }
 
 
@@ -221,6 +252,18 @@ T fromHex(const std::string_view& hex_view)
         bytes[current_symbol_index] = (high_part << 4) + low_part;
     }
 
-    return Bytes(bytes);
+    return T(bytes);
 }
 } // namespace base
+
+
+template<std::size_t S>
+std::size_t std::hash<base::FixedBytes<S>>::operator()(const base::FixedBytes<S>& k) const
+{
+    /*
+        This hash function is not intended for general use, and isn't guaranteed to be equal 
+        during separate runs of a program - so please don't use it for any persistent 
+        storage or communication.
+    */
+    return boost::hash<decltype(k.toArray())>{}(k.toArray());
+}

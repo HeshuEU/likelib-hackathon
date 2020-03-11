@@ -24,6 +24,16 @@ base::Bytes toBytes(DataType type, const base::Bytes& key)
     return data;
 }
 
+
+template<std::size_t S>
+base::Bytes toBytes(DataType type, const base::FixedBytes<S>& key)
+{
+    base::Bytes data;
+    data.append(static_cast<base::Byte>(type));
+    data.append(key.getData(), S);
+    return data;
+}
+
 const base::Bytes LAST_BLOCK_HASH_KEY{toBytes(DataType::SYSTEM, base::Bytes("last_block_hash"))};
 
 } // namespace

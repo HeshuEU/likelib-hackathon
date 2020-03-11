@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(bytes_intializer_list_constructor)
 BOOST_AUTO_TEST_CASE(bytes_to_hex)
 {
     base::Bytes bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
-    BOOST_CHECK_EQUAL(bytes.toHex(), "01ff02fe00");
+    BOOST_CHECK_EQUAL(base::toHex<base::Bytes>(bytes), "01ff02fe00");
 }
 
 
@@ -199,23 +199,11 @@ BOOST_AUTO_TEST_CASE(bytes_from_hex)
 {
     base::Bytes target_bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
     auto target_hex = "01ff02fe00";
-    auto hex_view = target_bytes.toHex();
+    auto hex_view = base::toHex<base::Bytes>(target_bytes);
     BOOST_CHECK_EQUAL(hex_view, target_hex);
 
-    auto from_hex_bytes = base::Bytes::fromHex(target_hex);
+    auto from_hex_bytes = base::fromHex<base::Bytes>(target_hex);
     BOOST_CHECK_EQUAL(from_hex_bytes, target_bytes);
-}
-
-
-BOOST_AUTO_TEST_CASE(bytes_relation_check)
-{
-    base::Bytes b1 = base::Sha256::compute(base::Bytes("0123")).getBytes();
-    base::Bytes b2 = base::Sha256::compute(base::Bytes("123")).getBytes();
-    base::Bytes b3 = base::Sha256::compute(base::Bytes("1234")).getBytes();
-    base::Bytes b4 = base::Sha256::compute(base::Bytes("1235")).getBytes();
-    BOOST_CHECK(b1 < b2);
-    BOOST_CHECK(b1 > b3);
-    BOOST_CHECK(b1 < b4);
 }
 
 
@@ -241,7 +229,7 @@ BOOST_AUTO_TEST_CASE(fixed_bytes_constructor_from_array_of_chars)
     for(std::size_t i = 0; i < fb1.size(); i++) {
         fb1[i] = (static_cast<base::Byte>(i ^ 3));
     }
-    auto c_str = fb1.toArray();
+    auto c_str = fb1.getData();
     base::FixedBytes<111> fb2(c_str, fb1.size());
 
     BOOST_CHECK(fb2.size() == fb1.size());
@@ -284,7 +272,7 @@ BOOST_AUTO_TEST_CASE(fixed_bytes_string_ctor)
 BOOST_AUTO_TEST_CASE(fixed_bytes_to_hex)
 {
     base::FixedBytes<5> bytes{0x01, 0xFF, 0x02, 0xFE, 0x00};
-    BOOST_CHECK_EQUAL(bytes.toHex(), "01ff02fe00");
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<5>>(bytes), "01ff02fe00");
 }
 
 

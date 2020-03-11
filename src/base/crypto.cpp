@@ -390,13 +390,13 @@ AesKey::AesKey(const Bytes& bytes)
     }
     auto last_bit_number = static_cast<std::size_t>(_type);
     _key = bytes.takePart(0, last_bit_number);
-    _iv = bytes.takePart(last_bit_number, bytes.size());
+    _iv = FixedBytes<16>(bytes.takePart(last_bit_number, bytes.size()));
 }
 
 
 Bytes AesKey::toBytes() const
 {
-    return Bytes(_key.toString() + _iv.toString()); // concatenate size = iv.size() * 3
+    return Bytes(_key.toString() + _iv.toString());
 }
 
 
@@ -472,7 +472,7 @@ Bytes AesKey::encrypt256Aes(const Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -497,7 +497,7 @@ base::Bytes AesKey::decrypt256Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -522,7 +522,7 @@ base::Bytes AesKey::encrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -547,7 +547,7 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.toArray())) {
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
@@ -601,11 +601,11 @@ const base::RsaPrivateKey& KeyVault::getPrivateKey() const noexcept
 }
 
 
-Secp256PrivateKey::Secp256PrivateKey() : _secp_key(generate_bytes(SECP256PRIVATEKEYSIZE))
+Secp256PrivateKey::Secp256PrivateKey() : _secp_key(generate_bytes(SECP256_PRIVATE_KEY_SIZE))
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
-    if(secp256k1_ec_seckey_verify(context.get(), _secp_key.toArray()) == 0) {
+    if(secp256k1_ec_seckey_verify(context.get(), _secp_key.getData()) == 0) {
         RAISE_ERROR(base::CryptoError, "error create secp_key");
     }
 }
@@ -613,29 +613,34 @@ Secp256PrivateKey::Secp256PrivateKey() : _secp_key(generate_bytes(SECP256PRIVATE
 
 Secp256PrivateKey::Secp256PrivateKey(const base::Bytes& private_key_bytes) : _secp_key(private_key_bytes)
 {
-    if(private_key_bytes.size() != SECP256PRIVATEKEYSIZE) {
+    if(private_key_bytes.size() != SECP256_PRIVATE_KEY_SIZE) {
         RAISE_ERROR(base::InvalidArgument, "Invalid size of bytes for Secp256PrivateKey");
     }
 }
 
 
-base::Bytes Secp256PrivateKey::sign(const base::Bytes& bytes) const
+Secp256PrivateKey::Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& private_key_bytes)
+    : _secp_key(private_key_bytes)
+{}
+
+
+base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> Secp256PrivateKey::sign(const base::FixedBytes<32>& bytes) const
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
     if(secp256k1_ecdsa_sign_recoverable(
-           context.get(), &recoverable_signature, bytes.toArray(), _secp_key.toArray(), nullptr, nullptr) == 0) {
+           context.get(), &recoverable_signature, bytes.getData(), _secp_key.getData(), nullptr, nullptr) == 0) {
         RAISE_ERROR(base::CryptoError, "error signing transaction");
     }
-    return base::Bytes(recoverable_signature.data, 65);
+    return base::FixedBytes<SECP256_SIGNATURE_SIZE>(recoverable_signature.data, SECP256_SIGNATURE_SIZE);
 }
 
 
 
 void Secp256PrivateKey::save(const std::filesystem::path& path) const
 {
-    writeFile(path, _secp_key);
+    writeFile(path, _secp_key.toBytes());
 }
 
 
@@ -647,7 +652,7 @@ Secp256PrivateKey Secp256PrivateKey::load(const std::filesystem::path& path)
 
 Secp256PrivateKey Secp256PrivateKey::deserialize(base::SerializationIArchive& ia)
 {
-    base::Bytes bytes = ia.deserialize<base::Bytes>();
+    auto bytes = ia.deserialize<FixedBytes<32>>();
     return {bytes};
 }
 
@@ -658,50 +663,56 @@ void Secp256PrivateKey::serialize(base::SerializationOArchive& oa) const
 }
 
 
-base::Bytes Secp256PrivateKey::getBytes() const
+base::FixedBytes<Secp256PrivateKey::SECP256_PRIVATE_KEY_SIZE> Secp256PrivateKey::getBytes() const
 {
     return _secp_key;
 }
 
 
-Secp256PublicKey::Secp256PublicKey(const Secp256PrivateKey& private_key) : _secp_key(SECP256PUBLICKEYSIZE)
+Secp256PublicKey::Secp256PublicKey(const Secp256PrivateKey& private_key)
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
     secp256k1_pubkey pubkey;
-    if(secp256k1_ec_pubkey_create(context.get(), &pubkey, private_key.getBytes().toArray()) == 0) {
+    if(secp256k1_ec_pubkey_create(context.get(), &pubkey, private_key.getBytes().getData()) == 0) {
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
-    _secp_key = base::Bytes(pubkey.data, SECP256PUBLICKEYSIZE);
+    _secp_key = base::FixedBytes<64>(pubkey.data, SECP256_PUBLIC_KEY_SIZE);
 }
 
 
 Secp256PublicKey::Secp256PublicKey(const base::Bytes& public_key_bytes) : _secp_key(public_key_bytes)
 {
-    if(public_key_bytes.size() != SECP256PUBLICKEYSIZE) {
+    if(public_key_bytes.size() != SECP256_PUBLIC_KEY_SIZE) {
         RAISE_ERROR(base::InvalidArgument, "Invalid size of bytes for Secp256PublicKey");
     }
 }
 
 
-bool Secp256PublicKey::verifySignature(const base::Bytes signature, const base::Bytes& bytes) const
+Secp256PublicKey::Secp256PublicKey(const base::FixedBytes<SECP256_PUBLIC_KEY_SIZE>& public_key_bytes)
+    : _secp_key(public_key_bytes)
+{}
+
+
+bool Secp256PublicKey::verifySignature(
+    const base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> signature, const base::FixedBytes<32>& bytes) const
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
     secp256k1_pubkey pubkey;
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
-    memcpy(recoverable_signature.data, signature.toArray(), signature.size());
-    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.toArray()) == 0) {
+    memcpy(recoverable_signature.data, signature.getData(), Secp256PrivateKey::SECP256_SIGNATURE_SIZE);
+    if(secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.getData()) == 0) {
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
-    base::Bytes signature_pubkey(pubkey.data, SECP256PUBLICKEYSIZE);
+    base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> signature_pubkey(pubkey.data, SECP256_PUBLIC_KEY_SIZE);
     return _secp_key == signature_pubkey;
 }
 
 
 void Secp256PublicKey::save(const std::filesystem::path& path) const
 {
-    writeFile(path, _secp_key);
+    writeFile(path, _secp_key.toBytes());
 }
 
 
@@ -713,7 +724,7 @@ Secp256PublicKey Secp256PublicKey::load(const std::filesystem::path& path)
 
 Secp256PublicKey Secp256PublicKey::deserialize(base::SerializationIArchive& ia)
 {
-    base::Bytes bytes = ia.deserialize<base::Bytes>();
+    auto bytes = ia.deserialize<base::FixedBytes<64>>();
     return {bytes};
 }
 
@@ -730,7 +741,7 @@ bool Secp256PublicKey::operator==(const Secp256PublicKey& other) const
 }
 
 
-base::Bytes Secp256PublicKey::getBytes() const
+base::FixedBytes<Secp256PublicKey::SECP256_PUBLIC_KEY_SIZE> Secp256PublicKey::getBytes() const
 {
     return _secp_key;
 }

@@ -129,7 +129,7 @@ Miner::~Miner()
 }
 
 
-void Miner::findNonce(const bc::Block& block_without_nonce, const base::Bytes& complexity)
+void Miner::findNonce(const bc::Block& block_without_nonce, const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity)
 {
     _common_state.setCommonData({impl::Task::FIND_NONCE, block_without_nonce, complexity});
 }
@@ -193,7 +193,7 @@ void MinerWorker::worker()
                 ASSERT(data.block_to_mine);
                 ASSERT(data.complexity);
                 bc::Block& b = data.block_to_mine.value();
-                const base::Bytes& complexity = data.complexity.value();
+                const auto& complexity = data.complexity.value();
                 while(last_read_version == _common_state.getVersion()) {
                     auto attempting_nonce = mt();
                     b.setNonce(attempting_nonce);

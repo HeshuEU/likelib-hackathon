@@ -8,33 +8,25 @@ Address::Address(const base::RsaPublicKey& pub)
 {
     auto sha256 = base::Sha256::compute(pub.toBytes());
     auto ripemd = base::Ripemd160::compute(sha256.getBytes());
-    ASSERT(ripemd.getBytes().size() == BYTE_LENGTH);
     _address = ripemd.getBytes();
 }
 
 
-Address::Address(const std::string_view& base64_address)
-{
-    _address = base::base64Decode(base64_address);
-    if(_address.size() != BYTE_LENGTH) {
-        RAISE_ERROR(base::InvalidArgument, "invalid base64 string");
-    }
-    // TODO: check address length
-}
+Address::Address(const std::string_view& base64_address) : _address(base::base64Decode(base64_address))
+{}
 
 
-Address::Address(base::Bytes raw_address)
-{
-    if(raw_address.size() != BYTE_LENGTH) {
-        RAISE_ERROR(base::InvalidArgument, "invalid bytes length");
-    }
-    _address = std::move(raw_address);
-}
+Address::Address(const base::Bytes& raw_address) : _address(raw_address)
+{}
+
+
+Address::Address(const base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>& raw_address) : _address(raw_address)
+{}
 
 
 const Address& Address::null()
 {
-    static const Address null_address{base::Bytes(Address::BYTE_LENGTH)};
+    static const Address null_address{base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>()};
     return null_address;
 }
 
@@ -47,11 +39,11 @@ bool Address::isNull() const
 
 std::string Address::toString() const
 {
-    return base::base64Encode(_address);
+    return base::base64Encode(_address.toBytes());
 }
 
 
-const base::Bytes& Address::getBytes() const noexcept
+const base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>& Address::getBytes() const noexcept
 {
     return _address;
 }
@@ -77,8 +69,7 @@ bool Address::operator<(const Address& other) const
 
 Address Address::deserialize(base::SerializationIArchive& ia)
 {
-    auto address_bytes = ia.deserialize<base::Bytes>();
-    return Address(address_bytes);
+    return Address(ia.deserialize<base::FixedBytes<ADDRESS_BYTES_LENGTH>>());
 }
 
 

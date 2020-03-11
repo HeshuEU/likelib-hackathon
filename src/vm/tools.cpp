@@ -68,9 +68,17 @@ evmc::bytes32 toEvmcBytes32(const base::Bytes& data)
 }
 
 
+evmc::bytes32 toEvmcBytes32(const base::FixedBytes<32>& data)
+{
+    evmc::bytes32 res;
+    memcpy(res.bytes, data.getData(), 32);
+    return res;
+}
+
+
 bc::Balance toBalance(evmc_uint256be value)
 {
-    auto val = toBytes(value).toHex();
+    auto val = base::toHex<base::Bytes>(toBytes(value));
     char* end;
     return std::strtoull(val.c_str(), &end, 16);
 }
@@ -163,7 +171,7 @@ base::Bytes encode(uint8_t value)
 
 bc::Address toNativeAddress(const evmc::address& addr)
 {
-    base::Bytes raw_address(addr.bytes, bc::Address::BYTE_LENGTH);
+    base::Bytes raw_address(addr.bytes, bc::Address::ADDRESS_BYTES_LENGTH);
     bc::Address address(raw_address);
     return address;
 }
@@ -174,7 +182,7 @@ evmc::address toEthAddress(const bc::Address& address)
     evmc::address ret;
     auto byte_address = address.getBytes();
     ASSERT(byte_address.size() == std::size(ret.bytes));
-    std::copy(byte_address.toArray(), byte_address.toArray() + byte_address.size(), ret.bytes);
+    std::copy(byte_address.getData(), byte_address.getData() + byte_address.size(), ret.bytes);
     return ret;
 }
 

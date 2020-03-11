@@ -2,7 +2,6 @@
 
 #include "bc/address.hpp"
 
-
 BOOST_AUTO_TEST_CASE(address_null)
 {
     auto null = bc::Address::null();
@@ -12,7 +11,7 @@ BOOST_AUTO_TEST_CASE(address_null)
 BOOST_AUTO_TEST_CASE(address_constructor_fromPublicKey)
 {
     bc::Address target_address(base::generateKeys().first);
-    BOOST_CHECK(target_address.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(target_address.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 
@@ -23,7 +22,7 @@ BOOST_AUTO_TEST_CASE(address_constructor_from_one_publickey)
     bc::Address address2(pub_key);
     BOOST_CHECK(address1 == address2);
     BOOST_CHECK(address1.toString() == address2.toString());
-    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 
@@ -34,7 +33,7 @@ BOOST_AUTO_TEST_CASE(address_constructor_from_string)
     bc::Address address2(address1.toString());
     BOOST_CHECK(address1 == address2);
     BOOST_CHECK(address1.toString() == address2.toString());
-    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 
@@ -45,7 +44,7 @@ BOOST_AUTO_TEST_CASE(address_constructor_from_bytes)
     bc::Address address2(address1.getBytes());
     BOOST_CHECK(address1 == address2);
     BOOST_CHECK(address1.toString() == address2.toString());
-    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 
@@ -56,7 +55,7 @@ BOOST_AUTO_TEST_CASE(address_constructor_copy)
     bc::Address address2(address1);
     BOOST_CHECK(address1 == address2);
     BOOST_CHECK(address1.toString() == address2.toString());
-    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 
@@ -68,7 +67,7 @@ BOOST_AUTO_TEST_CASE(address_constructor_move)
     bc::Address address2(std::move(address1));
     BOOST_CHECK(address2 == address);
     BOOST_CHECK(address2.toString() == address.toString());
-    BOOST_CHECK(address2.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(address2.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 
@@ -82,7 +81,7 @@ BOOST_AUTO_TEST_CASE(address_operator_equal)
     address2 = address1;
     BOOST_CHECK(address1 == address2);
     BOOST_CHECK(address1.toString() == address2.toString());
-    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(address1.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 
@@ -97,7 +96,7 @@ BOOST_AUTO_TEST_CASE(address_operator_move)
     address2 = std::move(address1);
     BOOST_CHECK(address2 == address);
     BOOST_CHECK(address2.toString() == address.toString());
-    BOOST_CHECK(address2.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(address2.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 
@@ -111,7 +110,7 @@ BOOST_AUTO_TEST_CASE(address_serialization1)
     bc::Address address2 = ia.deserialize<bc::Address>();
     BOOST_CHECK(address1 == address2);
     BOOST_CHECK(address1.toString() == address2.toString());
-    BOOST_CHECK(address2.toString().size() == bc::Address::ADDRESS_SIZE);
+    BOOST_CHECK(address2.toString().size() == bc::Address::ADDRESS_BASE64_LENGTH);
 }
 
 

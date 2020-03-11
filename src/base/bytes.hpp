@@ -12,6 +12,9 @@
 namespace base
 {
 
+template<std::size_t S>
+class FixedBytes;
+
 
 class Bytes
 {
@@ -23,6 +26,10 @@ class Bytes
     explicit Bytes(const std::string& s);
     Bytes(const Byte* bytes, std::size_t length);
     Bytes(std::initializer_list<Byte> l);
+
+    template<std::size_t S>
+    explicit Bytes(const FixedBytes<S>& bytes);
+
     Bytes(const Bytes&) = default;
     Bytes(Bytes&&) = default;
     Bytes& operator=(const Bytes&) = default;
@@ -58,12 +65,7 @@ class Bytes
     [[nodiscard]] std::vector<Byte>& toVector() noexcept;
     [[nodiscard]] const std::vector<Byte>& toVector() const noexcept;
     //==============
-
-    [[nodiscard]] std::string toHex() const;
-
     [[nodiscard]] std::string toString() const;
-    //==============
-    [[nodiscard]] static Bytes fromHex(const std::string_view& hex_view);
     //==============
     [[nodiscard]] bool operator==(const Bytes& another) const;
     [[nodiscard]] bool operator!=(const Bytes& another) const;
@@ -89,6 +91,7 @@ class FixedBytes
   public:
     FixedBytes();
     explicit FixedBytes(const std::vector<Byte>& bytes);
+    explicit FixedBytes(const Bytes& bytes);
     explicit FixedBytes(const std::string& str);
     FixedBytes(const Byte* bytes, std::size_t length);
     FixedBytes(std::initializer_list<Byte> l);
@@ -103,10 +106,12 @@ class FixedBytes
     //==============
     [[nodiscard]] std::size_t size() const noexcept;
     //==============
-    [[nodiscard]] const Byte* toArray() const;
-    [[nodiscard]] Byte* toArray();
+    [[nodiscard]] const Byte* getData() const;
+    [[nodiscard]] Byte* getData();
+    [[nodiscard]] const std::array<Byte, S>& toArray() const noexcept;
+    [[nodiscard]] std::array<Byte, S>& toArray() noexcept;
+    [[nodiscard]] Bytes toBytes() const;
     //==============
-    [[nodiscard]] std::string toHex() const;
     [[nodiscard]] std::string toString() const;
     //==============
     [[nodiscard]] bool operator==(const FixedBytes& another) const;
@@ -122,6 +127,7 @@ class FixedBytes
     std::array<Byte, S> _array;
 };
 
+// TODO: add comparison operators for Bytes and FixedBytes
 
 std::string base64Encode(const base::Bytes& bytes);
 base::Bytes base64Decode(std::string_view base64);
@@ -143,6 +149,13 @@ template<>
 struct hash<base::Bytes>
 {
     std::size_t operator()(const base::Bytes& k) const;
+};
+
+
+template<std::size_t S>
+struct hash<base::FixedBytes<S>>
+{
+    std::size_t operator()(const base::FixedBytes<S>& k) const;
 };
 } // namespace std
 

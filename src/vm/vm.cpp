@@ -18,13 +18,13 @@ namespace
     {
         static const std::string target{"60806040"};
         // TODO: make normal algorithm
-        auto hex_code = full_code.toHex();
+        auto hex_code = base::toHex<base::Bytes>(full_code);
         auto index = hex_code.find(target, target.size());
         if(index == 0) {
             RAISE_ERROR(base::LogicError, "Not valid code");
         }
         auto sub = hex_code.substr(index, hex_code.size());
-        return base::Bytes::fromHex(sub);
+        return base::fromHex<base::Bytes>(sub);
     }
 
 } // namespace

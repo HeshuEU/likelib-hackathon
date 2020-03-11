@@ -19,6 +19,8 @@ base::Bytes toBytes(const evmc::bytes32& bytes);
 
 evmc::bytes32 toEvmcBytes32(const base::Bytes& data);
 
+evmc::bytes32 toEvmcBytes32(const base::FixedBytes<32>& data);
+
 bc::Balance toBalance(evmc_uint256be value);
 
 evmc_uint256be toEvmcUint256(const bc::Balance& balance);
