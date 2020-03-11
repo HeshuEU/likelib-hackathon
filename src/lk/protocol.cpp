@@ -104,11 +104,11 @@ void HandshakeMessage::handle(Peer& peer, Network& network, Core& core)
                 peer.setState(Peer::State::SYNCHRONISED);
             }
             else {
-                peer.addSyncBlock(std::move(_theirs_top_block));
                 base::SerializationOArchive oa;
                 GetBlockMessage::serialize(oa, _theirs_top_block.getPrevBlockHash());
                 peer.send(std::move(oa).getBytes());
                 peer.setState(Peer::State::REQUESTED_BLOCKS);
+                peer.addSyncBlock(std::move(_theirs_top_block));
             }
         }
     }
