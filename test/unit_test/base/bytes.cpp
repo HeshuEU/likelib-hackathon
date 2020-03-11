@@ -207,18 +207,6 @@ BOOST_AUTO_TEST_CASE(bytes_from_hex)
 }
 
 
-BOOST_AUTO_TEST_CASE(bytes_relation_check)
-{
-    base::Bytes b1 = base::Sha256::compute(base::Bytes("0123")).getBytes().toBytes();
-    base::Bytes b2 = base::Sha256::compute(base::Bytes("123")).getBytes().toBytes();
-    base::Bytes b3 = base::Sha256::compute(base::Bytes("1234")).getBytes().toBytes();
-    base::Bytes b4 = base::Sha256::compute(base::Bytes("1235")).getBytes().toBytes();
-    BOOST_CHECK(b1 < b2);
-    BOOST_CHECK(b1 > b3);
-    BOOST_CHECK(b1 < b4);
-}
-
-
 BOOST_AUTO_TEST_CASE(fixed_bytes_storage_check)
 {
     base::FixedBytes<111> fb1;
