@@ -96,6 +96,7 @@ class FixedBytes
   public:
     FixedBytes();
     explicit FixedBytes(const std::vector<Byte>& bytes);
+    explicit FixedBytes(const Bytes& bytes);
     explicit FixedBytes(const std::string& str);
     FixedBytes(const Byte* bytes, std::size_t length);
     FixedBytes(std::initializer_list<Byte> l);
@@ -110,14 +111,16 @@ class FixedBytes
     //==============
     std::size_t size() const noexcept;
     //==============
-    [[nodiscard]] const Byte* toArray() const;
-    [[nodiscard]] Byte* toArray();
+    const Byte* getData() const;
+    Byte* getData();
+    [[nodiscard]] const std::array<Byte, S>& toArray() const noexcept;
+    [[nodiscard]] std::array<Byte, S>& toArray() noexcept;
+    Bytes toBytes() const;
     //==============
-    [[nodiscard]] std::string toHex() const;
     [[nodiscard]] std::string toString() const;
     //==============
-    bool operator==(const FixedBytes& another) const;
-    bool operator!=(const FixedBytes& another) const;
+    [[nodiscard]] bool operator==(const FixedBytes& another) const;
+    [[nodiscard]] bool operator!=(const FixedBytes& another) const;
 
     // lexicographical compare
     bool operator<(const FixedBytes& another) const;
@@ -151,6 +154,13 @@ struct hash<base::Bytes>
 {
     std::size_t operator()(const base::Bytes& k) const;
 };
+
+template<std::size_t S>
+struct hash<base::FixedBytes<S>>
+{
+    std::size_t operator()(const base::FixedBytes<S>& k) const;
+};
+
 } // namespace std
 
 #include "bytes.tpp"
