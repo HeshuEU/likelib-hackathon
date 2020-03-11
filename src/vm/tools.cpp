@@ -68,6 +68,14 @@ evmc::bytes32 toEvmcBytes32(const base::Bytes& data)
 }
 
 
+evmc::bytes32 toEvmcBytes32(const base::FixedBytes<32>& data)
+{
+    evmc::bytes32 res;
+    memcpy(res.bytes, data.toArray(), 32);
+    return res;
+}
+
+
 bc::Balance toBalance(evmc_uint256be value)
 {
     auto val = toBytes(value).toHex();
