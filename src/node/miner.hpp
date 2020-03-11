@@ -32,9 +32,10 @@ enum class Task
 
 struct CommonData
 {
+    static constexpr std::size_t COMPLEXITY_SIZE = 32;
     impl::Task task;
     std::optional<bc::Block> block_to_mine;
-    std::optional<base::Bytes> complexity;
+    std::optional<base::FixedBytes<COMPLEXITY_SIZE>> complexity;
 };
 
 
@@ -78,7 +79,7 @@ class Miner
 
     ~Miner();
     //===================
-    void findNonce(const bc::Block& block_without_nonce, const base::Bytes& complexity);
+    void findNonce(const bc::Block& block_without_nonce, const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity);
     void dropJob();
     //===================
   private:

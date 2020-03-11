@@ -7,7 +7,7 @@ namespace bc
 Address::Address(const base::RsaPublicKey& pub)
 {
     auto sha256 = base::Sha256::compute(pub.toBytes());
-    auto ripemd = base::Ripemd160::compute(sha256.getBytes().toBytes());
+    auto ripemd = base::Ripemd160::compute(sha256.getBytes());
     _address = ripemd.getBytes();
 }
 

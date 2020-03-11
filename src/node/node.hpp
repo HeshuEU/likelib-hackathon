@@ -14,6 +14,7 @@ class Node
     void run();
 
   private:
+    //---------------------------
     const base::PropertyTree& _config;
     //---------------------------
     base::KeyVault _key_vault;
@@ -23,7 +24,7 @@ class Node
     //---------------------------
     std::unique_ptr<Miner> _miner;
     //---------------------------
-    static base::Bytes getMiningComplexity();
+    static base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> getMiningComplexity();
     //---------------------------
     void onBlockMine(bc::Block&& block);
     void onNewTransactionReceived(const bc::Transaction& tx);

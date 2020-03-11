@@ -34,6 +34,9 @@ class Sha256
     bool operator<(const Sha256& another) const;
     //----------------------------------
     static Sha256 compute(const base::Bytes& data);
+
+    template<std::size_t S>
+    static Sha256 compute(const base::FixedBytes<S>& data);
     //----------------------------------
     void serialize(SerializationOArchive& oa) const;
     static Sha256 deserialize(SerializationIArchive& ia);
@@ -83,6 +86,9 @@ class Sha1
     bool operator!=(const Sha1& another) const;
     //----------------------------------
     static Sha1 compute(const base::Bytes& data);
+
+    template<std::size_t S>
+    static Sha1 compute(const base::FixedBytes<S>& data);
     //----------------------------------
     void serialize(SerializationOArchive& oa) const;
     static Sha1 deserialize(SerializationIArchive& ia);
@@ -133,6 +139,9 @@ class Ripemd160
     bool operator!=(const Ripemd160& another) const;
     //----------------------------------
     static Ripemd160 compute(const base::Bytes& data);
+
+    template<std::size_t S>
+    static Ripemd160 compute(const base::FixedBytes<S>& data);
     //----------------------------------
     void serialize(SerializationOArchive& oa) const;
     static Ripemd160 deserialize(SerializationIArchive& ia);
@@ -213,3 +222,6 @@ struct hash<base::Sha3>
     std::size_t operator()(const base::Sha3& k) const;
 };
 } // namespace std
+
+
+#include "hash.tpp"

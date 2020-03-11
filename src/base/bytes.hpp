@@ -154,6 +154,13 @@ struct hash<base::Bytes>
 {
     std::size_t operator()(const base::Bytes& k) const;
 };
+
+
+template<std::size_t S>
+struct hash<base::FixedBytes<S>>
+{
+    std::size_t operator()(const base::FixedBytes<S>& k) const;
+};
 } // namespace std
 
 #include "bytes.tpp"

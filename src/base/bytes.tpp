@@ -52,7 +52,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::vector<Byte>& bytes)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < bytes.size() || bytes.size() == 0) {
+    if(S != bytes.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes.begin(), S, _array.begin());
@@ -63,7 +63,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const Bytes& bytes)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < bytes.size() || bytes.size() == 0) {
+    if(S != bytes.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes.toVector().begin(), S, _array.begin());
@@ -74,7 +74,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::string& str)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < str.size() || str.size() == 0) {
+    if(S != str.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid string size for FixedBytes");
     }
     for(std::size_t i = 0; i < S; i++) {
@@ -87,7 +87,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const Byte* bytes, std::size_t length)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < length || length == 0) {
+    if(S != length) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes, S, _array.begin());
@@ -98,7 +98,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(std::initializer_list<Byte> l)
 {
     static_assert(S != 0, "FixedBytes length must be longet than 0");
-    if(S < l.size() || l.size() == 0) {
+    if(S != l.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid initializer list size for FixedBytes");
     }
     for(std::size_t i = 0; i < S; i++) {
@@ -246,3 +246,10 @@ T fromHex(const std::string_view& hex_view)
     return Bytes(bytes);
 }
 } // namespace base
+
+
+// template<std::size_t S>
+// std::size_t std::hash<base::FixedBytes<S>>::operator()(const base::FixedBytes<S>& k) const
+// {
+//     return boost::hash_value(k.toBytes().toVector());
+// }

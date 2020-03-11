@@ -290,6 +290,7 @@ base::Bytes base64Decode(std::string_view base64)
 
 
 static constexpr char pszBase58[59] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+// clang-format off
 static constexpr int8_t mapBase58[256] = {
      -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
      -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
@@ -308,6 +309,7 @@ static constexpr int8_t mapBase58[256] = {
      -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
      -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
  };
+// clang-format on
 
 base::Bytes base58Decode(std::string_view base58)
 {
