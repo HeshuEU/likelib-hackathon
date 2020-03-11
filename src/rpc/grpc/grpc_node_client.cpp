@@ -96,6 +96,35 @@ Info GrpcNodeClient::info()
 }
 
 
+bc::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
+{
+    likelib::GetBlockRequest request;
+    request.set_block_hash(block_hash.toHex());
+
+    // call remote host
+    likelib::GetBlockResponse reply;
+    grpc::ClientContext context;
+    grpc::Status status = _stub->get_block(&context, request, &reply);
+
+    // return value if ok
+    if(status.ok()) {
+        bc::BlockDepth depth{reply.depth()};
+        base::Sha256 prev_block_hash{base::fromHex<base::Bytes>(reply.previous_block_hash())};
+        auto timestamp = base::Time::fromSecondsSinceEpochBeginning(reply.timestamp().since_epoch());
+        bc::NonceInt nonce{reply.nonce()};
+        bc::Address coinbase{reply.coinbase().address()};
+        bc::TransactionsSet txset;
+
+        bc::Block blk{depth, std::move(prev_block_hash), std::move(timestamp), std::move(coinbase), std::move(txset)};
+        blk.setNonce(nonce);
+        return blk;
+    }
+    else {
+        throw RpcError(status.error_message());
+    }
+}
+
+
 std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transaction_create_contract(bc::Balance amount,
     const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
     const std::string& contract_code, const std::string& init, const bc::Sign& signature)
@@ -108,7 +137,7 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
     request.set_init(init);
     request.set_contract_code(contract_code);
     request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpochBeginning());
-    request.set_signature(signature.toBase64());
+    request.mutable_signature()->set_raw(signature.toBase64());
 
     // call remote host
     likelib::TransactionCreateContractResponse reply;

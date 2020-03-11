@@ -12,6 +12,7 @@
 #include "rpc/error.hpp"
 #include "vm/messages.hpp"
 
+#include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -30,7 +31,8 @@ constexpr const char* ADDRESS_OPTION = "address";
 constexpr const char* CODE_PATH_OPTION = "code";
 constexpr const char* GAS_OPTION = "gas";
 constexpr const char* INITIAL_MESSAGE_OPTION = "init";
-constexpr const char* MESSAGE_OPTION = "message for call smart contract";
+constexpr const char* MESSAGE_OPTION = "message";
+constexpr const char* BLOCK_HASH_OPTION = "hash";
 
 std::pair<base::RsaPublicKey, base::RsaPrivateKey> loadKeys(const std::filesystem::path& dir)
 {
@@ -76,12 +78,16 @@ int ActionBase::run()
         }
     }
     catch(const base::ParsingError& er) {
-        std::cerr << "Bad input arguments\n" << _router.helpMessage();
+        std::cerr << "Invalid arguments";
+        if(std::strlen(er.what())) {
+            std::cerr << ": " << er.what();
+        }
+        std::cerr << "\n" << _router.helpMessage();
         LOG_ERROR << "[base::ParsingError caught during execution of Client::" << getName() << "] " << er.what();
         return base::config::EXIT_FAIL;
     }
     catch(const rpc::RpcError& er) {
-        std::cerr << "RPC error. " << er.what() << "\n";
+        std::cerr << "RPC error " << er.what() << "\n";
         LOG_ERROR << "[rpc::RpcError caught during client::" << getName() << "] " << er.what();
         return base::config::EXIT_FAIL;
     }
@@ -636,5 +642,45 @@ int ActionInfo::execute()
     auto result = client.info();
     std::cout << "Top block hash: " << result.top_block_hash << std::endl;
     LOG_INFO << "Remote call of Info: " << result.top_block_hash;
+    return base::config::EXIT_OK;
+}
+
+//====================================
+
+ActionGetBlock::ActionGetBlock(base::SubprogramRouter& router) : ActionBase{router}
+{}
+
+
+const std::string_view& ActionGetBlock::getName() const
+{
+    static const std::string_view name = "GetBlock";
+    return name;
+}
+
+
+void ActionGetBlock::setupOptionsParser(base::ProgramOptionsParser& parser)
+{
+    parser.addRequiredOption<std::string>(HOST_OPTION, "address of host");
+    parser.addRequiredOption<std::string>(BLOCK_HASH_OPTION, "block hash hex");
+}
+
+
+int ActionGetBlock::loadOptions(const base::ProgramOptionsParser& parser)
+{
+    _host_address = parser.getValue<std::string>(HOST_OPTION);
+    _block_hash = base::Sha256{base::fromHex<base::Bytes>(parser.getValue<std::string>(BLOCK_HASH_OPTION))};
+    return base::config::EXIT_OK;
+}
+
+
+int ActionGetBlock::execute()
+{
+    LOG_INFO << "Trying to connect to rpc server at " << _host_address;
+    rpc::RpcClient client(_host_address);
+    auto block = client.get_block(_block_hash);
+    std::cout << "Block " << _block_hash << '\n'
+        << "Depth: " << block.getDepth() << '\n'
+        << "Timestamp: " << block.getTimestamp() << '\n'
+        << "Coinbase: " << block.getCoinbase() << std::endl;
     return base::config::EXIT_OK;
 }

@@ -2,6 +2,7 @@
 
 #include "base/time.hpp"
 #include "bc/address.hpp"
+#include "bc/block.hpp"
 #include "bc/transaction.hpp"
 #include "bc/types.hpp"
 
@@ -75,6 +76,8 @@ class BaseRpc
     virtual OperationStatus test(uint32_t api_version) = 0;
 
     virtual Info info() = 0;
+
+    virtual bc::Block get_block(const base::Sha256& block_hash) = 0;
 
     virtual std::tuple<OperationStatus, bc::Address, bc::Balance> transaction_create_contract(bc::Balance amount,
         const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,

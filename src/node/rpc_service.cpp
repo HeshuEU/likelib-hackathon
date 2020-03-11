@@ -10,19 +10,19 @@ namespace node
 
 GeneralServerService::GeneralServerService(lk::Core& core) : _core{core}
 {
-    LOG_TRACE << "Created GeneralServerService";
+    LOG_TRACE << "Constructed GeneralServerService";
 }
 
 
 GeneralServerService::~GeneralServerService()
 {
-    LOG_TRACE << "Deleted GeneralServerService";
+    LOG_TRACE << "Destructed GeneralServerService";
 }
 
 
 rpc::OperationStatus GeneralServerService::test(uint32_t api_version)
 {
-    LOG_TRACE << "Node received in {test}: test_request[" << api_version << "]";
+    LOG_TRACE << "Received RPC request {test} with api_version[" << api_version << "]";
     if(base::config::RPC_PUBLIC_API_VERSION == api_version) {
         return rpc::OperationStatus::createSuccess("RPC api is compatible");
     }
@@ -38,7 +38,7 @@ rpc::OperationStatus GeneralServerService::test(uint32_t api_version)
 bc::Balance GeneralServerService::balance(const bc::Address& address)
 {
     try {
-        LOG_TRACE << "Node received in {balance}: address[" << address.toString() << "]";
+        LOG_TRACE << "Received RPC request {balance} with address[" << address.toString() << "]";
         auto ret = _core.getBalance(address);
         return ret;
     }
@@ -55,6 +55,7 @@ bc::Balance GeneralServerService::balance(const bc::Address& address)
 
 rpc::Info GeneralServerService::info()
 {
+    LOG_TRACE << "Received RPC request {info}";
     try {
         auto hash = base::Sha256::compute(base::toBytes(_core.getTopBlock()));
         return {hash, 0};
@@ -65,11 +66,23 @@ rpc::Info GeneralServerService::info()
 }
 
 
+bc::Block GeneralServerService::get_block(const base::Sha256& block_hash)
+{
+    LOG_TRACE << "Received RPC request {get_block} with block_hash[" << block_hash << "]";
+    if(auto block_opt = _core.findBlock(block_hash); block_opt) {
+        return *block_opt;
+    }
+    else {
+        ASSERT(false);
+    }
+}
+
+
 std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_create_contract(
     bc::Balance amount, const bc::Address& from_address, const base::Time& timestamp, bc::Balance gas,
     const std::string& hex_contract_code, const std::string& hex_init, const bc::Sign& signature)
 {
-    LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString() << "], amount["
+    LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString() << "], amount["
               << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
               << timestamp.getSecondsSinceEpochBeginning() << "], initial_message[" << hex_init << "]";
 
@@ -119,7 +132,7 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
     bc::Balance amount, const bc::Address& from_address, const bc::Address& to_address, const base::Time& timestamp,
     bc::Balance gas, const std::string& hex_message, const bc::Sign& signature)
 {
-    LOG_TRACE << "Node received in {transaction_to_contract}: from_address[" << from_address.toString()
+    LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
               << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message[" << hex_message << "]";
 

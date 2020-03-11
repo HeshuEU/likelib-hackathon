@@ -55,6 +55,12 @@ message GetBlockRequest {
 }
 
 message GetBlockResponse {
+    Address coinbase = 1;
+    Time timestamp = 2;
+    uint64 depth = 3;
+    uint64 nonce = 4;
+    string previous_block_hash = 5;
+    repeated Transaction transactions = 6;
 }
 
 //=====================================
@@ -84,7 +90,7 @@ message TransactionCreateContractRequest {
     Time creation_time = 4;
     string contract_code = 5;
     string init = 6;
-    string signature = 7;
+    Signature signature = 7;
 }
 
 message TransactionCreateContractResponse {
@@ -114,6 +120,18 @@ message Address {
 message Signature {
     string raw = 1;
 }
+
+
+message Transaction {
+    Address from = 1;
+    Address to = 2;
+    Money value = 3;
+    Money gas = 4;
+    Time creation_time = 5;
+    string data = 6;
+    string signature = 7;
+}
+
 
 message OperationStatus {
     enum StatusCode {

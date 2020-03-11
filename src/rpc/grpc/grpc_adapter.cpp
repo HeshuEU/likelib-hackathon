@@ -82,6 +82,26 @@ grpc::Status GrpcAdapter::info(
 }
 
 
+grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context, const likelib::GetBlockRequest* request, likelib::GetBlockResponse* response)
+{
+    LOG_DEBUG << "received RPC get_block method call from " << context->peer();
+    try {
+        base::Sha256 block_hash{base::fromHex<base::Bytes>(request->block_hash())};
+        auto block = _service->get_block(block_hash);
+        response->set_depth(block.getDepth());
+        response->set_nonce(block.getNonce());
+        response->set_previous_block_hash(block.getPrevBlockHash().toHex());
+        response->mutable_coinbase()->set_address(block.getCoinbase().toString());
+        response->mutable_timestamp()->set_since_epoch(block.getTimestamp().getSecondsSinceEpochBeginning());
+    }
+    catch(const base::Error& e) {
+        LOG_ERROR << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    return ::grpc::Status::OK;
+}
+
+
 ::grpc::Status GrpcAdapter::create_contract(::grpc::ServerContext* context,
     const ::likelib::TransactionCreateContractRequest* request, ::likelib::TransactionCreateContractResponse* response)
 {
@@ -93,7 +113,7 @@ grpc::Status GrpcAdapter::info(
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
         auto contract_code = request->contract_code();
         auto init = request->init();
-        auto sign = bc::Sign::fromBase64(request->signature());
+        auto sign = bc::Sign::fromBase64(request->signature().raw());
 
         auto [status, contract_address, least_gas] =
             _service->transaction_create_contract(amount, from_address, creation_time, gas, contract_code, init, sign);

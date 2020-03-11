@@ -40,6 +40,8 @@ class GrpcAdapter final : public likelib::NodePublicInterface::Service
 
     grpc::Status info(grpc::ServerContext* context, const likelib::InfoRequest* request, likelib::InfoResponse* response) override;
 
+    grpc::Status get_block(grpc::ServerContext* context, const likelib::GetBlockRequest* request, likelib::GetBlockResponse* response) override;
+
     grpc::Status message_call(grpc::ServerContext* context, const likelib::TransactionMessageCallRequest* request,
         likelib::TransactionMessageCallResponse* response) override;
 

@@ -206,3 +206,22 @@ private:
     std::string _host_address;
     //====================================
 };
+
+
+class ActionGetBlock : public ActionBase
+{
+public:
+    //====================================
+    explicit ActionGetBlock(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+private:
+    //====================================
+    std::string _host_address;
+    base::Sha256 _block_hash{base::Sha256::null()};
+    //====================================
+};
