@@ -72,7 +72,6 @@ Integration tests:
   tags:
     - docker
   script:
-    - cd ./doc
     - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
     - PROJECT_SOURCE_DIR=${PWD}
     - TEST_DIR="intergation_test_run"
