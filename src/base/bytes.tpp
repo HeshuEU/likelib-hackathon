@@ -48,7 +48,7 @@ Bytes::Bytes(I begin, I end) : _raw(begin, end)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes()
 {
-    static_assert(S != 0, "FixedBytes length must be longet than 0");
+    static_assert(S != 0, "FixedBytes length must be longer than 0");
 }
 
 
@@ -101,7 +101,7 @@ FixedBytes<S>::FixedBytes(const Byte* bytes, std::size_t length)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(std::initializer_list<Byte> l)
 {
-    static_assert(S != 0, "FixedBytes length must be longet than 0");
+    static_assert(S != 0, "FixedBytes length must be longer than 0");
     if(S != l.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid initializer list size for FixedBytes");
     }
