@@ -124,7 +124,7 @@ class FixedBytes
     bool operator>=(const FixedBytes& another) const;
     //==============
   private:
-    std::array<Byte, S> _array;
+    std::array<Byte, S> _array{};
 };
 
 
