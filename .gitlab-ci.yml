@@ -15,7 +15,8 @@ Build:
     - SOURCE_DIR=${PWD}
     - BUILD_DIR="${SOURCE_DIR}/build"
     - cat ${INSTALL_DIR}/prepare_build.md5
-    - ${SOURCE_DIR}/doc/prepare_build.sh
+    - cd ${SOURCE_DIR}/doc
+    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
     - mkdir -p ${BUILD_DIR}
     - mkdir -p /tmp/logs
     - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
