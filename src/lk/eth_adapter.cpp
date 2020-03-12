@@ -279,7 +279,8 @@ std::pair<bc::Address, base::Bytes> EthAdapter::createContract(const bc::Address
 
     _eth_host->setContext(&associated_tx, &associated_block);
     if(auto result = _vm.execute(message); result.ok()) {
-        return {contract_address, result.toOutputData()};
+        // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
+        return {contract_address, {}};
     }
     else {
         RAISE_ERROR(base::Error, "invalid result");
