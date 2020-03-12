@@ -7,14 +7,15 @@ stages:
 
 Build:
   stage: build
-  image: ubuntu:19.10
+  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
     - INSTALL_DIR="/opt"
     - SOURCE_DIR=${PWD}
     - BUILD_DIR="${SOURCE_DIR}/build"
-    - ${SOURCE_DIR}/doc/prepare_build.sh
+    - cd ${SOURCE_DIR}/doc
+    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
     - mkdir -p ${BUILD_DIR}
     - mkdir -p /tmp/logs
     - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
@@ -29,14 +30,15 @@ Build:
 
 Code quality:
   stage: analyzers
-  image: ubuntu:19.10
+  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
     - SOURCE_DIR=${PWD}
     - LOG_DIR=${SOURCE_DIR}/clang-tidy-log
     - BUILD_DIR="${SOURCE_DIR}/build"
-    - ${SOURCE_DIR}/doc/prepare_build.sh
+    - cd ${SOURCE_DIR}/doc
+    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
     - mkdir -p ${LOG_DIR}
     - mkdir -p ${BUILD_DIR}
     - mkdir -p /tmp/logs
@@ -54,7 +56,7 @@ Code quality:
 
 Unit tests:
   stage: unit-tests
-  image: ubuntu:19.10
+  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
@@ -66,11 +68,12 @@ Unit tests:
 Integration tests:
   timeout: 45m
   stage: integration-tests
-  image: ubuntu:19.10
+  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
-    - ./doc/prepare_build.sh
+    - cd ./doc
+    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
     - PROJECT_SOURCE_DIR=${PWD}
     - TEST_DIR="intergation_test_run"
     - mkdir ${TEST_DIR}
@@ -84,10 +87,11 @@ Integration tests:
 
 Valgrind test:
   stage: analyzers
-  image: ubuntu:19.10
+  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
-    - ./doc/prepare_build.sh
+    - cd ./doc
+    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
     - cd build/bin
     - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
