@@ -135,13 +135,13 @@ std::size_t Bytes::size() const noexcept
 }
 
 
-const Byte* Bytes::toArray() const
+const Byte* Bytes::getData() const
 {
     return _raw.data();
 }
 
 
-Byte* Bytes::toArray()
+Byte* Bytes::getData()
 {
     return _raw.data();
 }
@@ -219,39 +219,6 @@ std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
 }
 
 
-std::string base64Encode(const base::Bytes& bytes)
-{
-    if(bytes.size() == 0) {
-        return "";
-    }
-
-    BIO* bio_temp = BIO_new(BIO_s_mem());
-    BIO* b64 = BIO_new(BIO_f_base64());
-    BUF_MEM* bufferPtr = nullptr;
-
-    std::unique_ptr<BIO, decltype(&::BIO_free_all)> bio(BIO_push(b64, bio_temp), ::BIO_free_all);
-    BIO_set_flags(bio.get(), BIO_FLAGS_BASE64_NO_NL);
-    if(BIO_write(bio.get(), bytes.toArray(), static_cast<int>(bytes.size())) < 1) {
-        RAISE_ERROR(CryptoError, "Base64 encode write error");
-    }
-    if(BIO_flush(bio.get()) < 1) {
-        RAISE_ERROR(CryptoError, "Base64 encode flush error");
-    }
-    if(BIO_get_mem_ptr(bio.get(), &bufferPtr) < 1) {
-        if(bufferPtr) {
-            BUF_MEM_free(bufferPtr);
-        }
-        RAISE_ERROR(CryptoError, "Get pointer to memory from base64 error");
-    }
-
-    std::string base64_bytes(bufferPtr->data, bufferPtr->length);
-
-    BUF_MEM_free(bufferPtr);
-    BIO_set_close(bio.get(), BIO_NOCLOSE);
-    return base64_bytes;
-}
-
-
 base::Bytes base64Decode(std::string_view base64)
 {
     auto length = base64.length();
@@ -265,7 +232,7 @@ base::Bytes base64Decode(std::string_view base64)
 
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bio = BIO_push(b64, bio);
-    auto new_length = BIO_read(bio, ret.toArray(), length);
+    auto new_length = BIO_read(bio, ret.getData(), length);
     if(new_length < 1) {
         BIO_free_all(bio);
         RAISE_ERROR(CryptoError, "Base64 decode read error");
@@ -276,8 +243,6 @@ base::Bytes base64Decode(std::string_view base64)
     return ret;
 }
 
-
-static constexpr char pszBase58[59] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 // clang-format off
 static constexpr int8_t mapBase58[256] = {
      -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
@@ -298,6 +263,7 @@ static constexpr int8_t mapBase58[256] = {
      -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
  };
 // clang-format on
+
 
 base::Bytes base58Decode(std::string_view base58)
 {
@@ -332,44 +298,6 @@ base::Bytes base58Decode(std::string_view base58)
     }
     return ret_bytes;
 }
-
-std::string base58Encode(const base::Bytes& bytes)
-{
-    std::size_t current_pos = 0;
-    std::size_t zeroes_count = 0;
-    std::size_t length = 0;
-    while(current_pos != bytes.size() && bytes[current_pos] == 0) {
-        current_pos++;
-        zeroes_count++;
-    }
-
-    base::Bytes b58(bytes.size() * 138 / 100 + 1); // log(256) / log(58)
-    while(current_pos != bytes.size()) {
-        auto carry = static_cast<std::size_t>(bytes[current_pos]);
-        std::size_t i = 0;
-        for(auto it = b58.toVector().rbegin(); (carry != 0 || i < length) && (it != b58.toVector().rend()); it++, i++) {
-            carry += 256 * (*it);
-            *it = carry % 58;
-            carry /= 58;
-        }
-        length = i;
-        current_pos++;
-    }
-    auto it = b58.toVector().begin() + (b58.size() - length);
-    while(it != b58.toVector().end() && *it == 0) {
-        it++;
-    }
-
-    std::string str;
-    str.reserve(zeroes_count + (b58.toVector().end() - it));
-    str.assign(zeroes_count, '1');
-    while(it != b58.toVector().end()) {
-        str += pszBase58[*(it++)];
-    }
-    return str;
-}
-
-
 } // namespace base
 
 

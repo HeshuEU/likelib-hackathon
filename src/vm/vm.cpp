@@ -63,7 +63,7 @@ SmartContractMessage SmartContract::createMessage(int64_t gas, const bc::Address
     message._message.value = toEvmcUint256(value);
     message._message.create2_salt = evmc_bytes32();
     message._input_data = input;
-    message._message.input_data = message._input_data.toArray();
+    message._message.input_data = message._input_data.getData();
     message._message.input_size = message._input_data.size();
     return message;
 }
@@ -213,7 +213,7 @@ Vm Vm::load(evmc::Host& vm_host)
 
 ExecutionResult Vm::execute(const SmartContractMessage& msg)
 {
-    auto res = _vm.execute(_host, msg.getRevision(), msg.getMessage(), msg.getCode().toArray(), msg.getCode().size());
+    auto res = _vm.execute(_host, msg.getRevision(), msg.getMessage(), msg.getCode().getData(), msg.getCode().size());
     return ExecutionResult{std::move(res)};
 }
 

@@ -17,9 +17,9 @@ namespace detail
         }
         base::Bytes real(sizeof(value));
 
-        memcpy(real.toArray(), &value, sizeof(value));
+        memcpy(real.getData(), &value, sizeof(value));
 
-        std::reverse(real.toArray(), real.toArray() + real.size());
+        std::reverse(real.getData(), real.getData() + real.size());
         return base::Bytes(32 - sizeof(value)) + real;
     }
 
@@ -29,7 +29,7 @@ namespace detail
 base::Bytes copy(const uint8_t* t, size_t t_size)
 {
     base::Bytes res(t_size);
-    memcpy(res.toArray(), t, t_size);
+    memcpy(res.getData(), t, t_size);
     return res;
 }
 
@@ -46,7 +46,7 @@ evmc::address toAddress(const base::Bytes& data)
         RAISE_ERROR(base::InvalidArgument, "data len is not 20 bytes");
     }
     evmc::address res;
-    memcpy(res.bytes, data.toArray(), 20);
+    memcpy(res.bytes, data.getData(), 20);
     return res;
 }
 
@@ -63,7 +63,7 @@ evmc::bytes32 toEvmcBytes32(const base::Bytes& data)
         RAISE_ERROR(base::InvalidArgument, "data len is not 32 bytes");
     }
     evmc::bytes32 res;
-    memcpy(res.bytes, data.toArray(), 32);
+    memcpy(res.bytes, data.getData(), 32);
     return res;
 }
 
@@ -89,7 +89,7 @@ evmc_uint256be toEvmcUint256(const bc::Balance& balance)
     auto bytes = detail::encode(balance);
     evmc_uint256be res;
 
-    memcpy(res.bytes, bytes.toArray(), bytes.size());
+    memcpy(res.bytes, bytes.getData(), bytes.size());
 
     return res;
 }
@@ -115,7 +115,7 @@ base::Bytes encode(const std::string& str)
     }
 
     base::Bytes res(result_size);
-    memcpy(res.toArray(), str.data(), str.size());
+    memcpy(res.getData(), str.data(), str.size());
 
     return str_len + res;
 }
@@ -144,9 +144,9 @@ size_t decodeAsSizeT(const base::Bytes& data)
     }
 
     auto real_part = data.takePart(data.size() - sizeof(size_t), data.size());
-    std::reverse(real_part.toArray(), real_part.toArray() + real_part.size());
+    std::reverse(real_part.getData(), real_part.getData() + real_part.size());
     size_t value;
-    memcpy(&value, real_part.toArray(), real_part.size());
+    memcpy(&value, real_part.getData(), real_part.size());
     return value;
 }
 

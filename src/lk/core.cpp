@@ -227,7 +227,7 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
     if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
         try {
             auto [address, result] = doContractCreation(tx, block_where_tx);
-            LOG_DEBUG << "Contract created at " << address << " with output = " << result.toHex();
+            LOG_DEBUG << "Contract created at " << address << " with output = " << base::toHex<base::Bytes>(result);
             base::SerializationOArchive oa;
             oa.serialize(address);
             oa.serialize(result);
@@ -243,7 +243,7 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
     }
     else {
         auto result = doMessageCall(tx, block_where_tx);
-        LOG_DEBUG << "Message call result: " << result.toHex();
+        LOG_DEBUG << "Message call result: " << base::toHex<base::Bytes>(result);
         {
             std::unique_lock lk(_tx_outputs_mutex);
             _tx_outputs[hash] = base::toBytes(result);

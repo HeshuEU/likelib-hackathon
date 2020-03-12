@@ -323,7 +323,7 @@ int ActionCreateContract::execute()
     txb.setTimestamp(base::Time::now());
     txb.setFee(_gas);
 
-    bc::ContractInitData init_data{base::Bytes::fromHex(_compiled_contract), base::Bytes::fromHex(_message)};
+    bc::ContractInitData init_data{base::fromHex<base::Bytes>(_compiled_contract), base::fromHex<base::Bytes>(_message)};
     txb.setData(base::toBytes(init_data));
 
     auto tx = std::move(txb).build();
@@ -399,7 +399,7 @@ int ActionMessageCall::execute()
     txb.setTo(std::move(_to_address));
     txb.setTimestamp(base::Time::now());
     txb.setFee(_gas);
-    txb.setData(base::Bytes::fromHex(_message));
+    txb.setData(base::fromHex<base::Bytes>(_message));
 
     auto tx = std::move(txb).build();
     tx.sign(pub, priv);
