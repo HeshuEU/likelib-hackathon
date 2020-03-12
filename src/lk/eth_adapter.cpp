@@ -144,7 +144,7 @@ class EthAdapter::EthHost : public evmc::Host
         else {
             const auto& code = code_opt->get();
             std::size_t bytes_to_copy = std::min(buffer_size, code.size() - code_offset);
-            std::copy_n(code.toArray() + code_offset, bytes_to_copy, buffer_data);
+            std::copy_n(code.getData() + code_offset, bytes_to_copy, buffer_data);
             return bytes_to_copy;
         }
     }

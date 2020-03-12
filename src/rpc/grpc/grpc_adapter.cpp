@@ -68,7 +68,7 @@ grpc::Status GrpcAdapter::balance(
 
 
 grpc::Status GrpcAdapter::info(
-        grpc::ServerContext* context, const likelib::InfoRequest*, likelib::InfoResponse* response)
+    grpc::ServerContext* context, const likelib::InfoRequest*, likelib::InfoResponse* response)
 {
     LOG_DEBUG << "received RPC call at balance method from: " << context->peer();
     try {
@@ -82,7 +82,8 @@ grpc::Status GrpcAdapter::info(
 }
 
 
-grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context, const likelib::GetBlockRequest* request, likelib::GetBlockResponse* response)
+grpc::Status GrpcAdapter::get_block(
+    grpc::ServerContext* context, const likelib::GetBlockRequest* request, likelib::GetBlockResponse* response)
 {
     LOG_DEBUG << "received RPC get_block method call from " << context->peer();
     try {
