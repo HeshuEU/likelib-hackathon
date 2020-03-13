@@ -11,6 +11,7 @@ import traceback
 import signal
 import logging
 import re
+from shutil import copy
 
 
 class CheckFailedException(Exception):
@@ -108,7 +109,7 @@ class NodeTester:
 
     DISTRIBUTOR_ADDRESS_PATH = os.path.realpath(os.path.join(os.getcwd(), "..", "doc", "base-account-keys"))
 
-    def __init__(self, node_exec_path, rpc_client_exec_path, node_id, logger, *, 
+    def __init__(self, node_exec_path, rpc_client_exec_path, evm_exec_path, node_id, logger, *, 
                     nodes_id_list=[], miner_threads=2,
                     path_to_database="likelib/database", clean_up_database=True):
         self.logger = logger
@@ -125,6 +126,7 @@ class NodeTester:
             shutil.rmtree(self.work_dir, ignore_errors=True)
             self.logger.debug(f"{self.name} - clean up work directory[{self.work_dir}]")
         os.makedirs(self.work_dir)
+        copy(evm_exec_path, self.work_dir)
         self.node_config_file = os.path.join(self.work_dir, "config.json")
         self.__running = False
 
@@ -162,13 +164,6 @@ class NodeTester:
             print(f"{self.name} - is in dead lock. pid {self.pid}, rpc address: {self.id.connect_rpc_address}")
             self.logger.info(message)
             raise TimeOutException(message)
-            # try:
-            #     print(f"{self.name} - recall command {command} with parameters {parameters} at node {self.id.connect_rpc_address}")
-            #     pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
-            # except subprocess.TimeoutExpired:
-            #     message = f"{self.name} - recall client slow command execution {command} with parameters {parameters} at node {self.id.connect_rpc_address}"
-            #     self.logger.info(message)
-            #     raise TimeOutException(message)
 
         if pipe.returncode != 0:
             return NodeTester.Result(not bool(pipe.returncode), pipe.stderr)
@@ -192,7 +187,7 @@ class NodeTester:
 
     def generate_keys(self, *, keys_path, wait, timeout=1):
         os.makedirs(keys_path)
-        parameters = ["--path", keys_path]
+        parameters = ["--keys", keys_path]
         result = self.__run_client_command(command="generate", parameters=parameters, timeout=timeout)
         self.logger.info(f"{self.name} - generate_keys command end with parameters {parameters} to node {self.id.connect_rpc_address} with result: \"{self.parse_result(result)}\"")
         time.sleep(wait)
@@ -208,12 +203,11 @@ class NodeTester:
     @staticmethod
     def get_address(self, result):
         result_message = self.parse_result(result)
-        str_pattern = "Address: "
-        pos = result_message.find(str_pattern)
-        address_len = 28
-        pos_address_begin = pos + len(str_pattern)
-        pos_address_end = pos_address_begin + address_len
-        return result_message[pos_address_begin : pos_address_end]
+        begin_pattern = "Address: "
+        begin_pos = result_message.find(begin_pattern) + len(begin_pattern)
+        end_pattern = "\nHash of public key"
+        end_pos = result_message.find(end_pattern)
+        return result_message[begin_pos : end_pos]
 
 
     def run_check_generate_keys(self, *, keys_path, wait, timeout=1):
@@ -223,7 +217,7 @@ class NodeTester:
         return address
 
 
-    def transfer(self, *, to_address, amount, keys_path, fee, wait, timeout=1):
+    def transfer(self, *, to_address, amount, keys_path, fee, wait, timeout=5):
         parameters = ["--to", to_address, "--amount", str(amount), "--keys", keys_path, "--fee", str(fee)]
         result = self.__run_client_command(command="transfer", parameters=parameters, timeout=timeout)
         self.logger.info(f"{self.name} - transfer command end with parameters {parameters} to node {self.id.connect_rpc_address} with result: \"{self.parse_result(result)}\"")
@@ -232,12 +226,12 @@ class NodeTester:
 
     @staticmethod
     def check_transfer_result(result):
-        if result.success and b"1" in result.message:
+        if result.success and b"Transaction successfully performed" in result.message:
             return True
         else:
             return False
 
-    def run_check_transfer(self, *, to_address, amount, keys_path, fee, wait, timeout=1):
+    def run_check_transfer(self, *, to_address, amount, keys_path, fee, wait, timeout=5):
         TEST_CHECK(self.check_transfer_result(self.transfer(to_address=to_address, amount=amount, keys_path=keys_path, fee=fee, wait=wait, timeout=timeout)),
                     message=f"fail during transfer to node[{self.name}], to={to_address}, amount={amount}, keys_path={keys_path}, fee={fee}")
 
