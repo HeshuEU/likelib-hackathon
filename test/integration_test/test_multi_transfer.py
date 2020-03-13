@@ -3,14 +3,14 @@ import concurrent.futures
 
 
 @test_case("multi_transfer")
-def main(node_exec_path, rpc_client_exec_path):
+def main(node_exec_path, rpc_client_exec_path,evm_exec_path):
 
     logger = Log("test.log")
 
-    with NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=20300, rpc_port=50150), logger) as node_1:
+    with NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=20300, rpc_port=50150), logger) as node_1:
         node_1.run_check_test()
 
-        with NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=20301, rpc_port=50151), logger, nodes_id_list=[node_1.id, ]) as node_2:
+        with NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=20301, rpc_port=50151), logger, nodes_id_list=[node_1.id, ]) as node_2:
             node_2.run_check_test()
             target_address = Address(node_1, "keys1")
 
@@ -28,7 +28,7 @@ def main(node_exec_path, rpc_client_exec_path):
 
 
 @test_case("multi_transfer_connected_with_everything")
-def main(node_exec_path, rpc_client_exec_path):
+def main(node_exec_path, rpc_client_exec_path,evm_exec_path):
     logger = Log("test.log")
 
     count_nodes = 10
@@ -38,7 +38,7 @@ def main(node_exec_path, rpc_client_exec_path):
     transaction_wait = 2
 
     with NodePoll() as pool:
-        pool.append(NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=start_sync_port, rpc_port=start_rpc_port), logger))
+        pool.append(NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=start_sync_port, rpc_port=start_rpc_port), logger))
         pool.last.start_node(waiting_time)
         pool.last.run_check_test()
 
@@ -47,7 +47,7 @@ def main(node_exec_path, rpc_client_exec_path):
             curent_sync_port = start_sync_port + i
             curent_rpc_port = start_rpc_port + i
 
-            pool.append(NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=curent_sync_port, rpc_port=curent_rpc_port), logger, nodes_id_list=pool.ids))
+            pool.append(NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=curent_sync_port, rpc_port=curent_rpc_port), logger, nodes_id_list=pool.ids))
             pool.last.start_node(waiting_time)
             for node in pool:
                 node.run_check_test()
@@ -79,7 +79,7 @@ def main(node_exec_path, rpc_client_exec_path):
 
 
 @test_case("multi_transfer_connected_one_by_one")
-def main(node_exec_path, rpc_client_exec_path):
+def main(node_exec_path, rpc_client_exec_path,evm_exec_path):
     logger = Log("test.log")
 
     count_nodes = 10
@@ -89,7 +89,7 @@ def main(node_exec_path, rpc_client_exec_path):
     transaction_wait = 2
 
     with NodePoll() as pool:
-        pool.append(NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=start_sync_port, rpc_port=start_rpc_port), logger))
+        pool.append(NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=start_sync_port, rpc_port=start_rpc_port), logger))
         pool.last.start_node(waiting_time)
         pool.last.run_check_test()
 
@@ -98,7 +98,7 @@ def main(node_exec_path, rpc_client_exec_path):
             curent_sync_port = start_sync_port + i
             curent_rpc_port = start_rpc_port + i
 
-            pool.append(NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=curent_sync_port, rpc_port=curent_rpc_port), logger, nodes_id_list=[pool.last.id, ]))
+            pool.append(NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=curent_sync_port, rpc_port=curent_rpc_port), logger, nodes_id_list=[pool.last.id, ]))
             pool.last.start_node(waiting_time)
             for node in pool:
                 node.run_check_test()
@@ -143,7 +143,7 @@ def node_transfers(node, addresses, transaction_wait):
     
 
 @test_case("parallel_transfer_connected_with_everything")
-def main(node_exec_path, rpc_client_exec_path):
+def main(node_exec_path, rpc_client_exec_path,evm_exec_path):
 
     logger = Log("test.log")
 
@@ -157,7 +157,7 @@ def main(node_exec_path, rpc_client_exec_path):
     address_per_nodes = 3
 
     with NodePoll() as pool:
-        pool.append(NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=start_sync_port, rpc_port=start_rpc_port), logger))
+        pool.append(NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=start_sync_port, rpc_port=start_rpc_port), logger))
         pool.last.start_node(node_startup_time)
         pool.last.run_check_test()
 
@@ -166,7 +166,7 @@ def main(node_exec_path, rpc_client_exec_path):
             curent_sync_port = start_sync_port + i
             curent_rpc_port = start_rpc_port + i
 
-            pool.append(NodeTester(node_exec_path, rpc_client_exec_path, NodeId(sync_port=curent_sync_port, rpc_port=curent_rpc_port), logger, nodes_id_list=pool.ids))
+            pool.append(NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=curent_sync_port, rpc_port=curent_rpc_port), logger, nodes_id_list=pool.ids))
             pool.last.start_node(node_startup_time)
             for node in pool:
                 node.run_check_test()

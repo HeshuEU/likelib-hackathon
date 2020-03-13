@@ -14,10 +14,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test execution params')
     parser.add_argument('-r', '--rpc_client', type=str, default="client",
                         help='client execution file path')
-    parser.add_argument('-n', '--node', type=str, default="node",
+    parser.add_argument('-n', '--node', type=str, default="node", 
                         help='node execution file path')
     parser.add_argument('-t', '--test_names', type=str, default="",
                         help='pattern for test execution')
+    parser.add_argument('-evm', '--evm_lib', type=str, default="libevmone.so.0.4",
+                        help='evm execution file path')
 
     args = parser.parse_args()
 
@@ -32,6 +34,12 @@ if __name__ == "__main__":
             f"Not found rpc client executalble file by path: {rpc_client_exec_path}")
         exit(2)
 
+    evm_exec_path = args.evm_lib
+    if not os.path.exists(evm_exec_path):
+        print(
+            f"Not found evm executalble file by path: {rpc_client_exec_path}")
+        exit(2)
+
     return_code = tester.run_registered_test_cases(
-        args.test_names, node_exec_path, rpc_client_exec_path)
+        args.test_names, node_exec_path, rpc_client_exec_path, evm_exec_path)
     exit(return_code)

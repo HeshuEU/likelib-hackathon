@@ -109,10 +109,9 @@ class NodeTester:
 
     DISTRIBUTOR_ADDRESS_PATH = os.path.realpath(os.path.join(os.getcwd(), "..", "..", "doc", "base-account-keys"))
 
-    def __init__(self, node_exec_path, rpc_client_exec_path, node_id, logger, *, 
+    def __init__(self, node_exec_path, rpc_client_exec_path, evm_exec_path, node_id, logger, *, 
                     nodes_id_list=[], miner_threads=2,
                     path_to_database="likelib/database", clean_up_database=True):
-        LIB_VM_PATH = os.path.realpath(os.path.join(os.getcwd(), "..", "..", "..", "build", "bin", "libevmone.so.0.4"))
         self.logger = logger
         self.name = "Node_" + str(node_id.rpc_port)
         self.work_dir = os.path.abspath(self.name)
@@ -127,7 +126,7 @@ class NodeTester:
             shutil.rmtree(self.work_dir, ignore_errors=True)
             self.logger.debug(f"{self.name} - clean up work directory[{self.work_dir}]")
         os.makedirs(self.work_dir)
-        copy(LIB_VM_PATH, self.work_dir)
+        copy(evm_exec_path, self.work_dir)
         self.node_config_file = os.path.join(self.work_dir, "config.json")
         self.__running = False
 

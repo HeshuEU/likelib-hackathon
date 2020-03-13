@@ -79,7 +79,7 @@ Integration tests:
     - TEST_DIR="intergation_test_run"
     - mkdir ${TEST_DIR}
     - cd ${TEST_DIR}
-    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/bin/node -r ${PROJECT_SOURCE_DIR}/build/bin/client
+    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/bin/node -r ${PROJECT_SOURCE_DIR}/build/bin/client -evm ${PROJECT_SOURCE_DIR}/build/bin/libevmone.so.0.4
   artifacts:
     when: always
     paths:
