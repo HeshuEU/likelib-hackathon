@@ -107,7 +107,7 @@ class Address:
 class NodeTester:
     Result = collections.namedtuple('Result', ["success", "message"])
 
-    DISTRIBUTOR_ADDRESS_PATH = os.path.realpath(os.path.join(os.getcwd(), "..", "..", "doc", "base-account-keys"))
+    DISTRIBUTOR_ADDRESS_PATH = os.path.realpath(os.path.join(os.getcwd(), "..", "doc", "base-account-keys"))
 
     def __init__(self, node_exec_path, rpc_client_exec_path, evm_exec_path, node_id, logger, *, 
                     nodes_id_list=[], miner_threads=2,
