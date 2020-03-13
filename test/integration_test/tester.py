@@ -112,7 +112,7 @@ class NodeTester:
     def __init__(self, node_exec_path, rpc_client_exec_path, node_id, logger, *, 
                     nodes_id_list=[], miner_threads=2,
                     path_to_database="likelib/database", clean_up_database=True):
-        LIB_VM_PATH = "/home/feterman/main_folder/projects/likelib/build/bin/libevmone.so.0.4"
+        LIB_VM_PATH = os.path.realpath(os.path.join(os.getcwd(), "..", "..", "..", "build", "bin", "libevmone.so.0.4"))
         self.logger = logger
         self.name = "Node_" + str(node_id.rpc_port)
         self.work_dir = os.path.abspath(self.name)
