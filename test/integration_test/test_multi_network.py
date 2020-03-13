@@ -68,10 +68,10 @@ def main(node_exec_path, rpc_client_exec_path, evm_exec_path):
     return 0
 
 
-def init_nodes(node_exec_path, rpc_client_exec_path, initializing_node_ids, first_node_id, waiting_time, logger):
+def init_nodes(node_exec_path, rpc_client_exec_path, evm_exec_path, initializing_node_ids, first_node_id, waiting_time, logger):
     nodes = list()
     for node_id in initializing_node_ids:
-        node = NodeTester(node_exec_path, rpc_client_exec_path, node_id, logger, nodes_id_list=[first_node_id, ])
+        node = NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, node_id, logger, nodes_id_list=[first_node_id, ])
         node.start_node(waiting_time)
         nodes.append(node)
     return nodes
