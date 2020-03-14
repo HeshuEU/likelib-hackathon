@@ -217,6 +217,8 @@ void Core::applyBlockTransactions(const bc::Block& block)
         for(const auto& tx: block.getTransactions()) {
             tryPerformTransaction(tx, block);
         }
+        constexpr bc::Balance EMISSION_VALUE = 1000;
+        _account_manager.getAccount(block.getCoinbase()).addBalance(EMISSION_VALUE);
     }
 }
 
