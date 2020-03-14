@@ -228,11 +228,12 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
     auto hash = base::Sha256::compute(base::toBytes(tx));
     if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
         try {
-            auto [address, result] = doContractCreation(tx, block_where_tx);
+            auto [address, result, gas_left] = doContractCreation(tx, block_where_tx);
             LOG_DEBUG << "Contract created at " << address << " with output = " << base::toHex<base::Bytes>(result);
             base::SerializationOArchive oa;
             oa.serialize(address);
             oa.serialize(result);
+            oa.serialize(gas_left);
             {
                 std::unique_lock lk(_tx_outputs_mutex);
                 _tx_outputs[hash] = std::move(oa).getBytes();
@@ -244,18 +245,21 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
         return true;
     }
     else {
-        auto result = doMessageCall(tx, block_where_tx);
-        LOG_DEBUG << "Message call result: " << base::toHex<base::Bytes>(result);
+        auto [result, gas_left] = doMessageCall(tx, block_where_tx);
+        LOG_DEBUG << "Message call result: " << base::toHex(result);
+        base::SerializationOArchive oa;
+        oa.serialize(std::move(result));
+        oa.serialize(gas_left);
         {
             std::unique_lock lk(_tx_outputs_mutex);
-            _tx_outputs[hash] = base::toBytes(result);
+            _tx_outputs[hash] = std::move(oa).getBytes();
         }
         return true;
     }
 }
 
 
-std::pair<bc::Address, base::Bytes> Core::doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx)
+std::tuple<bc::Address, base::Bytes, bc::Balance> Core::doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
     base::SerializationIArchive ia(tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();
@@ -275,7 +279,7 @@ std::pair<bc::Address, base::Bytes> Core::doContractCreation(const bc::Transacti
 }
 
 
-base::Bytes Core::doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx)
+std::tuple<base::Bytes, bc::Balance> Core::doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
     auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
 

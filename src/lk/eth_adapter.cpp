@@ -266,7 +266,7 @@ EthAdapter::EthAdapter(Core& core, AccountManager& account_manager, CodeManager&
 EthAdapter::~EthAdapter() = default;
 
 
-std::pair<bc::Address, base::Bytes> EthAdapter::createContract(const bc::Address& contract_address, const bc::Transaction& associated_tx, const bc::Block& associated_block)
+std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(const bc::Address& contract_address, const bc::Transaction& associated_tx, const bc::Block& associated_block)
 {
     std::lock_guard lk(_execution_mutex);
 
@@ -280,7 +280,7 @@ std::pair<bc::Address, base::Bytes> EthAdapter::createContract(const bc::Address
     _eth_host->setContext(&associated_tx, &associated_block);
     if(auto result = _vm.execute(message); result.ok()) {
         // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
-        return {contract_address, {}};
+        return {contract_address, {}, result.gasLeft()};
     }
     else {
         RAISE_ERROR(base::Error, "invalid result");
@@ -288,7 +288,7 @@ std::pair<bc::Address, base::Bytes> EthAdapter::createContract(const bc::Address
 }
 
 
-base::Bytes EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
+std::tuple<base::Bytes, bc::Balance> EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
 {
     std::lock_guard lk(_execution_mutex);
 
@@ -303,7 +303,7 @@ base::Bytes EthAdapter::call(const bc::Transaction& associated_tx, const bc::Blo
 
         _eth_host->setContext(&associated_tx, &associated_block);
         auto ret = _vm.execute(message);
-        return ret.toOutputData();
+        return {ret.toOutputData(), ret.gasLeft()};
     }
 }
 

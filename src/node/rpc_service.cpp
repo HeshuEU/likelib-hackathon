@@ -113,13 +113,14 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
         base::SerializationIArchive ia(std::move(raw_output));
         auto contract_address = ia.deserialize<bc::Address>();
         auto output = ia.deserialize<base::Bytes>();
+        auto gas_left = ia.deserialize<bc::Balance>();
 
         std::string ret_str{"Contract was successfully deployed"};
         if(!output.isEmpty()) {
             ret_str += " with output: ";
             ret_str += base::toHex<base::Bytes>(output);
         }
-        return {rpc::OperationStatus::createSuccess(ret_str), contract_address, 0x228};
+        return {rpc::OperationStatus::createSuccess(ret_str), contract_address, gas_left};
     }
     catch(const std::exception& e) {
         return {
@@ -154,9 +155,11 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
     try {
         _core.addPendingTransactionAndWait(tx);
         auto hash = base::Sha256::compute(base::toBytes(tx));
-        auto result = _core.getTransactionOutput(hash);
+        base::SerializationIArchive ia(_core.getTransactionOutput(hash));
+        auto result = ia.deserialize<base::Bytes>();
+        auto gas_left = ia.deserialize<bc::Balance>();
         return {rpc::OperationStatus::createSuccess("Message call was successfully executed"),
-            base::toHex<base::Bytes>(result), 0x228};
+            base::toHex<base::Bytes>(result), gas_left};
     }
     catch(const std::exception& e) {
         return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()),
