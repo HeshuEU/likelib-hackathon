@@ -288,7 +288,6 @@ base::Bytes Core::doMessageCall(const bc::Transaction& tx, const bc::Block& bloc
         return _eth_adapter.call(tx, block_where_tx);
     }
     else {
-        // _account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount());
         return {};
     }
 }
