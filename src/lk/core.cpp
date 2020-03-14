@@ -228,6 +228,7 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
     auto hash = base::Sha256::compute(base::toBytes(tx));
     if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
         try {
+            _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
             auto [address, result, gas_left] = doContractCreation(tx, block_where_tx);
             LOG_DEBUG << "Contract created at " << address << " with output = " << base::toHex<base::Bytes>(result);
             base::SerializationOArchive oa;
@@ -238,6 +239,8 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
                 std::unique_lock lk(_tx_outputs_mutex);
                 _tx_outputs[hash] = std::move(oa).getBytes();
             }
+            _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - gas_left);
+            _account_manager.getAccount(tx.getFrom()).addBalance(gas_left);
         }
         catch(const base::Error&) {
             return false;
@@ -245,16 +248,24 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
         return true;
     }
     else {
-        auto [result, gas_left] = doMessageCall(tx, block_where_tx);
-        LOG_DEBUG << "Message call result: " << base::toHex(result);
-        base::SerializationOArchive oa;
-        oa.serialize(std::move(result));
-        oa.serialize(gas_left);
-        {
-            std::unique_lock lk(_tx_outputs_mutex);
-            _tx_outputs[hash] = std::move(oa).getBytes();
+        try {
+            _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
+            auto [result, gas_left] = doMessageCall(tx, block_where_tx);
+            LOG_DEBUG << "Message call result: " << base::toHex(result);
+            base::SerializationOArchive oa;
+            oa.serialize(std::move(result));
+            oa.serialize(gas_left);
+            {
+                std::unique_lock lk(_tx_outputs_mutex);
+                _tx_outputs[hash] = std::move(oa).getBytes();
+            }
+            _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - gas_left);
+            _account_manager.getAccount(tx.getFrom()).addBalance(gas_left);
+            return true;
         }
-        return true;
+        catch(const base::Error&) {
+            return false;
+        }
     }
 }
 
