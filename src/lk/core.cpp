@@ -232,6 +232,7 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
             auto [address, result, gas_left] = doContractCreation(tx, block_where_tx);
             LOG_DEBUG << "Contract created at " << address << " with output = " << base::toHex<base::Bytes>(result);
             base::SerializationOArchive oa;
+            oa.serialize(true);
             oa.serialize(address);
             oa.serialize(result);
             oa.serialize(gas_left);
@@ -253,6 +254,7 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
             auto [result, gas_left] = doMessageCall(tx, block_where_tx);
             LOG_DEBUG << "Message call result: " << base::toHex(result);
             base::SerializationOArchive oa;
+            oa.serialize(true);
             oa.serialize(std::move(result));
             oa.serialize(gas_left);
             {

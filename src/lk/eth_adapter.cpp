@@ -283,7 +283,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
         return {contract_address, {}, result.gasLeft()};
     }
     else {
-        RAISE_ERROR(base::Error, "invalid result");
+        RAISE_ERROR(base::Error, "contract creation failed during execution");
     }
 }
 

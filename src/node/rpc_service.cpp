@@ -110,7 +110,14 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
         _core.addPendingTransactionAndWait(tx);
         auto hash = base::Sha256::compute(base::toBytes(tx));
         auto raw_output = _core.getTransactionOutput(hash);
-        base::SerializationIArchive ia(std::move(raw_output));
+        if(raw_output.isEmpty()) {
+            return {rpc::OperationStatus::createFailed(std::string{"Transaction failed"}), bc::Address::null(), gas};
+        }
+        base::SerializationIArchive ia(raw_output);
+        auto is_successful = ia.deserialize<bool>();
+        if(!is_successful) {
+            return {rpc::OperationStatus::createFailed(std::string{"Transaction failed"}), bc::Address::null(), gas};
+        }
         auto contract_address = ia.deserialize<bc::Address>();
         auto output = ia.deserialize<base::Bytes>();
         auto gas_left = ia.deserialize<bc::Balance>();
@@ -155,7 +162,18 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
     try {
         _core.addPendingTransactionAndWait(tx);
         auto hash = base::Sha256::compute(base::toBytes(tx));
-        base::SerializationIArchive ia(_core.getTransactionOutput(hash));
+        const auto& result_bytes = _core.getTransactionOutput(hash);
+        if(result_bytes.isEmpty()) {
+            return {rpc::OperationStatus::createFailed(std::string{"Message call failed"}),
+                    std::string{}, gas};
+        }
+        base::SerializationIArchive ia(result_bytes);
+
+        auto is_successful = ia.deserialize<bool>();
+        if(!is_successful) {
+            return {rpc::OperationStatus::createFailed(std::string{"Message call failed"}),
+                    std::string{}, gas};
+        }
         auto result = ia.deserialize<base::Bytes>();
         auto gas_left = ia.deserialize<bc::Balance>();
         return {rpc::OperationStatus::createSuccess("Message call was successfully executed"),
