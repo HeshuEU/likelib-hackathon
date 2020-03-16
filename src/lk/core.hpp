@@ -85,8 +85,8 @@ class Core
     bool checkTransaction(const bc::Transaction& tx) const;
     //==================
     bool tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx);
-    std::pair<bc::Address, base::Bytes> doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx);
-    base::Bytes doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx);
+    std::tuple<bc::Address, base::Bytes, bc::Balance> doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx);
+    std::tuple<base::Bytes, bc::Balance> doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx);
     //==================
   public:
     //==================

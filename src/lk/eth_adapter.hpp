@@ -20,8 +20,8 @@ class EthAdapter
 
     ~EthAdapter();
 
-    std::pair<bc::Address, base::Bytes> createContract(const bc::Address& bc_address, const bc::Transaction& associated_tx, const bc::Block& associated_block);
-    base::Bytes call(const bc::Transaction& associated_tx, const bc::Block& associated_block);
+    std::tuple<bc::Address, base::Bytes, bc::Balance> createContract(const bc::Address& bc_address, const bc::Transaction& associated_tx, const bc::Block& associated_block);
+    std::tuple<base::Bytes, bc::Balance> call(const bc::Transaction& associated_tx, const bc::Block& associated_block);
 
   private:
     class EthHost;
