@@ -194,6 +194,7 @@ class EthAdapter::EthHost : public evmc::Host
 
         auto tx = std::move(txb).build();
         auto result = _core.doMessageCall(tx, *_associated_block);
+        return result.getResult();
 
         // return result;
         // return evmc::make_result(evmc::result::)
@@ -280,7 +281,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
     _eth_host->setContext(&associated_tx, &associated_block);
     if(auto result = _vm.execute(message); result.ok()) {
         // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
-        return {contract_address, {}, result.gasLeft()};
+        return {contract_address, {}, static_cast<bc::Balance>(result.gasLeft())};
     }
     else {
         RAISE_ERROR(base::Error, "contract creation failed during execution");
@@ -288,7 +289,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
 }
 
 
-std::tuple<base::Bytes, bc::Balance> EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
+vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
 {
     std::lock_guard lk(_execution_mutex);
 
@@ -302,8 +303,7 @@ std::tuple<base::Bytes, bc::Balance> EthAdapter::call(const bc::Transaction& ass
         auto message = contract.createMessage(associated_tx.getFee(), associated_tx.getFrom(), associated_tx.getTo(), associated_tx.getAmount(), associated_tx.getData());
 
         _eth_host->setContext(&associated_tx, &associated_block);
-        auto ret = _vm.execute(message);
-        return {ret.toOutputData(), ret.gasLeft()};
+        return _vm.execute(message);
     }
 }
 

@@ -256,18 +256,18 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
     else {
         try {
             _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
-            auto [result, gas_left] = doMessageCall(tx, block_where_tx);
+            auto result = doMessageCall(tx, block_where_tx);
             LOG_DEBUG << "Message call result: " << base::toHex(result);
             base::SerializationOArchive oa;
             oa.serialize(true);
-            oa.serialize(std::move(result));
-            oa.serialize(gas_left);
+            oa.serialize(result.toOutputData());
+            oa.serialize(result.gasLeft());
             {
                 std::unique_lock lk(_tx_outputs_mutex);
                 _tx_outputs[hash] = std::move(oa).getBytes();
             }
-            _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - gas_left);
-            _account_manager.getAccount(tx.getFrom()).addBalance(gas_left);
+            _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - result.gasLeft());
+            _account_manager.getAccount(tx.getFrom()).addBalance(result.gasLeft());
             return true;
         }
         catch(const base::Error&) {
@@ -297,7 +297,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> Core::doContractCreation(const
 }
 
 
-std::tuple<base::Bytes, bc::Balance> Core::doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx)
+vm::ExecutionResult Core::doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
     auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
 
