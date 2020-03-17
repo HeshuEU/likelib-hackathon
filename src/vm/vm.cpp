@@ -133,31 +133,31 @@ ExecutionResult::ExecutionResult(evmc::result&& data) : _data(std::move(data))
 
 bool ExecutionResult::ok() const noexcept
 {
-    return _data.status_code == evmc_status_code::EVMC_SUCCESS;
+    return !_data || _data->status_code == evmc_status_code::EVMC_SUCCESS;
 }
 
 
 base::Bytes ExecutionResult::toOutputData() const
 {
-    return copy(_data.output_data, _data.output_size);
+    return copy(_data->output_data, _data->output_size);
 }
 
 
 int64_t ExecutionResult::gasLeft() const
 {
-    return _data.gas_left;
+    return _data->gas_left;
 }
 
 
 base::Bytes ExecutionResult::createdAddress() const
 {
-    return toBytes(_data.create_address);
+    return toBytes(_data->create_address);
 }
 
 
 evmc::result ExecutionResult::getResult() noexcept
 {
-    return std::move(_data);
+    return std::move(*_data);
 }
 
 

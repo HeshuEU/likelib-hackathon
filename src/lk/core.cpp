@@ -257,7 +257,7 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
         try {
             _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
             auto result = doMessageCall(tx, block_where_tx);
-            LOG_DEBUG << "Message call result: " << base::toHex(result);
+            LOG_DEBUG << "Message call result: " << base::toHex(result.toOutputData());
             base::SerializationOArchive oa;
             oa.serialize(true);
             oa.serialize(result.toOutputData());

@@ -73,7 +73,7 @@ bc::Block GeneralServerService::get_block(const base::Sha256& block_hash)
         return *block_opt;
     }
     else {
-        return bc::Block{-1, base::Sha256::null(), 0, bc::Address::null(), {}};
+        return bc::Block{bc::BlockDepth(-1), base::Sha256::null(), base::Time::fromSecondsSinceEpochBeginning(0), bc::Address::null(), {}};
     }
 }
 

@@ -32,10 +32,15 @@ class EthAdapter::EthHost : public evmc::Host
         ASSERT(_associated_block);
 
         LOG_DEBUG << "Core::get_storage";
-        auto address = vm::toNativeAddress(addr);
-        base::Bytes key(ethKey.bytes, 32);
-        auto storage_value = _account_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
-        return vm::toEvmcBytes32(storage_value);
+        try {
+            auto address = vm::toNativeAddress(addr);
+            base::Bytes key(ethKey.bytes, 32);
+            auto storage_value = _account_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
+            return vm::toEvmcBytes32(storage_value);
+        }
+        catch(...) { // cannot pass exceptions since noexcept
+            return {};
+        }
     }
 
 
