@@ -93,5 +93,5 @@ Valgrind test:
   script:
     - cd ./doc
     - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
-    - cd build/bin
+    - cd ../build/bin
     - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
