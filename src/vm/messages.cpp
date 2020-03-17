@@ -96,8 +96,6 @@ std::optional<Contracts> Solc::compile(const std::string& path_to_solidity_code)
 {
     // TODO check api parsing errors
     auto full_compilation_output = call_full_compilation_command(path_to_solidity_code);
-    auto runtime_compilation_output = call_runtime_compilation_command(path_to_solidity_code);
-    auto abi_output = call_abi_command(path_to_solidity_code);
     auto hashes_output = call_hashes_command(path_to_solidity_code);
     auto metadata_output = call_metadata_command(path_to_solidity_code);
 
@@ -106,18 +104,6 @@ std::optional<Contracts> Solc::compile(const std::string& path_to_solidity_code)
         CompiledContract contract;
         contract.setName(contract_name_full_code_pair.first);
         contract.setFullCode(contract_name_full_code_pair.second);
-
-        for(const auto& contract_name_code_pair: runtime_compilation_output) {
-            if(contract_name_code_pair.first == contract.getName()) {
-                contract.setRuntimeCode(contract_name_code_pair.second);
-            }
-        }
-
-        for(const auto& contract_name_abi_pair: abi_output) {
-            if(contract_name_abi_pair.first == contract.getName()) {
-                contract.setAbiSpecification(contract_name_abi_pair.second);
-            }
-        }
 
         for(const auto& contract_name_hashes_pair: hashes_output) {
             if(contract_name_hashes_pair.first == contract.getName()) {
@@ -161,39 +147,6 @@ std::vector<std::string> Solc::call_command(std::vector<std::string> args) const
     }
 
     return out_put_result_values;
-}
-
-
-std::vector<std::pair<std::string, base::Bytes>> Solc::call_runtime_compilation_command(
-    const std::string& path_to_solidity_code) const
-{
-    std::vector<std::string> args;
-    args.push_back("--bin-runtime");
-    args.push_back(path_to_solidity_code);
-
-    auto res = call_command(args);
-
-    static const std::set<std::string> ignore{"=======", "Binary", "of", "the", "runtime", "part:"};
-    std::vector<std::string> out_put_result_values;
-    for(const auto& item: res) {
-        if(ignore.find(item) == ignore.end()) {
-            out_put_result_values.push_back(item);
-        }
-    }
-
-    std::vector<std::pair<std::string, base::Bytes>> contracts_byte_codes;
-    for(std::size_t i = 0; i < out_put_result_values.size() / 2; i++) {
-        auto current_contract_path_index = i * 2;
-        auto current_data_index = current_contract_path_index + 1;
-        auto path = out_put_result_values[current_contract_path_index];
-        auto delimiter_pos = path.find(':');
-        auto source_file = path.substr(0, delimiter_pos);
-        auto contract_name = path.substr(delimiter_pos + 1, path.size());
-        auto bytecode = base::fromHex<base::Bytes>(out_put_result_values[current_data_index]);
-        contracts_byte_codes.push_back({std::move(contract_name), std::move(bytecode)});
-    }
-
-    return contracts_byte_codes;
 }
 
 
@@ -262,41 +215,6 @@ std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_comm
     }
 
     return contracts_metadatas;
-}
-
-
-std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_abi_command(
-    const std::string& path_to_solidity_code) const
-{
-    std::vector<std::string> args;
-    args.push_back("--abi");
-    args.push_back(path_to_solidity_code);
-
-    auto res = call_command(args);
-
-    static const std::set<std::string> ignore{"=======", "Contract", "JSON", "ABI"};
-    std::vector<std::string> out_put_result_values;
-    for(const auto& item: res) {
-        if(ignore.find(item) == ignore.end()) {
-            out_put_result_values.push_back(item);
-        }
-    }
-
-    std::vector<std::pair<std::string, base::PropertyTree>> contracts_abi_data;
-    for(std::size_t i = 0; i < out_put_result_values.size() / 2; i++) {
-        auto current_contract_path_index = i * 2;
-        auto current_data_index = current_contract_path_index + 1;
-        auto path = out_put_result_values[current_contract_path_index];
-        auto delimiter_pos = path.find(':');
-        auto source_file = path.substr(0, delimiter_pos);
-        auto contract_name = path.substr(delimiter_pos + 1, path.size());
-
-        auto metadata = base::parseJson(out_put_result_values[current_data_index]);
-
-        contracts_abi_data.push_back({std::move(contract_name), std::move(metadata)});
-    }
-
-    return contracts_abi_data;
 }
 
 
