@@ -99,16 +99,10 @@ class Solc
 
     std::vector<std::string> call_command(std::vector<std::string> args) const;
 
-    std::vector<std::pair<std::string, base::Bytes>> call_runtime_compilation_command(
-        const std::string& path_to_solidity_code) const;
-
     std::vector<std::pair<std::string, base::Bytes>> call_full_compilation_command(
         const std::string& path_to_solidity_code) const;
 
     std::vector<std::pair<std::string, base::PropertyTree>> call_metadata_command(
-        const std::string& path_to_solidity_code) const;
-
-    std::vector<std::pair<std::string, base::PropertyTree>> call_abi_command(
         const std::string& path_to_solidity_code) const;
 
     std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::string>>>> call_hashes_command(

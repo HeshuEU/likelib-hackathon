@@ -10,6 +10,8 @@ namespace base
 
 class PropertyTree
 {
+    friend void save(const PropertyTree& tree, const std::filesystem::path& path_to_save);
+
   public:
     PropertyTree();
 
@@ -30,6 +32,8 @@ class PropertyTree
 PropertyTree readConfig(const std::filesystem::path& config_file);
 
 PropertyTree parseJson(const std::string& json_string);
+
+void save(const PropertyTree& tree, const std::filesystem::path& path_to_save);
 
 } // namespace base
 

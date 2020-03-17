@@ -7,13 +7,13 @@
 #include "base/property_tree.hpp"
 #include "base/subprogram_router.hpp"
 #include "base/time.hpp"
+#include "base/directory.hpp"
 #include "bc/transaction.hpp"
 #include "rpc/rpc.hpp"
 #include "rpc/error.hpp"
 #include "vm/messages.hpp"
 
 #include <cstring>
-#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -449,6 +449,25 @@ int ActionCompile::loadOptions(const base::ProgramOptionsParser& parser)
     return base::config::EXIT_OK;
 }
 
+namespace
+{
+
+void save_contract(const vm::CompiledContract& contract)
+{
+    std::filesystem::path current_folder{contract.getName()};
+    base::createIfNotExists(current_folder);
+
+    {
+        std::ofstream file;
+        file.open(current_folder / std::filesystem::path{"compiled_code.bin"});
+        file << base::toHex(contract.getFullCode());
+        file.close();
+    }
+
+    base::save(contract.getMetadata(), current_folder / std::filesystem::path{"metadata.json"});
+}
+
+} // namespace
 
 int ActionCompile::execute()
 {
@@ -462,7 +481,8 @@ int ActionCompile::execute()
         }
         std::cout << "Compiled contracts:" << std::endl;
         for(const auto& contract: contracts.value()) {
-            std::cout << contract.getName() << std::endl;
+            std::cout << "\t" << contract.getName() << std::endl;
+            save_contract(contract);
         }
     }
     catch(const base::ParsingError& er) {
