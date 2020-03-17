@@ -679,6 +679,12 @@ int ActionGetBlock::execute()
     LOG_INFO << "Trying to connect to rpc server at " << _host_address;
     rpc::RpcClient client(_host_address);
     auto block = client.get_block(_block_hash);
+
+    if(block.getTimestamp().getSecondsSinceEpochBeginning() == 0 && block.getDepth() == bc::BlockDepth(-1)) {
+        std::cout << "Cannot find given block" << std::endl;
+        return base::config::EXIT_OK;
+    }
+
     std::cout << "Block hash " << _block_hash << '\n'
               << "\tDepth: " << block.getDepth() << '\n'
               << "\tTimestamp: " << block.getTimestamp() << '\n'
