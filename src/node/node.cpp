@@ -41,7 +41,7 @@ void Node::onBlockMine(bc::Block&& block)
 base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> Node::getMiningComplexity()
 {
     base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> complexity;
-    complexity[3] = 0x2f;
+    complexity[2] = 0xbf;
     return complexity;
 }
 
