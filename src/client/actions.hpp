@@ -154,6 +154,45 @@ class ActionCompile : public ActionBase
 };
 
 
+class ActionEncode : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionEncode(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::filesystem::path _compiled_code_folder_path;
+    std::string _call_data;
+    //====================================
+};
+
+
+class ActionDecode : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionDecode(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::filesystem::path _compiled_code_folder_path;
+    std::string _method_name;
+    std::string _data_to_decode;
+    //====================================
+};
+
+
 class ActionGenerateKeys : public ActionBase
 {
   public:

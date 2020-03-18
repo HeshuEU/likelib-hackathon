@@ -12,6 +12,7 @@
 #include "rpc/rpc.hpp"
 #include "rpc/error.hpp"
 #include "vm/messages.hpp"
+#include "vm/tools.hpp"
 
 #include <cstring>
 #include <iostream>
@@ -29,6 +30,8 @@ constexpr const char* KEYS_DIRECTORY_OPTION = "keys";
 constexpr const char* FEE_OPTION = "fee";
 constexpr const char* ADDRESS_OPTION = "address";
 constexpr const char* CODE_PATH_OPTION = "code";
+constexpr const char* METHOD_NAME_OPTION = "method";
+constexpr const char* DATA_OPTION = "data";
 constexpr const char* GAS_OPTION = "gas";
 constexpr const char* INITIAL_MESSAGE_OPTION = "init";
 constexpr const char* MESSAGE_OPTION = "message";
@@ -293,9 +296,14 @@ int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
 
-    std::filesystem::path code_file_path = parser.getValue<std::string>(CODE_PATH_OPTION);
-    auto compiled_code = base::readConfig(code_file_path);
-    _compiled_contract = compiled_code.get<std::string>("object");
+    std::filesystem::path code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
+    auto code_file_path = code_folder_path / std::filesystem::path("compiled_code.bin");
+
+    if(!std::filesystem::exists(code_folder_path)) {
+        RAISE_ERROR(base::InvalidArgument, "the file with this path does not exist");
+    }
+    std::ifstream file(code_file_path, std::ios::binary);
+    _compiled_contract = std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
 
@@ -483,6 +491,111 @@ int ActionCompile::execute()
         for(const auto& contract: contracts.value()) {
             std::cout << "\t" << contract.getName() << std::endl;
             save_contract(contract);
+        }
+    }
+    catch(const base::ParsingError& er) {
+        std::cerr << er;
+        return base::config::EXIT_FAIL;
+    }
+    catch(const base::SystemCallFailed& er) {
+        std::cerr << er;
+        return base::config::EXIT_FAIL;
+    }
+
+    return base::config::EXIT_OK;
+}
+
+//====================================
+
+ActionEncode::ActionEncode(base::SubprogramRouter& router) : ActionBase{router}
+{}
+
+
+const std::string_view& ActionEncode::getName() const
+{
+    static const std::string_view name = "Encode";
+    return name;
+}
+
+
+void ActionEncode::setupOptionsParser(base::ProgramOptionsParser& parser)
+{
+    parser.addRequiredOption<std::string>(CODE_PATH_OPTION, "path to folder with compiled Solidity code");
+    parser.addRequiredOption<std::string>(DATA_OPTION, "call code");
+}
+
+
+int ActionEncode::loadOptions(const base::ProgramOptionsParser& parser)
+{
+    _compiled_code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
+    _call_data = parser.getValue<std::string>(DATA_OPTION);
+    return base::config::EXIT_OK;
+}
+
+
+int ActionEncode::execute()
+{
+    try {
+        auto output_message = vm::encodeCall(_compiled_code_folder_path, _call_data);
+        if(output_message) {
+            std::cout << output_message.value() << std::endl;
+        }
+        else {
+            std::cerr << "encoding failed.\n";
+            return base::config::EXIT_FAIL;
+        }
+    }
+    catch(const base::ParsingError& er) {
+        std::cerr << er;
+        return base::config::EXIT_FAIL;
+    }
+    catch(const base::SystemCallFailed& er) {
+        std::cerr << er;
+        return base::config::EXIT_FAIL;
+    }
+
+    return base::config::EXIT_OK;
+}
+
+//====================================
+
+ActionDecode::ActionDecode(base::SubprogramRouter& router) : ActionBase{router}
+{}
+
+
+const std::string_view& ActionDecode::getName() const
+{
+    static const std::string_view name = "Decode";
+    return name;
+}
+
+
+void ActionDecode::setupOptionsParser(base::ProgramOptionsParser& parser)
+{
+    parser.addRequiredOption<std::string>(CODE_PATH_OPTION, "path to folder with compiled Solidity code");
+    parser.addRequiredOption<std::string>(METHOD_NAME_OPTION, "call code");
+    parser.addRequiredOption<std::string>(DATA_OPTION, "data to decode");
+}
+
+
+int ActionDecode::loadOptions(const base::ProgramOptionsParser& parser)
+{
+    _compiled_code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
+    _method_name = parser.getValue<std::string>(METHOD_NAME_OPTION);
+    _data_to_decode = parser.getValue<std::string>(DATA_OPTION);
+    return base::config::EXIT_OK;
+}
+
+int ActionDecode::execute()
+{
+    try {
+        auto output_message = vm::decodeOutput(_compiled_code_folder_path, _method_name, _data_to_decode);
+        if(output_message) {
+            std::cout << output_message.value() << std::endl;
+        }
+        else {
+            std::cerr << "decoding failed.\n";
+            return base::config::EXIT_FAIL;
         }
     }
     catch(const base::ParsingError& er) {

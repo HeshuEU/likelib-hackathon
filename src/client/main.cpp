@@ -53,6 +53,8 @@ int main(int argc, char** argv)
         router.addSubprogram("create_contract", "deploy a smart contract", run<ActionCreateContract>);
         router.addSubprogram("message_call", "create message to call smart contract", run<ActionMessageCall>);
         router.addSubprogram("compile", "compile smart contract", run<ActionCompile>);
+        router.addSubprogram("encode", "encode smart contract message", run<ActionEncode>);
+        router.addSubprogram("decode", "decode smart contract message", run<ActionDecode>);
         return router.process(argc, argv);
     }
     catch(const std::exception& error) {
