@@ -1,7 +1,13 @@
 #include "tools.hpp"
 #include "error.hpp"
 
+#include <boost/process.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include <algorithm>
+
+
+namespace bp = ::boost::process;
 
 namespace vm
 {
@@ -184,6 +190,87 @@ evmc::address toEthAddress(const bc::Address& address)
     ASSERT(byte_address.size() == std::size(ret.bytes));
     std::copy(byte_address.getData(), byte_address.getData() + byte_address.size(), ret.bytes);
     return ret;
+}
+
+
+std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call)
+{
+    auto exec_script = std::filesystem::current_path() / std::filesystem::path{"encoder.py"};
+    if(std::filesystem::exists(exec_script)) {
+        std::vector<std::string> args{exec_script, "--contract_path", path_to_code_folder, "--call", call};
+        return base::fromHex<base::Bytes>(callPython(args));
+    }
+    return std::nullopt;
+}
+
+
+std::optional<std::string> decodeOutput(
+    const std::filesystem::path& path_to_code_folder, const std::string& method, const std::string& output)
+{
+    auto exec_script = std::filesystem::current_path() / std::filesystem::path{"decoder.py"};
+    if(std::filesystem::exists(exec_script)) {
+        std::vector<std::string> args{
+            exec_script, "--contract_path", path_to_code_folder, "--method", method, "--data", output};
+        return callPython(args);
+    }
+    return std::nullopt;
+}
+
+namespace
+{
+    constexpr const char* PATH_VARIABLE_NAME = "PATH";
+    constexpr const char* PATH_DELIMITER_NAME = ":";
+    constexpr const char* PYTHON_EXEC = "python3.7";
+
+    std::optional<std::string> findPython()
+    {
+        std::string path_var = std::getenv(PATH_VARIABLE_NAME);
+        std::vector<std::string> results;
+
+        boost::algorithm::split(results, path_var, boost::is_any_of(PATH_DELIMITER_NAME));
+
+        for(const auto& item: results) {
+            auto current = std::filesystem::path(item) / std::filesystem::path(PYTHON_EXEC);
+            if(std::filesystem::exists(current)) {
+                return current;
+            }
+        }
+        return std::nullopt;
+    }
+
+} // namespace
+
+std::string callPython(std::vector<std::string>& args)
+{
+    bp::ipstream out;
+    int exit_code = 2;
+
+    auto python_exec = findPython();
+    if(python_exec) {
+        try {
+            bp::child c(python_exec.value(), args, bp::std_out > out);
+            c.wait();
+            exit_code = c.exit_code();
+        }
+        catch(const std::exception& e) {
+            RAISE_ERROR(base::SystemCallFailed, e.what());
+        }
+    }
+    else {
+        RAISE_ERROR(base::InaccessibleFile, "can't find python executable file");
+    }
+
+    std::ostringstream s;
+    while(out) {
+        std::string out_result;
+        out >> out_result;
+        s << out_result;
+    }
+
+    if(exit_code) {
+        RAISE_ERROR(base::SystemCallFailed, s.str());
+    }
+    return s.str();
 }
 
 

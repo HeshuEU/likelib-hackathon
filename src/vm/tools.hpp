@@ -6,6 +6,11 @@
 
 #include <evmc/evmc.hpp>
 
+#include <boost/filesystem.hpp>
+
+#include <optional>
+
+
 namespace vm
 {
 
@@ -44,5 +49,11 @@ base::Bytes encode(uint8_t value);
 bc::Address toNativeAddress(const evmc::address& addr);
 
 evmc::address toEthAddress(const bc::Address& address);
+
+std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call);
+
+std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_code_folder, const std::string& method, const std::string& output);
+
+std::string callPython(std::vector<std::string>& args);
 
 } // namespace vm

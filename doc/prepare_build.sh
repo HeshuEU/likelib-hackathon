@@ -23,6 +23,8 @@ ${SUDO_PREF} apt-get install -y git wget unzip tar curl valgrind \
                                 clang-tidy python3.7 python3-pip \
                                 solc autoconf libtool || exit 1
 
+pip3 install web3 || exit 1
+
 # Installed with apt-utils
 #${SUDO_PREF} apt-get install -y  software-properties-common || exit 1
 #${SUDO_PREF} apt-get update || exit 1
