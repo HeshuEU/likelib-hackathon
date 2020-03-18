@@ -11,7 +11,8 @@ def generate_call(compiled_sol, call):
         abi=compiled_sol['metadata']['output']['abi'], bytecode=compiled_sol['bytecode'])
 
     if call['method'] == "constructor":
-        call_data = contract.constructor(call["args"]).data_in_transaction
+        call_data = contract.constructor(*call["args"]).data_in_transaction
+        call_data = call_data[len(compiled_sol['bytecode']):]
     else:
         call_data = contract.encodeABI(
             fn_name=call["method"], args=call["args"])

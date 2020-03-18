@@ -31,7 +31,6 @@ constexpr const char* FEE_OPTION = "fee";
 constexpr const char* ADDRESS_OPTION = "address";
 constexpr const char* CODE_PATH_OPTION = "code";
 constexpr const char* METHOD_NAME_OPTION = "method";
-constexpr const char* COMPILED_CODE_FOLDER_PATH_OPTION = "compiled_code";
 constexpr const char* DATA_OPTION = "data";
 constexpr const char* GAS_OPTION = "gas";
 constexpr const char* INITIAL_MESSAGE_OPTION = "init";
@@ -297,8 +296,10 @@ int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
 
-    std::filesystem::path code_file_path = parser.getValue<std::string>(CODE_PATH_OPTION);
-    if(!std::filesystem::exists(code_file_path)) {
+    std::filesystem::path code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
+    auto code_file_path = code_folder_path / std::filesystem::path("compiled_code.bin");
+
+    if(!std::filesystem::exists(code_folder_path)) {
         RAISE_ERROR(base::InvalidArgument, "the file with this path does not exist");
     }
     std::ifstream file(code_file_path, std::ios::binary);
@@ -519,15 +520,14 @@ const std::string_view& ActionEncode::getName() const
 
 void ActionEncode::setupOptionsParser(base::ProgramOptionsParser& parser)
 {
-    parser.addRequiredOption<std::string>(
-        COMPILED_CODE_FOLDER_PATH_OPTION, "path to folder with compiled Solidity code");
+    parser.addRequiredOption<std::string>(CODE_PATH_OPTION, "path to folder with compiled Solidity code");
     parser.addRequiredOption<std::string>(DATA_OPTION, "call code");
 }
 
 
 int ActionEncode::loadOptions(const base::ProgramOptionsParser& parser)
 {
-    _compiled_code_folder_path = parser.getValue<std::string>(COMPILED_CODE_FOLDER_PATH_OPTION);
+    _compiled_code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
     _call_data = parser.getValue<std::string>(DATA_OPTION);
     return base::config::EXIT_OK;
 }
@@ -539,7 +539,8 @@ int ActionEncode::execute()
         auto output_message = vm::encodeCall(_compiled_code_folder_path, _call_data);
         if(output_message) {
             std::cout << output_message.value() << std::endl;
-        } else{
+        }
+        else {
             std::cerr << "encoding failed.\n";
             return base::config::EXIT_FAIL;
         }
@@ -571,8 +572,7 @@ const std::string_view& ActionDecode::getName() const
 
 void ActionDecode::setupOptionsParser(base::ProgramOptionsParser& parser)
 {
-    parser.addRequiredOption<std::string>(
-        COMPILED_CODE_FOLDER_PATH_OPTION, "path to folder with compiled Solidity code");
+    parser.addRequiredOption<std::string>(CODE_PATH_OPTION, "path to folder with compiled Solidity code");
     parser.addRequiredOption<std::string>(METHOD_NAME_OPTION, "call code");
     parser.addRequiredOption<std::string>(DATA_OPTION, "data to decode");
 }
@@ -580,7 +580,7 @@ void ActionDecode::setupOptionsParser(base::ProgramOptionsParser& parser)
 
 int ActionDecode::loadOptions(const base::ProgramOptionsParser& parser)
 {
-    _compiled_code_folder_path = parser.getValue<std::string>(COMPILED_CODE_FOLDER_PATH_OPTION);
+    _compiled_code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
     _method_name = parser.getValue<std::string>(METHOD_NAME_OPTION);
     _data_to_decode = parser.getValue<std::string>(DATA_OPTION);
     return base::config::EXIT_OK;
@@ -592,7 +592,8 @@ int ActionDecode::execute()
         auto output_message = vm::decodeOutput(_compiled_code_folder_path, _method_name, _data_to_decode);
         if(output_message) {
             std::cout << output_message.value() << std::endl;
-        } else{
+        }
+        else {
             std::cerr << "decoding failed.\n";
             return base::config::EXIT_FAIL;
         }
