@@ -56,4 +56,7 @@ if __name__ == "__main__":
     args = argument_parser.parse_args()
     contract_data = load(args.contract_path)
     call_data = generate_call(contract_data, args.call)
-    print(call_data)
+    if call_data:
+        print(call_data[2:])
+    else:
+        exit(2)

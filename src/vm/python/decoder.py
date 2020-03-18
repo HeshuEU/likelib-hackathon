@@ -16,8 +16,6 @@ def create_hash(function):
 
 def decode_output(compiled_sol, method, data):
     web3_interface = web3.Web3()
-    contract = web3_interface.eth.contract(
-        abi=compiled_sol['metadata']['output']['abi'])
 
     for abi_fn in compiled_sol['metadata']['output']['abi']:
         if abi_fn["type"] == "function":
@@ -62,4 +60,7 @@ if __name__ == "__main__":
     args = argument_parser.parse_args()
     contract_data = load(args.contract_path)
     decoded_data = decode_output(contract_data, args.method, args.data)
-    print(decoded_data)
+    if decoded_data:
+        print(decoded_data)
+    else:
+        exit(2)
