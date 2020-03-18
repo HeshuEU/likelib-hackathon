@@ -261,11 +261,7 @@ std::string callPython(std::vector<std::string>& args)
     }
 
     std::ostringstream s;
-    while(out) {
-        std::string out_result;
-        out >> out_result;
-        s << out_result;
-    }
+    s << out.rdbuf();
 
     if(exit_code) {
         RAISE_ERROR(base::SystemCallFailed, s.str());
