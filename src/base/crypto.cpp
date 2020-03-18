@@ -53,7 +53,7 @@ void writeFile(const std::filesystem::path& path, const base::Bytes& data)
     if(!file.is_open()) {
         RAISE_ERROR(base::InvalidArgument, "Failed to create file.");
     }
-    file.write(reinterpret_cast<const char*>(data.toArray()), data.size());
+    file.write(reinterpret_cast<const char*>(data.getData()), data.size());
 }
 
 
@@ -61,7 +61,7 @@ void writeFile(const std::filesystem::path& path, const base::Bytes& data)
 base::Bytes generate_bytes(std::size_t size)
 {
     base::Bytes data(size);
-    RAND_bytes(data.toArray(), static_cast<int>(size));
+    RAND_bytes(data.getData(), static_cast<int>(size));
     return data;
 }
 
@@ -97,7 +97,7 @@ Bytes RsaPublicKey::encrypt(const Bytes& message) const
 
     Bytes encrypted_message(_encrypted_message_size);
     if(!RSA_public_encrypt(
-           message.size(), message.toArray(), encrypted_message.toArray(), _rsa_key.get(), RSA_PKCS1_OAEP_PADDING)) {
+           message.size(), message.getData(), encrypted_message.getData(), _rsa_key.get(), RSA_PKCS1_OAEP_PADDING)) {
         RAISE_ERROR(CryptoError, "rsa encryption failed");
     }
 
@@ -121,7 +121,7 @@ Bytes RsaPublicKey::encryptWithAes(const Bytes& message) const
 
     Bytes encrypted_serialized_key_size(sizeof(std::uint_least32_t));
     std::uint_least32_t key_size = encrypted_serialized_symmetric_key.size();
-    std::memcpy(encrypted_serialized_key_size.toArray(), &key_size, encrypted_serialized_key_size.size());
+    std::memcpy(encrypted_serialized_key_size.getData(), &key_size, encrypted_serialized_key_size.size());
 
     return encrypted_serialized_key_size.append(encrypted_serialized_symmetric_key).append(encrypted_message);
 }
@@ -134,8 +134,8 @@ Bytes RsaPublicKey::decrypt(const Bytes& encrypted_message) const
     }
 
     Bytes decrypted_message(_encrypted_message_size);
-    auto message_size = RSA_public_decrypt(encrypted_message.size(), encrypted_message.toArray(),
-        decrypted_message.toArray(), _rsa_key.get(), RSA_PKCS1_PADDING);
+    auto message_size = RSA_public_decrypt(encrypted_message.size(), encrypted_message.getData(),
+        decrypted_message.getData(), _rsa_key.get(), RSA_PKCS1_PADDING);
     if(message_size == -1) {
         RAISE_ERROR(CryptoError, "rsa decryption failed");
     }
@@ -171,7 +171,7 @@ Bytes RsaPublicKey::toBytes() const
     }
 
     Bytes public_key_bytes(BIO_pending(public_bio.get()));
-    if(!BIO_read(public_bio.get(), public_key_bytes.toArray(), public_key_bytes.size())) {
+    if(!BIO_read(public_bio.get(), public_key_bytes.getData(), public_key_bytes.size())) {
         RAISE_ERROR(CryptoError, "failed to write big num with public RSA to bytes");
     }
 
@@ -181,7 +181,7 @@ Bytes RsaPublicKey::toBytes() const
 
 std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPublicKey::loadKey(const Bytes& key_word)
 {
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new_mem_buf(key_word.toArray(), key_word.size()), ::BIO_free);
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new_mem_buf(key_word.getData(), key_word.size()), ::BIO_free);
     RSA* rsa_key = nullptr;
     if(!PEM_read_bio_RSAPublicKey(bio.get(), &rsa_key, nullptr, nullptr)) {
         RAISE_ERROR(CryptoError, "Fail to read public RSA key");
@@ -221,7 +221,7 @@ Bytes RsaPrivateKey::encrypt(const Bytes& message) const
 
     Bytes encrypted_message(_encrypted_message_size);
     if(!RSA_private_encrypt(
-           message.size(), message.toArray(), encrypted_message.toArray(), _rsa_key.get(), RSA_PKCS1_PADDING)) {
+           message.size(), message.getData(), encrypted_message.getData(), _rsa_key.get(), RSA_PKCS1_PADDING)) {
         RAISE_ERROR(CryptoError, "rsa encryption failed");
     }
 
@@ -236,8 +236,8 @@ Bytes RsaPrivateKey::decrypt(const Bytes& encrypted_message) const
     }
 
     Bytes decrypt_message(_encrypted_message_size);
-    auto message_size = RSA_private_decrypt(encrypted_message.size(), encrypted_message.toArray(),
-        decrypt_message.toArray(), _rsa_key.get(), RSA_PKCS1_OAEP_PADDING);
+    auto message_size = RSA_private_decrypt(encrypted_message.size(), encrypted_message.getData(),
+        decrypt_message.getData(), _rsa_key.get(), RSA_PKCS1_OAEP_PADDING);
     if(message_size == -1) {
         RAISE_ERROR(CryptoError, "rsa decryption failed");
     }
@@ -249,7 +249,7 @@ Bytes RsaPrivateKey::decryptWithAes(const Bytes& message) const
 {
     Bytes encrypted_serialized_key_size = message.takePart(0, sizeof(std::uint_least32_t));
     std::uint_least32_t key_size = 0;
-    std::memcpy(&key_size, encrypted_serialized_key_size.toArray(), encrypted_serialized_key_size.size());
+    std::memcpy(&key_size, encrypted_serialized_key_size.getData(), encrypted_serialized_key_size.size());
 
     auto encrypted_serialized_symmetric_key =
         message.takePart(sizeof(std::uint_least32_t), key_size + sizeof(std::uint_least32_t));
@@ -288,7 +288,7 @@ Bytes RsaPrivateKey::toBytes() const
     }
 
     Bytes private_key_bytes(BIO_pending(private_bio.get()));
-    if(!BIO_read(private_bio.get(), private_key_bytes.toArray(), BIO_pending(private_bio.get()))) {
+    if(!BIO_read(private_bio.get(), private_key_bytes.getData(), BIO_pending(private_bio.get()))) {
         RAISE_ERROR(CryptoError, "failed to write big num with private RSA to bytes");
     }
 
@@ -298,7 +298,7 @@ Bytes RsaPrivateKey::toBytes() const
 
 std::unique_ptr<RSA, decltype(&::RSA_free)> RsaPrivateKey::loadKey(const Bytes& key_word)
 {
-    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new_mem_buf(key_word.toArray(), key_word.size()), ::BIO_free);
+    std::unique_ptr<BIO, decltype(&::BIO_free)> bio(BIO_new_mem_buf(key_word.getData(), key_word.size()), ::BIO_free);
     RSA* rsa_key = nullptr;
     if(!PEM_read_bio_RSAPrivateKey(bio.get(), &rsa_key, nullptr, nullptr)) {
         RAISE_ERROR(CryptoError, "Fail to read private RSA key");
@@ -336,7 +336,7 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t key_size)
     Bytes public_key_bytes(BIO_pending(public_bio.get()));
 
     // check errors in generation
-    if(!BIO_read(public_bio.get(), public_key_bytes.toArray(), public_key_bytes.size())) {
+    if(!BIO_read(public_bio.get(), public_key_bytes.getData(), public_key_bytes.size())) {
         RAISE_ERROR(Error, "Fail to check public RSA key");
     }
     // =============
@@ -356,7 +356,7 @@ std::pair<RsaPublicKey, RsaPrivateKey> generateKeys(std::size_t key_size)
     Bytes private_key_bytes(BIO_pending(private_bio.get()));
 
     // check errors in generation
-    if(!BIO_read(private_bio.get(), private_key_bytes.toArray(), BIO_pending(private_bio.get()))) {
+    if(!BIO_read(private_bio.get(), private_key_bytes.getData(), BIO_pending(private_bio.get()))) {
         RAISE_ERROR(Error, "Fail to check private RSA key");
     }
     // =============
@@ -472,19 +472,19 @@ Bytes AesKey::encrypt256Aes(const Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.getData())) {
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.getData(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
     Bytes output_data(data.size() * 2);
 
     int current_data_len = 0;
-    if(1 != EVP_EncryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size())) {
+    if(1 != EVP_EncryptUpdate(context.get(), output_data.getData(), &current_data_len, data.getData(), data.size())) {
         RAISE_ERROR(CryptoError, "failed to encrypt message");
     }
     int encrypted_message_len_in_buffer = current_data_len;
 
-    if(1 != EVP_EncryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len)) {
+    if(1 != EVP_EncryptFinal_ex(context.get(), output_data.getData() + current_data_len, &current_data_len)) {
         RAISE_ERROR(CryptoError, "unable to finalize encrypt");
     }
     encrypted_message_len_in_buffer += current_data_len;
@@ -497,19 +497,19 @@ base::Bytes AesKey::decrypt256Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.toArray(), _iv.getData())) {
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_256_cbc(), nullptr, _key.getData(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
     Bytes output_data(data.size() * 2);
 
     int current_data_len = 0;
-    if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size())) {
+    if(1 != EVP_DecryptUpdate(context.get(), output_data.getData(), &current_data_len, data.getData(), data.size())) {
         RAISE_ERROR(CryptoError, "failed to decrypt message");
     }
     int decrypted_message_len_in_buffer = current_data_len;
 
-    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len)) {
+    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.getData() + current_data_len, &current_data_len)) {
         RAISE_ERROR(CryptoError, "unable to finalize decrypt");
     }
     decrypted_message_len_in_buffer += current_data_len;
@@ -522,19 +522,19 @@ base::Bytes AesKey::encrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.getData())) {
+    if(1 != EVP_EncryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.getData(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
     Bytes output_data(data.size() * 2);
 
     int current_data_len = 0;
-    if(1 != EVP_EncryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size())) {
+    if(1 != EVP_EncryptUpdate(context.get(), output_data.getData(), &current_data_len, data.getData(), data.size())) {
         RAISE_ERROR(CryptoError, "failed to encrypt message");
     }
     int encrypted_message_len_in_buffer = current_data_len;
 
-    if(1 != EVP_EncryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len)) {
+    if(1 != EVP_EncryptFinal_ex(context.get(), output_data.getData() + current_data_len, &current_data_len)) {
         RAISE_ERROR(CryptoError, "unable to finalize encrypt");
     }
     encrypted_message_len_in_buffer += current_data_len;
@@ -547,18 +547,18 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 {
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)> context(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
 
-    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.toArray(), _iv.getData())) {
+    if(1 != EVP_DecryptInit_ex(context.get(), EVP_aes_128_cbc(), nullptr, _key.getData(), _iv.getData())) {
         RAISE_ERROR(CryptoError, "failed to initialize context");
     }
 
     Bytes output_data(data.size() * 2);
 
     int current_data_len = 0;
-    if(1 != EVP_DecryptUpdate(context.get(), output_data.toArray(), &current_data_len, data.toArray(), data.size()))
+    if(1 != EVP_DecryptUpdate(context.get(), output_data.getData(), &current_data_len, data.getData(), data.size()))
         RAISE_ERROR(CryptoError, "failed to decrypt message");
     int decrypted_message_len_in_buffer = current_data_len;
 
-    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.toArray() + current_data_len, &current_data_len))
+    if(1 != EVP_DecryptFinal_ex(context.get(), output_data.getData() + current_data_len, &current_data_len))
         RAISE_ERROR(CryptoError, "unable to finalize decrypt");
     decrypted_message_len_in_buffer += current_data_len;
 

@@ -32,10 +32,15 @@ class EthAdapter::EthHost : public evmc::Host
         ASSERT(_associated_block);
 
         LOG_DEBUG << "Core::get_storage";
-        auto address = vm::toNativeAddress(addr);
-        base::Bytes key(ethKey.bytes, 32);
-        auto storage_value = _account_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
-        return vm::toEvmcBytes32(storage_value);
+        try {
+            auto address = vm::toNativeAddress(addr);
+            base::Bytes key(ethKey.bytes, 32);
+            auto storage_value = _account_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
+            return vm::toEvmcBytes32(storage_value);
+        }
+        catch(...) { // cannot pass exceptions since noexcept
+            return {};
+        }
     }
 
 
@@ -144,7 +149,7 @@ class EthAdapter::EthHost : public evmc::Host
         else {
             const auto& code = code_opt->get();
             std::size_t bytes_to_copy = std::min(buffer_size, code.size() - code_offset);
-            std::copy_n(code.toArray() + code_offset, bytes_to_copy, buffer_data);
+            std::copy_n(code.getData() + code_offset, bytes_to_copy, buffer_data);
             return bytes_to_copy;
         }
     }
@@ -194,6 +199,7 @@ class EthAdapter::EthHost : public evmc::Host
 
         auto tx = std::move(txb).build();
         auto result = _core.doMessageCall(tx, *_associated_block);
+        return result.getResult();
 
         // return result;
         // return evmc::make_result(evmc::result::)
@@ -266,7 +272,7 @@ EthAdapter::EthAdapter(Core& core, AccountManager& account_manager, CodeManager&
 EthAdapter::~EthAdapter() = default;
 
 
-std::pair<bc::Address, base::Bytes> EthAdapter::createContract(const bc::Address& contract_address, const bc::Transaction& associated_tx, const bc::Block& associated_block)
+std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(const bc::Address& contract_address, const bc::Transaction& associated_tx, const bc::Block& associated_block)
 {
     std::lock_guard lk(_execution_mutex);
 
@@ -279,15 +285,16 @@ std::pair<bc::Address, base::Bytes> EthAdapter::createContract(const bc::Address
 
     _eth_host->setContext(&associated_tx, &associated_block);
     if(auto result = _vm.execute(message); result.ok()) {
-        return {contract_address, result.toOutputData()};
+        // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
+        return {contract_address, {}, static_cast<bc::Balance>(result.gasLeft())};
     }
     else {
-        RAISE_ERROR(base::Error, "invalid result");
+        RAISE_ERROR(base::Error, "contract creation failed during execution");
     }
 }
 
 
-base::Bytes EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
+vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
 {
     std::lock_guard lk(_execution_mutex);
 
@@ -301,8 +308,7 @@ base::Bytes EthAdapter::call(const bc::Transaction& associated_tx, const bc::Blo
         auto message = contract.createMessage(associated_tx.getFee(), associated_tx.getFrom(), associated_tx.getTo(), associated_tx.getAmount(), associated_tx.getData());
 
         _eth_host->setContext(&associated_tx, &associated_block);
-        auto ret = _vm.execute(message);
-        return ret.toOutputData();
+        return _vm.execute(message);
     }
 }
 

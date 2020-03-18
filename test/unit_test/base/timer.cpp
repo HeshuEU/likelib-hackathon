@@ -36,7 +36,9 @@ BOOST_AUTO_TEST_CASE(timer_usage2)
     std::this_thread::sleep_for(std::chrono::milliseconds(56));
     auto milli1 = timer1.elapsedMillis();
     auto milli2 = timer2.elapsedMillis();
-    BOOST_CHECK(abs(milli1 - milli2) < milli_fault);
+    auto max = std::max(milli1, milli2);
+    auto min = std::min(milli1, milli2);
+    BOOST_CHECK(max - min < milli_fault);
 }
 
 
@@ -48,7 +50,9 @@ BOOST_AUTO_TEST_CASE(timer_constructor_copy)
     base::Timer timer2 = timer1;
     auto milli1 = timer1.elapsedMillis();
     auto milli2 = timer2.elapsedMillis();
-    BOOST_CHECK(abs(milli1 - milli2) < milli_fault);
+    auto max = std::max(milli1, milli2);
+    auto min = std::min(milli1, milli2);
+    BOOST_CHECK(max - min < milli_fault);
 }
 
 
@@ -60,7 +64,9 @@ BOOST_AUTO_TEST_CASE(timer_constructor_move)
     base::Timer timer2 = std::move(timer1);
     auto milli1 = timer1.elapsedMillis();
     auto milli2 = timer2.elapsedMillis();
-    BOOST_CHECK(abs(milli1 - milli2) < milli_fault);
+    auto max = std::max(milli1, milli2);
+    auto min = std::min(milli1, milli2);
+    BOOST_CHECK(max - min < milli_fault);
 }
 
 

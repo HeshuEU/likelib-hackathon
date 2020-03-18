@@ -7,13 +7,13 @@
 #include "base/property_tree.hpp"
 #include "base/subprogram_router.hpp"
 #include "base/time.hpp"
+#include "base/directory.hpp"
 #include "bc/transaction.hpp"
 #include "rpc/rpc.hpp"
 #include "rpc/error.hpp"
 #include "vm/messages.hpp"
 
 #include <cstring>
-#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -323,7 +323,8 @@ int ActionCreateContract::execute()
     txb.setTimestamp(base::Time::now());
     txb.setFee(_gas);
 
-    bc::ContractInitData init_data{base::Bytes::fromHex(_compiled_contract), base::Bytes::fromHex(_message)};
+    bc::ContractInitData init_data{
+        base::fromHex<base::Bytes>(_compiled_contract), base::fromHex<base::Bytes>(_message)};
     txb.setData(base::toBytes(init_data));
 
     auto tx = std::move(txb).build();
@@ -399,7 +400,7 @@ int ActionMessageCall::execute()
     txb.setTo(std::move(_to_address));
     txb.setTimestamp(base::Time::now());
     txb.setFee(_gas);
-    txb.setData(base::Bytes::fromHex(_message));
+    txb.setData(base::fromHex<base::Bytes>(_message));
 
     auto tx = std::move(txb).build();
     tx.sign(pub, priv);
@@ -448,6 +449,25 @@ int ActionCompile::loadOptions(const base::ProgramOptionsParser& parser)
     return base::config::EXIT_OK;
 }
 
+namespace
+{
+
+void save_contract(const vm::CompiledContract& contract)
+{
+    std::filesystem::path current_folder{contract.getName()};
+    base::createIfNotExists(current_folder);
+
+    {
+        std::ofstream file;
+        file.open(current_folder / std::filesystem::path{"compiled_code.bin"});
+        file << base::toHex(contract.getFullCode());
+        file.close();
+    }
+
+    base::save(contract.getMetadata(), current_folder / std::filesystem::path{"metadata.json"});
+}
+
+} // namespace
 
 int ActionCompile::execute()
 {
@@ -461,7 +481,8 @@ int ActionCompile::execute()
         }
         std::cout << "Compiled contracts:" << std::endl;
         for(const auto& contract: contracts.value()) {
-            std::cout << contract.getName() << std::endl;
+            std::cout << "\t" << contract.getName() << std::endl;
+            save_contract(contract);
         }
     }
     catch(const base::ParsingError& er) {
@@ -678,24 +699,30 @@ int ActionGetBlock::execute()
     LOG_INFO << "Trying to connect to rpc server at " << _host_address;
     rpc::RpcClient client(_host_address);
     auto block = client.get_block(_block_hash);
+
+    if(block.getTimestamp().getSecondsSinceEpochBeginning() == 0 && block.getDepth() == bc::BlockDepth(-1)) {
+        std::cout << "Cannot find given block" << std::endl;
+        return base::config::EXIT_OK;
+    }
+
     std::cout << "Block hash " << _block_hash << '\n'
-        << "\tDepth: " << block.getDepth() << '\n'
-        << "\tTimestamp: " << block.getTimestamp() << '\n'
-        << "\tCoinbase: " << block.getCoinbase() << '\n'
-        << "\tPrevious block hash: " << block.getPrevBlockHash().toHex() << '\n'
-        << "\tNumber of transactions: " << block.getTransactions().size() << std::endl;
+              << "\tDepth: " << block.getDepth() << '\n'
+              << "\tTimestamp: " << block.getTimestamp() << '\n'
+              << "\tCoinbase: " << block.getCoinbase() << '\n'
+              << "\tPrevious block hash: " << block.getPrevBlockHash().toHex() << '\n'
+              << "\tNumber of transactions: " << block.getTransactions().size() << std::endl;
 
     std::size_t tx_index = 0;
-    for(const auto& tx : block.getTransactions()) {
+    for(const auto& tx: block.getTransactions()) {
         std::cout << "\t\tTransaction #" << ++tx_index << '\n'
-            << "\t\tType: " << (tx.getTo() == bc::Address::null() ? "contract creation" : "message call") << '\n'
-            << "\t\tFrom: " << tx.getFrom().toString() << '\n'
-            << "\t\tTo: " << tx.getTo().toString() << '\n'
-            << "\t\tValue: " << tx.getAmount() << '\n'
-            << "\t\tFee: " << tx.getFee() << '\n'
-            << "\t\tTimestamp: " << tx.getTimestamp() << '\n'
-            << "\t\tData: " << (tx.getData().isEmpty() ? "<empty>" : base::toHex(tx.getData())) << '\n'
-            << "\t\tSignature: " << (tx.checkSign() ? "verified" : "bad signature") << std::endl;
+                  << "\t\tType: " << (tx.getTo() == bc::Address::null() ? "contract creation" : "message call") << '\n'
+                  << "\t\tFrom: " << tx.getFrom().toString() << '\n'
+                  << "\t\tTo: " << tx.getTo().toString() << '\n'
+                  << "\t\tValue: " << tx.getAmount() << '\n'
+                  << "\t\tFee: " << tx.getFee() << '\n'
+                  << "\t\tTimestamp: " << tx.getTimestamp() << '\n'
+                  << "\t\tData: " << (tx.getData().isEmpty() ? "<empty>" : base::toHex(tx.getData())) << '\n'
+                  << "\t\tSignature: " << (tx.checkSign() ? "verified" : "bad signature") << std::endl;
     }
     std::cout.flush();
 

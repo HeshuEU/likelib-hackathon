@@ -88,6 +88,7 @@ void AccountManager::newAccount(const bc::Address& address, base::Sha256 code_ha
         RAISE_ERROR(base::LogicError, "address already exists");
     }
 
+    std::unique_lock lk(_rw_mutex);
     AccountState state;
     state.setCodeHash(std::move(code_hash));
     _states[address] = std::move(state);
@@ -96,12 +97,14 @@ void AccountManager::newAccount(const bc::Address& address, base::Sha256 code_ha
 
 bool AccountManager::hasAccount(const bc::Address& address) const
 {
+    std::shared_lock lk(_rw_mutex);
     return _states.find(address) != _states.end();
 }
 
 
 bool AccountManager::deleteAccount(const bc::Address& address)
 {
+    std::unique_lock lk(_rw_mutex);
     if(auto it = _states.find(address); it != _states.end()) {
         _states.erase(it);
         return true;

@@ -8,17 +8,17 @@ OperationStatus::OperationStatus(StatusCode status, std::string message) noexcep
 
 OperationStatus OperationStatus::createSuccess(const std::string& message) noexcept
 {
-    return std::move(OperationStatus(OperationStatus::StatusCode::Success, message));
+    return OperationStatus(OperationStatus::StatusCode::Success, message);
 }
 
 OperationStatus OperationStatus::createRejected(const std::string& message) noexcept
 {
-    return std::move(OperationStatus(OperationStatus::StatusCode::Rejected, message));
+    return OperationStatus(OperationStatus::StatusCode::Rejected, message);
 }
 
 OperationStatus OperationStatus::createFailed(const std::string& message) noexcept
 {
-    return std::move(OperationStatus(OperationStatus::StatusCode::Failed, message));
+    return OperationStatus(OperationStatus::StatusCode::Failed, message);
 }
 
 OperationStatus::operator bool() const noexcept

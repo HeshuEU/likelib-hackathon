@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(bytes_constructor_from_array_of_chars)
     for(std::size_t i = 0; i < length; i++) {
         tmp.append(static_cast<base::Byte>(i ^ 3));
     }
-    auto c_str = tmp.toArray();
+    auto c_str = tmp.getData();
     base::Bytes bytes(c_str, length);
 
     BOOST_CHECK(bytes.size() == length);
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(bytes_append2)
     base::Bytes bytes_concat;
     bytes_concat.append(bytes1);
     std::size_t count_to_concat = bytes2.size() / 2;
-    bytes_concat.append(bytes2.toArray(), count_to_concat);
+    bytes_concat.append(bytes2.getData(), count_to_concat);
     BOOST_CHECK(bytes_concat.size() == bytes1.size() + count_to_concat);
 
     bool res = true;
@@ -300,6 +300,17 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode)
 }
 
 
+BOOST_AUTO_TEST_CASE(base64_encode_fixed_bytes)
+{
+    base::FixedBytes<50> target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base::base64Decode(base64);
+
+    BOOST_CHECK(base64 == "ZEZNIzY5MzU2XiMtMDQgIEAjNC0wXgoKNCMwNjMyPS1HRUozZGxzNXMsc3BpKy01KzA=");
+    BOOST_CHECK(target_msg.toString() == decode_base64.toString());
+}
+
+
 BOOST_AUTO_TEST_CASE(base64_encode_decode_empty)
 {
     base::Bytes target_msg("");
@@ -322,9 +333,30 @@ BOOST_AUTO_TEST_CASE(base64_encode_decode_one_byte)
 }
 
 
+BOOST_AUTO_TEST_CASE(base64_encode_fixed_bytes_one_byte)
+{
+    base::FixedBytes<1> target_msg("1");
+    auto base64 = base64Encode(target_msg);
+    auto decode_base64 = base::base64Decode(base64);
+
+    BOOST_CHECK(base64 == "MQ==");
+    BOOST_CHECK(target_msg.toString() == decode_base64.toString());
+}
+
+
 BOOST_AUTO_TEST_CASE(base58_encode_decode)
 {
     base::Bytes target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
+    auto base58 = base::base58Encode(target_msg);
+    auto decode_base58 = base::base58Decode(base58);
+    BOOST_CHECK(base58 == "2EfFY3oougxD9wQVN97fY9zmUuz3dEFnxDzbG8Xga34ArAY8nvx9hhsdtaUYze8CiDABR");
+    BOOST_CHECK(decode_base58 == target_msg);
+}
+
+
+BOOST_AUTO_TEST_CASE(base58_encode_fixed_bytes)
+{
+    base::FixedBytes<50> target_msg("dFM#69356^#-04  @#4-0^\n\n4#0632=-GEJ3dls5s,spi+-5+0");
     auto base58 = base::base58Encode(target_msg);
     auto decode_base58 = base::base58Decode(base58);
     BOOST_CHECK(base58 == "2EfFY3oougxD9wQVN97fY9zmUuz3dEFnxDzbG8Xga34ArAY8nvx9hhsdtaUYze8CiDABR");

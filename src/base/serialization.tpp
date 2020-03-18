@@ -92,7 +92,7 @@ class global_deserialize
             }
             ASSERT(_index + sizeof(T) <= _bytes.size());
 
-            v = *reinterpret_cast<const T*>(_bytes.toArray() + _index);
+            v = *reinterpret_cast<const T*>(_bytes.getData() + _index);
             _index += sizeof(v);
             if constexpr(sizeof(v) != 1) {
                 v = base::nativeToBig(v);

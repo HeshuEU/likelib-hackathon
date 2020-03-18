@@ -54,7 +54,7 @@ grpc::Status GrpcAdapter::test(
 grpc::Status GrpcAdapter::balance(
     grpc::ServerContext* context, const likelib::Address* request, likelib::CurrencyAmount* response)
 {
-    LOG_DEBUG << "received RPC call at balance method from: " << context->peer();
+    LOG_DEBUG << "received RPC balance method call from: " << context->peer();
     try {
         bc::Address query_address{request->address()};
         response->set_value(_service->balance(query_address));
@@ -68,9 +68,9 @@ grpc::Status GrpcAdapter::balance(
 
 
 grpc::Status GrpcAdapter::info(
-        grpc::ServerContext* context, const likelib::InfoRequest*, likelib::InfoResponse* response)
+    grpc::ServerContext* context, const likelib::InfoRequest*, likelib::InfoResponse* response)
 {
-    LOG_DEBUG << "received RPC call at balance method from: " << context->peer();
+    LOG_DEBUG << "received RPC info method call from: " << context->peer();
     try {
         response->set_top_block_hash(base::base64Encode(_service->info().top_block_hash.getBytes()));
     }
@@ -82,7 +82,8 @@ grpc::Status GrpcAdapter::info(
 }
 
 
-grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context, const likelib::GetBlockRequest* request, likelib::GetBlockResponse* response)
+grpc::Status GrpcAdapter::get_block(
+    grpc::ServerContext* context, const likelib::GetBlockRequest* request, likelib::GetBlockResponse* response)
 {
     LOG_DEBUG << "received RPC get_block method call from " << context->peer();
     try {

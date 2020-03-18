@@ -80,7 +80,7 @@ bool Sha256::operator<(const Sha256& another) const
 Sha256 Sha256::compute(const base::Bytes& data)
 {
     base::FixedBytes<SHA256_SIZE> ret;
-    SHA256(data.toArray(), data.size(), ret.getData());
+    SHA256(data.getData(), data.size(), ret.getData());
     return Sha256(ret);
 }
 
@@ -169,7 +169,7 @@ bool Sha1::operator!=(const Sha1& another) const
 Sha1 Sha1::compute(const base::Bytes& data)
 {
     base::FixedBytes<SHA1_SIZE> ret;
-    SHA1(data.toArray(), data.size(), reinterpret_cast<unsigned char*>(ret.getData()));
+    SHA1(data.getData(), data.size(), reinterpret_cast<unsigned char*>(ret.getData()));
     return Sha1(ret);
 }
 
@@ -264,7 +264,7 @@ Ripemd160 Ripemd160::compute(const base::Bytes& data)
         RAISE_ERROR(CryptoError, "failed to initialize context for Ripemd160");
     }
 
-    if(1 != RIPEMD160_Update(&context, data.toArray(), data.size())) {
+    if(1 != RIPEMD160_Update(&context, data.getData(), data.size())) {
         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
     }
 
@@ -384,12 +384,12 @@ Sha3 Sha3::compute(const base::Bytes& data, Sha3::Sha3Type type)
             RAISE_ERROR(InvalidArgument, "Sha3 type is not valid");
     }
 
-    if(1 != EVP_DigestUpdate(context.get(), data.toArray(), data.size())) {
+    if(1 != EVP_DigestUpdate(context.get(), data.getData(), data.size())) {
         RAISE_ERROR(CryptoError, "failed to hash data");
     }
 
     std::unique_ptr<unsigned int> hash_length = std::make_unique<unsigned int>();
-    if(1 != EVP_DigestFinal_ex(context.get(), ret.toArray(), hash_length.get())) {
+    if(1 != EVP_DigestFinal_ex(context.get(), ret.getData(), hash_length.get())) {
         RAISE_ERROR(CryptoError, "failed to hash data");
     }
 

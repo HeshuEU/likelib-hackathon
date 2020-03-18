@@ -67,6 +67,7 @@ class SmartContractMessage
 class ExecutionResult
 {
   public:
+    ExecutionResult() = default;
     ExecutionResult(evmc::result&& data);
     ExecutionResult(ExecutionResult&&) = default;
     ExecutionResult(const ExecutionResult&) = delete;
@@ -83,7 +84,7 @@ class ExecutionResult
     evmc::result getResult() noexcept;
 
   private:
-    evmc::result _data;
+    std::optional<evmc::result> _data;
 };
 
 

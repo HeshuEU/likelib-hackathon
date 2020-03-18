@@ -59,18 +59,13 @@ class Bytes
     void shrinkToFit();
     bool isEmpty() const noexcept;
     //==============
-    [[nodiscard]] const Byte* toArray() const;
-    [[nodiscard]] Byte* toArray();
+    const Byte* getData() const;
+    Byte* getData();
     //==============
     [[nodiscard]] std::vector<Byte>& toVector() noexcept;
     [[nodiscard]] const std::vector<Byte>& toVector() const noexcept;
     //==============
-
-    [[nodiscard]] std::string toHex() const;
-
     [[nodiscard]] std::string toString() const;
-    //==============
-    [[nodiscard]] static Bytes fromHex(const std::string_view& hex_view);
     //==============
     bool operator==(const Bytes& another) const;
     bool operator!=(const Bytes& another) const;
@@ -119,8 +114,8 @@ class FixedBytes
     //==============
     [[nodiscard]] std::string toString() const;
     //==============
-    [[nodiscard]] bool operator==(const FixedBytes& another) const;
-    [[nodiscard]] bool operator!=(const FixedBytes& another) const;
+    bool operator==(const FixedBytes& another) const;
+    bool operator!=(const FixedBytes& another) const;
 
     // lexicographical compare
     bool operator<(const FixedBytes& another) const;
@@ -129,14 +124,17 @@ class FixedBytes
     bool operator>=(const FixedBytes& another) const;
     //==============
   private:
-    std::array<Byte, S> _array;
+    std::array<Byte, S> _array{};
 };
 
 
-std::string base64Encode(const base::Bytes& bytes);
+template<typename T>
+std::string base64Encode(const T& bytes);
 base::Bytes base64Decode(std::string_view base64);
 
-std::string base58Encode(const base::Bytes& bytes);
+
+template<typename T>
+std::string base58Encode(const T& bytes);
 base::Bytes base58Decode(std::string_view base58);
 
 template<typename T>

@@ -73,7 +73,7 @@ bc::Block GeneralServerService::get_block(const base::Sha256& block_hash)
         return *block_opt;
     }
     else {
-        ASSERT(false);
+        return bc::Block{bc::BlockDepth(-1), base::Sha256::null(), base::Time::fromSecondsSinceEpochBeginning(0), bc::Address::null(), {}};
     }
 }
 
@@ -82,12 +82,12 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
     bc::Balance amount, const bc::Address& from_address, const base::Time& timestamp, bc::Balance gas,
     const std::string& hex_contract_code, const std::string& hex_init, const bc::Sign& signature)
 {
-    LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString() << "], amount["
-              << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
+    LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
+              << "], amount[" << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
               << timestamp.getSecondsSinceEpochBeginning() << "], initial_message[" << hex_init << "]";
 
-    auto contract_code = base::Bytes::fromHex(hex_contract_code);
-    auto init = base::Bytes::fromHex(hex_init);
+    auto contract_code = base::fromHex<base::Bytes>(hex_contract_code);
+    auto init = base::fromHex<base::Bytes>(hex_init);
 
     bc::TransactionBuilder txb;
     txb.setType(bc::Transaction::Type::CONTRACT_CREATION);
@@ -110,16 +110,24 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
         _core.addPendingTransactionAndWait(tx);
         auto hash = base::Sha256::compute(base::toBytes(tx));
         auto raw_output = _core.getTransactionOutput(hash);
-        base::SerializationIArchive ia(std::move(raw_output));
+        if(raw_output.isEmpty()) {
+            return {rpc::OperationStatus::createFailed(std::string{"Transaction failed"}), bc::Address::null(), gas};
+        }
+        base::SerializationIArchive ia(raw_output);
+        auto is_successful = ia.deserialize<bool>();
+        if(!is_successful) {
+            return {rpc::OperationStatus::createFailed(std::string{"Transaction failed"}), bc::Address::null(), gas};
+        }
         auto contract_address = ia.deserialize<bc::Address>();
         auto output = ia.deserialize<base::Bytes>();
+        auto gas_left = ia.deserialize<bc::Balance>();
 
         std::string ret_str{"Contract was successfully deployed"};
         if(!output.isEmpty()) {
             ret_str += " with output: ";
-            ret_str += output.toHex();
+            ret_str += base::toHex<base::Bytes>(output);
         }
-        return {rpc::OperationStatus::createSuccess(ret_str), contract_address, 0x228};
+        return {rpc::OperationStatus::createSuccess(ret_str), contract_address, gas_left};
     }
     catch(const std::exception& e) {
         return {
@@ -137,7 +145,7 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
               << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message[" << hex_message << "]";
 
 
-    auto message = base::Bytes::fromHex(hex_message);
+    auto message = base::fromHex<base::Bytes>(hex_message);
 
     bc::TransactionBuilder txb;
     txb.setType(bc::Transaction::Type::MESSAGE_CALL);
@@ -153,9 +161,23 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
 
     try {
         _core.addPendingTransactionAndWait(tx);
-        auto hash = base::Sha256::compute(base::toBytes<base::Bytes>(tx));
-        auto result = _core.getTransactionOutput(hash);
-        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"), result.toHex(), 0x228};
+        auto hash = base::Sha256::compute(base::toBytes(tx));
+        const auto& result_bytes = _core.getTransactionOutput(hash);
+        if(result_bytes.isEmpty()) {
+            return {rpc::OperationStatus::createFailed(std::string{"Message call failed"}),
+                    std::string{}, gas};
+        }
+        base::SerializationIArchive ia(result_bytes);
+
+        auto is_successful = ia.deserialize<bool>();
+        if(!is_successful) {
+            return {rpc::OperationStatus::createFailed(std::string{"Message call failed"}),
+                    std::string{}, gas};
+        }
+        auto result = ia.deserialize<base::Bytes>();
+        auto gas_left = ia.deserialize<bc::Balance>();
+        return {rpc::OperationStatus::createSuccess("Message call was successfully executed"),
+            base::toHex<base::Bytes>(result), gas_left};
     }
     catch(const std::exception& e) {
         return {rpc::OperationStatus::createFailed(std::string{"Error occurred during message call: "} + e.what()),

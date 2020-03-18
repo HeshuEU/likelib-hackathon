@@ -63,7 +63,7 @@ SmartContractMessage SmartContract::createMessage(int64_t gas, const bc::Address
     message._message.value = toEvmcUint256(value);
     message._message.create2_salt = evmc_bytes32();
     message._input_data = input;
-    message._message.input_data = message._input_data.toArray();
+    message._message.input_data = message._input_data.getData();
     message._message.input_size = message._input_data.size();
     return message;
 }
@@ -133,31 +133,31 @@ ExecutionResult::ExecutionResult(evmc::result&& data) : _data(std::move(data))
 
 bool ExecutionResult::ok() const noexcept
 {
-    return _data.status_code == evmc_status_code::EVMC_SUCCESS;
+    return !_data || _data->status_code == evmc_status_code::EVMC_SUCCESS;
 }
 
 
 base::Bytes ExecutionResult::toOutputData() const
 {
-    return copy(_data.output_data, _data.output_size);
+    return copy(_data->output_data, _data->output_size);
 }
 
 
 int64_t ExecutionResult::gasLeft() const
 {
-    return _data.gas_left;
+    return _data->gas_left;
 }
 
 
 base::Bytes ExecutionResult::createdAddress() const
 {
-    return toBytes(_data.create_address);
+    return toBytes(_data->create_address);
 }
 
 
 evmc::result ExecutionResult::getResult() noexcept
 {
-    return std::move(_data);
+    return std::move(*_data);
 }
 
 
@@ -213,7 +213,7 @@ Vm Vm::load(evmc::Host& vm_host)
 
 ExecutionResult Vm::execute(const SmartContractMessage& msg)
 {
-    auto res = _vm.execute(_host, msg.getRevision(), msg.getMessage(), msg.getCode().toArray(), msg.getCode().size());
+    auto res = _vm.execute(_host, msg.getRevision(), msg.getMessage(), msg.getCode().getData(), msg.getCode().size());
     return ExecutionResult{std::move(res)};
 }
 
