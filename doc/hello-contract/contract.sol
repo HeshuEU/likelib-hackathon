@@ -11,7 +11,7 @@ contract Hello {
 
     function getMessage() public view returns(string memory) {
         string memory name = bytes(accounts[msg.sender]).length > 0 ? accounts[msg.sender] : defaultName;
-        return concat("Hello," , name);
+        return concat("Hello, " , name);
     }
 
     function setName(string memory name) public returns(bool success) {
