@@ -198,7 +198,10 @@ std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_
     auto exec_script = std::filesystem::current_path() / std::filesystem::path{"encoder.py"};
     if(std::filesystem::exists(exec_script)) {
         std::vector<std::string> args{exec_script, "--contract_path", path_to_code_folder, "--call", call};
-        return base::fromHex<base::Bytes>(callPython(args));
+        std::istringstream iss(callPython(args));
+        std::string tmp;
+        iss >> tmp;
+        return base::fromHex<base::Bytes>(tmp);
     }
     return std::nullopt;
 }
