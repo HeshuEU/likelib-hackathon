@@ -3,7 +3,6 @@
 #include "base/assert.hpp"
 #include "base/log.hpp"
 
-#include <boost/asio/connect.hpp>
 #include <boost/asio/error.hpp>
 
 #include <chrono>

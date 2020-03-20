@@ -22,7 +22,7 @@ namespace net
 class Host
 {
   public:
-    //===================
+    //=================================
     class HandlerFactory
     {
     public:
@@ -33,30 +33,30 @@ class Host
         virtual ~HandlerFactory() = default;
         //===================
     };
-    //===================
+    //=================================
     explicit Host(const base::PropertyTree& config);
     ~Host();
-    //===================
+    //=================================
     void connect(const Endpoint& address);
     bool isConnectedTo(const Endpoint& endpoint) const;
-    //===================
+    //=================================
     void broadcast(const base::Bytes& data);
-    //===================
+    //=================================
     void run(std::unique_ptr<HandlerFactory> handler_factory);
     void join();
-    //===================
+    //=================================
   private:
-    //===================
+    //=================================
     const base::PropertyTree& _config;
-    //===================
+    //=================================
     const Endpoint _listen_ip;
     const unsigned short _server_public_port;
-    //===================
+    //=================================
     boost::asio::io_context _io_context;
     //===================
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
-    //===================
+    //=================================
     std::vector<std::shared_ptr<Session>> _sessions;
     mutable std::shared_mutex _sessions_mutex;
 
@@ -67,11 +67,11 @@ class Host
 
     void accept();
     Session& addNewSession(std::unique_ptr<Connection> peer);
-    //===================
+    //=================================
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();
     void dropZombieConnections();
-    //===================
+    //=================================
 };
 
 } // namespace net
