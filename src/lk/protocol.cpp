@@ -520,7 +520,7 @@ Peer::Peer(Network& owning_network_object, net::Session& session, Core& core)
 }
 
 
-std::unique_ptr<net::Handler> Peer::createHandler()
+std::unique_ptr<net::Session::Handler> Peer::createHandler()
 {
     return std::make_unique<Peer::Handler>(*this, _owning_network_object, _session, _core);
 }
@@ -618,7 +618,7 @@ Network::HandlerFactory::HandlerFactory(Network& owning_network_object) : _ownin
 {}
 
 
-std::unique_ptr<net::Handler> Network::HandlerFactory::create(net::Session& session)
+std::unique_ptr<net::Session::Handler> Network::HandlerFactory::create(net::Session& session)
 {
     auto& peer = _owning_network_object.createPeer(session);
     return peer.createHandler();
@@ -657,7 +657,7 @@ std::vector<PeerInfo> Network::allConnectedPeersInfo() const
     for(const auto& peer: _peers) {
         if(auto server_endpoint = peer.getPublicEndpoint()) {
             if(auto address = peer.getAddress()) {
-                ret.push_back(PeerInfo{*std::move(server_endpoint), *std::move(address)});
+                ret.push_back(PeerInfo{*std::move(server_endpoint), std::move(*address)});
             }
         }
     }
@@ -681,7 +681,8 @@ bool Network::checkOutNode(const net::Endpoint& endpoint, const bc::Address& add
         }
     }
 
-    LOG_DEBUG << "Connecting to node after Network::checkOutNode()";
+    LOG_CURRENT_FUNCTION;
+    LOG_DEBUG << "Connecting to node " << endpoint;
     _host.connect(endpoint);
     LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
     return true;

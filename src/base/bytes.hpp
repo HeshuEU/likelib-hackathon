@@ -95,10 +95,10 @@ class FixedBytes
     explicit FixedBytes(const std::string& str);
     FixedBytes(const Byte* bytes, std::size_t length);
     FixedBytes(std::initializer_list<Byte> l);
-    FixedBytes(const FixedBytes&) = default;
-    FixedBytes(FixedBytes&&) = default;
-    FixedBytes& operator=(const FixedBytes&) = default;
-    FixedBytes& operator=(FixedBytes&&) = default;
+    FixedBytes(const FixedBytes<S>&) = default;
+    FixedBytes(FixedBytes<S>&&) = default;
+    FixedBytes& operator=(const FixedBytes<S>&) = default;
+    FixedBytes& operator=(FixedBytes<S>&&) = default;
     ~FixedBytes() = default;
     //==============
     Byte& operator[](std::size_t index);
@@ -114,14 +114,14 @@ class FixedBytes
     //==============
     [[nodiscard]] std::string toString() const;
     //==============
-    bool operator==(const FixedBytes& another) const;
-    bool operator!=(const FixedBytes& another) const;
+    bool operator==(const FixedBytes<S>& another) const;
+    bool operator!=(const FixedBytes<S>& another) const;
 
     // lexicographical compare
-    bool operator<(const FixedBytes& another) const;
-    bool operator>(const FixedBytes& another) const;
-    bool operator<=(const FixedBytes& another) const;
-    bool operator>=(const FixedBytes& another) const;
+    bool operator<(const FixedBytes<S>& another) const;
+    bool operator>(const FixedBytes<S>& another) const;
+    bool operator<=(const FixedBytes<S>& another) const;
+    bool operator>=(const FixedBytes<S>& another) const;
     //==============
   private:
     std::array<Byte, S> _array{};
