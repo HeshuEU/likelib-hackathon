@@ -38,7 +38,7 @@ void AccountState::addBalance(bc::Balance delta)
 
 void AccountState::subBalance(bc::Balance delta)
 {
-    if(_balance < delta) {
+    if (_balance < delta) {
         throw base::LogicError("trying to take more LK from account than it has");
     }
     _balance -= delta;
@@ -65,7 +65,7 @@ bool AccountState::checkStorageValue(const base::Sha256& key) const
 
 AccountState::StorageData AccountState::getStorageValue(const base::Sha256& key) const
 {
-    if(auto it = _storage.find(key); it == _storage.end()) {
+    if (auto it = _storage.find(key); it == _storage.end()) {
         RAISE_ERROR(base::LogicError, "value was not found by a given key");
     }
     else {
@@ -84,7 +84,7 @@ void AccountState::setStorageValue(const base::Sha256& key, base::Bytes value)
 
 void AccountManager::newAccount(const bc::Address& address, base::Sha256 code_hash)
 {
-    if(hasAccount(address)) {
+    if (hasAccount(address)) {
         RAISE_ERROR(base::LogicError, "address already exists");
     }
 
@@ -105,7 +105,7 @@ bool AccountManager::hasAccount(const bc::Address& address) const
 bool AccountManager::deleteAccount(const bc::Address& address)
 {
     std::unique_lock lk(_rw_mutex);
-    if(auto it = _states.find(address); it != _states.end()) {
+    if (auto it = _states.find(address); it != _states.end()) {
         _states.erase(it);
         return true;
     }
@@ -132,7 +132,7 @@ const AccountState& AccountManager::getAccount(const bc::Address& address) const
 {
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
-    if(it == _states.end()) {
+    if (it == _states.end()) {
         RAISE_ERROR(base::InvalidArgument, "cannot getAccount for non-existent account");
     }
     else {
@@ -145,7 +145,7 @@ AccountState& AccountManager::getAccount(const bc::Address& address)
 {
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
-    if(it == _states.end()) {
+    if (it == _states.end()) {
         AccountState state; // TODO: lazy creation
         return _states[address] = state;
     }
@@ -157,7 +157,7 @@ AccountState& AccountManager::getAccount(const bc::Address& address)
 
 bc::Balance AccountManager::getBalance(const bc::Address& account_address) const
 {
-    if(hasAccount(account_address)) {
+    if (hasAccount(account_address)) {
         return getAccount(account_address).getBalance();
     }
     else {
@@ -169,7 +169,7 @@ bc::Balance AccountManager::getBalance(const bc::Address& account_address) const
 bool AccountManager::checkTransaction(const bc::Transaction& tx) const
 {
     std::shared_lock lk(_rw_mutex);
-    if(_states.find(tx.getFrom()) == _states.end()) {
+    if (_states.find(tx.getFrom()) == _states.end()) {
         return false;
     }
     return getAccount(tx.getFrom()).getBalance() >= tx.getAmount();
@@ -178,14 +178,14 @@ bool AccountManager::checkTransaction(const bc::Transaction& tx) const
 
 bool AccountManager::tryTransferMoney(const bc::Address& from, const bc::Address& to, bc::Balance amount)
 {
-    if(!hasAccount(from)) {
+    if (!hasAccount(from)) {
         return false;
     }
     auto& from_account = getAccount(from);
-    if(from_account.getBalance() < amount) {
+    if (from_account.getBalance() < amount) {
         return false;
     }
-    if(!hasAccount(to)) {
+    if (!hasAccount(to)) {
         newAccount(to, base::Sha256::null());
     }
     auto& to_account = getAccount(to);
@@ -201,19 +201,19 @@ void AccountManager::update(const bc::Transaction& tx)
     std::unique_lock lk(_rw_mutex);
     auto from_iter = _states.find(tx.getFrom());
 
-    if(from_iter == _states.end() || from_iter->second.getBalance() < tx.getAmount()) {
+    if (from_iter == _states.end() || from_iter->second.getBalance() < tx.getAmount()) {
         RAISE_ERROR(base::LogicError, "account doesn't have enough funds to perform the operation");
     }
 
     auto& from_state = from_iter->second;
     from_state.subBalance(tx.getAmount());
-    if(auto to_iter = _states.find(tx.getTo()); to_iter != _states.end()) {
+    if (auto to_iter = _states.find(tx.getTo()); to_iter != _states.end()) {
         to_iter->second.addBalance(tx.getAmount());
     }
     else {
         AccountState to_state;
         to_state.setBalance(tx.getAmount());
-        _states.insert({tx.getTo(), std::move(to_state)});
+        _states.insert({ tx.getTo(), std::move(to_state) });
     }
     from_state.incNonce();
 }
@@ -221,7 +221,7 @@ void AccountManager::update(const bc::Transaction& tx)
 
 void AccountManager::update(const bc::Block& block)
 {
-    for(const auto& tx: block.getTransactions()) {
+    for (const auto& tx : block.getTransactions()) {
         update(tx);
     }
 }
@@ -230,17 +230,17 @@ void AccountManager::update(const bc::Block& block)
 void AccountManager::updateFromGenesis(const bc::Block& block)
 {
     std::unique_lock lk(_rw_mutex);
-    for(const auto& tx: block.getTransactions()) {
+    for (const auto& tx : block.getTransactions()) {
         AccountState state;
         state.setBalance(tx.getAmount());
-        _states.insert({tx.getTo(), std::move(state)});
+        _states.insert({ tx.getTo(), std::move(state) });
     }
 }
 
 
 std::optional<std::reference_wrapper<const base::Bytes>> CodeManager::getCode(const base::Sha256& hash) const
 {
-    if(auto it = _code_db.find(hash); it == _code_db.end()) {
+    if (auto it = _code_db.find(hash); it == _code_db.end()) {
         return std::nullopt;
     }
     else {
@@ -252,7 +252,7 @@ std::optional<std::reference_wrapper<const base::Bytes>> CodeManager::getCode(co
 void CodeManager::saveCode(base::Bytes code)
 {
     auto hash = base::Sha256::compute(code);
-    _code_db.insert({std::move(hash), std::move(code)});
+    _code_db.insert({ std::move(hash), std::move(code) });
 }
 
 } // namespace lk

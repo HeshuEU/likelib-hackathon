@@ -38,7 +38,7 @@ class Time
     //=====================
   private:
     //=====================
-    std::uint_least32_t _seconds_since_epoch_beginning{0};
+    std::uint_least32_t _seconds_since_epoch_beginning{ 0 };
     //=====================
 };
 

@@ -7,7 +7,7 @@ namespace
 void convert(const rpc::OperationStatus& source, likelib::OperationStatus* target)
 {
     target->set_message(source.getMessage());
-    switch(source.getStatus()) {
+    switch (source.getStatus()) {
         case rpc::OperationStatus::StatusCode::Success:
             target->set_status(likelib::OperationStatus_StatusCode_Success);
             break;
@@ -34,15 +34,16 @@ void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
 }
 
 
-grpc::Status GrpcAdapter::test(
-    grpc::ServerContext* context, const likelib::TestRequest* request, likelib::TestResponse* response)
+grpc::Status GrpcAdapter::test(grpc::ServerContext* context,
+                               const likelib::TestRequest* request,
+                               likelib::TestResponse* response)
 {
     LOG_DEBUG << "received RPC call at test method from: " << context->peer();
     try {
         auto status = _service->test(request->interface_version());
         convert(status, response->mutable_status());
     }
-    catch(const base::Error& e) {
+    catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
@@ -51,15 +52,16 @@ grpc::Status GrpcAdapter::test(
 }
 
 
-grpc::Status GrpcAdapter::balance(
-    grpc::ServerContext* context, const likelib::Address* request, likelib::CurrencyAmount* response)
+grpc::Status GrpcAdapter::balance(grpc::ServerContext* context,
+                                  const likelib::Address* request,
+                                  likelib::CurrencyAmount* response)
 {
     LOG_DEBUG << "received RPC balance method call from: " << context->peer();
     try {
-        bc::Address query_address{request->address()};
+        bc::Address query_address{ request->address() };
         response->set_value(_service->balance(query_address));
     }
-    catch(const base::Error& e) {
+    catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
@@ -67,14 +69,15 @@ grpc::Status GrpcAdapter::balance(
 }
 
 
-grpc::Status GrpcAdapter::info(
-    grpc::ServerContext* context, const likelib::InfoRequest*, likelib::InfoResponse* response)
+grpc::Status GrpcAdapter::info(grpc::ServerContext* context,
+                               const likelib::InfoRequest*,
+                               likelib::InfoResponse* response)
 {
     LOG_DEBUG << "received RPC info method call from: " << context->peer();
     try {
         response->set_top_block_hash(base::base64Encode(_service->info().top_block_hash.getBytes()));
     }
-    catch(const base::Error& e) {
+    catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
@@ -82,12 +85,13 @@ grpc::Status GrpcAdapter::info(
 }
 
 
-grpc::Status GrpcAdapter::get_block(
-    grpc::ServerContext* context, const likelib::GetBlockRequest* request, likelib::GetBlockResponse* response)
+grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
+                                    const likelib::GetBlockRequest* request,
+                                    likelib::GetBlockResponse* response)
 {
     LOG_DEBUG << "received RPC get_block method call from " << context->peer();
     try {
-        base::Sha256 block_hash{base::fromHex<base::Bytes>(request->block_hash())};
+        base::Sha256 block_hash{ base::fromHex<base::Bytes>(request->block_hash()) };
         auto block = _service->get_block(block_hash);
         response->set_depth(block.getDepth());
         response->set_nonce(block.getNonce());
@@ -95,7 +99,7 @@ grpc::Status GrpcAdapter::get_block(
         response->mutable_coinbase()->set_address(block.getCoinbase().toString());
         response->mutable_timestamp()->set_since_epoch(block.getTimestamp().getSecondsSinceEpochBeginning());
 
-        for(const auto& tx: block.getTransactions()) {
+        for (const auto& tx : block.getTransactions()) {
             likelib::Transaction tv;
             tv.mutable_from()->set_address(tx.getFrom().toString());
             tv.mutable_to()->set_address(tx.getTo().toString());
@@ -107,7 +111,7 @@ grpc::Status GrpcAdapter::get_block(
             response->mutable_transactions()->Add(std::move(tv));
         }
     }
-    catch(const base::Error& e) {
+    catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
@@ -116,26 +120,27 @@ grpc::Status GrpcAdapter::get_block(
 
 
 ::grpc::Status GrpcAdapter::create_contract(::grpc::ServerContext* context,
-    const ::likelib::TransactionCreateContractRequest* request, ::likelib::TransactionCreateContractResponse* response)
+                                            const ::likelib::TransactionCreateContractRequest* request,
+                                            ::likelib::TransactionCreateContractResponse* response)
 {
     LOG_DEBUG << "received RPC call at transaction_for_create_contract method from: " << context->peer();
     try {
-        auto amount = bc::Balance{request->value().value()};
-        auto from_address = bc::Address{request->from().address()};
-        auto gas = bc::Balance{request->fee().value()};
+        auto amount = bc::Balance{ request->value().value() };
+        auto from_address = bc::Address{ request->from().address() };
+        auto gas = bc::Balance{ request->fee().value() };
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
         auto contract_code = request->contract_code();
         auto init = request->init();
         auto sign = bc::Sign::fromBase64(request->signature().raw());
 
         auto [status, contract_address, least_gas] =
-            _service->transaction_create_contract(amount, from_address, creation_time, gas, contract_code, init, sign);
+          _service->transaction_create_contract(amount, from_address, creation_time, gas, contract_code, init, sign);
 
         convert(status, response->mutable_status());
         response->mutable_contract_address()->set_address(contract_address.toString());
         response->mutable_gas_left()->set_value(least_gas);
     }
-    catch(const base::Error& e) {
+    catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
@@ -145,14 +150,15 @@ grpc::Status GrpcAdapter::get_block(
 
 
 grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
-    const likelib::TransactionMessageCallRequest* request, likelib::TransactionMessageCallResponse* response)
+                                       const likelib::TransactionMessageCallRequest* request,
+                                       likelib::TransactionMessageCallResponse* response)
 {
     LOG_DEBUG << "received RPC call at transaction_to_contract method from: " << context->peer();
     try {
-        auto amount = bc::Balance{request->value().value()};
-        auto from_address = bc::Address{request->from().address()};
-        auto to_address = bc::Address{request->to().address()};
-        auto gas = bc::Balance{request->fee().value()};
+        auto amount = bc::Balance{ request->value().value() };
+        auto from_address = bc::Address{ request->from().address() };
+        auto to_address = bc::Address{ request->to().address() };
+        auto gas = bc::Balance{ request->fee().value() };
         auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
         auto data = request->data();
         auto sign = bc::Sign::fromBase64(request->signature());
@@ -161,13 +167,13 @@ grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
         std::string contract_response;
         bc::Balance least_gas;
         std::tie(status, contract_response, least_gas) =
-            _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, sign);
+          _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, sign);
 
         convert(status, response->mutable_status());
         response->set_contract_response(contract_response);
         response->mutable_gas_left()->set_value(least_gas);
     }
-    catch(const base::Error& e) {
+    catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }

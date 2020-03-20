@@ -9,7 +9,7 @@ namespace bc
 
 void TransactionsSet::add(const bc::Transaction& tx)
 {
-    if(!find(tx)) {
+    if (!find(tx)) {
         _txs.push_back(tx);
     }
 }
@@ -23,11 +23,10 @@ bool TransactionsSet::find(const bc::Transaction& tx) const
 
 std::optional<Transaction> TransactionsSet::find(const base::Sha256& hash) const
 {
-    auto it = std::find_if(_txs.begin(), _txs.end(), [&hash](const auto& tx) {
-        return base::Sha256::compute(base::toBytes(tx)) == hash;
-    });
+    auto it = std::find_if(
+      _txs.begin(), _txs.end(), [&hash](const auto& tx) { return base::Sha256::compute(base::toBytes(tx)) == hash; });
 
-    if(it == _txs.end()) {
+    if (it == _txs.end()) {
         return std::nullopt;
     }
     else {
@@ -39,14 +38,14 @@ std::optional<Transaction> TransactionsSet::find(const base::Sha256& hash) const
 void TransactionsSet::remove(const bc::Transaction& tx)
 {
     auto it = std::find(_txs.begin(), _txs.end(), tx);
-    if(it == _txs.end()) {
+    if (it == _txs.end()) {
         return;
     }
 
     auto last_vector_element = _txs.end();
     std::advance(last_vector_element, -1);
 
-    if(last_vector_element != it) {
+    if (last_vector_element != it) {
         *it = std::move(*last_vector_element);
     }
     _txs.pop_back();
@@ -91,7 +90,7 @@ std::vector<Transaction>::iterator TransactionsSet::end()
 
 void TransactionsSet::remove(const TransactionsSet& other)
 {
-    for(const auto& tx: other) {
+    for (const auto& tx : other) {
         remove(tx);
     }
 }
@@ -126,12 +125,12 @@ TransactionsSet TransactionsSet::deserialize(base::SerializationIArchive& ia)
 std::map<Address, Balance> calcBalance(const TransactionsSet& txs)
 {
     std::map<Address, Balance> result;
-    for(const auto& tx: txs) {
+    for (const auto& tx : txs) {
 
         auto from_address_in_result = result.find(tx.getFrom());
         auto from_amount_modifier = -tx.getAmount();
-        if(from_address_in_result == result.end()) {
-            result.insert({tx.getFrom(), from_amount_modifier});
+        if (from_address_in_result == result.end()) {
+            result.insert({ tx.getFrom(), from_amount_modifier });
         }
         else {
             from_address_in_result->second = from_address_in_result->second + from_amount_modifier;
@@ -139,8 +138,8 @@ std::map<Address, Balance> calcBalance(const TransactionsSet& txs)
 
         auto to_address_in_result = result.find(tx.getTo());
         auto to_amount_modifier = tx.getAmount();
-        if(to_address_in_result == result.end()) {
-            result.insert({tx.getTo(), to_amount_modifier});
+        if (to_address_in_result == result.end()) {
+            result.insert({ tx.getTo(), to_amount_modifier });
         }
         else {
             to_address_in_result->second = to_address_in_result->second + to_amount_modifier;

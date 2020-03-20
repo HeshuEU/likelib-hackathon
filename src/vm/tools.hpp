@@ -52,8 +52,9 @@ evmc::address toEthAddress(const bc::Address& address);
 
 std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call);
 
-std::optional<std::string> decodeOutput(
-    const std::filesystem::path& path_to_code_folder, const std::string& method, const std::string& output);
+std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_code_folder,
+                                        const std::string& method,
+                                        const std::string& output);
 
 std::string callPython(std::vector<std::string>& args);
 

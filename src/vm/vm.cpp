@@ -14,30 +14,35 @@ namespace vm
 namespace
 {
 
-    base::Bytes getRuntimeCode(const base::Bytes& full_code)
-    {
-        static const std::string target{"60806040"};
-        // TODO: make normal algorithm
-        auto hex_code = base::toHex<base::Bytes>(full_code);
-        auto index = hex_code.find(target, target.size());
-        if(index == 0) {
-            RAISE_ERROR(base::LogicError, "Not valid code");
-        }
-        auto sub = hex_code.substr(index, hex_code.size());
-        return base::fromHex<base::Bytes>(sub);
+base::Bytes getRuntimeCode(const base::Bytes& full_code)
+{
+    static const std::string target{ "60806040" };
+    // TODO: make normal algorithm
+    auto hex_code = base::toHex<base::Bytes>(full_code);
+    auto index = hex_code.find(target, target.size());
+    if (index == 0) {
+        RAISE_ERROR(base::LogicError, "Not valid code");
     }
+    auto sub = hex_code.substr(index, hex_code.size());
+    return base::fromHex<base::Bytes>(sub);
+}
 
 } // namespace
 
 
-SmartContract::SmartContract(const base::Bytes& contract_code) : _revision(EVMC_ISTANBUL), _contract_code{contract_code}
+SmartContract::SmartContract(const base::Bytes& contract_code)
+  : _revision(EVMC_ISTANBUL)
+  , _contract_code{ contract_code }
 {}
 
 
-SmartContractMessage SmartContract::createInitMessage(int64_t gas, const bc::Address& source,
-    const bc::Address& destination, const bc::Balance& value, const base::Bytes& input) const
+SmartContractMessage SmartContract::createInitMessage(int64_t gas,
+                                                      const bc::Address& source,
+                                                      const bc::Address& destination,
+                                                      const bc::Balance& value,
+                                                      const base::Bytes& input) const
 {
-    SmartContractMessage message{_revision};
+    SmartContractMessage message{ _revision };
     message._contract_code = _contract_code + input;
     message._message.kind = evmc_call_kind::EVMC_CALL;
     message._message.depth = 0;
@@ -50,10 +55,13 @@ SmartContractMessage SmartContract::createInitMessage(int64_t gas, const bc::Add
 }
 
 
-SmartContractMessage SmartContract::createMessage(int64_t gas, const bc::Address& source,
-    const bc::Address& destination, const bc::Balance& value, const base::Bytes& input) const
+SmartContractMessage SmartContract::createMessage(int64_t gas,
+                                                  const bc::Address& source,
+                                                  const bc::Address& destination,
+                                                  const bc::Balance& value,
+                                                  const base::Bytes& input) const
 {
-    SmartContractMessage message{_revision};
+    SmartContractMessage message{ _revision };
     message._contract_code = getRuntimeCode(_contract_code);
     message._message.kind = evmc_call_kind::EVMC_CALL;
     message._message.depth = 0;
@@ -123,11 +131,15 @@ evmc_revision SmartContractMessage::getRevision() const
 }
 
 
-SmartContractMessage::SmartContractMessage(evmc_revision revision) : _message{}, _contract_code{}, _revision{revision}
+SmartContractMessage::SmartContractMessage(evmc_revision revision)
+  : _message{}
+  , _contract_code{}
+  , _revision{ revision }
 {}
 
 
-ExecutionResult::ExecutionResult(evmc::result&& data) : _data(std::move(data))
+ExecutionResult::ExecutionResult(evmc::result&& data)
+  : _data(std::move(data))
 {}
 
 
@@ -163,27 +175,27 @@ evmc::result ExecutionResult::getResult() noexcept
 
 namespace
 {
-    std::filesystem::path getVmPath()
-    {
-        static const std::filesystem::path lib_name = std::filesystem::absolute("libevmone.so.0.4");
+std::filesystem::path getVmPath()
+{
+    static const std::filesystem::path lib_name = std::filesystem::absolute("libevmone.so.0.4");
 
-        if(std::filesystem::exists(lib_name)) {
-            if(std::filesystem::is_symlink(lib_name)) {
-                std::error_code ec;
-                auto result = std::filesystem::read_symlink(lib_name, ec);
-                if(!ec) {
-                    RAISE_ERROR(base::InaccessibleFile, "Vm library was not found");
-                }
-                return std::filesystem::absolute(result);
+    if (std::filesystem::exists(lib_name)) {
+        if (std::filesystem::is_symlink(lib_name)) {
+            std::error_code ec;
+            auto result = std::filesystem::read_symlink(lib_name, ec);
+            if (!ec) {
+                RAISE_ERROR(base::InaccessibleFile, "Vm library was not found");
             }
-            else {
-                return std::filesystem::absolute(lib_name);
-            }
+            return std::filesystem::absolute(result);
         }
         else {
-            RAISE_ERROR(base::InaccessibleFile, "Vm library was not found");
+            return std::filesystem::absolute(lib_name);
         }
     }
+    else {
+        RAISE_ERROR(base::InaccessibleFile, "Vm library was not found");
+    }
+}
 } // namespace
 
 Vm Vm::load(evmc::Host& vm_host)
@@ -192,8 +204,8 @@ Vm Vm::load(evmc::Host& vm_host)
 
     auto vm_ptr = evmc_load_and_create(getVmPath().c_str(), &load_error_code);
 
-    if(load_error_code != EVMC_LOADER_SUCCESS || vm_ptr == nullptr) {
-        switch(load_error_code) {
+    if (load_error_code != EVMC_LOADER_SUCCESS || vm_ptr == nullptr) {
+        switch (load_error_code) {
             case EVMC_LOADER_SUCCESS:
                 RAISE_ERROR(base::LogicError, "Error status is success but pointer is null");
             case EVMC_LOADER_CANNOT_OPEN:
@@ -207,36 +219,38 @@ Vm Vm::load(evmc::Host& vm_host)
         }
     }
 
-    return {vm_ptr, vm_host};
+    return { vm_ptr, vm_host };
 }
 
 
 ExecutionResult Vm::execute(const SmartContractMessage& msg)
 {
     auto res = _vm.execute(_host, msg.getRevision(), msg.getMessage(), msg.getCode().getData(), msg.getCode().size());
-    return ExecutionResult{std::move(res)};
+    return ExecutionResult{ std::move(res) };
 }
 
 
-Vm::Vm(evmc_vm* vm_instance_ptr, evmc::Host& vm_host) : _vm{vm_instance_ptr}, _host{vm_host}
+Vm::Vm(evmc_vm* vm_instance_ptr, evmc::Host& vm_host)
+  : _vm{ vm_instance_ptr }
+  , _host{ vm_host }
 {
     LOG_INFO << "Created EVM name: " << _vm.name() << ", version:" << _vm.version();
 
-    if(!_vm.is_abi_compatible()) {
+    if (!_vm.is_abi_compatible()) {
         RAISE_ERROR(VmError, " ABI version is incompatible.");
     }
 
     auto vm_capabilities = _vm.get_capabilities();
 
-    if(vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_EVM1) {
+    if (vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_EVM1) {
         LOG_INFO << "EVM compatible with EVM1 instructions";
     }
 
-    if(vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_EWASM) {
+    if (vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_EWASM) {
         LOG_INFO << "EVM compatible with EWASM instructions";
     }
 
-    if(vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_PRECOMPILES) {
+    if (vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_PRECOMPILES) {
         LOG_INFO << "EVM compatible with precompiles instructions";
     }
 }

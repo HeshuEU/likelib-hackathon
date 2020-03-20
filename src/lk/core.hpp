@@ -1,7 +1,7 @@
 #pragma once
 
-#include "base/property_tree.hpp"
 #include "base/crypto.hpp"
+#include "base/property_tree.hpp"
 #include "base/utility.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
@@ -64,7 +64,7 @@ class Core
     base::Observable<const bc::Block&> _event_block_added;
     base::Observable<const bc::Transaction&> _event_new_pending_transaction;
     //==================
-    bool _is_account_manager_updated{false};
+    bool _is_account_manager_updated{ false };
     AccountManager _account_manager;
     CodeManager _code_manager;
     bc::Blockchain _blockchain;
@@ -85,8 +85,8 @@ class Core
     bool checkTransaction(const bc::Transaction& tx) const;
     //==================
     bool tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx);
-    std::tuple<bc::Address, base::Bytes, bc::Balance> doContractCreation(
-        const bc::Transaction& tx, const bc::Block& block_where_tx);
+    std::tuple<bc::Address, base::Bytes, bc::Balance> doContractCreation(const bc::Transaction& tx,
+                                                                         const bc::Block& block_where_tx);
     vm::ExecutionResult doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx);
     //==================
   public:

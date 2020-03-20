@@ -64,7 +64,7 @@ struct has_deserialize<C, Ret(Args...)>
   private:
     template<typename T>
     static constexpr auto check(T*) ->
-        typename std::is_same<decltype(std::declval<T>().deserialize(std::declval<Args>()...)), Ret>::type;
+      typename std::is_same<decltype(std::declval<T>().deserialize(std::declval<Args>()...)), Ret>::type;
 
     template<typename>
     static constexpr std::false_type check(...);
@@ -82,24 +82,24 @@ class global_deserialize
   public:
     T deserialize(base::SerializationIArchive& ia, const base::Bytes& _bytes, std::size_t& _index)
     {
-        if constexpr(std::is_integral<T>::value) {
+        if constexpr (std::is_integral<T>::value) {
             T v;
             static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8,
-                "this integral type is not serializable");
+                          "this integral type is not serializable");
 
-            if(_index + sizeof(T) > _bytes.size()) {
+            if (_index + sizeof(T) > _bytes.size()) {
                 _index += 120;
             }
             ASSERT(_index + sizeof(T) <= _bytes.size());
 
             v = *reinterpret_cast<const T*>(_bytes.getData() + _index);
             _index += sizeof(v);
-            if constexpr(sizeof(v) != 1) {
+            if constexpr (sizeof(v) != 1) {
                 v = base::nativeToBig(v);
             }
             return v;
         }
-        else if constexpr(std::is_enum<T>::value) {
+        else if constexpr (std::is_enum<T>::value) {
             auto v = ia.deserialize<typename std::underlying_type<T>::type>();
             return static_cast<T>(v);
         }
@@ -118,7 +118,7 @@ class global_deserialize<std::vector<T>>
     {
         std::vector<T> v;
         std::size_t size = ia.deserialize<std::size_t>();
-        for(std::size_t i = 0; i < size; i++) {
+        for (std::size_t i = 0; i < size; i++) {
             v.push_back(ia.deserialize<T>());
         }
         return v;
@@ -134,7 +134,7 @@ class global_deserialize<std::optional<T>>
     {
         auto do_we_have_a_value = ia.deserialize<bool>();
         std::optional<T> v;
-        if(do_we_have_a_value) {
+        if (do_we_have_a_value) {
             T t;
             ia >> t;
             v = t;
@@ -155,7 +155,7 @@ class global_deserialize<base::FixedBytes<S>>
     base::FixedBytes<S> deserialize(base::SerializationIArchive& ia, const base::Bytes&, std::size_t&)
     {
         base::FixedBytes<S> fb;
-        for(std::size_t i = 0; i < S; ++i) {
+        for (std::size_t i = 0; i < S; ++i) {
             auto b = ia.deserialize<base::Byte>();
             fb[i] = b;
         }
@@ -172,7 +172,7 @@ class global_deserialize<base::Bytes>
     {
         auto size = ia.deserialize<std::size_t>();
         base::Bytes bytes(size);
-        for(std::size_t i = 0; i < size; ++i) {
+        for (std::size_t i = 0; i < size; ++i) {
             auto b = ia.deserialize<base::Byte>();
             bytes[i] = b;
         }
@@ -207,7 +207,7 @@ struct has_serialize<C, Ret(Args...)>
   private:
     template<typename T>
     static constexpr auto check(T*) ->
-        typename std::is_same<decltype(std::declval<T>().serialize(std::declval<Args>()...)), Ret>::type;
+      typename std::is_same<decltype(std::declval<T>().serialize(std::declval<Args>()...)), Ret>::type;
 
     template<typename>
     static constexpr std::false_type check(...);
@@ -225,11 +225,11 @@ class global_serialize
   public:
     void serialize(base::SerializationOArchive& oa, const T& v, base::Bytes& _bytes)
     {
-        if constexpr(std::is_integral<T>::value) {
+        if constexpr (std::is_integral<T>::value) {
             static_assert(sizeof(v) == 1 || sizeof(v) == 2 || sizeof(v) == 4 || sizeof(v) == 8,
-                "this integral type is not serializable");
+                          "this integral type is not serializable");
 
-            if constexpr(sizeof(v) != 1) {
+            if constexpr (sizeof(v) != 1) {
                 auto t = base::bigToNative(v);
                 _bytes.append(reinterpret_cast<base::Byte*>(&t), sizeof(v));
             }
@@ -237,7 +237,7 @@ class global_serialize
                 _bytes.append(static_cast<base::Byte>(v));
             }
         }
-        else if constexpr(std::is_enum<T>::value) {
+        else if constexpr (std::is_enum<T>::value) {
             oa.serialize(static_cast<typename std::underlying_type<T>::type>(v));
         }
         else {
@@ -254,7 +254,7 @@ class global_serialize<std::vector<T>>
     void serialize(base::SerializationOArchive& oa, const std::vector<T>& v, base::Bytes&)
     {
         oa.serialize(v.size());
-        for(const auto& x: v) {
+        for (const auto& x : v) {
             oa.serialize(x);
         }
     }
@@ -267,7 +267,7 @@ class global_serialize<std::optional<T>>
   public:
     void serialize(base::SerializationOArchive& oa, const std::optional<T>& v, base::Bytes&)
     {
-        if(v) {
+        if (v) {
             oa.serialize(true);
             oa.serialize(*v);
         }
@@ -284,7 +284,7 @@ class global_serialize<base::FixedBytes<S>>
   public:
     void serialize(base::SerializationOArchive& oa, const base::FixedBytes<S>& fb, base::Bytes&)
     {
-        for(std::size_t i = 0; i < S; i++) {
+        for (std::size_t i = 0; i < S; i++) {
             oa.serialize(fb[i]);
         }
     }
@@ -298,7 +298,7 @@ class global_serialize<base::Bytes>
     void serialize(base::SerializationOArchive& oa, const base::Bytes& bytes, base::Bytes&)
     {
         oa.serialize(bytes.size());
-        for(auto b: bytes.toVector()) {
+        for (auto b : bytes.toVector()) {
             oa.serialize(b);
         }
     }
@@ -325,7 +325,7 @@ namespace base
 template<typename T>
 T SerializationIArchive::deserialize()
 {
-    if constexpr(impl::has_deserialize<T, T(base::SerializationIArchive&)>::value) {
+    if constexpr (impl::has_deserialize<T, T(base::SerializationIArchive&)>::value) {
         return T::deserialize(*this);
     }
     else {
@@ -339,14 +339,14 @@ std::pair<U, V> SerializationIArchive::deserialize()
 {
     auto u = deserialize<U>();
     auto v = deserialize<V>();
-    return {u, v};
+    return { u, v };
 }
 
 
 template<typename T>
 void SerializationOArchive::serialize(const T& v)
 {
-    if constexpr(impl::has_serialize<T, void(base::SerializationOArchive&)>::value) {
+    if constexpr (impl::has_serialize<T, void(base::SerializationOArchive&)>::value) {
         v.serialize(*this);
     }
     else {

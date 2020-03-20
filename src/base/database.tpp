@@ -9,7 +9,7 @@ void Database::put(const Bytes& key, const FixedBytes<S>& value)
     checkStatus();
 
     auto const status = _database->Put(_write_options, key.toString(), value.toString());
-    if(!status.ok()) {
+    if (!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
     }
 }

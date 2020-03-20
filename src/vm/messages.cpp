@@ -84,9 +84,10 @@ const std::vector<std::pair<base::Bytes, std::string>>& CompiledContract::getSig
 }
 
 
-Solc::Solc() : _path_to_solc{bp::search_path(_SOLC_NAME)}
+Solc::Solc()
+  : _path_to_solc{ bp::search_path(_SOLC_NAME) }
 {
-    if(!boost::filesystem::exists(_path_to_solc)) {
+    if (!boost::filesystem::exists(_path_to_solc)) {
         RAISE_ERROR(base::InaccessibleFile, "Solidity compiler was not found");
     }
 }
@@ -100,19 +101,19 @@ std::optional<Contracts> Solc::compile(const std::string& path_to_solidity_code)
     auto metadata_output = call_metadata_command(path_to_solidity_code);
 
     Contracts contracts{};
-    for(const auto& contract_name_full_code_pair: full_compilation_output) {
+    for (const auto& contract_name_full_code_pair : full_compilation_output) {
         CompiledContract contract;
         contract.setName(contract_name_full_code_pair.first);
         contract.setFullCode(contract_name_full_code_pair.second);
 
-        for(const auto& contract_name_hashes_pair: hashes_output) {
-            if(contract_name_hashes_pair.first == contract.getName()) {
+        for (const auto& contract_name_hashes_pair : hashes_output) {
+            if (contract_name_hashes_pair.first == contract.getName()) {
                 contract.setSignatures(contract_name_hashes_pair.second);
             }
         }
 
-        for(const auto& contract_name_metadata_pair: metadata_output) {
-            if(contract_name_metadata_pair.first == contract.getName()) {
+        for (const auto& contract_name_metadata_pair : metadata_output) {
+            if (contract_name_metadata_pair.first == contract.getName()) {
                 contract.setMetadata(contract_name_metadata_pair.second);
             }
         }
@@ -132,15 +133,15 @@ std::vector<std::string> Solc::call_command(std::vector<std::string> args) const
     c.wait();
 
     std::vector<std::string> out_put_result_values;
-    while(out) {
+    while (out) {
         std::string out_result;
         out >> out_result;
         out_put_result_values.push_back(out_result);
     }
 
-    if(c.exit_code()) {
+    if (c.exit_code()) {
         std::ostringstream s;
-        for(const auto& item: out_put_result_values) {
+        for (const auto& item : out_put_result_values) {
             s << item;
         }
         RAISE_ERROR(base::SystemCallFailed, s.str());
@@ -151,7 +152,7 @@ std::vector<std::string> Solc::call_command(std::vector<std::string> args) const
 
 
 std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_command(
-    const std::string& path_to_solidity_code) const
+  const std::string& path_to_solidity_code) const
 {
     std::vector<std::string> args;
     args.push_back("--bin");
@@ -159,16 +160,16 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_com
 
     auto res = call_command(args);
 
-    static const std::set<std::string> ignore{"=======", "Binary:"};
+    static const std::set<std::string> ignore{ "=======", "Binary:" };
     std::vector<std::string> out_put_result_values;
-    for(const auto& item: res) {
-        if(ignore.find(item) == ignore.end()) {
+    for (const auto& item : res) {
+        if (ignore.find(item) == ignore.end()) {
             out_put_result_values.push_back(item);
         }
     }
 
     std::vector<std::pair<std::string, base::Bytes>> contracts_byte_codes;
-    for(std::size_t i = 0; i < out_put_result_values.size() / 2; i++) {
+    for (std::size_t i = 0; i < out_put_result_values.size() / 2; i++) {
         auto current_contract_path_index = i * 2;
         auto current_data_index = current_contract_path_index + 1;
         auto path = out_put_result_values[current_contract_path_index];
@@ -176,7 +177,7 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_com
         auto source_file = path.substr(0, delimiter_pos);
         auto contract_name = path.substr(delimiter_pos + 1, path.size());
         auto bytecode = base::fromHex<base::Bytes>(out_put_result_values[current_data_index]);
-        contracts_byte_codes.push_back({std::move(contract_name), std::move(bytecode)});
+        contracts_byte_codes.push_back({ std::move(contract_name), std::move(bytecode) });
     }
 
     return contracts_byte_codes;
@@ -184,7 +185,7 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_com
 
 
 std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_command(
-    const std::string& path_to_solidity_code) const
+  const std::string& path_to_solidity_code) const
 {
     std::vector<std::string> args;
     args.push_back("--metadata");
@@ -192,16 +193,16 @@ std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_comm
 
     auto res = call_command(args);
 
-    static const std::set<std::string> ignore{"=======", "Metadata:"};
+    static const std::set<std::string> ignore{ "=======", "Metadata:" };
     std::vector<std::string> out_put_result_values;
-    for(const auto& item: res) {
-        if(ignore.find(item) == ignore.end()) {
+    for (const auto& item : res) {
+        if (ignore.find(item) == ignore.end()) {
             out_put_result_values.push_back(item);
         }
     }
 
     std::vector<std::pair<std::string, base::PropertyTree>> contracts_metadatas;
-    for(std::size_t i = 0; i < out_put_result_values.size() / 2; i++) {
+    for (std::size_t i = 0; i < out_put_result_values.size() / 2; i++) {
         auto current_contract_path_index = i * 2;
         auto current_data_index = current_contract_path_index + 1;
         auto path = out_put_result_values[current_contract_path_index];
@@ -211,7 +212,7 @@ std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_comm
 
         auto metadata = base::parseJson(out_put_result_values[current_data_index]);
 
-        contracts_metadatas.push_back({std::move(contract_name), std::move(metadata)});
+        contracts_metadatas.push_back({ std::move(contract_name), std::move(metadata) });
     }
 
     return contracts_metadatas;
@@ -219,7 +220,7 @@ std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_comm
 
 
 std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::string>>>> Solc::call_hashes_command(
-    const std::string& path_to_solidity_code) const
+  const std::string& path_to_solidity_code) const
 {
     std::vector<std::string> args;
     args.push_back("--hashes");
@@ -227,10 +228,10 @@ std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::strin
 
     auto res = call_command(args);
 
-    static const std::set<std::string> ignore{"=======", "Function", "signatures:", ""};
+    static const std::set<std::string> ignore{ "=======", "Function", "signatures:", "" };
     std::vector<std::string> out_put_result_values;
-    for(const auto& item: res) {
-        if(ignore.find(item) == ignore.end()) {
+    for (const auto& item : res) {
+        if (ignore.find(item) == ignore.end()) {
             out_put_result_values.push_back(item);
         }
     }
@@ -238,10 +239,10 @@ std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::strin
     std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::string>>>> hashes;
     std::string current_contract_name;
     std::vector<std::pair<base::Bytes, std::string>> current_contract_members;
-    for(size_t i = 0; i < out_put_result_values.size();) {
-        if(out_put_result_values[i].find(".sol:") != std::string::npos) { // TODO independent separate method
-            if(!current_contract_name.empty()) {
-                hashes.push_back({current_contract_name, current_contract_members});
+    for (size_t i = 0; i < out_put_result_values.size();) {
+        if (out_put_result_values[i].find(".sol:") != std::string::npos) { // TODO independent separate method
+            if (!current_contract_name.empty()) {
+                hashes.push_back({ current_contract_name, current_contract_members });
                 current_contract_name.clear();
                 current_contract_members.clear();
             }
@@ -255,7 +256,7 @@ std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::strin
         i++;
         auto signature = out_put_result_values[i];
         i++;
-        current_contract_members.push_back({hash, signature});
+        current_contract_members.push_back({ hash, signature });
     }
 
     return hashes;

@@ -13,7 +13,8 @@ class TestSerialization
 {
   public:
     TestSerialization() = default;
-    TestSerialization(int value) : _value(value)
+    TestSerialization(int value)
+      : _value(value)
     {}
 
     static TestSerialization deserialize(base::SerializationIArchive& ia)
@@ -22,10 +23,7 @@ class TestSerialization
         return TestSerialization(val);
     }
 
-    void serialize(base::SerializationOArchive& oa) const
-    {
-        oa.serialize(_value);
-    }
+    void serialize(base::SerializationOArchive& oa) const { oa.serialize(_value); }
 
     int _value;
 };
@@ -34,8 +32,8 @@ class TestSerialization
 BOOST_AUTO_TEST_CASE(serialization_sanity_check1)
 {
     base::SerializationOArchive oa;
-    std::uint16_t s{0x1234};
-    oa.serialize(base::Byte{0x12});
+    std::uint16_t s{ 0x1234 };
+    oa.serialize(base::Byte{ 0x12 });
     oa.serialize(-35);
     oa.serialize(-7ll);
     oa.serialize(s);
@@ -55,8 +53,8 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check1)
 BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
 {
     const std::uint64_t aa = 0x12345678987654;
-    base::Bytes bb{0x1, 0x3, 0x5, 0x7, 0x15};
-    const std::vector<std::string> cc{"a", "b", "c"};
+    base::Bytes bb{ 0x1, 0x3, 0x5, 0x7, 0x15 };
+    const std::vector<std::string> cc{ "a", "b", "c" };
 
     base::SerializationOArchive oa;
     oa.serialize(aa);
@@ -79,10 +77,11 @@ BOOST_AUTO_TEST_CASE(serialization_sanity_check2)
 BOOST_AUTO_TEST_CASE(serialization_operators_input_output)
 {
     base::SerializationOArchive oa;
-    std::vector<char> v1{'f', '!', '*', 'a'};
-    std::vector<int> v2{2200, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 77, -99976};
-    std::vector<long long> v3{
-        20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
+    std::vector<char> v1{ 'f', '!', '*', 'a' };
+    std::vector<int> v2{ 2200, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 77, -99976 };
+    std::vector<long long> v3{ 20000000000,
+                               std::numeric_limits<long long>::min(),
+                               std::numeric_limits<long long>::max() };
     std::vector<unsigned char> v4;
     oa.serialize(v1);
     oa.serialize(v2);
@@ -163,11 +162,12 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_strings)
 
 BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_integers)
 {
-    std::vector<char> v1{'f', '!', '*', 'a'};
-    std::vector<short> v2{11057, std::numeric_limits<short>::min(), std::numeric_limits<short>::max(), 767};
-    std::vector<int> v3{2200, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 77, -99976};
-    std::vector<long long> v4{
-        20000000000, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
+    std::vector<char> v1{ 'f', '!', '*', 'a' };
+    std::vector<short> v2{ 11057, std::numeric_limits<short>::min(), std::numeric_limits<short>::max(), 767 };
+    std::vector<int> v3{ 2200, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), 77, -99976 };
+    std::vector<long long> v4{ 20000000000,
+                               std::numeric_limits<long long>::min(),
+                               std::numeric_limits<long long>::max() };
     std::vector<unsigned char> v5;
 
     auto b1 = base::toBytes(v1);
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_integers)
 
 BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_strings)
 {
-    std::vector<std::string> v1{"34fGEk350u8Fj", "DFN#%06784 giksdf34 \n  ", "asd35%64khrtfFsp    ad03\n\n\n\n"};
+    std::vector<std::string> v1{ "34fGEk350u8Fj", "DFN#%06784 giksdf34 \n  ", "asd35%64khrtfFsp    ad03\n\n\n\n" };
     std::vector<std::string> v2{};
 
     auto b1 = base::toBytes(v1);
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_enum)
         C,
         D
     };
-    std::vector<E> v1{E::A, E::C, E::D};
+    std::vector<E> v1{ E::A, E::C, E::D };
     std::vector<E> v2{};
 
     auto b1 = base::toBytes(v1);
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(serialization_toBytes_fromBytes_vectors_enum)
 BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
 {
     std::vector<TestSerialization> v1, v2, v3;
-    for(std::size_t i = 0; i < 9; i++) {
+    for (std::size_t i = 0; i < 9; i++) {
         v1.emplace_back(i * 3);
 
         v2.emplace_back(i * 5);
@@ -244,13 +244,13 @@ BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
     BOOST_CHECK(v1.size() == v4.size());
     BOOST_CHECK(v2.size() == v5.size());
     BOOST_CHECK(v3.size() == v6.size());
-    for(std::size_t i = 0; i < v1.size(); i++) {
+    for (std::size_t i = 0; i < v1.size(); i++) {
         BOOST_CHECK(v1[i]._value == v4[i]._value);
     }
-    for(std::size_t i = 0; i < v2.size(); i++) {
+    for (std::size_t i = 0; i < v2.size(); i++) {
         BOOST_CHECK(v2[i]._value == v5[i]._value);
     }
-    for(std::size_t i = 0; i < v3.size(); i++) {
+    for (std::size_t i = 0; i < v3.size(); i++) {
         BOOST_CHECK(v3[i]._value == v6[i]._value);
     }
 }
@@ -258,9 +258,9 @@ BOOST_AUTO_TEST_CASE(serialization_vector_with_deserialize)
 
 BOOST_AUTO_TEST_CASE(serialization_pair1)
 {
-    std::pair<char, TestSerialization> p1{'6', 123};
-    std::pair<char, TestSerialization> p2{'a', 5};
-    std::pair<char, TestSerialization> p3{'^', 777};
+    std::pair<char, TestSerialization> p1{ '6', 123 };
+    std::pair<char, TestSerialization> p2{ 'a', 5 };
+    std::pair<char, TestSerialization> p3{ '^', 777 };
 
     base::SerializationOArchive oa;
     oa.serialize(p1);
@@ -280,9 +280,9 @@ BOOST_AUTO_TEST_CASE(serialization_pair1)
 
 BOOST_AUTO_TEST_CASE(serialization_pair2)
 {
-    TestSerialization p1{123};
-    TestSerialization p2{5};
-    TestSerialization p3{777};
+    TestSerialization p1{ 123 };
+    TestSerialization p2{ 5 };
+    TestSerialization p3{ 777 };
 
     base::SerializationOArchive oa;
     oa.serialize(p1);

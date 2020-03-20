@@ -13,7 +13,8 @@ static constexpr std::size_t SIZE_OF_MESSAGE_LENGTH_IN_BYTES = 2;
 namespace net
 {
 
-Session::Session(std::unique_ptr<Connection> connection) : _connection{connection.release()}
+Session::Session(std::unique_ptr<Connection> connection)
+  : _connection{ connection.release() }
 {
     ASSERT(_connection);
 }
@@ -21,7 +22,7 @@ Session::Session(std::unique_ptr<Connection> connection) : _connection{connectio
 
 Session::~Session()
 {
-    if(isActive()) {
+    if (isActive()) {
         close();
     }
 }
@@ -41,7 +42,7 @@ bool Session::isClosed() const
 
 void Session::send(const base::Bytes& data)
 {
-    if(isActive()) {
+    if (isActive()) {
         _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data);
     }
 }
@@ -49,7 +50,7 @@ void Session::send(const base::Bytes& data)
 
 void Session::send(base::Bytes&& data)
 {
-    if(isActive()) {
+    if (isActive()) {
         _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data);
     }
 }
@@ -69,8 +70,8 @@ void Session::start()
 
 void Session::close()
 {
-    if(isActive()) {
-        if(_handler) {
+    if (isActive()) {
+        if (_handler) {
             _handler->onClose();
         }
         _connection->close();
@@ -83,10 +84,10 @@ void Session::receive()
     _connection->receive(SIZE_OF_MESSAGE_LENGTH_IN_BYTES, [this](const base::Bytes& data) {
         auto length = base::fromBytes<std::uint16_t>(data);
         _connection->receive(length, [this](const base::Bytes& data) {
-            if(_handler) {
+            if (_handler) {
                 _handler->onReceive(data);
             }
-            if(isActive()) {
+            if (isActive()) {
                 receive();
             }
         });

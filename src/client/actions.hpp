@@ -1,9 +1,9 @@
 #pragma once
 
 #include "base/config.hpp"
+#include "base/log.hpp"
 #include "base/subprogram_router.hpp"
 #include "bc/address.hpp"
-#include "base/log.hpp"
 #include "bc/types.hpp"
 #include "rpc/rpc.hpp"
 
@@ -44,7 +44,7 @@ class ActionTransfer : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    bc::Address _to_address{bc::Address::null()};
+    bc::Address _to_address{ bc::Address::null() };
     bc::Balance _amount;
     bc::Balance _fee;
     std::filesystem::path _keys_dir;
@@ -66,7 +66,7 @@ class ActionGetBalance : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    bc::Address _account_address{bc::Address::null()};
+    bc::Address _account_address{ bc::Address::null() };
     //====================================
 };
 
@@ -85,7 +85,7 @@ class ActionTestConnection : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    bc::Address _account_address{bc::Address::null()};
+    bc::Address _account_address{ bc::Address::null() };
     //====================================
 };
 
@@ -127,7 +127,7 @@ class ActionMessageCall : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    bc::Address _to_address{bc::Address::null()};
+    bc::Address _to_address{ bc::Address::null() };
     bc::Balance _amount;
     bc::Balance _gas;
     std::filesystem::path _keys_dir;
@@ -261,6 +261,6 @@ class ActionGetBlock : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    base::Sha256 _block_hash{base::Sha256::null()};
+    base::Sha256 _block_hash{ base::Sha256::null() };
     //====================================
 };

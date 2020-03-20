@@ -2,7 +2,8 @@
 
 #include "base/assert.hpp"
 
-SoftConfig::SoftConfig(const std::filesystem::path& path) : base::PropertyTree{base::readConfig(path)}
+SoftConfig::SoftConfig(const std::filesystem::path& path)
+  : base::PropertyTree{ base::readConfig(path) }
 {
     // ASSERT(hasKey("root_node"));
 }

@@ -1,8 +1,8 @@
 #include "tools.hpp"
 #include "error.hpp"
 
-#include <boost/process.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/process.hpp>
 
 #include <algorithm>
 
@@ -15,19 +15,19 @@ namespace vm
 
 namespace detail
 {
-    template<typename N>
-    base::Bytes encode(N value)
-    {
-        if(sizeof(value) > 32) {
-            RAISE_ERROR(base::InvalidArgument, "given type more than 32 bytes");
-        }
-        base::Bytes real(sizeof(value));
-
-        memcpy(real.getData(), &value, sizeof(value));
-
-        std::reverse(real.getData(), real.getData() + real.size());
-        return base::Bytes(32 - sizeof(value)) + real;
+template<typename N>
+base::Bytes encode(N value)
+{
+    if (sizeof(value) > 32) {
+        RAISE_ERROR(base::InvalidArgument, "given type more than 32 bytes");
     }
+    base::Bytes real(sizeof(value));
+
+    memcpy(real.getData(), &value, sizeof(value));
+
+    std::reverse(real.getData(), real.getData() + real.size());
+    return base::Bytes(32 - sizeof(value)) + real;
+}
 
 } // namespace detail
 
@@ -48,7 +48,7 @@ base::Bytes toBytes(const evmc::address& addr)
 
 evmc::address toAddress(const base::Bytes& data)
 {
-    if(data.size() != 20) {
+    if (data.size() != 20) {
         RAISE_ERROR(base::InvalidArgument, "data len is not 20 bytes");
     }
     evmc::address res;
@@ -65,7 +65,7 @@ base::Bytes toBytes(const evmc::bytes32& bytes)
 
 evmc::bytes32 toEvmcBytes32(const base::Bytes& data)
 {
-    if(data.size() != 32) {
+    if (data.size() != 32) {
         RAISE_ERROR(base::InvalidArgument, "data len is not 32 bytes");
     }
     evmc::bytes32 res;
@@ -116,7 +116,7 @@ base::Bytes encode(const std::string& str)
     auto str_len = encode(str.size());
 
     auto result_size = str.size();
-    if(result_size % 32 != 0) {
+    if (result_size % 32 != 0) {
         result_size = ((result_size / 32) + 1) * 32;
     }
 
@@ -145,7 +145,7 @@ base::Bytes encode(size_t value)
 
 size_t decodeAsSizeT(const base::Bytes& data)
 {
-    if(data.size() % 32 != 0) {
+    if (data.size() % 32 != 0) {
         RAISE_ERROR(base::InvalidArgument, "data not equal 32 bytes");
     }
 
@@ -195,9 +195,9 @@ evmc::address toEthAddress(const bc::Address& address)
 
 std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call)
 {
-    auto exec_script = std::filesystem::current_path() / std::filesystem::path{"encoder.py"};
-    if(std::filesystem::exists(exec_script)) {
-        std::vector<std::string> args{exec_script, "--contract_path", path_to_code_folder, "--call", call};
+    auto exec_script = std::filesystem::current_path() / std::filesystem::path{ "encoder.py" };
+    if (std::filesystem::exists(exec_script)) {
+        std::vector<std::string> args{ exec_script, "--contract_path", path_to_code_folder, "--call", call };
         std::istringstream iss(callPython(args));
         std::string tmp;
         iss >> tmp;
@@ -207,13 +207,15 @@ std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_
 }
 
 
-std::optional<std::string> decodeOutput(
-    const std::filesystem::path& path_to_code_folder, const std::string& method, const std::string& output)
+std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_code_folder,
+                                        const std::string& method,
+                                        const std::string& output)
 {
-    auto exec_script = std::filesystem::current_path() / std::filesystem::path{"decoder.py"};
-    if(std::filesystem::exists(exec_script)) {
+    auto exec_script = std::filesystem::current_path() / std::filesystem::path{ "decoder.py" };
+    if (std::filesystem::exists(exec_script)) {
         std::vector<std::string> args{
-            exec_script, "--contract_path", path_to_code_folder, "--method", method, "--data", output};
+            exec_script, "--contract_path", path_to_code_folder, "--method", method, "--data", output
+        };
         return callPython(args);
     }
     return std::nullopt;
@@ -221,25 +223,25 @@ std::optional<std::string> decodeOutput(
 
 namespace
 {
-    constexpr const char* PATH_VARIABLE_NAME = "PATH";
-    constexpr const char* PATH_DELIMITER_NAME = ":";
-    constexpr const char* PYTHON_EXEC = "python3.7";
+constexpr const char* PATH_VARIABLE_NAME = "PATH";
+constexpr const char* PATH_DELIMITER_NAME = ":";
+constexpr const char* PYTHON_EXEC = "python3.7";
 
-    std::optional<std::string> findPython()
-    {
-        std::string path_var = std::getenv(PATH_VARIABLE_NAME);
-        std::vector<std::string> results;
+std::optional<std::string> findPython()
+{
+    std::string path_var = std::getenv(PATH_VARIABLE_NAME);
+    std::vector<std::string> results;
 
-        boost::algorithm::split(results, path_var, boost::is_any_of(PATH_DELIMITER_NAME));
+    boost::algorithm::split(results, path_var, boost::is_any_of(PATH_DELIMITER_NAME));
 
-        for(const auto& item: results) {
-            auto current = std::filesystem::path(item) / std::filesystem::path(PYTHON_EXEC);
-            if(std::filesystem::exists(current)) {
-                return current;
-            }
+    for (const auto& item : results) {
+        auto current = std::filesystem::path(item) / std::filesystem::path(PYTHON_EXEC);
+        if (std::filesystem::exists(current)) {
+            return current;
         }
-        return std::nullopt;
     }
+    return std::nullopt;
+}
 
 } // namespace
 
@@ -249,13 +251,13 @@ std::string callPython(std::vector<std::string>& args)
     int exit_code = 2;
 
     auto python_exec = findPython();
-    if(python_exec) {
+    if (python_exec) {
         try {
             bp::child c(python_exec.value(), args, bp::std_out > out);
             c.wait();
             exit_code = c.exit_code();
         }
-        catch(const std::exception& e) {
+        catch (const std::exception& e) {
             RAISE_ERROR(base::SystemCallFailed, e.what());
         }
     }
@@ -266,7 +268,7 @@ std::string callPython(std::vector<std::string>& args)
     std::ostringstream s;
     s << out.rdbuf();
 
-    if(exit_code) {
+    if (exit_code) {
         RAISE_ERROR(base::SystemCallFailed, s.str());
     }
     return s.str();

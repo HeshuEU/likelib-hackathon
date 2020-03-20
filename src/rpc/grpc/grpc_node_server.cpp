@@ -7,7 +7,8 @@ namespace rpc
 {
 
 GrpcNodeServer::GrpcNodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service)
-    : _service(), _server_address(server_address)
+  : _service()
+  , _server_address(server_address)
 {
     _service.init(service);
 }
@@ -25,7 +26,7 @@ void GrpcNodeServer::run()
     builder.AddListeningPort(_server_address, channel_credentials, &selected_port);
     builder.RegisterService(&_service);
     _server = builder.BuildAndStart();
-    if(selected_port == -1 || selected_port == 0) {
+    if (selected_port == -1 || selected_port == 0) {
         // _server->Shutdown();
         RAISE_ERROR(rpc::RpcError, "RPC cannot bind to a selected port");
     }

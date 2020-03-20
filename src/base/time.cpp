@@ -32,7 +32,7 @@ Time Time::now()
 {
     Time time;
     time._seconds_since_epoch_beginning =
-        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     return time;
 }
 
@@ -49,7 +49,7 @@ Time Time::fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time
 {
     Time time;
     time._seconds_since_epoch_beginning =
-        std::chrono::duration_cast<std::chrono::seconds>(time_point.time_since_epoch()).count();
+      std::chrono::duration_cast<std::chrono::seconds>(time_point.time_since_epoch()).count();
     return time;
 }
 

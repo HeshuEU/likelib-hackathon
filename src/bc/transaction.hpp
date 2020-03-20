@@ -48,8 +48,14 @@ class Transaction
         CONTRACT_CREATION,
     };
     //=================
-    Transaction(bc::Address from, bc::Address to, bc::Balance amount, bc::Balance fee, base::Time timestamp,
-        Type transaction_type, base::Bytes data, bc::Sign sign = bc::Sign{});
+    Transaction(bc::Address from,
+                bc::Address to,
+                bc::Balance amount,
+                bc::Balance fee,
+                base::Time timestamp,
+                Type transaction_type,
+                base::Bytes data,
+                bc::Sign sign = bc::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 

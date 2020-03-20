@@ -8,7 +8,7 @@ BOOST_AUTO_TEST_CASE(data_base_test_1)
     std::filesystem::path path_to_data_base_folder("local_test_base");
 
     base::Bytes target_bytes(
-        "sgfabvduflalfgfdnjknv fvfdvdbgdyfuobv7359t4-79898^#$%@#%&^*(*)afua   lcjnajfhvbadg ksd weufib34g 8vb");
+      "sgfabvduflalfgfdnjknv fvfdvdbgdyfuobv7359t4-79898^#$%@#%&^*(*)afua   lcjnajfhvbadg ksd weufib34g 8vb");
     base::Bytes target_key("test key");
     auto data_base = base::createClearDatabaseInstance(path_to_data_base_folder);
 

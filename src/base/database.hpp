@@ -3,13 +3,13 @@
 #include "base/bytes.hpp"
 #include "base/directory.hpp"
 
-#include <leveldb/db.h>
 #include <leveldb/cache.h>
+#include <leveldb/db.h>
 
-#include <string>
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <string>
 
 namespace base
 {
@@ -35,7 +35,7 @@ class Database
     //======================
   private:
     //======================
-    bool _inited{false};
+    bool _inited{ false };
     std::unique_ptr<leveldb::DB> _database;
     leveldb::ReadOptions _read_options;
     leveldb::WriteOptions _write_options;

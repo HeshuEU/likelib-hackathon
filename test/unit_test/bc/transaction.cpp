@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
     bc::Address to = bc::Address(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Balance fee{23213213};
+    bc::Balance fee{ 23213213 };
     bc::Transaction tx1(from, to, amount, fee, time, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{});
     bc::Transaction tx2(from, to, 821481368, fee, time, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{});
 
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
     bc::Address to = bc::Address(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Balance fee{213213};
+    bc::Balance fee{ 213213 };
     bc::Transaction tx1(from, to, amount, fee, time, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{});
     bc::Transaction tx2(from, to, 821481368, fee, time, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{});
 
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(transaction_serialization2)
     bc::Address to = bc::Address(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Balance fee{506};
+    bc::Balance fee{ 506 };
     bc::Transaction tx1(from, to, amount, fee, time, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{});
 
     base::SerializationOArchive oa;
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(transaction_builder_set_all2)
     bc::Address to = bc::Address(base::generateKeys().first);
     bc::Balance amount = 1239823409;
     auto time = base::Time::now();
-    bc::Balance fee{229};
+    bc::Balance fee{ 229 };
 
     bc::TransactionBuilder txb;
     txb.setFrom(from);

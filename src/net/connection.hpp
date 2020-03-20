@@ -51,7 +51,7 @@ class Connection : public std::enable_shared_from_this<Connection>
     boost::asio::ip::tcp::socket _socket;
     std::unique_ptr<Endpoint> _connect_endpoint;
 
-    std::atomic<bool> _is_closed{false};
+    std::atomic<bool> _is_closed{ false };
     //====================
     base::Bytes _read_buffer;
     //====================

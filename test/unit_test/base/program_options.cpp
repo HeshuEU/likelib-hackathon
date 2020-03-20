@@ -6,7 +6,7 @@ BOOST_AUTO_TEST_CASE(program_options_empty_test_1)
 {
     int argc = 1;
     char test1[] = "unit_test.exe";
-    char* argv[] = {test1};
+    char* argv[] = { test1 };
 
     base::ProgramOptionsParser parser;
     parser.addFlag("demonize,d", "demonize application start");
@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(program_options_flag_test)
     int argc = 2;
     char test1[] = "unit_test.exe";
     char test2[] = "-d";
-    char* argv[] = {test1, test2};
+    char* argv[] = { test1, test2 };
 
     base::ProgramOptionsParser parser;
     parser.addFlag("demonize,d", "demonize application start");
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(program_options_uint_test)
     char test1[] = "unit_test.exe";
     char test2[] = "-p";
     char test3[] = "900";
-    char* argv[] = {test1, test2, test3};
+    char* argv[] = { test1, test2, test3 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::uint32_t>("processors,p", "Processors count");
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(program_options_default_uint_test)
 
     int argc = 1;
     char test1[] = "unit_test.exe";
-    char* argv[] = {test1};
+    char* argv[] = { test1 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::uint32_t>("processors,p", test_target, "Processors count");
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(program_options_required_uint_test)
     char test1[] = "unit_test.exe";
     char test2[] = "-p";
     char test3[] = "900";
-    char* argv[] = {test1, test2, test3};
+    char* argv[] = { test1, test2, test3 };
 
     base::ProgramOptionsParser parser;
     parser.addRequiredOption<std::uint32_t>("processors,p", "Processors count");
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(program_options_int_test)
     char test1[] = "unit_test.exe";
     char test2[] = "--number";
     char test3[] = "-809900";
-    char* argv[] = {test1, test2, test3};
+    char* argv[] = { test1, test2, test3 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::int32_t>("number,n", "Input number");
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(program_options_default_int_test)
 
     int argc = 1;
     char test1[] = "unit_test.exe";
-    char* argv[] = {test1};
+    char* argv[] = { test1 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::int32_t>("number,n", test_target, "Input number");
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(program_options_required_int_test)
     char test1[] = "unit_test.exe";
     char test2[] = "--number";
     char test3[] = "-809900";
-    char* argv[] = {test1, test2, test3};
+    char* argv[] = { test1, test2, test3 };
 
     base::ProgramOptionsParser parser;
     parser.addRequiredOption<std::int32_t>("number,n", "Input number");
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(program_options_double_test)
     char test1[] = "unit_test.exe";
     char test2[] = "--money";
     char test3[] = "1.1";
-    char* argv[] = {test1, test2, test3};
+    char* argv[] = { test1, test2, test3 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<double>("money,m", "Money count");
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(program_options_default_double_test)
 
     int argc = 1;
     char test1[] = "unit_test.exe";
-    char* argv[] = {test1};
+    char* argv[] = { test1 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<double>("money,m", test_target, "Money count");
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(program_options_required_double_test)
     char test1[] = "unit_test.exe";
     char test2[] = "-m";
     char test3[] = "1.1";
-    char* argv[] = {test1, test2, test3};
+    char* argv[] = { test1, test2, test3 };
 
     base::ProgramOptionsParser parser;
     parser.addRequiredOption<double>("money,m", "Money count");
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(program_options_string_test)
     int argc = 3;
     char test1[] = "unit_test.exe";
     char test2[] = "-h";
-    char* argv[] = {test1, test2, target.data()};
+    char* argv[] = { test1, test2, target.data() };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::string>("hash,h", "Hash string");
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(program_options_default_string_test)
     std::string target = "GJSHDGI32mvdsjb12BFA";
     int argc = 1;
     char test1[] = "unit_test.exe";
-    char* argv[] = {test1};
+    char* argv[] = { test1 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::string>("hash,h", target, "Hash string");
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(program_options_required_string_test)
     int argc = 3;
     char test1[] = "unit_test.exe";
     char test2[] = "--hash";
-    char* argv[] = {test1, test2, target.data()};
+    char* argv[] = { test1, test2, target.data() };
 
     base::ProgramOptionsParser parser;
     parser.addRequiredOption<std::string>("hash,h", "Hash string");
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE(program_options_help_message)
     int argc = 2;
     char test1[] = "unit_test.exe";
     char test2[] = "--help";
-    char* argv[] = {test1, test2};
+    char* argv[] = { test1, test2 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::string>("hash,h", test_target_1);
@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE(program_options_help_message_bad_declaration)
     int argc = 2;
     char test1[] = "unit_test.exe";
     char test2[] = "--help";
-    char* argv[] = {test1, test2};
+    char* argv[] = { test1, test2 };
 
     base::ProgramOptionsParser parser;
     parser.addRequiredOption<std::string>("hash,h", test_target_1);
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE(program_options_required_throw)
 {
     int argc = 1;
     char test1[] = "unit_test.exe";
-    char* argv[] = {test1};
+    char* argv[] = { test1 };
 
     base::ProgramOptionsParser parser;
     parser.addRequiredOption<std::string>("hash", "Hash string");
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE(program_options_incorrect_input_params)
     char test1[] = "unit_test.exe";
     char test2[] = "--temp";
     char test3[] = "-809900";
-    char* argv[] = {test1, test2, test3};
+    char* argv[] = { test1, test2, test3 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::int32_t>("number,n", "Input number");
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(program_options_incorrect_type_exception)
     char test1[] = "unit_test.exe";
     char test2[] = "--number";
     char test3[] = "-809900";
-    char* argv[] = {test1, test2, test3};
+    char* argv[] = { test1, test2, test3 };
 
     base::ProgramOptionsParser parser;
     parser.addOption<std::int32_t>("number,n", "Input number");
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(program_options_incorrect_type_exception)
 
 int walletProcessForTestSubParser1(const base::ProgramOptionsParser& parser)
 {
-    if(parser.hasOption("help")) {
+    if (parser.hasOption("help")) {
         BOOST_CHECK(true);
     }
     else {

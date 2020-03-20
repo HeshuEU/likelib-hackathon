@@ -90,7 +90,7 @@ class AesKey
     enum class KeyType : std::size_t
     {
         K256BIT = 32, // 32(bytes)
-        K128BIT = 16 // 16(bytes)
+        K128BIT = 16  // 16(bytes)
 
     };
     //=================
@@ -197,7 +197,7 @@ class Secp256PublicKey
     Secp256PublicKey& operator=(Secp256PublicKey&& other) = default;
     //---------------------------
     bool verifySignature(const base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> signature,
-        const base::FixedBytes<32>& bytes) const; // TODO: name 32
+                         const base::FixedBytes<32>& bytes) const; // TODO: name 32
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PublicKey load(const std::filesystem::path& path);

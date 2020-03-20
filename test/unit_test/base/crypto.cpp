@@ -8,7 +8,7 @@ BOOST_AUTO_TEST_CASE(Rsa_pub_encrypt_priv_decrypt_check)
 {
     auto rsa = base::generateKeys(3688);
 
-    base::Bytes msg{"RS@_Pub_Priv !EST"};
+    base::Bytes msg{ "RS@_Pub_Priv !EST" };
     auto enc_msg = rsa.first.encrypt(msg);
     auto dec_msg = rsa.second.decrypt(enc_msg);
     BOOST_CHECK(msg == dec_msg);
@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(Rsa_priv_encrypt_pub_decrypt_check)
 {
     auto rsa = base::generateKeys(2644);
 
-    base::Bytes msg{"RSA_Pr1v Pub_TES!"};
+    base::Bytes msg{ "RSA_Pr1v Pub_TES!" };
     auto enc_msg = rsa.second.encrypt(msg);
     auto dec_msg = rsa.first.decrypt(enc_msg);
     BOOST_CHECK(msg == dec_msg);
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(Rsa_constructor_random_keys)
     auto rsa1 = base::generateKeys(3422);
     auto rsa2 = base::generateKeys(1898);
 
-    base::Bytes msg{"RSA&Cons1r5tor"};
+    base::Bytes msg{ "RSA&Cons1r5tor" };
     auto enc_msg1 = rsa1.first.encrypt(msg);
     auto enc_msg2 = rsa2.first.encrypt(msg);
     BOOST_CHECK(enc_msg1 != enc_msg2);
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(Rsa_serialization_constructor)
     base::RsaPublicKey pub_key(rsa.first.toBytes());
     base::RsaPrivateKey priv_key(rsa.second.toBytes());
 
-    base::Bytes msg{"Rs@_ser1al7ze construc"};
+    base::Bytes msg{ "Rs@_ser1al7ze construc" };
     auto enc_msg1 = rsa.first.encrypt(msg);
     auto enc_msg2 = pub_key.encrypt(msg);
 
@@ -98,8 +98,8 @@ BOOST_AUTO_TEST_CASE(RsaPubKey_constructor_from_file_save_in_file)
 BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_save_in_file)
 {
     auto [pub_rsa, priv_rsa] = base::generateKeys(3738);
-    std::filesystem::path private_key_path{"ssh/rsa.priv"};
-    std::filesystem::path public_key_path{"ssh/rsa.pub"};
+    std::filesystem::path private_key_path{ "ssh/rsa.priv" };
+    std::filesystem::path public_key_path{ "ssh/rsa.pub" };
 
     priv_rsa.save(private_key_path);
     pub_rsa.save(public_key_path);
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(aes_serialization_256bit)
     base::AesKey target_key(base::AesKey::KeyType ::K128BIT);
     auto encrypted_data = target_key.encrypt(target_msg);
 
-    std::filesystem::path key_path{"test.aes"};
+    std::filesystem::path key_path{ "test.aes" };
     target_key.save(key_path);
 
     auto deserialized_key = base::AesKey::read(key_path);
@@ -222,8 +222,8 @@ BOOST_AUTO_TEST_CASE(secp256_sign_verify)
 BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_copy)
 {
     auto [pub_key, priv_key] = base::generateSecp256Keys();
-    auto pub_key2{pub_key};
-    auto priv_key2{std::move(priv_key)};
+    auto pub_key2{ pub_key };
+    auto priv_key2{ std::move(priv_key) };
     auto hash = base::Sha256::compute(base::Bytes("222"));
 
     auto signature = priv_key2.sign(hash.getBytes());
@@ -234,8 +234,8 @@ BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_copy)
 BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_bytes_copy)
 {
     auto [pub_key, priv_key] = base::generateSecp256Keys();
-    base::Secp256PublicKey pub_key2{pub_key.getBytes()};
-    base::Secp256PrivateKey priv_key2{priv_key.getBytes()};
+    base::Secp256PublicKey pub_key2{ pub_key.getBytes() };
+    base::Secp256PrivateKey priv_key2{ priv_key.getBytes() };
     auto hash = base::Sha256::compute(base::Bytes("333"));
 
     auto signature1 = priv_key.sign(hash.getBytes());
@@ -269,8 +269,8 @@ BOOST_AUTO_TEST_CASE(secp256_sign_verify_with_another_key)
 BOOST_AUTO_TEST_CASE(secp256_save_load)
 {
     auto [pub_key1, priv_key1] = base::generateSecp256Keys();
-    std::filesystem::path private_key_path{"ssh/rsa.priv"};
-    std::filesystem::path public_key_path{"ssh/rsa.pub"};
+    std::filesystem::path private_key_path{ "ssh/rsa.priv" };
+    std::filesystem::path public_key_path{ "ssh/rsa.pub" };
 
     priv_key1.save(private_key_path);
     pub_key1.save(public_key_path);

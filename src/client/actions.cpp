@@ -2,15 +2,15 @@
 #include "config.hpp"
 
 #include "base/config.hpp"
+#include "base/directory.hpp"
 #include "base/hash.hpp"
 #include "base/log.hpp"
 #include "base/property_tree.hpp"
 #include "base/subprogram_router.hpp"
 #include "base/time.hpp"
-#include "base/directory.hpp"
 #include "bc/transaction.hpp"
-#include "rpc/rpc.hpp"
 #include "rpc/error.hpp"
+#include "rpc/rpc.hpp"
 #include "vm/messages.hpp"
 #include "vm/tools.hpp"
 
@@ -40,25 +40,26 @@ constexpr const char* BLOCK_HASH_OPTION = "hash";
 std::pair<base::RsaPublicKey, base::RsaPrivateKey> loadKeys(const std::filesystem::path& dir)
 {
     auto public_key_path = base::config::makePublicKeyPath(dir);
-    if(!std::filesystem::exists(public_key_path)) {
+    if (!std::filesystem::exists(public_key_path)) {
         RAISE_ERROR(base::InaccessibleFile, "cannot find public key file by path \"" + public_key_path.string() + '\"');
     }
     auto public_key = base::RsaPublicKey::load(public_key_path);
 
     auto private_key_path = base::config::makePrivateKeyPath(dir);
-    if(!std::filesystem::exists(private_key_path)) {
-        RAISE_ERROR(
-            base::InaccessibleFile, "cannot find private key file by path \"" + private_key_path.string() + '\"');
+    if (!std::filesystem::exists(private_key_path)) {
+        RAISE_ERROR(base::InaccessibleFile,
+                    "cannot find private key file by path \"" + private_key_path.string() + '\"');
     }
     auto private_key = base::RsaPrivateKey::load(private_key_path);
 
-    return {std::move(public_key), std::move(private_key)};
+    return { std::move(public_key), std::move(private_key) };
 }
 } // namespace
 
 //====================================
 
-ActionBase::ActionBase(base::SubprogramRouter& router) : _router{router}
+ActionBase::ActionBase(base::SubprogramRouter& router)
+  : _router{ router }
 {}
 
 
@@ -68,43 +69,43 @@ int ActionBase::run()
         setupOptionsParser(_router.getOptionsParser());
         _router.update();
 
-        if(_router.getOptionsParser().hasOption("help")) {
+        if (_router.getOptionsParser().hasOption("help")) {
             std::cout << _router.helpMessage() << std::endl;
             return base::config::EXIT_OK;
         }
 
-        if(auto ret = loadOptions(_router.getOptionsParser()); ret != base::config::EXIT_OK) {
+        if (auto ret = loadOptions(_router.getOptionsParser()); ret != base::config::EXIT_OK) {
             return ret;
         }
-        if(auto ret = execute(); ret != base::config::EXIT_OK) {
+        if (auto ret = execute(); ret != base::config::EXIT_OK) {
             return ret;
         }
     }
-    catch(const base::ParsingError& er) {
+    catch (const base::ParsingError& er) {
         std::cerr << "Invalid arguments";
-        if(std::strlen(er.what())) {
+        if (std::strlen(er.what())) {
             std::cerr << ": " << er.what();
         }
         std::cerr << "\n" << _router.helpMessage();
         LOG_ERROR << "[base::ParsingError caught during execution of Client::" << getName() << "] " << er.what();
         return base::config::EXIT_FAIL;
     }
-    catch(const rpc::RpcError& er) {
+    catch (const rpc::RpcError& er) {
         std::cerr << "RPC error " << er.what() << "\n";
         LOG_ERROR << "[rpc::RpcError caught during client::" << getName() << "] " << er.what();
         return base::config::EXIT_FAIL;
     }
-    catch(const base::Error& er) {
+    catch (const base::Error& er) {
         std::cerr << "Unexpected error." << er.what() << "\n";
         LOG_ERROR << "[base::Error caught during Client::" << getName() << "] " << er.what();
         return base::config::EXIT_FAIL;
     }
-    catch(const std::exception& er) {
+    catch (const std::exception& er) {
         std::cerr << "Unexpected error." << er.what() << "\n";
         LOG_ERROR << "[std::exception caught during Client::" << getName() << "] " << er.what();
         return base::config::EXIT_FAIL;
     }
-    catch(...) {
+    catch (...) {
         std::cerr << "Unexpected error.\n";
         LOG_ERROR << "[exception of an unknown type caught during client::" << getName() << "] ";
         return base::config::EXIT_FAIL;
@@ -115,7 +116,8 @@ int ActionBase::run()
 
 //====================================
 
-ActionTransfer::ActionTransfer(base::SubprogramRouter& router) : ActionBase{router}
+ActionTransfer::ActionTransfer(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -139,7 +141,7 @@ void ActionTransfer::setupOptionsParser(base::ProgramOptionsParser& parser)
 int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
-    _to_address = bc::Address{parser.getValue<std::string>(TO_ADDRESS_OPTION)};
+    _to_address = bc::Address{ parser.getValue<std::string>(TO_ADDRESS_OPTION) };
     _amount = parser.getValue<bc::Balance>(AMOUNT_OPTION);
     _fee = parser.getValue<bc::Balance>(FEE_OPTION);
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
@@ -171,9 +173,9 @@ int ActionTransfer::execute()
     tx.sign(pub, priv);
 
     auto [status, result, gas_left] = client.transaction_message_call(
-        tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
+      tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
 
-    if(status) {
+    if (status) {
         std::cout << "Transaction successfully performed" << std::endl;
     }
     else {
@@ -186,7 +188,8 @@ int ActionTransfer::execute()
 
 //====================================
 
-ActionGetBalance::ActionGetBalance(base::SubprogramRouter& router) : ActionBase{router}
+ActionGetBalance::ActionGetBalance(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -207,7 +210,7 @@ void ActionGetBalance::setupOptionsParser(base::ProgramOptionsParser& parser)
 int ActionGetBalance::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
-    _account_address = bc::Address{parser.getValue<std::string>(ADDRESS_OPTION)};
+    _account_address = bc::Address{ parser.getValue<std::string>(ADDRESS_OPTION) };
     return base::config::EXIT_OK;
 }
 
@@ -225,7 +228,8 @@ int ActionGetBalance::execute()
 
 //====================================
 
-ActionTestConnection::ActionTestConnection(base::SubprogramRouter& router) : ActionBase{router}
+ActionTestConnection::ActionTestConnection(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -257,7 +261,7 @@ int ActionTestConnection::execute()
 
     auto answer = client.test(config::API_VERSION);
 
-    if(answer) {
+    if (answer) {
         std::cout << "Test passed" << std::endl;
         LOG_INFO << "Test passed";
     }
@@ -270,7 +274,8 @@ int ActionTestConnection::execute()
 
 //====================================
 
-ActionCreateContract::ActionCreateContract(base::SubprogramRouter& router) : ActionBase{router}
+ActionCreateContract::ActionCreateContract(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -299,7 +304,7 @@ int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
     std::filesystem::path code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
     auto code_file_path = code_folder_path / std::filesystem::path("compiled_code.bin");
 
-    if(!std::filesystem::exists(code_folder_path)) {
+    if (!std::filesystem::exists(code_folder_path)) {
         RAISE_ERROR(base::InvalidArgument, "the file with this path does not exist");
     }
     std::ifstream file(code_file_path, std::ios::binary);
@@ -310,7 +315,7 @@ int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
     _amount = parser.getValue<bc::Balance>(AMOUNT_OPTION);
     _gas = parser.getValue<bc::Balance>(GAS_OPTION);
 
-    if(parser.hasOption(INITIAL_MESSAGE_OPTION)) {
+    if (parser.hasOption(INITIAL_MESSAGE_OPTION)) {
         _message = parser.getValue<std::string>(INITIAL_MESSAGE_OPTION);
     }
 
@@ -331,8 +336,8 @@ int ActionCreateContract::execute()
     txb.setTimestamp(base::Time::now());
     txb.setFee(_gas);
 
-    bc::ContractInitData init_data{
-        base::fromHex<base::Bytes>(_compiled_contract), base::fromHex<base::Bytes>(_message)};
+    bc::ContractInitData init_data{ base::fromHex<base::Bytes>(_compiled_contract),
+                                    base::fromHex<base::Bytes>(_message) };
     txb.setData(base::toBytes(init_data));
 
     auto tx = std::move(txb).build();
@@ -343,9 +348,9 @@ int ActionCreateContract::execute()
     LOG_INFO << "Trying to connect to rpc server by: " << _host_address;
     rpc::RpcClient client(_host_address);
     auto [status, contract_address, gas_left] = client.transaction_create_contract(
-        tx.getAmount(), tx.getFrom(), tx.getTimestamp(), tx.getFee(), _compiled_contract, _message, tx.getSign());
+      tx.getAmount(), tx.getFrom(), tx.getTimestamp(), tx.getFee(), _compiled_contract, _message, tx.getSign());
 
-    if(status) {
+    if (status) {
         std::cout << "Remote call of creation smart contract success -> [" << status.getMessage()
                   << "], contract created at [" << contract_address.toString() << "], gas left[" << gas_left << "]"
                   << std::endl;
@@ -362,7 +367,8 @@ int ActionCreateContract::execute()
 
 //====================================
 
-ActionMessageCall::ActionMessageCall(base::SubprogramRouter& router) : ActionBase{router}
+ActionMessageCall::ActionMessageCall(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -387,7 +393,7 @@ void ActionMessageCall::setupOptionsParser(base::ProgramOptionsParser& parser)
 int ActionMessageCall::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
-    _to_address = bc::Address{parser.getValue<std::string>(TO_ADDRESS_OPTION)};
+    _to_address = bc::Address{ parser.getValue<std::string>(TO_ADDRESS_OPTION) };
     _amount = parser.getValue<bc::Balance>(AMOUNT_OPTION);
     _gas = parser.getValue<bc::Balance>(GAS_OPTION);
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
@@ -417,9 +423,9 @@ int ActionMessageCall::execute()
     rpc::RpcClient client(_host_address);
 
     auto [status, contract_response, gas_left] = client.transaction_message_call(
-        tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), _message, tx.getSign());
+      tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), _message, tx.getSign());
 
-    if(status) {
+    if (status) {
         std::cout << "Remote call of smart contract call success -> [" << status.getMessage() << "], contract response["
                   << contract_response << "], gas left[" << gas_left << "]" << std::endl;
         return base::config::EXIT_OK;
@@ -434,7 +440,8 @@ int ActionMessageCall::execute()
 
 //====================================
 
-ActionCompile::ActionCompile(base::SubprogramRouter& router) : ActionBase{router}
+ActionCompile::ActionCompile(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -462,17 +469,17 @@ namespace
 
 void save_contract(const vm::CompiledContract& contract)
 {
-    std::filesystem::path current_folder{contract.getName()};
+    std::filesystem::path current_folder{ contract.getName() };
     base::createIfNotExists(current_folder);
 
     {
         std::ofstream file;
-        file.open(current_folder / std::filesystem::path{"compiled_code.bin"});
+        file.open(current_folder / std::filesystem::path{ "compiled_code.bin" });
         file << base::toHex(contract.getFullCode());
         file.close();
     }
 
-    base::save(contract.getMetadata(), current_folder / std::filesystem::path{"metadata.json"});
+    base::save(contract.getMetadata(), current_folder / std::filesystem::path{ "metadata.json" });
 }
 
 } // namespace
@@ -483,21 +490,21 @@ int ActionCompile::execute()
 
     try {
         auto contracts = compiler.compile(_code_file_path);
-        if(!contracts) {
+        if (!contracts) {
             std::cerr << "Compilation error\n";
             return base::config::EXIT_FAIL;
         }
         std::cout << "Compiled contracts:" << std::endl;
-        for(const auto& contract: contracts.value()) {
+        for (const auto& contract : contracts.value()) {
             std::cout << "\t" << contract.getName() << std::endl;
             save_contract(contract);
         }
     }
-    catch(const base::ParsingError& er) {
+    catch (const base::ParsingError& er) {
         std::cerr << er;
         return base::config::EXIT_FAIL;
     }
-    catch(const base::SystemCallFailed& er) {
+    catch (const base::SystemCallFailed& er) {
         std::cerr << er;
         return base::config::EXIT_FAIL;
     }
@@ -507,7 +514,8 @@ int ActionCompile::execute()
 
 //====================================
 
-ActionEncode::ActionEncode(base::SubprogramRouter& router) : ActionBase{router}
+ActionEncode::ActionEncode(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -537,7 +545,7 @@ int ActionEncode::execute()
 {
     try {
         auto output_message = vm::encodeCall(_compiled_code_folder_path, _call_data);
-        if(output_message) {
+        if (output_message) {
             std::cout << output_message.value() << std::endl;
         }
         else {
@@ -545,11 +553,11 @@ int ActionEncode::execute()
             return base::config::EXIT_FAIL;
         }
     }
-    catch(const base::ParsingError& er) {
+    catch (const base::ParsingError& er) {
         std::cerr << er;
         return base::config::EXIT_FAIL;
     }
-    catch(const base::SystemCallFailed& er) {
+    catch (const base::SystemCallFailed& er) {
         std::cerr << er;
         return base::config::EXIT_FAIL;
     }
@@ -559,7 +567,8 @@ int ActionEncode::execute()
 
 //====================================
 
-ActionDecode::ActionDecode(base::SubprogramRouter& router) : ActionBase{router}
+ActionDecode::ActionDecode(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -590,7 +599,7 @@ int ActionDecode::execute()
 {
     try {
         auto output_message = vm::decodeOutput(_compiled_code_folder_path, _method_name, _data_to_decode);
-        if(output_message) {
+        if (output_message) {
             std::cout << output_message.value() << std::endl;
         }
         else {
@@ -598,11 +607,11 @@ int ActionDecode::execute()
             return base::config::EXIT_FAIL;
         }
     }
-    catch(const base::ParsingError& er) {
+    catch (const base::ParsingError& er) {
         std::cerr << er;
         return base::config::EXIT_FAIL;
     }
-    catch(const base::SystemCallFailed& er) {
+    catch (const base::SystemCallFailed& er) {
         std::cerr << er;
         return base::config::EXIT_FAIL;
     }
@@ -612,7 +621,8 @@ int ActionDecode::execute()
 
 //====================================
 
-ActionGenerateKeys::ActionGenerateKeys(base::SubprogramRouter& router) : ActionBase{router}
+ActionGenerateKeys::ActionGenerateKeys(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -633,11 +643,11 @@ int ActionGenerateKeys::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
 
-    if(!std::filesystem::exists(_keys_dir)) {
+    if (!std::filesystem::exists(_keys_dir)) {
         std::cerr << "Given path does not exist" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    else if(!std::filesystem::is_directory(_keys_dir)) {
+    else if (!std::filesystem::is_directory(_keys_dir)) {
         std::cerr << "Given path is not a directory" << std::endl;
         return base::config::EXIT_FAIL;
     }
@@ -653,14 +663,14 @@ int ActionGenerateKeys::execute()
     const auto& [pub, priv] = base::generateKeys();
 
     auto public_path = base::config::makePublicKeyPath(_keys_dir);
-    if(std::filesystem::exists(public_path)) {
+    if (std::filesystem::exists(public_path)) {
         std::cerr << "Error: " << public_path << " already exists.\n";
         LOG_ERROR << public_path << " file already exists";
         return base::config::EXIT_FAIL;
     }
 
     auto private_path = base::config::makePrivateKeyPath(_keys_dir);
-    if(std::filesystem::exists(private_path)) {
+    if (std::filesystem::exists(private_path)) {
         std::cerr << "Error: " << private_path << " already exists.\n";
         LOG_ERROR << private_path << " file already exists";
         return base::config::EXIT_FAIL;
@@ -682,7 +692,8 @@ int ActionGenerateKeys::execute()
 
 //====================================
 
-ActionKeysInfo::ActionKeysInfo(base::SubprogramRouter& router) : ActionBase{router}
+ActionKeysInfo::ActionKeysInfo(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -703,11 +714,11 @@ int ActionKeysInfo::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
 
-    if(!std::filesystem::exists(_keys_dir)) {
+    if (!std::filesystem::exists(_keys_dir)) {
         std::cerr << "Given path does not exist" << std::endl;
         return base::config::EXIT_FAIL;
     }
-    else if(!std::filesystem::is_directory(_keys_dir)) {
+    else if (!std::filesystem::is_directory(_keys_dir)) {
         std::cerr << "Given path is not a directory" << std::endl;
         return base::config::EXIT_FAIL;
     }
@@ -719,14 +730,14 @@ int ActionKeysInfo::loadOptions(const base::ProgramOptionsParser& parser)
 int ActionKeysInfo::execute()
 {
     auto public_path = base::config::makePublicKeyPath(_keys_dir);
-    if(!std::filesystem::exists(public_path)) {
+    if (!std::filesystem::exists(public_path)) {
         std::cerr << "Error: " << public_path << " doesn't exist.\n";
         LOG_ERROR << public_path << " file not exists";
         return base::config::EXIT_FAIL;
     }
 
     auto private_path = base::config::makePrivateKeyPath(_keys_dir);
-    if(!std::filesystem::exists(private_path)) {
+    if (!std::filesystem::exists(private_path)) {
         std::cerr << "Error: " << private_path << " doesn't exist.\n";
         LOG_ERROR << private_path << " file not exists";
         return base::config::EXIT_FAIL;
@@ -745,7 +756,8 @@ int ActionKeysInfo::execute()
 
 //====================================
 
-ActionInfo::ActionInfo(base::SubprogramRouter& router) : ActionBase{router}
+ActionInfo::ActionInfo(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -781,7 +793,8 @@ int ActionInfo::execute()
 
 //====================================
 
-ActionGetBlock::ActionGetBlock(base::SubprogramRouter& router) : ActionBase{router}
+ActionGetBlock::ActionGetBlock(base::SubprogramRouter& router)
+  : ActionBase{ router }
 {}
 
 
@@ -802,7 +815,7 @@ void ActionGetBlock::setupOptionsParser(base::ProgramOptionsParser& parser)
 int ActionGetBlock::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
-    _block_hash = base::Sha256{base::fromHex<base::Bytes>(parser.getValue<std::string>(BLOCK_HASH_OPTION))};
+    _block_hash = base::Sha256{ base::fromHex<base::Bytes>(parser.getValue<std::string>(BLOCK_HASH_OPTION)) };
     return base::config::EXIT_OK;
 }
 
@@ -813,7 +826,7 @@ int ActionGetBlock::execute()
     rpc::RpcClient client(_host_address);
     auto block = client.get_block(_block_hash);
 
-    if(block.getTimestamp().getSecondsSinceEpochBeginning() == 0 && block.getDepth() == bc::BlockDepth(-1)) {
+    if (block.getTimestamp().getSecondsSinceEpochBeginning() == 0 && block.getDepth() == bc::BlockDepth(-1)) {
         std::cout << "Cannot find given block" << std::endl;
         return base::config::EXIT_OK;
     }
@@ -826,7 +839,7 @@ int ActionGetBlock::execute()
               << "\tNumber of transactions: " << block.getTransactions().size() << std::endl;
 
     std::size_t tx_index = 0;
-    for(const auto& tx: block.getTransactions()) {
+    for (const auto& tx : block.getTransactions()) {
         std::cout << "\t\tTransaction #" << ++tx_index << '\n'
                   << "\t\tType: " << (tx.getTo() == bc::Address::null() ? "contract creation" : "message call") << '\n'
                   << "\t\tFrom: " << tx.getFrom().toString() << '\n'

@@ -21,11 +21,17 @@ class SmartContract
     SmartContract& operator=(SmartContract&&) = default;
     ~SmartContract() = default;
 
-    SmartContractMessage createInitMessage(int64_t gas, const bc::Address& source, const bc::Address& destination,
-        const bc::Balance& value, const base::Bytes& input) const;
+    SmartContractMessage createInitMessage(int64_t gas,
+                                           const bc::Address& source,
+                                           const bc::Address& destination,
+                                           const bc::Balance& value,
+                                           const base::Bytes& input) const;
 
-    SmartContractMessage createMessage(int64_t gas, const bc::Address& source, const bc::Address& destination,
-        const bc::Balance& value, const base::Bytes& input) const;
+    SmartContractMessage createMessage(int64_t gas,
+                                       const bc::Address& source,
+                                       const bc::Address& destination,
+                                       const bc::Balance& value,
+                                       const base::Bytes& input) const;
 
   private:
     evmc_revision _revision;

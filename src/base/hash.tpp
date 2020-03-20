@@ -27,15 +27,15 @@ Ripemd160 Ripemd160::compute(const FixedBytes<S>& data)
 {
     base::FixedBytes<RIPEMD160_SIZE> ret;
     RIPEMD160_CTX context;
-    if(1 != RIPEMD160_Init(&context)) {
+    if (1 != RIPEMD160_Init(&context)) {
         RAISE_ERROR(CryptoError, "failed to initialize context for Ripemd160");
     }
 
-    if(1 != RIPEMD160_Update(&context, data.getData(), S)) {
+    if (1 != RIPEMD160_Update(&context, data.getData(), S)) {
         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
     }
 
-    if(1 != RIPEMD160_Final(ret.getData(), &context)) {
+    if (1 != RIPEMD160_Final(ret.getData(), &context)) {
         RAISE_ERROR(CryptoError, "failed to hash data in Ripemd160");
     }
     return Ripemd160(ret);

@@ -13,7 +13,7 @@ namespace net
 Endpoint::Endpoint(const std::string_view& address_with_port)
 {
     std::size_t i = address_with_port.find(':');
-    if(i == std::string_view::npos) {
+    if (i == std::string_view::npos) {
         RAISE_ERROR(base::InvalidArgument, "port is not specified");
     }
 
@@ -22,12 +22,12 @@ Endpoint::Endpoint(const std::string_view& address_with_port)
 
     try {
         _address = boost::asio::ip::make_address_v4(ip_address_part);
-        if(!boost::spirit::qi::parse(std::cbegin(port_part), std::cend(port_part), boost::spirit::qi::int_, _port)) {
+        if (!boost::spirit::qi::parse(std::cbegin(port_part), std::cend(port_part), boost::spirit::qi::int_, _port)) {
             throw base::InvalidArgument{};
         }
     }
-    catch(const std::exception& e) {
-        RAISE_ERROR(base::InvalidArgument, std::string{"invalid address "} + std::string{address_with_port});
+    catch (const std::exception& e) {
+        RAISE_ERROR(base::InvalidArgument, std::string{ "invalid address " } + std::string{ address_with_port });
     }
 }
 
@@ -64,7 +64,7 @@ void Endpoint::setPort(unsigned short port) noexcept
 
 Endpoint::operator boost::asio::ip::tcp::endpoint() const
 {
-    return {_address, _port};
+    return { _address, _port };
 }
 
 
@@ -113,7 +113,7 @@ std::ostream& operator<<(std::ostream& os, const Endpoint& endpoint)
 Endpoint Endpoint::deserialize(base::SerializationIArchive& ia)
 {
     std::string ip_with_port = ia.deserialize<std::string>();
-    return {ip_with_port};
+    return { ip_with_port };
 }
 
 

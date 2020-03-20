@@ -1,7 +1,7 @@
 #include "database.hpp"
 
-#include "base/error.hpp"
 #include "base/config.hpp"
+#include "base/error.hpp"
 
 #include <leveldb/cache.h>
 
@@ -16,7 +16,7 @@ Database::Database(Directory const& path)
 
 void Database::open(Directory const& path)
 {
-    if(_inited) {
+    if (_inited) {
         RAISE_ERROR(LogicError, "Double initialization of one database instance");
     }
     // reset and set up read options
@@ -32,7 +32,7 @@ void Database::open(Directory const& path)
     database_options.create_if_missing = true;
     database_options.write_buffer_size = config::DATABASE_WRITE_BUFFER_SIZE;
     database_options.block_size = config::DATABASE_DATA_BLOCK_SIZE;
-    if constexpr(config::DATABASE_COMPRESS_DATA) {
+    if constexpr (config::DATABASE_COMPRESS_DATA) {
         database_options.compression = leveldb::kSnappyCompression; // fast compression
     }
     else {
@@ -45,7 +45,7 @@ void Database::open(Directory const& path)
     // create database
     leveldb::DB* database = nullptr;
     auto const status = leveldb::DB::Open(database_options, path.string(), &database);
-    if(!status.ok() || database == nullptr) {
+    if (!status.ok() || database == nullptr) {
         RAISE_ERROR(base::DatabaseError, "Failed to create database instance.");
     }
     _database.reset(database);
@@ -61,7 +61,7 @@ std::optional<Bytes> Database::get(const Bytes& key) const
 
     std::string value;
     auto const status = _database->Get(_read_options, key.toString(), &value);
-    if(!status.ok()) {
+    if (!status.ok()) {
         return std::nullopt;
     }
     return Bytes(value);
@@ -74,10 +74,10 @@ bool Database::exists(const Bytes& key) const
 
     std::string value;
     auto const status = _database->Get(_read_options, key.toString(), &value);
-    if(status.IsNotFound()) {
+    if (status.IsNotFound()) {
         return false;
     }
-    if(!status.ok()) {
+    if (!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
     }
 
@@ -90,7 +90,7 @@ void Database::put(const Bytes& key, const Bytes& value)
     checkStatus();
 
     auto const status = _database->Put(_write_options, key.toString(), value.toString());
-    if(!status.ok()) {
+    if (!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
     }
 }
@@ -101,7 +101,7 @@ void Database::remove(const Bytes& key)
     checkStatus();
 
     auto const status = _database->Delete(_write_options, key.toString());
-    if(!status.ok()) {
+    if (!status.ok()) {
         RAISE_ERROR(base::DatabaseError, status.ToString());
     }
 }
@@ -109,7 +109,7 @@ void Database::remove(const Bytes& key)
 
 void Database::checkStatus() const
 {
-    if(!_inited) {
+    if (!_inited) {
         RAISE_ERROR(base::DatabaseError, "Database is not inited yet");
     }
 }
@@ -124,7 +124,7 @@ Database createDefaultDatabaseInstance(Directory const& path)
 
 Database createClearDatabaseInstance(Directory const& path)
 {
-    if(std::filesystem::exists(path)) {
+    if (std::filesystem::exists(path)) {
         std::filesystem::remove_all(path);
     }
     return createDefaultDatabaseInstance(path);

@@ -1,10 +1,10 @@
-#include "soft_config.hpp"
 #include "hard_config.hpp"
+#include "soft_config.hpp"
 
-#include "base/program_options.hpp"
+#include "base/assert.hpp"
 #include "base/config.hpp"
 #include "base/log.hpp"
-#include "base/assert.hpp"
+#include "base/program_options.hpp"
 #include "node/node.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
@@ -13,19 +13,19 @@
 
 #include <boost/stacktrace.hpp>
 
-#include <iostream>
 #include <csignal>
 #include <cstdlib>
 #include <exception>
-#include <thread>
 #include <filesystem>
+#include <iostream>
+#include <thread>
 
 namespace
 {
 
 extern "C" void signalHandler(int signal)
 {
-    if(signal == SIGINT) {
+    if (signal == SIGINT) {
         LOG_INFO << "SIGINT caught. Exit.";
         boost::log::core::get()->flush();
         std::_Exit(1); // TODO: a clean exit
@@ -63,14 +63,14 @@ int main(int argc, char** argv)
 
         // process options
         parser.process(argc, argv);
-        if(parser.hasOption("help")) {
+        if (parser.hasOption("help")) {
             std::cout << parser.helpMessage() << std::endl;
             return base::config::EXIT_OK;
         }
 
         auto config_file_path = parser.getValue<std::string>("config");
 
-        if(!std::filesystem::exists(config_file_path)) {
+        if (!std::filesystem::exists(config_file_path)) {
             LOG_ERROR << "[config file is not exists] input file path: " << parser.getValue<std::string>("config");
             return base::config::EXIT_FAIL;
         }
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
         // handlers initialization
 
         // setup handler for all signal types defined in Standard, expect SIGABRT. Not all POSIX signals
-        for(auto signal_code: {SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE}) {
+        for (auto signal_code : { SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE }) {
             [[maybe_unused]] auto result = std::signal(signal_code, signalHandler);
             ASSERT_SOFT(result != SIG_ERR);
         }
@@ -100,11 +100,11 @@ int main(int argc, char** argv)
 
         return base::config::EXIT_OK;
     }
-    catch(const std::exception& error) {
+    catch (const std::exception& error) {
         LOG_ERROR << "[exception caught in main] " << error.what();
         return base::config::EXIT_FAIL;
     }
-    catch(...) {
+    catch (...) {
         LOG_ERROR << "[unknown exception caught]";
         return base::config::EXIT_FAIL;
     }
