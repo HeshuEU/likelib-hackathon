@@ -15,6 +15,8 @@ class Time
      * \brief default constructor which have an epoch january 1, 1970.
      */
     Time() = default;
+    explicit Time(std::uint_least32_t seconds_from_epoch);
+    explicit Time(std::chrono::time_point<std::chrono::system_clock> time_point);
     Time(const Time&) = default;
     Time(Time&&) = default;
     //====================
@@ -23,22 +25,21 @@ class Time
     //====================
     ~Time() = default;
     //====================
-    std::uint_least32_t getSecondsSinceEpochBeginning() const;
+    std::uint_least32_t getSecondsSinceEpoch() const;
     std::chrono::time_point<std::chrono::system_clock> toTimePoint() const;
     //====================
     bool operator==(const Time& other) const;
     bool operator!=(const Time& other) const;
     //====================
     static Time now();
-    static Time fromSecondsSinceEpochBeginning(std::uint_least32_t seconds_from_epoch);
-    static Time fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time_point);
     //=====================
     void serialize(SerializationOArchive& oa) const;
     static Time deserialize(SerializationIArchive& ia);
     //=====================
   private:
     //=====================
-    std::uint_least32_t _seconds_since_epoch_beginning{ 0 };
+    using SerializationType = std::uint32_t;
+    std::uint_least32_t _seconds_since_epoch{ 0 };
     //=====================
 };
 

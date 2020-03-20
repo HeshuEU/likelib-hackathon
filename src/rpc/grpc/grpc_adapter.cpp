@@ -97,7 +97,7 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
         response->set_nonce(block.getNonce());
         response->set_previous_block_hash(block.getPrevBlockHash().toHex());
         response->mutable_coinbase()->set_address(block.getCoinbase().toString());
-        response->mutable_timestamp()->set_since_epoch(block.getTimestamp().getSecondsSinceEpochBeginning());
+        response->mutable_timestamp()->set_since_epoch(block.getTimestamp().getSecondsSinceEpoch());
 
         for (const auto& tx : block.getTransactions()) {
             likelib::Transaction tv;
@@ -105,7 +105,7 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
             tv.mutable_to()->set_address(tx.getTo().toString());
             tv.mutable_value()->set_value(tx.getAmount());
             tv.mutable_gas()->set_value(tx.getFee());
-            tv.mutable_creation_time()->set_since_epoch(tx.getTimestamp().getSecondsSinceEpochBeginning());
+            tv.mutable_creation_time()->set_since_epoch(tx.getTimestamp().getSecondsSinceEpoch());
             tv.set_data(base::base64Encode(tx.getData()));
             tv.set_signature(tx.getSign().toBase64());
             response->mutable_transactions()->Add(std::move(tv));
@@ -128,7 +128,7 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
         auto amount = bc::Balance{ request->value().value() };
         auto from_address = bc::Address{ request->from().address() };
         auto gas = bc::Balance{ request->fee().value() };
-        auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
+        auto creation_time = base::Time(request->creation_time().since_epoch());
         auto contract_code = request->contract_code();
         auto init = request->init();
         auto sign = bc::Sign::fromBase64(request->signature().raw());
@@ -159,7 +159,7 @@ grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
         auto from_address = bc::Address{ request->from().address() };
         auto to_address = bc::Address{ request->to().address() };
         auto gas = bc::Balance{ request->fee().value() };
-        auto creation_time = base::Time::fromSecondsSinceEpochBeginning(request->creation_time().since_epoch());
+        auto creation_time = base::Time(request->creation_time().since_epoch());
         auto data = request->data();
         auto sign = bc::Sign::fromBase64(request->signature());
 

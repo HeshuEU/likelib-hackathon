@@ -3,22 +3,22 @@
 namespace base
 {
 
-std::uint_least32_t Time::getSecondsSinceEpochBeginning() const
+std::uint_least32_t Time::getSecondsSinceEpoch() const
 {
-    return _seconds_since_epoch_beginning;
+    return _seconds_since_epoch;
 }
 
 
 std::chrono::time_point<std::chrono::system_clock> Time::toTimePoint() const
 {
-    std::chrono::duration<std::uint32_t, std::ratio<1, 1>> duration_from_epoch(_seconds_since_epoch_beginning);
+    std::chrono::duration<std::uint32_t, std::ratio<1, 1>> duration_from_epoch(_seconds_since_epoch);
     return std::chrono::time_point<std::chrono::system_clock>(duration_from_epoch);
 }
 
 
 bool Time::operator==(const Time& other) const
 {
-    return _seconds_since_epoch_beginning == other._seconds_since_epoch_beginning;
+    return _seconds_since_epoch == other._seconds_since_epoch;
 }
 
 
@@ -30,46 +30,38 @@ bool Time::operator!=(const Time& other) const
 
 Time Time::now()
 {
-    Time time;
-    time._seconds_since_epoch_beginning =
-      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    return time;
+    Time ret{ std::chrono::system_clock::now() };
+    return ret;
 }
 
 
-Time Time::fromSecondsSinceEpochBeginning(std::uint_least32_t seconds_from_epoch)
-{
-    Time time;
-    time._seconds_since_epoch_beginning = seconds_from_epoch;
-    return time;
-}
+Time::Time(std::uint_least32_t seconds_from_epoch)
+  : _seconds_since_epoch{ seconds_from_epoch }
+{}
 
 
-Time Time::fromTimePoint(std::chrono::time_point<std::chrono::system_clock> time_point)
-{
-    Time time;
-    time._seconds_since_epoch_beginning =
-      std::chrono::duration_cast<std::chrono::seconds>(time_point.time_since_epoch()).count();
-    return time;
-}
+Time::Time(std::chrono::time_point<std::chrono::system_clock> time_point)
+  : _seconds_since_epoch{ static_cast<std::uint_least32_t>(
+      std::chrono::duration_cast<std::chrono::seconds>(time_point.time_since_epoch()).count()) }
+{}
 
 
 void Time::serialize(SerializationOArchive& oa) const
 {
-    oa.serialize(static_cast<std::uint32_t>(_seconds_since_epoch_beginning));
+    oa.serialize(static_cast<SerializationType>(_seconds_since_epoch));
 }
 
 
 Time Time::deserialize(SerializationIArchive& ia)
 {
-    auto timestamp = ia.deserialize<std::uint32_t>();
-    return fromSecondsSinceEpochBeginning(timestamp);
+    auto timestamp = ia.deserialize<SerializationType>();
+    return Time{ timestamp };
 }
 
 
 std::ostream& operator<<(std::ostream& os, const Time& time)
 {
-    return os << time.getSecondsSinceEpochBeginning();
+    return os << time.getSecondsSinceEpoch();
 }
 
 } // namespace base

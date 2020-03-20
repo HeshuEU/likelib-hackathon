@@ -74,11 +74,9 @@ bc::Block GeneralServerService::get_block(const base::Sha256& block_hash)
         return *block_opt;
     }
     else {
-        return bc::Block{ bc::BlockDepth(-1),
-                          base::Sha256::null(),
-                          base::Time::fromSecondsSinceEpochBeginning(0),
-                          bc::Address::null(),
-                          {} };
+        return bc::Block{
+            bc::BlockDepth(-1), base::Sha256::null(), base::Time(0), bc::Address::null(), {}
+        };
     }
 }
 
@@ -94,7 +92,7 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
 {
     LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
               << "], amount[" << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
-              << timestamp.getSecondsSinceEpochBeginning() << "], initial_message[" << hex_init << "]";
+              << timestamp.getSecondsSinceEpoch() << "], initial_message[" << hex_init << "]";
 
     auto contract_code = base::fromHex<base::Bytes>(hex_contract_code);
     auto init = base::fromHex<base::Bytes>(hex_init);
@@ -162,7 +160,7 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
 {
     LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
-              << "], timestamp[" << timestamp.getSecondsSinceEpochBeginning() << "], message[" << hex_message << "]";
+              << "], timestamp[" << timestamp.getSecondsSinceEpoch() << "], message[" << hex_message << "]";
 
 
     auto message = base::fromHex<base::Bytes>(hex_message);

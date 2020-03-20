@@ -34,7 +34,7 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
 const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
-        auto timestamp = base::Time::fromSecondsSinceEpochBeginning(1583789617);
+        auto timestamp = base::Time(1583789617);
 
         bc::Block ret{ 0, base::Sha256(base::Bytes(32)), timestamp, bc::Address::null(), {} };
         bc::Address from{ bc::Address::null() };

@@ -82,6 +82,7 @@ void Session::close()
 void Session::receive()
 {
     _connection->receive(SIZE_OF_MESSAGE_LENGTH_IN_BYTES, [this](const base::Bytes& data) {
+        _last_seen = base::Time::now();
         auto length = base::fromBytes<std::uint16_t>(data);
         _connection->receive(length, [this](const base::Bytes& data) {
             if (_handler) {
@@ -95,9 +96,15 @@ void Session::receive()
 }
 
 
-const Endpoint& Session::getEndpoint() const
+const Endpoint& Session::getEndpoint() const noexcept
 {
     return _connection->getEndpoint();
+}
+
+
+const base::Time& Session::getLastSeen() const noexcept
+{
+    return _last_seen;
 }
 
 

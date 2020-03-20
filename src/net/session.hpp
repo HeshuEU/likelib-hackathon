@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base/time.hpp"
 #include "net/connection.hpp"
 
 #include <memory>
@@ -37,12 +38,15 @@ class Session
     void start();
     void close();
     //==================
-    const Endpoint& getEndpoint() const;
+    const Endpoint& getEndpoint() const noexcept;
+    const base::Time& getLastSeen() const noexcept;
     //==================
   private:
     //==================
     std::shared_ptr<Connection> _connection;
     std::unique_ptr<Handler> _handler;
+    //==================
+    base::Time _last_seen;
     //==================
     void receive();
     //==================
