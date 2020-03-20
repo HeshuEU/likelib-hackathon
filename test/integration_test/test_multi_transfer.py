@@ -134,7 +134,7 @@ def node_transfers(node, addresses, transaction_wait):
     pos = 0
     from_address = addresses[pos]
     amount = 300
-    transaction_timeout = 20;
+    transaction_timeout = 40
     for _ in range(len(addresses) * 5):
         pos = (pos + shift) % len(addresses)
         to_address = addresses[pos]
@@ -151,7 +151,7 @@ def main(node_exec_path, rpc_client_exec_path,evm_exec_path):
     start_sync_port = 20330
     start_rpc_port = 50180
     node_startup_time = 5
-    transaction_wait = 2
+    transaction_wait = 5
 
     init_amount = 1000
     address_per_nodes = 3
