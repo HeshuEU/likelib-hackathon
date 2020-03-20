@@ -1,21 +1,19 @@
-from tester import Address, Log, test_case, NodeId, NodeTester, TEST_CHECK
-import os
+from tester import test_case, Node
 
 
 @test_case("base_transfer")
-def main(node_exec_path, rpc_client_exec_path, evm_exec_path):
-
-    logger = Log("test.log")
-    with NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=20206, rpc_port=50056), logger) as node:
+def main(logger, node_exec_path, client_exec_path, evm_path):
+    node_settings = Node.Settings(
+        node_exec_path, client_exec_path, evm_path, Node.Id(20206, 50056))
+    with Node(node_settings, logger) as node:
         node.run_check_test()
 
-        
-        target_address = Address(node, "keys1")
-        node.run_check_balance(address=target_address.address, target_balance=0)
+        target_address = node.create_new_address("keys1")
+        node.run_check_balance(target_address, 0)
 
+        distriburot_address = node.load_address(node.DISTRIBUTOR_ADDRESS_PATH)
         amount = 333
-        transaction_wait = 1
-        node.run_check_transfer(to_address=target_address.address, amount=amount, keys_path=node.DISTRIBUTOR_ADDRESS_PATH, fee=0, wait=transaction_wait)
-        node.run_check_balance(address=target_address.address, target_balance=amount)
+        node.run_check_transfer(to_address=target_address, amount=amount,
+                                from_address=distriburot_address, fee=0)
+        node.run_check_balance(target_address, amount)
     return 0
-

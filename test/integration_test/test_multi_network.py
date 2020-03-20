@@ -1,12 +1,9 @@
-from tester import Address, Log, test_case, NodeId, NodeTester, TEST_CHECK, NodePoll
+from tester import Address, test_case, NodeId, NodeTester, TEST_CHECK, NodePoll
 import concurrent.futures, time
 
 
 @test_case("multi_network_connection_base")
-def main(node_exec_path, rpc_client_exec_path, evm_exec_path):
-
-    logger = Log("test.log")
-    
+def main(logger, node_exec_path, rpc_client_exec_path, evm_exec_path):   
     with NodeTester(node_exec_path, rpc_client_exec_path, evm_exec_path, NodeId(sync_port=20207, rpc_port=50057), logger) as node_1:
         node_1.run_check_test()
 
@@ -17,9 +14,7 @@ def main(node_exec_path, rpc_client_exec_path, evm_exec_path):
 
 
 @test_case("multi_network_connection_one_by_one")
-def main(node_exec_path, rpc_client_exec_path, evm_exec_path):
-    logger = Log("test.log")
-
+def main(logger, node_exec_path, rpc_client_exec_path, evm_exec_path):
     start_sync_port = 20209
     start_rpc_port = 50059
     waiting_time = 3
@@ -43,9 +38,7 @@ def main(node_exec_path, rpc_client_exec_path, evm_exec_path):
 
 
 @test_case("multi_network_connection_with_everything")
-def main(node_exec_path, rpc_client_exec_path, evm_exec_path):
-    logger = Log("test.log")
-
+def main(logger, node_exec_path, rpc_client_exec_path, evm_exec_path):
     start_sync_port = 20215
     start_rpc_port = 50065
     waiting_time = 5
@@ -77,9 +70,7 @@ def init_nodes(node_exec_path, rpc_client_exec_path, evm_exec_path, initializing
     return nodes
 
 @test_case("multi_network_parallel_connection_stress_test")
-def main(node_exec_path, rpc_client_exec_path, evm_exec_path):
-    logger = Log("test.log")
-
+def main(logger, node_exec_path, rpc_client_exec_path, evm_exec_path):
     start_sync_port = 20230
     start_rpc_port = 50080
     waiting_time = 10
