@@ -654,7 +654,7 @@ void Network::HandlerFactory::destroy() {}
 
 Network::Network(const base::PropertyTree& config, Core& core)
   : _config{ config }
-  , _host{ _config }
+  , _host{ _config, 0x42 } // TODO: change later
   , _core{ core }
 {
     if (_config.hasKey("net.public_port")) {

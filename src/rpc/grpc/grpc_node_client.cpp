@@ -110,7 +110,7 @@ bc::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
     if (status.ok()) {
         bc::BlockDepth depth{ reply.depth() };
         base::Sha256 prev_block_hash{ base::fromHex<base::Bytes>(reply.previous_block_hash()) };
-        auto timestamp = base::Time::fromSecondsSinceEpochBeginning(reply.timestamp().since_epoch());
+        auto timestamp = base::Time(reply.timestamp().since_epoch());
         bc::NonceInt nonce{ reply.nonce() };
         bc::Address coinbase{ reply.coinbase().address() };
 
@@ -121,7 +121,7 @@ bc::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
             txb.setTo(bc::Address(txv.to().address()));
             txb.setAmount(txv.value().value());
             txb.setFee(txv.gas().value());
-            txb.setTimestamp(base::Time::fromSecondsSinceEpochBeginning(txv.creation_time().since_epoch()));
+            txb.setTimestamp(base::Time(txv.creation_time().since_epoch()));
             txb.setData(base::base64Decode(txv.data()));
             txb.setSign(bc::Sign::fromBase64(txv.signature()));
             txb.setType(bc::Address(txv.to().address()) == bc::Address::null() ?
@@ -156,7 +156,7 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
     request.mutable_fee()->set_value(static_cast<google::protobuf::uint64>(gas));
     request.set_init(init);
     request.set_contract_code(contract_code);
-    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpochBeginning());
+    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpoch());
     request.mutable_signature()->set_raw(signature.toBase64());
 
     // call remote host
@@ -193,7 +193,7 @@ std::tuple<OperationStatus, std::string, bc::Balance> GrpcNodeClient::transactio
     request.mutable_to()->set_address(to_address.toString());
     request.mutable_fee()->set_value(static_cast<google::protobuf::uint64>(fee));
     request.set_data(data);
-    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpochBeginning());
+    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpoch());
     request.set_signature(signature.toBase64());
 
     // call remote host
