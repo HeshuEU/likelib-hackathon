@@ -326,7 +326,7 @@ class Network
     //================
     friend class Peer; // in order to be able to call removePeer from Handler
     //================
-    class HandlerFactory : public net::HandlerFactory
+    class HandlerFactory : public net::Host::HandlerFactory
     {
       public:
         //================

@@ -19,34 +19,31 @@
 namespace net
 {
 
-
-class HandlerFactory
-{
-  public:
-    //===================
-    virtual std::unique_ptr<Handler> create(Session& session) = 0;
-    virtual void destroy() = 0;
-    //===================
-    virtual ~HandlerFactory() = default;
-    //===================
-};
-
-
 class Host
 {
   public:
+    //===================
+    class HandlerFactory
+    {
+    public:
+        //===================
+        virtual std::unique_ptr<Handler> create(Session& session) = 0;
+        virtual void destroy() = 0;
+        //===================
+        virtual ~HandlerFactory() = default;
+        //===================
+    };
     //===================
     explicit Host(const base::PropertyTree& config);
     ~Host();
     //===================
     void connect(const Endpoint& address);
+    bool isConnectedTo(const Endpoint& endpoint) const;
     //===================
     void broadcast(const base::Bytes& data);
     //===================
     void run(std::unique_ptr<HandlerFactory> handler_factory);
     void join();
-    //===================
-    bool isConnectedTo(const Endpoint& endpoint) const;
     //===================
   private:
     //===================
