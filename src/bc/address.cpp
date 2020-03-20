@@ -22,14 +22,14 @@ Address::Address(const base::Bytes& raw_address)
 {}
 
 
-Address::Address(const base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>& raw_address)
+Address::Address(const base::FixedBytes<Address::LENGTH_IN_BYTES>& raw_address)
   : _address(raw_address)
 {}
 
 
 const Address& Address::null()
 {
-    static const Address null_address{ base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>() };
+    static const Address null_address{ base::FixedBytes<Address::LENGTH_IN_BYTES>() };
     return null_address;
 }
 
@@ -46,7 +46,7 @@ std::string Address::toString() const
 }
 
 
-const base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>& Address::getBytes() const noexcept
+const base::FixedBytes<Address::LENGTH_IN_BYTES>& Address::getBytes() const noexcept
 {
     return _address;
 }
@@ -72,7 +72,7 @@ bool Address::operator<(const Address& other) const
 
 Address Address::deserialize(base::SerializationIArchive& ia)
 {
-    return Address(ia.deserialize<base::FixedBytes<ADDRESS_BYTES_LENGTH>>());
+    return Address(ia.deserialize<base::FixedBytes<LENGTH_IN_BYTES>>());
 }
 
 

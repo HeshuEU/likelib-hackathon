@@ -79,6 +79,12 @@ void Session::close()
 }
 
 
+void Session::reject()
+{
+    close();
+}
+
+
 void Session::receive()
 {
     _connection->receive(SIZE_OF_MESSAGE_LENGTH_IN_BYTES, [this](const base::Bytes& data) {
