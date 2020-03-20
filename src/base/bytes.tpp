@@ -27,7 +27,7 @@ std::size_t hexToInt(char hex)
         return hex - 'A' + 10;
     }
     else {
-        RAISE_ERROR(base::InvalidArgument, "Non hex symbol.");
+        RAISE_ERROR(base::InvalidArgument, "Non hex symbol");
     }
 }
 

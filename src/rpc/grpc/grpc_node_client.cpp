@@ -115,7 +115,7 @@ bc::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
         bc::Address coinbase{reply.coinbase().address()};
 
         bc::TransactionsSet txset;
-        for(const auto& txv : reply.transactions()) {
+        for(const auto& txv: reply.transactions()) {
             bc::TransactionBuilder txb;
             txb.setFrom(bc::Address(txv.from().address()));
             txb.setTo(bc::Address(txv.to().address()));
@@ -124,7 +124,9 @@ bc::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
             txb.setTimestamp(base::Time::fromSecondsSinceEpochBeginning(txv.creation_time().since_epoch()));
             txb.setData(base::base64Decode(txv.data()));
             txb.setSign(bc::Sign::fromBase64(txv.signature()));
-            txb.setType(bc::Address(txv.to().address()) == bc::Address::null() ? bc::Transaction::Type::CONTRACT_CREATION : bc::Transaction::Type::MESSAGE_CALL);
+            txb.setType(bc::Address(txv.to().address()) == bc::Address::null() ?
+                    bc::Transaction::Type::CONTRACT_CREATION :
+                    bc::Transaction::Type::MESSAGE_CALL);
             txset.add(std::move(txb).build());
         }
 

@@ -7,32 +7,27 @@
 namespace net
 {
 
-class Handler
-{
-  public:
-    //===================
-    virtual void onReceive(const base::Bytes& bytes) = 0;
-    // virtual void onSend() = 0;
-    virtual void onClose() = 0;
-    //===================
-    virtual ~Handler() = default;
-    //===================
-};
-
-
 class Session
 {
   public:
     //==================
-    using SessionManager = std::function<void(Session& session, const base::Bytes& data)>;
+    class Handler
+    {
+      public:
+        //===================
+        virtual void onReceive(const base::Bytes& bytes) = 0;
+        // virtual void onSend() = 0;
+        virtual void onClose() = 0;
+        //===================
+        virtual ~Handler() = default;
+        //===================
+    };
     //==================
     explicit Session(std::unique_ptr<Connection> connection);
     ~Session();
     //==================
     bool isActive() const;
     bool isClosed() const;
-    //==================
-    std::size_t getId() const;
     //==================
     void setHandler(std::unique_ptr<Handler> handler);
     //==================
@@ -45,9 +40,6 @@ class Session
     const Endpoint& getEndpoint() const;
     //==================
   private:
-    //==================
-    std::size_t _id;
-    void setNextId();
     //==================
     std::shared_ptr<Connection> _connection;
     std::unique_ptr<Handler> _handler;

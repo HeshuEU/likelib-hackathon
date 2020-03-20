@@ -265,14 +265,14 @@ class Peer
     bool applySyncs();
     const std::forward_list<bc::Block>& getSyncBlocks() const noexcept;
     //================
-    [[nodiscard]] std::unique_ptr<net::Handler> createHandler();
+    [[nodiscard]] std::unique_ptr<net::Session::Handler> createHandler();
     //================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
     //================
   private:
     //================
-    class Handler : public net::Handler
+    class Handler : public net::Session::Handler
     {
       public:
         //===================
@@ -326,14 +326,14 @@ class Network
     //================
     friend class Peer; // in order to be able to call removePeer from Handler
     //================
-    class HandlerFactory : public net::HandlerFactory
+    class HandlerFactory : public net::Host::HandlerFactory
     {
       public:
         //================
         explicit HandlerFactory(Network& owning_network_object);
         ~HandlerFactory() override = default;
         //================
-        std::unique_ptr<net::Handler> create(net::Session& session) override;
+        std::unique_ptr<net::Session::Handler> create(net::Session& session) override;
         void destroy() override;
         //================
       private:

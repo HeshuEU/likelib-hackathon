@@ -73,7 +73,8 @@ bc::Block GeneralServerService::get_block(const base::Sha256& block_hash)
         return *block_opt;
     }
     else {
-        return bc::Block{bc::BlockDepth(-1), base::Sha256::null(), base::Time::fromSecondsSinceEpochBeginning(0), bc::Address::null(), {}};
+        return bc::Block{bc::BlockDepth(-1), base::Sha256::null(), base::Time::fromSecondsSinceEpochBeginning(0),
+            bc::Address::null(), {}};
     }
 }
 
@@ -164,15 +165,13 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
         auto hash = base::Sha256::compute(base::toBytes(tx));
         const auto& result_bytes = _core.getTransactionOutput(hash);
         if(result_bytes.isEmpty()) {
-            return {rpc::OperationStatus::createFailed(std::string{"Message call failed"}),
-                    std::string{}, gas};
+            return {rpc::OperationStatus::createFailed(std::string{"Message call failed"}), std::string{}, gas};
         }
         base::SerializationIArchive ia(result_bytes);
 
         auto is_successful = ia.deserialize<bool>();
         if(!is_successful) {
-            return {rpc::OperationStatus::createFailed(std::string{"Message call failed"}),
-                    std::string{}, gas};
+            return {rpc::OperationStatus::createFailed(std::string{"Message call failed"}), std::string{}, gas};
         }
         auto result = ia.deserialize<base::Bytes>();
         auto gas_left = ia.deserialize<bc::Balance>();

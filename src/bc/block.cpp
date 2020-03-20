@@ -7,8 +7,10 @@
 namespace bc
 {
 
-Block::Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, base::Time timestamp, bc::Address coinbase, TransactionsSet txs)
-    : _depth{depth}, _prev_block_hash{std::move(prev_block_hash)}, _timestamp{std::move(timestamp)}, _coinbase{std::move(coinbase)}, _txs(std::move(txs))
+Block::Block(
+    bc::BlockDepth depth, base::Sha256 prev_block_hash, base::Time timestamp, bc::Address coinbase, TransactionsSet txs)
+    : _depth{depth}, _prev_block_hash{std::move(prev_block_hash)},
+      _timestamp{std::move(timestamp)}, _coinbase{std::move(coinbase)}, _txs(std::move(txs))
 {}
 
 
@@ -106,8 +108,8 @@ void Block::addTransaction(const Transaction& tx)
 bool operator==(const bc::Block& a, const bc::Block& b)
 {
     return a.getDepth() == b.getDepth() && a.getNonce() == b.getNonce() &&
-        a.getPrevBlockHash() == b.getPrevBlockHash() && a.getTimestamp() == b.getTimestamp() && a.getCoinbase() == b.getCoinbase() &&
-        a.getTransactions() == b.getTransactions();
+        a.getPrevBlockHash() == b.getPrevBlockHash() && a.getTimestamp() == b.getTimestamp() &&
+        a.getCoinbase() == b.getCoinbase() && a.getTransactions() == b.getTransactions();
 }
 
 

@@ -624,7 +624,8 @@ Secp256PrivateKey::Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_
 {}
 
 
-base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> Secp256PrivateKey::sign(const base::FixedBytes<32>& bytes) const
+base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> Secp256PrivateKey::sign(
+    const base::FixedBytes<32>& bytes) const
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
@@ -694,8 +695,8 @@ Secp256PublicKey::Secp256PublicKey(const base::FixedBytes<SECP256_PUBLIC_KEY_SIZ
 {}
 
 
-bool Secp256PublicKey::verifySignature(
-    const base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> signature, const base::FixedBytes<32>& bytes) const
+bool Secp256PublicKey::verifySignature(const base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> signature,
+    const base::FixedBytes<32>& bytes) const
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
         secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);

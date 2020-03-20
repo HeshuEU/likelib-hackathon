@@ -16,7 +16,6 @@ namespace net
 Session::Session(std::unique_ptr<Connection> connection) : _connection{connection.release()}
 {
     ASSERT(_connection);
-    setNextId();
 }
 
 
@@ -53,19 +52,6 @@ void Session::send(base::Bytes&& data)
     if(isActive()) {
         _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data);
     }
-}
-
-
-std::size_t Session::getId() const
-{
-    return _id;
-}
-
-
-void Session::setNextId()
-{
-    static std::atomic<std::size_t> next_id;
-    _id = next_id++;
 }
 
 

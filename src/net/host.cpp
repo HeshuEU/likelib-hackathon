@@ -3,7 +3,6 @@
 #include "base/assert.hpp"
 #include "base/log.hpp"
 
-#include <boost/asio/connect.hpp>
 #include <boost/asio/error.hpp>
 
 #include <chrono>
@@ -13,7 +12,7 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Host::Host(const base::PropertyTree& config)
+Host::Host(const base::PropertyTree& config, std::size_t connections_limit)
     : _config{config}, _listen_ip{_config.get<std::string>("net.listen_addr")},
       _server_public_port{_config.get<unsigned short>("net.public_port")}, _acceptor{_io_context, _listen_ip},
       _connector{_io_context}, _heartbeat_timer{_io_context}

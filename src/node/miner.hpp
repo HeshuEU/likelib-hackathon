@@ -79,7 +79,8 @@ class Miner
 
     ~Miner();
     //===================
-    void findNonce(const bc::Block& block_without_nonce, const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity);
+    void findNonce(
+        const bc::Block& block_without_nonce, const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity);
     void dropJob();
     //===================
   private:
