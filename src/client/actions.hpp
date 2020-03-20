@@ -231,7 +231,7 @@ class ActionKeysInfo : public ActionBase
 
 class ActionInfo : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionInfo(base::SubprogramRouter& router);
     //====================================
@@ -240,7 +240,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::string _host_address;
     //====================================
@@ -249,7 +249,7 @@ private:
 
 class ActionGetBlock : public ActionBase
 {
-public:
+  public:
     //====================================
     explicit ActionGetBlock(base::SubprogramRouter& router);
     //====================================
@@ -258,7 +258,7 @@ public:
     int loadOptions(const base::ProgramOptionsParser& parser) override;
     int execute() override;
     //====================================
-private:
+  private:
     //====================================
     std::string _host_address;
     base::Sha256 _block_hash{base::Sha256::null()};

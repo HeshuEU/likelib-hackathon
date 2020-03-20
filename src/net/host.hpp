@@ -25,7 +25,7 @@ class Host
     //=================================
     class HandlerFactory
     {
-    public:
+      public:
         //===================
         virtual std::unique_ptr<Session::Handler> create(Session& session) = 0;
         virtual void destroy() = 0;
@@ -34,7 +34,7 @@ class Host
         //===================
     };
     //=================================
-    explicit Host(const base::PropertyTree& config);
+    explicit Host(const base::PropertyTree& config, std::size_t connections_limit);
     ~Host();
     //=================================
     void connect(const Endpoint& address);

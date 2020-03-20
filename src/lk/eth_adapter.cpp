@@ -272,7 +272,8 @@ EthAdapter::EthAdapter(Core& core, AccountManager& account_manager, CodeManager&
 EthAdapter::~EthAdapter() = default;
 
 
-std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(const bc::Address& contract_address, const bc::Transaction& associated_tx, const bc::Block& associated_block)
+std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(
+    const bc::Address& contract_address, const bc::Transaction& associated_tx, const bc::Block& associated_block)
 {
     std::lock_guard lk(_execution_mutex);
 
@@ -281,7 +282,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
 
     vm::SmartContract contract(contract_data.getCode());
     auto message = contract.createInitMessage(associated_tx.getFee(), associated_tx.getFrom(), contract_address,
-                                              associated_tx.getAmount(), contract_data.getInit());
+        associated_tx.getAmount(), contract_data.getInit());
 
     _eth_host->setContext(&associated_tx, &associated_block);
     if(auto result = _vm.execute(message); result.ok()) {
@@ -305,7 +306,8 @@ vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const
     }
     else {
         vm::SmartContract contract(*code_opt);
-        auto message = contract.createMessage(associated_tx.getFee(), associated_tx.getFrom(), associated_tx.getTo(), associated_tx.getAmount(), associated_tx.getData());
+        auto message = contract.createMessage(associated_tx.getFee(), associated_tx.getFrom(), associated_tx.getTo(),
+            associated_tx.getAmount(), associated_tx.getData());
 
         _eth_host->setContext(&associated_tx, &associated_block);
         return _vm.execute(message);

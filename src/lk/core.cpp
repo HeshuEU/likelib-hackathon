@@ -277,7 +277,8 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
 }
 
 
-std::tuple<bc::Address, base::Bytes, bc::Balance> Core::doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx)
+std::tuple<bc::Address, base::Bytes, bc::Balance> Core::doContractCreation(
+    const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
     base::SerializationIArchive ia(tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();

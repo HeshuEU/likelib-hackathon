@@ -13,7 +13,7 @@ class Session
     //==================
     class Handler
     {
-    public:
+      public:
         //===================
         virtual void onReceive(const base::Bytes& bytes) = 0;
         // virtual void onSend() = 0;

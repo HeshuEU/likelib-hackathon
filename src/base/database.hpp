@@ -28,7 +28,7 @@ class Database
     [[nodiscard]] std::optional<Bytes> get(const Bytes& key) const;
     bool exists(const Bytes& key) const;
     void put(const Bytes& key, const Bytes& value);
-    
+
     template<std::size_t S>
     void put(const Bytes& key, const FixedBytes<S>& value);
     void remove(const Bytes& key);

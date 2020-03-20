@@ -34,7 +34,8 @@ PropertyTree parseJson(const std::string& json_string)
     return ret;
 }
 
-void save(const PropertyTree& tree, const std::filesystem::path& path_to_save){
+void save(const PropertyTree& tree, const std::filesystem::path& path_to_save)
+{
     std::ofstream file;
     CLARIFY_ERROR(InaccessibleFile, file.open(path_to_save), "error opening file to save");
     boost::property_tree::write_json(file, tree._ptree);
