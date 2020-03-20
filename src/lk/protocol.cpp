@@ -654,7 +654,7 @@ void Network::HandlerFactory::destroy() {}
 
 Network::Network(const base::PropertyTree& config, Core& core)
   : _config{ config }
-  , _host{ _config, config.get<std::size_t>("net.max_connections") }
+  , _host{ _config, 0x42 } // TODO: change later
   , _core{ core }
 {
     if (_config.hasKey("net.public_port")) {

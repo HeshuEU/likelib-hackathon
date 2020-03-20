@@ -11,11 +11,11 @@ class Address
 {
   public:
     //=============================
-    static constexpr std::size_t LENGTH_IN_BYTES = 20;
+    static constexpr std::size_t ADDRESS_BYTES_LENGTH = 20;
     //=============================
     explicit Address(const std::string_view& base58_address);
     explicit Address(const base::Bytes& raw);
-    explicit Address(const base::FixedBytes<LENGTH_IN_BYTES>& raw);
+    explicit Address(const base::FixedBytes<ADDRESS_BYTES_LENGTH>& raw);
     explicit Address(const base::RsaPublicKey& pub);
     Address(const Address& another) = default;
     Address(Address&& another) = default;
@@ -24,7 +24,7 @@ class Address
     ~Address() = default;
     //=============================
     [[nodiscard]] std::string toString() const;
-    const base::FixedBytes<LENGTH_IN_BYTES>& getBytes() const noexcept;
+    const base::FixedBytes<ADDRESS_BYTES_LENGTH>& getBytes() const noexcept;
     //=============================
     static const Address& null();
     bool isNull() const;
@@ -38,7 +38,7 @@ class Address
     //=============================
 
   private:
-    base::FixedBytes<LENGTH_IN_BYTES> _address;
+    base::FixedBytes<ADDRESS_BYTES_LENGTH> _address;
 };
 
 

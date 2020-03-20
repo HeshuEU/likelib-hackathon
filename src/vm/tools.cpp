@@ -177,7 +177,7 @@ base::Bytes encode(uint8_t value)
 
 bc::Address toNativeAddress(const evmc::address& addr)
 {
-    base::Bytes raw_address(addr.bytes, bc::Address::LENGTH_IN_BYTES);
+    base::Bytes raw_address(addr.bytes, bc::Address::ADDRESS_BYTES_LENGTH);
     bc::Address address(raw_address);
     return address;
 }
