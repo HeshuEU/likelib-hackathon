@@ -50,14 +50,12 @@ Bytes::Bytes(I begin, I end)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes()
 {
-    static_assert(S != 0, "FixedBytes length must be longer than 0");
 }
 
 
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::vector<Byte>& bytes)
 {
-    static_assert(S != 0, "FixedBytes length must be longer than 0");
     if (S != bytes.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
@@ -68,7 +66,6 @@ FixedBytes<S>::FixedBytes(const std::vector<Byte>& bytes)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(const Bytes& bytes)
 {
-    static_assert(S != 0, "FixedBytes length must be longer than 0");
     if (S != bytes.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
@@ -79,7 +76,6 @@ FixedBytes<S>::FixedBytes(const Bytes& bytes)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::string& str)
 {
-    static_assert(S != 0, "FixedBytes length must be longer than 0");
     if (S != str.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid string size for FixedBytes");
     }
@@ -92,7 +88,6 @@ FixedBytes<S>::FixedBytes(const std::string& str)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(const Byte* bytes, std::size_t length)
 {
-    static_assert(S != 0, "FixedBytes length must be longer than 0");
     if (S != length) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
@@ -103,7 +98,6 @@ FixedBytes<S>::FixedBytes(const Byte* bytes, std::size_t length)
 template<std::size_t S>
 FixedBytes<S>::FixedBytes(std::initializer_list<Byte> l)
 {
-    static_assert(S != 0, "FixedBytes length must be longer than 0");
     if (S != l.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid initializer list size for FixedBytes");
     }

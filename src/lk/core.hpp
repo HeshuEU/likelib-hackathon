@@ -5,10 +5,10 @@
 #include "base/utility.hpp"
 #include "bc/block.hpp"
 #include "bc/blockchain.hpp"
+#include "host.hpp"
 #include "lk/eth_adapter.hpp"
 #include "lk/managers.hpp"
 #include "lk/protocol.hpp"
-#include "net/host.hpp"
 
 #include <shared_mutex>
 

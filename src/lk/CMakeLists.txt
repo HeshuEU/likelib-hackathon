@@ -2,6 +2,7 @@ set(LK_HEADERS
         eth_adapter.hpp
         managers.hpp
         core.hpp
+        peer.hpp
         protocol.hpp
         )
 
@@ -9,6 +10,7 @@ set(LK_SOURCES
         eth_adapter.cpp
         managers.cpp
         core.cpp
+        peer.cpp
         protocol.cpp
         )
 

@@ -9,7 +9,7 @@
 
 namespace ba = boost::asio;
 
-namespace net
+namespace lk
 {
 
 PeerTable::PeerTable(bc::Address host_id)
@@ -38,18 +38,20 @@ void Host::scheduleHeartBeat()
 {
     _heartbeat_timer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
     _heartbeat_timer.async_wait([this](const boost::system::error_code& ec) {
-        dropZombieConnections();
+        dropZombiePeers();
         scheduleHeartBeat();
     });
 }
 
 
-Session& Host::addNewSession(std::unique_ptr<Connection> connection)
+net::Session& Host::addNewSession(std::unique_ptr<net::Connection> connection)
 {
     ASSERT(connection);
-    std::unique_lock lk(_sessions_mutex);
-    _sessions.push_back(std::make_shared<Session>(std::move(connection)));
+    std::unique_lock lk(_connected_peers_mutex);
+    _connected_peers.push_back(std::make_shared<net::Session>(std::move(connection)));
     auto& session = *_sessions.back();
+
+    // setHandler won't miss any messages since it is called inside connections callback
     session.setHandler(_handler_factory->create(session));
     return session;
 }
@@ -57,7 +59,7 @@ Session& Host::addNewSession(std::unique_ptr<Connection> connection)
 
 void Host::accept()
 {
-    _acceptor.accept([this](std::unique_ptr<Connection> connection) {
+    _acceptor.accept([this](std::unique_ptr<net::Connection> connection) {
         ASSERT(connection);
         [[maybe_unused]] auto& session = addNewSession(std::move(connection));
         accept();
@@ -65,12 +67,31 @@ void Host::accept()
 }
 
 
-void Host::connect(const net::Endpoint& address)
+void Host::connect(const net::Endpoint& endpoint)
 {
-    _connector.connect(address, [this](std::unique_ptr<Connection> connection) {
-        ASSERT(connection);
-        [[maybe_unused]] auto& session = addNewSession(std::move(connection));
+    if (_listen_ip == endpoint) {
+        return;
+    }
+
+    if (isConnectedTo(endpoint)) {
+        return;
+    }
+
+    std::shared_lock lk(_connected_peers_mutex);
+    for (const auto& peer : _connected_peers) {
+        if (auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
+            return;
+        }
+    }
+
+    LOG_CURRENT_FUNCTION;
+    LOG_DEBUG << "Connecting to node " << endpoint;
+    _connector.connect(endpoint, [this](std::unique_ptr<net::Connection> connection) {
+      ASSERT(connection);
+      [[maybe_unused]] auto& session = addNewSession(std::move(connection));
     });
+    LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
+
 }
 
 
@@ -90,13 +111,17 @@ void Host::networkThreadWorkerFunction() noexcept
 }
 
 
-void Host::run(std::unique_ptr<HandlerFactory> handler_factory)
+void Host::run()
 {
-    ASSERT(handler_factory);
-    _handler_factory = std::move(handler_factory);
     accept();
     scheduleHeartBeat();
     _network_thread = std::thread(&Host::networkThreadWorkerFunction, this);
+
+    if (_config.hasKey("nodes")) {
+        for (const auto& node : _config.getVector<std::string>("nodes")) {
+            connect(net::Endpoint(node));
+        }
+    }
 }
 
 
@@ -108,29 +133,30 @@ void Host::join()
 }
 
 
-void Host::dropZombieConnections()
+void Host::dropZombiePeers()
 {
-    std::unique_lock lk(_sessions_mutex);
-    _sessions.erase(
-      std::remove_if(_sessions.begin(), _sessions.end(), [](auto& session) { return session->isClosed(); }),
-      _sessions.end());
+    std::unique_lock lk(_connected_peers_mutex);
+    _connected_peers.erase(
+      std::remove_if(_connected_peers.begin(), _connected_peers.end(), [](const auto& peer) { return peer->isClosed(); }),
+      _connected_peers.end());
 }
 
 
 void Host::broadcast(const base::Bytes& data)
 {
-    std::unique_lock lk(_sessions_mutex);
-    for (auto& session : _sessions) {
-        session->send(data);
+    std::unique_lock lk(_connected_peers_mutex);
+    LOG_DEBUG << "Broadcasting data size = " << data.size();
+    for (auto& peer : _connected_peers) {
+        peer.send(data);
     }
 }
 
 
-bool Host::isConnectedTo(const Endpoint& endpoint) const
+bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 {
-    std::shared_lock lk(_sessions_mutex);
-    for (const auto& session : _sessions) {
-        if (session->getEndpoint() == endpoint) {
+    std::shared_lock lk(_connected_peers_mutex);
+    for (const auto& peer : _connected_peers) {
+        if (peer.getEndpoint() == endpoint) {
             return true;
         }
     }

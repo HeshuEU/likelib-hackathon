@@ -89,6 +89,8 @@ template<std::size_t S>
 class FixedBytes
 {
   public:
+    static_assert(S != 0, "FixedBytes length cannot be 0");
+
     FixedBytes();
     explicit FixedBytes(const std::vector<Byte>& bytes);
     explicit FixedBytes(const Bytes& bytes);
