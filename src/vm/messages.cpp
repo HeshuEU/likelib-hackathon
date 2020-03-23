@@ -6,8 +6,30 @@
 
 #include <set>
 
-
 namespace bp = ::boost::process;
+
+
+namespace
+{
+    std::string parsePath(const std::string& path)
+    {
+        constexpr std::size_t DELIM_SIZE = 8; 
+        return path.substr(DELIM_SIZE, path.size() - DELIM_SIZE * 2);
+    }
+
+    std::pair<base::Bytes, std::string> parseContractMembers(const std::string& contract_members)
+    {
+        
+        if(auto space_pos = contract_members.find(' '); space_pos != contract_members.npos){
+            auto hash = base::fromHex<base::Bytes>(contract_members.substr(0, space_pos - 1));
+            auto signature = contract_members.substr(space_pos + 1, contract_members.size() - space_pos - 1);
+            return {hash, signature};
+        }
+        else{
+            RAISE_ERROR(base::InvalidArgument, "Invalid string for contract members parsing");
+        }
+    }
+}
 
 namespace vm
 {
@@ -126,15 +148,13 @@ std::optional<Contracts> Solc::compile(const std::string& path_to_solidity_code)
 
 std::vector<std::string> Solc::call_command(std::vector<std::string> args) const
 {
-
     bp::ipstream out;
     bp::child c(_path_to_solc, args, bp::std_out > out);
     c.wait();
 
     std::vector<std::string> out_put_result_values;
-    while(out) {
-        std::string out_result;
-        out >> out_result;
+    std::string out_result;
+    while(std::getline(out, out_result)) {
         out_put_result_values.push_back(out_result);
     }
 
@@ -159,7 +179,7 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_com
 
     auto res = call_command(args);
 
-    static const std::set<std::string> ignore{"=======", "Binary:"};
+    static const std::set<std::string> ignore{"Binary:", ""};
     std::vector<std::string> out_put_result_values;
     for(const auto& item: res) {
         if(ignore.find(item) == ignore.end()) {
@@ -171,12 +191,13 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_com
     for(std::size_t i = 0; i < out_put_result_values.size() / 2; i++) {
         auto current_contract_path_index = i * 2;
         auto current_data_index = current_contract_path_index + 1;
-        auto path = out_put_result_values[current_contract_path_index];
+        auto path = parsePath(out_put_result_values[current_contract_path_index]);
         auto delimiter_pos = path.find(':');
         auto source_file = path.substr(0, delimiter_pos);
         auto contract_name = path.substr(delimiter_pos + 1, path.size());
         auto bytecode = base::fromHex<base::Bytes>(out_put_result_values[current_data_index]);
         contracts_byte_codes.push_back({std::move(contract_name), std::move(bytecode)});
+        
     }
 
     return contracts_byte_codes;
@@ -192,7 +213,7 @@ std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_comm
 
     auto res = call_command(args);
 
-    static const std::set<std::string> ignore{"=======", "Metadata:"};
+    static const std::set<std::string> ignore{"Metadata:", ""};
     std::vector<std::string> out_put_result_values;
     for(const auto& item: res) {
         if(ignore.find(item) == ignore.end()) {
@@ -204,7 +225,7 @@ std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_comm
     for(std::size_t i = 0; i < out_put_result_values.size() / 2; i++) {
         auto current_contract_path_index = i * 2;
         auto current_data_index = current_contract_path_index + 1;
-        auto path = out_put_result_values[current_contract_path_index];
+        auto path = parsePath(out_put_result_values[current_contract_path_index]);
         auto delimiter_pos = path.find(':');
         auto source_file = path.substr(0, delimiter_pos);
         auto contract_name = path.substr(delimiter_pos + 1, path.size());
@@ -227,7 +248,7 @@ std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::strin
 
     auto res = call_command(args);
 
-    static const std::set<std::string> ignore{"=======", "Function", "signatures:", ""};
+    static const std::set<std::string> ignore{"Function signatures:", ""};
     std::vector<std::string> out_put_result_values;
     for(const auto& item: res) {
         if(ignore.find(item) == ignore.end()) {
@@ -245,17 +266,13 @@ std::vector<std::pair<std::string, std::vector<std::pair<base::Bytes, std::strin
                 current_contract_name.clear();
                 current_contract_members.clear();
             }
-            auto path = out_put_result_values[i];
+            auto path = parsePath(out_put_result_values[i]);
             auto delimiter_pos = path.find(':');
             auto source_file = path.substr(0, delimiter_pos);
             current_contract_name = path.substr(delimiter_pos + 1, path.size());
             i++;
         }
-        auto hash = base::fromHex<base::Bytes>(out_put_result_values[i].substr(0, out_put_result_values[i].size() - 1));
-        i++;
-        auto signature = out_put_result_values[i];
-        i++;
-        current_contract_members.push_back({hash, signature});
+        current_contract_members.push_back(parseContractMembers(out_put_result_values[i++]));
     }
 
     return hashes;
