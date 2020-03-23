@@ -71,14 +71,12 @@ Integration tests:
     - docker
   script:
     - INSTALL_DIR="/opt"
-    - cd ./doc
-    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ./prepare_build.sh
-    - cd ..
+    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ./doc/prepare_build.sh
     - PROJECT_SOURCE_DIR=${PWD}
     - TEST_DIR="intergation_test_run"
     - mkdir ${TEST_DIR}
     - cd ${TEST_DIR}
-    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/bin/node -r ${PROJECT_SOURCE_DIR}/build/bin/client -evm ${PROJECT_SOURCE_DIR}/build/bin/libevmone.so.0.4
+    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -b ${PROJECT_SOURCE_DIR}/build/
   artifacts:
     when: always
     paths:
