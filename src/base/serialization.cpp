@@ -24,7 +24,9 @@ base::Bytes&& SerializationOArchive::getBytes() && noexcept
 }
 
 
-SerializationIArchive::SerializationIArchive(const base::Bytes& raw) : _bytes{raw}, _index{0}
+SerializationIArchive::SerializationIArchive(const base::Bytes& raw)
+  : _bytes{ raw }
+  , _index{ 0 }
 {}
 
 

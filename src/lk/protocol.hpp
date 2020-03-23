@@ -52,8 +52,11 @@ class HandshakeMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const bc::Block& block, const bc::Address& address,
-        std::uint16_t public_port, const std::vector<PeerInfo>& known_peers);
+    static void serialize(base::SerializationOArchive& oa,
+                          const bc::Block& block,
+                          const bc::Address& address,
+                          std::uint16_t public_port,
+                          const std::vector<PeerInfo>& known_peers);
     void serialize(base::SerializationOArchive& oa) const;
     static HandshakeMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
@@ -62,11 +65,13 @@ class HandshakeMessage
     bc::Block _theirs_top_block;
     bc::Address _address;
     std::uint16_t
-        _public_port; // zero public port states that peer didn't provide information about his public endpoint
+      _public_port; // zero public port states that peer didn't provide information about his public endpoint
     std::vector<PeerInfo> _known_peers;
 
-    HandshakeMessage(
-        bc::Block&& top_block, bc::Address address, std::uint16_t public_port, std::vector<PeerInfo>&& known_peers);
+    HandshakeMessage(bc::Block&& top_block,
+                     bc::Address address,
+                     std::uint16_t public_port,
+                     std::vector<PeerInfo>&& known_peers);
 };
 
 
@@ -184,8 +189,9 @@ class InfoMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const base::Sha256& top_block_hash,
-        const std::vector<net::Endpoint>& available_peers);
+    static void serialize(base::SerializationOArchive& oa,
+                          const base::Sha256& top_block_hash,
+                          const std::vector<net::Endpoint>& available_peers);
     void serialize(base::SerializationOArchive& oa) const;
     static InfoMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
@@ -203,8 +209,9 @@ class NewNodeMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(
-        base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint, const bc::Address& address);
+    static void serialize(base::SerializationOArchive& oa,
+                          const net::Endpoint& new_node_endpoint,
+                          const bc::Address& address);
     void serialize(base::SerializationOArchive& oa) const;
     static NewNodeMessage deserialize(base::SerializationIArchive& ia);
     void handle(Peer& peer, Network& network, Core& core);
@@ -226,9 +233,17 @@ class MessageProcessor
     void process(const base::Bytes& raw_message);
 
   private:
-    static const base::TypeList<HandshakeMessage, PingMessage, PongMessage, TransactionMessage, GetBlockMessage,
-        BlockMessage, BlockNotFoundMessage, GetInfoMessage, InfoMessage, NewNodeMessage>
-        _all_message_types;
+    static const base::TypeList<HandshakeMessage,
+                                PingMessage,
+                                PongMessage,
+                                TransactionMessage,
+                                GetBlockMessage,
+                                BlockMessage,
+                                BlockNotFoundMessage,
+                                GetInfoMessage,
+                                InfoMessage,
+                                NewNodeMessage>
+      _all_message_types;
 
     Peer& _peer;
     Network& _network;
@@ -265,14 +280,14 @@ class Peer
     bool applySyncs();
     const std::forward_list<bc::Block>& getSyncBlocks() const noexcept;
     //================
-    [[nodiscard]] std::unique_ptr<net::Handler> createHandler();
+    [[nodiscard]] std::unique_ptr<net::Session::Handler> createHandler();
     //================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
     //================
   private:
     //================
-    class Handler : public net::Handler
+    class Handler : public net::Session::Handler
     {
       public:
         //===================
@@ -300,7 +315,7 @@ class Peer
     net::Session& _session;
     Core& _core;
     //================
-    State _state{State::JUST_ESTABLISHED};
+    State _state{ State::JUST_ESTABLISHED };
     std::optional<net::Endpoint> _endpoint_for_incoming_connections;
     std::optional<bc::Address> _address;
     //================
@@ -326,14 +341,14 @@ class Network
     //================
     friend class Peer; // in order to be able to call removePeer from Handler
     //================
-    class HandlerFactory : public net::HandlerFactory
+    class HandlerFactory : public net::Host::HandlerFactory
     {
       public:
         //================
         explicit HandlerFactory(Network& owning_network_object);
         ~HandlerFactory() override = default;
         //================
-        std::unique_ptr<net::Handler> create(net::Session& session) override;
+        std::unique_ptr<net::Session::Handler> create(net::Session& session) override;
         void destroy() override;
         //================
       private:

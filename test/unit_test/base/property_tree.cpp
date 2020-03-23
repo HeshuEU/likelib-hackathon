@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(property_tree_usage1)
     BOOST_CHECK_EQUAL(config.get<std::string>("name"), "test_name");
 
 
-    const std::vector<int> right_values{1, 2, 4, 8, 16, 256};
+    const std::vector<int> right_values{ 1, 2, 4, 8, 16, 256 };
     BOOST_CHECK(config.getVector<int>("array") == right_values);
 
     std::filesystem::remove("config.json");
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(property_tree_usage2)
 
     BOOST_CHECK_EQUAL(config.get<std::string>("name"), " D1ff1C u^#4lt_&43n2Ame /");
 
-    const std::vector<double> right_values{1.1, 2.5, 4.7274, 8.57840, 16, 256.0};
+    const std::vector<double> right_values{ 1.1, 2.5, 4.7274, 8.57840, 16, 256.0 };
     BOOST_CHECK(config.getVector<double>("array") == right_values);
 
     std::filesystem::remove("config.json");
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(property_tree_usage3)
     BOOST_CHECK_EQUAL(config.get<double>("number2"), 468968574.765678);
     BOOST_CHECK_EQUAL(config.get<bool>("number3"), false);
 
-    const std::vector<bool> right_values{true, false, true, true, true, false};
+    const std::vector<bool> right_values{ true, false, true, true, true, false };
     BOOST_CHECK(config.getVector<bool>("array") == right_values);
 
     std::filesystem::remove("config.json");

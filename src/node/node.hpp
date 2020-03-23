@@ -1,11 +1,11 @@
 #pragma once
 
+#include "base/crypto.hpp"
 #include "base/property_tree.hpp"
 #include "lk/core.hpp"
 #include "node/miner.hpp"
-#include "rpc/rpc.hpp"
 #include "node/rpc_service.hpp"
-#include "base/crypto.hpp"
+#include "rpc/rpc.hpp"
 
 class Node
 {

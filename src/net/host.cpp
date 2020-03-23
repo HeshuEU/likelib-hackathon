@@ -3,7 +3,6 @@
 #include "base/assert.hpp"
 #include "base/log.hpp"
 
-#include <boost/asio/connect.hpp>
 #include <boost/asio/error.hpp>
 
 #include <chrono>
@@ -13,10 +12,13 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Host::Host(const base::PropertyTree& config)
-    : _config{config}, _listen_ip{_config.get<std::string>("net.listen_addr")},
-      _server_public_port{_config.get<unsigned short>("net.public_port")}, _acceptor{_io_context, _listen_ip},
-      _connector{_io_context}, _heartbeat_timer{_io_context}
+Host::Host(const base::PropertyTree& config, std::size_t connections_limit)
+  : _config{ config }
+  , _listen_ip{ _config.get<std::string>("net.listen_addr") }
+  , _server_public_port{ _config.get<unsigned short>("net.public_port") }
+  , _acceptor{ _io_context, _listen_ip }
+  , _connector{ _io_context }
+  , _heartbeat_timer{ _io_context }
 {}
 
 
@@ -71,11 +73,11 @@ void Host::networkThreadWorkerFunction() noexcept
     try {
         _io_context.run();
     }
-    catch(const std::exception& e) {
+    catch (const std::exception& e) {
         // TODO: thread worker function error-handling
         LOG_WARNING << "Error occurred in network thread: " << e.what();
     }
-    catch(...) {
+    catch (...) {
         // global catch done for safety, since thread function cannot throw.
         LOG_WARNING << "Error occurred in network thread";
     }
@@ -94,7 +96,7 @@ void Host::run(std::unique_ptr<HandlerFactory> handler_factory)
 
 void Host::join()
 {
-    if(_network_thread.joinable()) {
+    if (_network_thread.joinable()) {
         _network_thread.join();
     }
 }
@@ -103,18 +105,16 @@ void Host::join()
 void Host::dropZombieConnections()
 {
     std::unique_lock lk(_sessions_mutex);
-    _sessions.erase(std::remove_if(_sessions.begin(), _sessions.end(),
-                        [](auto& session) {
-                            return session->isClosed();
-                        }),
-        _sessions.end());
+    _sessions.erase(
+      std::remove_if(_sessions.begin(), _sessions.end(), [](auto& session) { return session->isClosed(); }),
+      _sessions.end());
 }
 
 
 void Host::broadcast(const base::Bytes& data)
 {
     std::unique_lock lk(_sessions_mutex);
-    for(auto& session: _sessions) {
+    for (auto& session : _sessions) {
         session->send(data);
     }
 }
@@ -123,8 +123,8 @@ void Host::broadcast(const base::Bytes& data)
 bool Host::isConnectedTo(const Endpoint& endpoint) const
 {
     std::shared_lock lk(_sessions_mutex);
-    for(const auto& session: _sessions) {
-        if(session->getEndpoint() == endpoint) {
+    for (const auto& session : _sessions) {
+        if (session->getEndpoint() == endpoint) {
             return true;
         }
     }

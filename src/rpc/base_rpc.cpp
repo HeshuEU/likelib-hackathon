@@ -3,7 +3,9 @@
 namespace rpc
 {
 
-OperationStatus::OperationStatus(StatusCode status, std::string message) noexcept : _status{status}, _message{message}
+OperationStatus::OperationStatus(StatusCode status, std::string message) noexcept
+  : _status{ status }
+  , _message{ message }
 {}
 
 OperationStatus OperationStatus::createSuccess(const std::string& message) noexcept

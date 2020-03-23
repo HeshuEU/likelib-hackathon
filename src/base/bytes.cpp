@@ -12,31 +12,35 @@
 namespace base
 {
 
-Bytes::Bytes()
+Bytes::Bytes() {}
+
+
+Bytes::Bytes(std::size_t size)
+  : _raw(size)
+{}
+
+Bytes::Bytes(const std::vector<Byte>& bytes)
+  : _raw(bytes)
 {}
 
 
-Bytes::Bytes(std::size_t size) : _raw(size)
-{}
-
-Bytes::Bytes(const std::vector<Byte>& bytes) : _raw(bytes)
-{}
-
-
-Bytes::Bytes(const std::string& s) : _raw(s.length())
+Bytes::Bytes(const std::string& s)
+  : _raw(s.length())
 {
     std::size_t index = 0;
-    for(const char c: s) {
+    for (const char c : s) {
         _raw[index++] = static_cast<Byte>(c);
     }
 }
 
 
-Bytes::Bytes(const Byte* const bytes, std::size_t length) : _raw(bytes, bytes + length)
+Bytes::Bytes(const Byte* const bytes, std::size_t length)
+  : _raw(bytes, bytes + length)
 {}
 
 
-Bytes::Bytes(std::initializer_list<Byte> l) : _raw(l)
+Bytes::Bytes(std::initializer_list<Byte> l)
+  : _raw(l)
 {}
 
 
@@ -86,7 +90,7 @@ Bytes& Bytes::append(const Bytes& bytes)
 Bytes& Bytes::append(const Byte* byte, std::size_t length)
 {
     _raw.reserve(_raw.size() + length);
-    for(const Byte* ptr = byte; ptr < byte + length; ++ptr) {
+    for (const Byte* ptr = byte; ptr < byte + length; ++ptr) {
         _raw.push_back(*ptr);
     }
     return *this;
@@ -163,7 +167,7 @@ std::string Bytes::toString() const
 {
     std::string ret(_raw.size(), static_cast<char>(0));
     std::size_t index = 0;
-    for(const auto& c: _raw) {
+    for (const auto& c : _raw) {
         ret[index++] = static_cast<char>(c);
     }
     return ret;
@@ -208,7 +212,7 @@ bool Bytes::operator>=(const Bytes& another) const
 
 base::Bytes operator+(const base::Bytes& a, const base::Bytes& b)
 {
-    base::Bytes ret{a};
+    base::Bytes ret{ a };
     ret.append(b);
     return ret;
 }
@@ -222,7 +226,7 @@ std::ostream& operator<<(std::ostream& os, const Bytes& bytes)
 base::Bytes base64Decode(std::string_view base64)
 {
     auto length = base64.length();
-    if(length == 0) {
+    if (length == 0) {
         return base::Bytes();
     }
 
@@ -233,7 +237,7 @@ base::Bytes base64Decode(std::string_view base64)
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     bio = BIO_push(b64, bio);
     auto new_length = BIO_read(bio, ret.getData(), length);
-    if(new_length < 1) {
+    if (new_length < 1) {
         BIO_free_all(bio);
         RAISE_ERROR(CryptoError, "Base64 decode read error");
     }
@@ -270,19 +274,19 @@ base::Bytes base58Decode(std::string_view base58)
     std::size_t current_pos = 0;
     std::size_t zeroes_count = 0;
     std::size_t length = 0;
-    while(base58[current_pos] == '1') {
+    while (base58[current_pos] == '1') {
         zeroes_count++;
         current_pos++;
     }
 
     std::vector<unsigned char> b256((base58.size() - current_pos) * 733 / 1000 + 1); // log(58) / log(256)
-    while(current_pos != base58.size()) {
+    while (current_pos != base58.size()) {
         auto carry = static_cast<int>(mapBase58[static_cast<std::int8_t>(base58[current_pos])]);
-        if(carry == -1) {
+        if (carry == -1) {
             RAISE_ERROR(base::InvalidArgument, "Invalid base58 string");
         }
         std::size_t i = 0;
-        for(auto it = b256.rbegin(); (carry != 0 || i < length) && (it != b256.rend()); ++it, ++i) {
+        for (auto it = b256.rbegin(); (carry != 0 || i < length) && (it != b256.rend()); ++it, ++i) {
             carry += 58 * (*it);
             *it = carry % 256;
             carry /= 256;
@@ -293,7 +297,7 @@ base::Bytes base58Decode(std::string_view base58)
 
     auto it = b256.begin() + (b256.size() - length);
     base::Bytes ret_bytes(std::vector<base::Byte>(zeroes_count, 0x00));
-    while(it != b256.end()) {
+    while (it != b256.end()) {
         ret_bytes.append(*(it++));
     }
     return ret_bytes;

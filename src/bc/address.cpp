@@ -12,21 +12,24 @@ Address::Address(const base::RsaPublicKey& pub)
 }
 
 
-Address::Address(const std::string_view& base58_address) : _address(base::base58Decode(base58_address))
+Address::Address(const std::string_view& base58_address)
+  : _address(base::base58Decode(base58_address))
 {}
 
 
-Address::Address(const base::Bytes& raw_address) : _address(raw_address)
+Address::Address(const base::Bytes& raw_address)
+  : _address(raw_address)
 {}
 
 
-Address::Address(const base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>& raw_address) : _address(raw_address)
+Address::Address(const base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>& raw_address)
+  : _address(raw_address)
 {}
 
 
 const Address& Address::null()
 {
-    static const Address null_address{base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>()};
+    static const Address null_address{ base::FixedBytes<Address::ADDRESS_BYTES_LENGTH>() };
     return null_address;
 }
 

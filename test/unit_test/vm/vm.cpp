@@ -1,8 +1,8 @@
 #include <boost/test/unit_test.hpp>
 
-#include <vm/vm.hpp>
-#include <vm/tools.hpp>
 #include <vm/messages.hpp>
+#include <vm/tools.hpp>
+#include <vm/vm.hpp>
 
 #include <filesystem>
 #include <iostream>
@@ -27,25 +27,26 @@ class HostImplementation : public evmc::Host
         std::cout << "get_storage method call: address[" << vm::toBytes(addr) << "], key[" << vm::toBytes(key)
                   << "].\n";
         auto it = _storage.find(key);
-        if(it != _storage.end()) {
+        if (it != _storage.end()) {
             auto val = it->second;
             return val;
         }
         return evmc::bytes32();
     }
 
-    evmc_storage_status set_storage(
-        const evmc::address& addr, const evmc::bytes32& key, const evmc::bytes32& value) noexcept override
+    evmc_storage_status set_storage(const evmc::address& addr,
+                                    const evmc::bytes32& key,
+                                    const evmc::bytes32& value) noexcept override
     {
         std::cout << "set_storage method call: address[" << base::toHex(vm::toBytes(addr)) << "], key["
                   << vm::toBytes(key) << "], value[" << vm::toBytes(value) << "].\n";
         auto f = _storage.find(key);
-        if(f != _storage.end()) {
+        if (f != _storage.end()) {
             f->second = value;
             return evmc_storage_status::EVMC_STORAGE_MODIFIED;
         }
 
-        _storage.insert({key, value});
+        _storage.insert({ key, value });
         return evmc_storage_status::EVMC_STORAGE_ADDED;
     }
 
@@ -68,7 +69,7 @@ class HostImplementation : public evmc::Host
     }
 
     size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-        noexcept override
+      noexcept override
     {
         std::cout << "copy_code call method call: " << vm::toBytes(addr)
                   << ", code_offset: " << std::to_string(code_offset)
@@ -86,7 +87,7 @@ class HostImplementation : public evmc::Host
     {
         std::cout << "call method call: snd[" << vm::toBytes(msg.sender) << "], dest[" << vm::toBytes(msg.destination)
                   << "].\n";
-        evmc::result res{evmc_status_code::EVMC_SUCCESS, 0, nullptr, 0};
+        evmc::result res{ evmc_status_code::EVMC_SUCCESS, 0, nullptr, 0 };
         return res;
     }
 
@@ -102,8 +103,11 @@ class HostImplementation : public evmc::Host
         return evmc::bytes32();
     }
 
-    void emit_log(const evmc::address& addr, const uint8_t* data, size_t data_size, const evmc::bytes32 topics[],
-        size_t num_topics) noexcept override
+    void emit_log(const evmc::address& addr,
+                  const uint8_t* data,
+                  size_t data_size,
+                  const evmc::bytes32 topics[],
+                  size_t num_topics) noexcept override
     {
         std::cout << "emit_log method call: address[" << vm::toBytes(addr) << "], topics_number["
                   << std::to_string(num_topics) << "].\n";
@@ -145,12 +149,12 @@ contract Foo {
     vm::Solc solc;
 
     auto contracts = solc.compile(code_file_path.string());
-    if(!contracts) {
+    if (!contracts) {
         BOOST_CHECK(false);
     }
 
     auto target_contract = contracts->front();
-    for(const auto& sign: target_contract.getSignatures()) {
+    for (const auto& sign : target_contract.getSignatures()) {
         std::cout << base::toHex(sign.first) << " | " << sign.second << std::endl;
     }
 
@@ -160,17 +164,17 @@ contract Foo {
     auto source = base::fromHex<base::Bytes>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaf");
     auto destination = base::fromHex<base::Bytes>("ffffffffffffffffffffffffffffffffffffaaff");
 
-    vm::SmartContract contract{target_code};
+    vm::SmartContract contract{ target_code };
 
     auto target_value_1 = 1u;
     auto init_message = contract.createInitMessage(
-        100000, bc::Address{source}, bc::Address{destination}, 1, vm::encode(target_value_1));
+      100000, bc::Address{ source }, bc::Address{ destination }, 1, vm::encode(target_value_1));
     auto res1 = vm_instance.execute(init_message);
     BOOST_CHECK(res1.ok());
 
     auto input_for_message_1 = base::fromHex<base::Bytes>("29809703"); // TODO: remove
     auto message1 =
-        contract.createMessage(10000, bc::Address{source}, bc::Address{destination}, 0, input_for_message_1);
+      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_1);
     auto res2 = vm_instance.execute(message1);
     BOOST_CHECK(res2.ok());
 
@@ -180,13 +184,13 @@ contract Foo {
 
     auto input_for_message_2 = base::fromHex<base::Bytes>("bd70b447") + vm::encode(target_value_2);
     auto message2 =
-        contract.createMessage(10000, bc::Address{source}, bc::Address{destination}, 0, input_for_message_2);
+      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_2);
     auto res3 = vm_instance.execute(message2);
     BOOST_CHECK(res3.ok());
 
     auto input_for_message_3 = base::fromHex<base::Bytes>("29809703"); // TODO: remove
     auto message3 =
-        contract.createMessage(10000, bc::Address{source}, bc::Address{destination}, 0, input_for_message_3);
+      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_3);
     auto res4 = vm_instance.execute(message3);
     BOOST_CHECK(res3.ok());
 
@@ -227,12 +231,12 @@ contract Foo {
     vm::Solc solc;
 
     auto contracts = solc.compile(code_file_path.string());
-    if(!contracts) {
+    if (!contracts) {
         BOOST_CHECK(false);
     }
 
     auto target_contract = contracts->front();
-    for(const auto& sign: target_contract.getSignatures()) {
+    for (const auto& sign : target_contract.getSignatures()) {
         std::cout << base::toHex<base::Bytes>(sign.first) << " | " << sign.second << std::endl;
     }
 
@@ -242,17 +246,17 @@ contract Foo {
     auto source = base::fromHex<base::Bytes>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaf");
     auto destination = base::fromHex<base::Bytes>("ffffffffffffffffffffffffffffffffffffaaff");
 
-    vm::SmartContract contract{target_code};
+    vm::SmartContract contract{ target_code };
 
     std::string target_value_1 = "one";
 
     auto init_message = contract.createInitMessage(
-        1000000, bc::Address{source}, bc::Address{destination}, 0, vm::encode(32u) + vm::encode(target_value_1));
+      1000000, bc::Address{ source }, bc::Address{ destination }, 0, vm::encode(32u) + vm::encode(target_value_1));
     auto res1 = vm_instance.execute(init_message);
     BOOST_CHECK(res1.ok());
 
     auto message1 = contract.createMessage(
-        1000000, bc::Address{source}, bc::Address{destination}, 0, base::fromHex<base::Bytes>("e21f37ce"));
+      1000000, bc::Address{ source }, bc::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
     auto res2 = vm_instance.execute(message1);
     BOOST_CHECK(res2.ok());
 
@@ -260,13 +264,17 @@ contract Foo {
 
     std::string target_value_2 = "Hello, world";
 
-    auto message2 = contract.createMessage(1000000, bc::Address{source}, bc::Address{destination}, 0,
-        base::fromHex<base::Bytes>("3d7403a3") + vm::encode(32u) + vm::encode(target_value_2));
+    auto message2 =
+      contract.createMessage(1000000,
+                             bc::Address{ source },
+                             bc::Address{ destination },
+                             0,
+                             base::fromHex<base::Bytes>("3d7403a3") + vm::encode(32u) + vm::encode(target_value_2));
     auto res3 = vm_instance.execute(message2);
     BOOST_CHECK(res3.ok());
 
     auto message3 = contract.createMessage(
-        1000000, bc::Address{source}, bc::Address{destination}, 0, base::fromHex<base::Bytes>("e21f37ce"));
+      1000000, bc::Address{ source }, bc::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
     auto res4 = vm_instance.execute(message3);
     BOOST_CHECK(res3.ok());
 

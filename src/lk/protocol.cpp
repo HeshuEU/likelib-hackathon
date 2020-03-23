@@ -29,7 +29,7 @@ PeerInfo PeerInfo::deserialize(base::SerializationIArchive& ia)
 {
     auto endpoint = ia.deserialize<net::Endpoint>();
     auto address = ia.deserialize<bc::Address>();
-    return {std::move(endpoint), std::move(address)};
+    return { std::move(endpoint), std::move(address) };
 }
 
 
@@ -47,8 +47,11 @@ constexpr MessageType HandshakeMessage::getHandledMessageType()
 }
 
 
-void HandshakeMessage::serialize(base::SerializationOArchive& oa, const bc::Block& block, const bc::Address& address,
-    std::uint16_t public_port, const std::vector<PeerInfo>& known_peers)
+void HandshakeMessage::serialize(base::SerializationOArchive& oa,
+                                 const bc::Block& block,
+                                 const bc::Address& address,
+                                 std::uint16_t public_port,
+                                 const std::vector<PeerInfo>& known_peers)
 {
     oa.serialize(MessageType::HANDSHAKE);
     oa.serialize(block);
@@ -78,28 +81,28 @@ void HandshakeMessage::handle(Peer& peer, Network& network, Core& core)
 {
     const auto& ours_top_block = core.getTopBlock();
 
-    if(auto ep = peer.getPublicEndpoint(); !ep && _public_port) {
+    if (auto ep = peer.getPublicEndpoint(); !ep && _public_port) {
         auto public_ep = peer.getEndpoint();
         public_ep.setPort(_public_port);
         peer.setServerEndpoint(public_ep);
     }
 
-    for(const auto& peer_info: _known_peers) {
+    for (const auto& peer_info : _known_peers) {
         network.checkOutNode(peer_info.endpoint, peer_info.address);
     }
 
-    if(_theirs_top_block == ours_top_block) {
+    if (_theirs_top_block == ours_top_block) {
         peer.setState(Peer::State::SYNCHRONISED);
         return; // nothing changes, because top blocks are equal
     }
     else {
-        if(ours_top_block.getDepth() > _theirs_top_block.getDepth()) {
+        if (ours_top_block.getDepth() > _theirs_top_block.getDepth()) {
             peer.setState(Peer::State::SYNCHRONISED);
             // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
             return;
         }
         else {
-            if(core.getTopBlock().getDepth() + 1 == _theirs_top_block.getDepth()) {
+            if (core.getTopBlock().getDepth() + 1 == _theirs_top_block.getDepth()) {
                 core.tryAddBlock(_theirs_top_block);
                 peer.setState(Peer::State::SYNCHRONISED);
             }
@@ -115,10 +118,14 @@ void HandshakeMessage::handle(Peer& peer, Network& network, Core& core)
 }
 
 
-HandshakeMessage::HandshakeMessage(
-    bc::Block&& top_block, bc::Address address, std::uint16_t public_port, std::vector<PeerInfo>&& known_peers)
-    : _theirs_top_block{std::move(top_block)}, _address{std::move(address)}, _public_port{public_port},
-      _known_peers{std::move(known_peers)}
+HandshakeMessage::HandshakeMessage(bc::Block&& top_block,
+                                   bc::Address address,
+                                   std::uint16_t public_port,
+                                   std::vector<PeerInfo>&& known_peers)
+  : _theirs_top_block{ std::move(top_block) }
+  , _address{ std::move(address) }
+  , _public_port{ public_port }
+  , _known_peers{ std::move(known_peers) }
 {}
 
 //============================================
@@ -141,8 +148,7 @@ PingMessage PingMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void PingMessage::handle(Peer& peer, Network& network, Core& core)
-{}
+void PingMessage::handle(Peer& peer, Network& network, Core& core) {}
 
 
 //============================================
@@ -165,8 +171,7 @@ PongMessage PongMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void PongMessage::handle(Peer& peer, Network& network, Core& core)
-{}
+void PongMessage::handle(Peer& peer, Network& network, Core& core) {}
 
 //============================================
 
@@ -192,7 +197,7 @@ void TransactionMessage::serialize(base::SerializationOArchive& oa) const
 TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto tx = bc::Transaction::deserialize(ia);
-    return {std::move(tx)};
+    return { std::move(tx) };
 }
 
 
@@ -202,7 +207,8 @@ void TransactionMessage::handle(Peer& peer, Network& network, Core& core)
 }
 
 
-TransactionMessage::TransactionMessage(bc::Transaction tx) : _tx{std::move(tx)}
+TransactionMessage::TransactionMessage(bc::Transaction tx)
+  : _tx{ std::move(tx) }
 {}
 
 //============================================
@@ -229,14 +235,14 @@ void GetBlockMessage::serialize(base::SerializationOArchive& oa) const
 GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block_hash = base::Sha256::deserialize(ia);
-    return {std::move(block_hash)};
+    return { std::move(block_hash) };
 }
 
 
 void GetBlockMessage::handle(Peer& peer, Network& network, Core& core)
 {
     auto block = core.findBlock(_block_hash);
-    if(block) {
+    if (block) {
         peer.send(serializeMessage<BlockMessage>(*block));
     }
     else {
@@ -245,7 +251,8 @@ void GetBlockMessage::handle(Peer& peer, Network& network, Core& core)
 }
 
 
-GetBlockMessage::GetBlockMessage(base::Sha256 block_hash) : _block_hash{std::move(block_hash)}
+GetBlockMessage::GetBlockMessage(base::Sha256 block_hash)
+  : _block_hash{ std::move(block_hash) }
 {}
 
 //============================================
@@ -272,20 +279,20 @@ void BlockMessage::serialize(base::SerializationOArchive& oa) const
 BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block = bc::Block::deserialize(ia);
-    return {std::move(block)};
+    return { std::move(block) };
 }
 
 
 void BlockMessage::handle(Peer& peer, Network& network, Core& core)
 {
-    if(peer.getState() == Peer::State::SYNCHRONISED) {
+    if (peer.getState() == Peer::State::SYNCHRONISED) {
         core.tryAddBlock(std::move(_block));
     }
     else {
         bc::BlockDepth block_depth = _block.getDepth();
         peer.addSyncBlock(std::move(_block));
 
-        if(block_depth == core.getTopBlock().getDepth() + 1) {
+        if (block_depth == core.getTopBlock().getDepth() + 1) {
             peer.applySyncs();
         }
         else {
@@ -295,7 +302,8 @@ void BlockMessage::handle(Peer& peer, Network& network, Core& core)
 }
 
 
-BlockMessage::BlockMessage(bc::Block block) : _block{std::move(block)}
+BlockMessage::BlockMessage(bc::Block block)
+  : _block{ std::move(block) }
 {}
 
 //============================================
@@ -322,15 +330,15 @@ void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa) const
 BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block_hash = base::Sha256::deserialize(ia);
-    return {std::move(block_hash)};
+    return { std::move(block_hash) };
 }
 
 
-void BlockNotFoundMessage::handle(Peer& peer, Network& network, Core& core)
-{}
+void BlockNotFoundMessage::handle(Peer& peer, Network& network, Core& core) {}
 
 
-BlockNotFoundMessage::BlockNotFoundMessage(base::Sha256 block_hash) : _block_hash{std::move(block_hash)}
+BlockNotFoundMessage::BlockNotFoundMessage(base::Sha256 block_hash)
+  : _block_hash{ std::move(block_hash) }
 {}
 
 //============================================
@@ -366,8 +374,9 @@ constexpr MessageType InfoMessage::getHandledMessageType()
 }
 
 
-void InfoMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& top_block_hash,
-    const std::vector<net::Endpoint>& available_peers)
+void InfoMessage::serialize(base::SerializationOArchive& oa,
+                            const base::Sha256& top_block_hash,
+                            const std::vector<net::Endpoint>& available_peers)
 {
     oa.serialize(MessageType::INFO);
     oa.serialize(top_block_hash);
@@ -385,16 +394,16 @@ InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto top_block_hash = ia.deserialize<base::Bytes>();
     auto available_peers = ia.deserialize<std::vector<net::Endpoint>>();
-    return {std::move(top_block_hash), std::move(available_peers)};
+    return { std::move(top_block_hash), std::move(available_peers) };
 }
 
 
-void InfoMessage::handle(Peer& peer, Network& network, Core& core)
-{}
+void InfoMessage::handle(Peer& peer, Network& network, Core& core) {}
 
 
 InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
-    : _top_block_hash{std::move(top_block_hash)}, _available_peers{std::move(available_peers)}
+  : _top_block_hash{ std::move(top_block_hash) }
+  , _available_peers{ std::move(available_peers) }
 {}
 
 //============================================
@@ -405,8 +414,9 @@ constexpr MessageType NewNodeMessage::getHandledMessageType()
 }
 
 
-void NewNodeMessage::serialize(
-    base::SerializationOArchive& oa, const net::Endpoint& new_node_endpoint, const bc::Address& address)
+void NewNodeMessage::serialize(base::SerializationOArchive& oa,
+                               const net::Endpoint& new_node_endpoint,
+                               const bc::Address& address)
 {
     oa.serialize(MessageType::NEW_NODE);
     oa.serialize(new_node_endpoint);
@@ -424,55 +434,62 @@ NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto ep = net::Endpoint::deserialize(ia);
     auto address = ia.deserialize<bc::Address>();
-    return {std::move(ep), std::move(address)};
+    return { std::move(ep), std::move(address) };
 }
 
 
 void NewNodeMessage::handle(Peer& peer, Network& network, Core& core)
 {
-    if(network.checkOutNode(_new_node_endpoint, _address)) {
+    if (network.checkOutNode(_new_node_endpoint, _address)) {
         network.broadcast(serializeMessage<NewNodeMessage>(_new_node_endpoint));
     }
 }
 
 
 NewNodeMessage::NewNodeMessage(net::Endpoint&& new_node_endpoint, bc::Address&& address)
-    : _new_node_endpoint{std::move(new_node_endpoint)}, _address{std::move(address)}
+  : _new_node_endpoint{ std::move(new_node_endpoint) }
+  , _address{ std::move(address) }
 {}
 
 //============================================
 
 MessageProcessor::MessageProcessor(Peer& peer, Network& network, Core& core)
-    : _peer{peer}, _network{network}, _core{core}
+  : _peer{ peer }
+  , _network{ network }
+  , _core{ core }
 {}
 
 
 namespace
 {
-    template<typename F, typename... O>
-    void runHandleImpl(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core)
-    {
-        if(F::getHandledMessageType() == mt) {
-            auto message = F::deserialize(ia);
-            message.handle(peer, network, core);
-        }
-        else {
-            runHandleImpl<O...>(mt, ia, peer, network, core);
-        }
+template<typename F, typename... O>
+void runHandleImpl(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core)
+{
+    if (F::getHandledMessageType() == mt) {
+        auto message = F::deserialize(ia);
+        message.handle(peer, network, core);
     }
-
-
-    template<>
-    void runHandleImpl<void>(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core)
-    {}
-
-
-    template<typename... Args>
-    void runHandle(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core,
-        base::TypeList<Args...> type_list)
-    {
-        runHandleImpl<Args..., void>(mt, ia, peer, network, core);
+    else {
+        runHandleImpl<O...>(mt, ia, peer, network, core);
     }
+}
+
+
+template<>
+void runHandleImpl<void>(MessageType mt, base::SerializationIArchive& ia, Peer& peer, Network& network, Core& core)
+{}
+
+
+template<typename... Args>
+void runHandle(MessageType mt,
+               base::SerializationIArchive& ia,
+               Peer& peer,
+               Network& network,
+               Core& core,
+               base::TypeList<Args...> type_list)
+{
+    runHandleImpl<Args..., void>(mt, ia, peer, network, core);
+}
 } // namespace
 
 
@@ -488,8 +505,11 @@ void MessageProcessor::process(const base::Bytes& raw_message)
 //============================================
 
 Peer::Handler::Handler(Peer& owning_peer, Network& owning_network_object, net::Session& handled_session, Core& core)
-    : _owning_peer{owning_peer}, _owning_network_object{owning_network_object}, _session{handled_session}, _core{core},
-      _message_processor{_owning_peer, _owning_network_object, _core}
+  : _owning_peer{ owning_peer }
+  , _owning_network_object{ owning_network_object }
+  , _session{ handled_session }
+  , _core{ core }
+  , _message_processor{ _owning_peer, _owning_network_object, _core }
 {
     _session.start();
 }
@@ -497,7 +517,7 @@ Peer::Handler::Handler(Peer& owning_peer, Network& owning_network_object, net::S
 
 void Peer::Handler::onReceive(const base::Bytes& data)
 {
-    if(_session.isClosed()) {
+    if (_session.isClosed()) {
         return;
     }
 
@@ -514,13 +534,15 @@ void Peer::Handler::onClose()
 //=====================================
 
 Peer::Peer(Network& owning_network_object, net::Session& session, Core& core)
-    : _owning_network_object{owning_network_object}, _session{session}, _core{core}
+  : _owning_network_object{ owning_network_object }
+  , _session{ session }
+  , _core{ core }
 {
     doHandshake();
 }
 
 
-std::unique_ptr<net::Handler> Peer::createHandler()
+std::unique_ptr<net::Session::Handler> Peer::createHandler()
 {
     return std::make_unique<Peer::Handler>(*this, _owning_network_object, _session, _core);
 }
@@ -574,8 +596,8 @@ void Peer::addSyncBlock(bc::Block block)
 
 bool Peer::applySyncs()
 {
-    for(auto&& block: _sync_blocks) {
-        if(!_core.tryAddBlock(block)) {
+    for (auto&& block : _sync_blocks) {
+        if (!_core.tryAddBlock(block)) {
             return false;
         }
     }
@@ -614,25 +636,28 @@ void Peer::setAddress(bc::Address address)
 
 //=====================================
 
-Network::HandlerFactory::HandlerFactory(Network& owning_network_object) : _owning_network_object{owning_network_object}
+Network::HandlerFactory::HandlerFactory(Network& owning_network_object)
+  : _owning_network_object{ owning_network_object }
 {}
 
 
-std::unique_ptr<net::Handler> Network::HandlerFactory::create(net::Session& session)
+std::unique_ptr<net::Session::Handler> Network::HandlerFactory::create(net::Session& session)
 {
     auto& peer = _owning_network_object.createPeer(session);
     return peer.createHandler();
 }
 
 
-void Network::HandlerFactory::destroy()
-{}
+void Network::HandlerFactory::destroy() {}
 
 //=====================================
 
-Network::Network(const base::PropertyTree& config, Core& core) : _config{config}, _host{_config}, _core{core}
+Network::Network(const base::PropertyTree& config, Core& core)
+  : _config{ config }
+  , _host{ _config, 0x42 } // TODO: change later
+  , _core{ core }
 {
-    if(_config.hasKey("net.public_port")) {
+    if (_config.hasKey("net.public_port")) {
         _public_port = _config.get<std::uint16_t>("net.public_port");
     }
     _core.subscribeToBlockAddition(std::bind(&Network::onNewBlock, this, std::placeholders::_1));
@@ -647,17 +672,16 @@ Peer& Network::createPeer(net::Session& session)
 }
 
 
-void Network::removePeer(const Peer& peer)
-{}
+void Network::removePeer(const Peer& peer) {}
 
 
 std::vector<PeerInfo> Network::allConnectedPeersInfo() const
 {
     std::vector<PeerInfo> ret;
-    for(const auto& peer: _peers) {
-        if(auto server_endpoint = peer.getPublicEndpoint()) {
-            if(auto address = peer.getAddress()) {
-                ret.push_back(PeerInfo{*std::move(server_endpoint), *std::move(address)});
+    for (const auto& peer : _peers) {
+        if (auto server_endpoint = peer.getPublicEndpoint()) {
+            if (auto address = peer.getAddress()) {
+                ret.push_back(PeerInfo{ *std::move(server_endpoint), std::move(*address) });
             }
         }
     }
@@ -667,21 +691,22 @@ std::vector<PeerInfo> Network::allConnectedPeersInfo() const
 
 bool Network::checkOutNode(const net::Endpoint& endpoint, const bc::Address& address)
 {
-    if(_core.getThisNodeAddress() == address) {
+    if (_core.getThisNodeAddress() == address) {
         return false;
     }
 
-    if(_host.isConnectedTo(endpoint)) {
+    if (_host.isConnectedTo(endpoint)) {
         return false;
     }
 
-    for(const auto& peer: _peers) {
-        if(auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
+    for (const auto& peer : _peers) {
+        if (auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
             return false;
         }
     }
 
-    LOG_DEBUG << "Connecting to node after Network::checkOutNode()";
+    LOG_CURRENT_FUNCTION;
+    LOG_DEBUG << "Connecting to node " << endpoint;
     _host.connect(endpoint);
     LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
     return true;
@@ -711,8 +736,8 @@ void Network::run()
 {
     _host.run(std::make_unique<HandlerFactory>(*this));
 
-    if(_config.hasKey("nodes")) {
-        for(const auto& node: _config.getVector<std::string>("nodes")) {
+    if (_config.hasKey("nodes")) {
+        for (const auto& node : _config.getVector<std::string>("nodes")) {
             _host.connect(net::Endpoint(node));
         }
     }

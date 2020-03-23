@@ -2,10 +2,10 @@
 
 #include <boost/program_options.hpp>
 
-#include <string>
-#include <memory>
-#include <map>
 #include <functional>
+#include <map>
+#include <memory>
+#include <string>
 
 namespace base
 {

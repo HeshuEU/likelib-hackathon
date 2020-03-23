@@ -11,8 +11,12 @@ namespace lk
 {
 
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
-    : _config{config}, _vault{key_vault}, _this_node_address{_vault.getPublicKey()},
-      _blockchain{_config}, _network{_config, *this}, _eth_adapter{*this, _account_manager, _code_manager}
+  : _config{ config }
+  , _vault{ key_vault }
+  , _this_node_address{ _vault.getPublicKey() }
+  , _blockchain{ _config }
+  , _network{ _config, *this }
+  , _eth_adapter{ *this, _account_manager, _code_manager }
 {
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
     ASSERT(result);
@@ -20,7 +24,7 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
     _is_account_manager_updated = true;
 
     _blockchain.load();
-    for(bc::BlockDepth d = 1; d <= _blockchain.getTopBlock().getDepth(); ++d) {
+    for (bc::BlockDepth d = 1; d <= _blockchain.getTopBlock().getDepth(); ++d) {
         auto block = *_blockchain.findBlock(*_blockchain.findBlockHashByDepth(d));
         _account_manager.update(block);
     }
@@ -30,15 +34,15 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
 const bc::Block& Core::getGenesisBlock()
 {
     static bc::Block genesis = [] {
-        auto timestamp = base::Time::fromSecondsSinceEpochBeginning(1583789617);
+        auto timestamp = base::Time(1583789617);
 
-        bc::Block ret{0, base::Sha256(base::Bytes(32)), timestamp, bc::Address::null(), {}};
-        bc::Address from{bc::Address::null()};
-        bc::Address to{"28dpzpURpyqqLoWrEhnHrajndeCq"};
-        bc::Balance amount{0xFFFFFFFF};
-        bc::Balance fee{0};
+        bc::Block ret{ 0, base::Sha256(base::Bytes(32)), timestamp, bc::Address::null(), {} };
+        bc::Address from{ bc::Address::null() };
+        bc::Address to{ "28dpzpURpyqqLoWrEhnHrajndeCq" };
+        bc::Balance amount{ 0xFFFFFFFF };
+        bc::Balance fee{ 0 };
 
-        ret.addTransaction({from, to, amount, fee, timestamp, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}});
+        ret.addTransaction({ from, to, amount, fee, timestamp, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{} });
         return ret;
     }();
     return genesis;
@@ -53,7 +57,7 @@ void Core::run()
 
 bool Core::addPendingTransaction(const bc::Transaction& tx)
 {
-    if(checkTransaction(tx)) {
+    if (checkTransaction(tx)) {
         {
             LOG_DEBUG << "Adding tx to pending";
             std::unique_lock lk(_pending_transactions_mutex);
@@ -68,7 +72,7 @@ bool Core::addPendingTransaction(const bc::Transaction& tx)
 
 void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
 {
-    if(!checkTransaction(tx)) {
+    if (!checkTransaction(tx)) {
         RAISE_ERROR(base::InvalidArgument, "invalid transaction");
     }
 
@@ -77,7 +81,7 @@ void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
     bool is_tx_mined = false;
 
     auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](const bc::Block& block) {
-        if(block.getTransactions().find(tx)) {
+        if (block.getTransactions().find(tx)) {
             is_tx_mined = true;
             cv.notify_all();
         }
@@ -86,9 +90,7 @@ void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
     addPendingTransaction(tx);
 
     std::unique_lock lk(mt);
-    cv.wait(lk, [&is_tx_mined] {
-        return is_tx_mined;
-    });
+    cv.wait(lk, [&is_tx_mined] { return is_tx_mined; });
     _event_block_added.unsubscribe(id);
 }
 
@@ -96,7 +98,7 @@ void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
 base::Bytes Core::getTransactionOutput(const base::Sha256& tx)
 {
     std::shared_lock lk(_tx_outputs_mutex);
-    if(auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
+    if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
         return it->second;
     }
     else {
@@ -107,7 +109,7 @@ base::Bytes Core::getTransactionOutput(const base::Sha256& tx)
 
 bool Core::tryAddBlock(const bc::Block& b)
 {
-    if(checkBlock(b) && _blockchain.tryAddBlock(b)) {
+    if (checkBlock(b) && _blockchain.tryAddBlock(b)) {
         {
             std::shared_lock lk(_pending_transactions_mutex);
             _pending_transactions.remove(b.getTransactions());
@@ -137,13 +139,13 @@ std::optional<base::Sha256> Core::findBlockHash(const bc::BlockDepth& depth) con
 
 bool Core::checkBlock(const bc::Block& b) const
 {
-    if(_blockchain.findBlock(base::Sha256::compute(base::toBytes(b)))) {
+    if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(b)))) {
         return false;
     }
 
     // FIXME: this works wrong if two transactions are both valid, but together are not
-    for(const auto& tx: b.getTransactions()) {
-        if(!_account_manager.checkTransaction(tx)) {
+    for (const auto& tx : b.getTransactions()) {
+        if (!_account_manager.checkTransaction(tx)) {
             return false;
         }
     }
@@ -154,19 +156,19 @@ bool Core::checkBlock(const bc::Block& b) const
 
 bool Core::checkTransaction(const bc::Transaction& tx) const
 {
-    if(!tx.checkSign()) {
+    if (!tx.checkSign()) {
         LOG_DEBUG << "Failed signature verification";
         return false;
     }
 
-    if(_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
+    if (_blockchain.findTransaction(base::Sha256::compute(base::toBytes(tx)))) {
         return false;
     }
 
     std::map<bc::Address, bc::Balance> current_pending_balance;
     {
         std::shared_lock lk(_pending_transactions_mutex);
-        if(_pending_transactions.find(tx)) {
+        if (_pending_transactions.find(tx)) {
             return false;
         }
 
@@ -174,7 +176,7 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
     }
 
     auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
-    if(pending_from_account_balance != current_pending_balance.end()) {
+    if (pending_from_account_balance != current_pending_balance.end()) {
         auto current_from_account_balance = _account_manager.getBalance(tx.getFrom());
         return pending_from_account_balance->second + current_from_account_balance >= tx.getAmount();
     }
@@ -190,7 +192,7 @@ bc::Block Core::getBlockTemplate() const
     bc::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
     std::shared_lock lk(_pending_transactions_mutex);
-    return bc::Block{depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions};
+    return bc::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions };
 }
 
 
@@ -214,12 +216,12 @@ const bc::Address& Core::getThisNodeAddress() const noexcept
 
 void Core::applyBlockTransactions(const bc::Block& block)
 {
-    if(!_is_account_manager_updated) {
+    if (!_is_account_manager_updated) {
         _account_manager.updateFromGenesis(block);
         _is_account_manager_updated = true;
     }
     else {
-        for(const auto& tx: block.getTransactions()) {
+        for (const auto& tx : block.getTransactions()) {
             tryPerformTransaction(tx, block);
         }
         constexpr bc::Balance EMISSION_VALUE = 1000;
@@ -231,7 +233,7 @@ void Core::applyBlockTransactions(const bc::Block& block)
 bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx)
 {
     auto hash = base::Sha256::compute(base::toBytes(tx));
-    if(tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
+    if (tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
         try {
             _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
             auto [address, result, gas_left] = doContractCreation(tx, block_where_tx);
@@ -248,7 +250,7 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
             _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - gas_left);
             _account_manager.getAccount(tx.getFrom()).addBalance(gas_left);
         }
-        catch(const base::Error&) {
+        catch (const base::Error&) {
             return false;
         }
         return true;
@@ -270,14 +272,15 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
             _account_manager.getAccount(tx.getFrom()).addBalance(result.gasLeft());
             return true;
         }
-        catch(const base::Error&) {
+        catch (const base::Error&) {
             return false;
         }
     }
 }
 
 
-std::tuple<bc::Address, base::Bytes, bc::Balance> Core::doContractCreation(const bc::Transaction& tx, const bc::Block& block_where_tx)
+std::tuple<bc::Address, base::Bytes, bc::Balance> Core::doContractCreation(const bc::Transaction& tx,
+                                                                           const bc::Block& block_where_tx)
 {
     base::SerializationIArchive ia(tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();
@@ -287,8 +290,8 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> Core::doContractCreation(const
 
     bc::Address contract_address = _account_manager.newContract(tx.getFrom(), hash);
     LOG_DEBUG << "Deploying smart contract at address " << contract_address;
-    if(tx.getAmount() != 0) {
-        if(!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
+    if (tx.getAmount() != 0) {
+        if (!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
             RAISE_ERROR(base::Error, "cannot transfer money");
         }
     }
@@ -301,11 +304,11 @@ vm::ExecutionResult Core::doMessageCall(const bc::Transaction& tx, const bc::Blo
 {
     auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
 
-    if(!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
+    if (!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
         RAISE_ERROR(base::Error, "cannot transfer money");
     }
 
-    if(code_hash != base::Sha256::null()) {
+    if (code_hash != base::Sha256::null()) {
         // if we're here -- do a call to a contract
         return _eth_adapter.call(tx, block_where_tx);
     }

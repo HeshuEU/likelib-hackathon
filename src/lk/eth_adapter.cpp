@@ -11,7 +11,9 @@ class EthAdapter::EthHost : public evmc::Host
 {
   public:
     EthHost(lk::Core& core, lk::AccountManager& account_manager, lk::CodeManager& code_manager)
-        : _core{core}, _account_manager{account_manager}, _code_manager{code_manager}
+      : _core{ core }
+      , _account_manager{ account_manager }
+      , _code_manager{ code_manager }
     {}
 
 
@@ -38,14 +40,15 @@ class EthAdapter::EthHost : public evmc::Host
             auto storage_value = _account_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
             return vm::toEvmcBytes32(storage_value);
         }
-        catch(...) { // cannot pass exceptions since noexcept
+        catch (...) { // cannot pass exceptions since noexcept
             return {};
         }
     }
 
 
-    evmc_storage_status set_storage(
-        const evmc::address& addr, const evmc::bytes32& ekey, const evmc::bytes32& evalue) noexcept override
+    evmc_storage_status set_storage(const evmc::address& addr,
+                                    const evmc::bytes32& ekey,
+                                    const evmc::bytes32& evalue) noexcept override
     {
         ASSERT(_associated_tx);
         ASSERT(_associated_block);
@@ -58,8 +61,8 @@ class EthAdapter::EthHost : public evmc::Host
 
         auto& account_state = _account_manager.getAccount(address);
 
-        if(!account_state.checkStorageValue(key)) {
-            if(new_value == NULL_VALUE) {
+        if (!account_state.checkStorageValue(key)) {
+            if (new_value == NULL_VALUE) {
                 return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
             }
             else {
@@ -72,10 +75,10 @@ class EthAdapter::EthHost : public evmc::Host
             const auto& old_value = old_storage_data.data;
 
             account_state.setStorageValue(key, new_value);
-            if(old_value == new_value) {
+            if (old_value == new_value) {
                 return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
             }
-            else if(new_value == NULL_VALUE) {
+            else if (new_value == NULL_VALUE) {
                 return evmc_storage_status::EVMC_STORAGE_DELETED;
             }
             else {
@@ -95,7 +98,7 @@ class EthAdapter::EthHost : public evmc::Host
         auto balance = _account_manager.getBalance(address);
         evmc::uint256be ret;
         std::fill(std::begin(ret.bytes), std::end(ret.bytes), 0);
-        for(int i = sizeof(balance) * 8; i >= 0; --i) {
+        for (int i = sizeof(balance) * 8; i >= 0; --i) {
             ret.bytes[i] = balance & 0xFF;
             balance >>= 8;
         }
@@ -111,7 +114,7 @@ class EthAdapter::EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_code_size";
         auto address = vm::toNativeAddress(addr);
         auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
-        if(auto code = _code_manager.getCode(account_code_hash); !code) {
+        if (auto code = _code_manager.getCode(account_code_hash); !code) {
             ASSERT(false);
             return 0;
         }
@@ -134,7 +137,7 @@ class EthAdapter::EthHost : public evmc::Host
 
 
     size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-        noexcept override
+      noexcept override
     {
         ASSERT(_associated_tx);
         ASSERT(_associated_block);
@@ -142,7 +145,7 @@ class EthAdapter::EthHost : public evmc::Host
         LOG_DEBUG << "Core::copy_code";
         auto address = vm::toNativeAddress(addr);
         auto account_code_hash = _account_manager.getAccount(address).getCodeHash();
-        if(auto code_opt = _code_manager.getCode(account_code_hash); !code_opt) {
+        if (auto code_opt = _code_manager.getCode(account_code_hash); !code_opt) {
             ASSERT(false);
             return 0;
         }
@@ -217,7 +220,7 @@ class EthAdapter::EthHost : public evmc::Host
         std::fill(std::begin(ret.tx_gas_price.bytes), std::end(ret.tx_gas_price.bytes), 0);
         ret.tx_origin = vm::toEthAddress(_associated_tx->getFrom());
         ret.block_number = _associated_block->getDepth();
-        ret.block_timestamp = _associated_block->getTimestamp().getSecondsSinceEpochBeginning();
+        ret.block_timestamp = _associated_block->getTimestamp().getSecondsSinceEpoch();
         ret.block_coinbase = vm::toEthAddress(_associated_block->getCoinbase());
         // ret.block_gas_limit
         std::fill(std::begin(ret.block_difficulty.bytes), std::end(ret.block_difficulty.bytes), 0);
@@ -255,8 +258,8 @@ class EthAdapter::EthHost : public evmc::Host
     }
     //===================================
   private:
-    const bc::Transaction* _associated_tx{nullptr};
-    const bc::Block* _associated_block{nullptr};
+    const bc::Transaction* _associated_tx{ nullptr };
+    const bc::Block* _associated_block{ nullptr };
     lk::Core& _core;
     lk::AccountManager& _account_manager;
     lk::CodeManager& _code_manager;
@@ -264,15 +267,20 @@ class EthAdapter::EthHost : public evmc::Host
 
 
 EthAdapter::EthAdapter(Core& core, AccountManager& account_manager, CodeManager& code_manager)
-    : _eth_host{std::make_unique<EthHost>(core, account_manager, code_manager)}, _vm{vm::Vm::load(*_eth_host.get())},
-      _core{core}, _account_manager{account_manager}, _code_manager{code_manager}
+  : _eth_host{ std::make_unique<EthHost>(core, account_manager, code_manager) }
+  , _vm{ vm::Vm::load(*_eth_host.get()) }
+  , _core{ core }
+  , _account_manager{ account_manager }
+  , _code_manager{ code_manager }
 {}
 
 
 EthAdapter::~EthAdapter() = default;
 
 
-std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(const bc::Address& contract_address, const bc::Transaction& associated_tx, const bc::Block& associated_block)
+std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(const bc::Address& contract_address,
+                                                                             const bc::Transaction& associated_tx,
+                                                                             const bc::Block& associated_block)
 {
     std::lock_guard lk(_execution_mutex);
 
@@ -280,13 +288,16 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
     auto contract_data = ia.deserialize<bc::ContractInitData>();
 
     vm::SmartContract contract(contract_data.getCode());
-    auto message = contract.createInitMessage(associated_tx.getFee(), associated_tx.getFrom(), contract_address,
-                                              associated_tx.getAmount(), contract_data.getInit());
+    auto message = contract.createInitMessage(associated_tx.getFee(),
+                                              associated_tx.getFrom(),
+                                              contract_address,
+                                              associated_tx.getAmount(),
+                                              contract_data.getInit());
 
     _eth_host->setContext(&associated_tx, &associated_block);
-    if(auto result = _vm.execute(message); result.ok()) {
+    if (auto result = _vm.execute(message); result.ok()) {
         // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
-        return {contract_address, {}, static_cast<bc::Balance>(result.gasLeft())};
+        return { contract_address, {}, static_cast<bc::Balance>(result.gasLeft()) };
     }
     else {
         RAISE_ERROR(base::Error, "contract creation failed during execution");
@@ -300,12 +311,16 @@ vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const
 
     auto code_hash = _account_manager.getAccount(associated_tx.getTo()).getCodeHash();
 
-    if(auto code_opt = _code_manager.getCode(code_hash); !code_opt) {
+    if (auto code_opt = _code_manager.getCode(code_hash); !code_opt) {
         RAISE_ERROR(base::Error, "cannot find code by hash");
     }
     else {
         vm::SmartContract contract(*code_opt);
-        auto message = contract.createMessage(associated_tx.getFee(), associated_tx.getFrom(), associated_tx.getTo(), associated_tx.getAmount(), associated_tx.getData());
+        auto message = contract.createMessage(associated_tx.getFee(),
+                                              associated_tx.getFrom(),
+                                              associated_tx.getTo(),
+                                              associated_tx.getAmount(),
+                                              associated_tx.getData());
 
         _eth_host->setContext(&associated_tx, &associated_block);
         return _vm.execute(message);

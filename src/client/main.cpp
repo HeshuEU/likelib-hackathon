@@ -14,12 +14,12 @@ int mainProcess(base::SubprogramRouter& router)
     router.getOptionsParser().addFlag("version,v", "Print version of program");
     router.update();
 
-    if(router.getOptionsParser().hasOption("help") || router.getOptionsParser().empty()) {
+    if (router.getOptionsParser().hasOption("help") || router.getOptionsParser().empty()) {
         std::cout << router.helpMessage() << std::endl;
         return base::config::EXIT_OK;
     }
 
-    if(router.getOptionsParser().hasOption("version")) {
+    if (router.getOptionsParser().hasOption("version")) {
         std::cout << "Likelib2 client " << config::VERSION << std::endl;
         return base::config::EXIT_OK;
     }
@@ -46,9 +46,9 @@ int main(int argc, char** argv)
         router.addSubprogram("info", "get LK info", run<ActionInfo>);
         router.addSubprogram("get_block", "get block information", run<ActionGetBlock>);
         router.addSubprogram(
-            "get_balance", "use for get balance from remote by account address", run<ActionGetBalance>);
+          "get_balance", "use for get balance from remote by account address", run<ActionGetBalance>);
         router.addSubprogram(
-            "transfer", "use transfer balance from one address to another address", run<ActionTransfer>);
+          "transfer", "use transfer balance from one address to another address", run<ActionTransfer>);
         router.addSubprogram("test", "test RPC connection", run<ActionTestConnection>);
         router.addSubprogram("create_contract", "deploy a smart contract", run<ActionCreateContract>);
         router.addSubprogram("message_call", "create message to call smart contract", run<ActionMessageCall>);
@@ -57,12 +57,12 @@ int main(int argc, char** argv)
         router.addSubprogram("decode", "decode smart contract message", run<ActionDecode>);
         return router.process(argc, argv);
     }
-    catch(const std::exception& error) {
+    catch (const std::exception& error) {
         printUnexpectedError(error.what());
         LOG_ERROR << "[exception caught] " << error.what();
         return base::config::EXIT_FAIL;
     }
-    catch(...) {
+    catch (...) {
         printUnexpectedError();
         LOG_ERROR << "[unknown exception caught]";
         return base::config::EXIT_FAIL;

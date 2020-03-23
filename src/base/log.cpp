@@ -2,15 +2,15 @@
 
 #include "base/config.hpp"
 
-#include <boost/log/sources/record_ostream.hpp>
-#include <boost/log/sinks/text_ostream_backend.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/file.hpp>
 #include <boost/core/null_deleter.hpp>
 #include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/sinks/text_ostream_backend.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/file.hpp>
 #include <boost/stacktrace.hpp>
 
 #include <ctime>
@@ -49,8 +49,8 @@ void setFileSink()
 
     using TextFileSink = boost::log::sinks::synchronous_sink<boost::log::sinks::text_file_backend>;
     auto sink = boost::make_shared<TextFileSink>(boost::log::keywords::file_name = file_path,
-        boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
-        boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT);
+                                                 boost::log::keywords::max_size = base::config::LOG_FILE_MAX_SIZE,
+                                                 boost::log::keywords::max_files = base::config::LOG_MAX_FILE_COUNT);
 
     sink->locked_backend()->auto_flush(true);
 
@@ -88,15 +88,15 @@ void initLog(size_t mode)
 {
     clearLoggerSettings();
 
-    if(!mode) {
+    if (!mode) {
         disableLogger();
         return;
     }
 
-    if(mode & base::Sink::STDOUT) {
+    if (mode & base::Sink::STDOUT) {
         setStdoutSink();
     }
-    if(mode & base::Sink::FILE) {
+    if (mode & base::Sink::FILE) {
         setFileSink();
     }
 

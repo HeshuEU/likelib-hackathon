@@ -17,17 +17,17 @@ namespace
 
 std::size_t hexToInt(char hex)
 {
-    if('0' <= hex && hex <= '9') {
+    if ('0' <= hex && hex <= '9') {
         return hex - '0';
     }
-    else if('a' <= hex && hex <= 'f') {
+    else if ('a' <= hex && hex <= 'f') {
         return hex - 'a' + 10;
     }
-    else if('A' <= hex && hex <= 'F') {
+    else if ('A' <= hex && hex <= 'F') {
         return hex - 'A' + 10;
     }
     else {
-        RAISE_ERROR(base::InvalidArgument, "Non hex symbol.");
+        RAISE_ERROR(base::InvalidArgument, "Non hex symbol");
     }
 }
 
@@ -37,11 +37,13 @@ namespace base
 {
 
 template<std::size_t S>
-Bytes::Bytes(const FixedBytes<S>& bytes) : _raw(bytes.getData(), S)
+Bytes::Bytes(const FixedBytes<S>& bytes)
+  : _raw(bytes.getData(), S)
 {}
 
 template<typename I>
-Bytes::Bytes(I begin, I end) : _raw(begin, end)
+Bytes::Bytes(I begin, I end)
+  : _raw(begin, end)
 {}
 
 
@@ -56,7 +58,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::vector<Byte>& bytes)
 {
     static_assert(S != 0, "FixedBytes length must be longer than 0");
-    if(S != bytes.size()) {
+    if (S != bytes.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes.begin(), S, _array.begin());
@@ -67,7 +69,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const Bytes& bytes)
 {
     static_assert(S != 0, "FixedBytes length must be longer than 0");
-    if(S != bytes.size()) {
+    if (S != bytes.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes.toVector().begin(), S, _array.begin());
@@ -78,10 +80,10 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const std::string& str)
 {
     static_assert(S != 0, "FixedBytes length must be longer than 0");
-    if(S != str.size()) {
+    if (S != str.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid string size for FixedBytes");
     }
-    for(std::size_t i = 0; i < S; i++) {
+    for (std::size_t i = 0; i < S; i++) {
         _array[i] = static_cast<Byte>(str[i]);
     }
 }
@@ -91,7 +93,7 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(const Byte* bytes, std::size_t length)
 {
     static_assert(S != 0, "FixedBytes length must be longer than 0");
-    if(S != length) {
+    if (S != length) {
         RAISE_ERROR(base::InvalidArgument, "Invalid bytes size for FixedBytes");
     }
     std::copy_n(bytes, S, _array.begin());
@@ -102,10 +104,10 @@ template<std::size_t S>
 FixedBytes<S>::FixedBytes(std::initializer_list<Byte> l)
 {
     static_assert(S != 0, "FixedBytes length must be longer than 0");
-    if(S != l.size()) {
+    if (S != l.size()) {
         RAISE_ERROR(base::InvalidArgument, "Invalid initializer list size for FixedBytes");
     }
-    for(std::size_t i = 0; i < S; i++) {
+    for (std::size_t i = 0; i < S; i++) {
         _array[i] = l.begin()[i];
     }
 }
@@ -174,7 +176,7 @@ std::string FixedBytes<S>::toString() const
 {
     std::string ret(S, static_cast<char>(0));
     std::size_t index = 0;
-    for(const auto& c: _array) {
+    for (const auto& c : _array) {
         ret[index++] = static_cast<char>(c);
     }
     return ret;
@@ -230,7 +232,7 @@ std::string toHex(const T& bytes)
     // since every byte is represented by 2 hex digits, we do * 2
     std::string ret(bytes.size() * 2, static_cast<char>(0));
     std::size_t index = 0;
-    for(const Byte& c: bytes.toString()) {
+    for (const Byte& c : bytes.toString()) {
         ret[index++] = HEX_DIGITS[c >> 4];
         ret[index++] = HEX_DIGITS[c & 0xF];
     }
@@ -241,13 +243,13 @@ std::string toHex(const T& bytes)
 template<typename T>
 T fromHex(const std::string_view& hex_view)
 {
-    if(hex_view.size() % 2 != 0) {
+    if (hex_view.size() % 2 != 0) {
         RAISE_ERROR(InvalidArgument, "Invalid string length. Odd line length.");
     }
 
     auto bytes_size = hex_view.size() / 2;
     std::vector<Byte> bytes(bytes_size);
-    for(std::size_t current_symbol_index = 0; current_symbol_index < bytes_size; current_symbol_index++) {
+    for (std::size_t current_symbol_index = 0; current_symbol_index < bytes_size; current_symbol_index++) {
         auto index = current_symbol_index * 2;
         auto high_part = hexToInt(hex_view[index]);
         auto low_part = hexToInt(hex_view[index + 1]);
@@ -261,7 +263,7 @@ T fromHex(const std::string_view& hex_view)
 template<typename T>
 std::string base64Encode(const T& bytes)
 {
-    if(bytes.size() == 0) {
+    if (bytes.size() == 0) {
         return "";
     }
 
@@ -271,14 +273,14 @@ std::string base64Encode(const T& bytes)
 
     std::unique_ptr<BIO, decltype(&::BIO_free_all)> bio(BIO_push(b64, bio_temp), ::BIO_free_all);
     BIO_set_flags(bio.get(), BIO_FLAGS_BASE64_NO_NL);
-    if(BIO_write(bio.get(), bytes.getData(), static_cast<int>(bytes.size())) < 1) {
+    if (BIO_write(bio.get(), bytes.getData(), static_cast<int>(bytes.size())) < 1) {
         RAISE_ERROR(CryptoError, "Base64 encode write error");
     }
-    if(BIO_flush(bio.get()) < 1) {
+    if (BIO_flush(bio.get()) < 1) {
         RAISE_ERROR(CryptoError, "Base64 encode flush error");
     }
-    if(BIO_get_mem_ptr(bio.get(), &bufferPtr) < 1) {
-        if(bufferPtr) {
+    if (BIO_get_mem_ptr(bio.get(), &bufferPtr) < 1) {
+        if (bufferPtr) {
             BUF_MEM_free(bufferPtr);
         }
         RAISE_ERROR(CryptoError, "Get pointer to memory from base64 error");
@@ -300,16 +302,17 @@ std::string base58Encode(const T& bytes)
     std::size_t current_pos = 0;
     std::size_t zeroes_count = 0;
     std::size_t length = 0;
-    while(current_pos != bytes.size() && bytes[current_pos] == 0) {
+    while (current_pos != bytes.size() && bytes[current_pos] == 0) {
         current_pos++;
         zeroes_count++;
     }
 
     base::Bytes b58(bytes.size() * 138 / 100 + 1); // log(256) / log(58)
-    while(current_pos != bytes.size()) {
+    while (current_pos != bytes.size()) {
         auto carry = static_cast<std::size_t>(bytes[current_pos]);
         std::size_t i = 0;
-        for(auto it = b58.toVector().rbegin(); (carry != 0 || i < length) && (it != b58.toVector().rend()); it++, i++) {
+        for (auto it = b58.toVector().rbegin(); (carry != 0 || i < length) && (it != b58.toVector().rend());
+             it++, i++) {
             carry += 256 * (*it);
             *it = carry % 58;
             carry /= 58;
@@ -318,14 +321,14 @@ std::string base58Encode(const T& bytes)
         current_pos++;
     }
     auto it = b58.toVector().begin() + (b58.size() - length);
-    while(it != b58.toVector().end() && *it == 0) {
+    while (it != b58.toVector().end() && *it == 0) {
         it++;
     }
 
     std::string str;
     str.reserve(zeroes_count + (b58.toVector().end() - it));
     str.assign(zeroes_count, '1');
-    while(it != b58.toVector().end()) {
+    while (it != b58.toVector().end()) {
         str += pszBase58[*(it++)];
     }
     return str;

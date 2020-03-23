@@ -2,17 +2,16 @@
 
 #include <boost/current_function.hpp>
 #include <boost/log/keywords/severity.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/sources/logger.hpp>
-#include <boost/log/trivial.hpp>
 #include <boost/log/sources/features.hpp>
-#include <boost/log/sources/threading_models.hpp>
 #include <boost/log/sources/global_logger_storage.hpp>
+#include <boost/log/sources/logger.hpp>
+#include <boost/log/sources/threading_models.hpp>
+#include <boost/log/trivial.hpp>
 
 #include <cstddef>
-#include <thread>
-#include <sstream>
 #include <mutex>
+#include <sstream>
+#include <thread>
 
 namespace logging = boost::log;
 namespace src = boost::log::sources;
@@ -25,9 +24,9 @@ namespace base
 
 namespace Sink
 {
-    static constexpr const std::size_t DISABLE = 0x0;
-    static constexpr const std::size_t STDOUT = 0x1;
-    static constexpr const std::size_t FILE = 0x2;
+static constexpr const std::size_t DISABLE = 0x0;
+static constexpr const std::size_t STDOUT = 0x1;
+static constexpr const std::size_t FILE = 0x2;
 } // namespace Sink
 
 
@@ -36,7 +35,6 @@ void initLog(std::size_t mode = Sink::FILE);
 void dumpDebuggingInfo();
 
 } // namespace base
-
 
 
 #if defined(CONFIG_IS_DEBUG)
@@ -52,9 +50,8 @@ template<typename T>
     return nb;
 }
 
-#define LOG_DEBUG \
-    NullBuffer \
-    {}
+#define LOG_DEBUG                                                                                                      \
+    NullBuffer {}
 #endif
 
 #define LOG_TRACE BOOST_LOG_SEV(logger::get(), logging::trivial::trace) << BOOST_CURRENT_FUNCTION << ' '

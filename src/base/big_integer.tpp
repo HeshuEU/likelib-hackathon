@@ -7,7 +7,8 @@ namespace base
 
 template<typename T>
 template<typename N>
-BigInteger<T>::BigInteger(const N& big_int) : _number(big_int)
+BigInteger<T>::BigInteger(const N& big_int)
+  : _number(big_int)
 {}
 
 

@@ -13,16 +13,16 @@ static constexpr std::size_t SIZE_OF_MESSAGE_LENGTH_IN_BYTES = 2;
 namespace net
 {
 
-Session::Session(std::unique_ptr<Connection> connection) : _connection{connection.release()}
+Session::Session(std::unique_ptr<Connection> connection)
+  : _connection{ connection.release() }
 {
     ASSERT(_connection);
-    setNextId();
 }
 
 
 Session::~Session()
 {
-    if(isActive()) {
+    if (isActive()) {
         close();
     }
 }
@@ -42,7 +42,7 @@ bool Session::isClosed() const
 
 void Session::send(const base::Bytes& data)
 {
-    if(isActive()) {
+    if (isActive()) {
         _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data);
     }
 }
@@ -50,22 +50,9 @@ void Session::send(const base::Bytes& data)
 
 void Session::send(base::Bytes&& data)
 {
-    if(isActive()) {
+    if (isActive()) {
         _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data);
     }
-}
-
-
-std::size_t Session::getId() const
-{
-    return _id;
-}
-
-
-void Session::setNextId()
-{
-    static std::atomic<std::size_t> next_id;
-    _id = next_id++;
 }
 
 
@@ -83,8 +70,8 @@ void Session::start()
 
 void Session::close()
 {
-    if(isActive()) {
-        if(_handler) {
+    if (isActive()) {
+        if (_handler) {
             _handler->onClose();
         }
         _connection->close();
@@ -95,12 +82,13 @@ void Session::close()
 void Session::receive()
 {
     _connection->receive(SIZE_OF_MESSAGE_LENGTH_IN_BYTES, [this](const base::Bytes& data) {
+        _last_seen = base::Time::now();
         auto length = base::fromBytes<std::uint16_t>(data);
         _connection->receive(length, [this](const base::Bytes& data) {
-            if(_handler) {
+            if (_handler) {
                 _handler->onReceive(data);
             }
-            if(isActive()) {
+            if (isActive()) {
                 receive();
             }
         });
@@ -108,9 +96,15 @@ void Session::receive()
 }
 
 
-const Endpoint& Session::getEndpoint() const
+const Endpoint& Session::getEndpoint() const noexcept
 {
     return _connection->getEndpoint();
+}
+
+
+const base::Time& Session::getLastSeen() const noexcept
+{
+    return _last_seen;
 }
 
 

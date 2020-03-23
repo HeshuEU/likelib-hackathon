@@ -2,8 +2,8 @@
 
 #include "base/bytes.hpp"
 #include "base/property_tree.hpp"
-#include "bc/types.hpp"
 #include "bc/block.hpp"
+#include "bc/types.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -79,7 +79,8 @@ class Miner
 
     ~Miner();
     //===================
-    void findNonce(const bc::Block& block_without_nonce, const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity);
+    void findNonce(const bc::Block& block_without_nonce,
+                   const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity);
     void dropJob();
     //===================
   private:

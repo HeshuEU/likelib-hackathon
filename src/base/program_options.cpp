@@ -8,7 +8,8 @@ namespace base
 namespace po = boost::program_options;
 
 
-ProgramOptionsParser::ProgramOptionsParser() : _options_description("Allowed options")
+ProgramOptionsParser::ProgramOptionsParser()
+  : _options_description("Allowed options")
 {
     addFlag("help", "Print help message");
 }
@@ -27,7 +28,7 @@ void ProgramOptionsParser::process(int argc, const char* const* argv)
         ::boost::program_options::store(parsed_options, _options);
         ::boost::program_options::notify(_options);
     }
-    catch(const boost::program_options::error& e) {
+    catch (const boost::program_options::error& e) {
         RAISE_ERROR(base::ParsingError, e.what());
     }
 }

@@ -79,13 +79,23 @@ class BaseRpc
 
     virtual bc::Block get_block(const base::Sha256& block_hash) = 0;
 
-    virtual std::tuple<OperationStatus, bc::Address, bc::Balance> transaction_create_contract(bc::Balance amount,
-        const bc::Address& from_address, const base::Time& transaction_time, bc::Balance gas,
-        const std::string& contract_code, const std::string& init, const bc::Sign& signature) = 0;
+    virtual std::tuple<OperationStatus, bc::Address, bc::Balance> transaction_create_contract(
+      bc::Balance amount,
+      const bc::Address& from_address,
+      const base::Time& transaction_time,
+      bc::Balance gas,
+      const std::string& contract_code,
+      const std::string& init,
+      const bc::Sign& signature) = 0;
 
-    virtual std::tuple<OperationStatus, std::string, bc::Balance> transaction_message_call(bc::Balance amount,
-        const bc::Address& from_address, const bc::Address& to_address, const base::Time& transaction_time,
-        bc::Balance gas, const std::string& message, const bc::Sign& signature) = 0;
+    virtual std::tuple<OperationStatus, std::string, bc::Balance> transaction_message_call(
+      bc::Balance amount,
+      const bc::Address& from_address,
+      const bc::Address& to_address,
+      const base::Time& transaction_time,
+      bc::Balance gas,
+      const std::string& message,
+      const bc::Sign& signature) = 0;
 };
 
 } // namespace rpc

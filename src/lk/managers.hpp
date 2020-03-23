@@ -20,7 +20,7 @@ class AccountState
         StorageData() = default;
 
         base::Bytes data;
-        bool was_modified{false};
+        bool was_modified{ false };
     };
     //============================
     std::uint64_t getNonce() const noexcept;
@@ -39,9 +39,9 @@ class AccountState
     void setStorageValue(const base::Sha256& key, base::Bytes value);
     //============================
   private:
-    std::uint64_t _nonce{0};
-    bc::Balance _balance{0};
-    base::Sha256 _code_hash{base::Sha256::null()};
+    std::uint64_t _nonce{ 0 };
+    bc::Balance _balance{ 0 };
+    base::Sha256 _code_hash{ base::Sha256::null() };
     std::map<base::Sha256, StorageData> _storage;
 };
 

@@ -10,11 +10,11 @@ namespace base::config
 // constexpr IS_DEBUG definition
 constexpr bool IS_DEBUG =
 #if defined(NDEBUG)
-    false
+  false
 #else
-    true
+  true
 #endif
-    ;
+  ;
 
 // constexpr IS_DEBUG definition && macro CONFIG_IS_DEBUG or CONFIG_IS_RELEASE definition
 #if defined(NDEBUG)
@@ -44,17 +44,17 @@ static_assert(false, "cannot determine OS");
 // constexpr OS_NAME definition
 constexpr const char* const OS_NAME =
 #if defined(_WIN32) || defined(_WIN64)
-    "Windows"
+  "Windows"
 #elif defined(__APPLE__) || defined(__MACH__)
-    "Mac OSX"
+  "Mac OSX"
 #elif defined(__linux__)
-    "Linux"
+  "Linux"
 #elif defined(__FreeBSD__)
-    "FreeBSD"
+  "FreeBSD"
 #elif defined(__unix) || defined(__unix__)
-    "Unix"
+  "Unix"
 #endif
-    ;
+  ;
 //------------------------
 
 
@@ -62,7 +62,7 @@ constexpr const char* const OS_NAME =
 constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H-%M-%S_%N.log";
 constexpr const char* LOG_FOLDER = "logs";
 constexpr const std::size_t LOG_FILE_MAX_SIZE = 5 * 1024 * 1024; // 5 mb max log file
-constexpr const std::size_t LOG_MAX_FILE_COUNT = 512; // max log files
+constexpr const std::size_t LOG_MAX_FILE_COUNT = 512;            // max log files
 //------------------------
 
 // exit codes
@@ -74,7 +74,7 @@ constexpr int EXIT_ASSERT_FAILED = 2;
 
 // net
 constexpr std::size_t NET_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
-constexpr std::size_t NET_PING_FREQUENCY = 7000; // seconds
+constexpr std::size_t NET_PING_FREQUENCY = 7000;           // seconds
 //------------------------
 
 // blockchain
@@ -86,10 +86,10 @@ constexpr const uint32_t RPC_PUBLIC_API_VERSION = 1;
 //--------------------
 
 // database
-constexpr std::size_t DATABASE_WRITE_BUFFER_SIZE = 50 * 1024 * 1024; // 50MB write buffer
-constexpr std::size_t DATABASE_DATA_BLOCK_SIZE = 10 * 1024; // 10KB data-block size
+constexpr std::size_t DATABASE_WRITE_BUFFER_SIZE = 50 * 1024 * 1024;     // 50MB write buffer
+constexpr std::size_t DATABASE_DATA_BLOCK_SIZE = 10 * 1024;              // 10KB data-block size
 constexpr std::size_t DATABASE_DATA_BLOCK_CACHE_SIZE = 50 * 1024 * 1024; // 50MB data-block cache size
-constexpr bool DATABASE_COMPRESS_DATA = false; // no compress data
+constexpr bool DATABASE_COMPRESS_DATA = false;                           // no compress data
 //--------------------
 
 // keys paths

@@ -11,8 +11,9 @@ class SubprogramRouter
     //==============================
     SubprogramRouter(std::string name, std::function<int(SubprogramRouter&)> processor);
     //==============================
-    void addSubprogram(const std::string& name, const std::string& descendant_description,
-        const std::function<int(SubprogramRouter&)>& processor);
+    void addSubprogram(const std::string& name,
+                       const std::string& descendant_description,
+                       const std::function<int(SubprogramRouter&)>& processor);
     //==============================
     const ProgramOptionsParser& getOptionsParser() const noexcept;
     ProgramOptionsParser& getOptionsParser() noexcept;

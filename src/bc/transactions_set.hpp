@@ -3,8 +3,8 @@
 #include "base/serialization.hpp"
 #include "bc/transaction.hpp"
 
-#include <vector>
 #include <map>
+#include <vector>
 
 namespace bc
 {

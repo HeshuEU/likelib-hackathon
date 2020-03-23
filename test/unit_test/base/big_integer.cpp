@@ -2,8 +2,8 @@
 
 #include "base/big_integer.hpp"
 
-#include <string>
 #include <sstream>
+#include <string>
 
 BOOST_AUTO_TEST_CASE(BigNum_constructor)
 {
@@ -20,21 +20,21 @@ BOOST_AUTO_TEST_CASE(BigNum_constructor)
     BOOST_CHECK(num3 == 654321);
 
     bool res = true;
-    for(uint32_t i = 0; i < 1000; i++) {
+    for (uint32_t i = 0; i < 1000; i++) {
         base::Uint256 num(i);
         res = res && (num == i);
     }
     BOOST_CHECK(res);
 
     res = true;
-    for(uint32_t i = 0; i < 1000; i++) {
+    for (uint32_t i = 0; i < 1000; i++) {
         base::Uint256 num(std::to_string(i));
         res = res && (num == i);
     }
     BOOST_CHECK(res);
 
     base::Uint256 num256(1);
-    for(uint32_t i = 0; i < 255; i++) {
+    for (uint32_t i = 0; i < 255; i++) {
         num256 *= 2;
     }
     base::Uint256 num255 = num256 / 2;
@@ -53,21 +53,21 @@ BOOST_AUTO_TEST_CASE(BigNum_constructor)
     BOOST_CHECK(num6 == 123456);
 
     res = true;
-    for(uint32_t i = 1000; i < 2000; i++) {
+    for (uint32_t i = 1000; i < 2000; i++) {
         base::Uint512 num(i);
         res = res && (num == i);
     }
     BOOST_CHECK(res);
 
     res = true;
-    for(uint32_t i = 1000; i < 2000; i++) {
+    for (uint32_t i = 1000; i < 2000; i++) {
         base::Uint512 num(std::to_string(i));
         res = res && (num == i);
     }
     BOOST_CHECK(res);
 
     base::Uint512 num512(1);
-    for(uint32_t i = 0; i < 511; i++) {
+    for (uint32_t i = 0; i < 511; i++) {
         num512 *= 2;
     }
     base::Uint512 num511 = num512 / 2;
@@ -176,14 +176,14 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_plus_minus)
 {
     bool res = true;
     base::Uint256 num1(123456789u);
-    for(uint32_t i = 0; i < 1000; i++) {
+    for (uint32_t i = 0; i < 1000; i++) {
         base::Uint256 num = num1 + i;
         res = res && (num == (123456789u + i));
     }
     BOOST_CHECK(res);
 
     res = true;
-    for(uint32_t i = 10000; i < 11111; i++) {
+    for (uint32_t i = 10000; i < 11111; i++) {
         base::Uint256 num = num1 - i;
         res = res && (num == (123456789u - i));
     }
@@ -192,14 +192,14 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_plus_minus)
 
     res = true;
     base::Uint512 num2(123456789u);
-    for(uint32_t i = 0; i < 1000; i++) {
+    for (uint32_t i = 0; i < 1000; i++) {
         base::Uint512 num = num2 + i;
         res = res && (num == (123456789u + i));
     }
     BOOST_CHECK(res);
 
     res = true;
-    for(uint32_t i = 10000; i < 11111; i++) {
+    for (uint32_t i = 10000; i < 11111; i++) {
         base::Uint512 num = num2 - i;
         res = res && (num == (123456789u - i));
     }
@@ -212,14 +212,14 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_multiply_divide)
 {
     bool res = true;
     base::Uint256 num1(123456789u);
-    for(uint64_t i = 0; i < 1000; i++) {
+    for (uint64_t i = 0; i < 1000; i++) {
         base::Uint256 num = num1 * i;
         res = res && (num == (123456789u * i));
     }
     BOOST_CHECK(res);
 
     res = true;
-    for(uint64_t i = 10000; i < 11111; i++) {
+    for (uint64_t i = 10000; i < 11111; i++) {
         base::Uint256 num = num1 / i;
         res = res && (num == (123456789u / i));
     }
@@ -228,14 +228,14 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_multiply_divide)
 
     res = true;
     base::Uint512 num2(123456789u);
-    for(uint64_t i = 0; i < 1000; i++) {
+    for (uint64_t i = 0; i < 1000; i++) {
         base::Uint512 num = num2 * i;
         res = res && (num == (123456789u * i));
     }
     BOOST_CHECK(res);
 
     res = true;
-    for(uint64_t i = 10000; i < 11111; i++) {
+    for (uint64_t i = 10000; i < 11111; i++) {
         base::Uint512 num = num2 / i;
         res = res && (num == (123456789u / i));
     }
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_plus_minus_equal)
 {
     bool res = true;
     base::Uint256 num1(123456789u);
-    for(uint64_t i = 0; i < 1000; i++) {
+    for (uint64_t i = 0; i < 1000; i++) {
         base::Uint256 num = num1;
         num1 += i;
         res = res && ((num + i) == num1);
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_plus_minus_equal)
     BOOST_CHECK(res);
 
     res = true;
-    for(uint64_t i = 10000; i < 11111; i++) {
+    for (uint64_t i = 10000; i < 11111; i++) {
         base::Uint256 num = num1;
         num1 -= i;
         res = res && ((num - i) == num1);
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_plus_minus_equal)
 
     res = true;
     base::Uint512 num2(123456789u);
-    for(uint64_t i = 0; i < 1000; i++) {
+    for (uint64_t i = 0; i < 1000; i++) {
         base::Uint512 num = num2;
         num2 += i;
         res = res && ((num + i) == num2);
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_plus_minus_equal)
     BOOST_CHECK(res);
 
     res = true;
-    for(uint64_t i = 10000; i < 11111; i++) {
+    for (uint64_t i = 10000; i < 11111; i++) {
         base::Uint512 num = num2;
         num2 -= i;
         res = res && ((num - i) == num2);
@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_multiply_divide_equal)
 {
     bool res = true;
     base::Uint256 num1(123456789u);
-    for(uint64_t i = 0; i < 1000; i++) {
+    for (uint64_t i = 0; i < 1000; i++) {
         base::Uint256 num = num1;
         num1 *= i;
         res = res && ((num * i) == num1);
@@ -296,7 +296,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_multiply_divide_equal)
     BOOST_CHECK(res);
 
     res = true;
-    for(uint64_t i = 10000; i < 11111; i++) {
+    for (uint64_t i = 10000; i < 11111; i++) {
         base::Uint256 num = num1;
         num1 /= i;
         res = res && ((num / i) == num1);
@@ -306,7 +306,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_multiply_divide_equal)
 
     res = true;
     base::Uint512 num2(123456789u);
-    for(uint64_t i = 0; i < 1000; i++) {
+    for (uint64_t i = 0; i < 1000; i++) {
         base::Uint512 num = num2;
         num2 *= i;
         res = res && ((num * i) == num2);
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_multiply_divide_equal)
     BOOST_CHECK(res);
 
     res = true;
-    for(uint64_t i = 10000; i < 11111; i++) {
+    for (uint64_t i = 10000; i < 11111; i++) {
         base::Uint512 num = num2;
         num2 /= i;
         res = res && ((num / i) == num2);

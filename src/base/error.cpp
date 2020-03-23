@@ -5,7 +5,8 @@
 namespace base
 {
 
-Error::Error(const std::string& message) : _message{message}
+Error::Error(const std::string& message)
+  : _message{ message }
 {}
 
 

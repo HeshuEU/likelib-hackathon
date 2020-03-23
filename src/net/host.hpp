@@ -19,47 +19,44 @@
 namespace net
 {
 
-
-class HandlerFactory
-{
-  public:
-    //===================
-    virtual std::unique_ptr<Handler> create(Session& session) = 0;
-    virtual void destroy() = 0;
-    //===================
-    virtual ~HandlerFactory() = default;
-    //===================
-};
-
-
 class Host
 {
   public:
-    //===================
-    explicit Host(const base::PropertyTree& config);
+    //=================================
+    class HandlerFactory
+    {
+      public:
+        //===================
+        virtual std::unique_ptr<Session::Handler> create(Session& session) = 0;
+        virtual void destroy() = 0;
+        //===================
+        virtual ~HandlerFactory() = default;
+        //===================
+    };
+    //=================================
+    explicit Host(const base::PropertyTree& config, std::size_t connections_limit);
     ~Host();
-    //===================
+    //=================================
     void connect(const Endpoint& address);
-    //===================
+    bool isConnectedTo(const Endpoint& endpoint) const;
+    //=================================
     void broadcast(const base::Bytes& data);
-    //===================
+    //=================================
     void run(std::unique_ptr<HandlerFactory> handler_factory);
     void join();
-    //===================
-    bool isConnectedTo(const Endpoint& endpoint) const;
-    //===================
+    //=================================
   private:
-    //===================
+    //=================================
     const base::PropertyTree& _config;
-    //===================
+    //=================================
     const Endpoint _listen_ip;
     const unsigned short _server_public_port;
-    //===================
+    //=================================
     boost::asio::io_context _io_context;
     //===================
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
-    //===================
+    //=================================
     std::vector<std::shared_ptr<Session>> _sessions;
     mutable std::shared_mutex _sessions_mutex;
 
@@ -70,11 +67,11 @@ class Host
 
     void accept();
     Session& addNewSession(std::unique_ptr<Connection> peer);
-    //===================
+    //=================================
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();
     void dropZombieConnections();
-    //===================
+    //=================================
 };
 
 } // namespace net

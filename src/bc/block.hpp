@@ -16,8 +16,11 @@ class Block
 {
   public:
     //=================
-    Block(bc::BlockDepth depth, base::Sha256 prev_block_hash, base::Time timestamp, bc::Address coinbase,
-        TransactionsSet txs);
+    Block(bc::BlockDepth depth,
+          base::Sha256 prev_block_hash,
+          base::Time timestamp,
+          bc::Address coinbase,
+          TransactionsSet txs);
 
     Block(const Block&) = default;
     Block(Block&&) = default;
