@@ -61,6 +61,6 @@ if __name__ == "__main__":
     contract_data = load(args.contract_path)
     decoded_data = decode_output(contract_data, args.method, args.data)
     if decoded_data:
-        print(decoded_data)
+        print(json.dumps(decoded_data))
     else:
         exit(2)
