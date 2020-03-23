@@ -27,12 +27,14 @@ class PeerTable
     //=================================
     PeerTable(bc::Address host_id);
     //=================================
+    void tryAddPeer(std::unique_ptr<Peer>);
+    //=================================
   private:
     //=================================
     const bc::Address _host_id;
     //=================================
     static constexpr std::size_t MAX_BUCKET_SIZE = 10;
-    std::array<std::vector<int>, bc::Address::LENGTH_IN_BYTES * 8> _buckets;
+    std::array<std::vector< std::unique_ptr<Peer> >, bc::Address::LENGTH_IN_BYTES * 8> _buckets;
     //=================================
 };
 
@@ -54,6 +56,7 @@ class Host
     void join();
     //=================================
     void forEachPeer(std::function<void(const Peer&)> f);
+    std::vector<Peer::Info> getAllConnectedPeersInfo() const;
     //=================================
   private:
     //=================================

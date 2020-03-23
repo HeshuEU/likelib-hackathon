@@ -68,7 +68,7 @@ class Core
     AccountManager _account_manager;
     CodeManager _code_manager;
     bc::Blockchain _blockchain;
-    lk::Network _network;
+    lk::Host _host;
     //==================
     lk::EthAdapter _eth_adapter;
     //==================
