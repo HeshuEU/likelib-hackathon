@@ -38,7 +38,7 @@ contract SimpleStorage {
         target_value = 8888
         test_contract_init_message = node.encode_message(code=test_contract, message=f"constructor({target_value})")
 
-        distributor_address = node.load_address(keys_path=node.DISTRIBUTOR_ADDRESS_PATH)
+        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
                                                gas=10000000, init_message=test_contract_init_message, timeout=5)
 

@@ -22,13 +22,12 @@ class TimeOutException(Exception):
 # test case checks
 def TEST_CHECK(boolean_value, *, message=""):
     if not boolean_value:
-
         traceback_list = traceback.format_stack()
         log_message = ""
         for i in range(len(traceback_list)):
             if (traceback_list[i].find('in test_case_exception_wrapper') > 0) and (
-                    traceback_list[i].find('return func(*args, **kargs)\n') > 0):
-                for log_line in traceback_list[i:-1]:
+                    traceback_list[i].find('return func(env, logger)\n') > 0):
+                for log_line in traceback_list[i + 1:-1]:
                     log_message = log_message + log_line
                 break
         if message and len(message) > 0:
@@ -500,11 +499,12 @@ class Node:
 
     def run_check_balance(self, address, balance, timeout=1):
         TEST_CHECK_EQUAL(self.get_balance(address=address, timeout=timeout), balance,
-                         message=f"fail during check balance test to node[{self.name}]")
+                         message=f"fail during check balance test to node[{self.name}] by address: {address.address}")
 
-    def run_check_transfer(self, to_address, amount, from_address, fee, timeout=1):
+    def run_check_transfer(self, to_address, amount, from_address, fee, timeout=1, wait=0):
         TEST_CHECK(self.transfer(to_address=to_address, amount=amount, from_address=from_address,
-                                 fee=fee, timeout=timeout), message=f"fail during transfer test to node[{self.name}]")
+                                 fee=fee, wait=wait, timeout=timeout),
+                   message=f"fail during transfer test to node[{self.name}]")
 
     def generate_keys(self, *, keys_path, timeout=1):
         os.makedirs(keys_path)
@@ -523,11 +523,12 @@ class Node:
         address = self.get_keys_info(keys_path=keys_path)
         return self.Address(keys_path, address)
 
-    def transfer(self, *, to_address, amount, from_address, fee, timeout=5):
+    def transfer(self, *, to_address, amount, from_address, fee, wait=0, timeout=5):
         parameters = ["--to", to_address.address, "--amount",
                       str(amount), "--keys", from_address.key_path, "--fee", str(fee)]
         result = self.__run_client_command(
             command="transfer", parameters=parameters, timeout=timeout)
+        time.sleep(wait)
         return _TransferParser.parse(result)
 
     def compile_contract(self, *, code):
@@ -621,59 +622,59 @@ class Node:
                 f"{self.name} - closed node(exit code:{exit_code}, pid:{pid}) with work_dir {self.work_dir}")
 
 
-# class NodePoll:
-#     def __init__(self):
-#         self.nodes = list()
-#         self.last = None
+class NodePoll:
+    def __init__(self):
+        self.nodes = list()
+        self.last = None
 
-#     def append(self, node):
-#         self.nodes.append(node)
-#         self.last = node
+    def append(self, node):
+        self.nodes.append(node)
+        self.last = node
 
-#     def __enter__(self):
-#         return self
+    def __enter__(self):
+        return self
 
-#     def start_nodes(self, waiting_time=1):
-#         for node in self.nodes:
-#             node.start_node(waiting_time)
+    def start_nodes(self, waiting_time=1):
+        for node in self.nodes:
+            node.start_node(waiting_time)
 
-#     @property
-#     def ids(self):
-#         return [node.id for node in self.nodes]
+    @property
+    def ids(self):
+        return [node.settings.id for node in self.nodes]
 
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         self.close()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
-#     def __getitem__(self, key):
-#         return self.nodes[key]
+    def __getitem__(self, key):
+        return self.nodes[key]
 
-#     def close(self):
-#         for node in self.nodes:
-#             node.close()
+    def close(self):
+        for node in self.nodes:
+            node.close()
 
-#     def __iter__(self):
-#         def iter_fn(nodes):
-#             for node in nodes:
-#                 yield node
+    def __iter__(self):
+        def iter_fn(nodes):
+            for node in nodes:
+                yield node
 
-#         return iter_fn(self.nodes)
+        return iter_fn(self.nodes)
 
-#     def __len__(self):
-#         return len(self.nodes)
+    def __len__(self):
+        return len(self.nodes)
 
-#     @staticmethod
-#     def create_pool_of_nodes_one_by_one(node_exec_path, rpc_client_exec_path, start_sync_port, start_rpc_port, count_nodes, logger):
-#         pool = NodePoll()
-#         pool.append(NodeTester(node_exec_path, rpc_client_exec_path, NodeId(
-#             sync_port=start_sync_port, rpc_port=start_rpc_port), logger))
+    @staticmethod
+    def create_pool_of_nodes_one_by_one(env, logger, start_sync_port, start_rpc_port, count_nodes):
+        pool = NodePoll()
+        pool.append(Node(env, Node.Settings(Node.Id(start_sync_port, start_rpc_port)), logger))
 
-#         for i in range(1, count_nodes):
-#             curent_sync_port = start_sync_port + i
-#             curent_rpc_port = start_rpc_port + i
+        for i in range(1, count_nodes):
+            curent_sync_port = start_sync_port + i
+            curent_rpc_port = start_rpc_port + i
 
-#             pool.append(NodeTester(node_exec_path, rpc_client_exec_path, NodeId(
-#                 sync_port=curent_sync_port, rpc_port=curent_rpc_port), logger, nodes_id_list=[pool.last.id, ]))
-#         return pool
+            pool.append(
+                Node(env, Node.Settings(Node.Id(curent_sync_port, curent_rpc_port), nodes=[pool.last.settings.id, ]),
+                     logger))
+        return pool
 
 
 __enabled_tests = dict()
@@ -711,10 +712,10 @@ def test_case(registration_test_case_name=None, disable=False):
             raise Exception(f"Test with this name[{test_name}] is exists")
 
         if disable:
-            print(f"Registered test case {test_name} is disabled")
+            print(f"Registered test case [{test_name}] is disabled")
             __disabled_tests[test_name] = test_case_runner
         else:
-            print(f"Registered test case {test_name} is enabled")
+            print(f"Registered test case [{test_name}] is enabled")
             __enabled_tests[test_name] = test_case_runner
 
         return test_case_runner
@@ -744,7 +745,7 @@ def run_registered_test_cases(pattern, dependencies_folder):
 
         registered_test_case_runner = __enabled_tests[registered_test_case_name]
 
-        print(f"Test case {registered_test_case_name} started.")
+        print(f"Test case [{registered_test_case_name}] started.")
 
         test_case_start_time = datetime.datetime.now()
         return_code = registered_test_case_runner(dependencies_folder)
@@ -752,11 +753,11 @@ def run_registered_test_cases(pattern, dependencies_folder):
 
         if return_code == 0:
             print(
-                f"Test case {registered_test_case_name} success. Execute time: {test_case_execute_time}.")
+                f"Test case [{registered_test_case_name}] success. Execute time: {test_case_execute_time}.")
             success_tests += 1
         else:
             print(
-                f"Test case {registered_test_case_name} failed. Execute time: {test_case_execute_time}.")
+                f"Test case [{registered_test_case_name}] failed. Execute time: {test_case_execute_time}.")
             failed_tests += 1
 
     all_tests = success_tests + failed_tests + skipped_tests
