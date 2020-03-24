@@ -71,8 +71,8 @@ class Protocol : public net::Session::Handler
 
 class Network
 {
-    void onNewBlock(const bc::Block& block);
-    void onNewPendingTransaction(const bc::Transaction& tx);
+    void onNewBlock(const lk::Block& block);
+    void onNewPendingTransaction(const lk::Transaction& tx);
 };
 
 } // namespace core

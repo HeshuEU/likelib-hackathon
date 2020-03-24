@@ -7,45 +7,45 @@
 namespace
 {
 
-bc::Transaction trans1{ bc::Address(base::generateKeys().first),
-                        bc::Address(base::generateKeys().first),
+lk::Transaction trans1{ lk::Address(base::generateKeys().first),
+                        lk::Address(base::generateKeys().first),
                         12398,
                         11,
                         base::Time(),
-                        bc::Transaction::Type::MESSAGE_CALL,
+                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
-bc::Transaction trans2{ bc::Address(base::generateKeys().first),
-                        bc::Address(base::generateKeys().first),
+lk::Transaction trans2{ lk::Address(base::generateKeys().first),
+                        lk::Address(base::generateKeys().first),
                         5825285,
                         22,
                         base::Time::now(),
-                        bc::Transaction::Type::MESSAGE_CALL,
+                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
-bc::Transaction trans3{ bc::Address(base::generateKeys().first),
-                        bc::Address(base::generateKeys().first),
+lk::Transaction trans3{ lk::Address(base::generateKeys().first),
+                        lk::Address(base::generateKeys().first),
                         12245398,
                         33,
                         base::Time(),
-                        bc::Transaction::Type::MESSAGE_CALL,
+                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
-bc::Transaction trans4{ bc::Address(base::generateKeys().first),
-                        bc::Address(base::generateKeys().first),
+lk::Transaction trans4{ lk::Address(base::generateKeys().first),
+                        lk::Address(base::generateKeys().first),
                         168524347,
                         44,
                         base::Time(),
-                        bc::Transaction::Type::MESSAGE_CALL,
+                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
-bc::Transaction trans5{ bc::Address(base::generateKeys().first),
-                        bc::Address(base::generateKeys().first),
+lk::Transaction trans5{ lk::Address(base::generateKeys().first),
+                        lk::Address(base::generateKeys().first),
                         1434457,
                         55,
                         base::Time::now(),
-                        bc::Transaction::Type::MESSAGE_CALL,
+                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
 
-bc::TransactionsSet getTestSet()
+lk::TransactionsSet getTestSet()
 {
-    bc::TransactionsSet set;
+    lk::TransactionsSet set;
     set.add(trans1);
     set.add(trans2);
     set.add(trans3);
@@ -57,7 +57,7 @@ bc::TransactionsSet getTestSet()
 
 BOOST_AUTO_TEST_CASE(transactions_set_constructor)
 {
-    bc::TransactionsSet tx_set;
+    lk::TransactionsSet tx_set;
 
     BOOST_CHECK(tx_set.isEmpty());
 }
@@ -73,19 +73,19 @@ BOOST_AUTO_TEST_CASE(transactions_set_find)
     BOOST_CHECK(tx_set.find(trans4));
     BOOST_CHECK(tx_set.find(trans5));
 
-    BOOST_CHECK(!tx_set.find(bc::Transaction(trans1.getFrom(),
-                                             bc::Address(base::generateKeys().first),
+    BOOST_CHECK(!tx_set.find(lk::Transaction(trans1.getFrom(),
+                                             lk::Address(base::generateKeys().first),
                                              trans1.getAmount(),
                                              0,
                                              trans1.getTimestamp(),
-                                             bc::Transaction::Type::MESSAGE_CALL,
+                                             lk::Transaction::Type::MESSAGE_CALL,
                                              base::Bytes{})));
-    BOOST_CHECK(!tx_set.find(bc::Transaction(trans3.getFrom(),
+    BOOST_CHECK(!tx_set.find(lk::Transaction(trans3.getFrom(),
                                              trans3.getTo(),
                                              trans3.getAmount(),
                                              0,
                                              base::Time::now(),
-                                             bc::Transaction::Type::MESSAGE_CALL,
+                                             lk::Transaction::Type::MESSAGE_CALL,
                                              base::Bytes{})));
 }
 
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(transactions_set_remove)
 BOOST_AUTO_TEST_CASE(transactions_set_remove_set1)
 {
     auto tx_set = getTestSet();
-    bc::TransactionsSet rem_set;
+    lk::TransactionsSet rem_set;
     rem_set.add(trans2);
     rem_set.add(trans5);
 
@@ -155,15 +155,15 @@ BOOST_AUTO_TEST_CASE(transactions_set_remove_set2)
 
 BOOST_AUTO_TEST_CASE(transaction_set_inEmpty)
 {
-    bc::TransactionsSet tx_set;
-    auto from = bc::Address(base::generateKeys().first);
-    auto to = bc::Address(base::generateKeys().first);
+    lk::TransactionsSet tx_set;
+    auto from = lk::Address(base::generateKeys().first);
+    auto to = lk::Address(base::generateKeys().first);
     BOOST_CHECK(tx_set.isEmpty());
 
-    tx_set.add(bc::Transaction(from, to, 111, 0, base::Time(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}));
+    tx_set.add(lk::Transaction(from, to, 111, 0, base::Time(), lk::Transaction::Type::MESSAGE_CALL, base::Bytes{}));
     BOOST_CHECK(!tx_set.isEmpty());
 
-    tx_set.remove(bc::Transaction(from, to, 111, 0, base::Time(), bc::Transaction::Type::MESSAGE_CALL, base::Bytes{}));
+    tx_set.remove(lk::Transaction(from, to, 111, 0, base::Time(), lk::Transaction::Type::MESSAGE_CALL, base::Bytes{}));
     BOOST_CHECK(tx_set.isEmpty());
 }
 
@@ -219,7 +219,7 @@ BOOST_AUTO_TEST_CASE(transactions_set_serialixation)
     oa.serialize(tx_set);
 
     base::SerializationIArchive ia(oa.getBytes());
-    auto tx_set2 = ia.deserialize<bc::TransactionsSet>();
+    auto tx_set2 = ia.deserialize<lk::TransactionsSet>();
 
     BOOST_CHECK(tx_set2.find(trans1));
     BOOST_CHECK(tx_set2.find(trans2));

@@ -1,6 +1,6 @@
 #include "address.hpp"
 
-namespace bc
+namespace lk
 {
 
 
@@ -87,4 +87,4 @@ std::ostream& operator<<(std::ostream& os, const Address& address)
     return os << address.toString();
 }
 
-} // namespace bc
+} // namespace lk

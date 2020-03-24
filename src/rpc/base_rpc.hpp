@@ -66,7 +66,7 @@ class BaseRpc
     /// \return result of balance by specific address
     /// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
     /// exception during processing on server instance)
-    virtual bc::Balance balance(const bc::Address& address) = 0;
+    virtual lk::Balance balance(const lk::Address& address) = 0;
 
     /// method call remote server method(specified ip address in constructor) with similar params
     /// \param test_request sha256 from secret data request
@@ -77,25 +77,25 @@ class BaseRpc
 
     virtual Info info() = 0;
 
-    virtual bc::Block get_block(const base::Sha256& block_hash) = 0;
+    virtual lk::Block get_block(const base::Sha256& block_hash) = 0;
 
-    virtual std::tuple<OperationStatus, bc::Address, bc::Balance> transaction_create_contract(
-      bc::Balance amount,
-      const bc::Address& from_address,
+    virtual std::tuple<OperationStatus, lk::Address, lk::Balance> transaction_create_contract(
+      lk::Balance amount,
+      const lk::Address& from_address,
       const base::Time& transaction_time,
-      bc::Balance gas,
+      lk::Balance gas,
       const std::string& contract_code,
       const std::string& init,
-      const bc::Sign& signature) = 0;
+      const lk::Sign& signature) = 0;
 
-    virtual std::tuple<OperationStatus, std::string, bc::Balance> transaction_message_call(
-      bc::Balance amount,
-      const bc::Address& from_address,
-      const bc::Address& to_address,
+    virtual std::tuple<OperationStatus, std::string, lk::Balance> transaction_message_call(
+      lk::Balance amount,
+      const lk::Address& from_address,
+      const lk::Address& to_address,
       const base::Time& transaction_time,
-      bc::Balance gas,
+      lk::Balance gas,
       const std::string& message,
-      const bc::Sign& signature) = 0;
+      const lk::Sign& signature) = 0;
 };
 
 } // namespace rpc

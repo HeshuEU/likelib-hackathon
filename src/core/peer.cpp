@@ -46,13 +46,13 @@ const net::Session& Peer::getSession() const noexcept
 }
 
 
-void Peer::addSyncBlock(bc::Block block)
+void Peer::addSyncBlock(lk::Block block)
 {
     _sync_blocks.push_front(std::move(block));
 }
 
 
-const std::forward_list<bc::Block>& Peer::getSyncBlocks() const noexcept
+const std::forward_list<lk::Block>& Peer::getSyncBlocks() const noexcept
 {
     return _sync_blocks;
 }
@@ -70,13 +70,13 @@ void Peer::send(base::Bytes&& data)
 }
 
 
-std::optional<bc::Address> Peer::getAddress() const
+std::optional<lk::Address> Peer::getAddress() const
 {
     return _address;
 }
 
 
-void Peer::setAddress(bc::Address address)
+void Peer::setAddress(lk::Address address)
 {
     _address = std::move(address);
 }

@@ -35,7 +35,7 @@ void Node::run()
 }
 
 
-void Node::onBlockMine(bc::Block&& block)
+void Node::onBlockMine(lk::Block&& block)
 {
     _core.tryAddBlock(block);
 }
@@ -49,9 +49,9 @@ base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> Node::getMiningComplexity()
 }
 
 
-void Node::onNewTransactionReceived(const bc::Transaction&)
+void Node::onNewTransactionReceived(const lk::Transaction&)
 {
-    bc::Block block = _core.getBlockTemplate();
+    lk::Block block = _core.getBlockTemplate();
     if (!block.getTransactions().isEmpty()) {
         _miner->findNonce(_core.getBlockTemplate(), getMiningComplexity());
     }
@@ -61,9 +61,9 @@ void Node::onNewTransactionReceived(const bc::Transaction&)
 }
 
 
-void Node::onNewBlock(const bc::Block&)
+void Node::onNewBlock(const lk::Block&)
 {
-    bc::Block block = _core.getBlockTemplate();
+    lk::Block block = _core.getBlockTemplate();
     if (!block.getTransactions().isEmpty()) {
         _miner->findNonce(_core.getBlockTemplate(), getMiningComplexity());
     }

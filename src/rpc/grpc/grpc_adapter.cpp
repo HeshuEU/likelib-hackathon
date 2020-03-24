@@ -58,7 +58,7 @@ grpc::Status GrpcAdapter::balance(grpc::ServerContext* context,
 {
     LOG_DEBUG << "received RPC balance method call from: " << context->peer();
     try {
-        bc::Address query_address{ request->address() };
+        lk::Address query_address{ request->address() };
         response->set_value(_service->balance(query_address));
     }
     catch (const base::Error& e) {
@@ -125,13 +125,13 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
 {
     LOG_DEBUG << "received RPC call at transaction_for_create_contract method from: " << context->peer();
     try {
-        auto amount = bc::Balance{ request->value().value() };
-        auto from_address = bc::Address{ request->from().address() };
-        auto gas = bc::Balance{ request->fee().value() };
+        auto amount = lk::Balance{ request->value().value() };
+        auto from_address = lk::Address{ request->from().address() };
+        auto gas = lk::Balance{ request->fee().value() };
         auto creation_time = base::Time(request->creation_time().since_epoch());
         auto contract_code = request->contract_code();
         auto init = request->init();
-        auto sign = bc::Sign::fromBase64(request->signature().raw());
+        auto sign = lk::Sign::fromBase64(request->signature().raw());
 
         auto [status, contract_address, least_gas] =
           _service->transaction_create_contract(amount, from_address, creation_time, gas, contract_code, init, sign);
@@ -155,17 +155,17 @@ grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
 {
     LOG_DEBUG << "received RPC call at transaction_to_contract method from: " << context->peer();
     try {
-        auto amount = bc::Balance{ request->value().value() };
-        auto from_address = bc::Address{ request->from().address() };
-        auto to_address = bc::Address{ request->to().address() };
-        auto gas = bc::Balance{ request->fee().value() };
+        auto amount = lk::Balance{ request->value().value() };
+        auto from_address = lk::Address{ request->from().address() };
+        auto to_address = lk::Address{ request->to().address() };
+        auto gas = lk::Balance{ request->fee().value() };
         auto creation_time = base::Time(request->creation_time().since_epoch());
         auto data = request->data();
-        auto sign = bc::Sign::fromBase64(request->signature());
+        auto sign = lk::Sign::fromBase64(request->signature());
 
         auto status = OperationStatus::createSuccess();
         std::string contract_response;
-        bc::Balance least_gas;
+        lk::Balance least_gas;
         std::tie(status, contract_response, least_gas) =
           _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, sign);
 

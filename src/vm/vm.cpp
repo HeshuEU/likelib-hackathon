@@ -37,9 +37,9 @@ SmartContract::SmartContract(const base::Bytes& contract_code)
 
 
 SmartContractMessage SmartContract::createInitMessage(int64_t gas,
-                                                      const bc::Address& source,
-                                                      const bc::Address& destination,
-                                                      const bc::Balance& value,
+                                                      const lk::Address& source,
+                                                      const lk::Address& destination,
+                                                      const lk::Balance& value,
                                                       const base::Bytes& input) const
 {
     SmartContractMessage message{ _revision };
@@ -56,9 +56,9 @@ SmartContractMessage SmartContract::createInitMessage(int64_t gas,
 
 
 SmartContractMessage SmartContract::createMessage(int64_t gas,
-                                                  const bc::Address& source,
-                                                  const bc::Address& destination,
-                                                  const bc::Balance& value,
+                                                  const lk::Address& source,
+                                                  const lk::Address& destination,
+                                                  const lk::Balance& value,
                                                   const base::Bytes& input) const
 {
     SmartContractMessage message{ _revision };
@@ -119,7 +119,7 @@ const base::Bytes& SmartContractMessage::getCode() const
 }
 
 
-bc::Balance SmartContractMessage::getValue() const
+lk::Balance SmartContractMessage::getValue() const
 {
     return toBalance(_message.value);
 }

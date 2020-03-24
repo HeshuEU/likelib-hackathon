@@ -12,7 +12,7 @@ namespace ba = boost::asio;
 namespace lk
 {
 
-PeerTable::PeerTable(bc::Address host_id)
+PeerTable::PeerTable(lk::Address host_id)
   : _host_id{ std::move(host_id) }
 {}
 

@@ -39,7 +39,7 @@ const base::Bytes LAST_BLOCK_HASH_KEY{ toBytes(DataType::SYSTEM, base::Bytes("la
 } // namespace
 
 
-namespace bc
+namespace lk
 {
 
 Blockchain::Blockchain(const base::PropertyTree& config)
@@ -130,7 +130,7 @@ std::optional<Block> Blockchain::findBlock(const base::Sha256& block_hash) const
 }
 
 
-std::optional<base::Sha256> Blockchain::findBlockHashByDepth(bc::BlockDepth depth) const
+std::optional<base::Sha256> Blockchain::findBlockHashByDepth(lk::BlockDepth depth) const
 {
     std::shared_lock lk(_blocks_mutex);
     if (auto it = _blocks_by_depth.find(depth); it != _blocks_by_depth.end()) {
@@ -142,7 +142,7 @@ std::optional<base::Sha256> Blockchain::findBlockHashByDepth(bc::BlockDepth dept
 }
 
 
-std::optional<bc::Transaction> Blockchain::findTransaction(const base::Sha256& tx_hash) const
+std::optional<lk::Transaction> Blockchain::findTransaction(const base::Sha256& tx_hash) const
 {
     std::shared_lock lk(_blocks_mutex);
     for (const auto& block : _blocks) {
@@ -201,7 +201,7 @@ std::optional<Block> Blockchain::findBlockAtPersistentStorage(const base::Sha256
         return std::nullopt;
     }
     base::SerializationIArchive ia(block_data.value());
-    return bc::Block::deserialize(ia);
+    return lk::Block::deserialize(ia);
 }
 
 
@@ -226,4 +226,4 @@ std::vector<base::Sha256> Blockchain::createAllBlockHashesListAtPersistentStorag
     return all_blocks_hashes;
 }
 
-} // namespace bc
+} // namespace lk

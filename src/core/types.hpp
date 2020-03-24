@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-namespace bc
+namespace lk
 {
 
 // type that can be used to store any possible amount of currency
@@ -14,4 +14,4 @@ using NonceInt = std::uint64_t;
 
 using BlockDepth = std::uint64_t;
 
-} // namespace bc
+} // namespace lk

@@ -26,10 +26,10 @@ class AccountState
     std::uint64_t getNonce() const noexcept;
     void incNonce() noexcept;
     //============================
-    bc::Balance getBalance() const noexcept;
-    void setBalance(bc::Balance new_balance);
-    void addBalance(bc::Balance delta);
-    void subBalance(bc::Balance delta);
+    lk::Balance getBalance() const noexcept;
+    void setBalance(lk::Balance new_balance);
+    void addBalance(lk::Balance delta);
+    void subBalance(lk::Balance delta);
     //============================
     const base::Sha256& getCodeHash() const noexcept;
     void setCodeHash(base::Sha256 code_hash);
@@ -40,7 +40,7 @@ class AccountState
     //============================
   private:
     std::uint64_t _nonce{ 0 };
-    bc::Balance _balance{ 0 };
+    lk::Balance _balance{ 0 };
     base::Sha256 _code_hash{ base::Sha256::null() };
     std::map<base::Sha256, StorageData> _storage;
 };
@@ -58,28 +58,28 @@ class AccountManager
     AccountManager& operator=(AccountManager&& another) = delete;
     ~AccountManager() = default;
     //================
-    void newAccount(const bc::Address& address, base::Sha256 code_hash);
-    bool hasAccount(const bc::Address& address) const;
-    bool deleteAccount(const bc::Address& address);
+    void newAccount(const lk::Address& address, base::Sha256 code_hash);
+    bool hasAccount(const lk::Address& address) const;
+    bool deleteAccount(const lk::Address& address);
     //================
-    bc::Address newContract(const bc::Address& account_address, base::Sha256 associated_code_hash);
+    lk::Address newContract(const lk::Address& account_address, base::Sha256 associated_code_hash);
     //================
-    bool tryTransferMoney(const bc::Address& from, const bc::Address& to, bc::Balance amount);
+    bool tryTransferMoney(const lk::Address& from, const lk::Address& to, lk::Balance amount);
     //================
-    bool checkTransaction(const bc::Transaction& tx) const;
-    void update(const bc::Transaction& tx);
-    void update(const bc::Block& block);
-    void updateFromGenesis(const bc::Block& block);
+    bool checkTransaction(const lk::Transaction& tx) const;
+    void update(const lk::Transaction& tx);
+    void update(const lk::Block& block);
+    void updateFromGenesis(const lk::Block& block);
     //================
-    const AccountState& getAccount(const bc::Address& account_address) const;
-    AccountState& getAccount(const bc::Address& address);
+    const AccountState& getAccount(const lk::Address& account_address) const;
+    AccountState& getAccount(const lk::Address& address);
     //================
-    bc::Balance getBalance(const bc::Address& account) const;
+    lk::Balance getBalance(const lk::Address& account) const;
     //================
     //================
   private:
     //================
-    std::map<bc::Address, AccountState> _states;
+    std::map<lk::Address, AccountState> _states;
     mutable std::shared_mutex _rw_mutex;
     //================
 };

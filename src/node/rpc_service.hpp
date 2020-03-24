@@ -16,29 +16,29 @@ class GeneralServerService : public rpc::BaseRpc
 
     rpc::OperationStatus test(uint32_t api_version) override;
 
-    bc::Balance balance(const bc::Address& address) override;
+    lk::Balance balance(const lk::Address& address) override;
 
     rpc::Info info() override;
 
-    bc::Block get_block(const base::Sha256& block_hash) override;
+    lk::Block get_block(const base::Sha256& block_hash) override;
 
-    std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> transaction_create_contract(
-      bc::Balance amount,
-      const bc::Address& from_address,
+    std::tuple<rpc::OperationStatus, lk::Address, lk::Balance> transaction_create_contract(
+      lk::Balance amount,
+      const lk::Address& from_address,
       const base::Time& timestamp,
-      bc::Balance gas,
+      lk::Balance gas,
       const std::string& contract_code,
       const std::string& init,
-      const bc::Sign& signature) override;
+      const lk::Sign& signature) override;
 
-    std::tuple<rpc::OperationStatus, std::string, bc::Balance> transaction_message_call(
-      bc::Balance amount,
-      const bc::Address& from_address,
-      const bc::Address& to_address,
+    std::tuple<rpc::OperationStatus, std::string, lk::Balance> transaction_message_call(
+      lk::Balance amount,
+      const lk::Address& from_address,
+      const lk::Address& to_address,
       const base::Time& timestamp,
-      bc::Balance gas,
+      lk::Balance gas,
       const std::string& message,
-      const bc::Sign& signature) override;
+      const lk::Sign& signature) override;
 
   private:
     lk::Core& _core;

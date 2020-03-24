@@ -18,25 +18,25 @@ void AccountState::incNonce() noexcept
 }
 
 
-bc::Balance AccountState::getBalance() const noexcept
+lk::Balance AccountState::getBalance() const noexcept
 {
     return _balance;
 }
 
 
-void AccountState::setBalance(bc::Balance new_balance)
+void AccountState::setBalance(lk::Balance new_balance)
 {
     _balance = new_balance;
 }
 
 
-void AccountState::addBalance(bc::Balance delta)
+void AccountState::addBalance(lk::Balance delta)
 {
     _balance += delta;
 }
 
 
-void AccountState::subBalance(bc::Balance delta)
+void AccountState::subBalance(lk::Balance delta)
 {
     if (_balance < delta) {
         throw base::LogicError("trying to take more LK from account than it has");
@@ -82,7 +82,7 @@ void AccountState::setStorageValue(const base::Sha256& key, base::Bytes value)
 }
 
 
-void AccountManager::newAccount(const bc::Address& address, base::Sha256 code_hash)
+void AccountManager::newAccount(const lk::Address& address, base::Sha256 code_hash)
 {
     if (hasAccount(address)) {
         RAISE_ERROR(base::LogicError, "address already exists");
@@ -95,14 +95,14 @@ void AccountManager::newAccount(const bc::Address& address, base::Sha256 code_ha
 }
 
 
-bool AccountManager::hasAccount(const bc::Address& address) const
+bool AccountManager::hasAccount(const lk::Address& address) const
 {
     std::shared_lock lk(_rw_mutex);
     return _states.find(address) != _states.end();
 }
 
 
-bool AccountManager::deleteAccount(const bc::Address& address)
+bool AccountManager::deleteAccount(const lk::Address& address)
 {
     std::unique_lock lk(_rw_mutex);
     if (auto it = _states.find(address); it != _states.end()) {
@@ -115,20 +115,20 @@ bool AccountManager::deleteAccount(const bc::Address& address)
 }
 
 
-bc::Address AccountManager::newContract(const bc::Address& address, base::Sha256 associated_code_hash)
+lk::Address AccountManager::newContract(const lk::Address& address, base::Sha256 associated_code_hash)
 {
     auto& account = getAccount(address);
     auto nonce = account.getNonce() + 1;
     account.incNonce();
     auto bytes_address = address.getBytes();
     bytes_address[0] = (bytes_address[0] + nonce) & 0xFF; // TEMPORARILY!!
-    auto account_address = bc::Address(bytes_address);
+    auto account_address = lk::Address(bytes_address);
     newAccount(account_address, std::move(associated_code_hash));
     return account_address;
 }
 
 
-const AccountState& AccountManager::getAccount(const bc::Address& address) const
+const AccountState& AccountManager::getAccount(const lk::Address& address) const
 {
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
@@ -141,7 +141,7 @@ const AccountState& AccountManager::getAccount(const bc::Address& address) const
 }
 
 
-AccountState& AccountManager::getAccount(const bc::Address& address)
+AccountState& AccountManager::getAccount(const lk::Address& address)
 {
     std::shared_lock lk(_rw_mutex);
     auto it = _states.find(address);
@@ -155,7 +155,7 @@ AccountState& AccountManager::getAccount(const bc::Address& address)
 }
 
 
-bc::Balance AccountManager::getBalance(const bc::Address& account_address) const
+lk::Balance AccountManager::getBalance(const lk::Address& account_address) const
 {
     if (hasAccount(account_address)) {
         return getAccount(account_address).getBalance();
@@ -166,7 +166,7 @@ bc::Balance AccountManager::getBalance(const bc::Address& account_address) const
 }
 
 
-bool AccountManager::checkTransaction(const bc::Transaction& tx) const
+bool AccountManager::checkTransaction(const lk::Transaction& tx) const
 {
     std::shared_lock lk(_rw_mutex);
     if (_states.find(tx.getFrom()) == _states.end()) {
@@ -176,7 +176,7 @@ bool AccountManager::checkTransaction(const bc::Transaction& tx) const
 }
 
 
-bool AccountManager::tryTransferMoney(const bc::Address& from, const bc::Address& to, bc::Balance amount)
+bool AccountManager::tryTransferMoney(const lk::Address& from, const lk::Address& to, lk::Balance amount)
 {
     if (!hasAccount(from)) {
         return false;
@@ -196,7 +196,7 @@ bool AccountManager::tryTransferMoney(const bc::Address& from, const bc::Address
 }
 
 
-void AccountManager::update(const bc::Transaction& tx)
+void AccountManager::update(const lk::Transaction& tx)
 {
     std::unique_lock lk(_rw_mutex);
     auto from_iter = _states.find(tx.getFrom());
@@ -219,7 +219,7 @@ void AccountManager::update(const bc::Transaction& tx)
 }
 
 
-void AccountManager::update(const bc::Block& block)
+void AccountManager::update(const lk::Block& block)
 {
     for (const auto& tx : block.getTransactions()) {
         update(tx);
@@ -227,7 +227,7 @@ void AccountManager::update(const bc::Block& block)
 }
 
 
-void AccountManager::updateFromGenesis(const bc::Block& block)
+void AccountManager::updateFromGenesis(const lk::Block& block)
 {
     std::unique_lock lk(_rw_mutex);
     for (const auto& tx : block.getTransactions()) {

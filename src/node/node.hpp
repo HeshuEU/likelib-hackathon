@@ -26,7 +26,7 @@ class Node
     //---------------------------
     static base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> getMiningComplexity();
     //---------------------------
-    void onBlockMine(bc::Block&& block);
-    void onNewTransactionReceived(const bc::Transaction& tx);
-    void onNewBlock(const bc::Block& block);
+    void onBlockMine(lk::Block&& block);
+    void onNewTransactionReceived(const lk::Transaction& tx);
+    void onNewBlock(const lk::Block& block);
 };

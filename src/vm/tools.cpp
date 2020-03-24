@@ -82,7 +82,7 @@ evmc::bytes32 toEvmcBytes32(const base::FixedBytes<32>& data)
 }
 
 
-bc::Balance toBalance(evmc_uint256be value)
+lk::Balance toBalance(evmc_uint256be value)
 {
     auto val = base::toHex<base::Bytes>(toBytes(value));
     char* end;
@@ -90,7 +90,7 @@ bc::Balance toBalance(evmc_uint256be value)
 }
 
 
-evmc_uint256be toEvmcUint256(const bc::Balance& balance)
+evmc_uint256be toEvmcUint256(const lk::Balance& balance)
 {
     auto bytes = detail::encode(balance);
     evmc_uint256be res;
@@ -175,15 +175,15 @@ base::Bytes encode(uint8_t value)
 }
 
 
-bc::Address toNativeAddress(const evmc::address& addr)
+lk::Address toNativeAddress(const evmc::address& addr)
 {
-    base::Bytes raw_address(addr.bytes, bc::Address::LENGTH_IN_BYTES);
-    bc::Address address(raw_address);
+    base::Bytes raw_address(addr.bytes, lk::Address::LENGTH_IN_BYTES);
+    lk::Address address(raw_address);
     return address;
 }
 
 
-evmc::address toEthAddress(const bc::Address& address)
+evmc::address toEthAddress(const lk::Address& address)
 {
     evmc::address ret;
     auto byte_address = address.getBytes();

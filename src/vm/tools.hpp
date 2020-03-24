@@ -26,9 +26,9 @@ evmc::bytes32 toEvmcBytes32(const base::Bytes& data);
 
 evmc::bytes32 toEvmcBytes32(const base::FixedBytes<32>& data);
 
-bc::Balance toBalance(evmc_uint256be value);
+lk::Balance toBalance(evmc_uint256be value);
 
-evmc_uint256be toEvmcUint256(const bc::Balance& balance);
+evmc_uint256be toEvmcUint256(const lk::Balance& balance);
 
 std::string getStringArg(size_t position, const base::Bytes& data);
 
@@ -46,9 +46,9 @@ base::Bytes encode(uint16_t value);
 
 base::Bytes encode(uint8_t value);
 
-bc::Address toNativeAddress(const evmc::address& addr);
+lk::Address toNativeAddress(const evmc::address& addr);
 
-evmc::address toEthAddress(const bc::Address& address);
+evmc::address toEthAddress(const lk::Address& address);
 
 std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call);
 

@@ -4,7 +4,7 @@
 #include "base/hash.hpp"
 #include "base/serialization.hpp"
 
-namespace bc
+namespace lk
 {
 
 class Address
@@ -44,4 +44,4 @@ class Address
 
 std::ostream& operator<<(std::ostream& os, const Address& address);
 
-} // namespace bc
+} // namespace lk

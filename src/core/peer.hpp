@@ -24,7 +24,7 @@ class Peer
     struct Info
     {
         net::Endpoint endpoint;
-        bc::Address address;
+        lk::Address address;
 
         static Info deserialize(base::SerializationIArchive& ia);
         void serialize(base::SerializationOArchive& oa) const;
@@ -37,17 +37,17 @@ class Peer
     std::optional<net::Endpoint> getPublicEndpoint() const;
     void setServerEndpoint(net::Endpoint endpoint);
     //================
-    std::optional<bc::Address> getAddress() const;
-    void setAddress(bc::Address address);
+    std::optional<lk::Address> getAddress() const;
+    void setAddress(lk::Address address);
     //================
     void setState(State new_state);
     State getState() const noexcept;
 
     Info getInfo() const;
     //================
-    void addSyncBlock(bc::Block block);
+    void addSyncBlock(lk::Block block);
     bool applySyncs();
-    const std::forward_list<bc::Block>& getSyncBlocks() const noexcept;
+    const std::forward_list<lk::Block>& getSyncBlocks() const noexcept;
     //================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
@@ -60,9 +60,9 @@ class Peer
     //================
     State _state{ State::JUST_ESTABLISHED };
     std::optional<net::Endpoint> _endpoint_for_incoming_connections;
-    std::optional<bc::Address> _address;
+    std::optional<lk::Address> _address;
     //================
-    std::forward_list<bc::Block> _sync_blocks;
+    std::forward_list<lk::Block> _sync_blocks;
     //================
 };
 

@@ -168,13 +168,13 @@ contract Foo {
 
     auto target_value_1 = 1u;
     auto init_message = contract.createInitMessage(
-      100000, bc::Address{ source }, bc::Address{ destination }, 1, vm::encode(target_value_1));
+      100000, lk::Address{ source }, lk::Address{ destination }, 1, vm::encode(target_value_1));
     auto res1 = vm_instance.execute(init_message);
     BOOST_CHECK(res1.ok());
 
     auto input_for_message_1 = base::fromHex<base::Bytes>("29809703"); // TODO: remove
     auto message1 =
-      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_1);
+      contract.createMessage(10000, lk::Address{ source }, lk::Address{ destination }, 0, input_for_message_1);
     auto res2 = vm_instance.execute(message1);
     BOOST_CHECK(res2.ok());
 
@@ -184,13 +184,13 @@ contract Foo {
 
     auto input_for_message_2 = base::fromHex<base::Bytes>("bd70b447") + vm::encode(target_value_2);
     auto message2 =
-      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_2);
+      contract.createMessage(10000, lk::Address{ source }, lk::Address{ destination }, 0, input_for_message_2);
     auto res3 = vm_instance.execute(message2);
     BOOST_CHECK(res3.ok());
 
     auto input_for_message_3 = base::fromHex<base::Bytes>("29809703"); // TODO: remove
     auto message3 =
-      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_3);
+      contract.createMessage(10000, lk::Address{ source }, lk::Address{ destination }, 0, input_for_message_3);
     auto res4 = vm_instance.execute(message3);
     BOOST_CHECK(res3.ok());
 
@@ -251,12 +251,12 @@ contract Foo {
     std::string target_value_1 = "one";
 
     auto init_message = contract.createInitMessage(
-      1000000, bc::Address{ source }, bc::Address{ destination }, 0, vm::encode(32u) + vm::encode(target_value_1));
+      1000000, lk::Address{ source }, lk::Address{ destination }, 0, vm::encode(32u) + vm::encode(target_value_1));
     auto res1 = vm_instance.execute(init_message);
     BOOST_CHECK(res1.ok());
 
     auto message1 = contract.createMessage(
-      1000000, bc::Address{ source }, bc::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
+      1000000, lk::Address{ source }, lk::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
     auto res2 = vm_instance.execute(message1);
     BOOST_CHECK(res2.ok());
 
@@ -266,15 +266,15 @@ contract Foo {
 
     auto message2 =
       contract.createMessage(1000000,
-                             bc::Address{ source },
-                             bc::Address{ destination },
+                             lk::Address{ source },
+                             lk::Address{ destination },
                              0,
                              base::fromHex<base::Bytes>("3d7403a3") + vm::encode(32u) + vm::encode(target_value_2));
     auto res3 = vm_instance.execute(message2);
     BOOST_CHECK(res3.ok());
 
     auto message3 = contract.createMessage(
-      1000000, bc::Address{ source }, bc::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
+      1000000, lk::Address{ source }, lk::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
     auto res4 = vm_instance.execute(message3);
     BOOST_CHECK(res3.ok());
 

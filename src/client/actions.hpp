@@ -44,9 +44,9 @@ class ActionTransfer : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    bc::Address _to_address{ bc::Address::null() };
-    bc::Balance _amount;
-    bc::Balance _fee;
+    lk::Address _to_address{ lk::Address::null() };
+    lk::Balance _amount;
+    lk::Balance _fee;
     std::filesystem::path _keys_dir;
     //====================================
 };
@@ -66,7 +66,7 @@ class ActionGetBalance : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    bc::Address _account_address{ bc::Address::null() };
+    lk::Address _account_address{ lk::Address::null() };
     //====================================
 };
 
@@ -85,7 +85,7 @@ class ActionTestConnection : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    bc::Address _account_address{ bc::Address::null() };
+    lk::Address _account_address{ lk::Address::null() };
     //====================================
 };
 
@@ -105,8 +105,8 @@ class ActionCreateContract : public ActionBase
     //====================================
     std::string _host_address;
     std::filesystem::path _keys_dir;
-    bc::Balance _amount;
-    bc::Balance _gas;
+    lk::Balance _amount;
+    lk::Balance _gas;
     std::string _compiled_contract;
     std::string _message;
     //====================================
@@ -127,9 +127,9 @@ class ActionMessageCall : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    bc::Address _to_address{ bc::Address::null() };
-    bc::Balance _amount;
-    bc::Balance _gas;
+    lk::Address _to_address{ lk::Address::null() };
+    lk::Balance _amount;
+    lk::Balance _gas;
     std::filesystem::path _keys_dir;
     std::string _message;
     //====================================
