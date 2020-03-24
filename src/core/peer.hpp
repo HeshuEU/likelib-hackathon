@@ -1,7 +1,8 @@
 #pragma once
 
-#include "address.hpp"
-#include "block.hpp"
+#include "core/address.hpp"
+#include "core/block.hpp"
+#include "core/protocol.hpp"
 #include "net/session.hpp"
 
 #include <forward_list>
@@ -9,6 +10,9 @@
 
 namespace lk
 {
+
+class Core;
+class Host;
 
 class Peer
 {
@@ -30,7 +34,7 @@ class Peer
         void serialize(base::SerializationOArchive& oa) const;
     };
     //================
-    explicit Peer(std::unique_ptr<net::Session> session);
+    Peer(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host);
     //================
     const net::Session& getSession() const noexcept;
     net::Endpoint getEndpoint() const;
@@ -44,9 +48,10 @@ class Peer
     State getState() const noexcept;
 
     Info getInfo() const;
+    bool isClosed() const;
     //================
     void addSyncBlock(lk::Block block);
-    bool applySyncs();
+    void applySyncs();
     const std::forward_list<lk::Block>& getSyncBlocks() const noexcept;
     //================
     void send(const base::Bytes& data);
@@ -54,7 +59,7 @@ class Peer
     //================
   private:
     //================
-    void doHandshake();
+    // void doHandshake();
     //================
     std::unique_ptr<net::Session> _session;
     //================
@@ -63,6 +68,9 @@ class Peer
     std::optional<lk::Address> _address;
     //================
     std::forward_list<lk::Block> _sync_blocks;
+    //================
+    lk::Core& _core;
+    lk::Protocol _protocol;
     //================
 };
 

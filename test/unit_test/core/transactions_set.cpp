@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "lk/transactions_set.hpp"
+#include "core/transactions_set.hpp"
 
 #include <vector>
 

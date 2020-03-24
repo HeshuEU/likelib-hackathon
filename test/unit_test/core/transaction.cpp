@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "lk/transaction.hpp"
+#include "core/transaction.hpp"
 
 
 BOOST_AUTO_TEST_CASE(transaction_constructor1)

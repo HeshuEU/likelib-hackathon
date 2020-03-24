@@ -1,8 +1,8 @@
 #pragma once
 
 #include "base/property_tree.hpp"
-#include "block.hpp"
-#include "lk/peer.hpp"
+#include "core/block.hpp"
+#include "core/peer.hpp"
 #include "net/acceptor.hpp"
 #include "net/connector.hpp"
 #include "net/session.hpp"
@@ -20,6 +20,7 @@
 namespace lk
 {
 
+class Core;
 
 class PeerTable
 {
@@ -27,7 +28,7 @@ class PeerTable
     //=================================
     PeerTable(lk::Address host_id);
     //=================================
-    void tryAddPeer(std::unique_ptr<Peer>);
+    void tryAddPeer(std::unique_ptr<Peer> peer);
     //=================================
   private:
     //=================================
@@ -44,7 +45,7 @@ class Host
 {
   public:
     //=================================
-    explicit Host(const base::PropertyTree& config, std::size_t connections_limit);
+    explicit Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core);
     ~Host();
     //=================================
     void checkOutPeer(const net::Endpoint& address);
@@ -55,7 +56,7 @@ class Host
     void run();
     void join();
     //=================================
-    void forEachPeer(std::function<void(const Peer&)> f);
+    // void forEachPeer(std::function<void(const Peer&)> f);
     std::vector<Peer::Info> allConnectedPeersInfo() const;
     //=================================
   private:
@@ -65,15 +66,15 @@ class Host
     const net::Endpoint _listen_ip;
     const unsigned short _server_public_port;
     const std::size_t _max_connections_number;
+    lk::Core& _core;
     //=================================
     boost::asio::io_context _io_context;
     //===================
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
-    std::vector<Peer> _connected_peers;
+    std::list<lk::Peer> _connected_peers;
     mutable std::shared_mutex _connected_peers_mutex;
-    net::Session& addNewSession(std::unique_ptr<net::Connection> peer);
 
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();
@@ -81,7 +82,10 @@ class Host
     //=================================
     net::Acceptor _acceptor;
     void accept();
+    void onAccept(std::unique_ptr<net::Connection> connection);
+
     net::Connector _connector;
+    void onConnect(std::unique_ptr<net::Connection> connection);
     //=================================
 };
 

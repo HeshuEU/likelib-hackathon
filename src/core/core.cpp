@@ -15,7 +15,7 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
   , _vault{ key_vault }
   , _this_node_address{ _vault.getPublicKey() }
   , _blockchain{ _config }
-  , _network{ _config, *this }
+  , _host{ _config, 0xFFFF, *this }
   , _eth_adapter{ *this, _account_manager, _code_manager }
 {
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
@@ -51,7 +51,7 @@ const lk::Block& Core::getGenesisBlock()
 
 void Core::run()
 {
-    _network.run();
+    _host.run();
 }
 
 

@@ -3,12 +3,12 @@
 #include "base/crypto.hpp"
 #include "base/property_tree.hpp"
 #include "base/utility.hpp"
-#include "block.hpp"
-#include "blockchain.hpp"
-#include "host.hpp"
-#include "lk/eth_adapter.hpp"
-#include "lk/managers.hpp"
-#include "lk/protocol.hpp"
+#include "core/block.hpp"
+#include "core/blockchain.hpp"
+#include "core/eth_adapter.hpp"
+#include "core/host.hpp"
+#include "core/managers.hpp"
+#include "core/protocol.hpp"
 
 #include <shared_mutex>
 

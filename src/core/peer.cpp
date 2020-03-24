@@ -1,13 +1,33 @@
 #include "peer.hpp"
 
+#include "core/core.hpp"
+#include "core/host.hpp"
+
 namespace lk
 {
 
-Peer::Peer(std::unique_ptr<net::Session> session)
-  : _session{ std::move(session) }
+Peer::Info Peer::Info::deserialize(base::SerializationIArchive& ia)
 {
-    doHandshake();
+    auto endpoint = ia.deserialize<net::Endpoint>();
+    auto address = ia.deserialize<lk::Address>();
+    Peer::Info ret{std::move(endpoint), std::move(address)};
+    return ret;
 }
+
+
+void Peer::Info::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(endpoint);
+    oa.serialize(address);
+}
+
+//================================
+
+Peer::Peer(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
+  : _session{ std::move(session) }
+  , _core{core}
+  , _protocol{ lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, this }) }
+{}
 
 
 net::Endpoint Peer::getEndpoint() const
@@ -52,6 +72,15 @@ void Peer::addSyncBlock(lk::Block block)
 }
 
 
+void Peer::applySyncs()
+{
+    for(auto&& sync : _sync_blocks) {
+        _core.tryAddBlock(sync);
+    }
+    _sync_blocks.clear();
+}
+
+
 const std::forward_list<lk::Block>& Peer::getSyncBlocks() const noexcept
 {
     return _sync_blocks;
@@ -79,6 +108,18 @@ std::optional<lk::Address> Peer::getAddress() const
 void Peer::setAddress(lk::Address address)
 {
     _address = std::move(address);
+}
+
+
+bool Peer::isClosed() const
+{
+    return !_session || _session->isClosed();
+}
+
+
+Peer::Info Peer::getInfo() const
+{
+    return Peer::Info{_session->getEndpoint(), (_address ? *_address : lk::Address::null())};
 }
 
 //=====================================

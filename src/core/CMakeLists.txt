@@ -1,9 +1,10 @@
-set(LK_HEADERS
+set(CORE_HEADERS
         address.hpp
         block.hpp
         blockchain.hpp
         core.hpp
         eth_adapter.hpp
+        host.hpp
         managers.hpp
         peer.hpp
         protocol.hpp
@@ -12,12 +13,13 @@ set(LK_HEADERS
         transactions_set.hpp
         )
 
-set(LK_SOURCES
+set(CORE_SOURCES
         address.cpp
         block.cpp
         blockchain.cpp
         core.cpp
         eth_adapter.cpp
+        host.cpp
         managers.cpp
         peer.cpp
         protocol.cpp
@@ -25,6 +27,6 @@ set(LK_SOURCES
         transactions_set.cpp
         )
 
-add_library(lk ${LK_SOURCES} ${LK_HEADERS})
+add_library(core ${CORE_SOURCES} ${CORE_HEADERS})
 
-target_link_libraries(lk base bc net vm)
+target_link_libraries(core base net vm)

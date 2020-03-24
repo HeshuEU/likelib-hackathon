@@ -1,12 +1,13 @@
 #include <boost/test/unit_test.hpp>
 
-#include "lk/address.hpp"
+#include "core/address.hpp"
 
 BOOST_AUTO_TEST_CASE(address_null)
 {
     auto null = lk::Address::null();
     BOOST_CHECK(null.isNull());
 }
+
 
 BOOST_AUTO_TEST_CASE(address_constructor_fromPublicKey)
 {

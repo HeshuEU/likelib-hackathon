@@ -26,4 +26,4 @@ add_library(rpc ${RPC_HEADERS} ${RPC_SOURCES} ${GENERATED_HEADERS} ${GENERATED_S
 target_include_directories(rpc SYSTEM PUBLIC ${GLOBAL_OUTPUT_CODE_DIR})
 target_include_directories(rpc PUBLIC ${RPC_MODULE_INCLUDE})
 
-target_link_libraries(rpc base bc gRPC::grpc_module)
+target_link_libraries(rpc base core gRPC::grpc_module)

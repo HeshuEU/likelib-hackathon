@@ -3,7 +3,7 @@
 #include "base/config.hpp"
 #include "base/hash.hpp"
 #include "base/log.hpp"
-#include "lk/transaction.hpp"
+#include "core/transaction.hpp"
 
 namespace node
 {

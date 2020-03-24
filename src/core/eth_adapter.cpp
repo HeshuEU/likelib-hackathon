@@ -1,6 +1,6 @@
 #include "eth_adapter.hpp"
 
-#include "lk/core.hpp"
+#include "core/core.hpp"
 
 #include "vm/tools.hpp"
 #include "vm/vm.hpp"

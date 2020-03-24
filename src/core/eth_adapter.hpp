@@ -2,7 +2,7 @@
 
 #include "base/bytes.hpp"
 #include "block.hpp"
-#include "lk/managers.hpp"
+#include "core/managers.hpp"
 #include "vm/vm.hpp"
 
 #include <memory>

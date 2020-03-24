@@ -1,7 +1,7 @@
 #pragma once
 
-#include "lk/transaction.hpp"
-#include "lk/core.hpp"
+#include "core/core.hpp"
+#include "core/transaction.hpp"
 #include "rpc/base_rpc.hpp"
 
 namespace node

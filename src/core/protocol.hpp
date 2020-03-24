@@ -1,6 +1,5 @@
 #pragma once
 
-#include "lk/peer.hpp"
 #include "net/session.hpp"
 
 namespace lk
@@ -69,10 +68,10 @@ class Protocol : public net::Session::Handler
 };
 
 
-class Network
-{
-    void onNewBlock(const lk::Block& block);
-    void onNewPendingTransaction(const lk::Transaction& tx);
-};
+//class Network
+//{
+//    void onNewBlock(const lk::Block& block);
+//    void onNewPendingTransaction(const lk::Transaction& tx);
+//};
 
 } // namespace core

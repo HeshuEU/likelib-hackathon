@@ -1,8 +1,8 @@
 #pragma once
 
 #include "base/bytes.hpp"
-#include "lk/address.hpp"
-#include "lk/types.hpp"
+#include "core/address.hpp"
+#include "core/types.hpp"
 
 #include <evmc/evmc.hpp>
 

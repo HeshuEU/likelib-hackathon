@@ -17,14 +17,15 @@ PeerTable::PeerTable(lk::Address host_id)
 {}
 
 
-Host::Host(const base::PropertyTree& config, std::size_t connections_limit)
+Host::Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core)
   : _config{ config }
   , _listen_ip{ _config.get<std::string>("net.listen_addr") }
   , _server_public_port{ _config.get<unsigned short>("net.public_port") }
   , _max_connections_number{ connections_limit }
+  , _core{ core }
+  , _heartbeat_timer{ _io_context }
   , _acceptor{ _io_context, _listen_ip }
   , _connector{ _io_context }
-  , _heartbeat_timer{ _io_context }
 {}
 
 
@@ -44,30 +45,25 @@ void Host::scheduleHeartBeat()
 }
 
 
-net::Session& Host::addNewSession(std::unique_ptr<net::Connection> connection)
-{
-    ASSERT(connection);
-    std::unique_lock lk(_connected_peers_mutex);
-    _connected_peers.push_back(std::make_shared<net::Session>(std::move(connection)));
-    auto& session = *_sessions.back();
-
-    // setHandler won't miss any messages since it is called inside connections callback
-    session.setHandler(_handler_factory->create(session));
-    return session;
-}
-
-
 void Host::accept()
 {
     _acceptor.accept([this](std::unique_ptr<net::Connection> connection) {
         ASSERT(connection);
-        [[maybe_unused]] auto& session = addNewSession(std::move(connection));
+        onAccept(std::move(connection));
         accept();
     });
 }
 
 
-void Host::connect(const net::Endpoint& endpoint)
+void Host::onAccept(std::unique_ptr<net::Connection> connection)
+{
+    std::unique_lock lk{ _connected_peers_mutex };
+    auto session = std::make_unique<net::Session>(std::move(connection));
+    _connected_peers.emplace_back(std::move(session), _core, *this);
+}
+
+
+void Host::checkOutPeer(const net::Endpoint& endpoint)
 {
     if (_listen_ip == endpoint) {
         return;
@@ -84,13 +80,20 @@ void Host::connect(const net::Endpoint& endpoint)
         }
     }
 
-    LOG_CURRENT_FUNCTION;
     LOG_DEBUG << "Connecting to node " << endpoint;
     _connector.connect(endpoint, [this](std::unique_ptr<net::Connection> connection) {
         ASSERT(connection);
-        [[maybe_unused]] auto& session = addNewSession(std::move(connection));
+        onConnect(std::move(connection));
     });
     LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
+}
+
+
+void Host::onConnect(std::unique_ptr<net::Connection> connection)
+{
+    std::unique_lock lk{ _connected_peers_mutex };
+    auto session = std::make_unique<net::Session>(std::move(connection));
+    _connected_peers.emplace_back(std::move(session), _core, *this);
 }
 
 
@@ -118,7 +121,7 @@ void Host::run()
 
     if (_config.hasKey("nodes")) {
         for (const auto& node : _config.getVector<std::string>("nodes")) {
-            connect(net::Endpoint(node));
+            checkOutPeer(net::Endpoint(node));
         }
     }
 }
@@ -135,10 +138,7 @@ void Host::join()
 void Host::dropZombiePeers()
 {
     std::unique_lock lk(_connected_peers_mutex);
-    _connected_peers.erase(std::remove_if(_connected_peers.begin(),
-                                          _connected_peers.end(),
-                                          [](const auto& peer) { return peer->isClosed(); }),
-                           _connected_peers.end());
+    _connected_peers.remove_if([](const auto& peer) { return peer.isClosed(); });
 }
 
 
@@ -161,6 +161,17 @@ bool Host::isConnectedTo(const net::Endpoint& endpoint) const
         }
     }
     return false;
+}
+
+
+std::vector<Peer::Info> Host::allConnectedPeersInfo() const
+{
+    std::shared_lock lk{_connected_peers_mutex};
+    std::vector<Peer::Info> ret;
+    for(const auto& peer : _connected_peers) {
+        ret.push_back(peer.getInfo());
+    }
+    return ret;
 }
 
 } // namespace net

@@ -8,7 +8,7 @@
 #include "base/property_tree.hpp"
 #include "base/subprogram_router.hpp"
 #include "base/time.hpp"
-#include "lk/transaction.hpp"
+#include "core/transaction.hpp"
 #include "rpc/error.hpp"
 #include "rpc/rpc.hpp"
 #include "vm/messages.hpp"

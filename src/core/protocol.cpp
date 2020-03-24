@@ -2,7 +2,7 @@
 
 #include "base/log.hpp"
 #include "base/serialization.hpp"
-#include "lk/core.hpp"
+#include "core/core.hpp"
 
 
 namespace
@@ -71,7 +71,7 @@ class PingMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static PingMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     PingMessage() = default;
@@ -85,7 +85,7 @@ class PongMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static PongMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     PongMessage() = default;
@@ -99,7 +99,7 @@ class TransactionMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, lk::Transaction tx);
     static TransactionMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     lk::Transaction _tx;
@@ -115,7 +115,7 @@ class GetBlockMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
     static GetBlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     base::Sha256 _block_hash;
@@ -131,7 +131,7 @@ class BlockMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const lk::Block& block);
     static BlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     lk::Block _block;
@@ -147,7 +147,7 @@ class BlockNotFoundMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
     static BlockNotFoundMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     base::Sha256 _block_hash;
@@ -163,7 +163,7 @@ class GetInfoMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static GetInfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     GetInfoMessage() = default;
@@ -179,7 +179,7 @@ class InfoMessage
                           const base::Sha256& top_block_hash,
                           const std::vector<net::Endpoint>& available_peers);
     static InfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     base::Sha256 _top_block_hash;
@@ -198,7 +198,7 @@ class NewNodeMessage
                           const net::Endpoint& new_node_endpoint,
                           const lk::Address& address);
     static NewNodeMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::MessageProcessor::Context& ctx);
 
   private:
     net::Endpoint _new_node_endpoint;
@@ -304,13 +304,13 @@ void PingMessage::serialize(base::SerializationOArchive& oa)
 }
 
 
-PingMessage PingMessage::deserialize(base::SerializationIArchive& ia)
+PingMessage PingMessage::deserialize(base::SerializationIArchive&)
 {
     return {};
 }
 
 
-void PingMessage::handle(const lk::MessageProcessor::Context& ctx) {}
+void PingMessage::handle(const lk::MessageProcessor::Context&) {}
 
 
 //============================================
@@ -327,13 +327,13 @@ void PongMessage::serialize(base::SerializationOArchive& oa)
 }
 
 
-PongMessage PongMessage::deserialize(base::SerializationIArchive& ia)
+PongMessage PongMessage::deserialize(base::SerializationIArchive&)
 {
     return {};
 }
 
 
-void PongMessage::handle(const lk::MessageProcessor::Context& ctx) {}
+void PongMessage::handle(const lk::MessageProcessor::Context&) {}
 
 //============================================
 
@@ -472,7 +472,7 @@ BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchi
 }
 
 
-void BlockNotFoundMessage::handle(const lk::MessageProcessor::Context& ctx) {}
+void BlockNotFoundMessage::handle(const lk::MessageProcessor::Context&) {}
 
 
 BlockNotFoundMessage::BlockNotFoundMessage(base::Sha256 block_hash)
@@ -530,7 +530,7 @@ InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void InfoMessage::handle(const lk::MessageProcessor::Context& ctx) {}
+void InfoMessage::handle(const lk::MessageProcessor::Context&) {}
 
 
 InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
@@ -608,7 +608,7 @@ bool runHandleImpl(MessageType mt, base::SerializationIArchive& ia, const lk::Me
 
 
 template<>
-bool runHandleImpl<void>(MessageType mt, base::SerializationIArchive& ia, const lk::MessageProcessor::Context& ctx)
+bool runHandleImpl<void>(MessageType, base::SerializationIArchive&, const lk::MessageProcessor::Context&)
 {
     return false;
 }
@@ -706,6 +706,9 @@ void Protocol::startOnAcceptedPeer() {}
 
 
 void Protocol::startOnConnectedPeer() {}
+
+
+void Protocol::doHandshake() {}
 
 
 void Protocol::onReceive(const base::Bytes& bytes)
