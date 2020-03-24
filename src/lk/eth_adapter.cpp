@@ -93,13 +93,7 @@ class EthAdapter::EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_balance";
         auto address = vm::toNativeAddress(addr);
         auto balance = _account_manager.getBalance(address);
-        evmc::uint256be ret;
-        std::fill(std::begin(ret.bytes), std::end(ret.bytes), 0);
-        for(int i = sizeof(balance) * 8; i >= 0; --i) {
-            ret.bytes[i] = balance & 0xFF;
-            balance >>= 8;
-        }
-        return ret;
+        return vm::toEvmcUint256(balance);
     }
 
 
