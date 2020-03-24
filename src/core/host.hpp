@@ -26,7 +26,7 @@ class PeerTable
 {
   public:
     //=================================
-    PeerTable(lk::Address host_address);
+    explicit PeerTable(lk::Address host_address);
     //=================================
     /*
      * Trying to add peer to a table. If succeeded, then std::unique_ptr is moved; if failed --
