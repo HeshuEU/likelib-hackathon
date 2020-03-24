@@ -688,10 +688,19 @@ Protocol::Protocol(MessageProcessor::Context context)
 }
 
 
-void Protocol::startOnAcceptedPeer() {}
+void Protocol::startOnAcceptedPeer()
+{
+    // TODO: _ctx.host->schedule(_peer.close); schedule disconnection on timeout
+    // now does nothing, since we wait for connected peer to send us something (HANDSHAKE message)
+}
 
 
-void Protocol::startOnConnectedPeer() {}
+void Protocol::startOnConnectedPeer()
+{
+    /*
+     * we connected to a node, so now we are going to send handshake
+     */
+}
 
 
 void Protocol::doHandshake() {}
