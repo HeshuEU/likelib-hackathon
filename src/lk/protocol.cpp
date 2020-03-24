@@ -37,17 +37,6 @@ base::Bytes serializeMessage(Args&&... args)
 
 //========================================
 
-
-struct PeerInfo
-{
-    net::Endpoint endpoint;
-    bc::Address address;
-
-    static PeerInfo deserialize(base::SerializationIArchive& ia);
-    void serialize(base::SerializationOArchive& oa) const;
-};
-
-
 class HandshakeMessage
 {
   public:
@@ -56,24 +45,25 @@ class HandshakeMessage
                           const bc::Block& block,
                           const bc::Address& address,
                           std::uint16_t public_port,
-                          const std::vector<PeerInfo>& known_peers);
+                          const std::vector<lk::Peer::Info>& known_peers);
     void serialize(base::SerializationOArchive& oa) const;
     static HandshakeMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     bc::Block _theirs_top_block;
     bc::Address _address;
     std::uint16_t
       _public_port; // zero public port states that peer didn't provide information about his public endpoint
-    std::vector<PeerInfo> _known_peers;
+    std::vector<lk::Peer::Info> _known_peers;
 
     HandshakeMessage(bc::Block&& top_block,
                      bc::Address address,
                      std::uint16_t public_port,
-                     std::vector<PeerInfo>&& known_peers);
+                     std::vector<lk::Peer::Info>&& known_peers);
 };
 
+//========================================
 
 class PingMessage
 {
@@ -81,7 +71,7 @@ class PingMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static PingMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     PingMessage() = default;
@@ -95,7 +85,7 @@ class PongMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static PongMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     PongMessage() = default;
@@ -108,9 +98,8 @@ class TransactionMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, bc::Transaction tx);
-    void serialize(base::SerializationOArchive& oa) const;
     static TransactionMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     bc::Transaction _tx;
@@ -125,9 +114,8 @@ class GetBlockMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
-    void serialize(base::SerializationOArchive& oa) const;
     static GetBlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     base::Sha256 _block_hash;
@@ -142,9 +130,8 @@ class BlockMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const bc::Block& block);
-    void serialize(base::SerializationOArchive& oa) const;
     static BlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     bc::Block _block;
@@ -159,9 +146,8 @@ class BlockNotFoundMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
-    void serialize(base::SerializationOArchive& oa) const;
     static BlockNotFoundMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     base::Sha256 _block_hash;
@@ -177,7 +163,7 @@ class GetInfoMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static GetInfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     GetInfoMessage() = default;
@@ -192,9 +178,8 @@ class InfoMessage
     static void serialize(base::SerializationOArchive& oa,
                           const base::Sha256& top_block_hash,
                           const std::vector<net::Endpoint>& available_peers);
-    void serialize(base::SerializationOArchive& oa) const;
     static InfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     base::Sha256 _top_block_hash;
@@ -212,9 +197,8 @@ class NewNodeMessage
     static void serialize(base::SerializationOArchive& oa,
                           const net::Endpoint& new_node_endpoint,
                           const bc::Address& address);
-    void serialize(base::SerializationOArchive& oa) const;
     static NewNodeMessage deserialize(base::SerializationIArchive& ia);
-    void handle(lk::Core& core, lk::Host& host, lk::Peer& peer);
+    void handle(const lk::MessageProcessor::Context& context);
 
   private:
     net::Endpoint _new_node_endpoint;
@@ -235,7 +219,7 @@ void HandshakeMessage::serialize(base::SerializationOArchive& oa,
                                  const bc::Block& block,
                                  const bc::Address& address,
                                  std::uint16_t public_port,
-                                 const std::vector<PeerInfo>& known_peers)
+                                 const std::vector<lk::Peer::Info>& known_peers)
 {
     oa.serialize(MessageType::HANDSHAKE);
     oa.serialize(block);
@@ -245,57 +229,51 @@ void HandshakeMessage::serialize(base::SerializationOArchive& oa,
 }
 
 
-void HandshakeMessage::serialize(base::SerializationOArchive& oa) const
-{
-    serialize(oa, _theirs_top_block, _address, _public_port, _known_peers);
-}
-
-
 HandshakeMessage HandshakeMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto top_block = ia.deserialize<bc::Block>();
     auto address = ia.deserialize<bc::Address>();
     auto public_port = ia.deserialize<std::uint16_t>();
-    auto known_peers = ia.deserialize<std::vector<PeerInfo>>();
+    auto known_peers = ia.deserialize<std::vector<lk::Peer::Info>>();
     return HandshakeMessage(std::move(top_block), std::move(address), public_port, std::move(known_peers));
 }
 
 
-void HandshakeMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer)
+void HandshakeMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    const auto& ours_top_block = core.getTopBlock();
+    const auto& ours_top_block = ctx.core->getTopBlock();
 
-    if (auto ep = peer.getPublicEndpoint(); !ep && _public_port) {
-        auto public_ep = peer.getEndpoint();
+    if (auto ep = ctx.peer->getPublicEndpoint(); !ep && _public_port) {
+        auto public_ep = ctx.peer->getEndpoint();
         public_ep.setPort(_public_port);
-        peer.setServerEndpoint(public_ep);
+        ctx.peer->setServerEndpoint(public_ep);
     }
 
     for (const auto& peer_info : _known_peers) {
-        host.checkOutNode(peer_info.endpoint, peer_info.address);
+        ctx.host->checkOutPeer(peer_info.endpoint);
     }
 
     if (_theirs_top_block == ours_top_block) {
-        peer.setState(lk::Peer::State::SYNCHRONISED);
+        ctx.peer->setState(lk::Peer::State::SYNCHRONISED);
         return; // nothing changes, because top blocks are equal
     }
     else {
         if (ours_top_block.getDepth() > _theirs_top_block.getDepth()) {
-            peer.setState(lk::Peer::State::SYNCHRONISED);
+            ctx.peer->setState(lk::Peer::State::SYNCHRONISED);
             // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
             return;
         }
         else {
-            if (core.getTopBlock().getDepth() + 1 == _theirs_top_block.getDepth()) {
-                core.tryAddBlock(_theirs_top_block);
-                peer.setState(lk::Peer::State::SYNCHRONISED);
+            if (ctx.core->getTopBlock().getDepth() + 1 == _theirs_top_block.getDepth()) {
+                ctx.core->tryAddBlock(_theirs_top_block);
+                ctx.peer->setState(lk::Peer::State::SYNCHRONISED);
             }
             else {
                 base::SerializationOArchive oa;
                 GetBlockMessage::serialize(oa, _theirs_top_block.getPrevBlockHash());
-                peer.send(std::move(oa).getBytes());
-                peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
-                peer.addSyncBlock(std::move(_theirs_top_block));
+                ctx.peer->send(std::move(oa).getBytes());
+                ctx.peer->setState(lk::Peer::State::REQUESTED_BLOCKS);
+                ctx.peer->addSyncBlock(std::move(_theirs_top_block));
             }
         }
     }
@@ -305,7 +283,7 @@ void HandshakeMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer)
 HandshakeMessage::HandshakeMessage(bc::Block&& top_block,
                                    bc::Address address,
                                    std::uint16_t public_port,
-                                   std::vector<PeerInfo>&& known_peers)
+                                   std::vector<lk::Peer::Info>&& known_peers)
   : _theirs_top_block{ std::move(top_block) }
   , _address{ std::move(address) }
   , _public_port{ public_port }
@@ -332,7 +310,7 @@ PingMessage PingMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void PingMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer) {}
+void PingMessage::handle(const lk::MessageProcessor::Context& ctx) {}
 
 
 //============================================
@@ -355,7 +333,7 @@ PongMessage PongMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void PongMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer) {}
+void PongMessage::handle(const lk::MessageProcessor::Context& ctx) {}
 
 //============================================
 
@@ -372,12 +350,6 @@ void TransactionMessage::serialize(base::SerializationOArchive& oa, bc::Transact
 }
 
 
-void TransactionMessage::serialize(base::SerializationOArchive& oa) const
-{
-    serialize(oa, _tx);
-}
-
-
 TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto tx = bc::Transaction::deserialize(ia);
@@ -385,9 +357,9 @@ TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& 
 }
 
 
-void TransactionMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer)
+void TransactionMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    core.addPendingTransaction(_tx);
+    ctx.core->addPendingTransaction(_tx);
 }
 
 
@@ -410,12 +382,6 @@ void GetBlockMessage::serialize(base::SerializationOArchive& oa, const base::Sha
 }
 
 
-void GetBlockMessage::serialize(base::SerializationOArchive& oa) const
-{
-    serialize(oa, _block_hash);
-}
-
-
 GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block_hash = base::Sha256::deserialize(ia);
@@ -423,14 +389,14 @@ GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void GetBlockMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer)
+void GetBlockMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    auto block = core.findBlock(_block_hash);
+    auto block = ctx.core->findBlock(_block_hash);
     if (block) {
-        peer.send(serializeMessage<BlockMessage>(*block));
+        ctx.peer->send(serializeMessage<BlockMessage>(*block));
     }
     else {
-        peer.send(serializeMessage<BlockNotFoundMessage>(_block_hash));
+        ctx.peer->send(serializeMessage<BlockNotFoundMessage>(_block_hash));
     }
 }
 
@@ -454,12 +420,6 @@ void BlockMessage::serialize(base::SerializationOArchive& oa, const bc::Block& b
 }
 
 
-void BlockMessage::serialize(base::SerializationOArchive& oa) const
-{
-    serialize(oa, _block);
-}
-
-
 BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block = bc::Block::deserialize(ia);
@@ -467,20 +427,20 @@ BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void BlockMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer)
+void BlockMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    if (peer.getState() == lk::Peer::State::SYNCHRONISED) {
-        core.tryAddBlock(std::move(_block));
+    if (ctx.peer->getState() == lk::Peer::State::SYNCHRONISED) {
+        ctx.core->tryAddBlock(std::move(_block));
     }
     else {
         bc::BlockDepth block_depth = _block.getDepth();
-        peer.addSyncBlock(std::move(_block));
+        ctx.peer->addSyncBlock(std::move(_block));
 
-        if (block_depth == core.getTopBlock().getDepth() + 1) {
-            peer.applySyncs();
+        if (block_depth == ctx.core->getTopBlock().getDepth() + 1) {
+            ctx.peer->applySyncs();
         }
         else {
-            peer.send(serializeMessage<GetBlockMessage>(peer.getSyncBlocks().front().getPrevBlockHash()));
+            ctx.peer->send(serializeMessage<GetBlockMessage>(ctx.peer->getSyncBlocks().front().getPrevBlockHash()));
         }
     }
 }
@@ -505,12 +465,6 @@ void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa, const base
 }
 
 
-void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa) const
-{
-    serialize(oa, _block_hash);
-}
-
-
 BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block_hash = base::Sha256::deserialize(ia);
@@ -518,7 +472,7 @@ BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchi
 }
 
 
-void BlockNotFoundMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer) {}
+void BlockNotFoundMessage::handle(const lk::MessageProcessor::Context& ctx) {}
 
 
 BlockNotFoundMessage::BlockNotFoundMessage(base::Sha256 block_hash)
@@ -545,9 +499,9 @@ GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void GetInfoMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer)
+void GetInfoMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    peer.send(serializeMessage<InfoMessage>(core.getTopBlock(), host.allConnectedPeersInfo()));
+    ctx.peer->send(serializeMessage<InfoMessage>(ctx.core->getTopBlock(), ctx.host->allConnectedPeersInfo()));
 }
 
 //============================================
@@ -568,12 +522,6 @@ void InfoMessage::serialize(base::SerializationOArchive& oa,
 }
 
 
-void InfoMessage::serialize(base::SerializationOArchive& oa) const
-{
-    serialize(oa, _top_block_hash, _available_peers);
-}
-
-
 InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto top_block_hash = ia.deserialize<base::Bytes>();
@@ -582,7 +530,7 @@ InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void InfoMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer) {}
+void InfoMessage::handle(const lk::MessageProcessor::Context& ctx) {}
 
 
 InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
@@ -608,12 +556,6 @@ void NewNodeMessage::serialize(base::SerializationOArchive& oa,
 }
 
 
-void NewNodeMessage::serialize(base::SerializationOArchive& oa) const
-{
-    serialize(oa, _new_node_endpoint, _address);
-}
-
-
 NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto ep = net::Endpoint::deserialize(ia);
@@ -622,10 +564,10 @@ NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void NewNodeMessage::handle(lk::Core& core, lk::Host& host, lk::Peer& peer)
+void NewNodeMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    host.connect(_new_node_endpoint);
-    host.broadcast(serializeMessage<NewNodeMessage>(_new_node_endpoint));
+    ctx.host->checkOutPeer(_new_node_endpoint);
+    ctx.host->broadcast(serializeMessage<NewNodeMessage>(_new_node_endpoint));
 }
 
 
@@ -643,54 +585,39 @@ namespace lk
 
 //============================================
 
-class MessageProcessor
-{
-public:
-    MessageProcessor(lk::Core& core, lk::Host& host, lk::Peer& peer);
-
-    void process(const base::Bytes& raw_message);
-
-private:
-    lk::Core& _core;
-    lk::Host& _host;
-    lk::Peer& _peer;
-};
-
-//============================================
-
-MessageProcessor::MessageProcessor(lk::Core& core, lk::Host& host, lk::Peer& peer)
-  : _core{ core }, _host{host}, _peer{peer}
+MessageProcessor::MessageProcessor(MessageProcessor::Context context)
+  : _ctx{ context }
 {}
 
+//============================================
 
 namespace
 {
 template<typename F, typename... O>
-void runHandleImpl(MessageType mt, base::SerializationIArchive& ia, lk::Core& core, lk::Host& host, lk::Peer& peer)
+bool runHandleImpl(MessageType mt, base::SerializationIArchive& ia, const lk::MessageProcessor::Context& ctx)
 {
     if (F::getHandledMessageType() == mt) {
         auto message = F::deserialize(ia);
-        message.handle(core, host, peer);
+        message.handle(ctx);
+        return true;
     }
     else {
-        runHandleImpl<O...>(mt, ia, core, host, peer);
+        return runHandleImpl<O...>(mt, ia, ctx);
     }
 }
 
 
 template<>
-void runHandleImpl<void>(MessageType mt, base::SerializationIArchive& ia, lk::Core& core, lk::Host& host, lk::Peer& peer)
-{}
+bool runHandleImpl<void>(MessageType mt, base::SerializationIArchive& ia, const lk::MessageProcessor::Context& ctx)
+{
+    return false;
+}
 
 
 template<typename... Args>
-void runHandle(MessageType mt,
-               base::SerializationIArchive& ia,
-               lk::Core& core,
-               lk::Host& host,
-               lk::Peer& peer)
+bool runHandle(MessageType mt, base::SerializationIArchive& ia, const lk::MessageProcessor::Context& ctx)
 {
-    runHandleImpl<Args..., void>(mt, ia, core, host, peer);
+    return runHandleImpl<Args..., void>(mt, ia, ctx);
 }
 } // namespace
 
@@ -698,31 +625,34 @@ void runHandle(MessageType mt,
 void MessageProcessor::process(const base::Bytes& raw_message)
 {
     base::SerializationIArchive ia(raw_message);
-    auto mt = ia.deserialize<MessageType>();
-    LOG_DEBUG << "Processing " << enumToString(mt) << " message";
-    runHandle<HandshakeMessage,
-            PingMessage,
-            PongMessage,
-            TransactionMessage,
-            GetBlockMessage,
-            BlockMessage,
-            BlockNotFoundMessage,
-            GetInfoMessage,
-            InfoMessage,
-            NewNodeMessage>(mt, ia, _core, _host, _peer);
-    LOG_DEBUG << "Processed  " << enumToString(mt) << " message";
+    auto type = ia.deserialize<MessageType>();
+    if (runHandle<HandshakeMessage,
+                  PingMessage,
+                  PongMessage,
+                  TransactionMessage,
+                  GetBlockMessage,
+                  BlockMessage,
+                  BlockNotFoundMessage,
+                  GetInfoMessage,
+                  InfoMessage,
+                  NewNodeMessage>(type, ia, _ctx)) {
+        LOG_DEBUG << "Processed  " << enumToString(type) << " message";
+    }
+    else {
+        RAISE_ERROR(base::InvalidArgument, "invalid message type");
+    }
 }
 
 //============================================
 
-//Network::Network()
+// Network::Network()
 //    _core.subscribeToBlockAddition(std::bind(&Network::onNewBlock, this, std::placeholders::_1));
 //    _core.subscribeToNewPendingTransaction(std::bind(&Network::onNewPendingTransaction, this, std::placeholders::_1));
 //}
 //
 //
 //
-//std::vector<PeerInfo> Network::allConnectedPeersInfo() const
+// std::vector<PeerInfo> Network::allConnectedPeersInfo() const
 //{
 //    std::vector<PeerInfo> ret;
 //    for (const auto& peer : _peers) {
@@ -736,16 +666,55 @@ void MessageProcessor::process(const base::Bytes& raw_message)
 //}
 //
 //
-//void Network::onNewBlock(const bc::Block& block)
+// void Network::onNewBlock(const bc::Block& block)
 //{
 //    broadcast(serializeMessage<BlockMessage>(block));
 //}
 //
 //
-//void Network::onNewPendingTransaction(const bc::Transaction& tx)
+// void Network::onNewPendingTransaction(const bc::Transaction& tx)
 //{
 //    broadcast(serializeMessage<TransactionMessage>(tx));
 //}
+
+
+Protocol Protocol::peerConnected(MessageProcessor::Context context)
+{
+    Protocol ret{ std::move(context) };
+    ret.startOnConnectedPeer();
+    return ret;
+}
+
+
+Protocol Protocol::peerAccepted(MessageProcessor::Context context)
+{
+    Protocol ret{ std::move(context) };
+    ret.startOnAcceptedPeer();
+    return ret;
+}
+
+
+Protocol::Protocol(MessageProcessor::Context context)
+  : _ctx{ context }
+  , _processor{ context }
+{
+    doHandshake();
+}
+
+
+void Protocol::startOnAcceptedPeer() {}
+
+
+void Protocol::startOnConnectedPeer() {}
+
+
+void Protocol::onReceive(const base::Bytes& bytes)
+{
+    _processor.process(bytes);
+}
+
+
+void Protocol::onClose() {}
 
 
 } // namespace lk

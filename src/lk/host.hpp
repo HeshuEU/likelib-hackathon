@@ -34,7 +34,7 @@ class PeerTable
     const bc::Address _host_id;
     //=================================
     static constexpr std::size_t MAX_BUCKET_SIZE = 10;
-    std::array<std::vector< std::unique_ptr<Peer> >, bc::Address::LENGTH_IN_BYTES * 8> _buckets;
+    std::array<std::vector<std::unique_ptr<Peer>>, bc::Address::LENGTH_IN_BYTES * 8> _buckets;
     //=================================
 };
 
@@ -47,7 +47,7 @@ class Host
     explicit Host(const base::PropertyTree& config, std::size_t connections_limit);
     ~Host();
     //=================================
-    void connect(const net::Endpoint& address);
+    void checkOutPeer(const net::Endpoint& address);
     bool isConnectedTo(const net::Endpoint& endpoint) const;
     //=================================
     void broadcast(const base::Bytes& data);
@@ -56,7 +56,7 @@ class Host
     void join();
     //=================================
     void forEachPeer(std::function<void(const Peer&)> f);
-    std::vector<Peer::Info> getAllConnectedPeersInfo() const;
+    std::vector<Peer::Info> allConnectedPeersInfo() const;
     //=================================
   private:
     //=================================

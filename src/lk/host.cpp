@@ -87,11 +87,10 @@ void Host::connect(const net::Endpoint& endpoint)
     LOG_CURRENT_FUNCTION;
     LOG_DEBUG << "Connecting to node " << endpoint;
     _connector.connect(endpoint, [this](std::unique_ptr<net::Connection> connection) {
-      ASSERT(connection);
-      [[maybe_unused]] auto& session = addNewSession(std::move(connection));
+        ASSERT(connection);
+        [[maybe_unused]] auto& session = addNewSession(std::move(connection));
     });
     LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
-
 }
 
 
@@ -136,9 +135,10 @@ void Host::join()
 void Host::dropZombiePeers()
 {
     std::unique_lock lk(_connected_peers_mutex);
-    _connected_peers.erase(
-      std::remove_if(_connected_peers.begin(), _connected_peers.end(), [](const auto& peer) { return peer->isClosed(); }),
-      _connected_peers.end());
+    _connected_peers.erase(std::remove_if(_connected_peers.begin(),
+                                          _connected_peers.end(),
+                                          [](const auto& peer) { return peer->isClosed(); }),
+                           _connected_peers.end());
 }
 
 

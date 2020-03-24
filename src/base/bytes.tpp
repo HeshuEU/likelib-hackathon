@@ -49,8 +49,7 @@ Bytes::Bytes(I begin, I end)
 
 template<std::size_t S>
 FixedBytes<S>::FixedBytes()
-{
-}
+{}
 
 
 template<std::size_t S>
