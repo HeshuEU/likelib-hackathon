@@ -30,6 +30,10 @@ class Time
     //====================
     bool operator==(const Time& other) const;
     bool operator!=(const Time& other) const;
+    bool operator<(const Time& other) const;
+    bool operator>(const Time& other) const;
+    bool operator<=(const Time& other) const;
+    bool operator>=(const Time& other) const;
     //====================
     static Time now();
     //=====================

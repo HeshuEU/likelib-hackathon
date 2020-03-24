@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base/time.hpp"
 #include "core/address.hpp"
 #include "core/block.hpp"
 #include "core/protocol.hpp"
@@ -36,12 +37,12 @@ class Peer
     //================
     Peer(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host);
     //================
-    const net::Session& getSession() const noexcept;
+    base::Time getLastSeen() const;
     net::Endpoint getEndpoint() const;
     std::optional<net::Endpoint> getPublicEndpoint() const;
     void setServerEndpoint(net::Endpoint endpoint);
     //================
-    std::optional<lk::Address> getAddress() const;
+    const lk::Address& getAddress() const noexcept;
     void setAddress(lk::Address address);
     //================
     void setState(State new_state);
@@ -65,7 +66,7 @@ class Peer
     //================
     State _state{ State::JUST_ESTABLISHED };
     std::optional<net::Endpoint> _endpoint_for_incoming_connections;
-    std::optional<lk::Address> _address;
+    lk::Address _address;
     //================
     std::forward_list<lk::Block> _sync_blocks;
     //================

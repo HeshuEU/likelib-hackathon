@@ -6,15 +6,98 @@
 #include <boost/asio/error.hpp>
 
 #include <chrono>
+#include <iterator>
 
 namespace ba = boost::asio;
 
 namespace lk
 {
 
-PeerTable::PeerTable(lk::Address host_id)
-  : _host_id{ std::move(host_id) }
+PeerTable::PeerTable(lk::Address host_address)
+  : _host_address{ std::move(host_address) }
 {}
+
+
+std::size_t PeerTable::calcBucketIndex(const lk::Address& peer_address)
+{
+    const auto& a = _host_address.getBytes();
+    const auto& b = peer_address.getBytes();
+
+    std::size_t byte_index = 0;
+    while(byte_index < lk::Address::LENGTH_IN_BYTES && a[byte_index] == b[byte_index]) {
+        ++byte_index;
+    }
+
+    if(byte_index == lk::Address::LENGTH_IN_BYTES) {
+        return lk::Address::LENGTH_IN_BYTES * 8;
+    }
+    else {
+        base::Byte byte_a = a[byte_index], byte_b = b[byte_index];
+
+        for(std::size_t bit_index = 0; bit_index < 8; ++bit_index) {
+            if((byte_a & 0b10000000) != (byte_b & 0b10000000)) {
+                return byte_index * 8 + bit_index;
+            }
+            byte_a <<= 1;
+            byte_b <<= 1;
+        }
+
+        ASSERT(false); // must be unreachable
+    }
+}
+
+
+std::size_t PeerTable::getLeastRecentlySeenPeerIndex(const std::size_t bucket_id)
+{
+    ASSERT(_buckets.size() >= bucket_id);
+    ASSERT(!_buckets[bucket_id].empty());
+
+    ASSERT(_buckets[bucket_id][0]);
+    std::size_t lrs_index = 0;
+    for(std::size_t i = 1; i < _buckets[bucket_id].size(); ++i) {
+        ASSERT(_buckets[bucket_id][i]);
+        if(_buckets[bucket_id][lrs_index]->getLastSeen() > _buckets[bucket_id][i]->getLastSeen()) {
+            lrs_index = i;
+        }
+    }
+
+    return lrs_index;
+}
+
+
+bool PeerTable::tryAddPeer(std::unique_ptr<Peer>& peer)
+{
+    std::unique_lock lk{_buckets_mutex};
+    std::size_t bucket_index = calcBucketIndex(peer->getAddress());
+    if(_buckets[bucket_index].size() < MAX_BUCKET_SIZE) {
+        // accept peer
+        _buckets[bucket_index].push_back(std::move(peer));
+        return true;
+    }
+    else {
+        std::size_t index = getLeastRecentlySeenPeerIndex(bucket_index);
+        auto quiet_for = base::Time::now().getSecondsSinceEpoch() - _buckets[bucket_index][index]->getLastSeen().getSecondsSinceEpoch();
+        if(quiet_for > base::config::NET_PING_FREQUENCY * 2) {
+            removePeer(bucket_index, index);
+            _buckets[bucket_index].push_back(std::move(peer));
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+}
+
+
+void PeerTable::removePeer(std::size_t bucket_index, std::size_t peer_index)
+{
+    ASSERT(bucket_index < MAX_BUCKET_SIZE);
+    ASSERT(peer_index < _buckets[bucket_index].size());
+
+    auto it = _buckets[bucket_index].begin();
+    std::advance(it, peer_index);
+    _buckets[bucket_index].erase(it);
+}
 
 
 Host::Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core)

@@ -60,9 +60,9 @@ Peer::State Peer::getState() const noexcept
 }
 
 
-const net::Session& Peer::getSession() const noexcept
+base::Timestamp Peer::getLastSeen() const
 {
-    return *_session;
+    return _session->getLastSeen();
 }
 
 

@@ -26,16 +26,34 @@ class PeerTable
 {
   public:
     //=================================
-    PeerTable(lk::Address host_id);
+    PeerTable(lk::Address host_address);
     //=================================
-    void tryAddPeer(std::unique_ptr<Peer> peer);
+    bool tryAddPeer(std::unique_ptr<Peer>& peer);
     //=================================
   private:
     //=================================
-    const lk::Address _host_id;
+    const lk::Address _host_address;
     //=================================
     static constexpr std::size_t MAX_BUCKET_SIZE = 10;
     std::array<std::vector<std::unique_ptr<Peer>>, lk::Address::LENGTH_IN_BYTES * 8> _buckets;
+    mutable std::shared_mutex _buckets_mutex;
+    //=================================
+    std::size_t calcBucketIndex(const lk::Address& peer_address);
+
+    /*
+     * Returns the least recently seen peer in a bucket.
+     * @throws base::AssertionFailed if there is no such bucket or the bucket is empty
+     * Thread unsafe! The call must be protected by a lock.
+     */
+    std::size_t getLeastRecentlySeenPeerIndex(std::size_t bucket_id);
+
+
+    /*
+     * Removes given peer from bucket.
+     * Thread unsafe!
+     */
+    void removePeer(std::size_t bucket_index, std::size_t peer_index);
+
     //=================================
 };
 
