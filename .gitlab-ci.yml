@@ -35,13 +35,15 @@ Code quality:
     - CLANG_LOG_DIR="${SOURCE_DIR}/clang-tidy-log"
     - LOG_DIR="/tmp/logs"
     - BUILD_DIR="${SOURCE_DIR}/build"
+
     - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || "${SOURCE_DIR}/doc/prepare_build.sh"
     - mkdir -p ${LOG_DIR}
     - mkdir -p ${BUILD_DIR}
-    - mkdir -p ${LOG_DIR}
+    - mkdir -p ${CLANG_LOG_DIR}
+
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR} > /dev/null 2>&1
-    - cd ${BUILD_DIR} && make > /dev/null 2>&1 || (cp /tmp/logs/* ${CLANG_LOG_DIR} && exit 1)
-    - cp "${LOG_DIR}/*" ${CLANG_LOG_DIR} && cat ${LOG_DIR}/clang-tidy-output.txt
+    - cd ${BUILD_DIR} && make > /dev/null 2>&1 || (cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && exit 1)
+    - cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && cat ${LOG_DIR}/clang-tidy-output.txt
     - test -f "${LOG_DIR}/.error-flag" && exit 1
   artifacts:
     when: always
