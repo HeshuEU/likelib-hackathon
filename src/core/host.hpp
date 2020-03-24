@@ -28,6 +28,12 @@ class PeerTable
     //=================================
     PeerTable(lk::Address host_address);
     //=================================
+    /*
+     * Trying to add peer to a table. If succeeded, then std::unique_ptr is moved; if failed --
+     * the value is unchanged.
+     * @returns true if succeded, false otherwise
+     * @threadsafe
+     */
     bool tryAddPeer(std::unique_ptr<Peer>& peer);
     //=================================
   private:
