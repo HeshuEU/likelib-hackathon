@@ -466,7 +466,8 @@ class Node:
             pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
         except subprocess.TimeoutExpired as e:
             message = f"{self.name} - client slow command execution {command} with parameters {parameters} at node {self.settings.id.connect_rpc_address}"
-            print(f"{self.name} - is in dead lock. pid {self.pid}, rpc address: {self.settings.id.connect_rpc_address}")
+            print(f"{self.name} - is in dead lock. pid {self.pid}, rpc address: {self.settings.id.connect_rpc_address}",
+                  flush=True)
             self.logger.info(message)
             raise TimeOutException(message)
         except Exception as e:
@@ -703,7 +704,7 @@ def test_case(registration_test_case_name=None, disable=False):
                     env = Node.Env(dependencies_folder)
                     return func(env, logger)
                 except Exception as error:
-                    print(error)
+                    print(error, flush=True)
                     return 2
 
             return test_case_exception_wrapper(dependencies_folder)
@@ -712,10 +713,10 @@ def test_case(registration_test_case_name=None, disable=False):
             raise Exception(f"Test with this name[{test_name}] is exists")
 
         if disable:
-            print(f"Registered test case [{test_name}] is disabled")
+            print(f"Registered test case [{test_name}] is disabled", flush=True)
             __disabled_tests[test_name] = test_case_runner
         else:
-            print(f"Registered test case [{test_name}] is enabled")
+            print(f"Registered test case [{test_name}] is enabled", flush=True)
             __enabled_tests[test_name] = test_case_runner
 
         return test_case_runner
@@ -732,11 +733,11 @@ def run_registered_test_cases(pattern, dependencies_folder):
         matcher = re.compile(pattern)
     except Exception as e:
         matcher = None
-        print(f"Invalid pattern: {e}")
+        print(f"Invalid pattern: {e}", flush=True)
         exit(2)
 
     print(
-        f"Enabled tests: {len(__enabled_tests)}. Disabled tests: {len(__disabled_tests)}.")
+        f"Enabled tests: {len(__enabled_tests)}. Disabled tests: {len(__disabled_tests)}.", flush=True)
 
     for registered_test_case_name in __enabled_tests:
         if matcher.match(registered_test_case_name) is None:
@@ -745,7 +746,7 @@ def run_registered_test_cases(pattern, dependencies_folder):
 
         registered_test_case_runner = __enabled_tests[registered_test_case_name]
 
-        print(f"Test case [{registered_test_case_name}] started.")
+        print(f"Test case [{registered_test_case_name}] started.", flush=True)
 
         test_case_start_time = datetime.datetime.now()
         return_code = registered_test_case_runner(dependencies_folder)
@@ -753,14 +754,15 @@ def run_registered_test_cases(pattern, dependencies_folder):
 
         if return_code == 0:
             print(
-                f"Test case [{registered_test_case_name}] success. Execute time: {test_case_execute_time}.")
+                f"Test case [{registered_test_case_name}] success. Execute time: {test_case_execute_time}.", flush=True)
             success_tests += 1
         else:
             print(
-                f"Test case [{registered_test_case_name}] failed. Execute time: {test_case_execute_time}.")
+                f"Test case [{registered_test_case_name}] failed. Execute time: {test_case_execute_time}.", flush=True)
             failed_tests += 1
 
     all_tests = success_tests + failed_tests + skipped_tests
     print(
-        f"All test cases: {all_tests}. Passed tests: {success_tests}. Failed tests: {failed_tests}. Skipped tests: {skipped_tests}.")
+        f"All test cases: {all_tests}. Passed tests: {success_tests}. Failed tests: {failed_tests}. Skipped tests: {skipped_tests}.",
+        flush=True)
     return failed_tests
