@@ -25,6 +25,7 @@ void Peer::Info::serialize(base::SerializationOArchive& oa) const
 
 Peer::Peer(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
   : _session{ std::move(session) }
+  , _address{lk::Address::null()}
   , _core{core}
   , _protocol{ lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, this }) }
 {}
@@ -60,7 +61,7 @@ Peer::State Peer::getState() const noexcept
 }
 
 
-base::Timestamp Peer::getLastSeen() const
+base::Time Peer::getLastSeen() const
 {
     return _session->getLastSeen();
 }
@@ -99,7 +100,7 @@ void Peer::send(base::Bytes&& data)
 }
 
 
-std::optional<lk::Address> Peer::getAddress() const
+const lk::Address& Peer::getAddress() const noexcept
 {
     return _address;
 }
@@ -119,7 +120,7 @@ bool Peer::isClosed() const
 
 Peer::Info Peer::getInfo() const
 {
-    return Peer::Info{_session->getEndpoint(), (_address ? *_address : lk::Address::null())};
+    return Peer::Info{_session->getEndpoint(), _address};
 }
 
 //=====================================
