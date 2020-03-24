@@ -13,6 +13,6 @@ def main(env, logger):
         distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         amount = 333
         node.run_check_transfer(to_address=target_address, amount=amount,
-                                from_address=distributor_address, fee=0, timeout=2)
+                                from_address=distributor_address, fee=0, timeout=2, wait=1)
         node.run_check_balance(target_address, amount)
     return 0

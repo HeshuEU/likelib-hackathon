@@ -52,7 +52,6 @@ Code quality:
     expire_in: 1 week
 
 
-
 Unit tests:
   stage: unit-tests
   image: heshuby/prepare_build:2020-03-12
@@ -85,6 +84,7 @@ Integration tests:
     paths:
       - intergation_test_run
     expire_in: 1 week
+
 
 Valgrind test:
   stage: analyzers

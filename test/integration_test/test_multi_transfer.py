@@ -19,9 +19,10 @@ def main(env, logger):
 
             distributor_address = node_1.load_address(keys_path=node_1.DISTRIBUTOR_ADDRESS_PATH)
             amount = 333
-            transaction_wait = 2
+            transaction_wait = 5
+            transaction_timeout = 3
             node_2.run_check_transfer(to_address=target_address, amount=amount,
-                                      from_address=distributor_address, fee=0, timeout=transaction_wait)
+                                      from_address=distributor_address, fee=0, timeout=transaction_timeout, wait=transaction_wait)
 
             node_2.run_check_balance(address=target_address, balance=amount)
             node_1.run_check_balance(address=target_address, balance=amount)

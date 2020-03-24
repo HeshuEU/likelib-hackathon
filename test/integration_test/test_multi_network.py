@@ -83,7 +83,7 @@ def main(env, logger):
     count_nodes_per_thread = 5
 
     amount = 1000
-    transaction_wait = 7
+    transaction_wait = 10
     transaction_timeout = 12
 
     node_ids = list()
