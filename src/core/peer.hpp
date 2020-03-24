@@ -35,12 +35,15 @@ class Peer
         void serialize(base::SerializationOArchive& oa) const;
     };
     //================
-    Peer(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host);
+    static std::unique_ptr<Peer> accepted(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host);
+    static std::unique_ptr<Peer> connected(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host);
     //================
     base::Time getLastSeen() const;
     net::Endpoint getEndpoint() const;
     std::optional<net::Endpoint> getPublicEndpoint() const;
     void setServerEndpoint(net::Endpoint endpoint);
+
+    void setProtocol(std::unique_ptr<lk::Protocol> protocol);
     //================
     const lk::Address& getAddress() const noexcept;
     void setAddress(lk::Address address);
@@ -60,7 +63,7 @@ class Peer
     //================
   private:
     //================
-    // void doHandshake();
+    Peer(std::unique_ptr<net::Session> session, lk::Core& core);
     //================
     std::unique_ptr<net::Session> _session;
     //================
@@ -71,7 +74,7 @@ class Peer
     std::forward_list<lk::Block> _sync_blocks;
     //================
     lk::Core& _core;
-    lk::Protocol _protocol;
+    std::unique_ptr<lk::Protocol> _protocol;
     //================
 };
 

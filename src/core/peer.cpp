@@ -23,11 +23,28 @@ void Peer::Info::serialize(base::SerializationOArchive& oa) const
 
 //================================
 
-Peer::Peer(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
+std::unique_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
+{
+    auto ret = std::make_unique<Peer>(Peer(std::move(session), core));
+    auto protocol = std::make_unique<lk::Protocol>(lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, ret.get()}));
+    ret->setProtocol(std::move(protocol));
+    return ret;
+}
+
+
+std::unique_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
+{
+    auto ret = std::make_unique<Peer>(Peer(std::move(session), core));
+    auto protocol = std::make_unique<lk::Protocol>(lk::Protocol::peerConnected(lk::MessageProcessor::Context{ &core, &host, ret.get()}));
+    ret->setProtocol(std::move(protocol));
+    return ret;
+}
+
+
+Peer::Peer(std::unique_ptr<net::Session> session, lk::Core& core)
   : _session{ std::move(session) }
   , _address{lk::Address::null()}
   , _core{core}
-  , _protocol{ lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, this }) }
 {}
 
 
@@ -109,6 +126,12 @@ const lk::Address& Peer::getAddress() const noexcept
 void Peer::setAddress(lk::Address address)
 {
     _address = std::move(address);
+}
+
+
+void Peer::setProtocol(std::unique_ptr<lk::Protocol> protocol)
+{
+    _protocol = std::move(protocol);
 }
 
 

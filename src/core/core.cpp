@@ -28,6 +28,13 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
         auto block = *_blockchain.findBlock(*_blockchain.findBlockHashByDepth(d));
         _account_manager.update(block);
     }
+
+    subscribeToBlockAddition([this](const lk::Block& block){
+        _host.broadcast(block);
+    });
+    subscribeToNewPendingTransaction([this](const lk::Transaction& tx) {
+        _host.broadcast(tx);
+    });
 }
 
 

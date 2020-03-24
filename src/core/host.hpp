@@ -76,6 +76,8 @@ class Host
     bool isConnectedTo(const net::Endpoint& endpoint) const;
     //=================================
     void broadcast(const base::Bytes& data);
+    void broadcast(const lk::Block& block);
+    void broadcast(const lk::Transaction& tx);
     //=================================
     void run();
     void join();
@@ -97,7 +99,7 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
-    std::list<lk::Peer> _connected_peers;
+    std::list<std::unique_ptr<lk::Peer>> _connected_peers;
     mutable std::shared_mutex _connected_peers_mutex;
 
     boost::asio::steady_timer _heartbeat_timer;

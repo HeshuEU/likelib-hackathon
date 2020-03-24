@@ -142,7 +142,7 @@ void Host::onAccept(std::unique_ptr<net::Connection> connection)
 {
     std::unique_lock lk{ _connected_peers_mutex };
     auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.emplace_back(std::move(session), _core, *this);
+    _connected_peers.push_back(lk::Peer::accepted(std::move(session), _core, *this));
 }
 
 
@@ -158,7 +158,7 @@ void Host::checkOutPeer(const net::Endpoint& endpoint)
 
     std::shared_lock lk(_connected_peers_mutex);
     for (const auto& peer : _connected_peers) {
-        if (auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
+        if (auto ep = peer->getPublicEndpoint(); ep && *ep == endpoint) {
             return;
         }
     }
@@ -176,7 +176,7 @@ void Host::onConnect(std::unique_ptr<net::Connection> connection)
 {
     std::unique_lock lk{ _connected_peers_mutex };
     auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.emplace_back(std::move(session), _core, *this);
+    _connected_peers.push_back(lk::Peer::connected(std::move(session), _core, *this));
 }
 
 
@@ -221,7 +221,7 @@ void Host::join()
 void Host::dropZombiePeers()
 {
     std::unique_lock lk(_connected_peers_mutex);
-    _connected_peers.remove_if([](const auto& peer) { return peer.isClosed(); });
+    _connected_peers.remove_if([](const auto& peer) { return peer->isClosed(); });
 }
 
 
@@ -230,8 +230,20 @@ void Host::broadcast(const base::Bytes& data)
     std::unique_lock lk(_connected_peers_mutex);
     LOG_DEBUG << "Broadcasting data size = " << data.size();
     for (auto& peer : _connected_peers) {
-        peer.send(data);
+        peer->send(data);
     }
+}
+
+
+void Host::broadcast(const lk::Block& block)
+{
+    std::unique_lock lk(_connected_peers_mutex);
+}
+
+
+void Host::broadcast(const lk::Transaction& tx)
+{
+    std::unique_lock lk(_connected_peers_mutex);
 }
 
 
@@ -239,7 +251,7 @@ bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 {
     std::shared_lock lk(_connected_peers_mutex);
     for (const auto& peer : _connected_peers) {
-        if (peer.getEndpoint() == endpoint) {
+        if (peer->getEndpoint() == endpoint) {
             return true;
         }
     }
@@ -252,7 +264,7 @@ std::vector<Peer::Info> Host::allConnectedPeersInfo() const
     std::shared_lock lk{_connected_peers_mutex};
     std::vector<Peer::Info> ret;
     for(const auto& peer : _connected_peers) {
-        ret.push_back(peer.getInfo());
+        ret.push_back(peer->getInfo());
     }
     return ret;
 }

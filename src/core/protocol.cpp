@@ -651,19 +651,6 @@ void MessageProcessor::process(const base::Bytes& raw_message)
 //
 //
 //
-// std::vector<PeerInfo> Network::allConnectedPeersInfo() const
-//{
-//    std::vector<PeerInfo> ret;
-//    for (const auto& peer : _peers) {
-//        if (auto server_endpoint = peer.getPublicEndpoint()) {
-//            if (auto address = peer.getAddress()) {
-//                ret.push_back(PeerInfo{ *std::move(server_endpoint), std::move(*address) });
-//            }
-//        }
-//    }
-//    return ret;
-//}
-//
 //
 // void Network::onNewBlock(const lk::Block& block)
 //{
