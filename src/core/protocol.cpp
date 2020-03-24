@@ -28,7 +28,7 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
 template<typename M, typename... Args>
 base::Bytes serializeMessage(Args&&... args)
 {
-    LOG_TRACE << enumToString(M::getHandledMessageType());
+    LOG_TRACE << "Serializing " << enumToString(M::getHandledMessageType());
     base::SerializationOArchive oa;
     oa.serialize(M::getHandledMessageType());
     (oa.serialize(std::forward<Args>(args)), ...);
@@ -46,7 +46,6 @@ class HandshakeMessage
                           const lk::Address& address,
                           std::uint16_t public_port,
                           const std::vector<lk::Peer::Info>& known_peers);
-    void serialize(base::SerializationOArchive& oa) const;
     static HandshakeMessage deserialize(base::SerializationIArchive& ia);
     void handle(const lk::MessageProcessor::Context& context);
 
