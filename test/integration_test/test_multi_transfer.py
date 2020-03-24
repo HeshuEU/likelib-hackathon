@@ -164,8 +164,8 @@ def main(env, logger):
     start_sync_port = 20330
     start_rpc_port = 50180
     node_startup_time = 5
-    transaction_wait = 9
-    transaction_timeout = 40
+    transaction_wait = 10
+    transaction_timeout = 42
 
     init_amount = 1000
     address_per_nodes = 3
