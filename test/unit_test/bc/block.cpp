@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "bc/block.hpp"
+#include "lk/block.hpp"
 
 
 namespace

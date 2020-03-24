@@ -4,9 +4,9 @@
 #include "base/property_tree.hpp"
 #include "base/utility.hpp"
 
-#include "bc/block.hpp"
-#include "bc/transaction.hpp"
-#include "bc/transactions_set.hpp"
+#include "block.hpp"
+#include "transaction.hpp"
+#include "transactions_set.hpp"
 
 #include <shared_mutex>
 #include <unordered_map>

@@ -255,4 +255,4 @@ void CodeManager::saveCode(base::Bytes code)
     _code_db.insert({ std::move(hash), std::move(code) });
 }
 
-} // namespace lk
+} // namespace core

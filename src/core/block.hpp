@@ -3,9 +3,9 @@
 #include "base/bytes.hpp"
 #include "base/hash.hpp"
 #include "base/serialization.hpp"
-#include "bc/transaction.hpp"
-#include "bc/transactions_set.hpp"
-#include "bc/types.hpp"
+#include "transaction.hpp"
+#include "transactions_set.hpp"
+#include "types.hpp"
 
 #include <iosfwd>
 

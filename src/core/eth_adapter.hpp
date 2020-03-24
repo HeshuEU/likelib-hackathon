@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/bytes.hpp"
-#include "bc/block.hpp"
+#include "block.hpp"
 #include "lk/managers.hpp"
 #include "vm/vm.hpp"
 
@@ -37,4 +37,4 @@ class EthAdapter
     mutable std::mutex _execution_mutex;
 };
 
-} // namespace lk
+} // namespace core

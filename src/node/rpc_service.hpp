@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bc/transaction.hpp"
+#include "lk/transaction.hpp"
 #include "lk/core.hpp"
 #include "rpc/base_rpc.hpp"
 

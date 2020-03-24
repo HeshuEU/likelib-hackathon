@@ -330,4 +330,4 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 }
 
 
-} // namespace lk
+} // namespace core

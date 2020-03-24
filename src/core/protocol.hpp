@@ -75,4 +75,4 @@ class Network
     void onNewPendingTransaction(const bc::Transaction& tx);
 };
 
-} // namespace lk
+} // namespace core

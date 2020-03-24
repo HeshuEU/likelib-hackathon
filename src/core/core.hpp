@@ -3,8 +3,8 @@
 #include "base/crypto.hpp"
 #include "base/property_tree.hpp"
 #include "base/utility.hpp"
-#include "bc/block.hpp"
-#include "bc/blockchain.hpp"
+#include "block.hpp"
+#include "blockchain.hpp"
 #include "host.hpp"
 #include "lk/eth_adapter.hpp"
 #include "lk/managers.hpp"
@@ -99,4 +99,4 @@ class Core
     //==================
 };
 
-} // namespace lk
+} // namespace core

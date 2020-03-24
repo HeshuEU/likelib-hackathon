@@ -3,7 +3,7 @@ set(NET_HEADERS
         connection.hpp
         connector.hpp
         error.hpp
-        ../lk/host.hpp
+        ../core/host.hpp
         endpoint.hpp
         session.hpp
         )
@@ -12,7 +12,7 @@ set(NET_SOURCES
         acceptor.cpp
         connection.cpp
         connector.cpp
-        ../lk/host.cpp
+        ../core/host.cpp
         endpoint.cpp
         session.cpp
         )

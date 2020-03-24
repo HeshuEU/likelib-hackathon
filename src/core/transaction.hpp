@@ -4,8 +4,8 @@
 #include "base/serialization.hpp"
 #include "base/time.hpp"
 
-#include "bc/address.hpp"
-#include "bc/types.hpp"
+#include "address.hpp"
+#include "types.hpp"
 
 namespace bc
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/serialization.hpp"
-#include "bc/transaction.hpp"
+#include "transaction.hpp"
 
 #include <map>
 #include <vector>

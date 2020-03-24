@@ -328,4 +328,4 @@ vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const
 }
 
 
-} // namespace lk
+} // namespace core

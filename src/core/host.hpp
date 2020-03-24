@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/property_tree.hpp"
-#include "bc/block.hpp"
+#include "block.hpp"
 #include "lk/peer.hpp"
 #include "net/acceptor.hpp"
 #include "net/connector.hpp"

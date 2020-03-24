@@ -3,8 +3,8 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/subprogram_router.hpp"
-#include "bc/address.hpp"
-#include "bc/types.hpp"
+#include "lk/address.hpp"
+#include "lk/types.hpp"
 #include "rpc/rpc.hpp"
 
 #include <iostream>

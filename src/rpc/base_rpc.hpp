@@ -1,10 +1,10 @@
 #pragma once
 
 #include "base/time.hpp"
-#include "bc/address.hpp"
-#include "bc/block.hpp"
-#include "bc/transaction.hpp"
-#include "bc/types.hpp"
+#include "lk/address.hpp"
+#include "lk/block.hpp"
+#include "lk/transaction.hpp"
+#include "lk/types.hpp"
 
 #include <string>
 #include <tuple>

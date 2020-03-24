@@ -717,4 +717,4 @@ void Protocol::onReceive(const base::Bytes& bytes)
 void Protocol::onClose() {}
 
 
-} // namespace lk
+} // namespace core

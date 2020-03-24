@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "bc/address.hpp"
+#include "lk/address.hpp"
 
 BOOST_AUTO_TEST_CASE(address_null)
 {

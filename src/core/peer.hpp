@@ -1,7 +1,7 @@
 #pragma once
 
-#include "bc/address.hpp"
-#include "bc/block.hpp"
+#include "address.hpp"
+#include "block.hpp"
 #include "net/session.hpp"
 
 #include <forward_list>

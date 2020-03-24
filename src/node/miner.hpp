@@ -2,8 +2,8 @@
 
 #include "base/bytes.hpp"
 #include "base/property_tree.hpp"
-#include "bc/block.hpp"
-#include "bc/types.hpp"
+#include "lk/block.hpp"
+#include "lk/types.hpp"
 
 #include <atomic>
 #include <condition_variable>

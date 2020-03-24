@@ -1,7 +1,7 @@
 #pragma once
 
-#include "bc/block.hpp"
-#include "bc/transaction.hpp"
+#include "block.hpp"
+#include "transaction.hpp"
 
 #include <map>
 #include <shared_mutex>
@@ -96,4 +96,4 @@ class CodeManager
 };
 
 
-} // namespace lk
+} // namespace core
