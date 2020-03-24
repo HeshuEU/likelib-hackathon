@@ -68,7 +68,7 @@ class Protocol : public net::Session::Handler
 };
 
 
-//class Network
+// class Network
 //{
 //    void onNewBlock(const lk::Block& block);
 //    void onNewPendingTransaction(const lk::Transaction& tx);

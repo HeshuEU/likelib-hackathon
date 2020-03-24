@@ -24,18 +24,18 @@ std::size_t PeerTable::calcBucketIndex(const lk::Address& peer_address)
     const auto& b = peer_address.getBytes();
 
     std::size_t byte_index = 0;
-    while(byte_index < lk::Address::LENGTH_IN_BYTES && a[byte_index] == b[byte_index]) {
+    while (byte_index < lk::Address::LENGTH_IN_BYTES && a[byte_index] == b[byte_index]) {
         ++byte_index;
     }
 
-    if(byte_index == lk::Address::LENGTH_IN_BYTES) {
+    if (byte_index == lk::Address::LENGTH_IN_BYTES) {
         return lk::Address::LENGTH_IN_BYTES * 8;
     }
     else {
         base::Byte byte_a = a[byte_index], byte_b = b[byte_index];
 
-        for(std::size_t bit_index = 0; bit_index < 8; ++bit_index) {
-            if((byte_a & 0b10000000) != (byte_b & 0b10000000)) {
+        for (std::size_t bit_index = 0; bit_index < 8; ++bit_index) {
+            if ((byte_a & 0b10000000) != (byte_b & 0b10000000)) {
                 return byte_index * 8 + bit_index;
             }
             byte_a <<= 1;
@@ -54,9 +54,9 @@ std::size_t PeerTable::getLeastRecentlySeenPeerIndex(const std::size_t bucket_id
 
     ASSERT(_buckets[bucket_id][0]);
     std::size_t lrs_index = 0;
-    for(std::size_t i = 1; i < _buckets[bucket_id].size(); ++i) {
+    for (std::size_t i = 1; i < _buckets[bucket_id].size(); ++i) {
         ASSERT(_buckets[bucket_id][i]);
-        if(_buckets[bucket_id][lrs_index]->getLastSeen() > _buckets[bucket_id][i]->getLastSeen()) {
+        if (_buckets[bucket_id][lrs_index]->getLastSeen() > _buckets[bucket_id][i]->getLastSeen()) {
             lrs_index = i;
         }
     }
@@ -67,17 +67,18 @@ std::size_t PeerTable::getLeastRecentlySeenPeerIndex(const std::size_t bucket_id
 
 bool PeerTable::tryAddPeer(std::unique_ptr<Peer>& peer)
 {
-    std::unique_lock lk{_buckets_mutex};
+    std::unique_lock lk{ _buckets_mutex };
     std::size_t bucket_index = calcBucketIndex(peer->getAddress());
-    if(_buckets[bucket_index].size() < MAX_BUCKET_SIZE) {
+    if (_buckets[bucket_index].size() < MAX_BUCKET_SIZE) {
         // accept peer
         _buckets[bucket_index].push_back(std::move(peer));
         return true;
     }
     else {
         std::size_t index = getLeastRecentlySeenPeerIndex(bucket_index);
-        auto quiet_for = base::Time::now().getSecondsSinceEpoch() - _buckets[bucket_index][index]->getLastSeen().getSecondsSinceEpoch();
-        if(quiet_for > base::config::NET_PING_FREQUENCY * 2) {
+        auto quiet_for = base::Time::now().getSecondsSinceEpoch() -
+                         _buckets[bucket_index][index]->getLastSeen().getSecondsSinceEpoch();
+        if (quiet_for > base::config::NET_PING_FREQUENCY * 2) {
             removePeer(bucket_index, index);
             _buckets[bucket_index].push_back(std::move(peer));
             return true;
@@ -261,9 +262,9 @@ bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 
 std::vector<Peer::Info> Host::allConnectedPeersInfo() const
 {
-    std::shared_lock lk{_connected_peers_mutex};
+    std::shared_lock lk{ _connected_peers_mutex };
     std::vector<Peer::Info> ret;
-    for(const auto& peer : _connected_peers) {
+    for (const auto& peer : _connected_peers) {
         ret.push_back(peer->getInfo());
     }
     return ret;

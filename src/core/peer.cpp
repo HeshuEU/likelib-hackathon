@@ -10,7 +10,7 @@ Peer::Info Peer::Info::deserialize(base::SerializationIArchive& ia)
 {
     auto endpoint = ia.deserialize<net::Endpoint>();
     auto address = ia.deserialize<lk::Address>();
-    Peer::Info ret{std::move(endpoint), std::move(address)};
+    Peer::Info ret{ std::move(endpoint), std::move(address) };
     return ret;
 }
 
@@ -26,7 +26,8 @@ void Peer::Info::serialize(base::SerializationOArchive& oa) const
 std::unique_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
 {
     auto ret = std::make_unique<Peer>(Peer(std::move(session), core));
-    auto protocol = std::make_unique<lk::Protocol>(lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, ret.get()}));
+    auto protocol = std::make_unique<lk::Protocol>(
+      lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, ret.get() }));
     ret->setProtocol(std::move(protocol));
     return ret;
 }
@@ -35,7 +36,8 @@ std::unique_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::
 std::unique_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
 {
     auto ret = std::make_unique<Peer>(Peer(std::move(session), core));
-    auto protocol = std::make_unique<lk::Protocol>(lk::Protocol::peerConnected(lk::MessageProcessor::Context{ &core, &host, ret.get()}));
+    auto protocol = std::make_unique<lk::Protocol>(
+      lk::Protocol::peerConnected(lk::MessageProcessor::Context{ &core, &host, ret.get() }));
     ret->setProtocol(std::move(protocol));
     return ret;
 }
@@ -43,8 +45,8 @@ std::unique_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk:
 
 Peer::Peer(std::unique_ptr<net::Session> session, lk::Core& core)
   : _session{ std::move(session) }
-  , _address{lk::Address::null()}
-  , _core{core}
+  , _address{ lk::Address::null() }
+  , _core{ core }
 {}
 
 
@@ -92,7 +94,7 @@ void Peer::addSyncBlock(lk::Block block)
 
 void Peer::applySyncs()
 {
-    for(auto&& sync : _sync_blocks) {
+    for (auto&& sync : _sync_blocks) {
         _core.tryAddBlock(sync);
     }
     _sync_blocks.clear();
@@ -143,7 +145,7 @@ bool Peer::isClosed() const
 
 Peer::Info Peer::getInfo() const
 {
-    return Peer::Info{_session->getEndpoint(), _address};
+    return Peer::Info{ _session->getEndpoint(), _address };
 }
 
 //=====================================
