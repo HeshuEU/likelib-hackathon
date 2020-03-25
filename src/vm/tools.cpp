@@ -5,6 +5,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
+#include <regex>
 
 
 namespace bp = ::boost::process;
@@ -192,12 +193,39 @@ evmc::address toEthAddress(const bc::Address& address)
     return ret;
 }
 
+namespace {
+
+    std::string replaceAddressConstructor(const std::string& call){
+        std::regex reg("((\\(|,|\\s)Address\\((\\w+)\\)(\\)|,|\\s))");
+        auto words_begin = std::sregex_iterator(call.begin(), call.end(), reg);
+        auto words_end = std::sregex_iterator();
+        std::string result = call;
+        for(auto i = words_begin; i != words_end; i++){
+            std::string matched_world{(*i)[1]};
+
+            auto constructor = matched_world.substr(1, matched_world.size() - 2);
+
+            constexpr const std::size_t begin_cut = sizeof("Address");
+            auto base58_address = constructor.substr(begin_cut, constructor.size() - begin_cut - 1);
+
+            auto decoded_address = base::base58Decode(base58_address);
+            base::Bytes prefix(32 - decoded_address.size());
+            auto hex_view_address = base::toHex(prefix + decoded_address);
+
+            result = std::regex_replace(result, std::regex("Address\\(" + base58_address + "\\)"), "\"" + hex_view_address + "\"");
+        }
+        return result;
+    }
+
+}
+
 
 std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call)
 {
     auto exec_script = std::filesystem::current_path() / std::filesystem::path{"encoder.py"};
     if(std::filesystem::exists(exec_script)) {
-        std::vector<std::string> args{exec_script, "--contract_path", path_to_code_folder, "--call", call};
+        auto formatted_call = replaceAddressConstructor(call);
+        std::vector<std::string> args{exec_script, "--contract_path", path_to_code_folder, "--call", formatted_call};
         std::istringstream iss(callPython(args));
         std::string tmp;
         iss >> tmp;
