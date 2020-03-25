@@ -11,6 +11,7 @@ set(TEST_SOURCES
         base/serialization.cpp
         base/time.cpp
         base/timer.cpp
+        base/regex.cpp
         bc/address.cpp
         bc/block.cpp
         bc/transaction.cpp
