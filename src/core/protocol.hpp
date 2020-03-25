@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/block.hpp"
+#include "core/transaction.hpp"
 #include "net/session.hpp"
 
 namespace lk
@@ -56,6 +58,9 @@ class Protocol : public net::Session::Handler
      */
     void onClose() override;
     //===============
+    void sendBlock(const lk::Block& block);
+    void sendTransaction(const lk::Transaction& tx);
+    //===============
   private:
     MessageProcessor::Context _ctx;
     MessageProcessor _processor;
@@ -64,7 +69,6 @@ class Protocol : public net::Session::Handler
 
     void startOnConnectedPeer();
     void startOnAcceptedPeer();
-    void doHandshake();
 };
 
 

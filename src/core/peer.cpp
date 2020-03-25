@@ -119,6 +119,18 @@ void Peer::send(base::Bytes&& data)
 }
 
 
+void Peer::send(const lk::Block& block)
+{
+    _protocol->sendBlock(block);
+}
+
+
+void Peer::send(const lk::Transaction& tx)
+{
+    _protocol->sendTransaction(tx);
+}
+
+
 const lk::Address& Peer::getAddress() const noexcept
 {
     return _address;

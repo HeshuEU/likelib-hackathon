@@ -26,7 +26,7 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
 
 
 template<typename M, typename... Args>
-base::Bytes serializeMessage(Args&&... args)
+base::Bytes prepareMessage(Args&&... args)
 {
     LOG_TRACE << "Serializing " << enumToString(M::getHandledMessageType());
     base::SerializationOArchive oa;
@@ -42,7 +42,7 @@ class HandshakeMessage
   public:
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa,
-                          const lk::Block& block,
+                          const lk::Block& top_block,
                           const lk::Address& address,
                           std::uint16_t public_port,
                           const std::vector<lk::Peer::Info>& known_peers);
@@ -392,10 +392,10 @@ void GetBlockMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
     auto block = ctx.core->findBlock(_block_hash);
     if (block) {
-        ctx.peer->send(serializeMessage<BlockMessage>(*block));
+        ctx.peer->send(prepareMessage<BlockMessage>(*block));
     }
     else {
-        ctx.peer->send(serializeMessage<BlockNotFoundMessage>(_block_hash));
+        ctx.peer->send(prepareMessage<BlockNotFoundMessage>(_block_hash));
     }
 }
 
@@ -439,7 +439,7 @@ void BlockMessage::handle(const lk::MessageProcessor::Context& ctx)
             ctx.peer->applySyncs();
         }
         else {
-            ctx.peer->send(serializeMessage<GetBlockMessage>(ctx.peer->getSyncBlocks().front().getPrevBlockHash()));
+            ctx.peer->send(prepareMessage<GetBlockMessage>(ctx.peer->getSyncBlocks().front().getPrevBlockHash()));
         }
     }
 }
@@ -500,7 +500,7 @@ GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive& ia)
 
 void GetInfoMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    ctx.peer->send(serializeMessage<InfoMessage>(ctx.core->getTopBlock(), ctx.host->allConnectedPeersInfo()));
+    ctx.peer->send(prepareMessage<InfoMessage>(ctx.core->getTopBlock(), ctx.host->allConnectedPeersInfo()));
 }
 
 //============================================
@@ -566,7 +566,7 @@ NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 void NewNodeMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
     ctx.host->checkOutPeer(_new_node_endpoint);
-    ctx.host->broadcast(serializeMessage<NewNodeMessage>(_new_node_endpoint));
+    ctx.host->broadcast(prepareMessage<NewNodeMessage>(_new_node_endpoint));
 }
 
 
@@ -644,26 +644,6 @@ void MessageProcessor::process(const base::Bytes& raw_message)
 
 //============================================
 
-// Network::Network()
-//    _core.subscribeToBlockAddition(std::bind(&Network::onNewBlock, this, std::placeholders::_1));
-//    _core.subscribeToNewPendingTransaction(std::bind(&Network::onNewPendingTransaction, this, std::placeholders::_1));
-//}
-//
-//
-//
-//
-// void Network::onNewBlock(const lk::Block& block)
-//{
-//    broadcast(serializeMessage<BlockMessage>(block));
-//}
-//
-//
-// void Network::onNewPendingTransaction(const lk::Transaction& tx)
-//{
-//    broadcast(serializeMessage<TransactionMessage>(tx));
-//}
-
-
 Protocol Protocol::peerConnected(MessageProcessor::Context context)
 {
     Protocol ret{ std::move(context) };
@@ -684,7 +664,6 @@ Protocol::Protocol(MessageProcessor::Context context)
   : _ctx{ context }
   , _processor{ context }
 {
-    doHandshake();
 }
 
 
@@ -700,10 +679,11 @@ void Protocol::startOnConnectedPeer()
     /*
      * we connected to a node, so now we are going to send handshake
      */
+    _ctx.peer->send(prepareMessage<HandshakeMessage>(_ctx.core->getTopBlock(),
+                                                     _ctx.core->getThisNodeAddress(),
+                                                     _ctx.host->getPublicPort(),
+                                                     _ctx.host->allConnectedPeersInfo()));
 }
-
-
-void Protocol::doHandshake() {}
 
 
 void Protocol::onReceive(const base::Bytes& bytes)
@@ -714,5 +694,16 @@ void Protocol::onReceive(const base::Bytes& bytes)
 
 void Protocol::onClose() {}
 
+
+void Protocol::sendBlock(const lk::Block& block)
+{
+    _ctx.peer->send(prepareMessage<BlockMessage>(block));
+}
+
+
+void Protocol::sendTransaction(const lk::Transaction& tx)
+{
+    _ctx.peer->send(prepareMessage<TransactionMessage>(tx));
+}
 
 } // namespace core

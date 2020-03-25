@@ -31,10 +31,20 @@ class PeerTable
     /*
      * Trying to add peer to a table. If succeeded, then std::unique_ptr is moved; if failed --
      * the value is unchanged.
-     * @returns true if succeded, false otherwise
+     * @returns true if succeeded, false otherwise
      * @threadsafe
      */
-    bool tryAddPeer(std::unique_ptr<Peer>& peer);
+    bool tryAdd(std::unique_ptr<Peer>& peer);
+
+    bool tryAdd(std::unique_ptr<Peer>&& peer);
+
+    // thread-safe
+    void removeSilent();
+    //=================================
+
+    // thread-safe
+    void forEachPeer(std::function<void(const Peer&)> f) const;
+    void forEachPeer(std::function<void(Peer&)> f);
     //=================================
   private:
     //=================================
@@ -82,8 +92,8 @@ class Host
     void run();
     void join();
     //=================================
-    // void forEachPeer(std::function<void(const Peer&)> f);
     std::vector<Peer::Info> allConnectedPeersInfo() const;
+    unsigned short getPublicPort() const noexcept;
     //=================================
   private:
     //=================================
@@ -99,7 +109,7 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
-    std::list<std::unique_ptr<lk::Peer>> _connected_peers;
+    PeerTable _connected_peers;
     mutable std::shared_mutex _connected_peers_mutex;
 
     boost::asio::steady_timer _heartbeat_timer;

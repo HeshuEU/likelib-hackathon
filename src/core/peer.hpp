@@ -60,6 +60,8 @@ class Peer
     //================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
+    void send(const lk::Block& block);
+    void send(const lk::Transaction& tx);
     //================
   private:
     //================

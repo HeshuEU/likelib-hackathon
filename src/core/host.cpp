@@ -2,6 +2,7 @@
 
 #include "base/assert.hpp"
 #include "base/log.hpp"
+#include "core/core.hpp"
 
 #include <boost/asio/error.hpp>
 
@@ -65,9 +66,9 @@ std::size_t PeerTable::getLeastRecentlySeenPeerIndex(const std::size_t bucket_id
 }
 
 
-bool PeerTable::tryAddPeer(std::unique_ptr<Peer>& peer)
+bool PeerTable::tryAdd(std::unique_ptr<Peer>& peer)
 {
-    std::unique_lock lk{ _buckets_mutex };
+    std::unique_lock lk{_buckets_mutex};
     std::size_t bucket_index = calcBucketIndex(peer->getAddress());
     if (_buckets[bucket_index].size() < MAX_BUCKET_SIZE) {
         // accept peer
@@ -90,6 +91,12 @@ bool PeerTable::tryAddPeer(std::unique_ptr<Peer>& peer)
 }
 
 
+bool PeerTable::tryAdd(std::unique_ptr<Peer>&& peer)
+{
+    return tryAdd(peer);
+}
+
+
 void PeerTable::removePeer(std::size_t bucket_index, std::size_t peer_index)
 {
     ASSERT(bucket_index < MAX_BUCKET_SIZE);
@@ -101,12 +108,44 @@ void PeerTable::removePeer(std::size_t bucket_index, std::size_t peer_index)
 }
 
 
+void PeerTable::removeSilent()
+{
+    std::unique_lock lk(_buckets_mutex);
+    for(auto& bucket : _buckets) {
+        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [](const auto& peer) { return peer->isClosed(); }), bucket.end());
+    }
+}
+
+
+void PeerTable::forEachPeer(std::function<void(const Peer&)> f) const
+{
+    std::shared_lock lk(_buckets_mutex);
+    for(const auto& bucket : _buckets) {
+        for(const auto& peer : bucket) {
+            f(*peer);
+        }
+    }
+}
+
+
+void PeerTable::forEachPeer(std::function<void(Peer&)> f)
+{
+    std::unique_lock lk(_buckets_mutex);
+    for(auto& bucket : _buckets) {
+        for(auto& peer : bucket) {
+            f(*peer);
+        }
+    }
+}
+
+
 Host::Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core)
   : _config{ config }
   , _listen_ip{ _config.get<std::string>("net.listen_addr") }
   , _server_public_port{ _config.get<unsigned short>("net.public_port") }
   , _max_connections_number{ connections_limit }
   , _core{ core }
+  , _connected_peers{ core.getThisNodeAddress() }
   , _heartbeat_timer{ _io_context }
   , _acceptor{ _io_context, _listen_ip }
   , _connector{ _io_context }
@@ -143,7 +182,7 @@ void Host::onAccept(std::unique_ptr<net::Connection> connection)
 {
     std::unique_lock lk{ _connected_peers_mutex };
     auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.push_back(lk::Peer::accepted(std::move(session), _core, *this));
+    _connected_peers.tryAdd(lk::Peer::accepted(std::move(session), _core, *this));
 }
 
 
@@ -157,11 +196,14 @@ void Host::checkOutPeer(const net::Endpoint& endpoint)
         return;
     }
 
-    std::shared_lock lk(_connected_peers_mutex);
-    for (const auto& peer : _connected_peers) {
-        if (auto ep = peer->getPublicEndpoint(); ep && *ep == endpoint) {
-            return;
+    bool have_peer_with_endpoint = false;
+    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const Peer& peer) {
+        if (auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
+            have_peer_with_endpoint = true;
         }
+    });
+    if(have_peer_with_endpoint) {
+        return;
     }
 
     LOG_DEBUG << "Connecting to node " << endpoint;
@@ -177,7 +219,7 @@ void Host::onConnect(std::unique_ptr<net::Connection> connection)
 {
     std::unique_lock lk{ _connected_peers_mutex };
     auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.push_back(lk::Peer::connected(std::move(session), _core, *this));
+    _connected_peers.tryAdd(lk::Peer::connected(std::move(session), _core, *this));
 }
 
 
@@ -222,17 +264,16 @@ void Host::join()
 void Host::dropZombiePeers()
 {
     std::unique_lock lk(_connected_peers_mutex);
-    _connected_peers.remove_if([](const auto& peer) { return peer->isClosed(); });
+    _connected_peers.removeSilent();
 }
 
 
 void Host::broadcast(const base::Bytes& data)
 {
-    std::unique_lock lk(_connected_peers_mutex);
     LOG_DEBUG << "Broadcasting data size = " << data.size();
-    for (auto& peer : _connected_peers) {
-        peer->send(data);
-    }
+    _connected_peers.forEachPeer([data](Peer& peer) {
+        peer.send(data);
+    });
 }
 
 
@@ -250,24 +291,29 @@ void Host::broadcast(const lk::Transaction& tx)
 
 bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 {
-    std::shared_lock lk(_connected_peers_mutex);
-    for (const auto& peer : _connected_peers) {
-        if (peer->getEndpoint() == endpoint) {
-            return true;
+    bool have_peer_with_endpoint = false;
+    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const Peer& peer) {
+        if (auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
+            have_peer_with_endpoint = true;
         }
-    }
-    return false;
+    });
+    return have_peer_with_endpoint;
 }
 
 
 std::vector<Peer::Info> Host::allConnectedPeersInfo() const
 {
-    std::shared_lock lk{ _connected_peers_mutex };
     std::vector<Peer::Info> ret;
-    for (const auto& peer : _connected_peers) {
-        ret.push_back(peer->getInfo());
-    }
+    _connected_peers.forEachPeer([&ret](const Peer& peer) {
+        ret.push_back(peer.getInfo());
+    });
     return ret;
+}
+
+
+unsigned short Host::getPublicPort() const noexcept
+{
+    return _server_public_port;
 }
 
 } // namespace net
