@@ -191,6 +191,9 @@ class EthAdapter::EthHost : public evmc::Host
         base::Bytes data(msg.input_data, msg.input_size);
         txb.setData(data);
 
+        auto timestamp = base::Time::now();
+        txb.setTimestamp(timestamp);
+
         auto tx = std::move(txb).build();
         auto result = _core.doMessageCall(tx, *_associated_block);
         return result.getResult();

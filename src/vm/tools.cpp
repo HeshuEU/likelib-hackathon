@@ -212,7 +212,7 @@ namespace {
             base::Bytes prefix(32 - decoded_address.size());
             auto hex_view_address = base::toHex(prefix + decoded_address);
 
-            result = std::regex_replace(result, std::regex("Address\\(" + base58_address + "\\)"), hex_view_address);
+            result = std::regex_replace(result, std::regex("Address\\(" + base58_address + "\\)"), "\"" + hex_view_address + "\"");
         }
         return result;
     }
