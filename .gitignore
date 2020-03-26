@@ -1,9 +1,9 @@
 # build dirs
-*build*/*
+*build*/
 
 # IDE
-.idea/*
-.vs/*
+.idea/
+.vs/
 
 # documentation
 doc/html/
