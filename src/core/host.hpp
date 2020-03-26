@@ -110,7 +110,6 @@ class Host
     void networkThreadWorkerFunction() noexcept;
     //=================================
     PeerTable _connected_peers;
-    mutable std::shared_mutex _connected_peers_mutex;
 
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();

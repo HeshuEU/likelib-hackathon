@@ -180,7 +180,6 @@ void Host::accept()
 
 void Host::onAccept(std::unique_ptr<net::Connection> connection)
 {
-    std::unique_lock lk{ _connected_peers_mutex };
     auto session = std::make_unique<net::Session>(std::move(connection));
     _connected_peers.tryAdd(lk::Peer::accepted(std::move(session), _core, *this));
 }
@@ -217,7 +216,6 @@ void Host::checkOutPeer(const net::Endpoint& endpoint)
 
 void Host::onConnect(std::unique_ptr<net::Connection> connection)
 {
-    std::unique_lock lk{ _connected_peers_mutex };
     auto session = std::make_unique<net::Session>(std::move(connection));
     _connected_peers.tryAdd(lk::Peer::connected(std::move(session), _core, *this));
 }
@@ -263,7 +261,6 @@ void Host::join()
 
 void Host::dropZombiePeers()
 {
-    std::unique_lock lk(_connected_peers_mutex);
     _connected_peers.removeSilent();
 }
 
@@ -279,13 +276,17 @@ void Host::broadcast(const base::Bytes& data)
 
 void Host::broadcast(const lk::Block& block)
 {
-    std::unique_lock lk(_connected_peers_mutex);
+    _connected_peers.forEachPeer([block](Peer& peer) {
+       peer.send(block);
+    });
 }
 
 
 void Host::broadcast(const lk::Transaction& tx)
 {
-    std::unique_lock lk(_connected_peers_mutex);
+    _connected_peers.forEachPeer([tx](Peer& peer) {
+        peer.send(tx);
+    });
 }
 
 
