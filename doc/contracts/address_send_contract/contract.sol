@@ -8,9 +8,9 @@ contract AddressSend {
         minter = msg.sender;
     }
     
-    function testAddressSend(uint256 amount) public payable returns(bool) {
+    function testAddressSend(uint256 amount) public payable returns(bool is_success) {
         coins_store += msg.value;
-        if(coins_store > amount){
+        if(coins_store >= amount){
             bool result = minter.send(coins_store);
             if(result){
                 coins_store = 0;

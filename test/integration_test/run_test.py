@@ -7,6 +7,7 @@ import test_transfer
 import test_contract
 import test_multi_network
 import test_multi_transfer
+import test_contract_functions
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test execution params')

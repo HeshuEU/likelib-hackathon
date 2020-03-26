@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+import binascii
 
 import web3
 
@@ -49,6 +50,19 @@ def load(path_to_contract_folder):
     return {"bytecode": bytecode, "metadata": metadata}
 
 
+def prepare_for_serialize(decoded_data):
+    if type(decoded_data) is list:
+        for item_num in range(len(decoded_data)):
+            decoded_data[item_num] = prepare_for_serialize(decoded_data[item_num])
+    elif type(decoded_data) is bytes:
+        b = binascii.hexlify(decoded_data)
+        return b.decode('utf8')
+    elif type(decoded_data) is dict:
+        for item_key in decoded_data.keys():
+            decoded_data[item_key] = prepare_for_serialize(decoded_data[item_key])
+    return decoded_data
+
+
 if __name__ == "__main__":
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument(
@@ -61,6 +75,6 @@ if __name__ == "__main__":
     contract_data = load(args.contract_path)
     decoded_data = decode_output(contract_data, args.method, args.data)
     if decoded_data:
-        print(json.dumps(decoded_data))
+        print(json.dumps(prepare_for_serialize(decoded_data)))
     else:
         exit(2)

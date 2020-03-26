@@ -184,6 +184,12 @@ class _TestParser:
         return text == "Test passed\n"
 
 
+class DeployedContract:
+    def __init__(self, address=None, gas_left=None):
+        self.address = address
+        self.gas_left = gas_left
+
+
 class _PushContractParser:
     _ADDRESS_TARGET = "address"
     _GAS_LEFT_TARGET = "gas_left"
@@ -192,18 +198,24 @@ class _PushContractParser:
 
     @staticmethod
     def parse(text):
-        result = dict()
+        result = DeployedContract()
         for line in text.split('\n'):
             match = _PushContractParser._RE_PARSER.search(line)
             if not match:
                 continue
-            result['address'] = match.group(_PushContractParser._ADDRESS_TARGET)
-            result['gas_left'] = int(match.group(_PushContractParser._GAS_LEFT_TARGET))
+            result.address = match.group(_PushContractParser._ADDRESS_TARGET)
+            result.gas_left = int(match.group(_PushContractParser._GAS_LEFT_TARGET))
 
         if result:
             return result
         else:
             return None
+
+
+class ContractResult:
+    def __init__(self, gas_left=None, message=None):
+        self.gas_left = gas_left
+        self.message = message
 
 
 class _MessageCallParser:
@@ -214,13 +226,13 @@ class _MessageCallParser:
 
     @staticmethod
     def parse(text):
-        result = dict()
+        result = ContractResult()
         for line in text.split('\n'):
             match = _MessageCallParser._RE_PARSER.search(line)
             if not match:
                 continue
-            result['message'] = match.group(_MessageCallParser._MESSAGE_TARGET)
-            result['gas_left'] = int(match.group(_MessageCallParser._GAS_LEFT_TARGET))
+            result.message = match.group(_MessageCallParser._MESSAGE_TARGET)
+            result.gas_left = int(match.group(_MessageCallParser._GAS_LEFT_TARGET))
 
         if result:
             return result
@@ -543,7 +555,7 @@ class Node:
     def decode_message(self, *, code, method, message):
         result = self.__run_standalone_command(command="decode",
                                                parameters=["--code", code, "--method", method, "--data",
-                                                           message["message"]])
+                                                           message.message])
         return _DecodeParser.parse(result)
 
     def push_contract(self, *, from_address, code, gas, amount, init_message, timeout=1):
@@ -554,7 +566,7 @@ class Node:
         return _PushContractParser.parse(result)
 
     def message_to_contract(self, *, from_address, to_address, gas, amount, message, timeout=1):
-        parameters = ["--keys", from_address.key_path, "--to", to_address['address'],
+        parameters = ["--keys", from_address.key_path, "--to", to_address.address,
                       "--amount", str(amount), "--gas", str(gas), "--message", message]
         result = self.__run_client_command(command="message_call", parameters=parameters, timeout=timeout)
         return _MessageCallParser.parse(result)

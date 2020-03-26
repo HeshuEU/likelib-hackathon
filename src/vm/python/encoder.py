@@ -17,16 +17,14 @@ def create_hash(function):
 def generate_call(compiled_sol, call):
     web3_interface = web3.Web3()
 
-    contract = web3_interface.eth.contract(
-        abi=compiled_sol['metadata']['output']['abi'], bytecode=compiled_sol['bytecode'])
-    target_hash = create_hash(contract.get_function_by_name(call["method"]))
-
+    original_contract = web3_interface.eth.contract(abi=compiled_sol['metadata']['output']['abi'],
+                                                    bytecode=compiled_sol['bytecode'])
 
     for item in compiled_sol['metadata']['output']['abi']:
         for input_item in item["inputs"]:
-            if input_item["internalType"] == "address":
-                input_item["internalType"] = "bytes32";
-                input_item["type"] = "bytes32";
+            if input_item["type"] == "address":
+                input_item["internalType"] = "bytes32"
+                input_item["type"] = "bytes32"
 
     new_contract = web3_interface.eth.contract(
         abi=compiled_sol['metadata']['output']['abi'], bytecode=compiled_sol['bytecode'])
@@ -37,8 +35,8 @@ def generate_call(compiled_sol, call):
     else:
         call_data = new_contract.encodeABI(
             fn_name=call["method"], args=call["args"])
+        target_hash = create_hash(original_contract.get_function_by_name(call["method"]))
         call_data = target_hash[2] + call_data[10:]
-
 
     return call_data
 
@@ -66,7 +64,7 @@ def load(path_to_contract_folder):
 def parse_call(call_string):
     bracket_index = call_string.find('(')
     method_name = call_string[0: bracket_index]
-    argument_data = f"[{call_string[bracket_index+1: len(call_string) - 1]}]"
+    argument_data = f"[{call_string[bracket_index + 1: len(call_string) - 1]}]"
     arguments = json.loads(argument_data)
     return {"method": method_name, "args": arguments}
 
