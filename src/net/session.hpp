@@ -30,7 +30,7 @@ class Session
     bool isActive() const;
     bool isClosed() const;
     //==================
-    void setHandler(std::unique_ptr<Handler> handler);
+    void setHandler(Handler* handler); // not owning handler
     //==================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
@@ -50,7 +50,7 @@ class Session
   private:
     //==================
     std::shared_ptr<Connection> _connection;
-    std::unique_ptr<Handler> _handler;
+    Handler* _handler{nullptr};
     //==================
     base::Time _last_seen;
     //==================

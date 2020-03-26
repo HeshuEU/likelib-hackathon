@@ -44,6 +44,7 @@ class Peer
     void setServerEndpoint(net::Endpoint endpoint);
 
     void setProtocol(std::unique_ptr<lk::Protocol> protocol);
+    void start();
     //================
     const lk::Address& getAddress() const noexcept;
     void setAddress(lk::Address address);

@@ -29,6 +29,7 @@ std::unique_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::
     auto protocol = std::make_unique<lk::Protocol>(
       lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, ret.get() }));
     ret->setProtocol(std::move(protocol));
+    ret->start();
     return ret;
 }
 
@@ -39,6 +40,7 @@ std::unique_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk:
     auto protocol = std::make_unique<lk::Protocol>(
       lk::Protocol::peerConnected(lk::MessageProcessor::Context{ &core, &host, ret.get() }));
     ret->setProtocol(std::move(protocol));
+    ret->start();
     return ret;
 }
 
@@ -47,7 +49,8 @@ Peer::Peer(std::unique_ptr<net::Session> session, lk::Core& core)
   : _session{ std::move(session) }
   , _address{ lk::Address::null() }
   , _core{ core }
-{}
+{
+}
 
 
 net::Endpoint Peer::getEndpoint() const
@@ -146,6 +149,13 @@ void Peer::setAddress(lk::Address address)
 void Peer::setProtocol(std::unique_ptr<lk::Protocol> protocol)
 {
     _protocol = std::move(protocol);
+    _session->setHandler(_protocol.get());
+}
+
+
+void Peer::start()
+{
+    _session->start();
 }
 
 

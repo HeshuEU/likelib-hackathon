@@ -471,7 +471,10 @@ BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchi
 }
 
 
-void BlockNotFoundMessage::handle(const lk::MessageProcessor::Context&) {}
+void BlockNotFoundMessage::handle(const lk::MessageProcessor::Context&)
+{
+    LOG_DEBUG << "Block not found " << block_hash;
+}
 
 
 BlockNotFoundMessage::BlockNotFoundMessage(base::Sha256 block_hash)
