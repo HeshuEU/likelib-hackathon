@@ -24,10 +24,10 @@ std::tuple<std::string, std::string> parseInfoLine(const std::string& path)
 std::pair<base::Bytes, std::string> parseContractMembers(const std::string& contract_members)
 {
 
-    if(auto space_pos = contract_members.find(' '); space_pos != contract_members.npos) {
+    if (auto space_pos = contract_members.find(' '); space_pos != contract_members.npos) {
         auto hash = base::fromHex<base::Bytes>(contract_members.substr(0, space_pos - 1));
         auto signature = contract_members.substr(space_pos + 1, contract_members.size() - space_pos - 1);
-        return {hash, signature};
+        return { hash, signature };
     }
     else {
         RAISE_ERROR(base::InvalidArgument, "Invalid string for contract members parsing");
@@ -130,8 +130,8 @@ std::optional<Contracts> Solc::compile(const std::string& path_to_solidity_code)
         contract.setName(contract_name_full_code_pair.first);
         contract.setFullCode(contract_name_full_code_pair.second);
 
-        for(const auto& contract_name_metadata_pair: metadata_output) {
-            if(contract_name_metadata_pair.first == contract.getName()) {
+        for (const auto& contract_name_metadata_pair : metadata_output) {
+            if (contract_name_metadata_pair.first == contract.getName()) {
                 contract.setMetadata(contract_name_metadata_pair.second);
             }
         }
@@ -151,7 +151,7 @@ std::vector<std::string> Solc::call_command(std::vector<std::string> args) const
 
     std::vector<std::string> out_put_result_values;
     std::string out_result;
-    while(std::getline(out, out_result)) {
+    while (std::getline(out, out_result)) {
         out_put_result_values.push_back(out_result);
     }
 
@@ -170,12 +170,12 @@ std::vector<std::string> Solc::call_command(std::vector<std::string> args) const
 std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_command(
   const std::string& path_to_solidity_code) const
 {
-    std::vector<std::string> args{"--bin", path_to_solidity_code};
+    std::vector<std::string> args{ "--bin", path_to_solidity_code };
     auto res = call_command(args);
 
     std::vector<std::pair<std::string, base::Bytes>> contracts_byte_codes;
     constexpr const size_t GROUP_SIZE = 4;
-    for(std::size_t i = 0; i < res.size() / GROUP_SIZE; i++) {
+    for (std::size_t i = 0; i < res.size() / GROUP_SIZE; i++) {
         auto current_contract_index = i * GROUP_SIZE;
 
         auto info_line = res[current_contract_index + 1];
@@ -183,7 +183,7 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_com
 
         auto info = parseInfoLine(info_line);
 
-        contracts_byte_codes.push_back({std::get<1>(info), std::move(bytecode)});
+        contracts_byte_codes.push_back({ std::get<1>(info), std::move(bytecode) });
     }
 
     return contracts_byte_codes;
@@ -193,13 +193,13 @@ std::vector<std::pair<std::string, base::Bytes>> Solc::call_full_compilation_com
 std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_command(
   const std::string& path_to_solidity_code) const
 {
-    std::vector<std::string> args{"--metadata", path_to_solidity_code};
+    std::vector<std::string> args{ "--metadata", path_to_solidity_code };
 
     auto res = call_command(args);
 
     std::vector<std::pair<std::string, base::PropertyTree>> contracts_metadatas;
     constexpr const size_t GROUP_SIZE = 4;
-    for(std::size_t i = 0; i < res.size() / GROUP_SIZE; i++) {
+    for (std::size_t i = 0; i < res.size() / GROUP_SIZE; i++) {
         auto current_contract_index = i * GROUP_SIZE;
 
         auto info_line = res[current_contract_index + 1];
@@ -207,7 +207,7 @@ std::vector<std::pair<std::string, base::PropertyTree>> Solc::call_metadata_comm
 
         auto info = parseInfoLine(info_line);
 
-        contracts_metadatas.push_back({std::get<1>(info), std::move(metadata)});
+        contracts_metadatas.push_back({ std::get<1>(info), std::move(metadata) });
     }
 
     return contracts_metadatas;
