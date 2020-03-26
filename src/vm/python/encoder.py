@@ -5,17 +5,40 @@ import argparse
 import web3
 
 
+def create_hash(function):
+    name = function.abi['name']
+    str_view = str(function)
+    signature = str_view[str_view.find(" ") + 1: len(str_view) - 1]
+    sha3_hash = web3.Web3.solidityKeccak(
+        ['bytes'], [signature.encode('ascii')]).hex()
+    return name, signature, sha3_hash[:10]
+
+
 def generate_call(compiled_sol, call):
     web3_interface = web3.Web3()
+
     contract = web3_interface.eth.contract(
+        abi=compiled_sol['metadata']['output']['abi'], bytecode=compiled_sol['bytecode'])
+    target_hash = create_hash(contract.get_function_by_name(call["method"]))
+
+
+    for item in compiled_sol['metadata']['output']['abi']:
+        for input_item in item["inputs"]:
+            if input_item["internalType"] == "address":
+                input_item["internalType"] = "bytes32";
+                input_item["type"] = "bytes32";
+
+    new_contract = web3_interface.eth.contract(
         abi=compiled_sol['metadata']['output']['abi'], bytecode=compiled_sol['bytecode'])
 
     if call['method'] == "constructor":
-        call_data = contract.constructor(*call["args"]).data_in_transaction
+        call_data = new_contract.constructor(*call["args"]).data_in_transaction
         call_data = call_data[len(compiled_sol['bytecode']):]
     else:
-        call_data = contract.encodeABI(
+        call_data = new_contract.encodeABI(
             fn_name=call["method"], args=call["args"])
+        call_data = target_hash[2] + call_data[10:]
+
 
     return call_data
 
