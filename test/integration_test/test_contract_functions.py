@@ -204,3 +204,41 @@ def main(env, logger):
         TEST_CHECK(not message_result.message)
 
     return 0
+
+
+@test_case("call_other_contract")
+def main(env, logger):
+    contract_a_file_path = os.path.join(CONTRACTS_FOLDER, "call_other_contract", "a.sol")
+    if not os.path.exists(contract_a_file_path):
+        TEST_CHECK(False, message="Contracts folder was not found")
+
+    contract_b_file_path = os.path.join(CONTRACTS_FOLDER, "call_other_contract", "b.sol")
+    if not os.path.exists(contract_b_file_path):
+        TEST_CHECK(False, message="Contracts folder was not found")
+
+    node_settings = Node.Settings(Node.Id(20216, 50066), start_up_time=2)
+    with Node(env, node_settings, logger) as node:
+        node.run_check_test()
+
+        contracts_a = node.compile_contract(code=contract_a_file_path)
+        test_contract_a = "A"
+
+        contracts_b = node.compile_contract(code=contract_b_file_path)
+        test_contract_b = "B"
+
+        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
+        deployed_contract_a = node.push_contract(from_address=distributor_address, code=test_contract_a, amount=0,
+                                                 gas=10000000, init_message="", timeout=5)
+
+        deployed_contract_b = node.push_contract(from_address=distributor_address, code=test_contract_b, amount=0,
+                                                 gas=10000000, init_message="", timeout=5)
+
+        arg1 = 5
+        agr2 = 6
+        call_message = node.encode_message(code=test_contract_b, message=f"doYourThing(Address({deployed_contract_a.address}), {arg1}, {agr2})")
+        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract_b,
+                                                  gas=10000000, amount=0, message=call_message, timeout=5)
+        res = node.decode_message(code=test_contract_b, method="doYourThing", message=message_result)
+        print(res)
+
+    return 0
