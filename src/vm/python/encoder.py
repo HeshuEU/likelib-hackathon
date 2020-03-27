@@ -1,7 +1,7 @@
 import os
 import json
 import argparse
-
+import copy
 import web3
 
 
@@ -17,17 +17,15 @@ def create_hash(function):
 def generate_call(compiled_sol, call):
     web3_interface = web3.Web3()
 
-    original_contract = web3_interface.eth.contract(abi=compiled_sol['metadata']['output']['abi'],
-                                                    bytecode=compiled_sol['bytecode'])
-
-    for item in compiled_sol['metadata']['output']['abi']:
+    new_contract_data_abi = copy.deepcopy(compiled_sol['metadata']['output']['abi'])
+    for item in new_contract_data_abi:
         for input_item in item["inputs"]:
             if input_item["type"] == "address":
                 input_item["internalType"] = "bytes32"
                 input_item["type"] = "bytes32"
 
     new_contract = web3_interface.eth.contract(
-        abi=compiled_sol['metadata']['output']['abi'], bytecode=compiled_sol['bytecode'])
+        abi=new_contract_data_abi, bytecode=compiled_sol['bytecode'])
 
     if call['method'] == "constructor":
         call_data = new_contract.constructor(*call["args"]).data_in_transaction
@@ -35,7 +33,9 @@ def generate_call(compiled_sol, call):
     else:
         call_data = new_contract.encodeABI(
             fn_name=call["method"], args=call["args"])
-        target_hash = create_hash(original_contract.get_function_by_name(call["method"]))
+
+        original = web3_interface.eth.contract(abi=compiled_sol['metadata']['output']['abi'])
+        target_hash = create_hash(original.get_function_by_name(call["method"]))
         call_data = target_hash[2] + call_data[10:]
 
     return call_data
