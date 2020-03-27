@@ -279,7 +279,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
                                                                              const bc::Transaction& associated_tx,
                                                                              const bc::Block& associated_block)
 {
-    std::lock_guard lk(_execution_mutex);
+    std::lock_guard lk(_create_mutex);
 
     base::SerializationIArchive ia(associated_tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();
@@ -304,7 +304,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
 
 vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
 {
-    std::lock_guard lk(_execution_mutex);
+    std::lock_guard lk(_call_mutex);
 
     auto code_hash = _account_manager.getAccount(associated_tx.getTo()).getCodeHash();
 
