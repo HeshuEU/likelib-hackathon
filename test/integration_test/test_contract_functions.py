@@ -234,11 +234,12 @@ def main(env, logger):
                                                  gas=10000000, init_message="", timeout=5)
 
         arg1 = 5
-        agr2 = 6
-        call_message = node.encode_message(code=test_contract_b, message=f"doYourThing(Address({deployed_contract_a.address}), {arg1}, {agr2})")
+        arg2 = 6
+        call_message = node.encode_message(code=test_contract_b,
+                                           message=f"doYourThing(Address({deployed_contract_a.address}), {arg1}, {arg2})")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract_b,
                                                   gas=10000000, amount=0, message=call_message, timeout=5)
         res = node.decode_message(code=test_contract_b, method="doYourThing", message=message_result)
-        print(res)
+        TEST_CHECK(res['result'] == (arg1 + arg2))
 
     return 0
