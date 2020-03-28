@@ -240,39 +240,42 @@ HandshakeMessage HandshakeMessage::deserialize(base::SerializationIArchive& ia)
 
 void HandshakeMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
+    auto& peer = dynamic_cast<lk::Peer&>(*ctx.peer);
+    auto& host = dynamic_cast<lk::Host&>(*ctx.host);
+
     const auto& ours_top_block = ctx.core->getTopBlock();
 
-    if (auto ep = ctx.peer->getPublicEndpoint(); !ep && _public_port) {
-        auto public_ep = ctx.peer->getEndpoint();
+    if (_public_port) {
+        auto public_ep = peer.getEndpoint();
         public_ep.setPort(_public_port);
-        ctx.peer->setServerEndpoint(public_ep);
+        peer.setServerEndpoint(public_ep);
     }
 
     for (const auto& peer_info : _known_peers) {
-        ctx.host->checkOutPeer(peer_info.endpoint);
+        host.checkOutPeer(peer_info.endpoint);
     }
 
     if (_theirs_top_block == ours_top_block) {
-        ctx.peer->setState(lk::Peer::State::SYNCHRONISED);
+        peer.setState(lk::Peer::State::SYNCHRONISED);
         return; // nothing changes, because top blocks are equal
     }
     else {
         if (ours_top_block.getDepth() > _theirs_top_block.getDepth()) {
-            ctx.peer->setState(lk::Peer::State::SYNCHRONISED);
+            peer.setState(lk::Peer::State::SYNCHRONISED);
             // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
             return;
         }
         else {
             if (ctx.core->getTopBlock().getDepth() + 1 == _theirs_top_block.getDepth()) {
                 ctx.core->tryAddBlock(_theirs_top_block);
-                ctx.peer->setState(lk::Peer::State::SYNCHRONISED);
+                peer.setState(lk::Peer::State::SYNCHRONISED);
             }
             else {
                 base::SerializationOArchive oa;
                 GetBlockMessage::serialize(oa, _theirs_top_block.getPrevBlockHash());
-                ctx.peer->send(std::move(oa).getBytes());
-                ctx.peer->setState(lk::Peer::State::REQUESTED_BLOCKS);
-                ctx.peer->addSyncBlock(std::move(_theirs_top_block));
+                peer.send(std::move(oa).getBytes());
+                peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
+                peer.addSyncBlock(std::move(_theirs_top_block));
             }
         }
     }
@@ -428,18 +431,19 @@ BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
 
 void BlockMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    if (ctx.peer->getState() == lk::Peer::State::SYNCHRONISED) {
+    auto& peer = dynamic_cast<lk::Peer&>(*ctx.peer);
+    if (peer.getState() == lk::Peer::State::SYNCHRONISED) {
         ctx.core->tryAddBlock(std::move(_block));
     }
     else {
         lk::BlockDepth block_depth = _block.getDepth();
-        ctx.peer->addSyncBlock(std::move(_block));
+        peer.addSyncBlock(std::move(_block));
 
         if (block_depth == ctx.core->getTopBlock().getDepth() + 1) {
-            ctx.peer->applySyncs();
+            peer.applySyncs();
         }
         else {
-            ctx.peer->send(prepareMessage<GetBlockMessage>(ctx.peer->getSyncBlocks().front().getPrevBlockHash()));
+            ctx.peer->send(prepareMessage<GetBlockMessage>(peer.getSyncBlocks().front().getPrevBlockHash()));
         }
     }
 }
@@ -473,7 +477,7 @@ BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchi
 
 void BlockNotFoundMessage::handle(const lk::MessageProcessor::Context&)
 {
-    LOG_DEBUG << "Block not found " << block_hash;
+    LOG_DEBUG << "Block not found " << _block_hash;
 }
 
 
@@ -503,7 +507,8 @@ GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive& ia)
 
 void GetInfoMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    ctx.peer->send(prepareMessage<InfoMessage>(ctx.core->getTopBlock(), ctx.host->allConnectedPeersInfo()));
+    auto& host = dynamic_cast<lk::Host&>(*ctx.host);
+    ctx.peer->send(prepareMessage<InfoMessage>(ctx.core->getTopBlock(), host.allConnectedPeersInfo()));
 }
 
 //============================================
@@ -568,8 +573,9 @@ NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 
 void NewNodeMessage::handle(const lk::MessageProcessor::Context& ctx)
 {
-    ctx.host->checkOutPeer(_new_node_endpoint);
-    ctx.host->broadcast(prepareMessage<NewNodeMessage>(_new_node_endpoint));
+    auto& host = dynamic_cast<lk::Host&>(*ctx.host);
+    host.checkOutPeer(_new_node_endpoint);
+    host.broadcast(prepareMessage<NewNodeMessage>(_new_node_endpoint));
 }
 
 
@@ -666,8 +672,7 @@ Protocol Protocol::peerAccepted(MessageProcessor::Context context)
 Protocol::Protocol(MessageProcessor::Context context)
   : _ctx{ context }
   , _processor{ context }
-{
-}
+{}
 
 
 void Protocol::startOnAcceptedPeer()
@@ -682,10 +687,11 @@ void Protocol::startOnConnectedPeer()
     /*
      * we connected to a node, so now we are going to send handshake
      */
+    auto& host = dynamic_cast<lk::Host&>(*_ctx.host);
     _ctx.peer->send(prepareMessage<HandshakeMessage>(_ctx.core->getTopBlock(),
                                                      _ctx.core->getThisNodeAddress(),
-                                                     _ctx.host->getPublicPort(),
-                                                     _ctx.host->allConnectedPeersInfo()));
+                                                     host.getPublicPort(),
+                                                     host.allConnectedPeersInfo()));
 }
 
 
@@ -707,6 +713,12 @@ void Protocol::sendBlock(const lk::Block& block)
 void Protocol::sendTransaction(const lk::Transaction& tx)
 {
     _ctx.peer->send(prepareMessage<TransactionMessage>(tx));
+}
+
+
+void Protocol::sendSessionEnd(std::function<void()> on_send)
+{
+    LOG_WARNING << "SendSessionEnd not implemented";
 }
 
 } // namespace core

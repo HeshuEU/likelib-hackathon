@@ -22,7 +22,7 @@ namespace lk
 
 class Core;
 
-class PeerTable
+class PeerTable : public PeerPoolBase
 {
   public:
     //=================================
@@ -34,24 +34,26 @@ class PeerTable
      * @returns true if succeeded, false otherwise
      * @threadsafe
      */
-    bool tryAdd(std::unique_ptr<Peer>& peer);
+    bool tryAddPeer(std::shared_ptr<PeerBase> peer) override;
 
-    bool tryAdd(std::unique_ptr<Peer>&& peer);
+    void removePeer(std::shared_ptr<PeerBase> peer) override;
 
     // thread-safe
     void removeSilent();
     //=================================
 
     // thread-safe
-    void forEachPeer(std::function<void(const Peer&)> f) const;
-    void forEachPeer(std::function<void(Peer&)> f);
+    void forEachPeer(std::function<void(const PeerBase&)> f) const override;
+    void forEachPeer(std::function<void(PeerBase&)> f) override;
     //=================================
+
+    std::vector<Peer::Info> allPeersInfo() const override;
   private:
     //=================================
     const lk::Address _host_address;
     //=================================
     static constexpr std::size_t MAX_BUCKET_SIZE = 10;
-    std::array<std::vector<std::unique_ptr<Peer>>, lk::Address::LENGTH_IN_BYTES * 8> _buckets;
+    std::array<std::vector<std::shared_ptr<PeerBase>>, lk::Address::LENGTH_IN_BYTES * 8> _buckets;
     mutable std::shared_mutex _buckets_mutex;
     //=================================
     std::size_t calcBucketIndex(const lk::Address& peer_address);
@@ -74,7 +76,7 @@ class PeerTable
 };
 
 
-// Kademlia based host
+// Kademlia-based host
 class Host
 {
   public:

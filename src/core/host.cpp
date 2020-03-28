@@ -66,9 +66,9 @@ std::size_t PeerTable::getLeastRecentlySeenPeerIndex(const std::size_t bucket_id
 }
 
 
-bool PeerTable::tryAdd(std::unique_ptr<Peer>& peer)
+bool PeerTable::tryAddPeer(std::shared_ptr<PeerBase> peer)
 {
-    std::unique_lock lk{_buckets_mutex};
+    std::unique_lock lk{ _buckets_mutex };
     std::size_t bucket_index = calcBucketIndex(peer->getAddress());
     if (_buckets[bucket_index].size() < MAX_BUCKET_SIZE) {
         // accept peer
@@ -91,9 +91,12 @@ bool PeerTable::tryAdd(std::unique_ptr<Peer>& peer)
 }
 
 
-bool PeerTable::tryAdd(std::unique_ptr<Peer>&& peer)
+void PeerTable::removePeer(std::shared_ptr<PeerBase> peer)
 {
-    return tryAdd(peer);
+    std::unique_lock lk{_buckets_mutex};
+    for(auto& bucket : _buckets) {
+        bucket.erase(std::remove(bucket.begin(), bucket.end(), peer), bucket.end());
+    }
 }
 
 
@@ -111,31 +114,40 @@ void PeerTable::removePeer(std::size_t bucket_index, std::size_t peer_index)
 void PeerTable::removeSilent()
 {
     std::unique_lock lk(_buckets_mutex);
-    for(auto& bucket : _buckets) {
-        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [](const auto& peer) { return peer->isClosed(); }), bucket.end());
+    for (auto& bucket : _buckets) {
+        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [](const auto& peer) { return peer->isClosed(); }),
+                     bucket.end());
     }
 }
 
 
-void PeerTable::forEachPeer(std::function<void(const Peer&)> f) const
+void PeerTable::forEachPeer(std::function<void(const PeerBase&)> f) const
 {
     std::shared_lock lk(_buckets_mutex);
-    for(const auto& bucket : _buckets) {
-        for(const auto& peer : bucket) {
+    for (const auto& bucket : _buckets) {
+        for (const auto& peer : bucket) {
             f(*peer);
         }
     }
 }
 
 
-void PeerTable::forEachPeer(std::function<void(Peer&)> f)
+void PeerTable::forEachPeer(std::function<void(PeerBase&)> f)
 {
     std::unique_lock lk(_buckets_mutex);
-    for(auto& bucket : _buckets) {
-        for(auto& peer : bucket) {
+    for (auto& bucket : _buckets) {
+        for (auto& peer : bucket) {
             f(*peer);
         }
     }
+}
+
+
+std::vector<Peer::Info> PeerTable::allPeersInfo() const
+{
+    std::vector<Peer::Info> ret;
+    forEachPeer([&ret](const PeerBase& peer) { ret.push_back(peer.getInfo()); });
+    return ret;
 }
 
 
@@ -181,7 +193,7 @@ void Host::accept()
 void Host::onAccept(std::unique_ptr<net::Connection> connection)
 {
     auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.tryAdd(lk::Peer::accepted(std::move(session), _core, *this));
+    _connected_peers.tryAddPeer(lk::Peer::accepted(std::move(session), _connected_peers, _core));
 }
 
 
@@ -196,19 +208,21 @@ void Host::checkOutPeer(const net::Endpoint& endpoint)
     }
 
     bool have_peer_with_endpoint = false;
-    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const Peer& peer) {
-        if (auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
+    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const PeerBase& peer) {
+        if (peer.getPublicEndpoint() == endpoint) {
             have_peer_with_endpoint = true;
         }
     });
-    if(have_peer_with_endpoint) {
+    if (have_peer_with_endpoint) {
         return;
     }
 
     LOG_DEBUG << "Connecting to node " << endpoint;
-    _connector.connect(endpoint, [this](std::unique_ptr<net::Connection> connection) {
+    _connector.connect(endpoint, base::config::NET_CONNECT_TIMEOUT, [this](std::unique_ptr<net::Connection> connection) {
         ASSERT(connection);
         onConnect(std::move(connection));
+    }, [](const net::Connector::ConnectError&) {
+        // TODO: remember
     });
     LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
 }
@@ -217,7 +231,7 @@ void Host::checkOutPeer(const net::Endpoint& endpoint)
 void Host::onConnect(std::unique_ptr<net::Connection> connection)
 {
     auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.tryAdd(lk::Peer::connected(std::move(session), _core, *this));
+    _connected_peers.tryAddPeer(lk::Peer::connected(std::move(session), _connected_peers, _core));
 }
 
 
@@ -268,33 +282,27 @@ void Host::dropZombiePeers()
 void Host::broadcast(const base::Bytes& data)
 {
     LOG_DEBUG << "Broadcasting data size = " << data.size();
-    _connected_peers.forEachPeer([data](Peer& peer) {
-        peer.send(data);
-    });
+    _connected_peers.forEachPeer([data](PeerBase& peer) { peer.send(data); });
 }
 
 
 void Host::broadcast(const lk::Block& block)
 {
-    _connected_peers.forEachPeer([block](Peer& peer) {
-       peer.send(block);
-    });
+    _connected_peers.forEachPeer([block](PeerBase& peer) { dynamic_cast<lk::Peer&>(peer).send(block); });
 }
 
 
 void Host::broadcast(const lk::Transaction& tx)
 {
-    _connected_peers.forEachPeer([tx](Peer& peer) {
-        peer.send(tx);
-    });
+    _connected_peers.forEachPeer([tx](PeerBase& peer) { dynamic_cast<lk::Peer&>(peer).send(tx); });
 }
 
 
 bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 {
     bool have_peer_with_endpoint = false;
-    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const Peer& peer) {
-        if (auto ep = peer.getPublicEndpoint(); ep && *ep == endpoint) {
+    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const PeerBase& peer) {
+        if (peer.getPublicEndpoint() == endpoint) {
             have_peer_with_endpoint = true;
         }
     });
@@ -304,11 +312,7 @@ bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 
 std::vector<Peer::Info> Host::allConnectedPeersInfo() const
 {
-    std::vector<Peer::Info> ret;
-    _connected_peers.forEachPeer([&ret](const Peer& peer) {
-        ret.push_back(peer.getInfo());
-    });
-    return ret;
+    return _connected_peers.allPeersInfo();
 }
 
 

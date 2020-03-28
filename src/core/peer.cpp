@@ -23,9 +23,9 @@ void Peer::Info::serialize(base::SerializationOArchive& oa) const
 
 //================================
 
-std::unique_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
+std::unique_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::PeerPoolBase& host, lk::Core& core)
 {
-    auto ret = std::make_unique<Peer>(Peer(std::move(session), core));
+    auto ret = std::make_unique<Peer>(Peer(std::move(session), host, core));
     auto protocol = std::make_unique<lk::Protocol>(
       lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, ret.get() }));
     ret->setProtocol(std::move(protocol));
@@ -34,9 +34,9 @@ std::unique_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::
 }
 
 
-std::unique_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::Core& core, lk::Host& host)
+std::unique_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::PeerPoolBase& host, lk::Core& core)
 {
-    auto ret = std::make_unique<Peer>(Peer(std::move(session), core));
+    auto ret = std::make_unique<Peer>(Peer(std::move(session), host, core));
     auto protocol = std::make_unique<lk::Protocol>(
       lk::Protocol::peerConnected(lk::MessageProcessor::Context{ &core, &host, ret.get() }));
     ret->setProtocol(std::move(protocol));
@@ -45,11 +45,18 @@ std::unique_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk:
 }
 
 
-Peer::Peer(std::unique_ptr<net::Session> session, lk::Core& core)
+Peer::Peer(std::unique_ptr<net::Session> session, lk::PeerPoolBase& pool, lk::Core& core)
   : _session{ std::move(session) }
   , _address{ lk::Address::null() }
+  , _pool{ pool }
   , _core{ core }
 {
+    if(_pool.tryAddPeer(shared_from_this())) {
+        _is_attached_to_pool = true;
+    }
+    else {
+        rejectedByPool();
+    }
 }
 
 
@@ -59,9 +66,9 @@ net::Endpoint Peer::getEndpoint() const
 }
 
 
-std::optional<net::Endpoint> Peer::getPublicEndpoint() const
+net::Endpoint Peer::getPublicEndpoint() const
 {
-    return _endpoint_for_incoming_connections;
+    return *_endpoint_for_incoming_connections;
 }
 
 
@@ -146,10 +153,10 @@ void Peer::setAddress(lk::Address address)
 }
 
 
-void Peer::setProtocol(std::unique_ptr<lk::Protocol> protocol)
+void Peer::setProtocol(std::shared_ptr<lk::ProtocolBase> protocol)
 {
     _protocol = std::move(protocol);
-    _session->setHandler(_protocol.get());
+    _session->setHandler(_protocol);
 }
 
 
@@ -170,6 +177,12 @@ Peer::Info Peer::getInfo() const
     return Peer::Info{ _session->getEndpoint(), _address };
 }
 
-//=====================================
+
+void Peer::rejectedByPool()
+{
+    _protocol->sendSessionEnd([this]{
+      _session->close();
+    });
+}
 
 }

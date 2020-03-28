@@ -8,6 +8,7 @@
 namespace net
 {
 
+
 class Session
 {
   public:
@@ -30,7 +31,7 @@ class Session
     bool isActive() const;
     bool isClosed() const;
     //==================
-    void setHandler(Handler* handler); // not owning handler
+    void setHandler(std::shared_ptr<Handler> handler);
     //==================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
@@ -50,7 +51,7 @@ class Session
   private:
     //==================
     std::shared_ptr<Connection> _connection;
-    Handler* _handler{nullptr};
+    std::shared_ptr<Handler> _handler;
     //==================
     base::Time _last_seen;
     //==================

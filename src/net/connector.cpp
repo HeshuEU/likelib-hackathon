@@ -61,7 +61,7 @@ void Connector::connect(const Endpoint& address,
     auto socket = std::make_unique<ba::ip::tcp::socket>(_io_context);
     auto event_status = std::make_shared<ConnectEventStatus>(timeout_seconds, _io_context, std::move(on_fail));
 
-    event_status->deadline.async_wait([event_status] {
+    event_status->deadline.async_wait([event_status](const boost::system::error_code&) {
         if (!event_status->is_already_connected) {
             event_status->on_fail(ConnectError{Connector::ConnectError::Status::TIMEOUT});
         }

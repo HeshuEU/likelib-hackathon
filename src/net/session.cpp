@@ -56,7 +56,7 @@ void Session::send(base::Bytes&& data)
 }
 
 
-void Session::setHandler(Handler* handler)
+void Session::setHandler(std::shared_ptr<Handler> handler)
 {
     _handler = std::move(handler);
 }

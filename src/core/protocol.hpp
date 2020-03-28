@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/block.hpp"
+#include "core/peer.hpp"
 #include "core/transaction.hpp"
 #include "net/session.hpp"
 
@@ -11,7 +12,6 @@ class Core;
 class Host;
 class Peer;
 
-
 class MessageProcessor
 {
   public:
@@ -19,11 +19,11 @@ class MessageProcessor
     struct Context
     {
         Core* core;
-        Host* host;
-        Peer* peer;
+        PeerPoolBase* host;
+        PeerBase* peer;
     };
     //===============
-    MessageProcessor(Context context);
+    explicit MessageProcessor(Context context);
 
     /*
      * Decode and act according to received data.
@@ -36,7 +36,7 @@ class MessageProcessor
 };
 
 
-class Protocol : public net::Session::Handler
+class Protocol : public ProtocolBase
 {
   public:
     //===============
@@ -52,14 +52,11 @@ class Protocol : public net::Session::Handler
     Protocol& operator=(Protocol&&) = delete;
     //===============
     void onReceive(const base::Bytes& bytes) override;
-
-    /*
-     * Called once when peer is closed.
-     */
     void onClose() override;
     //===============
-    void sendBlock(const lk::Block& block);
-    void sendTransaction(const lk::Transaction& tx);
+    void sendBlock(const lk::Block& block) override;
+    void sendTransaction(const lk::Transaction& tx) override;
+    void sendSessionEnd(std::function<void()> on_send) override;
     //===============
   private:
     MessageProcessor::Context _ctx;
