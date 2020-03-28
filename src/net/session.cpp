@@ -56,6 +56,22 @@ void Session::send(base::Bytes&& data)
 }
 
 
+void Session::send(const base::Bytes& data, Connection::SendHandler on_send)
+{
+    if (isActive()) {
+        _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data, std::move(on_send));
+    }
+}
+
+
+void Session::send(base::Bytes&& data, Connection::SendHandler on_send)
+{
+    if (isActive()) {
+        _connection->send(base::toBytes(static_cast<std::uint16_t>(data.size())) + data, std::move(on_send));
+    }
+}
+
+
 void Session::setHandler(std::shared_ptr<Handler> handler)
 {
     _handler = std::move(handler);

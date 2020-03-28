@@ -35,6 +35,9 @@ class Session
     //==================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
+
+    void send(const base::Bytes& data, Connection::SendHandler on_send);
+    void send(base::Bytes&& data, Connection::SendHandler on_send);
     //==================
     void start();
     void close();

@@ -117,15 +117,15 @@ const std::forward_list<lk::Block>& Peer::getSyncBlocks() const noexcept
 }
 
 
-void Peer::send(const base::Bytes& data)
+void Peer::send(const base::Bytes& data, net::Connection::SendHandler on_send)
 {
-    _session->send(data);
+    _session->send(data, std::move(on_send));
 }
 
 
-void Peer::send(base::Bytes&& data)
+void Peer::send(base::Bytes&& data, net::Connection::SendHandler on_send)
 {
-    _session->send(std::move(data));
+    _session->send(std::move(data), std::move(on_send));
 }
 
 

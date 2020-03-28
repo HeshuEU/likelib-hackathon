@@ -68,7 +68,7 @@ class HostImplementation : public evmc::Host
         return evmc::bytes32();
     }
 
-    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
+    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* /*buffer_data*/, size_t buffer_size) const
       noexcept override
     {
         std::cout << "copy_code call method call: " << vm::toBytes(addr)
@@ -104,9 +104,9 @@ class HostImplementation : public evmc::Host
     }
 
     void emit_log(const evmc::address& addr,
-                  const uint8_t* data,
-                  size_t data_size,
-                  const evmc::bytes32 topics[],
+                  const uint8_t* /*data*/,
+                  size_t /*data_size*/,
+                  const evmc::bytes32[] /*topics*/,
                   size_t num_topics) noexcept override
     {
         std::cout << "emit_log method call: address[" << vm::toBytes(addr) << "], topics_number["
@@ -117,7 +117,7 @@ class HostImplementation : public evmc::Host
 
 BOOST_AUTO_TEST_CASE(vm_base)
 {
-    const char* source_code = R"V0G0N(
+    const char* source_code = R"raw(
 pragma solidity >=0.4.16 <0.7.0;
 
 contract Foo {
@@ -135,7 +135,7 @@ contract Foo {
 
     function sam(bytes memory, bool, uint[] memory) public pure {}
 }
-)V0G0N";
+)raw";
 
     std::filesystem::path code_file_path = "vm_base.sol";
 

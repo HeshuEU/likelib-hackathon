@@ -29,8 +29,8 @@ class PeerBase : public std::enable_shared_from_this<PeerBase>
     //===========================
     virtual bool isClosed() const = 0;
     //===========================
-    virtual void send(const base::Bytes& data) = 0;
-    virtual void send(base::Bytes&& data) = 0;
+    virtual void send(const base::Bytes& data, net::Connection::SendHandler on_send = {}) = 0;
+    virtual void send(base::Bytes&& data, net::Connection::SendHandler on_send = {}) = 0;
 
     virtual const lk::Address& getAddress() const noexcept = 0;
     virtual Info getInfo() const = 0;
@@ -102,8 +102,8 @@ class Peer : public PeerBase
     void applySyncs();
     const std::forward_list<lk::Block>& getSyncBlocks() const noexcept;
     //================
-    void send(const base::Bytes& data) override;
-    void send(base::Bytes&& data) override;
+    void send(const base::Bytes& data, net::Connection::SendHandler on_send = {}) override;
+    void send(base::Bytes&& data, net::Connection::SendHandler on_send = {}) override;
 
     void send(const lk::Block& block);
     void send(const lk::Transaction& tx);

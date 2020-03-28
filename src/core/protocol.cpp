@@ -4,6 +4,12 @@
 #include "base/serialization.hpp"
 #include "core/core.hpp"
 
+/*
+ * Some functions, that are implemented and later used inside templates are shown as not used.
+ * So, warnings for unused functions are just disabled for this file.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 
 namespace
 {
@@ -21,6 +27,7 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
                                             (GET_INFO)
                                             (INFO)
                                             (NEW_NODE)
+                                            (CLOSE)
 )
 // clang-format on
 
@@ -204,6 +211,20 @@ class NewNodeMessage
     lk::Address _address;
 
     NewNodeMessage(net::Endpoint&& new_node_endpoint, lk::Address&& address);
+};
+
+//============================================
+
+class CloseMessage
+{
+  public:
+    static constexpr MessageType getHandledMessageType();
+    static void serialize(base::SerializationOArchive& oa);
+    static CloseMessage deserialize(base::SerializationIArchive& ia);
+    void handle(const lk::MessageProcessor::Context& ctx);
+
+  private:
+    CloseMessage();
 };
 
 //============================================
@@ -499,7 +520,7 @@ void GetInfoMessage::serialize(base::SerializationOArchive& oa)
 }
 
 
-GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive& ia)
+GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive&)
 {
     return {};
 }
@@ -585,6 +606,35 @@ NewNodeMessage::NewNodeMessage(net::Endpoint&& new_node_endpoint, lk::Address&& 
 {}
 
 //============================================
+
+constexpr MessageType CloseMessage::getHandledMessageType()
+{
+    return MessageType::CLOSE;
+}
+
+
+void CloseMessage::serialize(base::SerializationOArchive& oa)
+{
+    oa.serialize(getHandledMessageType());
+}
+
+
+CloseMessage CloseMessage::deserialize(base::SerializationIArchive&)
+{
+    return {};
+}
+
+
+void CloseMessage::handle(const lk::MessageProcessor::Context&)
+{
+}
+
+
+CloseMessage::CloseMessage()
+{}
+
+//============================================
+
 } // namespace
 
 
@@ -643,7 +693,8 @@ void MessageProcessor::process(const base::Bytes& raw_message)
                   BlockNotFoundMessage,
                   GetInfoMessage,
                   InfoMessage,
-                  NewNodeMessage>(type, ia, _ctx)) {
+                  NewNodeMessage,
+                  CloseMessage>(type, ia, _ctx)) {
         LOG_DEBUG << "Processed  " << enumToString(type) << " message";
     }
     else {
@@ -718,7 +769,9 @@ void Protocol::sendTransaction(const lk::Transaction& tx)
 
 void Protocol::sendSessionEnd(std::function<void()> on_send)
 {
-    LOG_WARNING << "SendSessionEnd not implemented";
+    _ctx.peer->send(prepareMessage<CloseMessage>(), std::move(on_send));
 }
 
 } // namespace core
+
+#pragma GCC diagnostic pop
