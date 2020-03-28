@@ -45,6 +45,8 @@ class PeerTable : public PeerPoolBase
     // thread-safe
     void forEachPeer(std::function<void(const PeerBase&)> f) const override;
     void forEachPeer(std::function<void(PeerBase&)> f) override;
+
+    void broadcast(const base::Bytes& data) override;
     //=================================
 
     std::vector<Peer::Info> allPeersInfo() const override;
@@ -86,6 +88,8 @@ class Host
     //=================================
     void checkOutPeer(const net::Endpoint& address);
     bool isConnectedTo(const net::Endpoint& endpoint) const;
+    PeerTable& getPool() noexcept;
+    const PeerTable& getPool() const noexcept;
     //=================================
     void broadcast(const base::Bytes& data);
     void broadcast(const lk::Block& block);

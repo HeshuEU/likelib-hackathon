@@ -54,7 +54,7 @@ class HandshakeMessage
                           std::uint16_t public_port,
                           const std::vector<lk::Peer::Info>& known_peers);
     static HandshakeMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& context);
+    void handle(const lk::Protocol::Context& context);
 
   private:
     lk::Block _theirs_top_block;
@@ -77,7 +77,7 @@ class PingMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static PingMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     PingMessage() = default;
@@ -91,7 +91,7 @@ class PongMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static PongMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     PongMessage() = default;
@@ -105,7 +105,7 @@ class TransactionMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, lk::Transaction tx);
     static TransactionMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     lk::Transaction _tx;
@@ -121,7 +121,7 @@ class GetBlockMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
     static GetBlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     base::Sha256 _block_hash;
@@ -137,7 +137,7 @@ class BlockMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const lk::Block& block);
     static BlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     lk::Block _block;
@@ -153,7 +153,7 @@ class BlockNotFoundMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
     static BlockNotFoundMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     base::Sha256 _block_hash;
@@ -169,7 +169,7 @@ class GetInfoMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static GetInfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     GetInfoMessage() = default;
@@ -185,7 +185,7 @@ class InfoMessage
                           const base::Sha256& top_block_hash,
                           const std::vector<net::Endpoint>& available_peers);
     static InfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     base::Sha256 _top_block_hash;
@@ -204,7 +204,7 @@ class NewNodeMessage
                           const net::Endpoint& new_node_endpoint,
                           const lk::Address& address);
     static NewNodeMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     net::Endpoint _new_node_endpoint;
@@ -221,10 +221,85 @@ class CloseMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa);
     static CloseMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const lk::MessageProcessor::Context& ctx);
+    void handle(const lk::Protocol::Context& ctx);
 
   private:
     CloseMessage();
+};
+
+//============================================
+
+
+namespace
+{
+
+class Dummy {};
+
+template<typename C, typename F, typename... O>
+bool runHandleImpl(MessageType mt, base::SerializationIArchive& ia, const C& ctx)
+{
+    if constexpr(std::is_same<F, Dummy>::value) {
+        return false;
+    }
+    else {
+        if (F::getHandledMessageType() == mt) {
+            auto message = F::deserialize(ia);
+            message.handle(ctx);
+            return true;
+        }
+        else {
+            return runHandleImpl<C, O...>(mt, ia, ctx);
+        }
+    }
+}
+
+
+template<typename C, typename... Args>
+bool runHandle(MessageType mt, base::SerializationIArchive& ia, const C& ctx)
+{
+    return runHandleImpl<C, Args..., Dummy>(mt, ia, ctx);
+}
+} // namespace
+
+
+template<typename C>
+class MessageProcessor
+{
+  public:
+    //===============
+    explicit MessageProcessor(const C& context)
+        : _ctx{context}
+    {}
+
+    /*
+     * Decode and act according to received data.
+     * Throws if invalid message, or there is an error during handling.
+     */
+    void process(const base::Bytes& raw_message)
+    {
+        base::SerializationIArchive ia(raw_message);
+        auto type = ia.deserialize<MessageType>();
+        if (runHandle<lk::Protocol::Context,
+          HandshakeMessage,
+          PingMessage,
+          PongMessage,
+          TransactionMessage,
+          GetBlockMessage,
+          BlockMessage,
+          BlockNotFoundMessage,
+          GetInfoMessage,
+          InfoMessage,
+          NewNodeMessage,
+          CloseMessage>(type, ia, _ctx)) {
+            LOG_DEBUG << "Processed  " << enumToString(type) << " message";
+        }
+        else {
+            RAISE_ERROR(base::InvalidArgument, "invalid message type");
+        }
+    }
+
+  private:
+    const C& _ctx;
 };
 
 //============================================
@@ -259,10 +334,10 @@ HandshakeMessage HandshakeMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void HandshakeMessage::handle(const lk::MessageProcessor::Context& ctx)
+void HandshakeMessage::handle(const lk::Protocol::Context& ctx)
 {
-    auto& peer = dynamic_cast<lk::Peer&>(*ctx.peer);
-    auto& host = dynamic_cast<lk::Host&>(*ctx.host);
+    auto& peer = *ctx.peer;
+    auto& host = *ctx.host;
 
     const auto& ours_top_block = ctx.core->getTopBlock();
 
@@ -333,7 +408,7 @@ PingMessage PingMessage::deserialize(base::SerializationIArchive&)
 }
 
 
-void PingMessage::handle(const lk::MessageProcessor::Context&) {}
+void PingMessage::handle(const lk::Protocol::Context&) {}
 
 
 //============================================
@@ -356,7 +431,7 @@ PongMessage PongMessage::deserialize(base::SerializationIArchive&)
 }
 
 
-void PongMessage::handle(const lk::MessageProcessor::Context&) {}
+void PongMessage::handle(const lk::Protocol::Context&) {}
 
 //============================================
 
@@ -380,7 +455,7 @@ TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& 
 }
 
 
-void TransactionMessage::handle(const lk::MessageProcessor::Context& ctx)
+void TransactionMessage::handle(const lk::Protocol::Context& ctx)
 {
     ctx.core->addPendingTransaction(_tx);
 }
@@ -412,7 +487,7 @@ GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void GetBlockMessage::handle(const lk::MessageProcessor::Context& ctx)
+void GetBlockMessage::handle(const lk::Protocol::Context& ctx)
 {
     auto block = ctx.core->findBlock(_block_hash);
     if (block) {
@@ -450,9 +525,9 @@ BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void BlockMessage::handle(const lk::MessageProcessor::Context& ctx)
+void BlockMessage::handle(const lk::Protocol::Context& ctx)
 {
-    auto& peer = dynamic_cast<lk::Peer&>(*ctx.peer);
+    auto& peer = *ctx.peer;
     if (peer.getState() == lk::Peer::State::SYNCHRONISED) {
         ctx.core->tryAddBlock(std::move(_block));
     }
@@ -496,7 +571,7 @@ BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchi
 }
 
 
-void BlockNotFoundMessage::handle(const lk::MessageProcessor::Context&)
+void BlockNotFoundMessage::handle(const lk::Protocol::Context&)
 {
     LOG_DEBUG << "Block not found " << _block_hash;
 }
@@ -526,9 +601,9 @@ GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive&)
 }
 
 
-void GetInfoMessage::handle(const lk::MessageProcessor::Context& ctx)
+void GetInfoMessage::handle(const lk::Protocol::Context& ctx)
 {
-    auto& host = dynamic_cast<lk::Host&>(*ctx.host);
+    auto& host = *ctx.host;
     ctx.peer->send(prepareMessage<InfoMessage>(ctx.core->getTopBlock(), host.allConnectedPeersInfo()));
 }
 
@@ -558,7 +633,7 @@ InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void InfoMessage::handle(const lk::MessageProcessor::Context&) {}
+void InfoMessage::handle(const lk::Protocol::Context&) {}
 
 
 InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
@@ -592,9 +667,9 @@ NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void NewNodeMessage::handle(const lk::MessageProcessor::Context& ctx)
+void NewNodeMessage::handle(const lk::Protocol::Context& ctx)
 {
-    auto& host = dynamic_cast<lk::Host&>(*ctx.host);
+    auto& host = *ctx.host;
     host.checkOutPeer(_new_node_endpoint);
     host.broadcast(prepareMessage<NewNodeMessage>(_new_node_endpoint));
 }
@@ -625,7 +700,7 @@ CloseMessage CloseMessage::deserialize(base::SerializationIArchive&)
 }
 
 
-void CloseMessage::handle(const lk::MessageProcessor::Context&)
+void CloseMessage::handle(const lk::Protocol::Context&)
 {
 }
 
@@ -641,70 +716,7 @@ CloseMessage::CloseMessage()
 namespace lk
 {
 
-//============================================
-
-MessageProcessor::MessageProcessor(MessageProcessor::Context context)
-  : _ctx{ context }
-{}
-
-//============================================
-
-namespace
-{
-template<typename F, typename... O>
-bool runHandleImpl(MessageType mt, base::SerializationIArchive& ia, const lk::MessageProcessor::Context& ctx)
-{
-    if (F::getHandledMessageType() == mt) {
-        auto message = F::deserialize(ia);
-        message.handle(ctx);
-        return true;
-    }
-    else {
-        return runHandleImpl<O...>(mt, ia, ctx);
-    }
-}
-
-
-template<>
-bool runHandleImpl<void>(MessageType, base::SerializationIArchive&, const lk::MessageProcessor::Context&)
-{
-    return false;
-}
-
-
-template<typename... Args>
-bool runHandle(MessageType mt, base::SerializationIArchive& ia, const lk::MessageProcessor::Context& ctx)
-{
-    return runHandleImpl<Args..., void>(mt, ia, ctx);
-}
-} // namespace
-
-
-void MessageProcessor::process(const base::Bytes& raw_message)
-{
-    base::SerializationIArchive ia(raw_message);
-    auto type = ia.deserialize<MessageType>();
-    if (runHandle<HandshakeMessage,
-                  PingMessage,
-                  PongMessage,
-                  TransactionMessage,
-                  GetBlockMessage,
-                  BlockMessage,
-                  BlockNotFoundMessage,
-                  GetInfoMessage,
-                  InfoMessage,
-                  NewNodeMessage,
-                  CloseMessage>(type, ia, _ctx)) {
-        LOG_DEBUG << "Processed  " << enumToString(type) << " message";
-    }
-    else {
-        RAISE_ERROR(base::InvalidArgument, "invalid message type");
-    }
-}
-
-//============================================
-
-Protocol Protocol::peerConnected(MessageProcessor::Context context)
+Protocol Protocol::peerConnected(Protocol::Context context)
 {
     Protocol ret{ std::move(context) };
     ret.startOnConnectedPeer();
@@ -712,7 +724,7 @@ Protocol Protocol::peerConnected(MessageProcessor::Context context)
 }
 
 
-Protocol Protocol::peerAccepted(MessageProcessor::Context context)
+Protocol Protocol::peerAccepted(Protocol::Context context)
 {
     Protocol ret{ std::move(context) };
     ret.startOnAcceptedPeer();
@@ -720,15 +732,14 @@ Protocol Protocol::peerAccepted(MessageProcessor::Context context)
 }
 
 
-Protocol::Protocol(MessageProcessor::Context context)
+Protocol::Protocol(Protocol::Context context)
   : _ctx{ context }
-  , _processor{ context }
 {}
 
 
 void Protocol::startOnAcceptedPeer()
 {
-    // TODO: _ctx.host->schedule(_peer.close); schedule disconnection on timeout
+    // TODO: _ctx.pool->schedule(_peer.close); schedule disconnection on timeout
     // now does nothing, since we wait for connected peer to send us something (HANDSHAKE message)
 }
 
@@ -738,17 +749,17 @@ void Protocol::startOnConnectedPeer()
     /*
      * we connected to a node, so now we are going to send handshake
      */
-    auto& host = dynamic_cast<lk::Host&>(*_ctx.host);
     _ctx.peer->send(prepareMessage<HandshakeMessage>(_ctx.core->getTopBlock(),
                                                      _ctx.core->getThisNodeAddress(),
-                                                     host.getPublicPort(),
-                                                     host.allConnectedPeersInfo()));
+                                                     _ctx.peer->getPublicEndpoint().getPort(),
+                                                     _ctx.pool->allPeersInfo()));
 }
 
 
 void Protocol::onReceive(const base::Bytes& bytes)
 {
-    _processor.process(bytes);
+    MessageProcessor processor{_ctx};
+    processor.process(bytes);
 }
 
 

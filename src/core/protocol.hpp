@@ -12,41 +12,26 @@ class Core;
 class Host;
 class Peer;
 
-class MessageProcessor
+
+class Protocol : public ProtocolBase
 {
   public:
     //===============
     struct Context
     {
         Core* core;
-        PeerPoolBase* host;
-        PeerBase* peer;
+        PeerPoolBase* pool;
+        Host* host;
+        Peer* peer;
     };
-    //===============
-    explicit MessageProcessor(Context context);
 
-    /*
-     * Decode and act according to received data.
-     * Throws if invalid message, or there is an error during handling.
-     */
-    void process(const base::Bytes& raw_message);
-
-  private:
-    const Context _ctx;
-};
-
-
-class Protocol : public ProtocolBase
-{
-  public:
-    //===============
     /*
      * Creates Protocol object, meaning that we gonna start our session.
      * All members of context must outlive the Protocol object.
      */
 
-    static Protocol peerConnected(MessageProcessor::Context context);
-    static Protocol peerAccepted(MessageProcessor::Context context);
+    static Protocol peerConnected(Context context);
+    static Protocol peerAccepted(Context context);
     //===============
     Protocol(Protocol&&) = default;
     Protocol& operator=(Protocol&&) = delete;
@@ -59,10 +44,9 @@ class Protocol : public ProtocolBase
     void sendSessionEnd(std::function<void()> on_send) override;
     //===============
   private:
-    MessageProcessor::Context _ctx;
-    MessageProcessor _processor;
+    Context _ctx;
 
-    explicit Protocol(MessageProcessor::Context context);
+    explicit Protocol(Context context);
 
     void startOnConnectedPeer();
     void startOnAcceptedPeer();

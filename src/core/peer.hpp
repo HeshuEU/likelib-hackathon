@@ -12,9 +12,10 @@ namespace lk
 {
 
 class Core;
+class Host;
 
 
-class PeerBase : public std::enable_shared_from_this<PeerBase>
+class PeerBase
 {
   public:
     //===========================
@@ -50,6 +51,8 @@ class PeerPoolBase
     virtual void forEachPeer(std::function<void(const PeerBase&)> f) const = 0;
     virtual void forEachPeer(std::function<void(PeerBase&)> f) = 0;
 
+    virtual void broadcast(const base::Bytes& bytes) = 0;
+
     virtual std::vector<PeerBase::Info> allPeersInfo() const = 0;
 };
 
@@ -61,13 +64,18 @@ class PeerPoolBase
 class ProtocolBase : public net::Session::Handler
 {
   public:
+    // event-processing functions
+    void onReceive(const base::Bytes& bytes) override = 0;
+    void onClose() override = 0;
+
+    // functions, initiated by caller code
     virtual void sendTransaction(const lk::Transaction& tx) = 0;
     virtual void sendBlock(const lk::Block& block) = 0;
     virtual void sendSessionEnd(std::function<void()> on_send) = 0; // TODO: set close reason
 };
 
 
-class Peer : public PeerBase
+class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
 {
   public:
     //================
@@ -78,8 +86,8 @@ class Peer : public PeerBase
         SYNCHRONISED
     };
     //================
-    static std::unique_ptr<Peer> accepted(std::unique_ptr<net::Session> session, lk::PeerPoolBase& host, lk::Core& core);
-    static std::unique_ptr<Peer> connected(std::unique_ptr<net::Session> session, lk::PeerPoolBase& host, lk::Core& core);
+    static std::shared_ptr<Peer> accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
+    static std::shared_ptr<Peer> connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     //================
     base::Time getLastSeen() const override;
     net::Endpoint getEndpoint() const override;

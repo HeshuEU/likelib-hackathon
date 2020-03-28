@@ -79,7 +79,7 @@ bool PeerTable::tryAddPeer(std::shared_ptr<PeerBase> peer)
         std::size_t index = getLeastRecentlySeenPeerIndex(bucket_index);
         auto quiet_for = base::Time::now().getSecondsSinceEpoch() -
                          _buckets[bucket_index][index]->getLastSeen().getSecondsSinceEpoch();
-        if (quiet_for > base::config::NET_PING_FREQUENCY * 2) {
+        if (quiet_for > base::config::NET_PING_FREQUENCY + base::config::NET_CONNECT_TIMEOUT) {
             removePeer(bucket_index, index);
             _buckets[bucket_index].push_back(std::move(peer));
             return true;
@@ -143,6 +143,12 @@ void PeerTable::forEachPeer(std::function<void(PeerBase&)> f)
 }
 
 
+void PeerTable::broadcast(const base::Bytes& data)
+{
+    forEachPeer([data](PeerBase& peer) { peer.send(data); });
+}
+
+
 std::vector<Peer::Info> PeerTable::allPeersInfo() const
 {
     std::vector<Peer::Info> ret;
@@ -193,7 +199,7 @@ void Host::accept()
 void Host::onAccept(std::unique_ptr<net::Connection> connection)
 {
     auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.tryAddPeer(lk::Peer::accepted(std::move(session), _connected_peers, _core));
+    _connected_peers.tryAddPeer(lk::Peer::accepted(std::move(session), *this, _core));
 }
 
 
@@ -231,7 +237,19 @@ void Host::checkOutPeer(const net::Endpoint& endpoint)
 void Host::onConnect(std::unique_ptr<net::Connection> connection)
 {
     auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.tryAddPeer(lk::Peer::connected(std::move(session), _connected_peers, _core));
+    _connected_peers.tryAddPeer(lk::Peer::connected(std::move(session), *this, _core));
+}
+
+
+PeerTable& Host::getPool() noexcept
+{
+    return _connected_peers;
+}
+
+
+const PeerTable& Host::getPool() const noexcept
+{
+    return _connected_peers;
 }
 
 

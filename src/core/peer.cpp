@@ -23,22 +23,22 @@ void Peer::Info::serialize(base::SerializationOArchive& oa) const
 
 //================================
 
-std::unique_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::PeerPoolBase& host, lk::Core& core)
+std::shared_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
-    auto ret = std::make_unique<Peer>(Peer(std::move(session), host, core));
-    auto protocol = std::make_unique<lk::Protocol>(
-      lk::Protocol::peerAccepted(lk::MessageProcessor::Context{ &core, &host, ret.get() }));
+    std::shared_ptr<Peer> ret(new Peer(std::move(session), host.getPool(), core));
+    auto context = lk::Protocol::Context{ &core, &host.getPool(), &host, ret.get() };
+    auto protocol = std::make_unique<lk::Protocol>(lk::Protocol::peerAccepted(std::move(context)));
     ret->setProtocol(std::move(protocol));
     ret->start();
     return ret;
 }
 
 
-std::unique_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::PeerPoolBase& host, lk::Core& core)
+std::shared_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
-    auto ret = std::make_unique<Peer>(Peer(std::move(session), host, core));
-    auto protocol = std::make_unique<lk::Protocol>(
-      lk::Protocol::peerConnected(lk::MessageProcessor::Context{ &core, &host, ret.get() }));
+    std::shared_ptr<Peer> ret(new Peer(std::move(session), host.getPool(), core));
+    auto context = lk::Protocol::Context{ &core, &host.getPool(), &host, ret.get() };
+    auto protocol = std::make_unique<lk::Protocol>(lk::Protocol::peerConnected(std::move(context)));
     ret->setProtocol(std::move(protocol));
     ret->start();
     return ret;
@@ -50,14 +50,7 @@ Peer::Peer(std::unique_ptr<net::Session> session, lk::PeerPoolBase& pool, lk::Co
   , _address{ lk::Address::null() }
   , _pool{ pool }
   , _core{ core }
-{
-    if(_pool.tryAddPeer(shared_from_this())) {
-        _is_attached_to_pool = true;
-    }
-    else {
-        rejectedByPool();
-    }
-}
+{}
 
 
 net::Endpoint Peer::getEndpoint() const
@@ -162,7 +155,13 @@ void Peer::setProtocol(std::shared_ptr<lk::ProtocolBase> protocol)
 
 void Peer::start()
 {
-    _session->start();
+    if(_pool.tryAddPeer(shared_from_this())) {
+        _is_attached_to_pool = true;
+        _session->start();
+    }
+    else {
+        rejectedByPool();
+    }
 }
 
 
