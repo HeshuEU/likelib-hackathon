@@ -38,6 +38,8 @@ class PeerTable : public PeerPoolBase
 
     void removePeer(std::shared_ptr<PeerBase> peer) override;
 
+    void removePeer(PeerBase* peer) override;
+
     // thread-safe
     void removeSilent();
     //=================================

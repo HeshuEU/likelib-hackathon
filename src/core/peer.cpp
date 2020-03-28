@@ -155,13 +155,7 @@ void Peer::setProtocol(std::shared_ptr<lk::ProtocolBase> protocol)
 
 void Peer::start()
 {
-    if(_pool.tryAddPeer(shared_from_this())) {
-        _is_attached_to_pool = true;
-        _session->start();
-    }
-    else {
-        rejectedByPool();
-    }
+    _session->start();
 }
 
 
@@ -177,11 +171,9 @@ Peer::Info Peer::getInfo() const
 }
 
 
-void Peer::rejectedByPool()
+bool Peer::tryAddToPool()
 {
-    _protocol->sendSessionEnd([this]{
-      _session->close();
-    });
+    return _pool.tryAddPeer(shared_from_this());
 }
 
 }

@@ -39,6 +39,8 @@ class PeerBase
     virtual net::Endpoint getEndpoint() const = 0;
     virtual net::Endpoint getPublicEndpoint() const = 0;
     //===========================
+    virtual bool tryAddToPool() = 0;
+    //===========================
 };
 
 
@@ -47,6 +49,7 @@ class PeerPoolBase
   public:
     virtual bool tryAddPeer(std::shared_ptr<PeerBase> peer) = 0;
     virtual void removePeer(std::shared_ptr<PeerBase> peer) = 0;
+    virtual void removePeer(PeerBase* peer) = 0;
 
     virtual void forEachPeer(std::function<void(const PeerBase&)> f) const = 0;
     virtual void forEachPeer(std::function<void(PeerBase&)> f) = 0;
@@ -88,6 +91,8 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     //================
     static std::shared_ptr<Peer> accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     static std::shared_ptr<Peer> connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
+    //================
+    bool tryAddToPool() override;
     //================
     base::Time getLastSeen() const override;
     net::Endpoint getEndpoint() const override;

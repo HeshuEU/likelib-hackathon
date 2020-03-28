@@ -17,6 +17,7 @@ namespace
 // clang-format off
 DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
                                           (NOT_AVAILABLE)
+                                            (CANNOT_ACCEPT)
                                             (HANDSHAKE)
                                             (PING)
                                             (PONG)
@@ -41,6 +42,28 @@ base::Bytes prepareMessage(Args&&... args)
     (oa.serialize(std::forward<Args>(args)), ...);
     return std::move(oa).getBytes();
 }
+
+//========================================
+
+class CannotAcceptMessage
+{
+  public:
+    DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(RefusionReason, std::uint8_t,
+                                              (NOT_AVAILABLE)
+                                              (BUCKET_IS_FULL)
+                                              (BAD_RATING))
+
+    static constexpr MessageType getHandledMessageType();
+    static void serialize(base::SerializationOArchive& oa, RefusionReason why_not_accepted);
+    static CannotAcceptMessage deserialize(base::SerializationIArchive& ia);
+    void handle(const lk::Protocol::Context& ctx);
+
+  private:
+    RefusionReason _why_not_accepted;
+    std::vector<lk::PeerBase::Info> _peers_info;
+
+    CannotAcceptMessage(RefusionReason why_not_accepted, std::vector<lk::PeerBase::Info> peers_info);
+};
 
 //========================================
 
@@ -103,14 +126,14 @@ class TransactionMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, lk::Transaction tx);
+    static void serialize(base::SerializationOArchive& oa, const lk::Transaction& tx);
     static TransactionMessage deserialize(base::SerializationIArchive& ia);
     void handle(const lk::Protocol::Context& ctx);
 
   private:
     lk::Transaction _tx;
 
-    TransactionMessage(lk::Transaction tx);
+    TransactionMessage(const lk::Transaction& tx);
 };
 
 //============================================
@@ -236,7 +259,7 @@ namespace
 class Dummy {};
 
 template<typename C, typename F, typename... O>
-bool runHandleImpl(MessageType mt, base::SerializationIArchive& ia, const C& ctx)
+bool runHandleImpl([[maybe_unused]] MessageType mt, base::SerializationIArchive& ia, const C& ctx)
 {
     if constexpr(std::is_same<F, Dummy>::value) {
         return false;
@@ -291,7 +314,7 @@ class MessageProcessor
           InfoMessage,
           NewNodeMessage,
           CloseMessage>(type, ia, _ctx)) {
-            LOG_DEBUG << "Processed  " << enumToString(type) << " message";
+            LOG_DEBUG << "Processed " << enumToString(type) << " message";
         }
         else {
             RAISE_ERROR(base::InvalidArgument, "invalid message type");
@@ -301,6 +324,44 @@ class MessageProcessor
   private:
     const C& _ctx;
 };
+
+
+//============================================
+
+constexpr MessageType CannotAcceptMessage::getHandledMessageType()
+{
+    return MessageType::CANNOT_ACCEPT;
+}
+
+
+void CannotAcceptMessage::serialize(base::SerializationOArchive& oa, CannotAcceptMessage::RefusionReason why_not_accepted)
+{
+    oa.serialize(getHandledMessageType());
+    oa.serialize(why_not_accepted);
+}
+
+
+CannotAcceptMessage CannotAcceptMessage::deserialize(base::SerializationIArchive& ia)
+{
+    auto why_not_accepted = ia.deserialize<RefusionReason>();
+    auto peers_info = ia.deserialize<std::vector<lk::PeerBase::Info>>();
+    return CannotAcceptMessage(why_not_accepted, std::move(peers_info));
+}
+
+
+void CannotAcceptMessage::handle(const lk::Protocol::Context& ctx)
+{
+    ctx.pool->removePeer(ctx.peer);
+
+    for(const auto& peer : _peers_info) {
+        ctx.host->checkOutPeer(peer.endpoint);
+    }
+}
+
+
+CannotAcceptMessage::CannotAcceptMessage(CannotAcceptMessage::RefusionReason why_not_accepted, std::vector<lk::PeerBase::Info> peers_info)
+  : _why_not_accepted{why_not_accepted}, _peers_info{std::move(peers_info)}
+{}
 
 //============================================
 
@@ -441,7 +502,7 @@ constexpr MessageType TransactionMessage::getHandledMessageType()
 }
 
 
-void TransactionMessage::serialize(base::SerializationOArchive& oa, lk::Transaction tx)
+void TransactionMessage::serialize(base::SerializationOArchive& oa, const lk::Transaction& tx)
 {
     oa.serialize(MessageType::TRANSACTION);
     oa.serialize(tx);
@@ -461,7 +522,7 @@ void TransactionMessage::handle(const lk::Protocol::Context& ctx)
 }
 
 
-TransactionMessage::TransactionMessage(lk::Transaction tx)
+TransactionMessage::TransactionMessage(const lk::Transaction& tx)
   : _tx{ std::move(tx) }
 {}
 
@@ -489,6 +550,7 @@ GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
 
 void GetBlockMessage::handle(const lk::Protocol::Context& ctx)
 {
+    LOG_DEBUG << "Received GET_BLOCK on " << _block_hash;
     auto block = ctx.core->findBlock(_block_hash);
     if (block) {
         ctx.peer->send(prepareMessage<BlockMessage>(*block));
@@ -529,9 +591,17 @@ void BlockMessage::handle(const lk::Protocol::Context& ctx)
 {
     auto& peer = *ctx.peer;
     if (peer.getState() == lk::Peer::State::SYNCHRONISED) {
-        ctx.core->tryAddBlock(std::move(_block));
+        // we're synchronised already
+
+        if(ctx.core->tryAddBlock(_block)) {
+            // block added, all is OK
+        }
+        else {
+            // in this case we are missing some blocks
+        }
     }
     else {
+        // we are in synchronization process
         lk::BlockDepth block_depth = _block.getDepth();
         peer.addSyncBlock(std::move(_block));
 
@@ -741,18 +811,28 @@ void Protocol::startOnAcceptedPeer()
 {
     // TODO: _ctx.pool->schedule(_peer.close); schedule disconnection on timeout
     // now does nothing, since we wait for connected peer to send us something (HANDSHAKE message)
+    if(_ctx.peer->tryAddToPool()) {
+        _ctx.peer->send(prepareMessage<HandshakeMessage>(_ctx.core->getTopBlock(),
+                                                         _ctx.core->getThisNodeAddress(),
+                                                         _ctx.peer->getPublicEndpoint().getPort(),
+                                                         _ctx.pool->allPeersInfo()));
+    }
+    else
+    {
+        _ctx.peer->send(prepareMessage<CannotAcceptMessage>(CannotAcceptMessage::RefusionReason::BUCKET_IS_FULL,
+          _ctx.host->allConnectedPeersInfo()));
+    }
 }
 
 
 void Protocol::startOnConnectedPeer()
 {
     /*
-     * we connected to a node, so now we are going to send handshake
+     * we connected to a node, so now we are waiting for:
+     * 1) success response ---> handshake message
+     * 2) failure response ---> cannot accept message
+     * 3) for timeout
      */
-    _ctx.peer->send(prepareMessage<HandshakeMessage>(_ctx.core->getTopBlock(),
-                                                     _ctx.core->getThisNodeAddress(),
-                                                     _ctx.peer->getPublicEndpoint().getPort(),
-                                                     _ctx.pool->allPeersInfo()));
 }
 
 

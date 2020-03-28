@@ -93,9 +93,15 @@ bool PeerTable::tryAddPeer(std::shared_ptr<PeerBase> peer)
 
 void PeerTable::removePeer(std::shared_ptr<PeerBase> peer)
 {
+    removePeer(peer.get());
+}
+
+
+void PeerTable::removePeer(PeerBase* peer)
+{
     std::unique_lock lk{_buckets_mutex};
     for(auto& bucket : _buckets) {
-        bucket.erase(std::remove(bucket.begin(), bucket.end(), peer), bucket.end());
+        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [peer](const auto& candidate) { return peer == candidate.get(); }), bucket.end());
     }
 }
 
