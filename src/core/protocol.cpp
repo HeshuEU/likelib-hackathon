@@ -387,6 +387,69 @@ void PongMessage::handle(const lk::Protocol::Context&, lk::Protocol&) {}
 
 //============================================
 
+constexpr lk::MessageType LookupMessage::getHandledMessageType()
+{
+    return lk::MessageType::LOOKUP;
+}
+
+
+void LookupMessage::serialize(base::SerializationOArchive& oa, const lk::Address& address, std::uint8_t selection_size)
+{
+    oa.serialize(lk::MessageType::LOOKUP);
+    oa.serialize(address);
+    oa.serialize(selection_size);
+}
+
+
+LookupMessage LookupMessage::deserialize(base::SerializationIArchive& ia)
+{
+}
+
+
+void LookupMessage::handle(const lk::Protocol::Context& ctx, lk::Protocol&)
+{
+    ctx.peer->send(prepareMessage<LookupResponseMessage>(ctx.pool->lookup(_address, _selection_size)));
+}
+
+
+LookupMessage::LookupMessage(lk::Address address, std::uint8_t selection_size)
+    : _address{std::move(address)}, _selection_size{selection_size}
+{}
+
+//============================================
+
+constexpr lk::MessageType LookupResponseMessage::getHandledMessageType()
+{
+    return lk::MessageType::LOOKUP;
+}
+
+
+void LookupResponseMessage::serialize(base::SerializationOArchive& oa, const std::vector<lk::PeerBase::Info>& peers_info)
+{
+    oa.serialize(lk::MessageType::LOOKUP_RESPONSE);
+    oa.serialize(peers_info);
+}
+
+
+LookupResponseMessage LookupResponseMessage::deserialize(base::SerializationIArchive& ia)
+{
+}
+
+
+void LookupResponseMessage::handle(const lk::Protocol::Context& ctx, lk::Protocol& protocol)
+{
+    // either we continue to ask for closest nodes or just connect to them
+    // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of communication:
+    // now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
+}
+
+
+LookupResponseMessage::LookupResponseMessage(std::vector<lk::PeerBase::Info> peers_info)
+  : _peers_info{std::move(peers_info)}
+{}
+
+//============================================
+
 constexpr lk::MessageType TransactionMessage::getHandledMessageType()
 {
     return lk::MessageType::TRANSACTION;

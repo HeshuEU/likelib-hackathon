@@ -17,6 +17,8 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
                                             (ACCEPTED_RESPONSE)
                                             (PING)
                                             (PONG)
+                                            (LOOKUP)
+                                            (LOOKUP_RESPONSE)
                                             (TRANSACTION)
                                             (GET_BLOCK)
                                             (BLOCK)
@@ -185,6 +187,37 @@ class PongMessage
 
   private:
     PongMessage() = default;
+};
+
+//============================================
+
+class LookupMessage
+{
+  public:
+    static constexpr MessageType getHandledMessageType();
+    static void serialize(base::SerializationOArchive& oa, const lk::Address& address, std::uint8_t selection_size);
+    static LookupMessage deserialize(base::SerializationIArchive& ia);
+    void handle(const lk::Protocol::Context& ctx, Protocol& protocol);
+
+  private:
+    lk::Address _address;
+    std::uint8_t _selection_size;
+    LookupMessage(lk::Address address, std::uint8_t selection_size);
+};
+
+//============================================
+
+class LookupResponseMessage
+{
+  public:
+    static constexpr MessageType getHandledMessageType();
+    static void serialize(base::SerializationOArchive& oa, const std::vector<lk::PeerBase::Info>& peers_info);
+    static LookupResponseMessage deserialize(base::SerializationIArchive& ia);
+    void handle(const lk::Protocol::Context& ctx, Protocol& protocol);
+
+  private:
+    std::vector<lk::PeerBase::Info> _peers_info;
+    LookupResponseMessage(std::vector<lk::PeerBase::Info> peers);
 };
 
 //============================================
