@@ -25,12 +25,12 @@ std::size_t PeerTable::calcBucketIndex(const lk::Address& peer_address)
     const auto& b = peer_address.getBytes();
 
     std::size_t byte_index = 0;
-    while (byte_index < lk::Address::LENGTH_IN_BYTES && a[byte_index] == b[byte_index]) {
+    while (byte_index < lk::Address::ADDRESS_BYTES_LENGTH && a[byte_index] == b[byte_index]) {
         ++byte_index;
     }
 
-    if (byte_index == lk::Address::LENGTH_IN_BYTES) {
-        return lk::Address::LENGTH_IN_BYTES * 8;
+    if (byte_index == lk::Address::ADDRESS_BYTES_LENGTH) {
+        return lk::Address::ADDRESS_BYTES_LENGTH * 8;
     }
     else {
         base::Byte byte_a = a[byte_index], byte_b = b[byte_index];

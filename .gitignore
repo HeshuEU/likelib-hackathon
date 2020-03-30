@@ -1,9 +1,13 @@
 # build dirs
-*build*/*
+*build*/
 
 # IDE
-.idea/*
-.vs/*
+.idea/
+.vs/
+.vscode/
 
 # documentation
 doc/html/
+
+# cache
+__pycache__/

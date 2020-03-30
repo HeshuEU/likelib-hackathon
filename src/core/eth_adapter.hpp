@@ -34,7 +34,8 @@ class EthAdapter
     AccountManager& _account_manager;
     CodeManager& _code_manager;
 
-    mutable std::mutex _execution_mutex;
+    mutable std::recursive_mutex _call_mutex;
+    mutable std::mutex _create_mutex;
 };
 
 } // namespace core

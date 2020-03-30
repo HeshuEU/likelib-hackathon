@@ -57,7 +57,7 @@ class PeerTable : public PeerPoolBase
     const lk::Address _host_address;
     //=================================
     static constexpr std::size_t MAX_BUCKET_SIZE = 10;
-    std::array<std::vector<std::shared_ptr<PeerBase>>, lk::Address::LENGTH_IN_BYTES * 8> _buckets;
+    std::array<std::vector<std::shared_ptr<PeerBase>>, lk::Address::ADDRESS_BYTES_LENGTH * 8> _buckets;
     mutable std::shared_mutex _buckets_mutex;
     //=================================
     std::size_t calcBucketIndex(const lk::Address& peer_address);

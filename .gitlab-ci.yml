@@ -12,10 +12,9 @@ Build:
     - docker
   script:
     - INSTALL_DIR="/opt"
-    - SOURCE_DIR=${PWD}
+    - SOURCE_DIR="${PWD}"
     - BUILD_DIR="${SOURCE_DIR}/build"
-    - cd ${SOURCE_DIR}/doc
-    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || "${SOURCE_DIR}/doc/prepare_build.sh"
     - mkdir -p ${BUILD_DIR}
     - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
     - cd ${BUILD_DIR} && make -j$(nproc)
@@ -25,31 +24,32 @@ Build:
     expire_in: 1 week
 
 
-
 Code quality:
   stage: analyzers
   image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
-    - SOURCE_DIR=${PWD}
-    - LOG_DIR=${SOURCE_DIR}/clang-tidy-log
+    - INSTALL_DIR="/opt"
+    - SOURCE_DIR="${PWD}"
+    - CLANG_LOG_DIR="${SOURCE_DIR}/clang-tidy-log"
+    - LOG_DIR="/tmp/logs"
     - BUILD_DIR="${SOURCE_DIR}/build"
-    - cd ${SOURCE_DIR}/doc
-    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ${SOURCE_DIR}/doc/prepare_build.sh
+
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || "${SOURCE_DIR}/doc/prepare_build.sh"
     - mkdir -p ${LOG_DIR}
     - mkdir -p ${BUILD_DIR}
-    - mkdir -p /tmp/logs
+    - mkdir -p ${CLANG_LOG_DIR}
+
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR} > /dev/null 2>&1
-    - cd ${BUILD_DIR} && make > /dev/null 2>&1 || (cp /tmp/logs/* ${LOG_DIR} && exit 1)
-    - cp /tmp/logs/* ${LOG_DIR} && cat ${LOG_DIR}/clang-tidy-output.txt
-    - test -f /tmp/logs/.error-flag && exit 1
+    - cd ${BUILD_DIR} && make > /dev/null 2>&1 || (cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && exit 1)
+    - cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && cat ${LOG_DIR}/clang-tidy-output.txt
+    - test -f "${LOG_DIR}/.error-flag" && exit 1
   artifacts:
     when: always
     paths:
       - clang-tidy-log
     expire_in: 1 week
-
 
 
 Unit tests:
@@ -58,7 +58,9 @@ Unit tests:
   tags:
     - docker
   script:
-    - ./doc/prepare_build.sh
+    - INSTALL_DIR="/opt"
+    - SOURCE_DIR="${PWD}"
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || "${SOURCE_DIR}/doc/prepare_build.sh"
     - cd build/bin/
     - ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
@@ -71,19 +73,18 @@ Integration tests:
     - docker
   script:
     - INSTALL_DIR="/opt"
-    - cd ./doc
-    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ./prepare_build.sh
-    - cd ..
-    - PROJECT_SOURCE_DIR=${PWD}
+    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ./doc/prepare_build.sh
+    - SOURCE_DIR=${PWD}
     - TEST_DIR="intergation_test_run"
     - mkdir ${TEST_DIR}
     - cd ${TEST_DIR}
-    - python3 ${PROJECT_SOURCE_DIR}/test/integration_test/run_test.py -n ${PROJECT_SOURCE_DIR}/build/bin/node -r ${PROJECT_SOURCE_DIR}/build/bin/client -evm ${PROJECT_SOURCE_DIR}/build/bin/libevmone.so.0.4
+    - python3 ${SOURCE_DIR}/test/integration_test/run_test.py -b "${SOURCE_DIR}/build/bin"
   artifacts:
     when: always
     paths:
       - intergation_test_run
     expire_in: 1 week
+
 
 Valgrind test:
   stage: analyzers
