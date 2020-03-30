@@ -96,13 +96,7 @@ class EthAdapter::EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_balance";
         auto address = vm::toNativeAddress(addr);
         auto balance = _account_manager.getBalance(address);
-        evmc::uint256be ret;
-        std::fill(std::begin(ret.bytes), std::end(ret.bytes), 0);
-        for (int i = sizeof(balance) * 8; i >= 0; --i) {
-            ret.bytes[i] = balance & 0xFF;
-            balance >>= 8;
-        }
-        return ret;
+        return vm::toEvmcUint256(balance);
     }
 
 
@@ -200,6 +194,9 @@ class EthAdapter::EthHost : public evmc::Host
         base::Bytes data(msg.input_data, msg.input_size);
         txb.setData(data);
 
+        auto timestamp = base::Time::now();
+        txb.setTimestamp(timestamp);
+
         auto tx = std::move(txb).build();
         auto result = _core.doMessageCall(tx, *_associated_block);
         return result.getResult();
@@ -282,7 +279,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
                                                                              const bc::Transaction& associated_tx,
                                                                              const bc::Block& associated_block)
 {
-    std::lock_guard lk(_execution_mutex);
+    std::lock_guard lk(_create_mutex);
 
     base::SerializationIArchive ia(associated_tx.getData());
     auto contract_data = ia.deserialize<bc::ContractInitData>();
@@ -307,7 +304,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
 
 vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
 {
-    std::lock_guard lk(_execution_mutex);
+    std::lock_guard lk(_call_mutex);
 
     auto code_hash = _account_manager.getAccount(associated_tx.getTo()).getCodeHash();
 
