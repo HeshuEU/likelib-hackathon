@@ -50,8 +50,10 @@ class PeerTable : public PeerPoolBase
 
     void broadcast(const base::Bytes& data) override;
     //=================================
+    std::vector<PeerBase::Info> lookup(const lk::Address& address, std::size_t alpha) override;
 
     std::vector<Peer::Info> allPeersInfo() const override;
+
   private:
     //=================================
     const lk::Address _host_address;
@@ -60,7 +62,10 @@ class PeerTable : public PeerPoolBase
     std::array<std::vector<std::shared_ptr<PeerBase>>, lk::Address::LENGTH_IN_BYTES * 8> _buckets;
     mutable std::shared_mutex _buckets_mutex;
     //=================================
-    std::size_t calcBucketIndex(const lk::Address& peer_address);
+    static std::size_t calcDifference(const base::FixedBytes<lk::Address::LENGTH_IN_BYTES>& a,
+                                      const base::FixedBytes<lk::Address::LENGTH_IN_BYTES>& b);
+
+    std::size_t calcBucketIndex(const lk::Address& peer_address) const;
 
     /*
      * Returns the least recently seen peer in a bucket.
@@ -88,7 +93,7 @@ class Host
     explicit Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core);
     ~Host();
     //=================================
-    void checkOutPeer(const net::Endpoint& address);
+    void checkOutPeer(const net::Endpoint& address, std::function<void(std::shared_ptr<Peer>)> on_connect);
     bool isConnectedTo(const net::Endpoint& endpoint) const;
     PeerTable& getPool() noexcept;
     const PeerTable& getPool() const noexcept;
@@ -118,6 +123,7 @@ class Host
     void networkThreadWorkerFunction() noexcept;
     //=================================
     PeerTable _connected_peers;
+    void bootstrap();
 
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();
@@ -128,7 +134,6 @@ class Host
     void onAccept(std::unique_ptr<net::Connection> connection);
 
     net::Connector _connector;
-    void onConnect(std::unique_ptr<net::Connection> connection);
     //=================================
 };
 

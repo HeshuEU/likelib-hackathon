@@ -120,7 +120,7 @@ void Connection::send(base::Bytes data)
         std::lock_guard lk(_pending_send_messages_mutex);
         is_already_writing = !_pending_send_messages.empty();
 
-        _pending_send_messages.push({std::move(data), {}});
+        _pending_send_messages.push({ std::move(data), {} });
     }
 
     if (!is_already_writing) {
@@ -136,7 +136,7 @@ void Connection::send(base::Bytes data, Connection::SendHandler send_handler)
         std::lock_guard lk(_pending_send_messages_mutex);
         is_already_writing = !_pending_send_messages.empty();
 
-        _pending_send_messages.push({std::move(data), std::move(send_handler)});
+        _pending_send_messages.push({ std::move(data), std::move(send_handler) });
     }
 
     if (!is_already_writing) {
@@ -157,31 +157,32 @@ void Connection::sendPendingMessages()
     auto& message = data.first;
     auto& callback = data.second;
 
-    ba::async_write(_socket,
-                    ba::buffer(message.toVector()),
-                    [this, cp = shared_from_this(), callback](const boost::system::error_code& ec, const std::size_t bytes_sent) {
-                        if (_is_closed) {
-                            return;
-                        }
-                        else if (ec) {
-                            LOG_WARNING << "Error while sending message: " << ec << ' ' << ec.message();
-                            // TODO: do something
-                        }
-                        else {
-                            LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();
-                        }
+    ba::async_write(
+      _socket,
+      ba::buffer(message.toVector()),
+      [this, cp = shared_from_this(), callback](const boost::system::error_code& ec, const std::size_t bytes_sent) {
+          if (_is_closed) {
+              return;
+          }
+          else if (ec) {
+              LOG_WARNING << "Error while sending message: " << ec << ' ' << ec.message();
+              // TODO: do something
+          }
+          else {
+              LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();
+          }
 
-                        if(callback) {
-                            callback();
-                        }
+          if (callback) {
+              callback();
+          }
 
-                        std::lock_guard lk(_pending_send_messages_mutex);
-                        _pending_send_messages.pop();
+          std::lock_guard lk(_pending_send_messages_mutex);
+          _pending_send_messages.pop();
 
-                        if (!_pending_send_messages.empty()) {
-                            sendPendingMessages();
-                        }
-                    });
+          if (!_pending_send_messages.empty()) {
+              sendPendingMessages();
+          }
+      });
 }
 
 } // namespace net

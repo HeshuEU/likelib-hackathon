@@ -7,7 +7,6 @@ set(CORE_HEADERS
         host.hpp
         managers.hpp
         peer.hpp
-        protocol.hpp
         transaction.hpp
         types.hpp
         transactions_set.hpp
@@ -22,7 +21,6 @@ set(CORE_SOURCES
         host.cpp
         managers.cpp
         peer.cpp
-        protocol.cpp
         transaction.cpp
         transactions_set.cpp
         )

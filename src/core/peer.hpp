@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/time.hpp"
+#include "base/utility.hpp"
 #include "core/address.hpp"
 #include "core/block.hpp"
 #include "net/session.hpp"
@@ -13,6 +14,27 @@ namespace lk
 
 class Core;
 class Host;
+
+// clang-format off
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
+                                          (NOT_AVAILABLE)
+                                                  (CANNOT_ACCEPT)
+                                                  (ACCEPTED)
+                                                  (ACCEPTED_RESPONSE)
+                                                  (PING)
+                                                  (PONG)
+                                                  (LOOKUP)
+                                                  (LOOKUP_RESPONSE)
+                                                  (TRANSACTION)
+                                                  (GET_BLOCK)
+                                                  (BLOCK)
+                                                  (BLOCK_NOT_FOUND)
+                                                  (GET_INFO)
+                                                  (INFO)
+                                                  (NEW_NODE)
+                                                  (CLOSE)
+)
+// clang-format on
 
 
 class PeerBase
@@ -56,25 +78,9 @@ class PeerPoolBase
 
     virtual void broadcast(const base::Bytes& bytes) = 0;
 
+    virtual std::vector<PeerBase::Info> lookup(const lk::Address& address, std::size_t alpha) = 0;
+
     virtual std::vector<PeerBase::Info> allPeersInfo() const = 0;
-};
-
-
-/*
- * Protocol doesn't manage states of session or peer.
- * It just prepares, sends and handles messages.
- */
-class ProtocolBase : public net::Session::Handler
-{
-  public:
-    // event-processing functions
-    void onReceive(const base::Bytes& bytes) override = 0;
-    void onClose() override = 0;
-
-    // functions, initiated by caller code
-    virtual void sendTransaction(const lk::Transaction& tx) = 0;
-    virtual void sendBlock(const lk::Block& block) = 0;
-    virtual void sendSessionEnd(std::function<void()> on_send) = 0; // TODO: set close reason
 };
 
 
@@ -82,6 +88,13 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
 {
   public:
     //================
+    struct Context
+    {
+        lk::Core& core;
+        lk::Host& host;
+        lk::PeerPoolBase& pool;
+    };
+
     enum class State
     {
         JUST_ESTABLISHED,
@@ -97,17 +110,17 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     base::Time getLastSeen() const override;
     net::Endpoint getEndpoint() const override;
     net::Endpoint getPublicEndpoint() const override;
-    void setServerEndpoint(net::Endpoint endpoint);
+    bool wasConnectedTo() const noexcept;
 
-    void setProtocol(std::shared_ptr<lk::ProtocolBase> protocol);
+    void setServerEndpoint(net::Endpoint endpoint);
+    void setState(State state);
+    State getState() const noexcept;
+
     void start();
     //================
     const lk::Address& getAddress() const noexcept override;
     void setAddress(lk::Address address);
     //================
-    void setState(State new_state);
-    State getState() const noexcept;
-
     Info getInfo() const override;
     bool isClosed() const;
     //================
@@ -117,13 +130,18 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     //================
     void send(const base::Bytes& data, net::Connection::SendHandler on_send = {}) override;
     void send(base::Bytes&& data, net::Connection::SendHandler on_send = {}) override;
-
-    void send(const lk::Block& block);
-    void send(const lk::Transaction& tx);
     //================
+    void sendBlock(const lk::Block& block);
+    void sendTransaction(const lk::Transaction& tx);
+    void sendSessionEnd(std::function<void()> on_send);
+    //===============
+    void lookup(const lk::Address& address,
+                const std::size_t alpha,
+                std::function<void(std::vector<PeerBase::Info>)> callback);
+    //===============
   private:
     //================
-    Peer(std::unique_ptr<net::Session> session, lk::PeerPoolBase& pool, lk::Core& core);
+    Peer(std::unique_ptr<net::Session> session, bool is_connected, lk::PeerPoolBase& pool, lk::Core& core);
     //================
     std::unique_ptr<net::Session> _session;
     //================
@@ -133,10 +151,10 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     //================
     std::forward_list<lk::Block> _sync_blocks;
     //================
-    bool _is_attached_to_pool{false};
+    bool _was_connected_to; // peer was connected to or accepted?
+    bool _is_attached_to_pool{ false };
     lk::PeerPoolBase& _pool;
     lk::Core& _core;
-    std::shared_ptr<lk::ProtocolBase> _protocol;
     //================
     void rejectedByPool();
     //================

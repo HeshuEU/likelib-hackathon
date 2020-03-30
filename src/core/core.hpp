@@ -8,7 +8,6 @@
 #include "core/eth_adapter.hpp"
 #include "core/host.hpp"
 #include "core/managers.hpp"
-#include "core/protocol.hpp"
 
 #include <shared_mutex>
 

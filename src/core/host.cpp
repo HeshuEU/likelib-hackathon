@@ -6,6 +6,7 @@
 
 #include <boost/asio/error.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <iterator>
 
@@ -19,11 +20,9 @@ PeerTable::PeerTable(lk::Address host_address)
 {}
 
 
-std::size_t PeerTable::calcBucketIndex(const lk::Address& peer_address)
+std::size_t PeerTable::calcDifference(const base::FixedBytes<lk::Address::LENGTH_IN_BYTES>& a,
+                                      const base::FixedBytes<lk::Address::LENGTH_IN_BYTES>& b)
 {
-    const auto& a = _host_address.getBytes();
-    const auto& b = peer_address.getBytes();
-
     std::size_t byte_index = 0;
     while (byte_index < lk::Address::LENGTH_IN_BYTES && a[byte_index] == b[byte_index]) {
         ++byte_index;
@@ -45,6 +44,14 @@ std::size_t PeerTable::calcBucketIndex(const lk::Address& peer_address)
 
         ASSERT(false); // must be unreachable
     }
+}
+
+
+std::size_t PeerTable::calcBucketIndex(const lk::Address& peer_address) const
+{
+    const auto& a = _host_address.getBytes();
+    const auto& b = peer_address.getBytes();
+    return calcDifference(a, b);
 }
 
 
@@ -99,9 +106,11 @@ void PeerTable::removePeer(std::shared_ptr<PeerBase> peer)
 
 void PeerTable::removePeer(PeerBase* peer)
 {
-    std::unique_lock lk{_buckets_mutex};
-    for(auto& bucket : _buckets) {
-        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [peer](const auto& candidate) { return peer == candidate.get(); }), bucket.end());
+    std::unique_lock lk{ _buckets_mutex };
+    for (auto& bucket : _buckets) {
+        bucket.erase(std::remove_if(
+                       bucket.begin(), bucket.end(), [peer](const auto& candidate) { return peer == candidate.get(); }),
+                     bucket.end());
     }
 }
 
@@ -152,6 +161,21 @@ void PeerTable::forEachPeer(std::function<void(PeerBase&)> f)
 void PeerTable::broadcast(const base::Bytes& data)
 {
     forEachPeer([data](PeerBase& peer) { peer.send(data); });
+}
+
+
+std::vector<PeerBase::Info> PeerTable::lookup(const lk::Address& address, const std::size_t alpha)
+{
+    auto ret = allPeersInfo();
+    std::sort(ret.begin(), ret.end(), [this](const auto& a, const auto& b) {
+        return calcDifference(a.address.getBytes(), _host_address.getBytes()) <
+               calcDifference(b.address.getBytes(), _host_address.getBytes());
+    });
+
+    if (ret.size() > alpha) {
+        ret.erase(ret.begin() + alpha, ret.end());
+    }
+    return ret;
 }
 
 
@@ -209,7 +233,7 @@ void Host::onAccept(std::unique_ptr<net::Connection> connection)
 }
 
 
-void Host::checkOutPeer(const net::Endpoint& endpoint)
+void Host::checkOutPeer(const net::Endpoint& endpoint, std::function<void(std::shared_ptr<Peer>)> on_connect)
 {
     if (_listen_ip == endpoint) {
         return;
@@ -230,20 +254,25 @@ void Host::checkOutPeer(const net::Endpoint& endpoint)
     }
 
     LOG_DEBUG << "Connecting to node " << endpoint;
-    _connector.connect(endpoint, base::config::NET_CONNECT_TIMEOUT, [this](std::unique_ptr<net::Connection> connection) {
-        ASSERT(connection);
-        onConnect(std::move(connection));
-    }, [](const net::Connector::ConnectError&) {
-        // TODO: remember
-    });
+    _connector.connect(
+      endpoint,
+      base::config::NET_CONNECT_TIMEOUT,
+      [this, on_connect](std::unique_ptr<net::Connection> connection) {
+          ASSERT(connection);
+          auto session = std::make_unique<net::Session>(std::move(connection));
+          auto peer = lk::Peer::connected(std::move(session), *this, _core);
+          if (_connected_peers.tryAddPeer(peer)) {
+              on_connect(peer);
+          }
+          else {
+              on_connect(nullptr);
+          }
+      },
+      [on_connect](const net::Connector::ConnectError&) {
+          // TODO: remember, call another callback
+          on_connect(nullptr);
+      });
     LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
-}
-
-
-void Host::onConnect(std::unique_ptr<net::Connection> connection)
-{
-    auto session = std::make_unique<net::Session>(std::move(connection));
-    _connected_peers.tryAddPeer(lk::Peer::connected(std::move(session), *this, _core));
 }
 
 
@@ -281,9 +310,18 @@ void Host::run()
     scheduleHeartBeat();
     _network_thread = std::thread(&Host::networkThreadWorkerFunction, this);
 
+    bootstrap();
+}
+
+
+void Host::bootstrap()
+{
     if (_config.hasKey("nodes")) {
         for (const auto& node : _config.getVector<std::string>("nodes")) {
-            checkOutPeer(net::Endpoint(node));
+            checkOutPeer(net::Endpoint(node), [](auto peer) {
+                if (peer) {
+                }
+            });
         }
     }
 }
@@ -312,13 +350,13 @@ void Host::broadcast(const base::Bytes& data)
 
 void Host::broadcast(const lk::Block& block)
 {
-    _connected_peers.forEachPeer([block](PeerBase& peer) { dynamic_cast<lk::Peer&>(peer).send(block); });
+    _connected_peers.forEachPeer([block](PeerBase& peer) { static_cast<lk::Peer&>(peer).sendBlock(block); });
 }
 
 
 void Host::broadcast(const lk::Transaction& tx)
 {
-    _connected_peers.forEachPeer([tx](PeerBase& peer) { dynamic_cast<lk::Peer&>(peer).send(tx); });
+    _connected_peers.forEachPeer([tx](PeerBase& peer) { static_cast<lk::Peer&>(peer).sendTransaction(tx); });
 }
 
 
