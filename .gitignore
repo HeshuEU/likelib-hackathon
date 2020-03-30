@@ -4,6 +4,7 @@
 # IDE
 .idea/
 .vs/
+.vscode/
 
 # documentation
 doc/html/

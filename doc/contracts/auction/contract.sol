@@ -45,7 +45,7 @@ contract SimpleAuction {
         return true;
     }
 
-    function auctionEnd() public {
+    function auctionEnd() public returns(bool is_end) {
         require(now >= auctionEndTime, "Auction not yet ended.");
         require(!ended, "auctionEnd has already been called.");
 
@@ -53,5 +53,6 @@ contract SimpleAuction {
         emit AuctionEnded(highestBidder, highestBid);
 
         beneficiary.transfer(highestBid);
+        return ended;
     }
 }
