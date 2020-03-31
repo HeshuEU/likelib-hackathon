@@ -120,7 +120,23 @@ void Connection::send(base::Bytes data)
         std::lock_guard lk(_pending_send_messages_mutex);
         is_already_writing = !_pending_send_messages.empty();
 
-        _pending_send_messages.push(std::move(data));
+        _pending_send_messages.push({std::move(data), {}});
+    }
+
+    if (!is_already_writing) {
+        sendPendingMessages();
+    }
+}
+
+
+void Connection::send(base::Bytes data, Connection::SendHandler send_handler)
+{
+    bool is_already_writing;
+    {
+        std::lock_guard lk(_pending_send_messages_mutex);
+        is_already_writing = !_pending_send_messages.empty();
+
+        _pending_send_messages.push({std::move(data), std::move(send_handler)});
     }
 
     if (!is_already_writing) {
@@ -137,10 +153,13 @@ void Connection::sendPendingMessages()
         return;
     }
 
-    base::Bytes& message = _pending_send_messages.front();
+    auto& data = _pending_send_messages.front();
+    auto& message = data.first;
+    auto& callback = data.second;
+
     ba::async_write(_socket,
                     ba::buffer(message.toVector()),
-                    [this, cp = shared_from_this()](const boost::system::error_code& ec, const std::size_t bytes_sent) {
+                    [this, cp = shared_from_this(), callback](const boost::system::error_code& ec, const std::size_t bytes_sent) {
                         if (_is_closed) {
                             return;
                         }
@@ -150,6 +169,10 @@ void Connection::sendPendingMessages()
                         }
                         else {
                             LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();
+                        }
+
+                        if(callback) {
+                            callback();
                         }
 
                         std::lock_guard lk(_pending_send_messages_mutex);

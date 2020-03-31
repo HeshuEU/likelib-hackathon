@@ -4,13 +4,13 @@
 
 #include <utility>
 
-namespace bc
+namespace lk
 {
 
-Block::Block(bc::BlockDepth depth,
+Block::Block(lk::BlockDepth depth,
              base::Sha256 prev_block_hash,
              base::Time timestamp,
-             bc::Address coinbase,
+             lk::Address coinbase,
              TransactionsSet txs)
   : _depth{ depth }
   , _prev_block_hash{ std::move(prev_block_hash) }
@@ -37,7 +37,7 @@ Block Block::deserialize(base::SerializationIArchive& ia)
     auto nonce = ia.deserialize<NonceInt>();
     auto prev_block_hash = ia.deserialize<base::Sha256>();
     auto timestamp = ia.deserialize<base::Time>();
-    auto coinbase = ia.deserialize<bc::Address>();
+    auto coinbase = ia.deserialize<lk::Address>();
     auto txs = ia.deserialize<TransactionsSet>();
     Block ret{ depth, std::move(prev_block_hash), std::move(timestamp), std::move(coinbase), std::move(txs) };
     ret.setNonce(nonce);
@@ -45,7 +45,7 @@ Block Block::deserialize(base::SerializationIArchive& ia)
 }
 
 
-bc::BlockDepth Block::getDepth() const noexcept
+lk::BlockDepth Block::getDepth() const noexcept
 {
     return _depth;
 }
@@ -87,7 +87,7 @@ const base::Time& Block::getTimestamp() const noexcept
 }
 
 
-const bc::Address& Block::getCoinbase() const noexcept
+const lk::Address& Block::getCoinbase() const noexcept
 {
     return _coinbase;
 }
@@ -111,7 +111,7 @@ void Block::addTransaction(const Transaction& tx)
 }
 
 
-bool operator==(const bc::Block& a, const bc::Block& b)
+bool operator==(const lk::Block& a, const lk::Block& b)
 {
     return a.getDepth() == b.getDepth() && a.getNonce() == b.getNonce() &&
            a.getPrevBlockHash() == b.getPrevBlockHash() && a.getTimestamp() == b.getTimestamp() &&
@@ -119,7 +119,7 @@ bool operator==(const bc::Block& a, const bc::Block& b)
 }
 
 
-bool operator!=(const bc::Block& a, const bc::Block& b)
+bool operator!=(const lk::Block& a, const lk::Block& b)
 {
     return !(a == b);
 }
@@ -130,4 +130,4 @@ std::ostream& operator<<(std::ostream& os, const Block& block)
     return os << base::Sha256::compute(base::toBytes(block));
 }
 
-} // namespace bc
+} // namespace lk

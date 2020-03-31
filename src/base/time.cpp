@@ -28,6 +28,30 @@ bool Time::operator!=(const Time& other) const
 }
 
 
+bool Time::operator<(const Time& other) const
+{
+    return _seconds_since_epoch < other._seconds_since_epoch;
+}
+
+
+bool Time::operator>(const Time& other) const
+{
+    return _seconds_since_epoch > other._seconds_since_epoch;
+}
+
+
+bool Time::operator<=(const Time& other) const
+{
+    return !(*this > other);
+}
+
+
+bool Time::operator>=(const Time& other) const
+{
+    return !(*this < other);
+}
+
+
 Time Time::now()
 {
     Time ret{ std::chrono::system_clock::now() };

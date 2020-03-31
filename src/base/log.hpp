@@ -59,5 +59,3 @@ template<typename T>
 #define LOG_WARNING BOOST_LOG_SEV(logger::get(), logging::trivial::warning)
 #define LOG_ERROR BOOST_LOG_SEV(logger::get(), logging::trivial::error)
 #define LOG_FATAL BOOST_LOG_SEV(logger::get(), logging::trivial::fatal)
-
-#define LOG_CURRENT_FUNCTION LOG_DEBUG << BOOST_CURRENT_FUNCTION << ' '

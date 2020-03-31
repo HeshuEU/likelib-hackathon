@@ -4,10 +4,10 @@
 #include "base/serialization.hpp"
 #include "base/time.hpp"
 
-#include "bc/address.hpp"
-#include "bc/types.hpp"
+#include "address.hpp"
+#include "types.hpp"
 
-namespace bc
+namespace lk
 {
 
 class Sign
@@ -48,14 +48,14 @@ class Transaction
         CONTRACT_CREATION,
     };
     //=================
-    Transaction(bc::Address from,
-                bc::Address to,
-                bc::Balance amount,
-                bc::Balance fee,
+    Transaction(lk::Address from,
+                lk::Address to,
+                lk::Balance amount,
+                lk::Balance fee,
                 base::Time timestamp,
                 Type transaction_type,
                 base::Bytes data,
-                bc::Sign sign = bc::Sign{});
+                lk::Sign sign = lk::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -64,17 +64,17 @@ class Transaction
 
     ~Transaction() = default;
     //=================
-    const bc::Address& getFrom() const noexcept;
-    const bc::Address& getTo() const noexcept;
-    const bc::Balance& getAmount() const noexcept;
+    const lk::Address& getFrom() const noexcept;
+    const lk::Address& getTo() const noexcept;
+    const lk::Balance& getAmount() const noexcept;
     const base::Time& getTimestamp() const noexcept;
     Type getType() const noexcept;
     const base::Bytes& getData() const noexcept;
-    const bc::Balance& getFee() const noexcept;
+    const lk::Balance& getFee() const noexcept;
     //=================
     void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
     bool checkSign() const;
-    const bc::Sign& getSign() const noexcept;
+    const lk::Sign& getSign() const noexcept;
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;
@@ -85,14 +85,14 @@ class Transaction
     //=================
   private:
     //=================
-    bc::Address _from;
-    bc::Address _to;
-    bc::Balance _amount;
-    bc::Balance _fee;
+    lk::Address _from;
+    lk::Address _to;
+    lk::Balance _amount;
+    lk::Balance _fee;
     base::Time _timestamp;
     Type _tx_type;
     base::Bytes _data;
-    bc::Sign _sign;
+    lk::Sign _sign;
     //=================
     void serializeHeader(base::SerializationOArchive& oa) const;
     base::Sha256 hashOfTxData() const;
@@ -125,27 +125,27 @@ class ContractInitData
 class TransactionBuilder
 {
   public:
-    void setFrom(bc::Address from);
-    void setTo(bc::Address to);
-    void setAmount(bc::Balance amount);
+    void setFrom(lk::Address from);
+    void setTo(lk::Address to);
+    void setAmount(lk::Balance amount);
     void setTimestamp(base::Time timestamp);
-    void setFee(bc::Balance fee);
+    void setFee(lk::Balance fee);
     void setType(Transaction::Type type);
     void setData(base::Bytes data);
-    void setSign(bc::Sign sign);
+    void setSign(lk::Sign sign);
 
     [[nodiscard]] Transaction build() const&;
     [[nodiscard]] Transaction build() &&;
 
   private:
-    std::optional<bc::Address> _from;
-    std::optional<bc::Address> _to;
-    std::optional<bc::Balance> _amount;
+    std::optional<lk::Address> _from;
+    std::optional<lk::Address> _to;
+    std::optional<lk::Balance> _amount;
     std::optional<base::Time> _timestamp;
-    std::optional<bc::Balance> _fee;
+    std::optional<lk::Balance> _fee;
     std::optional<Transaction::Type> _tx_type;
     std::optional<base::Bytes> _data;
-    std::optional<bc::Sign> _sign;
+    std::optional<lk::Sign> _sign;
 };
 
-} // namespace bc
+} // namespace lk

@@ -1,6 +1,7 @@
 #include "core.hpp"
 
 #include "base/log.hpp"
+#include "vm/error.hpp"
 #include "vm/tools.hpp"
 
 #include <algorithm>
@@ -15,7 +16,7 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
   , _vault{ key_vault }
   , _this_node_address{ _vault.getPublicKey() }
   , _blockchain{ _config }
-  , _network{ _config, *this }
+  , _host{ _config, 0xFFFF, *this }
   , _eth_adapter{ *this, _account_manager, _code_manager }
 {
     [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
@@ -24,25 +25,30 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
     _is_account_manager_updated = true;
 
     _blockchain.load();
-    for (bc::BlockDepth d = 1; d <= _blockchain.getTopBlock().getDepth(); ++d) {
+    for (lk::BlockDepth d = 1; d <= _blockchain.getTopBlock().getDepth(); ++d) {
         auto block = *_blockchain.findBlock(*_blockchain.findBlockHashByDepth(d));
-        _account_manager.update(block);
+        for (const auto& tx : block.getTransactions()) {
+            tryPerformTransaction(tx, block);
+        }
     }
+
+    subscribeToBlockAddition([this](const lk::Block& block) { _host.broadcast(block); });
+    subscribeToNewPendingTransaction([this](const lk::Transaction& tx) { _host.broadcast(tx); });
 }
 
 
-const bc::Block& Core::getGenesisBlock()
+const lk::Block& Core::getGenesisBlock()
 {
-    static bc::Block genesis = [] {
+    static lk::Block genesis = [] {
         auto timestamp = base::Time(1583789617);
 
-        bc::Block ret{ 0, base::Sha256(base::Bytes(32)), timestamp, bc::Address::null(), {} };
-        bc::Address from{ bc::Address::null() };
-        bc::Address to{ "28dpzpURpyqqLoWrEhnHrajndeCq" };
-        bc::Balance amount{ 0xFFFFFFFF };
-        bc::Balance fee{ 0 };
+        lk::Block ret{ 0, base::Sha256(base::Bytes(32)), timestamp, lk::Address::null(), {} };
+        lk::Address from{ lk::Address::null() };
+        lk::Address to{ "28dpzpURpyqqLoWrEhnHrajndeCq" };
+        lk::Balance amount{ 0xFFFFFFFF };
+        lk::Balance fee{ 0 };
 
-        ret.addTransaction({ from, to, amount, fee, timestamp, bc::Transaction::Type::MESSAGE_CALL, base::Bytes{} });
+        ret.addTransaction({ from, to, amount, fee, timestamp, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{} });
         return ret;
     }();
     return genesis;
@@ -51,11 +57,11 @@ const bc::Block& Core::getGenesisBlock()
 
 void Core::run()
 {
-    _network.run();
+    _host.run();
 }
 
 
-bool Core::addPendingTransaction(const bc::Transaction& tx)
+bool Core::addPendingTransaction(const lk::Transaction& tx)
 {
     if (checkTransaction(tx)) {
         {
@@ -70,7 +76,7 @@ bool Core::addPendingTransaction(const bc::Transaction& tx)
 }
 
 
-void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
+void Core::addPendingTransactionAndWait(const lk::Transaction& tx)
 {
     if (!checkTransaction(tx)) {
         RAISE_ERROR(base::InvalidArgument, "invalid transaction");
@@ -80,7 +86,7 @@ void Core::addPendingTransactionAndWait(const bc::Transaction& tx)
     std::mutex mt;
     bool is_tx_mined = false;
 
-    auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](const bc::Block& block) {
+    auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](const lk::Block& block) {
         if (block.getTransactions().find(tx)) {
             is_tx_mined = true;
             cv.notify_all();
@@ -107,7 +113,7 @@ base::Bytes Core::getTransactionOutput(const base::Sha256& tx)
 }
 
 
-bool Core::tryAddBlock(const bc::Block& b)
+bool Core::tryAddBlock(const lk::Block& b)
 {
     if (checkBlock(b) && _blockchain.tryAddBlock(b)) {
         {
@@ -125,19 +131,19 @@ bool Core::tryAddBlock(const bc::Block& b)
 }
 
 
-std::optional<bc::Block> Core::findBlock(const base::Sha256& hash) const
+std::optional<lk::Block> Core::findBlock(const base::Sha256& hash) const
 {
     return _blockchain.findBlock(hash);
 }
 
 
-std::optional<base::Sha256> Core::findBlockHash(const bc::BlockDepth& depth) const
+std::optional<base::Sha256> Core::findBlockHash(const lk::BlockDepth& depth) const
 {
     return _blockchain.findBlockHashByDepth(depth);
 }
 
 
-bool Core::checkBlock(const bc::Block& b) const
+bool Core::checkBlock(const lk::Block& b) const
 {
     if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(b)))) {
         return false;
@@ -154,7 +160,7 @@ bool Core::checkBlock(const bc::Block& b) const
 }
 
 
-bool Core::checkTransaction(const bc::Transaction& tx) const
+bool Core::checkTransaction(const lk::Transaction& tx) const
 {
     if (!tx.checkSign()) {
         LOG_DEBUG << "Failed signature verification";
@@ -165,14 +171,14 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
         return false;
     }
 
-    std::map<bc::Address, bc::Balance> current_pending_balance;
+    std::map<lk::Address, lk::Balance> current_pending_balance;
     {
         std::shared_lock lk(_pending_transactions_mutex);
         if (_pending_transactions.find(tx)) {
             return false;
         }
 
-        current_pending_balance = bc::calcBalance(_pending_transactions);
+        current_pending_balance = lk::calcBalance(_pending_transactions);
     }
 
     auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
@@ -186,35 +192,35 @@ bool Core::checkTransaction(const bc::Transaction& tx) const
 }
 
 
-bc::Block Core::getBlockTemplate() const
+lk::Block Core::getBlockTemplate() const
 {
     const auto& top_block = _blockchain.getTopBlock();
-    bc::BlockDepth depth = top_block.getDepth() + 1;
+    lk::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
     std::shared_lock lk(_pending_transactions_mutex);
-    return bc::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions };
+    return lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions };
 }
 
 
-bc::Balance Core::getBalance(const bc::Address& address) const
+lk::Balance Core::getBalance(const lk::Address& address) const
 {
     return _account_manager.getBalance(address);
 }
 
 
-const bc::Block& Core::getTopBlock() const
+const lk::Block& Core::getTopBlock() const
 {
     return _blockchain.getTopBlock();
 }
 
 
-const bc::Address& Core::getThisNodeAddress() const noexcept
+const lk::Address& Core::getThisNodeAddress() const noexcept
 {
     return _this_node_address;
 }
 
 
-void Core::applyBlockTransactions(const bc::Block& block)
+void Core::applyBlockTransactions(const lk::Block& block)
 {
     if (!_is_account_manager_updated) {
         _account_manager.updateFromGenesis(block);
@@ -224,16 +230,17 @@ void Core::applyBlockTransactions(const bc::Block& block)
         for (const auto& tx : block.getTransactions()) {
             tryPerformTransaction(tx, block);
         }
-        constexpr bc::Balance EMISSION_VALUE = 1000;
+        constexpr lk::Balance EMISSION_VALUE = 1000;
         _account_manager.getAccount(block.getCoinbase()).addBalance(EMISSION_VALUE);
     }
 }
 
 
-bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx)
+bool Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx)
 {
     auto hash = base::Sha256::compute(base::toBytes(tx));
-    if (tx.getType() == bc::Transaction::Type::CONTRACT_CREATION) {
+    lk::AccountState from_account_recovery{ _account_manager.getAccount(tx.getFrom()) };
+    if (tx.getType() == lk::Transaction::Type::CONTRACT_CREATION) {
         try {
             _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
             auto [address, result, gas_left] = doContractCreation(tx, block_where_tx);
@@ -256,51 +263,65 @@ bool Core::tryPerformTransaction(const bc::Transaction& tx, const bc::Block& blo
         return true;
     }
     else {
+        lk::AccountState to_account_recovery{ _account_manager.getAccount(tx.getTo()) };
         try {
             _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
             auto result = doMessageCall(tx, block_where_tx);
-            LOG_DEBUG << "Message call result: " << base::toHex(result.toOutputData());
-            base::SerializationOArchive oa;
-            oa.serialize(true);
-            oa.serialize(result.toOutputData());
-            oa.serialize(result.gasLeft());
-            {
-                std::unique_lock lk(_tx_outputs_mutex);
-                _tx_outputs[hash] = std::move(oa).getBytes();
+            if (result.ok()) {
+                LOG_DEBUG << "Message call result: " << base::toHex(result.toOutputData());
+                base::SerializationOArchive oa;
+                oa.serialize(true);
+                oa.serialize(result.toOutputData());
+                oa.serialize(result.gasLeft());
+                {
+                    std::unique_lock lk(_tx_outputs_mutex);
+                    _tx_outputs[hash] = std::move(oa).getBytes();
+                }
+                _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - result.gasLeft());
+                _account_manager.getAccount(tx.getFrom()).addBalance(result.gasLeft());
+                return true;
             }
-            _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - result.gasLeft());
-            _account_manager.getAccount(tx.getFrom()).addBalance(result.gasLeft());
-            return true;
+            else {
+                RAISE_ERROR(base::Error, "evm has not success execution status");
+            }
         }
         catch (const base::Error&) {
+            _account_manager.getAccount(tx.getFrom()) = from_account_recovery;
+            _account_manager.getAccount(tx.getTo()) = to_account_recovery;
             return false;
         }
     }
 }
 
 
-std::tuple<bc::Address, base::Bytes, bc::Balance> Core::doContractCreation(const bc::Transaction& tx,
-                                                                           const bc::Block& block_where_tx)
+std::tuple<lk::Address, base::Bytes, lk::Balance> Core::doContractCreation(const lk::Transaction& tx,
+                                                                           const lk::Block& block_where_tx)
 {
     base::SerializationIArchive ia(tx.getData());
-    auto contract_data = ia.deserialize<bc::ContractInitData>();
+    auto contract_data = ia.deserialize<lk::ContractInitData>();
 
     auto hash = base::Sha256::compute(contract_data.getCode());
     _code_manager.saveCode(contract_data.getCode());
 
-    bc::Address contract_address = _account_manager.newContract(tx.getFrom(), hash);
+    lk::Address contract_address = _account_manager.newContract(tx.getFrom(), hash);
     LOG_DEBUG << "Deploying smart contract at address " << contract_address;
     if (tx.getAmount() != 0) {
-        if (!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
+        if (!_account_manager.tryTransferMoney(tx.getFrom(), contract_address, tx.getAmount())) {
             RAISE_ERROR(base::Error, "cannot transfer money");
         }
     }
 
-    return _eth_adapter.createContract(contract_address, tx, block_where_tx);
+    try {
+        return _eth_adapter.createContract(contract_address, tx, block_where_tx);
+    }
+    catch (const vm::RevertError& e) {
+        _account_manager.deleteAccount(contract_address);
+        RAISE_ERROR(base::Error, "fail at contract creation");
+    }
 }
 
 
-vm::ExecutionResult Core::doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx)
+vm::ExecutionResult Core::doMessageCall(const lk::Transaction& tx, const lk::Block& block_where_tx)
 {
     auto code_hash = _account_manager.getAccount(tx.getTo()).getCodeHash();
 
@@ -330,4 +351,4 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 }
 
 
-} // namespace lk
+} // namespace core

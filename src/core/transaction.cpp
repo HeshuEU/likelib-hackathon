@@ -2,7 +2,7 @@
 
 #include "transaction.hpp"
 
-namespace bc
+namespace lk
 {
 
 Sign::Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash)
@@ -19,7 +19,7 @@ bool Sign::isNull() const noexcept
 const base::RsaPublicKey& Sign::getPublicKey() const
 {
     if (isNull()) {
-        RAISE_ERROR(base::LogicError, "attemping to get on null bc::Sign");
+        RAISE_ERROR(base::LogicError, "attemping to get on null lk::Sign");
     }
     return _data->sender_public_key;
 }
@@ -28,7 +28,7 @@ const base::RsaPublicKey& Sign::getPublicKey() const
 const base::Bytes& Sign::getRsaEncryptedHash() const
 {
     if (isNull()) {
-        RAISE_ERROR(base::LogicError, "attemping to get on null bc::Sign");
+        RAISE_ERROR(base::LogicError, "attemping to get on null lk::Sign");
     }
     return _data->rsa_encrypted_hash;
 }
@@ -77,14 +77,14 @@ std::string Sign::toBase64() const
 }
 
 
-Transaction::Transaction(bc::Address from,
-                         bc::Address to,
-                         bc::Balance amount,
-                         bc::Balance fee,
+Transaction::Transaction(lk::Address from,
+                         lk::Address to,
+                         lk::Balance amount,
+                         lk::Balance fee,
                          base::Time timestamp,
                          Transaction::Type transaction_type,
                          base::Bytes data,
-                         bc::Sign sign)
+                         lk::Sign sign)
   : _from{ std::move(from) }
   , _to{ std::move(to) }
   , _amount{ amount }
@@ -100,19 +100,19 @@ Transaction::Transaction(bc::Address from,
 }
 
 
-const bc::Address& Transaction::getFrom() const noexcept
+const lk::Address& Transaction::getFrom() const noexcept
 {
     return _from;
 }
 
 
-const bc::Address& Transaction::getTo() const noexcept
+const lk::Address& Transaction::getTo() const noexcept
 {
     return _to;
 }
 
 
-const bc::Balance& Transaction::getAmount() const noexcept
+const lk::Balance& Transaction::getAmount() const noexcept
 {
     return _amount;
 }
@@ -124,7 +124,7 @@ const base::Time& Transaction::getTimestamp() const noexcept
 }
 
 
-const bc::Balance& Transaction::getFee() const noexcept
+const lk::Balance& Transaction::getFee() const noexcept
 {
     return _fee;
 }
@@ -172,7 +172,7 @@ bool Transaction::checkSign() const
     else {
         const auto& pub = _sign.getPublicKey();
         const auto& enc_hash = _sign.getRsaEncryptedHash();
-        auto derived_addr = bc::Address(pub);
+        auto derived_addr = lk::Address(pub);
         if (_from != derived_addr) {
             return false;
         }
@@ -213,14 +213,14 @@ void Transaction::serializeHeader(base::SerializationOArchive& oa) const
 
 Transaction Transaction::deserialize(base::SerializationIArchive& ia)
 {
-    auto from = ia.deserialize<bc::Address>();
-    auto to = ia.deserialize<bc::Address>();
-    auto amount = ia.deserialize<bc::Balance>();
-    auto fee = ia.deserialize<bc::Balance>();
+    auto from = ia.deserialize<lk::Address>();
+    auto to = ia.deserialize<lk::Address>();
+    auto amount = ia.deserialize<lk::Balance>();
+    auto fee = ia.deserialize<lk::Balance>();
     auto timestamp = ia.deserialize<base::Time>();
     auto tx_type = ia.deserialize<Type>();
     auto data = ia.deserialize<base::Bytes>();
-    auto sign = ia.deserialize<bc::Sign>();
+    auto sign = ia.deserialize<lk::Sign>();
     return { std::move(from), std::move(to), amount, fee, timestamp, tx_type, std::move(data), std::move(sign) };
 }
 
@@ -284,19 +284,19 @@ ContractInitData ContractInitData::deserialize(base::SerializationIArchive& ia)
 }
 
 
-void TransactionBuilder::setFrom(bc::Address from)
+void TransactionBuilder::setFrom(lk::Address from)
 {
     _from = std::move(from);
 }
 
 
-void TransactionBuilder::setTo(bc::Address to)
+void TransactionBuilder::setTo(lk::Address to)
 {
     _to = std::move(to);
 }
 
 
-void TransactionBuilder::setAmount(bc::Balance amount)
+void TransactionBuilder::setAmount(lk::Balance amount)
 {
     _amount = amount;
 }
@@ -308,13 +308,13 @@ void TransactionBuilder::setTimestamp(base::Time timestamp)
 }
 
 
-void TransactionBuilder::setFee(bc::Balance fee)
+void TransactionBuilder::setFee(lk::Balance fee)
 {
     _fee = fee;
 }
 
 
-void TransactionBuilder::setSign(bc::Sign sign)
+void TransactionBuilder::setSign(lk::Sign sign)
 {
     _sign = std::move(sign);
 }
@@ -372,4 +372,4 @@ Transaction TransactionBuilder::build() &&
 }
 
 
-} // namespace bc
+} // namespace lk

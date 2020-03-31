@@ -68,7 +68,7 @@ class HostImplementation : public evmc::Host
         return evmc::bytes32();
     }
 
-    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
+    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* /*buffer_data*/, size_t buffer_size) const
       noexcept override
     {
         std::cout << "copy_code call method call: " << vm::toBytes(addr)
@@ -104,9 +104,9 @@ class HostImplementation : public evmc::Host
     }
 
     void emit_log(const evmc::address& addr,
-                  const uint8_t* data,
-                  size_t data_size,
-                  const evmc::bytes32 topics[],
+                  const uint8_t* /*data*/,
+                  size_t /*data_size*/,
+                  const evmc::bytes32[] /*topics*/,
                   size_t num_topics) noexcept override
     {
         std::cout << "emit_log method call: address[" << vm::toBytes(addr) << "], topics_number["
@@ -117,7 +117,7 @@ class HostImplementation : public evmc::Host
 
 BOOST_AUTO_TEST_CASE(vm_base)
 {
-    const char* source_code = R"V0G0N(
+    const char* source_code = R"raw(
 pragma solidity >=0.4.16 <0.7.0;
 
 contract Foo {
@@ -135,7 +135,7 @@ contract Foo {
 
     function sam(bytes memory, bool, uint[] memory) public pure {}
 }
-)V0G0N";
+)raw";
 
     std::filesystem::path code_file_path = "vm_base.sol";
 
@@ -168,13 +168,13 @@ contract Foo {
 
     auto target_value_1 = 1u;
     auto init_message = contract.createInitMessage(
-      100000, bc::Address{ source }, bc::Address{ destination }, 1, vm::encode(target_value_1));
+      100000, lk::Address{ source }, lk::Address{ destination }, 1, vm::encode(target_value_1));
     auto res1 = vm_instance.execute(init_message);
     BOOST_CHECK(res1.ok());
 
     auto input_for_message_1 = base::fromHex<base::Bytes>("29809703"); // TODO: remove
     auto message1 =
-      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_1);
+      contract.createMessage(10000, lk::Address{ source }, lk::Address{ destination }, 0, input_for_message_1);
     auto res2 = vm_instance.execute(message1);
     BOOST_CHECK(res2.ok());
 
@@ -184,13 +184,13 @@ contract Foo {
 
     auto input_for_message_2 = base::fromHex<base::Bytes>("bd70b447") + vm::encode(target_value_2);
     auto message2 =
-      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_2);
+      contract.createMessage(10000, lk::Address{ source }, lk::Address{ destination }, 0, input_for_message_2);
     auto res3 = vm_instance.execute(message2);
     BOOST_CHECK(res3.ok());
 
     auto input_for_message_3 = base::fromHex<base::Bytes>("29809703"); // TODO: remove
     auto message3 =
-      contract.createMessage(10000, bc::Address{ source }, bc::Address{ destination }, 0, input_for_message_3);
+      contract.createMessage(10000, lk::Address{ source }, lk::Address{ destination }, 0, input_for_message_3);
     auto res4 = vm_instance.execute(message3);
     BOOST_CHECK(res3.ok());
 
@@ -251,12 +251,12 @@ contract Foo {
     std::string target_value_1 = "one";
 
     auto init_message = contract.createInitMessage(
-      1000000, bc::Address{ source }, bc::Address{ destination }, 0, vm::encode(32u) + vm::encode(target_value_1));
+      1000000, lk::Address{ source }, lk::Address{ destination }, 0, vm::encode(32u) + vm::encode(target_value_1));
     auto res1 = vm_instance.execute(init_message);
     BOOST_CHECK(res1.ok());
 
     auto message1 = contract.createMessage(
-      1000000, bc::Address{ source }, bc::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
+      1000000, lk::Address{ source }, lk::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
     auto res2 = vm_instance.execute(message1);
     BOOST_CHECK(res2.ok());
 
@@ -266,15 +266,15 @@ contract Foo {
 
     auto message2 =
       contract.createMessage(1000000,
-                             bc::Address{ source },
-                             bc::Address{ destination },
+                             lk::Address{ source },
+                             lk::Address{ destination },
                              0,
                              base::fromHex<base::Bytes>("3d7403a3") + vm::encode(32u) + vm::encode(target_value_2));
     auto res3 = vm_instance.execute(message2);
     BOOST_CHECK(res3.ok());
 
     auto message3 = contract.createMessage(
-      1000000, bc::Address{ source }, bc::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
+      1000000, lk::Address{ source }, lk::Address{ destination }, 0, base::fromHex<base::Bytes>("e21f37ce"));
     auto res4 = vm_instance.execute(message3);
     BOOST_CHECK(res3.ok());
 

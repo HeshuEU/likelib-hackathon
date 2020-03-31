@@ -3,7 +3,7 @@
 #include "base/config.hpp"
 #include "base/hash.hpp"
 #include "base/log.hpp"
-#include "bc/transaction.hpp"
+#include "core/transaction.hpp"
 
 namespace node
 {
@@ -36,7 +36,7 @@ rpc::OperationStatus GeneralServerService::test(uint32_t api_version)
 }
 
 
-bc::Balance GeneralServerService::balance(const bc::Address& address)
+lk::Balance GeneralServerService::balance(const lk::Address& address)
 {
     try {
         LOG_TRACE << "Received RPC request {balance} with address[" << address.toString() << "]";
@@ -67,28 +67,26 @@ rpc::Info GeneralServerService::info()
 }
 
 
-bc::Block GeneralServerService::get_block(const base::Sha256& block_hash)
+lk::Block GeneralServerService::get_block(const base::Sha256& block_hash)
 {
     LOG_TRACE << "Received RPC request {get_block} with block_hash[" << block_hash << "]";
     if (auto block_opt = _core.findBlock(block_hash); block_opt) {
         return *block_opt;
     }
     else {
-        return bc::Block{
-            bc::BlockDepth(-1), base::Sha256::null(), base::Time(0), bc::Address::null(), {}
-        };
+        return lk::Block{ lk::BlockDepth(-1), base::Sha256::null(), base::Time(0), lk::Address::null(), {} };
     }
 }
 
 
-std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService::transaction_create_contract(
-  bc::Balance amount,
-  const bc::Address& from_address,
+std::tuple<rpc::OperationStatus, lk::Address, lk::Balance> GeneralServerService::transaction_create_contract(
+  lk::Balance amount,
+  const lk::Address& from_address,
   const base::Time& timestamp,
-  bc::Balance gas,
+  lk::Balance gas,
   const std::string& hex_contract_code,
   const std::string& hex_init,
-  const bc::Sign& signature)
+  const lk::Sign& signature)
 {
     LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
               << "], amount[" << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
@@ -97,15 +95,15 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
     auto contract_code = base::fromHex<base::Bytes>(hex_contract_code);
     auto init = base::fromHex<base::Bytes>(hex_init);
 
-    bc::TransactionBuilder txb;
-    txb.setType(bc::Transaction::Type::CONTRACT_CREATION);
+    lk::TransactionBuilder txb;
+    txb.setType(lk::Transaction::Type::CONTRACT_CREATION);
     txb.setFrom(from_address);
-    txb.setTo(bc::Address::null());
+    txb.setTo(lk::Address::null());
     txb.setAmount(amount);
     txb.setFee(gas);
     txb.setTimestamp(timestamp);
 
-    bc::ContractInitData data(std::move(contract_code), std::move(init));
+    lk::ContractInitData data(std::move(contract_code), std::move(init));
     txb.setData(base::toBytes(data));
 
     txb.setSign(signature);
@@ -120,19 +118,19 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
         auto raw_output = _core.getTransactionOutput(hash);
         if (raw_output.isEmpty()) {
             return { rpc::OperationStatus::createFailed(std::string{ "Transaction failed" }),
-                     bc::Address::null(),
+                     lk::Address::null(),
                      gas };
         }
         base::SerializationIArchive ia(raw_output);
         auto is_successful = ia.deserialize<bool>();
         if (!is_successful) {
             return { rpc::OperationStatus::createFailed(std::string{ "Transaction failed" }),
-                     bc::Address::null(),
+                     lk::Address::null(),
                      gas };
         }
-        auto contract_address = ia.deserialize<bc::Address>();
+        auto contract_address = ia.deserialize<lk::Address>();
         auto output = ia.deserialize<base::Bytes>();
-        auto gas_left = ia.deserialize<bc::Balance>();
+        auto gas_left = ia.deserialize<lk::Balance>();
 
         std::string ret_str{ "Contract was successfully deployed" };
         if (!output.isEmpty()) {
@@ -143,20 +141,20 @@ std::tuple<rpc::OperationStatus, bc::Address, bc::Balance> GeneralServerService:
     }
     catch (const std::exception& e) {
         return { rpc::OperationStatus::createFailed(std::string{ "Error occurred: " } + e.what()),
-                 bc::Address::null(),
+                 lk::Address::null(),
                  gas };
     }
 }
 
 
-std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService::transaction_message_call(
-  bc::Balance amount,
-  const bc::Address& from_address,
-  const bc::Address& to_address,
+std::tuple<rpc::OperationStatus, std::string, lk::Balance> GeneralServerService::transaction_message_call(
+  lk::Balance amount,
+  const lk::Address& from_address,
+  const lk::Address& to_address,
   const base::Time& timestamp,
-  bc::Balance gas,
+  lk::Balance gas,
   const std::string& hex_message,
-  const bc::Sign& signature)
+  const lk::Sign& signature)
 {
     LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
@@ -165,8 +163,8 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
 
     auto message = base::fromHex<base::Bytes>(hex_message);
 
-    bc::TransactionBuilder txb;
-    txb.setType(bc::Transaction::Type::MESSAGE_CALL);
+    lk::TransactionBuilder txb;
+    txb.setType(lk::Transaction::Type::MESSAGE_CALL);
     txb.setFrom(from_address);
     txb.setTo(to_address);
     txb.setAmount(amount);
@@ -191,7 +189,7 @@ std::tuple<rpc::OperationStatus, std::string, bc::Balance> GeneralServerService:
             return { rpc::OperationStatus::createFailed(std::string{ "Message call failed" }), std::string{}, gas };
         }
         auto result = ia.deserialize<base::Bytes>();
-        auto gas_left = ia.deserialize<bc::Balance>();
+        auto gas_left = ia.deserialize<lk::Balance>();
         return { rpc::OperationStatus::createSuccess("Message call was successfully executed"),
                  base::toHex<base::Bytes>(result),
                  gas_left };

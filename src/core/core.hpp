@@ -3,12 +3,12 @@
 #include "base/crypto.hpp"
 #include "base/property_tree.hpp"
 #include "base/utility.hpp"
-#include "bc/block.hpp"
-#include "bc/blockchain.hpp"
-#include "lk/eth_adapter.hpp"
-#include "lk/managers.hpp"
-#include "lk/protocol.hpp"
-#include "net/host.hpp"
+#include "core/block.hpp"
+#include "core/blockchain.hpp"
+#include "core/eth_adapter.hpp"
+#include "core/host.hpp"
+#include "core/managers.hpp"
+#include "core/protocol.hpp"
 
 #include <shared_mutex>
 
@@ -38,20 +38,20 @@ class Core
      */
     void run();
     //==================
-    bc::Balance getBalance(const bc::Address& address) const;
+    lk::Balance getBalance(const lk::Address& address) const;
     //==================
-    bool addPendingTransaction(const bc::Transaction& tx);
-    void addPendingTransactionAndWait(const bc::Transaction& tx);
+    bool addPendingTransaction(const lk::Transaction& tx);
+    void addPendingTransactionAndWait(const lk::Transaction& tx);
     base::Bytes getTransactionOutput(const base::Sha256& tx_hash);
     //==================
-    bool tryAddBlock(const bc::Block& b);
-    std::optional<bc::Block> findBlock(const base::Sha256& hash) const;
-    std::optional<base::Sha256> findBlockHash(const bc::BlockDepth& depth) const;
-    const bc::Block& getTopBlock() const;
+    bool tryAddBlock(const lk::Block& b);
+    std::optional<lk::Block> findBlock(const base::Sha256& hash) const;
+    std::optional<base::Sha256> findBlockHash(const lk::BlockDepth& depth) const;
+    const lk::Block& getTopBlock() const;
     //==================
-    bc::Block getBlockTemplate() const;
+    lk::Block getBlockTemplate() const;
     //==================
-    const bc::Address& getThisNodeAddress() const noexcept;
+    const lk::Address& getThisNodeAddress() const noexcept;
     //==================
   private:
     //==================
@@ -59,35 +59,35 @@ class Core
     //==================
     const base::PropertyTree& _config;
     const base::KeyVault& _vault;
-    const bc::Address _this_node_address;
+    const lk::Address _this_node_address;
     //==================
-    base::Observable<const bc::Block&> _event_block_added;
-    base::Observable<const bc::Transaction&> _event_new_pending_transaction;
+    base::Observable<const lk::Block&> _event_block_added;
+    base::Observable<const lk::Transaction&> _event_new_pending_transaction;
     //==================
     bool _is_account_manager_updated{ false };
     AccountManager _account_manager;
     CodeManager _code_manager;
-    bc::Blockchain _blockchain;
-    lk::Network _network;
+    lk::Blockchain _blockchain;
+    lk::Host _host;
     //==================
     lk::EthAdapter _eth_adapter;
     //==================
     std::unordered_map<base::Sha256, base::Bytes> _tx_outputs;
     mutable std::shared_mutex _tx_outputs_mutex;
     //==================
-    bc::TransactionsSet _pending_transactions;
+    lk::TransactionsSet _pending_transactions;
     mutable std::shared_mutex _pending_transactions_mutex;
     //==================
-    static const bc::Block& getGenesisBlock();
-    void applyBlockTransactions(const bc::Block& block);
+    static const lk::Block& getGenesisBlock();
+    void applyBlockTransactions(const lk::Block& block);
     //==================
-    bool checkBlock(const bc::Block& block) const;
-    bool checkTransaction(const bc::Transaction& tx) const;
+    bool checkBlock(const lk::Block& block) const;
+    bool checkTransaction(const lk::Transaction& tx) const;
     //==================
-    bool tryPerformTransaction(const bc::Transaction& tx, const bc::Block& block_where_tx);
-    std::tuple<bc::Address, base::Bytes, bc::Balance> doContractCreation(const bc::Transaction& tx,
-                                                                         const bc::Block& block_where_tx);
-    vm::ExecutionResult doMessageCall(const bc::Transaction& tx, const bc::Block& block_where_tx);
+    bool tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx);
+    std::tuple<lk::Address, base::Bytes, lk::Balance> doContractCreation(const lk::Transaction& tx,
+                                                                         const lk::Block& block_where_tx);
+    vm::ExecutionResult doMessageCall(const lk::Transaction& tx, const lk::Block& block_where_tx);
     //==================
   public:
     //==================
@@ -99,4 +99,4 @@ class Core
     //==================
 };
 
-} // namespace lk
+} // namespace core

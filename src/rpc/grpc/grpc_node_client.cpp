@@ -54,7 +54,7 @@ OperationStatus GrpcNodeClient::test(uint32_t api_version)
     }
 }
 
-bc::Balance GrpcNodeClient::balance(const bc::Address& address)
+lk::Balance GrpcNodeClient::balance(const lk::Address& address)
 {
     // convert data for request
     likelib::Address request;
@@ -96,7 +96,7 @@ Info GrpcNodeClient::info()
 }
 
 
-bc::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
+lk::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
 {
     likelib::GetBlockRequest request;
     request.set_block_hash(block_hash.toHex());
@@ -108,29 +108,29 @@ bc::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
 
     // return value if ok
     if (status.ok()) {
-        bc::BlockDepth depth{ reply.depth() };
+        lk::BlockDepth depth{ reply.depth() };
         base::Sha256 prev_block_hash{ base::fromHex<base::Bytes>(reply.previous_block_hash()) };
         auto timestamp = base::Time(reply.timestamp().since_epoch());
-        bc::NonceInt nonce{ reply.nonce() };
-        bc::Address coinbase{ reply.coinbase().address() };
+        lk::NonceInt nonce{ reply.nonce() };
+        lk::Address coinbase{ reply.coinbase().address() };
 
-        bc::TransactionsSet txset;
+        lk::TransactionsSet txset;
         for (const auto& txv : reply.transactions()) {
-            bc::TransactionBuilder txb;
-            txb.setFrom(bc::Address(txv.from().address()));
-            txb.setTo(bc::Address(txv.to().address()));
+            lk::TransactionBuilder txb;
+            txb.setFrom(lk::Address(txv.from().address()));
+            txb.setTo(lk::Address(txv.to().address()));
             txb.setAmount(txv.value().value());
             txb.setFee(txv.gas().value());
             txb.setTimestamp(base::Time(txv.creation_time().since_epoch()));
             txb.setData(base::base64Decode(txv.data()));
-            txb.setSign(bc::Sign::fromBase64(txv.signature()));
-            txb.setType(bc::Address(txv.to().address()) == bc::Address::null() ?
-                          bc::Transaction::Type::CONTRACT_CREATION :
-                          bc::Transaction::Type::MESSAGE_CALL);
+            txb.setSign(lk::Sign::fromBase64(txv.signature()));
+            txb.setType(lk::Address(txv.to().address()) == lk::Address::null() ?
+                          lk::Transaction::Type::CONTRACT_CREATION :
+                          lk::Transaction::Type::MESSAGE_CALL);
             txset.add(std::move(txb).build());
         }
 
-        bc::Block blk{ depth, std::move(prev_block_hash), timestamp, std::move(coinbase), std::move(txset) };
+        lk::Block blk{ depth, std::move(prev_block_hash), timestamp, std::move(coinbase), std::move(txset) };
         blk.setNonce(nonce);
         return blk;
     }
@@ -140,14 +140,14 @@ bc::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
 }
 
 
-std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transaction_create_contract(
-  bc::Balance amount,
-  const bc::Address& from_address,
+std::tuple<OperationStatus, lk::Address, lk::Balance> GrpcNodeClient::transaction_create_contract(
+  lk::Balance amount,
+  const lk::Address& from_address,
   const base::Time& transaction_time,
-  bc::Balance gas,
+  lk::Balance gas,
   const std::string& contract_code,
   const std::string& init,
-  const bc::Sign& signature)
+  const lk::Sign& signature)
 {
     // convert data for request
     likelib::TransactionCreateContractRequest request;
@@ -167,8 +167,8 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
     // return value if ok
     if (status.ok()) {
         auto converted_status = convert(reply.status());
-        auto contract_address = bc::Address{ reply.contract_address().address() };
-        auto gas_left = bc::Balance{ reply.gas_left().value() };
+        auto contract_address = lk::Address{ reply.contract_address().address() };
+        auto gas_left = lk::Balance{ reply.gas_left().value() };
         return { converted_status, contract_address, gas_left };
     }
     else {
@@ -177,14 +177,14 @@ std::tuple<OperationStatus, bc::Address, bc::Balance> GrpcNodeClient::transactio
 }
 
 
-std::tuple<OperationStatus, std::string, bc::Balance> GrpcNodeClient::transaction_message_call(
-  bc::Balance amount,
-  const bc::Address& from_address,
-  const bc::Address& to_address,
+std::tuple<OperationStatus, std::string, lk::Balance> GrpcNodeClient::transaction_message_call(
+  lk::Balance amount,
+  const lk::Address& from_address,
+  const lk::Address& to_address,
   const base::Time& transaction_time,
-  bc::Balance fee,
+  lk::Balance fee,
   const std::string& data,
-  const bc::Sign& signature)
+  const lk::Sign& signature)
 {
     // convert data for request
     likelib::TransactionMessageCallRequest request;
@@ -204,7 +204,7 @@ std::tuple<OperationStatus, std::string, bc::Balance> GrpcNodeClient::transactio
     // return value if ok
     if (status.ok()) {
         auto converted_status = convert(reply.status());
-        auto gas_left = bc::Balance{ reply.gas_left().value() };
+        auto gas_left = lk::Balance{ reply.gas_left().value() };
         auto message_from_contract = reply.contract_response();
         return { converted_status, message_from_contract, gas_left };
     }

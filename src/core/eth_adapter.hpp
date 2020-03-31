@@ -1,8 +1,8 @@
 #pragma once
 
 #include "base/bytes.hpp"
-#include "bc/block.hpp"
-#include "lk/managers.hpp"
+#include "block.hpp"
+#include "core/managers.hpp"
 #include "vm/vm.hpp"
 
 #include <memory>
@@ -20,10 +20,10 @@ class EthAdapter
 
     ~EthAdapter();
 
-    std::tuple<bc::Address, base::Bytes, bc::Balance> createContract(const bc::Address& bc_address,
-                                                                     const bc::Transaction& associated_tx,
-                                                                     const bc::Block& associated_block);
-    vm::ExecutionResult call(const bc::Transaction& associated_tx, const bc::Block& associated_block);
+    std::tuple<lk::Address, base::Bytes, lk::Balance> createContract(const lk::Address& bc_address,
+                                                                     const lk::Transaction& associated_tx,
+                                                                     const lk::Block& associated_block);
+    vm::ExecutionResult call(const lk::Transaction& associated_tx, const lk::Block& associated_block);
 
   private:
     class EthHost;
@@ -38,4 +38,4 @@ class EthAdapter
     mutable std::mutex _create_mutex;
 };
 
-} // namespace lk
+} // namespace core

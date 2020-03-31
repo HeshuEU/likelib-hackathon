@@ -34,16 +34,14 @@ def load(path_to_contract_folder):
     compiled_contract_file_path = os.path.join(
         path_to_contract_folder, "compiled_code.bin")
     if not os.path.exists(compiled_contract_file_path):
-        raise Exception(
-            f"contract file not exists by path: {compiled_contract_file_path}")
+        raise Exception(f"contract file not exists by path: {compiled_contract_file_path}")
     with open(compiled_contract_file_path, "rt") as f:
         bytecode = f.read()
 
     contract_metadata_file_path = os.path.join(
         path_to_contract_folder, "metadata.json")
     if not os.path.exists(contract_metadata_file_path):
-        raise Exception(
-            f"contract metadata file not exists by path: {contract_metadata_file_path}")
+        raise Exception(f"contract metadata file not exists by path: {contract_metadata_file_path}")
     with open(contract_metadata_file_path, "rt") as f:
         metadata = json.loads(f.read())
 

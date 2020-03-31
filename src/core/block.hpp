@@ -3,23 +3,23 @@
 #include "base/bytes.hpp"
 #include "base/hash.hpp"
 #include "base/serialization.hpp"
-#include "bc/transaction.hpp"
-#include "bc/transactions_set.hpp"
-#include "bc/types.hpp"
+#include "transaction.hpp"
+#include "transactions_set.hpp"
+#include "types.hpp"
 
 #include <iosfwd>
 
-namespace bc
+namespace lk
 {
 
 class Block
 {
   public:
     //=================
-    Block(bc::BlockDepth depth,
+    Block(lk::BlockDepth depth,
           base::Sha256 prev_block_hash,
           base::Time timestamp,
-          bc::Address coinbase,
+          lk::Address coinbase,
           TransactionsSet txs);
 
     Block(const Block&) = default;
@@ -38,7 +38,7 @@ class Block
     const TransactionsSet& getTransactions() const;
     NonceInt getNonce() const noexcept;
     const base::Time& getTimestamp() const noexcept;
-    const bc::Address& getCoinbase() const noexcept;
+    const lk::Address& getCoinbase() const noexcept;
     //=================
     void setDepth(BlockDepth depth) noexcept;
     void setNonce(NonceInt nonce) noexcept;
@@ -48,18 +48,18 @@ class Block
     //=================
   private:
     //=================
-    bc::BlockDepth _depth;
+    lk::BlockDepth _depth;
     NonceInt _nonce;
     base::Sha256 _prev_block_hash;
     base::Time _timestamp;
-    bc::Address _coinbase;
+    lk::Address _coinbase;
     TransactionsSet _txs;
     //=================
 };
 
 std::ostream& operator<<(std::ostream& os, const Block& block);
 
-bool operator==(const bc::Block& a, const bc::Block& b);
-bool operator!=(const bc::Block& a, const bc::Block& b);
+bool operator==(const lk::Block& a, const lk::Block& b);
+bool operator!=(const lk::Block& a, const lk::Block& b);
 
-} // namespace bc
+} // namespace lk

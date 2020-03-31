@@ -15,9 +15,35 @@ class Connector
 {
   public:
     //===================
+    class ConnectError
+    {
+      public:
+        enum class Status
+        {
+            SUCCESS,
+            TIMEOUT,
+            NETWORK_FAILURE,
+        };
+
+        Status getStatus() const noexcept;
+        boost::system::error_code getErrorCode() const;
+
+      private:
+        Status _status;
+        boost::system::error_code _ec;
+
+        ConnectError(Status status, boost::system::error_code ec = {});
+
+        friend Connector;
+    };
+
+    //===================
     explicit Connector(boost::asio::io_context& io_context);
     //===================
-    void connect(const Endpoint& address, std::function<void(std::unique_ptr<Connection>)> on_connect);
+    void connect(const Endpoint& address,
+                 std::size_t timeout_seconds,
+                 std::function<void(std::unique_ptr<Connection>)> on_connect,
+                 std::function<void(ConnectError)> on_fail);
     //===================
   private:
     //===================

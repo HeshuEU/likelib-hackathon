@@ -17,7 +17,7 @@ set(NODE_SOURCES
 
 add_executable(node ${NODE_SOURCES} ${NODE_HEADERS})
 
-target_link_libraries(node base net bc lk rpc dl backtrace)
+target_link_libraries(node base core net rpc dl backtrace)
 
 target_compile_definitions(node PRIVATE BOOST_STACKTRACE_USE_ADDR2LINE)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

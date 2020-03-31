@@ -1,8 +1,8 @@
 #pragma once
 
 #include "base/bytes.hpp"
-#include "bc/address.hpp"
-#include "bc/types.hpp"
+#include "core/address.hpp"
+#include "core/types.hpp"
 
 #include <evmc/evmc.hpp>
 
@@ -22,15 +22,15 @@ class SmartContract
     ~SmartContract() = default;
 
     SmartContractMessage createInitMessage(int64_t gas,
-                                           const bc::Address& source,
-                                           const bc::Address& destination,
-                                           const bc::Balance& value,
+                                           const lk::Address& source,
+                                           const lk::Address& destination,
+                                           const lk::Balance& value,
                                            const base::Bytes& input) const;
 
     SmartContractMessage createMessage(int64_t gas,
-                                       const bc::Address& source,
-                                       const bc::Address& destination,
-                                       const bc::Balance& value,
+                                       const lk::Address& source,
+                                       const lk::Address& destination,
+                                       const lk::Balance& value,
                                        const base::Bytes& input) const;
 
   private:
@@ -57,7 +57,7 @@ class SmartContractMessage
     base::Bytes toInputData() const;
     base::Bytes getCreate2Salt() const;
     const base::Bytes& getCode() const;
-    bc::Balance getValue() const;
+    lk::Balance getValue() const;
     evmc_revision getRevision() const;
 
   private:
@@ -81,6 +81,7 @@ class ExecutionResult
     ExecutionResult& operator=(const ExecutionResult&) = delete;
     ~ExecutionResult() = default;
 
+    bool revert() const noexcept;
     bool ok() const noexcept;
 
     base::Bytes toOutputData() const;

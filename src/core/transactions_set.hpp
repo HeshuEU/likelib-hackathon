@@ -1,12 +1,12 @@
 #pragma once
 
 #include "base/serialization.hpp"
-#include "bc/transaction.hpp"
+#include "transaction.hpp"
 
 #include <map>
 #include <vector>
 
-namespace bc
+namespace lk
 {
 
 class TransactionsSet
@@ -40,4 +40,4 @@ class TransactionsSet
 
 std::map<Address, Balance> calcBalance(const TransactionsSet& txs);
 
-} // namespace bc
+} // namespace lk

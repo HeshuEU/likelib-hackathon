@@ -4,10 +4,10 @@
 #include <iterator>
 #include <utility>
 
-namespace bc
+namespace lk
 {
 
-void TransactionsSet::add(const bc::Transaction& tx)
+void TransactionsSet::add(const lk::Transaction& tx)
 {
     if (!find(tx)) {
         _txs.push_back(tx);
@@ -15,7 +15,7 @@ void TransactionsSet::add(const bc::Transaction& tx)
 }
 
 
-bool TransactionsSet::find(const bc::Transaction& tx) const
+bool TransactionsSet::find(const lk::Transaction& tx) const
 {
     return std::find(_txs.begin(), _txs.end(), tx) != _txs.end();
 }
@@ -35,7 +35,7 @@ std::optional<Transaction> TransactionsSet::find(const base::Sha256& hash) const
 }
 
 
-void TransactionsSet::remove(const bc::Transaction& tx)
+void TransactionsSet::remove(const lk::Transaction& tx)
 {
     auto it = std::find(_txs.begin(), _txs.end(), tx);
     if (it == _txs.end()) {
@@ -117,7 +117,7 @@ void TransactionsSet::serialize(base::SerializationOArchive& oa) const
 TransactionsSet TransactionsSet::deserialize(base::SerializationIArchive& ia)
 {
     TransactionsSet tx_set;
-    tx_set._txs = ia.deserialize<std::vector<bc::Transaction>>();
+    tx_set._txs = ia.deserialize<std::vector<lk::Transaction>>();
     return tx_set;
 }
 
@@ -148,4 +148,4 @@ std::map<Address, Balance> calcBalance(const TransactionsSet& txs)
     return result;
 }
 
-} // namespace bc
+} // namespace lk

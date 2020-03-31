@@ -34,7 +34,7 @@ def main(env, logger):
 
         distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         deployed_contract = node.push_contract(from_address=distributor_address, code=auction_contract_data, amount=0,
-                                               gas=10000000, init_message=auction_init_message, timeout=10)
+                                               fee=10000000, init_message=auction_init_message, timeout=10)
 
         client_1 = node.create_new_address(keys_path='client_1')
         client_2 = node.create_new_address(keys_path='client_2')
@@ -52,18 +52,18 @@ def main(env, logger):
         client_1_bid_1 = 10000
         client_1_bid_1_gas = 100000
         node.message_to_contract(from_address=client_1, to_address=deployed_contract,
-                                 gas=client_1_bid_1_gas, amount=client_1_bid_1, message=bid_message,
+                                 fee=client_1_bid_1_gas, amount=client_1_bid_1, message=bid_message,
                                  timeout=10)
 
         client_1_bid_2 = 15000
         client_1_bid_2_gas = 100000
         node.message_to_contract(from_address=client_1, to_address=deployed_contract,
-                                 gas=client_1_bid_2_gas, amount=client_1_bid_2, message=bid_message,
+                                 fee=client_1_bid_2_gas, amount=client_1_bid_2, message=bid_message,
                                  timeout=10)
 
         result = node.message_to_contract(from_address=distributor_address,
                                           to_address=deployed_contract,
-                                          gas=100000, amount=0,
+                                          fee=100000, amount=0,
                                           message=max_bid_message, timeout=10)
         current_max_bid = node.decode_message(code=auction_contract_data, method="highestBid", message=result)
         TEST_CHECK(current_max_bid[''] == client_1_bid_2)
@@ -71,12 +71,12 @@ def main(env, logger):
         client_2_bid_1 = 10000
         client_2_bid_1_gas = 100000
         node.message_to_contract(from_address=client_2, to_address=deployed_contract,
-                                 gas=client_2_bid_1_gas, amount=client_2_bid_1,
+                                 fee=client_2_bid_1_gas, amount=client_2_bid_1,
                                  message=bid_message, timeout=10)
 
         result = node.message_to_contract(from_address=distributor_address,
                                           to_address=deployed_contract,
-                                          gas=100000, amount=0,
+                                          fee=100000, amount=0,
                                           message=max_bid_message, timeout=10)
         current_max_bid = node.decode_message(code=auction_contract_data, method="highestBid", message=result)
         TEST_CHECK(current_max_bid[''] == client_1_bid_2)
@@ -84,12 +84,12 @@ def main(env, logger):
         client_2_bid_2 = 20000
         client_2_bid_2_gas = 100000
         node.message_to_contract(from_address=client_2, to_address=deployed_contract,
-                                 gas=client_2_bid_2_gas, amount=client_2_bid_2,
+                                 fee=client_2_bid_2_gas, amount=client_2_bid_2,
                                  message=bid_message, timeout=10)
 
         result = node.message_to_contract(from_address=distributor_address,
                                           to_address=deployed_contract,
-                                          gas=100000, amount=0,
+                                          fee=100000, amount=0,
                                           message=max_bid_message, timeout=10)
         current_max_bid = node.decode_message(code=auction_contract_data, method="highestBid", message=result)
         TEST_CHECK(current_max_bid[''] == client_2_bid_2)
@@ -99,14 +99,14 @@ def main(env, logger):
         max_bid_message = node.encode_message(code=auction_contract_data, message="highestBid()")
         result = node.message_to_contract(from_address=distributor_address,
                                           to_address=deployed_contract,
-                                          gas=100000, amount=0,
+                                          fee=100000, amount=0,
                                           message=max_bid_message, timeout=10)
         current_max_bid = node.decode_message(code=auction_contract_data, method="highestBid", message=result)
 
         auction_end_message = node.encode_message(code=auction_contract_data, message="auctionEnd()")
         result = node.message_to_contract(from_address=distributor_address,
                                           to_address=deployed_contract,
-                                          gas=100000, amount=0,
+                                          fee=100000, amount=0,
                                           message=auction_end_message, timeout=10)
         if result.message:
             TEST_CHECK(

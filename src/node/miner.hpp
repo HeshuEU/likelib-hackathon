@@ -2,8 +2,8 @@
 
 #include "base/bytes.hpp"
 #include "base/property_tree.hpp"
-#include "bc/block.hpp"
-#include "bc/types.hpp"
+#include "core/block.hpp"
+#include "core/types.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -19,7 +19,7 @@ namespace impl
 {
 class MinerWorker;
 
-using MinerHandlerType = std::function<void(bc::Block&&)>;
+using MinerHandlerType = std::function<void(lk::Block&&)>;
 
 enum class Task
 {
@@ -34,7 +34,7 @@ struct CommonData
 {
     static constexpr std::size_t COMPLEXITY_SIZE = 32;
     impl::Task task;
-    std::optional<bc::Block> block_to_mine;
+    std::optional<lk::Block> block_to_mine;
     std::optional<base::FixedBytes<COMPLEXITY_SIZE>> complexity;
 };
 
@@ -79,7 +79,7 @@ class Miner
 
     ~Miner();
     //===================
-    void findNonce(const bc::Block& block_without_nonce,
+    void findNonce(const lk::Block& block_without_nonce,
                    const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity);
     void dropJob();
     //===================

@@ -35,9 +35,9 @@ def main(env, logger):
     count_nodes = 10
     start_sync_port = 20302
     start_rpc_port = 50152
-    waiting_time = 5
-    transaction_timeout = 5
-    transaction_wait = 5
+    waiting_time = 10
+    transaction_timeout = 20
+    transaction_wait = 10
 
     with NodePoll() as pool:
         pool.append(Node(env, Node.Settings(Node.Id(start_sync_port, start_rpc_port)), logger))

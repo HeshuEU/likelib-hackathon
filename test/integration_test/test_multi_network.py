@@ -78,13 +78,13 @@ def init_nodes(env, initializing_node_ids, first_node_id, waiting_time, logger):
 def main(env, logger):
     start_sync_port = 20230
     start_rpc_port = 50080
-    waiting_time = 10
+    waiting_time = 20
     count_threads = 5
     count_nodes_per_thread = 5
 
     amount = 1000
-    transaction_wait = 10
-    transaction_timeout = 12
+    transaction_wait = 20
+    transaction_timeout = 40
 
     node_ids = list()
     for i in range(count_threads * count_nodes_per_thread + 1):

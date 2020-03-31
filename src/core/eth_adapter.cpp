@@ -1,9 +1,10 @@
 #include "eth_adapter.hpp"
 
-#include "lk/core.hpp"
+#include "core/core.hpp"
 
 #include "vm/tools.hpp"
 #include "vm/vm.hpp"
+#include "vm/error.hpp"
 
 namespace lk
 {
@@ -175,20 +176,20 @@ class EthAdapter::EthHost : public evmc::Host
 
         LOG_DEBUG << "Core::call";
 
-        bc::TransactionBuilder txb;
+        lk::TransactionBuilder txb;
 
-        txb.setType(bc::Transaction::Type::MESSAGE_CALL);
+        txb.setType(lk::Transaction::Type::MESSAGE_CALL);
 
-        bc::Balance fee = msg.gas;
+        lk::Balance fee = msg.gas;
         txb.setFee(fee);
 
-        bc::Address from = vm::toNativeAddress(msg.sender);
+        lk::Address from = vm::toNativeAddress(msg.sender);
         txb.setFrom(std::move(from));
 
-        bc::Address to = vm::toNativeAddress(msg.destination);
+        lk::Address to = vm::toNativeAddress(msg.destination);
         txb.setTo(std::move(to));
 
-        bc::Balance amount = vm::toBalance(msg.value);
+        lk::Balance amount = vm::toBalance(msg.value);
         txb.setAmount(amount);
 
         base::Bytes data(msg.input_data, msg.input_size);
@@ -245,7 +246,7 @@ class EthAdapter::EthHost : public evmc::Host
     }
 
     //===================================
-    void setContext(const bc::Transaction* associated_transaction, const bc::Block* associated_block)
+    void setContext(const lk::Transaction* associated_transaction, const lk::Block* associated_block)
     {
         ASSERT(associated_transaction);
         ASSERT(associated_block);
@@ -255,8 +256,8 @@ class EthAdapter::EthHost : public evmc::Host
     }
     //===================================
   private:
-    const bc::Transaction* _associated_tx{ nullptr };
-    const bc::Block* _associated_block{ nullptr };
+    const lk::Transaction* _associated_tx{ nullptr };
+    const lk::Block* _associated_block{ nullptr };
     lk::Core& _core;
     lk::AccountManager& _account_manager;
     lk::CodeManager& _code_manager;
@@ -275,14 +276,14 @@ EthAdapter::EthAdapter(Core& core, AccountManager& account_manager, CodeManager&
 EthAdapter::~EthAdapter() = default;
 
 
-std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(const bc::Address& contract_address,
-                                                                             const bc::Transaction& associated_tx,
-                                                                             const bc::Block& associated_block)
+std::tuple<lk::Address, base::Bytes, lk::Balance> EthAdapter::createContract(const lk::Address& contract_address,
+                                                                             const lk::Transaction& associated_tx,
+                                                                             const lk::Block& associated_block)
 {
     std::lock_guard lk(_create_mutex);
 
     base::SerializationIArchive ia(associated_tx.getData());
-    auto contract_data = ia.deserialize<bc::ContractInitData>();
+    auto contract_data = ia.deserialize<lk::ContractInitData>();
 
     vm::SmartContract contract(contract_data.getCode());
     auto message = contract.createInitMessage(associated_tx.getFee(),
@@ -292,9 +293,13 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
                                               contract_data.getInit());
 
     _eth_host->setContext(&associated_tx, &associated_block);
-    if (auto result = _vm.execute(message); result.ok()) {
+    auto result = _vm.execute(message);
+    if (result.ok()) {
         // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
-        return { contract_address, {}, static_cast<bc::Balance>(result.gasLeft()) };
+        return { contract_address, {}, static_cast<lk::Balance>(result.gasLeft()) };
+    }
+    else if (result.revert()) {
+        RAISE_ERROR(vm::RevertError, "contract creation failed during execution");
     }
     else {
         RAISE_ERROR(base::Error, "contract creation failed during execution");
@@ -302,7 +307,7 @@ std::tuple<bc::Address, base::Bytes, bc::Balance> EthAdapter::createContract(con
 }
 
 
-vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const bc::Block& associated_block)
+vm::ExecutionResult EthAdapter::call(const lk::Transaction& associated_tx, const lk::Block& associated_block)
 {
     std::lock_guard lk(_call_mutex);
 
@@ -325,4 +330,4 @@ vm::ExecutionResult EthAdapter::call(const bc::Transaction& associated_tx, const
 }
 
 
-} // namespace lk
+} // namespace core
