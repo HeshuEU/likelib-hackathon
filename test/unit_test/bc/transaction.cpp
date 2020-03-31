@@ -160,6 +160,8 @@ BOOST_AUTO_TEST_CASE(transaction_builder_set_all1)
     txb.setTo(to);
     txb.setTimestamp(time);
     txb.setAmount(amount);
+    txb.setType(bc::Transaction::Type::MESSAGE_CALL);
+    txb.setData(base::Bytes());
     txb.setFee(fee);
 
     auto tx = std::move(txb).build();
@@ -167,7 +169,9 @@ BOOST_AUTO_TEST_CASE(transaction_builder_set_all1)
     BOOST_CHECK(tx.getFrom().toString() == from.toString());
     BOOST_CHECK(tx.getTo().toString() == to.toString());
     BOOST_CHECK(tx.getTimestamp() == time);
+    BOOST_CHECK(tx.getType() == bc::Transaction::Type::MESSAGE_CALL);
     BOOST_CHECK(tx.getAmount() == amount);
+    BOOST_CHECK(tx.getData() == base::Bytes());
     BOOST_CHECK(tx.getFee() == fee);
 }
 
@@ -185,6 +189,8 @@ BOOST_AUTO_TEST_CASE(transaction_builder_set_all2)
     txb.setTo(to);
     txb.setTimestamp(time);
     txb.setAmount(amount);
+    txb.setType(bc::Transaction::Type::MESSAGE_CALL);
+    txb.setData(base::Bytes());
     txb.setFee(fee);
 
     auto tx1 = txb.build();
@@ -192,6 +198,8 @@ BOOST_AUTO_TEST_CASE(transaction_builder_set_all2)
     BOOST_CHECK(tx1.getFrom().toString() == from.toString());
     BOOST_CHECK(tx1.getTo().toString() == to.toString());
     BOOST_CHECK(tx1.getTimestamp() == time);
+    BOOST_CHECK(tx1.getType() == bc::Transaction::Type::MESSAGE_CALL);
     BOOST_CHECK(tx1.getAmount() == amount);
+    BOOST_CHECK(tx1.getData() == base::Bytes());
     BOOST_CHECK(tx1.getFee() == fee);
 }

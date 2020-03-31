@@ -22,4 +22,9 @@ set(TEST_SOURCES
 
 add_executable(run_tests ${TEST_SOURCES})
 
-target_link_libraries(run_tests base net rpc vm lk Boost::unit_test_framework)
+target_link_libraries(run_tests base net rpc vm lk Boost::unit_test_framework dl)
+
+target_compile_definitions(run_tests PRIVATE BOOST_STACKTRACE_USE_ADDR2LINE)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_link_options(run_tests PRIVATE "-no-pie")
+endif ()
