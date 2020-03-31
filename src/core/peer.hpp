@@ -116,7 +116,6 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     void setState(State state);
     State getState() const noexcept;
 
-    void start();
     //================
     const lk::Address& getAddress() const noexcept override;
     void setAddress(lk::Address address);
@@ -128,20 +127,22 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     void applySyncs();
     const std::forward_list<lk::Block>& getSyncBlocks() const noexcept;
     //================
-    void send(const base::Bytes& data, net::Connection::SendHandler on_send = {}) override;
-    void send(base::Bytes&& data, net::Connection::SendHandler on_send = {}) override;
+    void send(const base::Bytes& data, net::Connection::SendHandler on_send) override;
+    void send(base::Bytes&& data, net::Connection::SendHandler on_send) override;
     //================
     void sendBlock(const lk::Block& block);
     void sendTransaction(const lk::Transaction& tx);
     void sendSessionEnd(std::function<void()> on_send);
     //===============
+    void startSession();
+
     void lookup(const lk::Address& address,
-                const std::size_t alpha,
+                std::size_t alpha,
                 std::function<void(std::vector<PeerBase::Info>)> callback);
     //===============
   private:
     //================
-    Peer(std::unique_ptr<net::Session> session, bool is_connected, lk::PeerPoolBase& pool, lk::Core& core);
+    Peer(std::unique_ptr<net::Session> session, bool is_connected, lk::PeerPoolBase& pool, lk::Core& core, lk::Host& host);
     //================
     std::unique_ptr<net::Session> _session;
     //================
@@ -155,8 +156,11 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     bool _is_attached_to_pool{ false };
     lk::PeerPoolBase& _pool;
     lk::Core& _core;
+    lk::Host& _host;
     //================
     void rejectedByPool();
+    std::set<lk::Address> _zero_level_peers;
+    std::set<lk::Address> _first_level_peers;
     //================
 };
 

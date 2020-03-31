@@ -318,8 +318,26 @@ void Host::bootstrap()
 {
     if (_config.hasKey("nodes")) {
         for (const auto& node : _config.getVector<std::string>("nodes")) {
-            checkOutPeer(net::Endpoint(node), [](auto peer) {
+            checkOutPeer(net::Endpoint(node), [this](std::shared_ptr<Peer> peer) {
                 if (peer) {
+                    peer->lookup(_core.getThisNodeAddress(),
+                                 base::config::NET_LOOKUP_ALPHA,
+                                 [this, peer](std::vector<PeerBase::Info> peers_info) {
+                                     peer->startSession();
+                                     for (const auto& peer_info : peers_info) {
+                                         checkOutPeer(peer_info.endpoint, [this](std::shared_ptr<Peer> peer){
+                                             peer->lookup(_core.getThisNodeAddress(), base::config::NET_LOOKUP_ALPHA,
+                                                     [this, peer](std::vector<PeerBase::Info> peers_info) {
+                                                 for(const auto& peer_info : peers_info) {
+                                                     checkOutPeer(peer_info.endpoint, [this](std::shared_ptr<Peer> peer) {
+                                                         peer->startSession();
+                                                     });
+                                                 }
+                                             });
+                                             peer->startSession();
+                                         });
+                                     }
+                                 });
                 }
             });
         }

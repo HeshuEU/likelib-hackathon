@@ -238,25 +238,6 @@ class InfoMessage
 
 //============================================
 
-class NewNodeMessage
-{
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa,
-                          const net::Endpoint& new_node_endpoint,
-                          const lk::Address& address);
-    static NewNodeMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
-
-  private:
-    net::Endpoint _new_node_endpoint;
-    lk::Address _address;
-
-    NewNodeMessage(net::Endpoint&& new_node_endpoint, lk::Address&& address);
-};
-
-//============================================
-
 class CloseMessage
 {
   public:
@@ -375,7 +356,6 @@ class MessageProcessor
                       BlockNotFoundMessage,
                       GetInfoMessage,
                       InfoMessage,
-                      NewNodeMessage,
                       CloseMessage>(type, ia, _ctx, _peer)) {
             LOG_DEBUG << "Processed " << enumToString(type) << " message";
         }
@@ -429,7 +409,9 @@ void CannotAcceptMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     ctx.pool.removePeer(&peer);
 
     for (const auto& peer : _peers_info) {
-        ctx.host.checkOutPeer(peer.endpoint, [](auto peer) { peer->start(); });
+        ctx.host.checkOutPeer(peer.endpoint, [](std::shared_ptr<Peer> peer) {
+            peer->startSession();
+        });
     }
 }
 
@@ -479,7 +461,7 @@ void AcceptedMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     peer.send(prepareMessage<AcceptedResponseMessage>(ctx.core.getTopBlock(),
                                                       ctx.core.getThisNodeAddress(),
                                                       peer.getPublicEndpoint().getPort(),
-                                                      allPeersInfoExcept(ctx.host.getPool(), peer.getAddress())));
+                                                      allPeersInfoExcept(ctx.host.getPool(), peer.getAddress())), {});
 
     if (_public_port) {
         auto public_ep = peer.getEndpoint();
@@ -488,7 +470,9 @@ void AcceptedMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     }
 
     for (const auto& peer_info : _known_peers) {
-        ctx.host.checkOutPeer(peer_info.endpoint);
+        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) {
+            peer->startSession();
+        });
     }
 
     if (_theirs_top_block == ours_top_block) {
@@ -509,7 +493,7 @@ void AcceptedMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
             else {
                 base::SerializationOArchive oa;
                 GetBlockMessage::serialize(oa, _theirs_top_block.getPrevBlockHash());
-                peer.send(std::move(oa).getBytes());
+                peer.send(std::move(oa).getBytes(), {});
                 peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
                 peer.addSyncBlock(std::move(_theirs_top_block));
             }
@@ -571,7 +555,9 @@ void AcceptedResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     }
 
     for (const auto& peer_info : _known_peers) {
-        ctx.host.checkOutPeer(peer_info.endpoint);
+        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) {
+            peer->startSession();
+        });
     }
 
     if (_theirs_top_block == ours_top_block) {
@@ -592,7 +578,7 @@ void AcceptedResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
             else {
                 base::SerializationOArchive oa;
                 GetBlockMessage::serialize(oa, _theirs_top_block.getPrevBlockHash());
-                peer.send(std::move(oa).getBytes());
+                peer.send(std::move(oa).getBytes(), {});
                 peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
                 peer.addSyncBlock(std::move(_theirs_top_block));
             }
@@ -678,7 +664,7 @@ LookupMessage LookupMessage::deserialize(base::SerializationIArchive& ia) {}
 void LookupMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 {
     auto reply = ctx.pool.lookup(_address, _selection_size);
-    peer.send(prepareMessage<LookupResponseMessage>(reply));
+    peer.send(prepareMessage<LookupResponseMessage>(reply), {});
 }
 
 
@@ -712,7 +698,9 @@ void LookupResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of
     // communication: now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
     for (const auto& peer_info : _peers_info) {
-        ctx.host.checkOutPeer(peer_info.endpoint);
+        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) {
+            peer->startSession();
+        });
     }
 }
 
@@ -780,10 +768,10 @@ void GetBlockMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     LOG_DEBUG << "Received GET_BLOCK on " << _block_hash;
     auto block = ctx.core.findBlock(_block_hash);
     if (block) {
-        peer.send(prepareMessage<BlockMessage>(*block));
+        peer.send(prepareMessage<BlockMessage>(*block), {});
     }
     else {
-        peer.send(prepareMessage<BlockNotFoundMessage>(_block_hash));
+        peer.send(prepareMessage<BlockNotFoundMessage>(_block_hash), {});
     }
 }
 
@@ -835,7 +823,7 @@ void BlockMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
             peer.applySyncs();
         }
         else {
-            peer.send(prepareMessage<GetBlockMessage>(peer.getSyncBlocks().front().getPrevBlockHash()));
+            peer.send(prepareMessage<GetBlockMessage>(peer.getSyncBlocks().front().getPrevBlockHash()), {});
         }
     }
 }
@@ -899,8 +887,7 @@ GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive&)
 
 void GetInfoMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 {
-    peer.send(
-      prepareMessage<InfoMessage>(ctx.core.getTopBlock(), allPeersInfoExcept(ctx.host.getPool(), peer.getAddress())));
+    peer.send(prepareMessage<InfoMessage>(ctx.core.getTopBlock(), allPeersInfoExcept(ctx.host.getPool(), peer.getAddress())), {});
 }
 
 //============================================
@@ -939,44 +926,6 @@ InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoin
 
 //============================================
 
-constexpr lk::MessageType NewNodeMessage::getHandledMessageType()
-{
-    return lk::MessageType::INFO;
-}
-
-
-void NewNodeMessage::serialize(base::SerializationOArchive& oa,
-                               const net::Endpoint& new_node_endpoint,
-                               const lk::Address& address)
-{
-    oa.serialize(lk::MessageType::NEW_NODE);
-    oa.serialize(new_node_endpoint);
-    oa.serialize(address);
-}
-
-
-NewNodeMessage NewNodeMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto ep = net::Endpoint::deserialize(ia);
-    auto address = ia.deserialize<lk::Address>();
-    return { std::move(ep), std::move(address) };
-}
-
-
-void NewNodeMessage::handle(const Peer::Context& ctx, Peer&)
-{
-    ctx.host.checkOutPeer(_new_node_endpoint);
-    ctx.host.broadcast(prepareMessage<NewNodeMessage>(_new_node_endpoint));
-}
-
-
-NewNodeMessage::NewNodeMessage(net::Endpoint&& new_node_endpoint, lk::Address&& address)
-  : _new_node_endpoint{ std::move(new_node_endpoint) }
-  , _address{ std::move(address) }
-{}
-
-//============================================
-
 constexpr lk::MessageType CloseMessage::getHandledMessageType()
 {
     return lk::MessageType::CLOSE;
@@ -1002,25 +951,16 @@ CloseMessage::CloseMessage() {}
 
 //============================================
 
-void Peer::onReceive(const base::Bytes& bytes)
-{
-    MessageProcessor processor{ _ctx };
-    processor.process(bytes);
-}
-
-
-void Peer::onClose() {}
-
 
 void Peer::sendBlock(const lk::Block& block)
 {
-    send(prepareMessage<BlockMessage>(block));
+    send(prepareMessage<BlockMessage>(block), {});
 }
 
 
 void Peer::sendTransaction(const lk::Transaction& tx)
 {
-    send(prepareMessage<TransactionMessage>(tx));
+    send(prepareMessage<TransactionMessage>(tx), {});
 }
 
 
@@ -1039,26 +979,27 @@ void Peer::lookup(const lk::Address& address,
 
 std::shared_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
-    std::shared_ptr<Peer> ret(new Peer(std::move(session), false, host.getPool(), core));
-    ret->start();
+    std::shared_ptr<Peer> ret(new Peer(std::move(session), false, host.getPool(), core, host));
+    ret->startSession();
     return ret;
 }
 
 
 std::shared_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
-    std::shared_ptr<Peer> ret(new Peer(std::move(session), true, host.getPool(), core));
-    ret->start();
+    std::shared_ptr<Peer> ret(new Peer(std::move(session), true, host.getPool(), core, host));
+    ret->startSession();
     return ret;
 }
 
 
-Peer::Peer(std::unique_ptr<net::Session> session, bool is_connected, lk::PeerPoolBase& pool, lk::Core& core)
+Peer::Peer(std::unique_ptr<net::Session> session, bool is_connected, lk::PeerPoolBase& pool, lk::Core& core, lk::Host& host)
   : _session{ std::move(session) }
   , _address{ lk::Address::null() }
   , _was_connected_to{ is_connected }
   , _pool{ pool }
   , _core{ core }
+  , _host{ host }
 {}
 
 
@@ -1107,13 +1048,13 @@ const std::forward_list<lk::Block>& Peer::getSyncBlocks() const noexcept
 }
 
 
-void Peer::send(const base::Bytes& data, net::Connection::SendHandler on_send)
+void Peer::send(const base::Bytes& data, net::Connection::SendHandler on_send = {})
 {
     _session->send(data, std::move(on_send));
 }
 
 
-void Peer::send(base::Bytes&& data, net::Connection::SendHandler on_send)
+void Peer::send(base::Bytes&& data, net::Connection::SendHandler on_send = {})
 {
     _session->send(std::move(data), std::move(on_send));
 }
@@ -1137,8 +1078,12 @@ bool Peer::wasConnectedTo() const noexcept
 }
 
 
-void Peer::start()
+void Peer::startSession()
 {
+    if(_session->isActive()) {
+        return;
+    }
+
     _session->start();
     if (wasConnectedTo()) {
         /*
@@ -1175,6 +1120,18 @@ bool Peer::isClosed() const
 Peer::Info Peer::getInfo() const
 {
     return Peer::Info{ _session->getEndpoint(), _address };
+}
+
+
+void Peer::setState(Peer::State state)
+{
+    _state = state;
+}
+
+
+Peer::State Peer::getState() const noexcept
+{
+    return _state;
 }
 
 
