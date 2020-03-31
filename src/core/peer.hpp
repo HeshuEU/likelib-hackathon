@@ -29,9 +29,6 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
                                                   (GET_BLOCK)
                                                   (BLOCK)
                                                   (BLOCK_NOT_FOUND)
-                                                  (GET_INFO)
-                                                  (INFO)
-                                                  (NEW_NODE)
                                                   (CLOSE)
 )
 // clang-format on

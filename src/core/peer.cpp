@@ -285,12 +285,7 @@ bool runHandleImpl([[maybe_unused]] lk::MessageType mt, base::SerializationIArch
 template<typename C, typename... Args>
 bool runHandle(lk::MessageType mt, base::SerializationIArchive& ia, const C& ctx, Peer& peer)
 {
-    if (runHandleImpl<C, Args..., Dummy>(mt, ia, ctx, peer)) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return runHandleImpl<C, Args..., Dummy>(mt, ia, ctx, peer);
 }
 
 
