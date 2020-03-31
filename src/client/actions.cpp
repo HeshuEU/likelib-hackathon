@@ -32,7 +32,6 @@ constexpr const char* ADDRESS_OPTION = "address";
 constexpr const char* CODE_PATH_OPTION = "code";
 constexpr const char* METHOD_NAME_OPTION = "method";
 constexpr const char* DATA_OPTION = "data";
-constexpr const char* GAS_OPTION = "gas";
 constexpr const char* INITIAL_MESSAGE_OPTION = "init";
 constexpr const char* MESSAGE_OPTION = "message";
 constexpr const char* BLOCK_HASH_OPTION = "hash";
@@ -172,7 +171,7 @@ int ActionTransfer::execute()
 
     tx.sign(pub, priv);
 
-    auto [status, result, gas_left] = client.transaction_message_call(
+    auto [status, result, fee_left] = client.transaction_message_call(
       tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
 
     if (status) {
@@ -291,7 +290,7 @@ void ActionCreateContract::setupOptionsParser(base::ProgramOptionsParser& parser
     parser.addRequiredOption<std::string>(HOST_OPTION, "address of host");
     parser.addRequiredOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
     parser.addRequiredOption<lk::Balance>(AMOUNT_OPTION, "amount of Lk to transfer");
-    parser.addRequiredOption<lk::Balance>(GAS_OPTION, "gas count");
+    parser.addRequiredOption<lk::Balance>(FEE_OPTION, "fee count");
     parser.addRequiredOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addOption<std::string>(INITIAL_MESSAGE_OPTION, "message for initialize smart contract");
 }
@@ -313,7 +312,7 @@ int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
 
     _amount = parser.getValue<lk::Balance>(AMOUNT_OPTION);
-    _gas = parser.getValue<lk::Balance>(GAS_OPTION);
+    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
 
     if (parser.hasOption(INITIAL_MESSAGE_OPTION)) {
         _message = parser.getValue<std::string>(INITIAL_MESSAGE_OPTION);
@@ -334,7 +333,7 @@ int ActionCreateContract::execute()
     txb.setFrom(std::move(from_address));
     txb.setTo(lk::Address::null());
     txb.setTimestamp(base::Time::now());
-    txb.setFee(_gas);
+    txb.setFee(_fee);
 
     lk::ContractInitData init_data{ base::fromHex<base::Bytes>(_compiled_contract),
                                     base::fromHex<base::Bytes>(_message) };
@@ -347,12 +346,12 @@ int ActionCreateContract::execute()
 
     LOG_INFO << "Trying to connect to rpc server by: " << _host_address;
     rpc::RpcClient client(_host_address);
-    auto [status, contract_address, gas_left] = client.transaction_create_contract(
+    auto [status, contract_address, fee_left] = client.transaction_create_contract(
       tx.getAmount(), tx.getFrom(), tx.getTimestamp(), tx.getFee(), _compiled_contract, _message, tx.getSign());
 
     if (status) {
         std::cout << "Remote call of creation smart contract success -> [" << status.getMessage()
-                  << "], contract created at [" << contract_address.toString() << "], gas left[" << gas_left << "]"
+                  << "], contract created at [" << contract_address.toString() << "], fee left[" << fee_left << "]"
                   << std::endl;
         return base::config::EXIT_OK;
     }
@@ -384,7 +383,7 @@ void ActionMessageCall::setupOptionsParser(base::ProgramOptionsParser& parser)
     parser.addRequiredOption<std::string>(HOST_OPTION, "address of host");
     parser.addRequiredOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" contract");
     parser.addRequiredOption<lk::Balance>(AMOUNT_OPTION, "amount count");
-    parser.addRequiredOption<lk::Balance>(GAS_OPTION, "gas count");
+    parser.addRequiredOption<lk::Balance>(FEE_OPTION, "fee count");
     parser.addRequiredOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addRequiredOption<std::string>(MESSAGE_OPTION, "message for call smart contract");
 }
@@ -395,7 +394,7 @@ int ActionMessageCall::loadOptions(const base::ProgramOptionsParser& parser)
     _host_address = parser.getValue<std::string>(HOST_OPTION);
     _to_address = lk::Address{ parser.getValue<std::string>(TO_ADDRESS_OPTION) };
     _amount = parser.getValue<lk::Balance>(AMOUNT_OPTION);
-    _gas = parser.getValue<lk::Balance>(GAS_OPTION);
+    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
     _message = parser.getValue<std::string>(MESSAGE_OPTION);
     return base::config::EXIT_OK;
@@ -413,7 +412,7 @@ int ActionMessageCall::execute()
     txb.setFrom(std::move(from_address));
     txb.setTo(std::move(_to_address));
     txb.setTimestamp(base::Time::now());
-    txb.setFee(_gas);
+    txb.setFee(_fee);
     txb.setData(base::fromHex<base::Bytes>(_message));
 
     auto tx = std::move(txb).build();
@@ -422,12 +421,12 @@ int ActionMessageCall::execute()
     LOG_INFO << "Try to connect to rpc server by: " << _host_address;
     rpc::RpcClient client(_host_address);
 
-    auto [status, contract_response, gas_left] = client.transaction_message_call(
+    auto [status, contract_response, fee_left] = client.transaction_message_call(
       tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), _message, tx.getSign());
 
     if (status) {
         std::cout << "Remote call of smart contract call success -> [" << status.getMessage() << "], contract response["
-                  << contract_response << "], gas left[" << gas_left << "]" << std::endl;
+                  << contract_response << "], fee left[" << fee_left << "]" << std::endl;
         return base::config::EXIT_OK;
     }
     else {

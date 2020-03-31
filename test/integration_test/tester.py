@@ -194,7 +194,7 @@ class _PushContractParser:
     _ADDRESS_TARGET = "address"
     _GAS_LEFT_TARGET = "gas_left"
     _RE_PARSER = re.compile(
-        r'Remote call of creation smart contract success -> \[Contract was successfully deployed\], contract created at \[(?P<address>.*)\], gas left\[(?P<gas_left>\d+)\]')
+        r'Remote call of creation smart contract success -> \[Contract was successfully deployed\], contract created at \[(?P<address>.*)\], fee left\[(?P<gas_left>\d+)\]')
 
     @staticmethod
     def parse(text):
@@ -222,7 +222,7 @@ class _MessageCallParser:
     _MESSAGE_TARGET = "message"
     _GAS_LEFT_TARGET = "gas_left"
     _RE_PARSER = re.compile(
-        r'Remote call of smart contract call success -> \[Message call was successfully executed\], contract response\[(?P<message>.*)\], gas left\[(?P<gas_left>\d+)\]')
+        r'Remote call of smart contract call success -> \[Message call was successfully executed\], contract response\[(?P<message>.*)\], fee left\[(?P<gas_left>\d+)\]')
 
     @staticmethod
     def parse(text):
@@ -307,6 +307,9 @@ class _KeysInfoParser:
             if match:
                 return match.group(_KeysInfoParser._TARGET)
         return None
+
+
+MINIMUM_TX_WAIT = 1
 
 
 class Node:
@@ -472,10 +475,11 @@ class Node:
                 f"not success command execution {command} with parameters {parameters}: {pipe.stderr.decode('utf8')}")
         return pipe.stdout.decode("utf8")
 
-    def __run_client_command(self, *, command, parameters, timeout):
+    def __run_client_command(self, *, command, parameters, timeout, wait=0):
         run_commands = [self.env.client_path, command, "--host", self.settings.id.connect_rpc_address, *parameters]
         try:
             pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
+            time.sleep(wait)
         except subprocess.TimeoutExpired as e:
             message = f"{self.name} - client slow command execution {command} with parameters {parameters} at node {self.settings.id.connect_rpc_address}"
             print(f"{self.name} - is in dead lock. pid {self.pid}, rpc address: {self.settings.id.connect_rpc_address}",
@@ -514,12 +518,12 @@ class Node:
         TEST_CHECK_EQUAL(self.get_balance(address=address, timeout=timeout), balance,
                          message=f"fail during check balance test to node[{self.name}] by address: {address.address}")
 
-    def run_check_transfer(self, to_address, amount, from_address, fee, timeout=1, wait=0):
+    def run_check_transfer(self, to_address, amount, from_address, fee, timeout=1, wait=MINIMUM_TX_WAIT):
         TEST_CHECK(self.transfer(to_address=to_address, amount=amount, from_address=from_address,
                                  fee=fee, wait=wait, timeout=timeout),
                    message=f"fail during transfer test to node[{self.name}]")
 
-    def generate_keys(self, *, keys_path, timeout=1):
+    def generate_keys(self, *, keys_path):
         os.makedirs(keys_path)
         result = self.__run_standalone_command(command="generate", parameters=["--keys", keys_path])
         return _GenerateKeysParser.parse(result)
@@ -528,7 +532,7 @@ class Node:
         keys_info = self.generate_keys(keys_path=os.path.join(self.work_dir, keys_path))
         return self.Address(keys_info['keys_path'], keys_info['address'])
 
-    def get_keys_info(self, *, keys_path, timeout=1):
+    def get_keys_info(self, *, keys_path):
         result = self.__run_standalone_command(command="keys_info", parameters=["--keys", keys_path])
         return _KeysInfoParser.parse(result)
 
@@ -536,12 +540,11 @@ class Node:
         address = self.get_keys_info(keys_path=keys_path)
         return self.Address(keys_path, address)
 
-    def transfer(self, *, to_address, amount, from_address, fee, wait=0, timeout=5):
+    def transfer(self, *, to_address, amount, from_address, fee, wait=MINIMUM_TX_WAIT, timeout=5):
         parameters = ["--to", to_address.address, "--amount",
                       str(amount), "--keys", from_address.key_path, "--fee", str(fee)]
         result = self.__run_client_command(
-            command="transfer", parameters=parameters, timeout=timeout)
-        time.sleep(wait)
+            command="transfer", parameters=parameters, timeout=timeout, wait=wait)
         return _TransferParser.parse(result)
 
     def compile_contract(self, *, code):
@@ -558,17 +561,17 @@ class Node:
                                                            message.message])
         return _DecodeParser.parse(result)
 
-    def push_contract(self, *, from_address, code, gas, amount, init_message, timeout=1):
+    def push_contract(self, *, from_address, code, fee, amount, init_message, timeout=1, wait=MINIMUM_TX_WAIT):
         parameters = ["--keys", from_address.key_path, "--code", code, "--amount",
-                      str(amount), "--gas", str(gas), "--init", init_message]
+                      str(amount), "--fee", str(fee), "--init", init_message]
         result = self.__run_client_command(
-            command="create_contract", parameters=parameters, timeout=timeout)
+            command="create_contract", parameters=parameters, timeout=timeout, wait=wait)
         return _PushContractParser.parse(result)
 
-    def message_to_contract(self, *, from_address, to_address, gas, amount, message, timeout=1):
+    def message_to_contract(self, *, from_address, to_address, fee, amount, message, timeout=1, wait=MINIMUM_TX_WAIT):
         parameters = ["--keys", from_address.key_path, "--to", to_address.address,
-                      "--amount", str(amount), "--gas", str(gas), "--message", message]
-        result = self.__run_client_command(command="message_call", parameters=parameters, timeout=timeout)
+                      "--amount", str(amount), "--fee", str(fee), "--message", message]
+        result = self.__run_client_command(command="message_call", parameters=parameters, timeout=timeout, wait=wait)
         return _MessageCallParser.parse(result)
 
     def __write_config(self):
@@ -595,8 +598,6 @@ class Node:
         self.__write_config()
         self.process = subprocess.Popen([self.env.node_path, "--config", self.node_config_file],
                                         cwd=self.work_dir, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        self.logger.debug(
-            f"{self.name} - start node(pid:{self.pid}) with work directory: {self.work_dir}")
 
         if self.process.poll() is None:
             self.logger.info(
@@ -607,6 +608,9 @@ class Node:
                 f"{self.name} - failed running node with work directory:{self.work_dir}")
             self.__running = False
             raise Exception(f"{self.name} - Process failed to start")
+
+        self.logger.debug(
+            f"{self.name} - start node(pid:{self.pid}) with work directory: {self.work_dir}")
 
         time.sleep(start_up_time)
 

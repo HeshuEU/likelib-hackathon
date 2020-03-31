@@ -27,21 +27,21 @@ def main(env, logger):
 
         distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
-                                               gas=10000000, init_message=test_contract_init_message, timeout=5)
+                                               fee=10000000, init_message=test_contract_init_message, timeout=5)
 
         call_message = node.encode_message(code=test_contract, message="get()")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=10000000, amount=0, message=call_message, timeout=5)
+                                                  fee=10000000, amount=0, message=call_message, timeout=5)
         res = node.decode_message(code=test_contract, method="get", message=message_result)
         TEST_CHECK(res['stored_data'] == target_value)
 
         target_value_2 = 5555
         call_message_2 = node.encode_message(code=test_contract, message=f"set({target_value_2})")
         node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                 gas=10000000, amount=0, message=call_message_2, timeout=5)
+                                 fee=10000000, amount=0, message=call_message_2, timeout=5)
 
         message_result_3 = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                    gas=10000000, amount=0, message=call_message, timeout=5)
+                                                    fee=10000000, amount=0, message=call_message, timeout=5)
 
         res = node.decode_message(code=test_contract, method="get", message=message_result_3)
         TEST_CHECK(res['stored_data'] == target_value_2)
@@ -63,14 +63,14 @@ def main(env, logger):
         test_contract = contracts[0]
         distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
-                                               gas=10000000, init_message="", timeout=5)
+                                               fee=10000000, init_message="", timeout=5)
 
         current_balance = node.get_balance(address=distributor_address)
         gas_for_call = 10000000
 
         call_message = node.encode_message(code=test_contract, message="getBalance()")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=gas_for_call, amount=0, message=call_message, timeout=5)
+                                                  fee=gas_for_call, amount=0, message=call_message, timeout=5)
         res = node.decode_message(code=test_contract, method="getBalance", message=message_result)
         TEST_CHECK((res["balance"] + gas_for_call) == current_balance)
 
@@ -101,7 +101,7 @@ def main(env, logger):
         test_contract = contracts[0]
 
         deployed_contract = node.push_contract(from_address=new_test_account, code=test_contract, amount=0,
-                                               gas=100000, init_message="", timeout=5)
+                                               fee=100000, init_message="", timeout=5)
 
         current_balance = node.get_balance(address=new_test_account)
 
@@ -109,7 +109,7 @@ def main(env, logger):
         amount_for_call = 5000000
         call_message = node.encode_message(code=test_contract, message=f"testAddressSend({amount_for_call})")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=gas_for_call, amount=amount_for_call, message=call_message,
+                                                  fee=gas_for_call, amount=amount_for_call, message=call_message,
                                                   timeout=5)
         res = node.decode_message(code=test_contract, method="testAddressSend", message=message_result)
         TEST_CHECK(res["is_success"])
@@ -134,13 +134,13 @@ def main(env, logger):
         test_contract = contracts[0]
         distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
-                                               gas=10000000, init_message="", timeout=5)
+                                               fee=10000000, init_message="", timeout=5)
 
         current_block_hash = node.get_info()
 
         call_message = node.encode_message(code=test_contract, message="get()")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=10000000, amount=0, message=call_message, timeout=5)
+                                                  fee=10000000, amount=0, message=call_message, timeout=5)
         res = node.decode_message(code=test_contract, method="get", message=message_result)
         TEST_CHECK(res["previous_block_hash"] == current_block_hash)
 
@@ -148,13 +148,13 @@ def main(env, logger):
 
         call_message = node.encode_message(code=test_contract, message="get()")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=10000000, amount=0, message=call_message, timeout=5)
+                                                  fee=10000000, amount=0, message=call_message, timeout=5)
         res = node.decode_message(code=test_contract, method="get", message=message_result)
         TEST_CHECK(res["previous_block_hash"] == current_block_hash)
 
         call_message = node.encode_message(code=test_contract, message="get()")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=10000000, amount=0, message=call_message, timeout=5)
+                                                  fee=10000000, amount=0, message=call_message, timeout=5)
         res = node.decode_message(code=test_contract, method="get", message=message_result)
         TEST_CHECK(res["previous_block_hash"] != current_block_hash)
 
@@ -177,17 +177,17 @@ def main(env, logger):
         distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         init_message = node.encode_message(code=test_contract, message=f"constructor(Address({new_account.address}))")
         deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=50,
-                                               gas=10000000, init_message=init_message, timeout=7)
+                                               fee=10000000, init_message=init_message, timeout=7)
         amount_for_call = 100000
 
         pay_message = node.encode_message(code=test_contract, message="payMe()")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=10000000, amount=amount_for_call, message=pay_message, timeout=7)
+                                                  fee=10000000, amount=amount_for_call, message=pay_message, timeout=7)
         res = node.decode_message(code=test_contract, method="payMe", message=message_result)
         TEST_CHECK(res["current_balance"] == node.get_balance(address=deployed_contract))
 
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=10000000, amount=amount_for_call, message=pay_message, timeout=7)
+                                                  fee=10000000, amount=amount_for_call, message=pay_message, timeout=7)
         res = node.decode_message(code=test_contract, method="payMe", message=message_result)
         TEST_CHECK(res["current_balance"] == node.get_balance(address=deployed_contract))
 
@@ -195,12 +195,12 @@ def main(env, logger):
         last_balance = node.get_balance(address=deployed_contract)
         delete_message = node.encode_message(code=test_contract, message="initDelete()")
         node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                 gas=10000000, amount=0, message=delete_message, timeout=7)
+                                 fee=10000000, amount=0, message=delete_message, timeout=7)
         TEST_CHECK(last_balance == node.get_balance(address=new_account))
         TEST_CHECK(0 == node.get_balance(address=deployed_contract))
 
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=10000000, amount=1, message=pay_message, timeout=7)
+                                                  fee=10000000, amount=1, message=pay_message, timeout=7)
         TEST_CHECK(not message_result.message)
 
     return 0
@@ -228,17 +228,17 @@ def main(env, logger):
 
         distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         deployed_contract_a = node.push_contract(from_address=distributor_address, code=test_contract_a, amount=0,
-                                                 gas=10000000, init_message="", timeout=5)
+                                                 fee=10000000, init_message="", timeout=5)
 
         deployed_contract_b = node.push_contract(from_address=distributor_address, code=test_contract_b, amount=0,
-                                                 gas=10000000, init_message="", timeout=5)
+                                                 fee=10000000, init_message="", timeout=5)
 
         arg1 = 5
         arg2 = 6
         call_message = node.encode_message(code=test_contract_b,
                                            message=f"doYourThing(Address({deployed_contract_a.address}), {arg1}, {arg2})")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract_b,
-                                                  gas=10000000, amount=0, message=call_message, timeout=5)
+                                                  fee=10000000, amount=0, message=call_message, timeout=5)
         res = node.decode_message(code=test_contract_b, method="doYourThing", message=message_result)
         TEST_CHECK(res['result'] == (arg1 + arg2))
 

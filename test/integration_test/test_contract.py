@@ -40,11 +40,11 @@ contract SimpleStorage {
 
         distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
         deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
-                                               gas=10000000, init_message=test_contract_init_message, timeout=5)
+                                               fee=10000000, init_message=test_contract_init_message, timeout=5)
 
         call_message = node.encode_message(code=test_contract, message="get()")
         message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  gas=10000000, amount=0, message=call_message, timeout=5)
+                                                  fee=10000000, amount=0, message=call_message, timeout=5)
         res = node.decode_message(code=test_contract, method="get", message=message_result)
         TEST_CHECK(res['data'] == target_value)
 
