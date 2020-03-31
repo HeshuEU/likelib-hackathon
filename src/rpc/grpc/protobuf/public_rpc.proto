@@ -69,7 +69,7 @@ message TransactionMessageCallRequest {
     Address from = 1;
     Address to = 2;
     CurrencyAmount value = 3;
-    CurrencyAmount fee = 4;
+    CurrencyFee fee = 4;
     Time creation_time = 5;
     string data = 6;
     string signature = 7;
@@ -77,7 +77,7 @@ message TransactionMessageCallRequest {
 
 message TransactionMessageCallResponse {
     OperationStatus status = 1;
-    CurrencyAmount gas_left = 2;
+    CurrencyFee fee_left = 2;
     string contract_response = 3;
 }
 
@@ -86,7 +86,7 @@ message TransactionMessageCallResponse {
 message TransactionCreateContractRequest {
     Address from = 1;
     CurrencyAmount value = 2;
-    CurrencyAmount fee = 3;
+    CurrencyFee fee = 3;
     Time creation_time = 4;
     string contract_code = 5;
     string init = 6;
@@ -95,7 +95,7 @@ message TransactionCreateContractRequest {
 
 message TransactionCreateContractResponse {
     OperationStatus status = 1;
-    CurrencyAmount gas_left = 2;
+    CurrencyFee fee_left = 2;
     Address contract_address = 3;
 }
 
@@ -110,6 +110,10 @@ message Time {
 }
 
 message CurrencyAmount {
+    string value = 1;
+}
+
+message CurrencyFee {
     uint64 value = 1;
 }
 
@@ -126,7 +130,7 @@ message Transaction {
     Address from = 1;
     Address to = 2;
     CurrencyAmount value = 3;
-    CurrencyAmount gas = 4;
+    CurrencyFee fee = 4;
     Time creation_time = 5;
     string data = 6;
     string signature = 7;

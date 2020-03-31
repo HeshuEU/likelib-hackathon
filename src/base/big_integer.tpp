@@ -164,6 +164,20 @@ std::string BigInteger<T>::toString() const noexcept
 
 
 template<typename T>
+void BigInteger<T>::serialize(base::SerializationOArchive& oa) const    //TODO: plug
+{
+    oa.serialize(1);
+}
+
+
+template<typename T>
+BigInteger<T> BigInteger<T>::deserialize(base::SerializationIArchive& ia)   //TODO: plug
+{
+    return ia.deserialize<std::uint64_t>();;
+}
+
+
+template<typename T>
 std::ostream& operator<<(std::ostream& output, const BigInteger<T>& big_int)
 {
     return output << big_int.toString();

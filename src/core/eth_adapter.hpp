@@ -20,7 +20,7 @@ class EthAdapter
 
     ~EthAdapter();
 
-    std::tuple<lk::Address, base::Bytes, lk::Balance> createContract(const lk::Address& bc_address,
+    std::tuple<lk::Address, base::Bytes, std::uint64_t> createContract(const lk::Address& bc_address,
                                                                      const lk::Transaction& associated_tx,
                                                                      const lk::Block& associated_block);
     vm::ExecutionResult call(const lk::Transaction& associated_tx, const lk::Block& associated_block);

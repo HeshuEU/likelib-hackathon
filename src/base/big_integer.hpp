@@ -1,5 +1,7 @@
 #pragma once
 
+#include "base/serialization.hpp"
+
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include <istream>
@@ -72,6 +74,12 @@ class BigInteger
     //----------------------------------
 
     std::string toString() const noexcept;
+
+    //----------------------------------
+
+    void serialize(base::SerializationOArchive& oa) const;
+
+    static BigInteger<T> deserialize(base::SerializationIArchive& ia);
 
   private:
     boost::multiprecision::number<T> _number;

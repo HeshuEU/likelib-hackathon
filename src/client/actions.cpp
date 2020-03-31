@@ -142,7 +142,7 @@ int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser)
     _host_address = parser.getValue<std::string>(HOST_OPTION);
     _to_address = lk::Address{ parser.getValue<std::string>(TO_ADDRESS_OPTION) };
     _amount = parser.getValue<lk::Balance>(AMOUNT_OPTION);
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
     return base::config::EXIT_OK;
 }
@@ -312,7 +312,7 @@ int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
 
     _amount = parser.getValue<lk::Balance>(AMOUNT_OPTION);
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
 
     if (parser.hasOption(INITIAL_MESSAGE_OPTION)) {
         _message = parser.getValue<std::string>(INITIAL_MESSAGE_OPTION);
@@ -394,7 +394,7 @@ int ActionMessageCall::loadOptions(const base::ProgramOptionsParser& parser)
     _host_address = parser.getValue<std::string>(HOST_OPTION);
     _to_address = lk::Address{ parser.getValue<std::string>(TO_ADDRESS_OPTION) };
     _amount = parser.getValue<lk::Balance>(AMOUNT_OPTION);
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
     _message = parser.getValue<std::string>(MESSAGE_OPTION);
     return base::config::EXIT_OK;

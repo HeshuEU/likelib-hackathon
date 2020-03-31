@@ -54,7 +54,7 @@ OperationStatus GrpcNodeClient::test(uint32_t api_version)
     }
 }
 
-lk::Balance GrpcNodeClient::balance(const lk::Address& address)
+std::string GrpcNodeClient::balance(const lk::Address& address)
 {
     // convert data for request
     likelib::Address request;
@@ -120,7 +120,7 @@ lk::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
             txb.setFrom(lk::Address(txv.from().address()));
             txb.setTo(lk::Address(txv.to().address()));
             txb.setAmount(txv.value().value());
-            txb.setFee(txv.gas().value());
+            txb.setFee(txv.fee().value());
             txb.setTimestamp(base::Time(txv.creation_time().since_epoch()));
             txb.setData(base::base64Decode(txv.data()));
             txb.setSign(lk::Sign::fromBase64(txv.signature()));
@@ -140,18 +140,18 @@ lk::Block GrpcNodeClient::get_block(const base::Sha256& block_hash)
 }
 
 
-std::tuple<OperationStatus, lk::Address, lk::Balance> GrpcNodeClient::transaction_create_contract(
+std::tuple<OperationStatus, lk::Address, std::uint64_t> GrpcNodeClient::transaction_create_contract(
   lk::Balance amount,
   const lk::Address& from_address,
   const base::Time& transaction_time,
-  lk::Balance gas,
+  std::uint64_t gas,
   const std::string& contract_code,
   const std::string& init,
   const lk::Sign& signature)
 {
     // convert data for request
     likelib::TransactionCreateContractRequest request;
-    request.mutable_value()->set_value(static_cast<google::protobuf::uint64>(amount));
+    request.mutable_value()->set_value(static_cast<google::protobuf::string>(amount.toString()));
     request.mutable_from()->set_address(from_address.toString());
     request.mutable_fee()->set_value(static_cast<google::protobuf::uint64>(gas));
     request.set_init(init);
@@ -168,7 +168,7 @@ std::tuple<OperationStatus, lk::Address, lk::Balance> GrpcNodeClient::transactio
     if (status.ok()) {
         auto converted_status = convert(reply.status());
         auto contract_address = lk::Address{ reply.contract_address().address() };
-        auto gas_left = lk::Balance{ reply.gas_left().value() };
+        auto gas_left = std::uint64_t{ reply.fee_left().value() };
         return { converted_status, contract_address, gas_left };
     }
     else {
@@ -177,18 +177,18 @@ std::tuple<OperationStatus, lk::Address, lk::Balance> GrpcNodeClient::transactio
 }
 
 
-std::tuple<OperationStatus, std::string, lk::Balance> GrpcNodeClient::transaction_message_call(
+std::tuple<OperationStatus, std::string, std::uint64_t> GrpcNodeClient::transaction_message_call(
   lk::Balance amount,
   const lk::Address& from_address,
   const lk::Address& to_address,
   const base::Time& transaction_time,
-  lk::Balance fee,
+  std::uint64_t fee,
   const std::string& data,
   const lk::Sign& signature)
 {
     // convert data for request
     likelib::TransactionMessageCallRequest request;
-    request.mutable_value()->set_value(static_cast<google::protobuf::uint64>(amount));
+    request.mutable_value()->set_value(static_cast<google::protobuf::string>(amount.toString()));
     request.mutable_from()->set_address(from_address.toString());
     request.mutable_to()->set_address(to_address.toString());
     request.mutable_fee()->set_value(static_cast<google::protobuf::uint64>(fee));
@@ -204,7 +204,7 @@ std::tuple<OperationStatus, std::string, lk::Balance> GrpcNodeClient::transactio
     // return value if ok
     if (status.ok()) {
         auto converted_status = convert(reply.status());
-        auto gas_left = lk::Balance{ reply.gas_left().value() };
+        auto gas_left = std::uint64_t{ reply.fee_left().value() };
         auto message_from_contract = reply.contract_response();
         return { converted_status, message_from_contract, gas_left };
     }
