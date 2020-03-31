@@ -39,6 +39,8 @@ class BigInteger
 
     BigInteger<T> operator/(const BigInteger<T>& other) const;
 
+    BigInteger<T> operator%(const BigInteger<T>& other) const;
+
     BigInteger<T>& operator+=(const BigInteger<T>& other);
 
     BigInteger<T>& operator-=(const BigInteger<T>& other);
@@ -74,6 +76,8 @@ class BigInteger
     //----------------------------------
 
     std::string toString() const noexcept;
+
+    boost::multiprecision::number<T> toMultiNumber() const noexcept;
 
     //----------------------------------
 

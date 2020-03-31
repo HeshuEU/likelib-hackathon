@@ -3,10 +3,13 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/process.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <regex>
-
 
 namespace bp = ::boost::process;
 
@@ -28,6 +31,17 @@ base::Bytes encode(N value)
 
     std::reverse(real.getData(), real.getData() + real.size());
     return base::Bytes(32 - sizeof(value)) + real;
+}
+
+
+base::Bytes encode(lk::Balance value)
+{
+    base::Bytes ret;
+    for(int i = 0; i < 32; ++i) {
+        ret.append(static_cast<base::Byte>(std::atoi((value % 256).toString().c_str())));
+        value /= 256;
+    }
+    return ret;
 }
 
 } // namespace detail

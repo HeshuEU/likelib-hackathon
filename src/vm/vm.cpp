@@ -161,7 +161,7 @@ base::Bytes ExecutionResult::toOutputData() const
 }
 
 
-int64_t ExecutionResult::gasLeft() const
+uint64_t ExecutionResult::gasLeft() const
 {
     return _data->gas_left;
 }

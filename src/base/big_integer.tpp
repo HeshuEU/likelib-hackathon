@@ -49,6 +49,15 @@ BigInteger<T> BigInteger<T>::operator/(const BigInteger<T>& other) const
 
 
 template<typename T>
+BigInteger<T> BigInteger<T>::operator%(const BigInteger<T>& other) const
+{
+    BigInteger<T> res;
+    res._number = _number % other._number;
+    return res;
+}
+
+
+template<typename T>
 BigInteger<T>& BigInteger<T>::operator+=(const BigInteger<T>& other)
 {
     _number += other._number;
@@ -164,16 +173,23 @@ std::string BigInteger<T>::toString() const noexcept
 
 
 template<typename T>
+boost::multiprecision::number<T> BigInteger<T>::toMultiNumber() const noexcept
+{
+    return _number;
+}
+
+
+template<typename T>
 void BigInteger<T>::serialize(base::SerializationOArchive& oa) const    //TODO: plug
 {
-    oa.serialize(1);
+    oa.serialize(toString());
 }
 
 
 template<typename T>
 BigInteger<T> BigInteger<T>::deserialize(base::SerializationIArchive& ia)   //TODO: plug
 {
-    return ia.deserialize<std::uint64_t>();;
+    return BigInteger<T>{ia.deserialize<std::string>()};
 }
 
 
