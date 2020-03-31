@@ -143,6 +143,12 @@ ExecutionResult::ExecutionResult(evmc::result&& data)
 {}
 
 
+bool ExecutionResult::revert() const noexcept
+{
+    return !_data || _data->status_code == evmc_status_code::EVMC_REVERT;
+}
+
+
 bool ExecutionResult::ok() const noexcept
 {
     return !_data || _data->status_code == evmc_status_code::EVMC_SUCCESS;

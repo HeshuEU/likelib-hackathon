@@ -4,6 +4,7 @@
 
 #include "vm/tools.hpp"
 #include "vm/vm.hpp"
+#include "vm/error.hpp"
 
 namespace lk
 {
@@ -292,9 +293,13 @@ std::tuple<lk::Address, base::Bytes, lk::Balance> EthAdapter::createContract(con
                                               contract_data.getInit());
 
     _eth_host->setContext(&associated_tx, &associated_block);
-    if (auto result = _vm.execute(message); result.ok()) {
+    auto result = _vm.execute(message);
+    if (result.ok()) {
         // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
         return { contract_address, {}, static_cast<lk::Balance>(result.gasLeft()) };
+    }
+    else if (result.revert()) {
+        RAISE_ERROR(vm::RevertError, "contract creation failed during execution");
     }
     else {
         RAISE_ERROR(base::Error, "contract creation failed during execution");

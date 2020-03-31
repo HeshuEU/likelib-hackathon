@@ -81,6 +81,7 @@ class ExecutionResult
     ExecutionResult& operator=(const ExecutionResult&) = delete;
     ~ExecutionResult() = default;
 
+    bool revert() const noexcept;
     bool ok() const noexcept;
 
     base::Bytes toOutputData() const;
