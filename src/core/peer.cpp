@@ -130,7 +130,9 @@ class LookupResponseMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const lk::Address& address, const std::vector<lk::PeerBase::Info>& peers_info);
+    static void serialize(base::SerializationOArchive& oa,
+                          const lk::Address& address,
+                          const std::vector<lk::PeerBase::Info>& peers_info);
     static LookupResponseMessage deserialize(base::SerializationIArchive& ia);
     void handle(const Peer::Context& ctx, Peer& peer);
 
@@ -314,10 +316,13 @@ class MessageProcessor
         auto type = ia.deserialize<lk::MessageType>();
 
         if (runHandle<Peer::Context,
+                      CannotAcceptMessage,
                       AcceptedMessage,
                       AcceptedResponseMessage,
                       PingMessage,
                       PongMessage,
+                      LookupMessage,
+                      LookupResponseMessage,
                       TransactionMessage,
                       GetBlockMessage,
                       BlockMessage,
@@ -375,9 +380,7 @@ void CannotAcceptMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     ctx.pool.removePeer(&peer);
 
     for (const auto& peer : _peers_info) {
-        ctx.host.checkOutPeer(peer.endpoint, [](std::shared_ptr<Peer> peer) {
-            peer->startSession();
-        });
+        ctx.host.checkOutPeer(peer.endpoint, [](std::shared_ptr<Peer> peer) { peer->startSession(); });
     }
 }
 
@@ -427,7 +430,8 @@ void AcceptedMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     peer.send(prepareMessage<AcceptedResponseMessage>(ctx.core.getTopBlock(),
                                                       ctx.core.getThisNodeAddress(),
                                                       peer.getPublicEndpoint().getPort(),
-                                                      allPeersInfoExcept(ctx.host.getPool(), peer.getAddress())), {});
+                                                      allPeersInfoExcept(ctx.host.getPool(), peer.getAddress())),
+              {});
 
     if (_public_port) {
         auto public_ep = peer.getEndpoint();
@@ -436,9 +440,7 @@ void AcceptedMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     }
 
     for (const auto& peer_info : _known_peers) {
-        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) {
-            peer->startSession();
-        });
+        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) { peer->startSession(); });
     }
 
     if (_theirs_top_block == ours_top_block) {
@@ -521,9 +523,7 @@ void AcceptedResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     }
 
     for (const auto& peer_info : _known_peers) {
-        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) {
-            peer->startSession();
-        });
+        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) { peer->startSession(); });
     }
 
     if (_theirs_top_block == ours_top_block) {
@@ -624,10 +624,11 @@ void LookupMessage::serialize(base::SerializationOArchive& oa, const lk::Address
 }
 
 
-LookupMessage LookupMessage::deserialize(base::SerializationIArchive& ia) {
+LookupMessage LookupMessage::deserialize(base::SerializationIArchive& ia)
+{
     auto address = ia.deserialize<lk::Address>();
     auto selection_size = ia.deserialize<std::uint8_t>();
-    return LookupMessage{std::move(address), selection_size};
+    return LookupMessage{ std::move(address), selection_size };
 }
 
 
@@ -647,7 +648,7 @@ LookupMessage::LookupMessage(lk::Address address, std::uint8_t selection_size)
 
 constexpr lk::MessageType LookupResponseMessage::getHandledMessageType()
 {
-    return lk::MessageType::LOOKUP;
+    return lk::MessageType::LOOKUP_RESPONSE;
 }
 
 
@@ -675,7 +676,7 @@ void LookupResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of
     // communication: now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
 
-    if(auto it = peer._lookup_callbacks.find(_address); it != peer._lookup_callbacks.end()) {
+    if (auto it = peer._lookup_callbacks.find(_address); it != peer._lookup_callbacks.end()) {
         auto callback = std::move(it->second);
         peer._lookup_callbacks.erase(it);
         callback(_peers_info);
@@ -684,7 +685,8 @@ void LookupResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 
 
 LookupResponseMessage::LookupResponseMessage(lk::Address address, std::vector<lk::PeerBase::Info> peers_info)
-  : _address{std::move(address)}, _peers_info{ std::move(peers_info) }
+  : _address{ std::move(address) }
+  , _peers_info{ std::move(peers_info) }
 {}
 
 //============================================
@@ -896,12 +898,13 @@ void Peer::lookup(const lk::Address& address,
     struct LookupData
     {
         LookupData(boost::asio::io_context& io_context, lk::Address address)
-            : address{address}, timer{io_context}
+          : address{ address }
+          , timer{ io_context }
         {
             timer.expires_after(std::chrono::seconds(base::config::NET_CONNECT_TIMEOUT));
         }
 
-        bool was_responded{false};
+        bool was_responded{ false };
         lk::Address address;
         boost::asio::steady_timer timer;
     };
@@ -913,9 +916,8 @@ void Peer::lookup(const lk::Address& address,
         _lookup_callbacks.erase(_lookup_callbacks.find(data->address));
     });
 
-    _lookup_callbacks.insert({address, [data, callback = std::move(callback)](auto peers_info) {
-        callback(peers_info);
-    }});
+    _lookup_callbacks.insert(
+      { address, [data, callback = std::move(callback)](auto peers_info) { callback(peers_info); } });
 
     send(prepareMessage<LookupMessage>(address, alpha), {});
 }
@@ -938,7 +940,12 @@ std::shared_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk:
 }
 
 
-Peer::Peer(std::unique_ptr<net::Session> session, bool is_connected, boost::asio::io_context& io_context, lk::PeerPoolBase& pool, lk::Core& core, lk::Host& host)
+Peer::Peer(std::unique_ptr<net::Session> session,
+           bool is_connected,
+           boost::asio::io_context& io_context,
+           lk::PeerPoolBase& pool,
+           lk::Core& core,
+           lk::Host& host)
   : _session{ std::move(session) }
   , _io_context{ io_context }
   , _address{ lk::Address::null() }
@@ -946,7 +953,9 @@ Peer::Peer(std::unique_ptr<net::Session> session, bool is_connected, boost::asio
   , _pool{ pool }
   , _core{ core }
   , _host{ host }
-{}
+{
+    _session->setHandler(std::make_unique<Handler>(*this));
+}
 
 
 net::Endpoint Peer::getEndpoint() const
@@ -1026,9 +1035,10 @@ bool Peer::wasConnectedTo() const noexcept
 
 void Peer::startSession()
 {
-    if(_session->isActive()) {
+    if (_is_started) {
         return;
     }
+    _is_started = true;
 
     _session->start();
     if (wasConnectedTo()) {
@@ -1084,6 +1094,26 @@ Peer::State Peer::getState() const noexcept
 bool Peer::tryAddToPool()
 {
     return _pool.tryAddPeer(shared_from_this());
+}
+
+
+Peer::Handler::Handler(Peer& peer)
+  : _peer{ peer }
+{}
+
+
+void Peer::Handler::onReceive(const base::Bytes& bytes)
+{
+    MessageProcessor processor(Peer::Context{ _peer._core, _peer._host, _peer._host.getPool() }, _peer);
+    processor.process(bytes);
+}
+
+
+void Peer::Handler::onClose()
+{
+    if (_peer._is_attached_to_pool) {
+        _peer._pool.removePeer(&_peer);
+    }
 }
 
 }

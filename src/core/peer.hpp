@@ -136,13 +136,22 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     //===============
     void startSession();
 
-    void lookup(const lk::Address& address, std::size_t alpha, std::function<void(std::vector<PeerBase::Info>)> callback);
-    std::multimap<lk::Address, std::function< void(std::vector<PeerBase::Info>) >> _lookup_callbacks; // TODO: refactor, of course
+    void lookup(const lk::Address& address,
+                std::size_t alpha,
+                std::function<void(std::vector<PeerBase::Info>)> callback);
+    std::multimap<lk::Address, std::function<void(std::vector<PeerBase::Info>)>>
+      _lookup_callbacks; // TODO: refactor, of course
   private:
     //================
-    Peer(std::unique_ptr<net::Session> session, bool is_connected, boost::asio::io_context& io_context, lk::PeerPoolBase& pool, lk::Core& core, lk::Host& host);
+    Peer(std::unique_ptr<net::Session> session,
+         bool is_connected,
+         boost::asio::io_context& io_context,
+         lk::PeerPoolBase& pool,
+         lk::Core& core,
+         lk::Host& host);
     //================
     std::unique_ptr<net::Session> _session;
+    bool _is_started{ false };
     //================
     boost::asio::io_context& _io_context;
     //================
@@ -159,6 +168,18 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     lk::Host& _host;
     //================
     void rejectedByPool();
+    //================
+    class Handler : public net::Session::Handler
+    {
+      public:
+        Handler(Peer& peer);
+
+        void onReceive(const base::Bytes& bytes) override;
+        void onClose() override;
+
+      private:
+        Peer& _peer;
+    };
     //================
 };
 
