@@ -107,6 +107,7 @@ class Host
     //=================================
     std::vector<Peer::Info> allConnectedPeersInfo() const;
     unsigned short getPublicPort() const noexcept;
+    boost::asio::io_context& getIoContext() noexcept;
     //=================================
   private:
     //=================================

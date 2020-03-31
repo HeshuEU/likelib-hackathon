@@ -288,6 +288,12 @@ const PeerTable& Host::getPool() const noexcept
 }
 
 
+boost::asio::io_context& Host::getIoContext() noexcept
+{
+    return _io_context;
+}
+
+
 void Host::networkThreadWorkerFunction() noexcept
 {
     try {

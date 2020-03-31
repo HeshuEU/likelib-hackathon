@@ -130,13 +130,14 @@ class LookupResponseMessage
 {
   public:
     static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const std::vector<lk::PeerBase::Info>& peers_info);
+    static void serialize(base::SerializationOArchive& oa, const lk::Address& address, const std::vector<lk::PeerBase::Info>& peers_info);
     static LookupResponseMessage deserialize(base::SerializationIArchive& ia);
     void handle(const Peer::Context& ctx, Peer& peer);
 
   private:
+    lk::Address _address;
     std::vector<lk::PeerBase::Info> _peers_info;
-    LookupResponseMessage(std::vector<lk::PeerBase::Info> peers);
+    LookupResponseMessage(lk::Address address, std::vector<lk::PeerBase::Info> peers);
 };
 
 //============================================
@@ -201,39 +202,6 @@ class BlockNotFoundMessage
     base::Sha256 _block_hash;
 
     BlockNotFoundMessage(base::Sha256 block_hash);
-};
-
-//============================================
-
-class GetInfoMessage
-{
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa);
-    static GetInfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
-
-  private:
-    GetInfoMessage() = default;
-};
-
-//============================================
-
-class InfoMessage
-{
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa,
-                          const base::Sha256& top_block_hash,
-                          const std::vector<net::Endpoint>& available_peers);
-    static InfoMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
-
-  private:
-    base::Sha256 _top_block_hash;
-    std::vector<net::Endpoint> _available_peers;
-
-    InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers);
 };
 
 //============================================
@@ -354,8 +322,6 @@ class MessageProcessor
                       GetBlockMessage,
                       BlockMessage,
                       BlockNotFoundMessage,
-                      GetInfoMessage,
-                      InfoMessage,
                       CloseMessage>(type, ia, _ctx, _peer)) {
             LOG_DEBUG << "Processed " << enumToString(type) << " message";
         }
@@ -658,7 +624,11 @@ void LookupMessage::serialize(base::SerializationOArchive& oa, const lk::Address
 }
 
 
-LookupMessage LookupMessage::deserialize(base::SerializationIArchive& ia) {}
+LookupMessage LookupMessage::deserialize(base::SerializationIArchive& ia) {
+    auto address = ia.deserialize<lk::Address>();
+    auto selection_size = ia.deserialize<std::uint8_t>();
+    return LookupMessage{std::move(address), selection_size};
+}
 
 
 void LookupMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
@@ -682,14 +652,21 @@ constexpr lk::MessageType LookupResponseMessage::getHandledMessageType()
 
 
 void LookupResponseMessage::serialize(base::SerializationOArchive& oa,
+                                      const lk::Address& address,
                                       const std::vector<lk::PeerBase::Info>& peers_info)
 {
     oa.serialize(lk::MessageType::LOOKUP_RESPONSE);
+    oa.serialize(address);
     oa.serialize(peers_info);
 }
 
 
-LookupResponseMessage LookupResponseMessage::deserialize(base::SerializationIArchive& ia) {}
+LookupResponseMessage LookupResponseMessage::deserialize(base::SerializationIArchive& ia)
+{
+    auto address = ia.deserialize<lk::Address>();
+    auto peers_info = ia.deserialize<std::vector<lk::PeerBase::Info>>();
+    return LookupResponseMessage(std::move(address), std::move(peers_info));
+}
 
 
 void LookupResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
@@ -697,16 +674,17 @@ void LookupResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     // either we continue to ask for closest nodes or just connect to them
     // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of
     // communication: now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
-    for (const auto& peer_info : _peers_info) {
-        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) {
-            peer->startSession();
-        });
+
+    if(auto it = peer._lookup_callbacks.find(_address); it != peer._lookup_callbacks.end()) {
+        auto callback = std::move(it->second);
+        peer._lookup_callbacks.erase(it);
+        callback(_peers_info);
     }
 }
 
 
-LookupResponseMessage::LookupResponseMessage(std::vector<lk::PeerBase::Info> peers_info)
-  : _peers_info{ std::move(peers_info) }
+LookupResponseMessage::LookupResponseMessage(lk::Address address, std::vector<lk::PeerBase::Info> peers_info)
+  : _address{std::move(address)}, _peers_info{ std::move(peers_info) }
 {}
 
 //============================================
@@ -867,65 +845,6 @@ BlockNotFoundMessage::BlockNotFoundMessage(base::Sha256 block_hash)
 
 //============================================
 
-constexpr lk::MessageType GetInfoMessage::getHandledMessageType()
-{
-    return lk::MessageType::GET_INFO;
-}
-
-
-void GetInfoMessage::serialize(base::SerializationOArchive& oa)
-{
-    oa.serialize(lk::MessageType::GET_INFO);
-}
-
-
-GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive&)
-{
-    return {};
-}
-
-
-void GetInfoMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    peer.send(prepareMessage<InfoMessage>(ctx.core.getTopBlock(), allPeersInfoExcept(ctx.host.getPool(), peer.getAddress())), {});
-}
-
-//============================================
-
-constexpr lk::MessageType InfoMessage::getHandledMessageType()
-{
-    return lk::MessageType::INFO;
-}
-
-
-void InfoMessage::serialize(base::SerializationOArchive& oa,
-                            const base::Sha256& top_block_hash,
-                            const std::vector<net::Endpoint>& available_peers)
-{
-    oa.serialize(lk::MessageType::INFO);
-    oa.serialize(top_block_hash);
-    oa.serialize(available_peers);
-}
-
-
-InfoMessage InfoMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto top_block_hash = ia.deserialize<base::Bytes>();
-    auto available_peers = ia.deserialize<std::vector<net::Endpoint>>();
-    return { std::move(top_block_hash), std::move(available_peers) };
-}
-
-
-void InfoMessage::handle(const Peer::Context&, Peer&) {}
-
-
-InfoMessage::InfoMessage(base::Sha256&& top_block_hash, std::vector<net::Endpoint>&& available_peers)
-  : _top_block_hash{ std::move(top_block_hash) }
-  , _available_peers{ std::move(available_peers) }
-{}
-
-//============================================
-
 constexpr lk::MessageType CloseMessage::getHandledMessageType()
 {
     return lk::MessageType::CLOSE;
@@ -973,13 +892,39 @@ void Peer::sendSessionEnd(std::function<void()> on_send)
 void Peer::lookup(const lk::Address& address,
                   const std::size_t alpha,
                   std::function<void(std::vector<PeerBase::Info>)> callback)
-{}
+{
+    struct LookupData
+    {
+        LookupData(boost::asio::io_context& io_context, lk::Address address)
+            : address{address}, timer{io_context}
+        {
+            timer.expires_after(std::chrono::seconds(base::config::NET_CONNECT_TIMEOUT));
+        }
+
+        bool was_responded{false};
+        lk::Address address;
+        boost::asio::steady_timer timer;
+    };
+
+    auto data = std::make_shared<LookupData>(_host.getIoContext(), address);
+
+    data->timer.async_wait([this, data](const auto& ec) {
+        data->was_responded = true;
+        _lookup_callbacks.erase(_lookup_callbacks.find(data->address));
+    });
+
+    _lookup_callbacks.insert({address, [data, callback = std::move(callback)](auto peers_info) {
+        callback(peers_info);
+    }});
+
+    send(prepareMessage<LookupMessage>(address, alpha), {});
+}
 
 #pragma GCC diagnostic pop
 
 std::shared_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
-    std::shared_ptr<Peer> ret(new Peer(std::move(session), false, host.getPool(), core, host));
+    std::shared_ptr<Peer> ret(new Peer(std::move(session), false, host.getIoContext(), host.getPool(), core, host));
     ret->startSession();
     return ret;
 }
@@ -987,14 +932,15 @@ std::shared_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::
 
 std::shared_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
-    std::shared_ptr<Peer> ret(new Peer(std::move(session), true, host.getPool(), core, host));
+    std::shared_ptr<Peer> ret(new Peer(std::move(session), true, host.getIoContext(), host.getPool(), core, host));
     ret->startSession();
     return ret;
 }
 
 
-Peer::Peer(std::unique_ptr<net::Session> session, bool is_connected, lk::PeerPoolBase& pool, lk::Core& core, lk::Host& host)
+Peer::Peer(std::unique_ptr<net::Session> session, bool is_connected, boost::asio::io_context& io_context, lk::PeerPoolBase& pool, lk::Core& core, lk::Host& host)
   : _session{ std::move(session) }
+  , _io_context{ io_context }
   , _address{ lk::Address::null() }
   , _was_connected_to{ is_connected }
   , _pool{ pool }
