@@ -1,12 +1,33 @@
 #pragma once
 
-#include "grpc/grpc_node_client.hpp"
-#include "grpc/grpc_node_server.hpp"
+#include "rpc/grpc/grpc_client.hpp"
+#include "rpc/grpc/grpc_server.hpp"
+#include "rpc/http/http_adapter.hpp"
 
-namespace rpc
-{
+#include <base/property_tree.hpp>
 
-using RpcServer = GrpcNodeServer;
-using RpcClient = GrpcNodeClient;
+namespace rpc {
+
+    class RpcServer {
+
+        RpcServer(const base::PropertyTree &config, BaseRpc &interface);
+
+        ~RpcServer();
+
+        void run();
+
+    };
+
+
+    class RpcClient {
+        enum class Mode{
+            GRPC = 0,
+            HTTP = 1
+        };
+
+        RpcClient();
+
+        ~RpcClient();
+    };
 
 } // namespace rpc
