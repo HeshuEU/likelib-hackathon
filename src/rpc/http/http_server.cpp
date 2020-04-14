@@ -1,31 +1,31 @@
 #include "http_server.hpp"
 
-namespace rpc {
-    namespace http {
+namespace rpc::http
+{
 
 /// Constructor that initialize instance of LogicService
 /// \param server_address listening ip:port
-        explicit Server::Server(const std::string &server_address, std::shared_ptr<BaseRpc> service) {}
+NodeServer::NodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service)
+  : _listener(server_address)
+{
+    _service.init(std::move(service));
+    _listener.support(web::http::methods::GET, std::bind(&Adapter::handle_get, &_service, std::placeholders::_1));
+    _listener.support(web::http::methods::POST, std::bind(&Adapter::handle_post, &_service, std::placeholders::_1));
+}
 
 /// plain destructor that call GrpcNodeServer::stop()
-        Server::~Server() {}
+NodeServer::~NodeServer() {}
 
 /// Register LogicService and start listening port defined in constructor
-        void Server::run() {
-            utility::string_t port = U("34568");
-            utility::string_t address = U("http://127.0.0.1:");
-            address.append(port);
+void NodeServer::run()
+{
+    _listener.open().wait();
+}
 
-            web::http::uri_builder uri(address);
+/// stop listening port defined in constructor and started by GrpcNodeServer::run()
+void NodeServer::stop()
+{
+    _listener.close().wait();
+}
 
-            auto addr = uri.to_uri().to_string();
-            _service.open().wait();
-        }
-
-        /// stop listening port defined in constructor and started by GrpcNodeServer::run()
-        void Server::stop() {
-            _service.close().wait();
-        }
-
-    }
 }

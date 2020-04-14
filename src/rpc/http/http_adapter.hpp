@@ -2,28 +2,27 @@
 
 #include "cpprest/http_listener.h"
 
+#include <rpc/base_rpc.hpp>
 
-namespace rpc {
 
-    namespace http {
+namespace rpc::http
+{
 
-        class Adapter {
-        public:
-            explicit Adapter(utility::string_t url);
+class Adapter final
+{
+  public:
+    Adapter() = default;
 
-            virtual ~Adapter();
+    ~Adapter() = default;
 
-            pplx::task<void> open() { return m_listener.open(); }
+    void init(std::shared_ptr<BaseRpc> service);
 
-            pplx::task<void> close() { return m_listener.close(); }
+    void handle_get(web::http::http_request message);
 
-        private:
-            void handle_get(web::http::http_request message);
+    void handle_post(web::http::http_request message);
 
-            void handle_post(web::http::http_request message);
+  private:
+    std::shared_ptr<BaseRpc> _service;
+};
 
-            web::http::experimental::listener::http_listener m_listener;
-        };
-
-    }
 }

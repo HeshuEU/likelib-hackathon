@@ -1,33 +1,40 @@
 #pragma once
 
-#include "rpc/grpc/grpc_client.hpp"
-#include "rpc/grpc/grpc_server.hpp"
-#include "rpc/http/http_adapter.hpp"
+#include "base_rpc.hpp"
 
 #include <base/property_tree.hpp>
 
-namespace rpc {
+namespace rpc
+{
 
-    class RpcServer {
 
-        RpcServer(const base::PropertyTree &config, BaseRpc &interface);
+class RpcServer : public BaseRpcServer
+{
+  public:
+    RpcServer(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface);
 
-        ~RpcServer();
+    ~RpcServer();
 
-        void run();
+    void run() override;
 
+    void stop() override;
+
+  private:
+    std::unique_ptr<BaseRpcServer> _server;
+};
+
+
+class RpcClient: public BaseRpc
+{
+    enum class Mode
+    {
+        GRPC = 0,
+        HTTP = 1
     };
 
+    RpcClient();
 
-    class RpcClient {
-        enum class Mode{
-            GRPC = 0,
-            HTTP = 1
-        };
-
-        RpcClient();
-
-        ~RpcClient();
-    };
+    ~RpcClient();
+};
 
 } // namespace rpc

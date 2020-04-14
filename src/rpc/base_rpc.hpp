@@ -98,4 +98,12 @@ class BaseRpc
       const lk::Sign& signature) = 0;
 };
 
+class BaseRpcServer
+{
+  public:
+    virtual void run() = 0;
+
+    virtual void stop() = 0;
+};
+
 } // namespace rpc
