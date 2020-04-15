@@ -165,10 +165,7 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
         auto data = request->data();
         auto sign = lk::Sign::fromBase64(request->signature());
 
-        auto status = OperationStatus::createSuccess();
-        std::string contract_response;
-        lk::Balance least_gas;
-        std::tie(status, contract_response, least_gas) =
+        auto[status, contract_response, least_gas] =
           _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, sign);
 
         convert(status, response->mutable_status());

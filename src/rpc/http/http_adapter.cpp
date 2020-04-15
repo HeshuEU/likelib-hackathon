@@ -1,12 +1,10 @@
 #include "http_adapter.hpp"
 
-#include "cpprest/filestream.h"
 #include <cpprest/asyncrt_utils.h>
 #include <cpprest/http_listener.h>
 #include <cpprest/json.h>
 #include <cpprest/uri.h>
 
-#include <iostream>
 #include <string>
 
 
@@ -209,6 +207,103 @@ void ActionGetBlock::run(web::json::value& result)
     result[U("block")] = block_value;
 }
 
+
+class ActionMessageCall : public ActionPostBase
+{
+  public:
+    //====================================
+    explicit ActionMessageCall(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionMessageCall() = default;
+    //====================================
+    const std::string& getName() const override;
+    void run(web::json::value& result) override;
+
+  private:
+};
+
+
+ActionMessageCall::ActionMessageCall(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionPostBase(input, service)
+{}
+
+
+const std::string& ActionMessageCall::getName() const
+{
+    static const std::string name = "message_call";
+    return name;
+}
+
+
+void ActionMessageCall::run(web::json::value& result)
+{
+    auto amount = lk::Balance{ _input.at(U("amount")).as_number().to_uint64() };
+    auto data = _input.at(U("data")).as_string();
+    auto fee = lk::Balance{ _input.at(U("fee")).as_number().to_uint64() };
+    auto from = lk::Address{ _input.at(U("from")).as_string() };
+    auto to = lk::Address{ _input.at(U("to")).as_string() };
+    auto sign = lk::Sign::fromBase64(_input.at(U("sign")).as_string());
+    auto timestamp = base::Time(_input.at(U("timestamp")).as_number().to_uint32());
+
+    auto [status, contract_response, least_gas] =
+      _service->transaction_message_call(amount, from, to, timestamp, fee, data, sign);
+
+    if (!status) {
+        RAISE_ERROR(base::Error, "TODO Error!");
+    }
+
+    result[U("gas_left")] = web::json::value::number(least_gas);
+    result[U("contract_response")] = web::json::value::string(contract_response);
+}
+
+
+class ActionCreateContract : public ActionPostBase
+{
+  public:
+    //====================================
+    explicit ActionCreateContract(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionCreateContract() = default;
+    //====================================
+    const std::string& getName() const override;
+    void run(web::json::value& result) override;
+
+  private:
+};
+
+
+ActionCreateContract::ActionCreateContract(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionPostBase(input, service)
+{}
+
+
+const std::string& ActionCreateContract::getName() const
+{
+    static const std::string name = "create_contract";
+    return name;
+}
+
+
+void ActionCreateContract::run(web::json::value& result)
+{
+    auto amount = lk::Balance{ _input.at(U("amount")).as_number().to_uint64() };
+    auto code = _input.at(U("code")).as_string();
+    auto init_message = _input.at(U("init")).as_string();
+    auto fee = lk::Balance{ _input.at(U("fee")).as_number().to_uint64() };
+    auto from = lk::Address{ _input.at(U("from")).as_string() };
+    auto sign = lk::Sign::fromBase64(_input.at(U("sign")).as_string());
+    auto timestamp = base::Time(_input.at(U("timestamp")).as_number().to_uint32());
+
+    auto [status, contract_address, least_gas] =
+      _service->transaction_create_contract(amount, from, timestamp, fee, code, init_message, sign);
+
+    if (!status) {
+        RAISE_ERROR(base::Error, "TODO Error!");
+    }
+
+    result[U("gas_left")] = web::json::value::number(least_gas);
+    result[U("contract_address")] = web::json::value::string(contract_address.toString());
+}
+
+
 template<typename T>
 web::json::value run_get(std::shared_ptr<rpc::BaseRpc>& service)
 {
@@ -259,6 +354,8 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
 
     _post_processors.insert({ "get_balance", detail::run_post<detail::ActionGetBalance> });
     _post_processors.insert({ "get_block", detail::run_post<detail::ActionGetBlock> });
+    _post_processors.insert({ "message_call", detail::run_post<detail::ActionMessageCall> });
+    _post_processors.insert({ "create_contract", detail::run_post<detail::ActionCreateContract> });
 }
 
 void Adapter::handle_post(const web::http::http_request& message)
