@@ -36,20 +36,19 @@ NodeClient::NodeClient(const std::string& connect_address)
       std::make_unique<likelib::NodePublicInterface::Stub>(::grpc::CreateChannel(connect_address, channel_credentials));
 }
 
-OperationStatus NodeClient::test(uint32_t api_version)
+uint32_t NodeClient::get_api_version()
 {
     // convert data for request
     likelib::TestRequest request;
-    request.set_interface_version(api_version);
 
     // call remote host
     likelib::TestResponse reply;
     ::grpc::ClientContext context;
-    auto status = _stub->test(&context, request, &reply);
+    auto status = _stub->get_api_version(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
-        return convert(reply.status());
+        return reply.interface_version();
     }
     else {
         throw RpcError(status.error_message());

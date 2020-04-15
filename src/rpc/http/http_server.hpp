@@ -8,7 +8,7 @@ namespace rpc::http
 {
 
 /// Template server was implemented logic to start listening messages by gRPC
-class NodeServer : public BaseRpcServer
+class NodeServer final : public BaseRpcServer
 {
   public:
     /// Constructor that initialize instance of LogicService
@@ -16,7 +16,7 @@ class NodeServer : public BaseRpcServer
     NodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service);
 
     /// plain destructor that call GrpcNodeServer::stop()
-    ~NodeServer();
+    ~NodeServer() override;
 
     /// Register LogicService and start listening port defined in constructor
     void run() override;

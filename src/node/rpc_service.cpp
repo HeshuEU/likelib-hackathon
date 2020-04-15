@@ -21,18 +21,10 @@ GeneralServerService::~GeneralServerService()
 }
 
 
-rpc::OperationStatus GeneralServerService::test(uint32_t api_version)
+uint32_t GeneralServerService::get_api_version()
 {
-    LOG_TRACE << "Received RPC request {test} with api_version[" << api_version << "]";
-    if (base::config::RPC_PUBLIC_API_VERSION == api_version) {
-        return rpc::OperationStatus::createSuccess("RPC api is compatible");
-    }
-    else {
-        if (base::config::RPC_PUBLIC_API_VERSION > api_version) {
-            return rpc::OperationStatus::createFailed("Your RPC api is old.");
-        }
-        return rpc::OperationStatus::createFailed("Not support api version");
-    }
+    LOG_TRACE << "Received RPC request {test}";
+    return base::config::RPC_PUBLIC_API_VERSION;
 }
 
 

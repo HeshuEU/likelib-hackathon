@@ -34,7 +34,7 @@ class Adapter final : public likelib::NodePublicInterface::Service
   private:
     std::shared_ptr<BaseRpc> _service;
 
-    ::grpc::Status test(::grpc::ServerContext* context,
+    ::grpc::Status get_api_version(::grpc::ServerContext* context,
                         const likelib::TestRequest* request,
                         likelib::TestResponse* response) override;
 

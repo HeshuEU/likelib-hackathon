@@ -10,7 +10,7 @@ option objc_class_prefix = "LKL";
 package likelib;
 
 service NodePublicInterface {
-    rpc test (TestRequest) returns (TestResponse) {
+    rpc get_api_version (TestRequest) returns (TestResponse) {
     }
 
     rpc balance (Address) returns (CurrencyAmount) {
@@ -32,11 +32,10 @@ service NodePublicInterface {
 //=====================================
 
 message TestRequest {
-    uint32 interface_version = 1;
 }
 
 message TestResponse {
-    OperationStatus status = 1;
+    uint32 interface_version = 1;
 }
 
 //=====================================

@@ -15,7 +15,7 @@ NodeServer::NodeServer(const std::string& server_address, std::shared_ptr<BaseRp
 
 NodeServer::~NodeServer()
 {
-    (*this).stop();
+    stop();
 }
 
 void NodeServer::run()

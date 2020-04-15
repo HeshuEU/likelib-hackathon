@@ -1,17 +1,20 @@
 #include "rpc.hpp"
 
-#include "rpc/grpc/grpc_server.hpp"
-#include "rpc/http/http_server.hpp"
+#include "grpc/grpc_client.hpp"
+#include "grpc/grpc_server.hpp"
+#include "http/http_client.hpp"
+#include "http/http_server.hpp"
 
 namespace rpc
 {
 
-RpcServer::RpcServer(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface)
+
+std::unique_ptr<BaseRpcServer> create_rpc_server(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface)
 {
     auto mode = config.get<std::string>("rpc.mode");
     if (mode == "grpc") {
         auto address = config.get<std::string>("rpc.address");
-        _server = std::unique_ptr<rpc::BaseRpcServer>(new rpc::grpc::NodeServer(address, std::move(interface)));
+        return std::unique_ptr<rpc::BaseRpcServer>(new rpc::grpc::NodeServer(address, std::move(interface)));
     }
     else if (mode == "http") {
         auto address = config.get<std::string>("rpc.address");
@@ -19,7 +22,7 @@ RpcServer::RpcServer(const base::PropertyTree& config, std::shared_ptr<BaseRpc> 
         protocol.append(address);
         web::http::uri_builder uri(protocol);
 
-        _server = std::unique_ptr<rpc::BaseRpcServer>(
+        return std::unique_ptr<rpc::BaseRpcServer>(
           new rpc::http::NodeServer(uri.to_uri().to_string(), std::move(interface)));
     }
     else {
@@ -27,19 +30,16 @@ RpcServer::RpcServer(const base::PropertyTree& config, std::shared_ptr<BaseRpc> 
     }
 }
 
-RpcServer::~RpcServer()
+std::unique_ptr<BaseRpc> create_rpc_client(ClientMode mode, const std::string& connect_address)
 {
-    (*this).stop();
+    switch (mode) {
+        case ClientMode::GRPC:
+            return std::unique_ptr<BaseRpc>(new grpc::NodeClient(connect_address));
+        case ClientMode::HTTP:
+            return std::unique_ptr<BaseRpc>(new http::NodeClient(connect_address));
+    }
+    RAISE_ERROR(base::LogicError, "Unexpected case");
 }
 
-void RpcServer::run()
-{
-    _server->run();
-}
-
-void RpcServer::stop()
-{
-    _server->stop();
-}
 
 }

@@ -15,7 +15,7 @@ class NodeServer : public BaseRpcServer
     NodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service);
 
     /// plain destructor that call GrpcNodeServer::stop()
-    ~NodeServer();
+    ~NodeServer() override;
 
     /// Register LogicService and start listening port defined in constructor
     void run() override;

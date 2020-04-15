@@ -73,7 +73,7 @@ class BaseRpc
     /// \return sha256 from secret data response
     /// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
     /// exception during processing on server instance)
-    virtual OperationStatus test(uint32_t api_version) = 0;
+    virtual uint32_t get_api_version() = 0;
 
     virtual Info info() = 0;
 
@@ -101,6 +101,8 @@ class BaseRpc
 class BaseRpcServer
 {
   public:
+    virtual ~BaseRpcServer() = default;
+
     virtual void run() = 0;
 
     virtual void stop() = 0;

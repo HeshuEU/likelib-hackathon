@@ -9,8 +9,8 @@ NodeServer::NodeServer(const std::string& server_address, std::shared_ptr<BaseRp
   : _listener(server_address)
 {
     _service.init(std::move(service));
-    _listener.support(web::http::methods::GET, std::bind(&Adapter::handle_get, &_service, std::placeholders::_1));
     _listener.support(web::http::methods::POST, std::bind(&Adapter::handle_post, &_service, std::placeholders::_1));
+    _listener.support(web::http::methods::GET, std::bind(&Adapter::handle_get, &_service, std::placeholders::_1));
 }
 
 /// plain destructor that call GrpcNodeServer::stop()

@@ -14,14 +14,14 @@ namespace grpc
 {
 
 /// Class implementing connect to node by gRPC and call methods
-class NodeClient final : BaseRpc
+class NodeClient final : public BaseRpc
 {
   public:
     explicit NodeClient(const std::string& connect_address);
 
     ~NodeClient() override = default;
 
-    OperationStatus test(uint32_t api_version) override;
+    uint32_t get_api_version() override;
 
     lk::Balance balance(const lk::Address& address) override;
 

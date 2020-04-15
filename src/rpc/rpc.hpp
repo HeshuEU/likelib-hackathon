@@ -7,34 +7,16 @@
 namespace rpc
 {
 
-
-class RpcServer : public BaseRpcServer
+enum class ClientMode
 {
-  public:
-    RpcServer(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface);
-
-    ~RpcServer();
-
-    void run() override;
-
-    void stop() override;
-
-  private:
-    std::unique_ptr<BaseRpcServer> _server;
+    GRPC = 0,
+    HTTP = 1
 };
 
 
-class RpcClient: public BaseRpc
-{
-    enum class Mode
-    {
-        GRPC = 0,
-        HTTP = 1
-    };
+std::unique_ptr<BaseRpc> create_rpc_client(ClientMode mode, const std::string& connect_address);
 
-    RpcClient();
+std::unique_ptr<BaseRpcServer> create_rpc_server(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface);
 
-    ~RpcClient();
-};
 
 } // namespace rpc

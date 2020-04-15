@@ -7,7 +7,9 @@ namespace rpc::http
 
 NodeClient::NodeClient(const std::string& connect_address) {}
 
-OperationStatus NodeClient::test(uint32_t api_version) {}
+
+uint32_t NodeClient::get_api_version() {}
+
 
 lk::Balance NodeClient::balance(const lk::Address& address) {}
 

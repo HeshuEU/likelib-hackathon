@@ -153,7 +153,7 @@ int ActionTransfer::execute()
     auto [pub, priv] = loadKeys(_keys_dir);
     auto from_address = lk::Address(pub);
 
-    rpc::RpcClient client(_host_address);
+    auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
 
     LOG_INFO << "Transfer from " << from_address << " to " << _to_address << " with amount " << _amount
              << " to rpc server " << _host_address;
@@ -171,7 +171,7 @@ int ActionTransfer::execute()
 
     tx.sign(pub, priv);
 
-    auto [status, result, fee_left] = client.transaction_message_call(
+    auto [status, result, fee_left] = client->transaction_message_call(
       tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), "", tx.getSign());
 
     if (status) {
@@ -218,8 +218,8 @@ int ActionGetBalance::execute()
 {
     LOG_INFO << "GetBalance for address " << _account_address;
     LOG_INFO << "Trying to connect to rpc server at " << _host_address;
-    rpc::RpcClient client(_host_address);
-    auto result = client.balance(_account_address);
+    auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
+    auto result = client->balance(_account_address);
     std::cout << "balance of " << _account_address << " is " << result << std::endl;
     LOG_INFO << "Remote call of getBalance(" << _account_address << ") -> [" << result << "]";
     return base::config::EXIT_OK;
@@ -256,17 +256,17 @@ int ActionTestConnection::execute()
 {
     LOG_INFO << "Test connect to rpc server by: " << _host_address;
     LOG_INFO << "Trying to connect to rpc server by: " << _host_address;
-    rpc::RpcClient client(_host_address);
+    auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
 
-    auto answer = client.test(config::API_VERSION);
+    auto answer = client->get_api_version();
 
-    if (answer) {
+    if (config::API_VERSION == answer) {
         std::cout << "Test passed" << std::endl;
         LOG_INFO << "Test passed";
     }
     else {
         std::cout << "Test failed" << std::endl;
-        LOG_INFO << "Test failed with message: " << answer.getMessage();
+        LOG_INFO << "Test failed\n";
     }
     return base::config::EXIT_OK;
 }
@@ -345,8 +345,8 @@ int ActionCreateContract::execute()
     std::cout << tx << std::endl;
 
     LOG_INFO << "Trying to connect to rpc server by: " << _host_address;
-    rpc::RpcClient client(_host_address);
-    auto [status, contract_address, fee_left] = client.transaction_create_contract(
+    auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
+    auto [status, contract_address, fee_left] = client->transaction_create_contract(
       tx.getAmount(), tx.getFrom(), tx.getTimestamp(), tx.getFee(), _compiled_contract, _message, tx.getSign());
 
     if (status) {
@@ -419,9 +419,9 @@ int ActionMessageCall::execute()
     tx.sign(pub, priv);
 
     LOG_INFO << "Try to connect to rpc server by: " << _host_address;
-    rpc::RpcClient client(_host_address);
+    auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
 
-    auto [status, contract_response, fee_left] = client.transaction_message_call(
+    auto [status, contract_response, fee_left] = client->transaction_message_call(
       tx.getAmount(), tx.getFrom(), tx.getTo(), tx.getTimestamp(), tx.getFee(), _message, tx.getSign());
 
     if (status) {
@@ -783,8 +783,8 @@ int ActionInfo::loadOptions(const base::ProgramOptionsParser& parser)
 int ActionInfo::execute()
 {
     LOG_INFO << "Trying to connect to rpc server at " << _host_address;
-    rpc::RpcClient client(_host_address);
-    auto result = client.info();
+    auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
+    auto result = client->info();
     std::cout << "Top block hash: " << result.top_block_hash << std::endl;
     LOG_INFO << "Remote call of Info: " << result.top_block_hash;
     return base::config::EXIT_OK;
@@ -822,8 +822,8 @@ int ActionGetBlock::loadOptions(const base::ProgramOptionsParser& parser)
 int ActionGetBlock::execute()
 {
     LOG_INFO << "Trying to connect to rpc server at " << _host_address;
-    rpc::RpcClient client(_host_address);
-    auto block = client.get_block(_block_hash);
+    auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
+    auto block = client->get_block(_block_hash);
 
     if (block.getTimestamp().getSecondsSinceEpoch() == 0 && block.getDepth() == lk::BlockDepth(-1)) {
         std::cout << "Cannot find given block" << std::endl;

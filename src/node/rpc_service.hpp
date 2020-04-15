@@ -14,7 +14,7 @@ class GeneralServerService : public rpc::BaseRpc
 
     ~GeneralServerService() override;
 
-    rpc::OperationStatus test(uint32_t api_version) override;
+    uint32_t get_api_version() override;
 
     lk::Balance balance(const lk::Address& address) override;
 

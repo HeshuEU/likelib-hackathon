@@ -36,15 +36,14 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
     _service = service;
 }
 
-
-::grpc::Status Adapter::test(::grpc::ServerContext* context,
-                             const likelib::TestRequest* request,
-                             likelib::TestResponse* response)
+::grpc::Status Adapter::get_api_version(::grpc::ServerContext* context,
+                                        [[maybe_unused]] const likelib::TestRequest* request,
+                                        likelib::TestResponse* response)
 {
     LOG_DEBUG << "received RPC call at test method from: " << context->peer();
     try {
-        auto status = _service->test(request->interface_version());
-        convert(status, response->mutable_status());
+        auto version = _service->get_api_version();
+        response->set_interface_version(version);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();

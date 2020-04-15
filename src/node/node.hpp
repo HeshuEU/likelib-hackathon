@@ -20,7 +20,7 @@ class Node
     base::KeyVault _key_vault;
     //---------------------------
     lk::Core _core;
-    std::unique_ptr<rpc::RpcServer> _rpc;
+    std::unique_ptr<rpc::BaseRpcServer> _rpc;
     //---------------------------
     std::unique_ptr<Miner> _miner;
     //---------------------------
