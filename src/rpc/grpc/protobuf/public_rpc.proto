@@ -10,114 +10,48 @@ option objc_class_prefix = "LKL";
 package likelib;
 
 service NodePublicInterface {
-    rpc get_api_version (TestRequest) returns (TestResponse) {
+
+    rpc get_account (Address) returns (AccountInfo) {
     }
 
-    rpc balance (Address) returns (CurrencyAmount) {
+    rpc get_node_info (None) returns (NodeInfo) {
     }
 
-    rpc info (InfoRequest) returns (InfoResponse) {
+    rpc get_block (Hash) returns (Block) {
     }
 
-    rpc get_block (GetBlockRequest) returns (GetBlockResponse) {
+    rpc get_transaction (Hash) returns (Transaction) {
     }
 
-    rpc message_call (TransactionMessageCallRequest) returns (TransactionMessageCallResponse) {
-    }
-
-    rpc create_contract (TransactionCreateContractRequest) returns (TransactionCreateContractResponse) {
+    rpc push_transaction (Transaction) returns (TransactionStatus) {
     }
 }
 
 //=====================================
 
-message TestRequest {
+
+message NodeInfo {
+    Hash top_block_hash = 1;
+    uint32 interface_version = 2;
+    uint32 peers_number = 3;
 }
 
-message TestResponse {
-    uint32 interface_version = 1;
-}
 
-//=====================================
-
-message InfoRequest {
-}
-
-message InfoResponse {
-    string top_block_hash = 1;
-}
-
-//=====================================
-
-message GetBlockRequest {
-    string block_hash = 1;
-}
-
-message GetBlockResponse {
+message Block {
     Address coinbase = 1;
     Time timestamp = 2;
     uint64 depth = 3;
     uint64 nonce = 4;
-    string previous_block_hash = 5;
+    Hash previous_block_hash = 5;
     repeated Transaction transactions = 6;
 }
 
-//=====================================
 
-message TransactionMessageCallRequest {
-    Address from = 1;
-    Address to = 2;
-    CurrencyAmount value = 3;
-    CurrencyAmount fee = 4;
-    Time creation_time = 5;
-    string data = 6;
-    string signature = 7;
-}
-
-message TransactionMessageCallResponse {
-    OperationStatus status = 1;
-    CurrencyAmount gas_left = 2;
-    string contract_response = 3;
-}
-
-//=====================================
-
-message TransactionCreateContractRequest {
-    Address from = 1;
-    CurrencyAmount value = 2;
-    CurrencyAmount fee = 3;
-    Time creation_time = 4;
-    string contract_code = 5;
-    string init = 6;
-    Signature signature = 7;
-}
-
-message TransactionCreateContractResponse {
-    OperationStatus status = 1;
-    CurrencyAmount gas_left = 2;
-    Address contract_address = 3;
-}
-
-//=====================================
-
-message Contract {
-    string bytecode = 1;
-}
-
-message Time {
-    uint64 since_epoch = 1;
-}
-
-message CurrencyAmount {
-    uint64 value = 1;
-}
-
-message Address {
-    string address = 1;
-}
-
-message Signature {
-    string raw = 1;
+message AccountInfo {
+    Address address = 1;
+    CurrencyAmount balance = 2;
+    uint64 nonce = 3;
+    repeated Hash hashes = 4;
 }
 
 
@@ -127,17 +61,53 @@ message Transaction {
     CurrencyAmount value = 3;
     CurrencyAmount gas = 4;
     Time creation_time = 5;
-    string data = 6;
-    string signature = 7;
+    Data data = 6;
+    Signature signature = 7;
 }
 
 
-message OperationStatus {
+message TransactionStatus {
     enum StatusCode {
         Success = 0;
         Rejected = 1;
-        Failed = 2;
+        Revert = 2;
+        Failed = 3;
     }
     StatusCode status = 1;
-    string message = 2;
+    Data message = 2;
+    CurrencyAmount gas_left = 3;
+}
+
+
+message Signature {
+    string signature_bytes_at_base_64 = 1;
+}
+
+
+message Time {
+    uint64 since_epoch = 1;
+}
+
+
+message CurrencyAmount {
+    uint64 value = 1;
+}
+
+
+message Address {
+    string address_at_base_64 = 1;
+}
+
+
+message Hash {
+    string bytes_at_hex = 1;
+}
+
+
+message Data {
+    string bytes_at_hex = 1;
+}
+
+
+message None {
 }
