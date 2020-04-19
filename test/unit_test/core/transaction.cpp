@@ -9,7 +9,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor1)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee = 42;
+    std::uint64_t fee = 42;
     lk::Transaction tx(from, to, amount, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
 
     BOOST_CHECK(tx.getFrom().toString() == from.toString());
@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee = 123;
+    std::uint64_t fee = 123;
     lk::Transaction tx1(from, to, amount, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
     lk::Transaction tx2(tx1);
 
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_move)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee = 123;
+    std::uint64_t fee = 123;
     lk::Transaction tx1(from, to, amount, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
     lk::Transaction tx2(std::move(tx1));
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee{ 23213213 };
+    std::uint64_t fee{ 23213213 };
     lk::Transaction tx1(from, to, amount, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
     lk::Transaction tx2(from, to, 821481368, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
 
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee{ 213213 };
+    std::uint64_t fee{ 213213 };
     lk::Transaction tx1(from, to, amount, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
     lk::Transaction tx2(from, to, 821481368, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
 
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(transaction_sign)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee = 42;
+    std::uint64_t fee = 42;
     lk::Transaction tx(from, to, amount, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
     tx.sign(pub_key, priv_key);
 
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(transaction_serialization1)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee = 123;
+    std::uint64_t fee = 123;
     lk::Transaction tx1(from, to, amount, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
 
     base::SerializationOArchive oa;
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(transaction_serialization2)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee{ 506 };
+    std::uint64_t fee{ 506 };
     lk::Transaction tx1(from, to, amount, fee, time, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{});
 
     base::SerializationOArchive oa;
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(transaction_builder_set_all1)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee = 150;
+    std::uint64_t fee = 150;
     lk::TransactionBuilder txb;
 
     txb.setFrom(from);
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(transaction_builder_set_all2)
     lk::Address to = lk::Address(base::generateKeys().first);
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
-    lk::Balance fee{ 229 };
+    std::uint64_t fee{ 229 };
 
     lk::TransactionBuilder txb;
     txb.setFrom(from);

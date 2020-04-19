@@ -2,9 +2,9 @@
 
 #include "core/core.hpp"
 
+#include "vm/error.hpp"
 #include "vm/tools.hpp"
 #include "vm/vm.hpp"
-#include "vm/error.hpp"
 
 namespace lk
 {
@@ -180,7 +180,7 @@ class EthAdapter::EthHost : public evmc::Host
 
         txb.setType(lk::Transaction::Type::MESSAGE_CALL);
 
-        lk::Balance fee = msg.gas;
+        std::uint64_t fee = msg.gas;
         txb.setFee(fee);
 
         lk::Address from = vm::toNativeAddress(msg.sender);
@@ -276,9 +276,9 @@ EthAdapter::EthAdapter(Core& core, AccountManager& account_manager, CodeManager&
 EthAdapter::~EthAdapter() = default;
 
 
-std::tuple<lk::Address, base::Bytes, lk::Balance> EthAdapter::createContract(const lk::Address& contract_address,
-                                                                             const lk::Transaction& associated_tx,
-                                                                             const lk::Block& associated_block)
+std::tuple<lk::Address, base::Bytes, std::uint64_t> EthAdapter::createContract(const lk::Address& contract_address,
+                                                                               const lk::Transaction& associated_tx,
+                                                                               const lk::Block& associated_block)
 {
     std::lock_guard lk(_create_mutex);
 
@@ -296,7 +296,7 @@ std::tuple<lk::Address, base::Bytes, lk::Balance> EthAdapter::createContract(con
     auto result = _vm.execute(message);
     if (result.ok()) {
         // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
-        return { contract_address, {}, static_cast<lk::Balance>(result.gasLeft()) };
+        return { contract_address, {}, result.gasLeft() };
     }
     else if (result.revert()) {
         RAISE_ERROR(vm::RevertError, "contract creation failed during execution");

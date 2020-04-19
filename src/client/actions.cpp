@@ -133,7 +133,7 @@ void ActionTransfer::setupOptionsParser(base::ProgramOptionsParser& parser)
     parser.addRequiredOption<std::string>(TO_ADDRESS_OPTION, "address of recipient account");
     parser.addRequiredOption<lk::Balance>(AMOUNT_OPTION, "amount count");
     parser.addRequiredOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
-    parser.addRequiredOption<lk::Balance>(FEE_OPTION, "fee count");
+    parser.addRequiredOption<std::uint64_t>(FEE_OPTION, "fee count");
 }
 
 
@@ -142,7 +142,7 @@ int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser)
     _host_address = parser.getValue<std::string>(HOST_OPTION);
     _to_address = lk::Address{ parser.getValue<std::string>(TO_ADDRESS_OPTION) };
     _amount = parser.getValue<lk::Balance>(AMOUNT_OPTION);
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
     return base::config::EXIT_OK;
 }
@@ -290,7 +290,7 @@ void ActionCreateContract::setupOptionsParser(base::ProgramOptionsParser& parser
     parser.addRequiredOption<std::string>(HOST_OPTION, "address of host");
     parser.addRequiredOption<std::string>(CODE_PATH_OPTION, "path to compiled code");
     parser.addRequiredOption<lk::Balance>(AMOUNT_OPTION, "amount of Lk to transfer");
-    parser.addRequiredOption<lk::Balance>(FEE_OPTION, "fee count");
+    parser.addRequiredOption<std::uint64_t>(FEE_OPTION, "fee count");
     parser.addRequiredOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addOption<std::string>(INITIAL_MESSAGE_OPTION, "message for initialize smart contract");
 }
@@ -312,7 +312,7 @@ int ActionCreateContract::loadOptions(const base::ProgramOptionsParser& parser)
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
 
     _amount = parser.getValue<lk::Balance>(AMOUNT_OPTION);
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
 
     if (parser.hasOption(INITIAL_MESSAGE_OPTION)) {
         _message = parser.getValue<std::string>(INITIAL_MESSAGE_OPTION);
@@ -383,7 +383,7 @@ void ActionMessageCall::setupOptionsParser(base::ProgramOptionsParser& parser)
     parser.addRequiredOption<std::string>(HOST_OPTION, "address of host");
     parser.addRequiredOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" contract");
     parser.addRequiredOption<lk::Balance>(AMOUNT_OPTION, "amount count");
-    parser.addRequiredOption<lk::Balance>(FEE_OPTION, "fee count");
+    parser.addRequiredOption<std::uint64_t>(FEE_OPTION, "fee count");
     parser.addRequiredOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addRequiredOption<std::string>(MESSAGE_OPTION, "message for call smart contract");
 }
@@ -394,7 +394,7 @@ int ActionMessageCall::loadOptions(const base::ProgramOptionsParser& parser)
     _host_address = parser.getValue<std::string>(HOST_OPTION);
     _to_address = lk::Address{ parser.getValue<std::string>(TO_ADDRESS_OPTION) };
     _amount = parser.getValue<lk::Balance>(AMOUNT_OPTION);
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
     _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
     _message = parser.getValue<std::string>(MESSAGE_OPTION);
     return base::config::EXIT_OK;

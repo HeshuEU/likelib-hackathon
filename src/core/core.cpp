@@ -46,7 +46,7 @@ const lk::Block& Core::getGenesisBlock()
         lk::Address from{ lk::Address::null() };
         lk::Address to{ "28dpzpURpyqqLoWrEhnHrajndeCq" };
         lk::Balance amount{ 0xFFFFFFFF };
-        lk::Balance fee{ 0 };
+        std::uint64_t fee{ 0 };
 
         ret.addTransaction({ from, to, amount, fee, timestamp, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{} });
         return ret;
@@ -230,7 +230,7 @@ void Core::applyBlockTransactions(const lk::Block& block)
         for (const auto& tx : block.getTransactions()) {
             tryPerformTransaction(tx, block);
         }
-        constexpr lk::Balance EMISSION_VALUE = 1000;
+        const lk::Balance EMISSION_VALUE = 1000;
         _account_manager.getAccount(block.getCoinbase()).addBalance(EMISSION_VALUE);
     }
 }
@@ -294,7 +294,7 @@ bool Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
 }
 
 
-std::tuple<lk::Address, base::Bytes, lk::Balance> Core::doContractCreation(const lk::Transaction& tx,
+std::tuple<lk::Address, base::Bytes, std::uint64_t> Core::doContractCreation(const lk::Transaction& tx,
                                                                            const lk::Block& block_where_tx)
 {
     base::SerializationIArchive ia(tx.getData());

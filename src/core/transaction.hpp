@@ -51,7 +51,7 @@ class Transaction
     Transaction(lk::Address from,
                 lk::Address to,
                 lk::Balance amount,
-                lk::Balance fee,
+                std::uint64_t fee,
                 base::Time timestamp,
                 Type transaction_type,
                 base::Bytes data,
@@ -70,7 +70,7 @@ class Transaction
     const base::Time& getTimestamp() const noexcept;
     Type getType() const noexcept;
     const base::Bytes& getData() const noexcept;
-    const lk::Balance& getFee() const noexcept;
+    const std::uint64_t& getFee() const noexcept;
     //=================
     void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
     bool checkSign() const;
@@ -88,7 +88,7 @@ class Transaction
     lk::Address _from;
     lk::Address _to;
     lk::Balance _amount;
-    lk::Balance _fee;
+    std::uint64_t _fee;
     base::Time _timestamp;
     Type _tx_type;
     base::Bytes _data;
@@ -129,7 +129,7 @@ class TransactionBuilder
     void setTo(lk::Address to);
     void setAmount(lk::Balance amount);
     void setTimestamp(base::Time timestamp);
-    void setFee(lk::Balance fee);
+    void setFee(std::uint64_t fee);
     void setType(Transaction::Type type);
     void setData(base::Bytes data);
     void setSign(lk::Sign sign);
@@ -142,7 +142,7 @@ class TransactionBuilder
     std::optional<lk::Address> _to;
     std::optional<lk::Balance> _amount;
     std::optional<base::Time> _timestamp;
-    std::optional<lk::Balance> _fee;
+    std::optional<std::uint64_t> _fee;
     std::optional<Transaction::Type> _tx_type;
     std::optional<base::Bytes> _data;
     std::optional<lk::Sign> _sign;

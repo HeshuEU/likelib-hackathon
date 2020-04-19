@@ -103,8 +103,8 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
             likelib::Transaction tv;
             tv.mutable_from()->set_address(tx.getFrom().toString());
             tv.mutable_to()->set_address(tx.getTo().toString());
-            tv.mutable_value()->set_value(tx.getAmount());
-            tv.mutable_gas()->set_value(tx.getFee());
+            tv.mutable_value()->set_value(tx.getAmount().toString());
+            tv.mutable_fee()->set_value(tx.getFee());
             tv.mutable_creation_time()->set_since_epoch(tx.getTimestamp().getSecondsSinceEpoch());
             tv.set_data(base::base64Encode(tx.getData()));
             tv.set_signature(tx.getSign().toBase64());
@@ -127,7 +127,7 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
     try {
         auto amount = lk::Balance{ request->value().value() };
         auto from_address = lk::Address{ request->from().address() };
-        auto gas = lk::Balance{ request->fee().value() };
+        auto gas = std::uint64_t{ request->fee().value() };
         auto creation_time = base::Time(request->creation_time().since_epoch());
         auto contract_code = request->contract_code();
         auto init = request->init();
@@ -138,7 +138,7 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
 
         convert(status, response->mutable_status());
         response->mutable_contract_address()->set_address(contract_address.toString());
-        response->mutable_gas_left()->set_value(least_gas);
+        response->mutable_fee_left()->set_value(least_gas);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();
@@ -158,20 +158,20 @@ grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
         auto amount = lk::Balance{ request->value().value() };
         auto from_address = lk::Address{ request->from().address() };
         auto to_address = lk::Address{ request->to().address() };
-        auto gas = lk::Balance{ request->fee().value() };
+        auto gas = std::uint64_t{ request->fee().value() };
         auto creation_time = base::Time(request->creation_time().since_epoch());
         auto data = request->data();
         auto sign = lk::Sign::fromBase64(request->signature());
 
         auto status = OperationStatus::createSuccess();
         std::string contract_response;
-        lk::Balance least_gas;
+        std::uint64_t least_gas;
         std::tie(status, contract_response, least_gas) =
           _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, sign);
 
         convert(status, response->mutable_status());
         response->set_contract_response(contract_response);
-        response->mutable_gas_left()->set_value(least_gas);
+        response->mutable_fee_left()->set_value(least_gas);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();
