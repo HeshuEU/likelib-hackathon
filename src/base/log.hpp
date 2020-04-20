@@ -34,6 +34,8 @@ void initLog(std::size_t mode = Sink::FILE);
 
 void dumpDebuggingInfo();
 
+void flushLog();
+
 } // namespace base
 
 

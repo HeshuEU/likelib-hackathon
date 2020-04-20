@@ -22,13 +22,12 @@
 
 #else
 #define ASSERT(condition)                                                                                              \
-    do {                                                                                                               \
-        if (!(condition)) {                                                                                            \
-            LOG_DEBUG << "Assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace();                \
-        }                                                                                                              \
-    } while (0)
+    if (!(condition)) {                                                                                                \
+        LOG_DEBUG << "Assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace();                    \
+    }
 
 #define ASSERT_SOFT(condition)                                                                                         \
     do {                                                                                                               \
-    } while (0)
+    } while
+
 #endif

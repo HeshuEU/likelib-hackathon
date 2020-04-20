@@ -99,6 +99,7 @@ class Transaction
     //=================
 };
 
+
 std::ostream& operator<<(std::ostream& os, const Transaction& tx);
 
 
@@ -147,5 +148,8 @@ class TransactionBuilder
     std::optional<base::Bytes> _data;
     std::optional<lk::Sign> _sign;
 };
+
+
+const Transaction& invalidTransaction();
 
 } // namespace lk

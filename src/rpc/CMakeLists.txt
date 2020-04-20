@@ -1,5 +1,3 @@
-### grpc
-
 set(GLOBAL_PROTOBUF_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/grpc/protobuf/public_rpc.proto)
 set(GLOBAL_OUTPUT_CODE_DIR ${CMAKE_BINARY_DIR}/grpc/gen)
 
@@ -9,6 +7,7 @@ set(RPC_HEADERS
         grpc/grpc_adapter.hpp
         grpc/grpc_server.hpp
         grpc/grpc_client.hpp
+        grpc/tools.hpp
         http/http_adapter.hpp
         http/http_client.hpp
         http/http_server.hpp
@@ -21,6 +20,7 @@ set(RPC_SOURCES
         grpc/grpc_adapter.cpp
         grpc/grpc_server.cpp
         grpc/grpc_client.cpp
+        grpc/tools.cpp
         http/http_adapter.cpp
         http/http_client.cpp
         http/http_server.cpp

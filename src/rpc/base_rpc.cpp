@@ -3,48 +3,60 @@
 namespace rpc
 {
 
-OperationStatus::OperationStatus(StatusCode status, std::string message) noexcept
+TransactionStatus::TransactionStatus(StatusCode status, std::string message, lk::Balance gas_left) noexcept
   : _status{ status }
   , _message{ message }
+  , _gas_left{ gas_left }
 {}
 
-OperationStatus OperationStatus::createSuccess(const std::string& message) noexcept
+TransactionStatus TransactionStatus::createSuccess(lk::Balance gas_left, const std::string& message) noexcept
 {
-    return OperationStatus(OperationStatus::StatusCode::Success, message);
+    return TransactionStatus(TransactionStatus::StatusCode::Success, message, gas_left);
 }
 
-OperationStatus OperationStatus::createRejected(const std::string& message) noexcept
+TransactionStatus TransactionStatus::createRejected(lk::Balance gas_left, const std::string& message) noexcept
 {
-    return OperationStatus(OperationStatus::StatusCode::Rejected, message);
+    return TransactionStatus(TransactionStatus::StatusCode::Rejected, message, gas_left);
 }
 
-OperationStatus OperationStatus::createFailed(const std::string& message) noexcept
+TransactionStatus TransactionStatus::createRevert(lk::Balance gas_left, const std::string& message) noexcept
 {
-    return OperationStatus(OperationStatus::StatusCode::Failed, message);
+    return TransactionStatus(TransactionStatus::StatusCode::Revert, message, gas_left);
 }
 
-OperationStatus::operator bool() const noexcept
+TransactionStatus TransactionStatus::createFailed(lk::Balance gas_left, const std::string& message) noexcept
 {
-    return _status == OperationStatus::StatusCode::Success;
+    return TransactionStatus(TransactionStatus::StatusCode::Failed, message, gas_left);
 }
 
-bool OperationStatus::operator!() const noexcept
+TransactionStatus::operator bool() const noexcept
 {
-    return _status != OperationStatus::StatusCode::Success;
+    return _status == TransactionStatus::StatusCode::Success;
 }
 
-const std::string& OperationStatus::getMessage() const noexcept
+bool TransactionStatus::operator!() const noexcept
+{
+    return _status != TransactionStatus::StatusCode::Success;
+}
+
+const std::string& TransactionStatus::getMessage() const noexcept
 {
     return _message;
 }
 
-std::string& OperationStatus::getMessage() noexcept
+std::string& TransactionStatus::getMessage() noexcept
 {
     return _message;
 }
 
-OperationStatus::StatusCode OperationStatus::getStatus() const noexcept
+TransactionStatus::StatusCode TransactionStatus::getStatus() const noexcept
 {
     return _status;
 }
+
+lk::Balance TransactionStatus::getGasLeft() const noexcept
+{
+    return _gas_left;
+}
+
 } // namespace rpc

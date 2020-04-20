@@ -372,4 +372,8 @@ Transaction TransactionBuilder::build() &&
 }
 
 
+const Transaction& invalidTransaction(){
+ static const Transaction invalid_tx = Transaction();
+}
+
 } // namespace lk

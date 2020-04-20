@@ -1,11 +1,11 @@
 #include "hard_config.hpp"
 #include "soft_config.hpp"
 
-#include "base/assert.hpp"
-#include "base/config.hpp"
-#include "base/log.hpp"
-#include "base/program_options.hpp"
-#include "node/node.hpp"
+#include <base/assert.hpp>
+#include <base/config.hpp>
+#include <base/log.hpp>
+#include <base/program_options.hpp>
+#include <node/node.hpp>
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
@@ -27,8 +27,8 @@ extern "C" void signalHandler(int signal)
 {
     if (signal == SIGINT) {
         LOG_INFO << "SIGINT caught. Exit.";
-        boost::log::core::get()->flush();
-        std::_Exit(1); // TODO: a clean exit
+        base::flushLog();
+        std::_Exit(base::config::EXIT_OK); // TODO: a clean exit
     }
     else {
         LOG_INFO << "Signal caught: " << signal
@@ -37,8 +37,8 @@ extern "C" void signalHandler(int signal)
 #endif
                  << '\n'
                  << boost::stacktrace::stacktrace();
-        boost::log::core::get()->flush();
-        std::_Exit(1);
+        base::flushLog();
+        std::_Exit(base::config::EXIT_FAIL);
     }
 }
 
@@ -46,7 +46,7 @@ extern "C" void signalHandler(int signal)
 void atExitHandler()
 {
     LOG_INFO << "Node shutdown";
-    boost::log::core::get()->flush();
+    base::flushLog();
 }
 
 } // namespace
@@ -69,9 +69,8 @@ int main(int argc, char** argv)
         }
 
         auto config_file_path = parser.getValue<std::string>("config");
-
         if (!std::filesystem::exists(config_file_path)) {
-            LOG_ERROR << "[config file is not exists] input file path: " << parser.getValue<std::string>("config");
+            LOG_ERROR << "[config file is not exists] input file path: " << config_file_path;
             return base::config::EXIT_FAIL;
         }
         else {
@@ -79,7 +78,6 @@ int main(int argc, char** argv)
         }
 
         // handlers initialization
-
         // setup handler for all signal types defined in Standard, expect SIGABRT. Not all POSIX signals
         for (auto signal_code : { SIGTERM, SIGSEGV, SIGINT, SIGILL, SIGFPE }) {
             [[maybe_unused]] auto result = std::signal(signal_code, signalHandler);
@@ -96,7 +94,7 @@ int main(int argc, char** argv)
         Node node(exe_config);
         node.run();
         //=====================
-        std::this_thread::sleep_for(std::chrono::hours(24 * 366));
+        std::this_thread::sleep_for(std::chrono::hours(24 * 366)); // 1 year
 
         return base::config::EXIT_OK;
     }

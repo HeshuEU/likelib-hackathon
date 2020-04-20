@@ -57,6 +57,8 @@ class Block
     //=================
 };
 
+const Block& invalidBlock();
+
 std::ostream& operator<<(std::ostream& os, const Block& block);
 
 bool operator==(const lk::Block& a, const lk::Block& b);

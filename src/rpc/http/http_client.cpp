@@ -5,40 +5,40 @@
 namespace rpc::http
 {
 
-NodeClient::NodeClient(const std::string& connect_address) {}
+NodeClient::NodeClient(const std::string& connect_address)
+  : _client{ U("http://") + U(connect_address) }
+{}
 
+lk::AccountInfo NodeClient::get_account(const lk::Address& address) {}
 
-uint32_t NodeClient::get_api_version() {}
-
-
-lk::Balance NodeClient::balance(const lk::Address& address) {}
-
-
-Info NodeClient::info() {}
-
+Info NodeClient::get_node_info() {}
 
 lk::Block NodeClient::get_block(const base::Sha256& block_hash) {}
 
+lk::Transaction NodeClient::get_transaction(const base::Sha256& transaction_hash) {}
 
-std::tuple<OperationStatus, lk::Address, lk::Balance> NodeClient::transaction_create_contract(
-  lk::Balance amount,
-  const lk::Address& from_address,
-  const base::Time& transaction_time,
-  lk::Balance gas,
-  const std::string& contract_code,
-  const std::string& init,
-  const lk::Sign& signature)
-{}
+TransactionStatus NodeClient::push_transaction(lk::Transaction) {}
 
-
-std::tuple<OperationStatus, std::string, lk::Balance> NodeClient::transaction_message_call(
-  lk::Balance amount,
-  const lk::Address& from_address,
-  const lk::Address& to_address,
-  const base::Time& transaction_time,
-  lk::Balance fee,
-  const std::string& data,
-  const lk::Sign& signature)
-{}
+//uint32_t NodeClient::get_api_version()
+//{
+//    web::http::uri_builder builder(U("/get_api_version"));
+//    uint32_t result = 0;
+//    _client.request(web::http::methods::GET, builder.to_string())
+//      .then([&result](web::http::http_response response) {
+//          response.extract_json()
+//            .then([&result](web::json::value request_body) {
+//                if (request_body.at("status").as_string() == "ok") {
+//                    auto result_call_object = request_body.at("result");
+//                    result = result_call_object.as_object().at("api_version").as_number().to_uint32();
+//                }
+//            })
+//            .wait();
+//      })
+//      .wait();
+//    if (result != 0) {
+//        return result;
+//    }
+//    RAISE_ERROR(rpc::RpcError, "error in call");
+//}
 
 } // namespace rpc

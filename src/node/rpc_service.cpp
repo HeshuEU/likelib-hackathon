@@ -1,60 +1,35 @@
 #include "rpc_service.hpp"
 
-#include "base/config.hpp"
-#include "base/hash.hpp"
-#include "base/log.hpp"
-#include "core/transaction.hpp"
+#include <core/transaction.hpp>
+
+#include <base/config.hpp>
+#include <base/hash.hpp>
+#include <base/log.hpp>
 
 namespace node
 {
 
 GeneralServerService::GeneralServerService(lk::Core& core)
   : _core{ core }
+{}
+
+
+lk::AccountInfo GeneralServerService::get_account(const lk::Address& address)
 {
-    LOG_TRACE << "Constructed GeneralServerService";
+    LOG_TRACE << "Received RPC request {get_account}" << address;
+    return _core.getAccountInfo(address);
 }
 
 
-GeneralServerService::~GeneralServerService()
+rpc::Info GeneralServerService::get_node_info()
 {
-    LOG_TRACE << "Destructed GeneralServerService";
-}
-
-
-uint32_t GeneralServerService::get_api_version()
-{
-    LOG_TRACE << "Received RPC request {test}";
-    return base::config::RPC_PUBLIC_API_VERSION;
-}
-
-
-lk::Balance GeneralServerService::balance(const lk::Address& address)
-{
-    try {
-        LOG_TRACE << "Received RPC request {balance} with address[" << address.toString() << "]";
-        auto ret = _core.getBalance(address);
-        return ret;
-    }
-    catch (const std::exception& e) {
-        LOG_WARNING << "Exception caught during balance request: " << e.what();
-        return -1;
-    }
-    catch (...) {
-        LOG_WARNING << "Exception caught during balance request: unknown";
-        return -1;
-    }
-}
-
-
-rpc::Info GeneralServerService::info()
-{
-    LOG_TRACE << "Received RPC request {info}";
+    LOG_TRACE << "Received RPC request {get_node_info}";
     try {
         auto hash = base::Sha256::compute(base::toBytes(_core.getTopBlock()));
-        return { hash, 0 };
+        return { hash, base::config::RPC_PUBLIC_API_VERSION, 0 };
     }
     catch (const std::exception& e) {
-        return { base::Sha256::null(), 0 };
+        return { base::Sha256::null(), base::config::RPC_PUBLIC_API_VERSION, 0 };
     }
 }
 
@@ -66,131 +41,47 @@ lk::Block GeneralServerService::get_block(const base::Sha256& block_hash)
         return *block_opt;
     }
     else {
-        return lk::Block{ lk::BlockDepth(-1), base::Sha256::null(), base::Time(0), lk::Address::null(), {} };
+        return lk::invalidBlock();
     }
 }
 
 
-std::tuple<rpc::OperationStatus, lk::Address, lk::Balance> GeneralServerService::transaction_create_contract(
-  lk::Balance amount,
-  const lk::Address& from_address,
-  const base::Time& timestamp,
-  lk::Balance gas,
-  const std::string& hex_contract_code,
-  const std::string& hex_init,
-  const lk::Sign& signature)
+lk::Transaction GeneralServerService::get_transaction(const base::Sha256& transaction_hash)
 {
-    LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
-              << "], amount[" << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
-              << timestamp.getSecondsSinceEpoch() << "], initial_message[" << hex_init << "]";
+    LOG_TRACE << "Received RPC request {get_transaction}";
+    if (auto transaction_opt = _core.findTransaction(transaction_hash); transaction_opt) {
+        return *transaction_opt;
+    }
+    else {
+        return lk::invalidTransaction();
+    }
+}
 
-    auto contract_code = base::fromHex<base::Bytes>(hex_contract_code);
-    auto init = base::fromHex<base::Bytes>(hex_init);
 
-    lk::TransactionBuilder txb;
-    txb.setType(lk::Transaction::Type::CONTRACT_CREATION);
-    txb.setFrom(from_address);
-    txb.setTo(lk::Address::null());
-    txb.setAmount(amount);
-    txb.setFee(gas);
-    txb.setTimestamp(timestamp);
-
-    lk::ContractInitData data(std::move(contract_code), std::move(init));
-    txb.setData(base::toBytes(data));
-
-    txb.setSign(signature);
-
-    auto tx = std::move(txb).build();
-
-    LOG_DEBUG << tx;
+rpc::TransactionStatus GeneralServerService::push_transaction(lk::Transaction tx)
+{
+    LOG_TRACE << "Received RPC request {push_transaction} with tx[" << tx << "]";
 
     try {
         _core.addPendingTransactionAndWait(tx);
-        auto hash = base::Sha256::compute(base::toBytes(tx));
-        auto raw_output = _core.getTransactionOutput(hash);
-        if (raw_output.isEmpty()) {
-            return { rpc::OperationStatus::createFailed(std::string{ "Transaction failed" }),
-                     lk::Address::null(),
-                     gas };
+        auto transaction_hash = base::Sha256::compute(base::toBytes(tx));
+        const auto& [result_bytes, gas, status] = _core.getTransactionOutput(transaction_hash);
+        switch (status) {
+            case lk::TransactionStatus::SUCCESS:
+                return rpc::TransactionStatus::createSuccess(gas, base::toHex(result_bytes));
+            case lk::TransactionStatus::REVERT:
+                return rpc::TransactionStatus::createRevert(gas, base::toHex(result_bytes));
+            case lk::TransactionStatus::FAILED:
+                return rpc::TransactionStatus::createFailed(gas, std::string{ "Evm result failed" });
         }
-        base::SerializationIArchive ia(raw_output);
-        auto is_successful = ia.deserialize<bool>();
-        if (!is_successful) {
-            return { rpc::OperationStatus::createFailed(std::string{ "Transaction failed" }),
-                     lk::Address::null(),
-                     gas };
-        }
-        auto contract_address = ia.deserialize<lk::Address>();
-        auto output = ia.deserialize<base::Bytes>();
-        auto gas_left = ia.deserialize<lk::Balance>();
-
-        std::string ret_str{ "Contract was successfully deployed" };
-        if (!output.isEmpty()) {
-            ret_str += " with output: ";
-            ret_str += base::toHex<base::Bytes>(output);
-        }
-        return { rpc::OperationStatus::createSuccess(ret_str), contract_address, gas_left };
+    }
+    catch (const base::InvalidArgument& e) {
+        return rpc::TransactionStatus::createRejected(0, std::string{ "Error occurred: " } + e.what());
     }
     catch (const std::exception& e) {
-        return { rpc::OperationStatus::createFailed(std::string{ "Error occurred: " } + e.what()),
-                 lk::Address::null(),
-                 gas };
+        return rpc::TransactionStatus::createFailed(0, std::string{ "Error occurred: " } + e.what());
     }
 }
 
-
-std::tuple<rpc::OperationStatus, std::string, lk::Balance> GeneralServerService::transaction_message_call(
-  lk::Balance amount,
-  const lk::Address& from_address,
-  const lk::Address& to_address,
-  const base::Time& timestamp,
-  lk::Balance gas,
-  const std::string& hex_message,
-  const lk::Sign& signature)
-{
-    LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
-              << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
-              << "], timestamp[" << timestamp.getSecondsSinceEpoch() << "], message[" << hex_message << "]";
-
-
-    auto message = base::fromHex<base::Bytes>(hex_message);
-
-    lk::TransactionBuilder txb;
-    txb.setType(lk::Transaction::Type::MESSAGE_CALL);
-    txb.setFrom(from_address);
-    txb.setTo(to_address);
-    txb.setAmount(amount);
-    txb.setFee(gas);
-    txb.setTimestamp(timestamp);
-    txb.setData(message);
-    txb.setSign(signature);
-
-    auto tx = std::move(txb).build();
-
-    try {
-        _core.addPendingTransactionAndWait(tx);
-        auto hash = base::Sha256::compute(base::toBytes(tx));
-        const auto& result_bytes = _core.getTransactionOutput(hash);
-        if (result_bytes.isEmpty()) {
-            return { rpc::OperationStatus::createFailed(std::string{ "Message call failed" }), std::string{}, gas };
-        }
-        base::SerializationIArchive ia(result_bytes);
-
-        auto is_successful = ia.deserialize<bool>();
-        if (!is_successful) {
-            return { rpc::OperationStatus::createFailed(std::string{ "Message call failed" }), std::string{}, gas };
-        }
-        auto result = ia.deserialize<base::Bytes>();
-        auto gas_left = ia.deserialize<lk::Balance>();
-        return { rpc::OperationStatus::createSuccess("Message call was successfully executed"),
-                 base::toHex<base::Bytes>(result),
-                 gas_left };
-    }
-    catch (const std::exception& e) {
-        return { rpc::OperationStatus::createFailed(std::string{ "Error occurred during message call: " } + e.what()),
-                 std::string{},
-                 gas };
-    }
-}
 
 } // namespace node

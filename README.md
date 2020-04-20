@@ -10,8 +10,8 @@ By default it is config.json file of the following format:
         "public_port": 20203
     },
     "rpc": {
-        "mode": "grpc",
-        "address": "0.0.0.0:50051"
+        "grpc_address": "0.0.0.0:50051",
+        "http_address": "0.0.0.0:50052"
     },
     "miner": {
         "threads": 4

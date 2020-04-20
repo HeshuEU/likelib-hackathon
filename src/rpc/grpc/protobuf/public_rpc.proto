@@ -25,6 +25,10 @@ service NodePublicInterface {
 
     rpc push_transaction (Transaction) returns (TransactionStatus) {
     }
+
+    rpc get_transaction_result (Hash) returns (TransactionStatus) {
+    }
+
 }
 
 //=====================================
@@ -59,7 +63,7 @@ message Transaction {
     Address from = 1;
     Address to = 2;
     CurrencyAmount value = 3;
-    CurrencyAmount gas = 4;
+    CurrencyAmount fee = 4;
     Time creation_time = 5;
     Data data = 6;
     Signature signature = 7;
@@ -74,7 +78,7 @@ message TransactionStatus {
         Failed = 3;
     }
     StatusCode status = 1;
-    Data message = 2;
+    string message = 2;
     CurrencyAmount gas_left = 3;
 }
 
@@ -95,17 +99,17 @@ message CurrencyAmount {
 
 
 message Address {
-    string address_at_base_64 = 1;
+    string address_at_base_58 = 1;
 }
 
 
 message Hash {
-    string bytes_at_hex = 1;
+    string bytes_base_64 = 1;
 }
 
 
 message Data {
-    string bytes_at_hex = 1;
+    string bytes_base_64 = 1;
 }
 
 

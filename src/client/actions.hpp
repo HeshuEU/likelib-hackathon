@@ -85,7 +85,7 @@ class ActionTestConnection : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    lk::Address _account_address{ lk::Address::null() };
+    bool _is_http_mode{ false };
     //====================================
 };
 

@@ -1,33 +1,12 @@
 #include "grpc_client.hpp"
+#include "tools.hpp"
 
 #include <rpc/error.hpp>
 
 
-namespace
+namespace rpc::grpc
 {
 
-rpc::OperationStatus convert(const ::likelib::OperationStatus& status)
-{
-    switch (status.status()) {
-        case ::likelib::OperationStatus_StatusCode_Success:
-            return rpc::OperationStatus::createSuccess(status.message());
-        case ::likelib::OperationStatus_StatusCode_Rejected:
-            return rpc::OperationStatus::createRejected(status.message());
-        case ::likelib::OperationStatus_StatusCode_Failed:
-            return rpc::OperationStatus::createFailed(status.message());
-        default:
-            RAISE_ERROR(base::ParsingError, "Unexpected status code");
-    }
-}
-
-
-} // namespace
-
-
-namespace rpc
-{
-namespace grpc
-{
 
 NodeClient::NodeClient(const std::string& connect_address)
 {
@@ -36,40 +15,29 @@ NodeClient::NodeClient(const std::string& connect_address)
       std::make_unique<likelib::NodePublicInterface::Stub>(::grpc::CreateChannel(connect_address, channel_credentials));
 }
 
-uint32_t NodeClient::get_api_version()
-{
-    // convert data for request
-    likelib::TestRequest request;
 
-    // call remote host
-    likelib::TestResponse reply;
-    ::grpc::ClientContext context;
-    auto status = _stub->get_api_version(&context, request, &reply);
-
-    // return value if ok
-    if (status.ok()) {
-        return reply.interface_version();
-    }
-    else {
-        throw RpcError(status.error_message());
-    }
-}
-
-lk::Balance NodeClient::balance(const lk::Address& address)
+lk::AccountInfo NodeClient::getAccount(const lk::Address& address)
 {
     // convert data for request
     likelib::Address request;
-    request.set_address(address.toString());
+    request.set_address_at_base_58(base::base58Encode(address.getBytes()));
 
     // call remote host
-    likelib::CurrencyAmount reply;
+    likelib::AccountInfo reply;
     ::grpc::ClientContext context;
-    auto status = _stub->balance(&context, request, &reply);
+    auto status = _stub->get_account(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
-        auto result = reply.value();
-        return result;
+        auto balance = reply.balance().value();
+        auto nonce = reply.nonce();
+        std::vector<base::Sha256> hashes;
+        for (auto& hs : reply.hashes()) {
+            base::Sha256 hash{ base::base64Decode(hs.bytes_base_64()) };
+            hashes.emplace_back(std::move(hash));
+        }
+
+        return { address, balance, nonce, std::move(hashes) };
     }
     else {
         throw RpcError(status.error_message());
@@ -77,19 +45,20 @@ lk::Balance NodeClient::balance(const lk::Address& address)
 }
 
 
-Info NodeClient::info()
+Info NodeClient::getNodeInfo()
 {
-    likelib::InfoRequest request;
+    // convert data for request
+    likelib::None request;
 
     // call remote host
-    likelib::InfoResponse reply;
+    likelib::NodeInfo reply;
     ::grpc::ClientContext context;
-    auto status = _stub->info(&context, request, &reply);
+    auto status = _stub->get_node_info(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
-        Info ret{ base::Sha256(base::base64Decode(reply.top_block_hash())), 0 };
-        return ret;
+        auto top_block_hash = base::Sha256{ base::base64Decode(reply.top_block_hash().bytes_base_64()) };
+        return { std::move(top_block_hash), reply.interface_version(), reply.peers_number() };
     }
     else {
         throw RpcError(status.error_message());
@@ -97,38 +66,28 @@ Info NodeClient::info()
 }
 
 
-lk::Block NodeClient::get_block(const base::Sha256& block_hash)
+lk::Block NodeClient::getBlock(const base::Sha256& block_hash)
 {
-    likelib::GetBlockRequest request;
-    request.set_block_hash(block_hash.toHex());
+    // convert data for request
+    likelib::Hash request;
+    request.set_bytes_base_64(base::base64Encode(block_hash.getBytes()));
 
     // call remote host
-    likelib::GetBlockResponse reply;
+    likelib::Block reply;
     ::grpc::ClientContext context;
     auto status = _stub->get_block(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
         lk::BlockDepth depth{ reply.depth() };
-        base::Sha256 prev_block_hash{ base::fromHex<base::Bytes>(reply.previous_block_hash()) };
-        auto timestamp = base::Time(reply.timestamp().since_epoch());
+        base::Sha256 prev_block_hash{ base::base64Decode(reply.previous_block_hash().bytes_base_64()) };
+        base::Time timestamp(reply.timestamp().since_epoch());
         lk::NonceInt nonce{ reply.nonce() };
-        lk::Address coinbase{ reply.coinbase().address() };
+        lk::Address coinbase{ base::base58Decode(reply.coinbase().address_at_base_58()) };
 
         lk::TransactionsSet txset;
         for (const auto& txv : reply.transactions()) {
-            lk::TransactionBuilder txb;
-            txb.setFrom(lk::Address(txv.from().address()));
-            txb.setTo(lk::Address(txv.to().address()));
-            txb.setAmount(txv.value().value());
-            txb.setFee(txv.gas().value());
-            txb.setTimestamp(base::Time(txv.creation_time().since_epoch()));
-            txb.setData(base::base64Decode(txv.data()));
-            txb.setSign(lk::Sign::fromBase64(txv.signature()));
-            txb.setType(lk::Address(txv.to().address()) == lk::Address::null() ?
-                          lk::Transaction::Type::CONTRACT_CREATION :
-                          lk::Transaction::Type::MESSAGE_CALL);
-            txset.add(std::move(txb).build());
+            txset.add(deserializeTransaction(txv));
         }
 
         lk::Block blk{ depth, std::move(prev_block_hash), timestamp, std::move(coinbase), std::move(txset) };
@@ -141,36 +100,20 @@ lk::Block NodeClient::get_block(const base::Sha256& block_hash)
 }
 
 
-std::tuple<OperationStatus, lk::Address, lk::Balance> NodeClient::transaction_create_contract(
-  lk::Balance amount,
-  const lk::Address& from_address,
-  const base::Time& transaction_time,
-  lk::Balance gas,
-  const std::string& contract_code,
-  const std::string& init,
-  const lk::Sign& signature)
+lk::Transaction NodeClient::getTransaction(const base::Sha256& transaction_hash)
 {
     // convert data for request
-    likelib::TransactionCreateContractRequest request;
-    request.mutable_value()->set_value(static_cast<google::protobuf::uint64>(amount));
-    request.mutable_from()->set_address(from_address.toString());
-    request.mutable_fee()->set_value(static_cast<google::protobuf::uint64>(gas));
-    request.set_init(init);
-    request.set_contract_code(contract_code);
-    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpoch());
-    request.mutable_signature()->set_raw(signature.toBase64());
+    likelib::Hash request;
+    request.set_bytes_base_64(base::base64Encode(transaction_hash.getBytes()));
 
     // call remote host
-    likelib::TransactionCreateContractResponse reply;
+    likelib::Transaction reply;
     ::grpc::ClientContext context;
-    auto status = _stub->create_contract(&context, request, &reply);
+    auto status = _stub->get_transaction(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
-        auto converted_status = convert(reply.status());
-        auto contract_address = lk::Address{ reply.contract_address().address() };
-        auto gas_left = lk::Balance{ reply.gas_left().value() };
-        return { converted_status, contract_address, gas_left };
+        return deserializeTransaction(reply);
     }
     else {
         throw RpcError(status.error_message());
@@ -178,41 +121,48 @@ std::tuple<OperationStatus, lk::Address, lk::Balance> NodeClient::transaction_cr
 }
 
 
-std::tuple<OperationStatus, std::string, lk::Balance> NodeClient::transaction_message_call(
-  lk::Balance amount,
-  const lk::Address& from_address,
-  const lk::Address& to_address,
-  const base::Time& transaction_time,
-  lk::Balance fee,
-  const std::string& data,
-  const lk::Sign& signature)
+TransactionStatus NodeClient::pushTransaction(const lk::Transaction& transaction)
 {
     // convert data for request
-    likelib::TransactionMessageCallRequest request;
-    request.mutable_value()->set_value(static_cast<google::protobuf::uint64>(amount));
-    request.mutable_from()->set_address(from_address.toString());
-    request.mutable_to()->set_address(to_address.toString());
-    request.mutable_fee()->set_value(static_cast<google::protobuf::uint64>(fee));
-    request.set_data(data);
-    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpoch());
-    request.set_signature(signature.toBase64());
+    likelib::Transaction request;
+    serializeTransaction(transaction, request);
 
     // call remote host
-    likelib::TransactionMessageCallResponse reply;
+    likelib::TransactionStatus reply;
     ::grpc::ClientContext context;
-    auto status = _stub->message_call(&context, request, &reply);
+
+    auto status = _stub->push_transaction(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
-        auto converted_status = convert(reply.status());
-        auto gas_left = lk::Balance{ reply.gas_left().value() };
-        auto message_from_contract = reply.contract_response();
-        return { converted_status, message_from_contract, gas_left };
+        return deserializeTransactionStatus(reply);
     }
     else {
         throw RpcError(status.error_message());
     }
 }
 
+
+TransactionStatus NodeClient::getTransactionResult(const base::Sha256& transaction_hash)
+{
+    // convert data for request
+    likelib::Hash request;
+    request.set_bytes_base_64(base::base64Encode(transaction_hash.getBytes()));
+
+    // call remote host
+    likelib::TransactionStatus reply;
+    ::grpc::ClientContext context;
+
+    auto status = _stub->get_transaction_result(&context, request, &reply);
+
+    // return value if ok
+    if (status.ok()) {
+        return deserializeTransactionStatus(reply);
+    }
+    else {
+        throw RpcError(status.error_message());
+    }
 }
+
+
 } // namespace rpc

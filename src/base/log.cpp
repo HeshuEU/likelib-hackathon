@@ -108,4 +108,9 @@ void dumpDebuggingInfo()
     LOG_DEBUG << boost::stacktrace::stacktrace();
 }
 
+void flushLog()
+{
+    boost::log::core::get()->flush();
+}
+
 } // namespace base

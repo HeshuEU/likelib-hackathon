@@ -1,9 +1,8 @@
 #pragma once
 
-#include "cpprest/http_listener.h"
-
 #include <rpc/base_rpc.hpp>
 
+#include <cpprest/http_listener.h>
 
 namespace rpc::http
 {
@@ -22,7 +21,8 @@ class Adapter final
 
   private:
     std::shared_ptr<BaseRpc> _service;
-    std::map<std::string, std::function<web::json::value(web::json::value& json_body, std::shared_ptr<rpc::BaseRpc>&)>>
+    std::map<std::string,
+             std::function<web::json::value(web::json::value& json_body, std::shared_ptr<rpc::BaseRpc>&)>>
       _post_processors;
     std::map<std::string, std::function<web::json::value(std::shared_ptr<rpc::BaseRpc>&)>> _get_processors;
 };

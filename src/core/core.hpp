@@ -17,6 +17,13 @@ namespace lk
 
 class EthAdapter;
 
+enum class TransactionStatus : uint8_t
+{
+    SUCCESS = 0,
+    REVERT = 1,
+    FAILED = 2
+};
+
 class Core
 {
   public:
@@ -38,15 +45,16 @@ class Core
      */
     void run();
     //==================
-    lk::Balance getBalance(const lk::Address& address) const;
+    lk::AccountInfo getAccountInfo(const lk::Address& address) const;
     //==================
     bool addPendingTransaction(const lk::Transaction& tx);
     void addPendingTransactionAndWait(const lk::Transaction& tx);
-    base::Bytes getTransactionOutput(const base::Sha256& tx_hash);
+    std::tuple<base::Bytes, lk::Balance, TransactionStatus> getTransactionOutput(const base::Sha256& tx_hash);
     //==================
     bool tryAddBlock(const lk::Block& b);
     std::optional<lk::Block> findBlock(const base::Sha256& hash) const;
     std::optional<base::Sha256> findBlockHash(const lk::BlockDepth& depth) const;
+    std::optional<lk::Transaction> findTransaction(const base::Sha256& hash) const;
     const lk::Block& getTopBlock() const;
     //==================
     lk::Block getBlockTemplate() const;

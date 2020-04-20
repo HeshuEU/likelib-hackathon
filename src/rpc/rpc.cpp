@@ -1,33 +1,86 @@
 #include "rpc.hpp"
 
-#include "grpc/grpc_client.hpp"
-#include "grpc/grpc_server.hpp"
-#include "http/http_client.hpp"
-#include "http/http_server.hpp"
+#include <rpc/grpc/grpc_client.hpp>
+#include <rpc/grpc/grpc_server.hpp>
+#include <rpc/http/http_client.hpp>
+#include <rpc/http/http_server.hpp>
 
 namespace rpc
 {
 
-
-std::unique_ptr<BaseRpcServer> create_rpc_server(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface)
+namespace detail
 {
-    auto mode = config.get<std::string>("rpc.mode");
-    if (mode == "grpc") {
-        auto address = config.get<std::string>("rpc.address");
-        return std::unique_ptr<rpc::BaseRpcServer>(new rpc::grpc::NodeServer(address, std::move(interface)));
-    }
-    else if (mode == "http") {
-        auto address = config.get<std::string>("rpc.address");
-        utility::string_t protocol = U("http://");
-        protocol.append(address);
-        web::http::uri_builder uri(protocol);
 
-        return std::unique_ptr<rpc::BaseRpcServer>(
-          new rpc::http::NodeServer(uri.to_uri().to_string(), std::move(interface)));
+class RpcSever : public BaseRpcServer
+{
+  public:
+    RpcSever(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface);
+
+    ~RpcSever() override;
+
+    void run() override;
+
+    void stop() override;
+
+  private:
+    static constexpr const std::size_t GRPC = 0x1;
+    static constexpr const std::size_t HTTP = 0x2;
+
+    std::size_t _mode = 0x0;
+
+    std::unique_ptr<BaseRpcServer> _grpc_server;
+    std::string _grpc_listening_address;
+    std::unique_ptr<BaseRpcServer> _http_server;
+    std::string _http_listening_address;
+};
+
+
+RpcSever::~RpcSever()
+{
+    stop();
+}
+
+RpcSever::RpcSever(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface)
+{
+    if (config.hasKey("rpc.grpc_address")) {
+        _grpc_listening_address = config.get<std::string>("rpc.grpc_address");
+        _grpc_server = std::make_unique<rpc::grpc::NodeServer>(_grpc_listening_address, interface);
+        _mode = _mode | GRPC;
     }
-    else {
-        RAISE_ERROR(base::InvalidArgument, "unexpected mode");
+    if (config.hasKey("rpc.http_address")) {
+        _http_listening_address = "http://" + config.get<std::string>("rpc.http_address");
+        _http_server = std::make_unique<rpc::http::NodeServer>(_http_listening_address, interface);
+        _mode = _mode | HTTP;
     }
+    if (!_mode) {
+        RAISE_ERROR(base::InvalidArgument, "Not any rpc server was selected");
+    }
+}
+
+void RpcSever::run()
+{
+    if (_mode & HTTP) {
+        _http_server->run();
+        LOG_INFO << "HTTP RPC server started: " << _http_listening_address;
+    }
+    if (_mode & GRPC) {
+        _grpc_server->run();
+        LOG_INFO << "GRPC RPC server started: " << _grpc_listening_address;
+    }
+}
+
+void RpcSever::stop()
+{
+    if (_mode & HTTP) {
+        _http_server->stop();
+        LOG_INFO << "HTTP RPC server was stopped";
+    }
+    if (_mode & GRPC) {
+        _grpc_server->stop();
+        LOG_INFO << "GRPC RPC server was stopped";
+    }
+}
+
 }
 
 std::unique_ptr<BaseRpc> create_rpc_client(ClientMode mode, const std::string& connect_address)
@@ -39,6 +92,12 @@ std::unique_ptr<BaseRpc> create_rpc_client(ClientMode mode, const std::string& c
             return std::unique_ptr<BaseRpc>(new http::NodeClient(connect_address));
     }
     RAISE_ERROR(base::LogicError, "Unexpected case");
+}
+
+
+std::unique_ptr<BaseRpcServer> create_rpc_server(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface)
+{
+    return std::make_unique<detail::RpcSever>(config, interface);
 }
 
 

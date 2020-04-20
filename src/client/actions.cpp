@@ -24,6 +24,7 @@
 namespace
 {
 constexpr const char* HOST_OPTION = "host";
+constexpr const char* IS_HTTP_CLIENT_OPTION = "http";
 constexpr const char* TO_ADDRESS_OPTION = "to";
 constexpr const char* AMOUNT_OPTION = "amount";
 constexpr const char* KEYS_DIRECTORY_OPTION = "keys";
@@ -242,12 +243,14 @@ const std::string_view& ActionTestConnection::getName() const
 void ActionTestConnection::setupOptionsParser(base::ProgramOptionsParser& parser)
 {
     parser.addRequiredOption<std::string>(HOST_OPTION, "address of host");
+    parser.addFlag(IS_HTTP_CLIENT_OPTION, "is set enable http client call");
 }
 
 
 int ActionTestConnection::loadOptions(const base::ProgramOptionsParser& parser)
 {
     _host_address = parser.getValue<std::string>(HOST_OPTION);
+    _is_http_mode = parser.hasOption(IS_HTTP_CLIENT_OPTION);
     return base::config::EXIT_OK;
 }
 
@@ -256,7 +259,14 @@ int ActionTestConnection::execute()
 {
     LOG_INFO << "Test connect to rpc server by: " << _host_address;
     LOG_INFO << "Trying to connect to rpc server by: " << _host_address;
-    auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
+
+    std::unique_ptr<rpc::BaseRpc> client;
+    if (_is_http_mode) {
+        client = rpc::create_rpc_client(rpc::ClientMode::HTTP, _host_address);
+    }
+    else {
+        client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
+    }
 
     auto answer = client->get_api_version();
 
@@ -339,6 +349,26 @@ int ActionCreateContract::execute()
                                     base::fromHex<base::Bytes>(_message) };
     txb.setData(base::toBytes(init_data));
 
+//    auto contract_code = base::fromHex<base::Bytes>(hex_contract_code);
+//    auto init = base::fromHex<base::Bytes>(hex_init);
+//
+//    lk::TransactionBuilder txb;
+//    txb.setType(lk::Transaction::Type::CONTRACT_CREATION);
+//    txb.setFrom(from_address);
+//    txb.setTo(lk::Address::null());
+//    txb.setAmount(amount);
+//    txb.setFee(gas);
+//    txb.setTimestamp(timestamp);
+//
+//    lk::ContractInitData data(std::move(contract_code), std::move(init));
+//    txb.setData(base::toBytes(data));
+//
+//    txb.setSign(signature);
+//
+//    auto tx = std::move(txb).build();
+
+
+
     auto tx = std::move(txb).build();
     tx.sign(pub, priv);
 
@@ -417,7 +447,7 @@ int ActionMessageCall::execute()
 
     auto tx = std::move(txb).build();
     tx.sign(pub, priv);
-
+//    base::Sha256::compute(base::toBytes(tx));
     LOG_INFO << "Try to connect to rpc server by: " << _host_address;
     auto client = rpc::create_rpc_client(rpc::ClientMode::GRPC, _host_address);
 

@@ -101,7 +101,7 @@ void Core::addPendingTransactionAndWait(const lk::Transaction& tx)
 }
 
 
-base::Bytes Core::getTransactionOutput(const base::Sha256& tx)
+std::tuple<base::Bytes, lk::Balance, TransactionStatus> Core::getTransactionOutput(const base::Sha256& tx)
 {
     std::shared_lock lk(_tx_outputs_mutex);
     if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
@@ -142,6 +142,10 @@ std::optional<base::Sha256> Core::findBlockHash(const lk::BlockDepth& depth) con
     return _blockchain.findBlockHashByDepth(depth);
 }
 
+
+std::optional<lk::Transaction> Core::findTransaction(const base::Sha256& hash) const{
+
+}
 
 bool Core::checkBlock(const lk::Block& b) const
 {
@@ -201,6 +205,10 @@ lk::Block Core::getBlockTemplate() const
     return lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions };
 }
 
+lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const {
+
+
+}
 
 lk::Balance Core::getBalance(const lk::Address& address) const
 {

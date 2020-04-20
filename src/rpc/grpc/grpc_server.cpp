@@ -33,7 +33,9 @@ void NodeServer::run()
 
 void NodeServer::stop()
 {
-    _server->Shutdown();
+    if (_server) {
+        _server->Shutdown();
+    }
 }
 
 } // namespace rpc

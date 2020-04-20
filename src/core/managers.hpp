@@ -42,6 +42,7 @@ class AccountState
     std::uint64_t _nonce{ 0 };
     lk::Balance _balance{ 0 };
     base::Sha256 _code_hash{ base::Sha256::null() };
+    std::vector<base::Sha256> _transactions;
     std::map<base::Sha256, StorageData> _storage;
 };
 
@@ -93,6 +94,15 @@ class CodeManager
 
   private:
     std::map<base::Sha256, base::Bytes> _code_db;
+};
+
+
+struct AccountInfo
+{
+    lk::Address address;
+    lk::Balance balance;
+    std::uint64_t nonce;
+    std::vector<base::Sha256> transactions_hashes;
 };
 
 

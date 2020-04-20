@@ -24,7 +24,6 @@ void Node::run()
 
     try {
         _rpc->run();
-        LOG_INFO << "RPC server started: " << _config.get<std::string>("rpc.address");
     }
     catch (const std::exception& e) {
         LOG_WARNING << "Cannot start RPC server: " << e.what();

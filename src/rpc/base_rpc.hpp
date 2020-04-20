@@ -1,10 +1,12 @@
 #pragma once
 
-#include "base/time.hpp"
-#include "core/address.hpp"
-#include "core/block.hpp"
-#include "core/transaction.hpp"
-#include "core/types.hpp"
+#include <core/address.hpp>
+#include <core/block.hpp>
+#include <core/managers.hpp>
+#include <core/transaction.hpp>
+#include <core/types.hpp>
+
+#include <base/time.hpp>
 
 #include <string>
 #include <tuple>
@@ -12,27 +14,28 @@
 namespace rpc
 {
 
-class OperationStatus
+class TransactionStatus
 {
   public:
-    enum StatusCode
+    enum StatusCode : uint8_t
     {
         Success = 1,
         Rejected = 2,
-        Failed = 3
+        Revert = 3,
+        Failed = 4
     };
-    OperationStatus() = delete;
 
-    OperationStatus(StatusCode status, std::string message) noexcept;
+    explicit TransactionStatus(StatusCode status, std::string message, lk::Balance gas_left) noexcept;
 
-    OperationStatus(const OperationStatus&) = default;
-    OperationStatus(OperationStatus&&) = default;
-    OperationStatus& operator=(const OperationStatus&) = default;
-    OperationStatus& operator=(OperationStatus&&) = default;
+    TransactionStatus(const TransactionStatus&) = default;
+    TransactionStatus(TransactionStatus&&) = default;
+    TransactionStatus& operator=(const TransactionStatus&) = default;
+    TransactionStatus& operator=(TransactionStatus&&) = default;
 
-    static OperationStatus createSuccess(const std::string& message = "") noexcept;
-    static OperationStatus createRejected(const std::string& message = "") noexcept;
-    static OperationStatus createFailed(const std::string& message = "") noexcept;
+    static TransactionStatus createSuccess(lk::Balance gas_left, const std::string& message = "") noexcept;
+    static TransactionStatus createRejected(lk::Balance gas_left = 0, const std::string& message = "") noexcept;
+    static TransactionStatus createRevert(lk::Balance gas_left = 0, const std::string& message = "") noexcept;
+    static TransactionStatus createFailed(lk::Balance gas_left = 0, const std::string& message = "") noexcept;
 
     operator bool() const noexcept;
 
@@ -43,15 +46,19 @@ class OperationStatus
 
     StatusCode getStatus() const noexcept;
 
+    lk::Balance getGasLeft() const noexcept;
+
   private:
     StatusCode _status;
     std::string _message;
+    lk::Balance _gas_left;
 };
 
 
 struct Info
 {
     base::Sha256 top_block_hash;
+    uint32_t api_version;
     std::size_t peers_number;
 };
 
@@ -61,51 +68,17 @@ class BaseRpc
   public:
     virtual ~BaseRpc() = default;
 
-    /// method call remote server method(specified ip address in constructor) with similar params
-    /// \param address of account
-    /// \return result of balance by specific address
-    /// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
-    /// exception during processing on server instance)
-    virtual lk::Balance balance(const lk::Address& address) = 0;
+    virtual lk::AccountInfo getAccount(const lk::Address& address) = 0;
 
-    /// method call remote server method(specified ip address in constructor) with similar params
-    /// \param test_request sha256 from secret data request
-    /// \return sha256 from secret data response
-    /// \throw base::Error if call was with not ok grpc status(Networks errors, serialization error and
-    /// exception during processing on server instance)
-    virtual uint32_t get_api_version() = 0;
+    virtual Info getNodeInfo() = 0;
 
-    virtual Info info() = 0;
+    virtual lk::Block getBlock(const base::Sha256& block_hash) = 0;
 
-    virtual lk::Block get_block(const base::Sha256& block_hash) = 0;
+    virtual lk::Transaction getTransaction(const base::Sha256& transaction_hash) = 0;
 
-    virtual std::tuple<OperationStatus, lk::Address, lk::Balance> transaction_create_contract(
-      lk::Balance amount,
-      const lk::Address& from_address,
-      const base::Time& transaction_time,
-      lk::Balance gas,
-      const std::string& contract_code,
-      const std::string& init,
-      const lk::Sign& signature) = 0;
+    virtual TransactionStatus pushTransaction(const lk::Transaction& transaction) = 0;
 
-    virtual std::tuple<OperationStatus, std::string, lk::Balance> transaction_message_call(
-      lk::Balance amount,
-      const lk::Address& from_address,
-      const lk::Address& to_address,
-      const base::Time& transaction_time,
-      lk::Balance gas,
-      const std::string& message,
-      const lk::Sign& signature) = 0;
-};
-
-class BaseRpcServer
-{
-  public:
-    virtual ~BaseRpcServer() = default;
-
-    virtual void run() = 0;
-
-    virtual void stop() = 0;
+    virtual TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) = 0;
 };
 
 } // namespace rpc
