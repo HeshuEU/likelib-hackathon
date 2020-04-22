@@ -1,14 +1,16 @@
 #pragma once
 
-#include "base/crypto.hpp"
-#include "base/serialization.hpp"
-#include "base/time.hpp"
-
 #include "address.hpp"
 #include "types.hpp"
 
+#include <base/crypto.hpp>
+#include <base/serialization.hpp>
+#include <base/time.hpp>
+
+
 namespace lk
 {
+
 
 class Sign
 {
@@ -41,19 +43,12 @@ class Sign
 class Transaction
 {
   public:
-    //=================
-    enum class Type : std::uint8_t
-    {
-        MESSAGE_CALL,
-        CONTRACT_CREATION,
-    };
-    //=================
+
     Transaction(lk::Address from,
                 lk::Address to,
                 lk::Balance amount,
                 lk::Balance fee,
                 base::Time timestamp,
-                Type transaction_type,
                 base::Bytes data,
                 lk::Sign sign = lk::Sign{});
     Transaction(const Transaction&) = default;
@@ -68,7 +63,6 @@ class Transaction
     const lk::Address& getTo() const noexcept;
     const lk::Balance& getAmount() const noexcept;
     const base::Time& getTimestamp() const noexcept;
-    Type getType() const noexcept;
     const base::Bytes& getData() const noexcept;
     const lk::Balance& getFee() const noexcept;
     //=================
@@ -90,7 +84,6 @@ class Transaction
     lk::Balance _amount;
     lk::Balance _fee;
     base::Time _timestamp;
-    Type _tx_type;
     base::Bytes _data;
     lk::Sign _sign;
     //=================
@@ -151,5 +144,46 @@ class TransactionBuilder
 
 
 const Transaction& invalidTransaction();
+
+
+class TransactionStatus
+{
+  public:
+    enum StatusCode : uint8_t
+    {
+        Success = 1,
+        Rejected = 2,
+        Revert = 3,
+        Failed = 4
+    };
+
+    explicit TransactionStatus(StatusCode status, const std::string& message, lk::Balance fee_left) noexcept;
+
+    TransactionStatus(const TransactionStatus&) = default;
+    TransactionStatus(TransactionStatus&&) = default;
+    TransactionStatus& operator=(const TransactionStatus&) = default;
+    TransactionStatus& operator=(TransactionStatus&&) = default;
+
+    static TransactionStatus createSuccess(lk::Balance fee_left, const std::string& message = "") noexcept;
+    static TransactionStatus createRejected(lk::Balance fee_left = 0, const std::string& message = "") noexcept;
+    static TransactionStatus createRevert(lk::Balance fee_left = 0, const std::string& message = "") noexcept;
+    static TransactionStatus createFailed(lk::Balance fee_left = 0, const std::string& message = "") noexcept;
+
+    operator bool() const noexcept;
+
+    bool operator!() const noexcept;
+
+    const std::string& getMessage() const noexcept;
+    std::string& getMessage() noexcept;
+
+    StatusCode getStatus() const noexcept;
+
+    lk::Balance getFeeLeft() const noexcept;
+
+  private:
+    StatusCode _status;
+    std::string _message;
+    lk::Balance _fee_left;
+};
 
 } // namespace lk

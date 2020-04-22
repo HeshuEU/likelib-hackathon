@@ -1,9 +1,11 @@
-#include "base/error.hpp"
-
 #include "transaction.hpp"
+
+#include <base/error.hpp>
+
 
 namespace lk
 {
+
 
 Sign::Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash)
   : _data{ Data{ std::move(sender_public_key), std::move(rsa_encrypted_hash) } }
@@ -82,7 +84,6 @@ Transaction::Transaction(lk::Address from,
                          lk::Balance amount,
                          lk::Balance fee,
                          base::Time timestamp,
-                         Transaction::Type transaction_type,
                          base::Bytes data,
                          lk::Sign sign)
   : _from{ std::move(from) }
@@ -90,13 +91,12 @@ Transaction::Transaction(lk::Address from,
   , _amount{ amount }
   , _fee{ fee }
   , _timestamp{ timestamp }
-  , _tx_type{ transaction_type }
   , _data{ std::move(data) }
   , _sign{ std::move(sign) }
 {
-    //    if(_amount == 0) {
-    //        RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
-    //    }
+    if ((_amount == 0) || (_fee == 0)) {
+        RAISE_ERROR(base::LogicError, "Transaction cannot contain amount equal to 0");
+    }
 }
 
 
@@ -206,7 +206,6 @@ void Transaction::serializeHeader(base::SerializationOArchive& oa) const
     oa.serialize(_amount);
     oa.serialize(_fee);
     oa.serialize(_timestamp);
-    oa.serialize(_tx_type);
     oa.serialize(_data);
 }
 
@@ -218,10 +217,9 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
     auto amount = ia.deserialize<lk::Balance>();
     auto fee = ia.deserialize<lk::Balance>();
     auto timestamp = ia.deserialize<base::Time>();
-    auto tx_type = ia.deserialize<Type>();
     auto data = ia.deserialize<base::Bytes>();
     auto sign = ia.deserialize<lk::Sign>();
-    return { std::move(from), std::move(to), amount, fee, timestamp, tx_type, std::move(data), std::move(sign) };
+    return { std::move(from), std::move(to), amount, fee, timestamp, std::move(data), std::move(sign) };
 }
 
 
@@ -372,8 +370,65 @@ Transaction TransactionBuilder::build() &&
 }
 
 
-const Transaction& invalidTransaction(){
- static const Transaction invalid_tx = Transaction();
+const Transaction& invalidTransaction()
+{
+    // static const Transaction invalid_tx = Transaction();
+}
+
+TransactionStatus::TransactionStatus(StatusCode status, const std::string& message, lk::Balance fee_left) noexcept
+  : _status{ status }
+  , _message{ message }
+  , _fee_left{ fee_left }
+{}
+
+TransactionStatus TransactionStatus::createSuccess(lk::Balance fee_left, const std::string& message) noexcept
+{
+    return TransactionStatus(TransactionStatus::StatusCode::Success, message, fee_left);
+}
+
+TransactionStatus TransactionStatus::createRejected(lk::Balance fee_left, const std::string& message) noexcept
+{
+    return TransactionStatus(TransactionStatus::StatusCode::Rejected, message, fee_left);
+}
+
+TransactionStatus TransactionStatus::createRevert(lk::Balance fee_left, const std::string& message) noexcept
+{
+    return TransactionStatus(TransactionStatus::StatusCode::Revert, message, fee_left);
+}
+
+TransactionStatus TransactionStatus::createFailed(lk::Balance fee_left, const std::string& message) noexcept
+{
+    return TransactionStatus(TransactionStatus::StatusCode::Failed, message, fee_left);
+}
+
+TransactionStatus::operator bool() const noexcept
+{
+    return _status == TransactionStatus::StatusCode::Success;
+}
+
+bool TransactionStatus::operator!() const noexcept
+{
+    return _status != TransactionStatus::StatusCode::Success;
+}
+
+const std::string& TransactionStatus::getMessage() const noexcept
+{
+    return _message;
+}
+
+std::string& TransactionStatus::getMessage() noexcept
+{
+    return _message;
+}
+
+TransactionStatus::StatusCode TransactionStatus::getStatus() const noexcept
+{
+    return _status;
+}
+
+lk::Balance TransactionStatus::getFeeLeft() const noexcept
+{
+    return _fee_left;
 }
 
 } // namespace lk

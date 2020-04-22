@@ -14,16 +14,16 @@ GeneralServerService::GeneralServerService(lk::Core& core)
 {}
 
 
-lk::AccountInfo GeneralServerService::get_account(const lk::Address& address)
+lk::AccountInfo GeneralServerService::getAccount(const lk::Address& address)
 {
-    LOG_TRACE << "Received RPC request {get_account}" << address;
+    LOG_TRACE << "Received RPC request {getAccount}" << address;
     return _core.getAccountInfo(address);
 }
 
 
-rpc::Info GeneralServerService::get_node_info()
+rpc::Info GeneralServerService::getNodeInfo()
 {
-    LOG_TRACE << "Received RPC request {get_node_info}";
+    LOG_TRACE << "Received RPC request {getNodeInfo}";
     try {
         auto hash = base::Sha256::compute(base::toBytes(_core.getTopBlock()));
         return { hash, base::config::RPC_PUBLIC_API_VERSION, 0 };
@@ -34,9 +34,9 @@ rpc::Info GeneralServerService::get_node_info()
 }
 
 
-lk::Block GeneralServerService::get_block(const base::Sha256& block_hash)
+lk::Block GeneralServerService::getBlock(const base::Sha256& block_hash)
 {
-    LOG_TRACE << "Received RPC request {get_block} with block_hash[" << block_hash << "]";
+    LOG_TRACE << "Received RPC request {getBlock} with block_hash[" << block_hash << "]";
     if (auto block_opt = _core.findBlock(block_hash); block_opt) {
         return *block_opt;
     }
@@ -46,9 +46,9 @@ lk::Block GeneralServerService::get_block(const base::Sha256& block_hash)
 }
 
 
-lk::Transaction GeneralServerService::get_transaction(const base::Sha256& transaction_hash)
+lk::Transaction GeneralServerService::getTransaction(const base::Sha256& transaction_hash)
 {
-    LOG_TRACE << "Received RPC request {get_transaction}";
+    LOG_TRACE << "Received RPC request {getTransaction}";
     if (auto transaction_opt = _core.findTransaction(transaction_hash); transaction_opt) {
         return *transaction_opt;
     }
@@ -58,9 +58,9 @@ lk::Transaction GeneralServerService::get_transaction(const base::Sha256& transa
 }
 
 
-rpc::TransactionStatus GeneralServerService::push_transaction(lk::Transaction tx)
+rpc::TransactionStatus GeneralServerService::pushTransaction(const lk::Transaction& tx)
 {
-    LOG_TRACE << "Received RPC request {push_transaction} with tx[" << tx << "]";
+    LOG_TRACE << "Received RPC request {pushTransaction} with tx[" << tx << "]";
 
     try {
         _core.addPendingTransactionAndWait(tx);
@@ -76,10 +76,22 @@ rpc::TransactionStatus GeneralServerService::push_transaction(lk::Transaction tx
         }
     }
     catch (const base::InvalidArgument& e) {
-        return rpc::TransactionStatus::createRejected(0, std::string{ "Error occurred: " } + e.what());
+        return lk::TransactionStatus::createRejected(0, std::string{ "Error occurred: " } + e.what());
     }
     catch (const std::exception& e) {
-        return rpc::TransactionStatus::createFailed(0, std::string{ "Error occurred: " } + e.what());
+        return lk::TransactionStatus::createFailed(0, std::string{ "Error occurred: " } + e.what());
+    }
+}
+
+
+lk::TransactionStatus GeneralServerService::getTransactionResult(const base::Sha256& transaction_hash)
+{
+    LOG_TRACE << "Received RPC request {getTransactionResult}";
+    try {
+        return _core.getTransactionOutput(transaction_hash);
+    }
+    catch (const std::exception& e) {
+        return { base::Sha256::null(), base::config::RPC_PUBLIC_API_VERSION, 0 };
     }
 }
 

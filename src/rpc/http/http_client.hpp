@@ -17,15 +17,17 @@ class NodeClient final : public BaseRpc
 
     ~NodeClient() override = default;
 
-    lk::AccountInfo get_account(const lk::Address& address) override;
+    lk::AccountInfo getAccount(const lk::Address& address) override;
 
-    Info get_node_info() = 0;
+    Info getNodeInfo() override;
 
-    lk::Block get_block(const base::Sha256& block_hash) override;
+    lk::Block getBlock(const base::Sha256& block_hash) override;
 
-    lk::Transaction get_transaction(const base::Sha256& transaction_hash) override;
+    lk::Transaction getTransaction(const base::Sha256& transaction_hash) override;
 
-    TransactionStatus push_transaction(lk::Transaction) override;
+    TransactionStatus pushTransaction(const lk::Transaction& transaction) override;
+
+    virtual TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) override;
 
   private:
     web::http::client::http_client _client;

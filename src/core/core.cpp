@@ -48,7 +48,7 @@ const lk::Block& Core::getGenesisBlock()
         lk::Balance amount{ 0xFFFFFFFF };
         lk::Balance fee{ 0 };
 
-        ret.addTransaction({ from, to, amount, fee, timestamp, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{} });
+        ret.addTransaction({ from, to, amount, fee, timestamp, base::Bytes{} });
         return ret;
     }();
     return genesis;
@@ -101,11 +101,11 @@ void Core::addPendingTransactionAndWait(const lk::Transaction& tx)
 }
 
 
-std::tuple<base::Bytes, lk::Balance, TransactionStatus> Core::getTransactionOutput(const base::Sha256& tx)
+TransactionStatus Core::getTransactionOutput(const base::Sha256& tx)
 {
     std::shared_lock lk(_tx_outputs_mutex);
     if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
-        return it->second;
+        //        return it->second;
     }
     else {
         return {};
@@ -143,9 +143,7 @@ std::optional<base::Sha256> Core::findBlockHash(const lk::BlockDepth& depth) con
 }
 
 
-std::optional<lk::Transaction> Core::findTransaction(const base::Sha256& hash) const{
-
-}
+std::optional<lk::Transaction> Core::findTransaction(const base::Sha256& hash) const {}
 
 bool Core::checkBlock(const lk::Block& b) const
 {
@@ -205,15 +203,7 @@ lk::Block Core::getBlockTemplate() const
     return lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions };
 }
 
-lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const {
-
-
-}
-
-lk::Balance Core::getBalance(const lk::Address& address) const
-{
-    return _account_manager.getBalance(address);
-}
+lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const {}
 
 
 const lk::Block& Core::getTopBlock() const

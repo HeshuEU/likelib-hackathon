@@ -11,6 +11,7 @@ set(RPC_HEADERS
         http/http_adapter.hpp
         http/http_client.hpp
         http/http_server.hpp
+        http/tools.hpp
         base_rpc.hpp
         error.hpp
         rpc.hpp
@@ -24,7 +25,7 @@ set(RPC_SOURCES
         http/http_adapter.cpp
         http/http_client.cpp
         http/http_server.cpp
-        base_rpc.cpp
+        http/tools.cpp
         rpc.cpp)
 
 include_directories(SYSTEM ${GLOBAL_OUTPUT_CODE_DIR})

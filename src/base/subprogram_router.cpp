@@ -19,7 +19,7 @@ void SubprogramRouter::addSubprogram(const std::string& name,
     if (name.empty()) {
         RAISE_ERROR(base::InvalidArgument, "name of subprogram is empty");
     }
-    else if (_descendants.count(name)) {
+    else if (_descendants.count(name) > 0) {
         RAISE_ERROR(base::InvalidArgument, "this subprogram already exists");
     }
 
@@ -46,7 +46,7 @@ std::string SubprogramRouter::helpMessage() const
     ss << _program_options.helpMessage() << std::endl;
     if (!_descendant_descriptions.empty()) {
         ss << "Allowed commands:" << std::endl;
-        static constexpr const char* PREFIX = "   ";
+        static constexpr const char* PREFIX = "\t";
         std::string prefix(PREFIX);
         if (!_name.empty()) {
             prefix.append(_name);
@@ -54,7 +54,7 @@ std::string SubprogramRouter::helpMessage() const
         }
         for (const auto& child : _descendant_descriptions) {
             static constexpr const char* SPACE = "   [ --help ]    ";
-            ss << prefix << child.first << SPACE << child.second << std::endl; // TODO: add formatting later
+            ss << prefix << child.first << SPACE << child.second << std::endl; // TODO: add formatting
         }
     }
     return ss.str();

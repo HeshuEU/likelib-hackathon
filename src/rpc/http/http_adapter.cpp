@@ -9,298 +9,298 @@
 
 namespace detail
 {
-
-class ActionBase
-{
-  public:
-    //====================================
-    explicit ActionBase(std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionBase() = default;
-    //====================================
-    virtual const std::string& getName() const = 0;
-    virtual void run(web::json::value& result) = 0;
-    //====================================
-  protected:
-    std::shared_ptr<rpc::BaseRpc>& _service;
-};
-
-
-ActionBase::ActionBase(std::shared_ptr<rpc::BaseRpc>& service)
-  : _service{ service }
-{}
-
-
-class ActionInfo : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionInfo(std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionInfo() = default;
-    //====================================
-    const std::string& getName() const override;
-    void run(web::json::value& result) override;
-};
-
-
-ActionInfo::ActionInfo(std::shared_ptr<rpc::BaseRpc>& service)
-  : ActionBase(service)
-{}
-
-
-const std::string& ActionInfo::getName() const
-{
-    static const std::string name = "info";
-    return name;
-}
-
-
-void ActionInfo::run(web::json::value& result)
-{
-    auto top_block_hash = _service->info().top_block_hash.toHex();
-    result[U("top_block_hash")] = web::json::value::string(top_block_hash);
-}
-
-
-class ActionGetApiVersion : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionGetApiVersion(std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionGetApiVersion() = default;
-    //====================================
-    const std::string& getName() const override;
-    void run(web::json::value& result) override;
-
-  private:
-};
-
-
-ActionGetApiVersion::ActionGetApiVersion(std::shared_ptr<rpc::BaseRpc>& service)
-  : ActionBase(service)
-{}
-
-
-const std::string& ActionGetApiVersion::getName() const
-{
-    static const std::string name = "get_api_version";
-    return name;
-}
-
-void ActionGetApiVersion::run(web::json::value& result)
-{
-    auto version = _service->get_api_version();
-    result[U("api_version")] = web::json::value::number(version);
-}
-
-
-class ActionPostBase : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionPostBase(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionPostBase() = default;
-    //====================================
-  protected:
-    web::json::value _input;
-};
-
-
-ActionPostBase::ActionPostBase(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-  : ActionBase(service)
-  , _input{ input }
-{}
-
-
-class ActionGetBalance : public ActionPostBase
-{
-  public:
-    //====================================
-    explicit ActionGetBalance(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionGetBalance() = default;
-    //====================================
-    const std::string& getName() const override;
-    void run(web::json::value& result) override;
-
-  private:
-};
-
-
-ActionGetBalance::ActionGetBalance(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-  : ActionPostBase(input, service)
-{}
-
-
-const std::string& ActionGetBalance::getName() const
-{
-    static const std::string name = "get_balance";
-    return name;
-}
-
-
-void ActionGetBalance::run(web::json::value& result)
-{
-    auto block_hash_value = _input.at(U("address"));
-    auto address = lk::Address{ block_hash_value.as_string() };
-    auto balance = _service->balance(address);
-    result[U("address")] = block_hash_value;
-    result[U("balance")] = web::json::value::number(balance);
-}
-
-
-class ActionGetBlock : public ActionPostBase
-{
-  public:
-    //====================================
-    explicit ActionGetBlock(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionGetBlock() = default;
-    //====================================
-    const std::string& getName() const override;
-    void run(web::json::value& result) override;
-
-  private:
-};
-
-
-ActionGetBlock::ActionGetBlock(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-  : ActionPostBase(input, service)
-{}
-
-
-const std::string& ActionGetBlock::getName() const
-{
-    static const std::string name = "get_block";
-    return name;
-}
-
-
-void ActionGetBlock::run(web::json::value& result)
-{
-    auto block_hash_value = _input.at(U("block_hash"));
-    auto block_hash = base::Sha256{ base::fromHex<base::Bytes>(block_hash_value.as_string()) };
-    auto block = _service->get_block(block_hash);
-
-    web::json::value block_value;
-    block_value[U("block_depth")] = web::json::value::number(block.getDepth());
-    block_value[U("nonce")] = web::json::value::number(block.getNonce());
-    block_value[U("coinbase")] = web::json::value::string(block.getCoinbase().toString());
-    block_value[U("previous_block_hash")] = web::json::value::string(block.getPrevBlockHash().toHex());
-    block_value[U("timestamp")] = web::json::value::number(block.getTimestamp().getSecondsSinceEpoch());
-
-    std::vector<web::json::value> txs_values;
-    for (auto& tx : block.getTransactions()) {
-        web::json::value tx_value;
-        tx_value[U("from")] = web::json::value::string(tx.getFrom().toString());
-        tx_value[U("to")] = web::json::value::string(tx.getTo().toString());
-        tx_value[U("amount")] = web::json::value::number(tx.getAmount());
-        tx_value[U("fee")] = web::json::value::number(tx.getFee());
-        tx_value[U("timestamp")] = web::json::value::number(tx.getTimestamp().getSecondsSinceEpoch());
-        tx_value[U("type")] = web::json::value::number(static_cast<uint32_t>(tx.getType()));
-        tx_value[U("data")] = web::json::value::string(base::toHex(tx.getData()));
-        tx_value[U("sign")] =
-          web::json::value::string(tx.getSign().toBase64()); // TODO: think about cross-language serialization
-        txs_values.emplace_back(tx_value);
-    }
-    block_value[U("transactions")] = web::json::value::array(txs_values);
-
-    result[U("block_hash")] = block_hash_value;
-    result[U("block")] = block_value;
-}
-
-
-class ActionMessageCall : public ActionPostBase
-{
-  public:
-    //====================================
-    explicit ActionMessageCall(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionMessageCall() = default;
-    //====================================
-    const std::string& getName() const override;
-    void run(web::json::value& result) override;
-
-  private:
-};
-
-
-ActionMessageCall::ActionMessageCall(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-  : ActionPostBase(input, service)
-{}
-
-
-const std::string& ActionMessageCall::getName() const
-{
-    static const std::string name = "message_call";
-    return name;
-}
-
-
-void ActionMessageCall::run(web::json::value& result)
-{
-    auto amount = lk::Balance{ _input.at(U("amount")).as_number().to_uint64() };
-    auto data = _input.at(U("data")).as_string();
-    auto fee = lk::Balance{ _input.at(U("fee")).as_number().to_uint64() };
-    auto from = lk::Address{ _input.at(U("from")).as_string() };
-    auto to = lk::Address{ _input.at(U("to")).as_string() };
-    auto sign = lk::Sign::fromBase64(_input.at(U("sign")).as_string());
-    auto timestamp = base::Time(_input.at(U("timestamp")).as_number().to_uint32());
-
-    auto [status, contract_response, least_gas] =
-      _service->transaction_message_call(amount, from, to, timestamp, fee, data, sign);
-
-    if (!status) {
-        RAISE_ERROR(base::Error, "TODO Error!");
-    }
-
-    result[U("gas_left")] = web::json::value::number(least_gas);
-    result[U("contract_response")] = web::json::value::string(contract_response);
-}
-
-
-class ActionCreateContract : public ActionPostBase
-{
-  public:
-    //====================================
-    explicit ActionCreateContract(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionCreateContract() = default;
-    //====================================
-    const std::string& getName() const override;
-    void run(web::json::value& result) override;
-
-  private:
-};
-
-
-ActionCreateContract::ActionCreateContract(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-  : ActionPostBase(input, service)
-{}
-
-
-const std::string& ActionCreateContract::getName() const
-{
-    static const std::string name = "create_contract";
-    return name;
-}
-
-
-void ActionCreateContract::run(web::json::value& result)
-{
-    auto amount = lk::Balance{ _input.at(U("amount")).as_number().to_uint64() };
-    auto code = _input.at(U("code")).as_string();
-    auto init_message = _input.at(U("init")).as_string();
-    auto fee = lk::Balance{ _input.at(U("fee")).as_number().to_uint64() };
-    auto from = lk::Address{ _input.at(U("from")).as_string() };
-    auto sign = lk::Sign::fromBase64(_input.at(U("sign")).as_string());
-    auto timestamp = base::Time(_input.at(U("timestamp")).as_number().to_uint32());
-
-    auto [status, contract_address, least_gas] =
-      _service->transaction_create_contract(amount, from, timestamp, fee, code, init_message, sign);
-
-    if (!status) {
-        RAISE_ERROR(base::Error, "TODO Error!");
-    }
-
-    result[U("gas_left")] = web::json::value::number(least_gas);
-    result[U("contract_address")] = web::json::value::string(contract_address.toString());
-}
+//
+//class ActionBase
+//{
+//  public:
+//    //====================================
+//    explicit ActionBase(std::shared_ptr<rpc::BaseRpc>& service);
+//    virtual ~ActionBase() = default;
+//    //====================================
+//    virtual const std::string& getName() const = 0;
+//    virtual void run(web::json::value& result) = 0;
+//    //====================================
+//  protected:
+//    std::shared_ptr<rpc::BaseRpc>& _service;
+//};
+//
+//
+//ActionBase::ActionBase(std::shared_ptr<rpc::BaseRpc>& service)
+//  : _service{ service }
+//{}
+//
+//
+//class ActionInfo : public ActionBase
+//{
+//  public:
+//    //====================================
+//    explicit ActionInfo(std::shared_ptr<rpc::BaseRpc>& service);
+//    virtual ~ActionInfo() = default;
+//    //====================================
+//    const std::string& getName() const override;
+//    void run(web::json::value& result) override;
+//};
+//
+//
+//ActionInfo::ActionInfo(std::shared_ptr<rpc::BaseRpc>& service)
+//  : ActionBase(service)
+//{}
+//
+//
+//const std::string& ActionInfo::getName() const
+//{
+//    static const std::string name = "info";
+//    return name;
+//}
+//
+//
+//void ActionInfo::run(web::json::value& result)
+//{
+//    auto top_block_hash = _service->info().top_block_hash.toHex();
+//    result[U("top_block_hash")] = web::json::value::string(top_block_hash);
+//}
+//
+//
+//class ActionGetApiVersion : public ActionBase
+//{
+//  public:
+//    //====================================
+//    explicit ActionGetApiVersion(std::shared_ptr<rpc::BaseRpc>& service);
+//    virtual ~ActionGetApiVersion() = default;
+//    //====================================
+//    const std::string& getName() const override;
+//    void run(web::json::value& result) override;
+//
+//  private:
+//};
+//
+//
+//ActionGetApiVersion::ActionGetApiVersion(std::shared_ptr<rpc::BaseRpc>& service)
+//  : ActionBase(service)
+//{}
+//
+//
+//const std::string& ActionGetApiVersion::getName() const
+//{
+//    static const std::string name = "get_api_version";
+//    return name;
+//}
+//
+//void ActionGetApiVersion::run(web::json::value& result)
+//{
+//    auto version = _service->get_api_version();
+//    result[U("api_version")] = web::json::value::number(version);
+//}
+//
+//
+//class ActionPostBase : public ActionBase
+//{
+//  public:
+//    //====================================
+//    explicit ActionPostBase(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+//    virtual ~ActionPostBase() = default;
+//    //====================================
+//  protected:
+//    web::json::value _input;
+//};
+//
+//
+//ActionPostBase::ActionPostBase(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+//  : ActionBase(service)
+//  , _input{ input }
+//{}
+//
+//
+//class ActionGetBalance : public ActionPostBase
+//{
+//  public:
+//    //====================================
+//    explicit ActionGetBalance(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+//    virtual ~ActionGetBalance() = default;
+//    //====================================
+//    const std::string& getName() const override;
+//    void run(web::json::value& result) override;
+//
+//  private:
+//};
+//
+//
+//ActionGetBalance::ActionGetBalance(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+//  : ActionPostBase(input, service)
+//{}
+//
+//
+//const std::string& ActionGetBalance::getName() const
+//{
+//    static const std::string name = "get_balance";
+//    return name;
+//}
+//
+//
+//void ActionGetBalance::run(web::json::value& result)
+//{
+//    auto block_hash_value = _input.at(U("address"));
+//    auto address = lk::Address{ block_hash_value.as_string() };
+//    auto balance = _service->balance(address);
+//    result[U("address")] = block_hash_value;
+//    result[U("balance")] = web::json::value::number(balance);
+//}
+//
+//
+//class ActionGetBlock : public ActionPostBase
+//{
+//  public:
+//    //====================================
+//    explicit ActionGetBlock(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+//    virtual ~ActionGetBlock() = default;
+//    //====================================
+//    const std::string& getName() const override;
+//    void run(web::json::value& result) override;
+//
+//  private:
+//};
+//
+//
+//ActionGetBlock::ActionGetBlock(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+//  : ActionPostBase(input, service)
+//{}
+//
+//
+//const std::string& ActionGetBlock::getName() const
+//{
+//    static const std::string name = "get_block";
+//    return name;
+//}
+//
+//
+//void ActionGetBlock::run(web::json::value& result)
+//{
+//    auto block_hash_value = _input.at(U("block_hash"));
+//    auto block_hash = base::Sha256{ base::fromHex<base::Bytes>(block_hash_value.as_string()) };
+//    auto block = _service->get_block(block_hash);
+//
+//    web::json::value block_value;
+//    block_value[U("block_depth")] = web::json::value::number(block.getDepth());
+//    block_value[U("nonce")] = web::json::value::number(block.getNonce());
+//    block_value[U("coinbase")] = web::json::value::string(block.getCoinbase().toString());
+//    block_value[U("previous_block_hash")] = web::json::value::string(block.getPrevBlockHash().toHex());
+//    block_value[U("timestamp")] = web::json::value::number(block.getTimestamp().getSecondsSinceEpoch());
+//
+//    std::vector<web::json::value> txs_values;
+//    for (auto& tx : block.getTransactions()) {
+//        web::json::value tx_value;
+//        tx_value[U("from")] = web::json::value::string(tx.getFrom().toString());
+//        tx_value[U("to")] = web::json::value::string(tx.getTo().toString());
+//        tx_value[U("amount")] = web::json::value::number(tx.getAmount());
+//        tx_value[U("fee")] = web::json::value::number(tx.getFee());
+//        tx_value[U("timestamp")] = web::json::value::number(tx.getTimestamp().getSecondsSinceEpoch());
+//        tx_value[U("type")] = web::json::value::number(static_cast<uint32_t>(tx.getType()));
+//        tx_value[U("data")] = web::json::value::string(base::toHex(tx.getData()));
+//        tx_value[U("sign")] =
+//          web::json::value::string(tx.getSign().toBase64()); // TODO: think about cross-language serialization
+//        txs_values.emplace_back(tx_value);
+//    }
+//    block_value[U("transactions")] = web::json::value::array(txs_values);
+//
+//    result[U("block_hash")] = block_hash_value;
+//    result[U("block")] = block_value;
+//}
+//
+//
+//class ActionMessageCall : public ActionPostBase
+//{
+//  public:
+//    //====================================
+//    explicit ActionMessageCall(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+//    virtual ~ActionMessageCall() = default;
+//    //====================================
+//    const std::string& getName() const override;
+//    void run(web::json::value& result) override;
+//
+//  private:
+//};
+//
+//
+//ActionMessageCall::ActionMessageCall(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+//  : ActionPostBase(input, service)
+//{}
+//
+//
+//const std::string& ActionMessageCall::getName() const
+//{
+//    static const std::string name = "message_call";
+//    return name;
+//}
+//
+//
+//void ActionMessageCall::run(web::json::value& result)
+//{
+//    auto amount = lk::Balance{ _input.at(U("amount")).as_number().to_uint64() };
+//    auto data = _input.at(U("data")).as_string();
+//    auto fee = lk::Balance{ _input.at(U("fee")).as_number().to_uint64() };
+//    auto from = lk::Address{ _input.at(U("from")).as_string() };
+//    auto to = lk::Address{ _input.at(U("to")).as_string() };
+//    auto sign = lk::Sign::fromBase64(_input.at(U("sign")).as_string());
+//    auto timestamp = base::Time(_input.at(U("timestamp")).as_number().to_uint32());
+//
+//    auto [status, contract_response, least_gas] =
+//      _service->transaction_message_call(amount, from, to, timestamp, fee, data, sign);
+//
+//    if (!status) {
+//        RAISE_ERROR(base::Error, "TODO Error!");
+//    }
+//
+//    result[U("gas_left")] = web::json::value::number(least_gas);
+//    result[U("contract_response")] = web::json::value::string(contract_response);
+//}
+//
+//
+//class ActionCreateContract : public ActionPostBase
+//{
+//  public:
+//    //====================================
+//    explicit ActionCreateContract(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+//    virtual ~ActionCreateContract() = default;
+//    //====================================
+//    const std::string& getName() const override;
+//    void run(web::json::value& result) override;
+//
+//  private:
+//};
+//
+//
+//ActionCreateContract::ActionCreateContract(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+//  : ActionPostBase(input, service)
+//{}
+//
+//
+//const std::string& ActionCreateContract::getName() const
+//{
+//    static const std::string name = "create_contract";
+//    return name;
+//}
+//
+//
+//void ActionCreateContract::run(web::json::value& result)
+//{
+//    auto amount = lk::Balance{ _input.at(U("amount")).as_number().to_uint64() };
+//    auto code = _input.at(U("code")).as_string();
+//    auto init_message = _input.at(U("init")).as_string();
+//    auto fee = lk::Balance{ _input.at(U("fee")).as_number().to_uint64() };
+//    auto from = lk::Address{ _input.at(U("from")).as_string() };
+//    auto sign = lk::Sign::fromBase64(_input.at(U("sign")).as_string());
+//    auto timestamp = base::Time(_input.at(U("timestamp")).as_number().to_uint32());
+//
+//    auto [status, contract_address, least_gas] =
+//      _service->transaction_create_contract(amount, from, timestamp, fee, code, init_message, sign);
+//
+//    if (!status) {
+//        RAISE_ERROR(base::Error, "TODO Error!");
+//    }
+//
+//    result[U("gas_left")] = web::json::value::number(least_gas);
+//    result[U("contract_address")] = web::json::value::string(contract_address.toString());
+//}
 
 
 template<typename T>
@@ -348,13 +348,13 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
 {
     _service = std::move(service);
 
-    _get_processors.insert({ "info", detail::run_get<detail::ActionInfo> });
-    _get_processors.insert({ "get_api_version", detail::run_get<detail::ActionGetApiVersion> });
-
-    _post_processors.insert({ "get_balance", detail::run_post<detail::ActionGetBalance> });
-    _post_processors.insert({ "get_block", detail::run_post<detail::ActionGetBlock> });
-    _post_processors.insert({ "message_call", detail::run_post<detail::ActionMessageCall> });
-    _post_processors.insert({ "create_contract", detail::run_post<detail::ActionCreateContract> });
+//    _get_processors.insert({ "info", detail::run_get<detail::ActionInfo> });
+//    _get_processors.insert({ "get_api_version", detail::run_get<detail::ActionGetApiVersion> });
+//
+//    _post_processors.insert({ "get_balance", detail::run_post<detail::ActionGetBalance> });
+//    _post_processors.insert({ "get_block", detail::run_post<detail::ActionGetBlock> });
+//    _post_processors.insert({ "message_call", detail::run_post<detail::ActionMessageCall> });
+//    _post_processors.insert({ "create_contract", detail::run_post<detail::ActionCreateContract> });
 }
 
 void Adapter::handle_post(const web::http::http_request& message)

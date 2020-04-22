@@ -15,7 +15,7 @@ enum class ClientMode
 };
 
 
-std::unique_ptr<BaseRpc> create_rpc_client(ClientMode mode, const std::string& connect_address);
+std::unique_ptr<BaseRpc> createRpcClient(ClientMode mode, const std::string& connect_address);
 
 class BaseRpcServer
 {

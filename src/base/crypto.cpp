@@ -65,6 +65,30 @@ base::Bytes generate_bytes(std::size_t size)
     return data;
 }
 
+std::pair<std::unique_ptr<base::RsaPublicKey>, std::unique_ptr<base::RsaPrivateKey>> loadOrGeneratKeys(
+  const std::string_view& keys_dir_path)
+{
+    auto public_key_path = base::config::makePublicKeyPath(keys_dir_path);
+    auto private_key_path = base::config::makePrivateKeyPath(keys_dir_path);
+
+    std::unique_ptr<base::RsaPublicKey> _public_key;
+    std::unique_ptr<base::RsaPrivateKey> _private_key;
+    if (std::filesystem::exists(public_key_path) && std::filesystem::exists(private_key_path)) {
+        _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::load(public_key_path));
+        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::load(private_key_path));
+    }
+    else {
+        LOG_INFO << "Key files were not found by path " << keys_dir_path << ". Generating new keypair";
+        auto keys = base::generateKeys();
+        _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
+        _private_key = std::make_unique<base::RsaPrivateKey>(std::move(keys.second));
+        _public_key->save(public_key_path);
+        _private_key->save(private_key_path);
+        LOG_WARNING << "Generated new key pair";
+    }
+    return { std::move(_public_key), std::move(_private_key) };
+}
+
 } // namespace
 
 
@@ -583,24 +607,18 @@ base::Bytes AesKey::decrypt128Aes(const base::Bytes& data) const
 
 KeyVault::KeyVault(const base::PropertyTree& config)
 {
-    std::filesystem::path keys_dir_path = config.get<std::string>("keys_dir");
-    auto public_key_path = base::config::makePublicKeyPath(keys_dir_path);
-    auto private_key_path = base::config::makePrivateKeyPath(keys_dir_path);
+    auto keys_dir_path = config.get<std::string>("keys_dir");
+    auto [public_key, private_key] = loadOrGeneratKeys(keys_dir_path);
+    _public_key = std::move(public_key);
+    _private_key = std::move(private_key);
+}
 
-    if (std::filesystem::exists(public_key_path) && std::filesystem::exists(private_key_path)) {
-        _public_key = std::make_unique<base::RsaPublicKey>(base::RsaPublicKey::load(public_key_path));
-        _private_key = std::make_unique<base::RsaPrivateKey>(base::RsaPrivateKey::load(private_key_path));
-    }
-    else {
-        LOG_INFO << "Key files were not found by path " << keys_dir_path << ". Generating new keypair";
-        auto keys = base::generateKeys();
-        _public_key = std::make_unique<base::RsaPublicKey>(std::move(keys.first));
-        _private_key = std::make_unique<base::RsaPrivateKey>(std::move(keys.second));
-        _public_key->save(public_key_path);
-        _private_key->save(private_key_path);
-        LOG_WARNING << "Generated new key pair";
-    }
-    // TODO: maybe implement unload to disk for private key.
+
+KeyVault::KeyVault(const std::string_view& keys_folder)
+{
+    auto [public_key, private_key] = loadOrGeneratKeys(keys_folder);
+    _public_key = std::move(public_key);
+    _private_key = std::move(private_key);
 }
 
 

@@ -34,7 +34,7 @@ lk::Transaction&& deserializeTransaction(const ::likelib::Transaction& serialize
 
 void serializeTransactionStatus(const TransactionStatus& from, likelib::TransactionStatus& to)
 {
-    to.mutable_gas_left()->set_value(from.getGasLeft());
+    to.mutable_gas_left()->set_value(from.getFeeLeft());
     to.set_message(from.getMessage());
     switch (from.getStatus()) {
         case rpc::TransactionStatus::StatusCode::Success:
@@ -70,7 +70,7 @@ TransactionStatus deserializeTransactionStatus(const likelib::TransactionStatus&
             status_code = rpc::TransactionStatus::StatusCode::Rejected;
             break;
     }
-    return { status_code, status.message(), status.gas_left() };
+    return TransactionStatus{ status_code, status.message(), lk::Balance{ status.gas_left().value() } };
 }
 
 

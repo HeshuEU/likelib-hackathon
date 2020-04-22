@@ -136,6 +136,7 @@ class KeyVault
   public:
     KeyVault() = delete;
     explicit KeyVault(const base::PropertyTree& config);
+    explicit KeyVault(const std::string_view& keys_folder);
     KeyVault(const KeyVault&) = delete;
     KeyVault(KeyVault&&) = default;
     KeyVault& operator=(const KeyVault&) = delete;

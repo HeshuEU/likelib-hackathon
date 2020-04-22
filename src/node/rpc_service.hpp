@@ -14,17 +14,20 @@ class GeneralServerService : public rpc::BaseRpc
 
     ~GeneralServerService() override = default;
 
-    lk::AccountInfo get_account(const lk::Address& address) override;
+    lk::AccountInfo getAccount(const lk::Address& address) override;
 
-    rpc::Info get_node_info() override;
+    rpc::Info getNodeInfo() override;
 
-    lk::Block get_block(const base::Sha256& block_hash) override;
+    lk::Block getBlock(const base::Sha256& block_hash) override;
 
-    lk::Transaction get_transaction(const base::Sha256& transaction_hash) override;
+    lk::Transaction getTransaction(const base::Sha256& transaction_hash) override;
 
-    rpc::TransactionStatus push_transaction(lk::Transaction tx) override;
+    lk::TransactionStatus pushTransaction(const lk::Transaction& transaction) override;
+
+    lk::TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) override;
 
   private:
     lk::Core& _core;
 };
+
 } // namespace node

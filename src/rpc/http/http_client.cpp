@@ -9,17 +9,20 @@ NodeClient::NodeClient(const std::string& connect_address)
   : _client{ U("http://") + U(connect_address) }
 {}
 
-lk::AccountInfo NodeClient::get_account(const lk::Address& address) {}
+lk::AccountInfo NodeClient::getAccount(const lk::Address& address) {}
 
-Info NodeClient::get_node_info() {}
+Info NodeClient::getNodeInfo() {}
 
-lk::Block NodeClient::get_block(const base::Sha256& block_hash) {}
+lk::Block NodeClient::getBlock(const base::Sha256& block_hash) {}
 
-lk::Transaction NodeClient::get_transaction(const base::Sha256& transaction_hash) {}
+lk::Transaction NodeClient::getTransaction(const base::Sha256& transaction_hash) {}
 
-TransactionStatus NodeClient::push_transaction(lk::Transaction) {}
+TransactionStatus NodeClient::pushTransaction(const lk::Transaction& transaction) {}
 
-//uint32_t NodeClient::get_api_version()
+TransactionStatus NodeClient::getTransactionResult(const base::Sha256& transaction_hash) {}
+
+
+// uint32_t NodeClient::get_api_version()
 //{
 //    web::http::uri_builder builder(U("/get_api_version"));
 //    uint32_t result = 0;
