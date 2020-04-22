@@ -203,9 +203,6 @@ class EthAdapter::EthHost : public evmc::Host
         auto tx = std::move(txb).build();
         auto result = _core.doMessageCall(tx, *_associated_block);
         return result.getResult();
-
-        // return result;
-        // return evmc::make_result(evmc::result::)
     }
 
 
