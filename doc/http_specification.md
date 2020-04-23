@@ -13,7 +13,7 @@ request:
 	
 	get at http::/<target url>/get_node_info
 
-responce:
+response:
 
 	### json object at body:
 	{
@@ -32,7 +32,7 @@ request:
 
 	get at http::/<target url>/get_account?address=<address encoded by base58>
 
-responce:
+response:
 
 	### json object at body:
 	{
@@ -54,7 +54,7 @@ request:
 	## or
 	get at http::/<target url>/get_block?number=<block number>
 
-responce:
+response:
 
 	### json object at body:
 	{
@@ -76,7 +76,7 @@ request:
 	
 	get at http::/<target url>/get_transaction?hash=<hash encoded by base64>
 
-responce:
+response:
 
 	### json object at body:
 	{
@@ -91,7 +91,7 @@ request:
 
 	get at http::/<target url>/get_transaction_result?hash=<hash encoded by base64>
 
-responce:
+response:
 
 	### json object at body:
 	{
@@ -122,21 +122,14 @@ request:
 		“amount”: “<uint256 integer at string format>”,
 		“fee”: “<uint256 integer at string format>”,
 		“timestamp”: <integer is seconds from epoch start>,
-		### if "to" is null address
 		“data”: {
-			“contract_code”: “<binary contract code string message>”,
-			“init_message”: “<binary constructor encoded(for call) data string message>”,
-			“abi”: <contract abi object>		
+			“message”: “<binary encoded(for call) data string message or empty string if "to" is not a contract address>”,
+			“abi”: <if "to" is null address then field will be an empty string, if "to" is not null address then field wiil be a contract abi object>	
 		},
-		### if "to" is not null address
-		“data”: {
-			“message”: “<binary encoded(for call) data string message or empty string if "to" is not a contract address>”
-		}
-
 		“sign”: “<transaction hash encrypted by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
 	}
 
-responce:
+response:
 
 	### json object at body:
 	{
