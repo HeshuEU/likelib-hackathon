@@ -1,17 +1,15 @@
 # JSON HTTP specification
-## API version: 1
-
-Document with public http query specification of likelib node
+##### Document with public http query specification of likelib node. API version: 1
 
 ---
-
-## GET methods
 
 ### 1. get_node_info
 
 request: 
 	
-	get at http::/<target url>/get_node_info
+	post to http:://<target url>/get_node_info
+	
+	### without body
 
 response:
 
@@ -22,7 +20,7 @@ response:
 		“result”: {
 			“top_block_hash”: “<block hash encoded by base64>”,
 			“top_block_number”: <block number>,
-			“api_version”: <integer with current node api version>
+			“api_version”: 1
 		}
 	}
 
@@ -30,7 +28,12 @@ response:
 
 request:
 
-	get at http::/<target url>/get_account?address=<address encoded by base58>
+	post to http:://<target url>/get_account
+	
+	### need json object at body:
+    {
+        “address”: “<address encoded by base58>”,
+    }
 
 response:
 
@@ -50,10 +53,15 @@ response:
 
 request:
 
-	get at http::/<target url>/get_block?hash=<hash encoded by base64>
-	## or
-	get at http::/<target url>/get_block?number=<block number>
+	post to http:://<target url>/get_block
 
+	### need json object at body:
+    {
+        "hash": "<hash encoded by base64>"
+        ## or
+    	“number”: <integer block number>,
+    }
+    
 response:
 
 	### json object at body:
@@ -74,7 +82,12 @@ response:
 
 request:
 	
-	get at http::/<target url>/get_transaction?hash=<hash encoded by base64>
+	post to http:://<target url>/get_transaction
+
+	### need json object at body:
+    {
+        "hash": "<hash encoded by base64>"
+    }
 
 response:
 
@@ -89,8 +102,13 @@ response:
 
 request:
 
-	get at http::/<target url>/get_transaction_result?hash=<hash encoded by base64>
+	post to http:://<target url>/get_transaction_result
 
+	### need json object at body:
+    {
+        "hash": "<hash encoded by base64>"
+    }
+    
 response:
 
 	### json object at body:
@@ -105,15 +123,12 @@ response:
 		}
 	}
 
----
 
-## POST methods
-
-1. push_transaction
+6. push_transaction
 
 request:
 
-	post to http::/<target url>/push_transaction/
+	post to http:://<target url>/push_transaction
 
 	### need json object at body:
 	{
@@ -123,7 +138,7 @@ request:
 		“fee”: “<uint256 integer at string format>”,
 		“timestamp”: <integer is seconds from epoch start>,
 		“data”: {
-			“message”: “<binary encoded(for call) data string message or empty string if "to" is not a contract address>”,
+			“message”: “<binary encoded(for call) data string message then ecnoded by base64 or empty string if "to" is not a contract address>”,
 			“abi”: <if "to" is null address then field will be an empty string, if "to" is not null address then field wiil be a contract abi object>	
 		},
 		“sign”: “<transaction hash encrypted by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
