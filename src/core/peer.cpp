@@ -173,7 +173,7 @@ class TransactionMessage
   private:
     lk::Transaction _tx;
 
-    TransactionMessage(const lk::Transaction& tx);
+    explicit TransactionMessage(const lk::Transaction& tx);
 };
 
 //============================================
@@ -189,7 +189,7 @@ class GetBlockMessage
   private:
     base::Sha256 _block_hash;
 
-    GetBlockMessage(base::Sha256 block_hash);
+    explicit GetBlockMessage(base::Sha256 block_hash);
 };
 
 //============================================
@@ -205,7 +205,7 @@ class BlockMessage
   private:
     lk::Block _block;
 
-    BlockMessage(lk::Block block);
+    explicit BlockMessage(lk::Block block);
 };
 
 //============================================
@@ -221,7 +221,7 @@ class BlockNotFoundMessage
   private:
     base::Sha256 _block_hash;
 
-    BlockNotFoundMessage(base::Sha256 block_hash);
+    explicit BlockNotFoundMessage(base::Sha256 block_hash);
 };
 
 //============================================
@@ -720,7 +720,7 @@ void TransactionMessage::serialize(base::SerializationOArchive& oa, const lk::Tr
 TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto tx = lk::Transaction::deserialize(ia);
-    return { std::move(tx) };
+    return TransactionMessage{ std::move(tx) };
 }
 
 
@@ -752,7 +752,7 @@ void GetBlockMessage::serialize(base::SerializationOArchive& oa, const base::Sha
 GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block_hash = base::Sha256::deserialize(ia);
-    return { std::move(block_hash) };
+    return GetBlockMessage{ std::move(block_hash) };
 }
 
 
@@ -791,7 +791,7 @@ void BlockMessage::serialize(base::SerializationOArchive& oa, const lk::Block& b
 BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block = lk::Block::deserialize(ia);
-    return { std::move(block) };
+    return BlockMessage{ std::move(block) };
 }
 
 
@@ -844,7 +844,7 @@ void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa, const base
 BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto block_hash = base::Sha256::deserialize(ia);
-    return { std::move(block_hash) };
+    return BlockNotFoundMessage{ std::move(block_hash) };
 }
 
 
@@ -1031,12 +1031,6 @@ void Peer::send(base::Bytes&& data, net::Connection::SendHandler on_send = {})
 const lk::Address& Peer::getAddress() const noexcept
 {
     return _address;
-}
-
-
-void Peer::setAddress(lk::Address address)
-{
-    _address = std::move(address);
 }
 
 

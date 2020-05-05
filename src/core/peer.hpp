@@ -51,13 +51,6 @@ class Peer : public std::enable_shared_from_this<Peer>
     static std::shared_ptr<Peer> accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     static std::shared_ptr<Peer> connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     //================
-
-    /**
-     * Tries to add peer to a peer pool, to which it is attached.
-     * @return true if success, false - otherwise
-     */
-    bool tryAddToPool();
-    //================
     base::Time getLastSeen() const;
     net::Endpoint getEndpoint() const;
     net::Endpoint getPublicEndpoint() const;
@@ -66,10 +59,8 @@ class Peer : public std::enable_shared_from_this<Peer>
     void setServerEndpoint(net::Endpoint endpoint);
     void setState(State state);
     State getState() const noexcept;
-
     //================
     const lk::Address& getAddress() const noexcept;
-    void setAddress(lk::Address address);
     //================
     IdentityInfo getInfo() const;
     bool isClosed() const;
@@ -105,6 +96,28 @@ class Peer : public std::enable_shared_from_this<Peer>
          lk::Core& core,
          lk::Host& host);
     //================
+    /*
+     * Tries to add peer to a peer pool, to which it is attached.
+     * @return true if success, false - otherwise
+     */
+    bool tryAddToPool();
+    //================
+    /*
+     * Handler of session messages.
+     */
+    class Handler : public net::Session::Handler
+    {
+      public:
+        Handler(Peer& peer);
+
+        void onReceive(const base::Bytes& bytes) override;
+        void onClose() override;
+
+      private:
+        Peer& _peer;
+    };
+    //================
+
     std::unique_ptr<net::Session> _session;
     bool _is_started{ false };
     //================
@@ -122,25 +135,9 @@ class Peer : public std::enable_shared_from_this<Peer>
     lk::Core& _core;
     lk::Host& _host;
     //================
-    void rejectedByPool();
-    //================
-    /**
-     * Handler of session messages.
-     */
-    class Handler : public net::Session::Handler
-    {
-      public:
-        Handler(Peer& peer);
-
-        void onReceive(const base::Bytes& bytes) override;
-        void onClose() override;
-
-      private:
-        Peer& _peer;
-    };
+    // void rejectedByPool();
     //================
 };
-
 
 
 class PeerPoolBase
