@@ -9,19 +9,19 @@ namespace lk
 
 // clang-format off
 DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
-                                          (NOT_AVAILABLE)
-                                            (CANNOT_ACCEPT)
-                                            (ACCEPTED)
-                                            (ACCEPTED_RESPONSE)
-                                            (PING)
-                                            (PONG)
-                                            (LOOKUP)
-                                            (LOOKUP_RESPONSE)
-                                            (TRANSACTION)
-                                            (GET_BLOCK)
-                                            (BLOCK)
-                                            (BLOCK_NOT_FOUND)
-                                            (CLOSE)
+(NOT_AVAILABLE)
+            (CANNOT_ACCEPT)
+            (ACCEPTED)
+            (ACCEPTED_RESPONSE)
+            (PING)
+            (PONG)
+            (LOOKUP)
+            (LOOKUP_RESPONSE)
+            (TRANSACTION)
+            (GET_BLOCK)
+            (BLOCK)
+            (BLOCK_NOT_FOUND)
+            (CLOSE)
 )
 // clang-format on
 

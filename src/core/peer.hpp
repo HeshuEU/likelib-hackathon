@@ -27,8 +27,8 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     struct Context
     {
-        lk::Core& core; //! for operating with blockchain
-        lk::Host& host; //! for operating with host data
+        lk::Core& core;         //! for operating with blockchain
+        lk::Host& host;         //! for operating with host data
         lk::PeerPoolBase& pool; //! for new peer adding and gathering all peers info
     };
 
@@ -82,9 +82,7 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     void startSession();
 
-    void lookup(const lk::Address& address,
-                std::size_t alpha,
-                std::function<void(std::vector<IdentityInfo>)> callback);
+    void lookup(const lk::Address& address, std::size_t alpha, std::function<void(std::vector<IdentityInfo>)> callback);
     std::multimap<lk::Address, std::function<void(std::vector<IdentityInfo>)>>
       _lookup_callbacks; // TODO: refactor, of course
   private:
