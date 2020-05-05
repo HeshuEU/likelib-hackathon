@@ -34,23 +34,23 @@ class PeerTable : public PeerPoolBase
      * @returns true if succeeded, false otherwise
      * @threadsafe
      */
-    bool tryAddPeer(std::shared_ptr<PeerBase> peer) override;
+    bool tryAddPeer(std::shared_ptr<Peer> peer) override;
 
-    void removePeer(std::shared_ptr<PeerBase> peer) override;
+    void removePeer(std::shared_ptr<Peer> peer) override;
 
-    void removePeer(PeerBase* peer) override;
+    void removePeer(Peer* peer) override;
 
     // thread-safe
     void removeSilent();
     //=================================
 
     // thread-safe
-    void forEachPeer(std::function<void(const PeerBase&)> f) const override;
-    void forEachPeer(std::function<void(PeerBase&)> f) override;
+    void forEachPeer(std::function<void(const Peer&)> f) const override;
+    void forEachPeer(std::function<void(Peer&)> f) override;
 
     void broadcast(const base::Bytes& data) override;
     //=================================
-    std::vector<PeerBase::Info> lookup(const lk::Address& address, std::size_t alpha) override;
+    std::vector<Peer::Info> lookup(const lk::Address& address, std::size_t alpha) override;
 
     std::vector<Peer::Info> allPeersInfo() const override;
 
@@ -59,7 +59,7 @@ class PeerTable : public PeerPoolBase
     const lk::Address _host_address;
     //=================================
     static constexpr std::size_t MAX_BUCKET_SIZE = 10;
-    std::array<std::vector<std::shared_ptr<PeerBase>>, lk::Address::LENGTH_IN_BYTES * 8> _buckets;
+    std::array<std::vector<std::shared_ptr<Peer>>, lk::Address::LENGTH_IN_BYTES * 8> _buckets;
     mutable std::shared_mutex _buckets_mutex;
     //=================================
     static std::size_t calcDifference(const base::FixedBytes<lk::Address::LENGTH_IN_BYTES>& a,

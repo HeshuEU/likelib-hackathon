@@ -73,7 +73,7 @@ std::size_t PeerTable::getLeastRecentlySeenPeerIndex(const std::size_t bucket_id
 }
 
 
-bool PeerTable::tryAddPeer(std::shared_ptr<PeerBase> peer)
+bool PeerTable::tryAddPeer(std::shared_ptr<Peer> peer)
 {
     std::unique_lock lk{ _buckets_mutex };
     std::size_t bucket_index = calcBucketIndex(peer->getAddress());
@@ -98,13 +98,13 @@ bool PeerTable::tryAddPeer(std::shared_ptr<PeerBase> peer)
 }
 
 
-void PeerTable::removePeer(std::shared_ptr<PeerBase> peer)
+void PeerTable::removePeer(std::shared_ptr<Peer> peer)
 {
     removePeer(peer.get());
 }
 
 
-void PeerTable::removePeer(PeerBase* peer)
+void PeerTable::removePeer(Peer* peer)
 {
     std::unique_lock lk{ _buckets_mutex };
     for (auto& bucket : _buckets) {
@@ -136,7 +136,7 @@ void PeerTable::removeSilent()
 }
 
 
-void PeerTable::forEachPeer(std::function<void(const PeerBase&)> f) const
+void PeerTable::forEachPeer(std::function<void(const Peer&)> f) const
 {
     std::shared_lock lk(_buckets_mutex);
     for (const auto& bucket : _buckets) {
@@ -147,7 +147,7 @@ void PeerTable::forEachPeer(std::function<void(const PeerBase&)> f) const
 }
 
 
-void PeerTable::forEachPeer(std::function<void(PeerBase&)> f)
+void PeerTable::forEachPeer(std::function<void(Peer&)> f)
 {
     std::unique_lock lk(_buckets_mutex);
     for (auto& bucket : _buckets) {
@@ -160,11 +160,11 @@ void PeerTable::forEachPeer(std::function<void(PeerBase&)> f)
 
 void PeerTable::broadcast(const base::Bytes& data)
 {
-    forEachPeer([data](PeerBase& peer) { peer.send(data); });
+    forEachPeer([data](Peer& peer) { peer.send(data, {}); });
 }
 
 
-std::vector<PeerBase::Info> PeerTable::lookup(const lk::Address& address, const std::size_t alpha)
+std::vector<Peer::Info> PeerTable::lookup(const lk::Address& address, const std::size_t alpha)
 {
     auto ret = allPeersInfo();
     std::sort(ret.begin(), ret.end(), [this](const auto& a, const auto& b) {
@@ -182,7 +182,7 @@ std::vector<PeerBase::Info> PeerTable::lookup(const lk::Address& address, const 
 std::vector<Peer::Info> PeerTable::allPeersInfo() const
 {
     std::vector<Peer::Info> ret;
-    forEachPeer([&ret](const PeerBase& peer) { ret.push_back(peer.getInfo()); });
+    forEachPeer([&ret](const Peer& peer) { ret.push_back(peer.getInfo()); });
     return ret;
 }
 
@@ -244,7 +244,7 @@ void Host::checkOutPeer(const net::Endpoint& endpoint, std::function<void(std::s
     }
 
     bool have_peer_with_endpoint = false;
-    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const PeerBase& peer) {
+    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const Peer& peer) {
         if (peer.getPublicEndpoint() == endpoint) {
             have_peer_with_endpoint = true;
         }
@@ -328,13 +328,13 @@ void Host::bootstrap()
                 if (peer) {
                     peer->lookup(_core.getThisNodeAddress(),
                                  base::config::NET_LOOKUP_ALPHA,
-                                 [this, peer](std::vector<PeerBase::Info> peers_info) {
+                                 [this, peer](std::vector<Peer::Info> peers_info) {
                                      peer->startSession();
                                      for (const auto& peer_info : peers_info) {
                                          checkOutPeer(peer_info.endpoint, [this](std::shared_ptr<Peer> peer) {
                                              peer->lookup(_core.getThisNodeAddress(),
                                                           base::config::NET_LOOKUP_ALPHA,
-                                                          [this, peer](std::vector<PeerBase::Info> peers_info) {
+                                                          [this, peer](std::vector<Peer::Info> peers_info) {
                                                               for (const auto& peer_info : peers_info) {
                                                                   checkOutPeer(peer_info.endpoint,
                                                                                [this](std::shared_ptr<Peer> peer) {
@@ -370,26 +370,26 @@ void Host::dropZombiePeers()
 void Host::broadcast(const base::Bytes& data)
 {
     LOG_DEBUG << "Broadcasting data size = " << data.size();
-    _connected_peers.forEachPeer([data](PeerBase& peer) { peer.send(data); });
+    _connected_peers.forEachPeer([data](Peer& peer) { peer.send(data, {}); });
 }
 
 
 void Host::broadcast(const lk::Block& block)
 {
-    _connected_peers.forEachPeer([block](PeerBase& peer) { static_cast<lk::Peer&>(peer).sendBlock(block); });
+    _connected_peers.forEachPeer([block](Peer& peer) { static_cast<lk::Peer&>(peer).sendBlock(block); });
 }
 
 
 void Host::broadcast(const lk::Transaction& tx)
 {
-    _connected_peers.forEachPeer([tx](PeerBase& peer) { static_cast<lk::Peer&>(peer).sendTransaction(tx); });
+    _connected_peers.forEachPeer([tx](Peer& peer) { static_cast<lk::Peer&>(peer).sendTransaction(tx); });
 }
 
 
 bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 {
     bool have_peer_with_endpoint = false;
-    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const PeerBase& peer) {
+    _connected_peers.forEachPeer([&have_peer_with_endpoint, endpoint](const Peer& peer) {
         if (peer.getPublicEndpoint() == endpoint) {
             have_peer_with_endpoint = true;
         }

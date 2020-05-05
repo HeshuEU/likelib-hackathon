@@ -21,9 +21,9 @@ class CannotAcceptMessage
 
   private:
     RefusionReason _why_not_accepted;
-    std::vector<lk::PeerBase::Info> _peers_info;
+    std::vector<Peer::Info> _peers_info;
 
-    CannotAcceptMessage(RefusionReason why_not_accepted, std::vector<lk::PeerBase::Info> peers_info);
+    CannotAcceptMessage(RefusionReason why_not_accepted, std::vector<Peer::Info> peers_info);
 };
 
 //========================================
@@ -132,14 +132,14 @@ class LookupResponseMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa,
                           const lk::Address& address,
-                          const std::vector<lk::PeerBase::Info>& peers_info);
+                          const std::vector<Peer::Info>& peers_info);
     static LookupResponseMessage deserialize(base::SerializationIArchive& ia);
     void handle(const Peer::Context& ctx, Peer& peer);
 
   private:
     lk::Address _address;
-    std::vector<lk::PeerBase::Info> _peers_info;
-    LookupResponseMessage(lk::Address address, std::vector<lk::PeerBase::Info> peers);
+    std::vector<Peer::Info> _peers_info;
+    LookupResponseMessage(lk::Address address, std::vector<Peer::Info> peers);
 };
 
 //============================================
@@ -336,7 +336,7 @@ class MessageProcessor
 };
 
 
-std::vector<lk::PeerBase::Info> allPeersInfoExcept(lk::PeerPoolBase& host, const lk::Address& address)
+std::vector<Peer::Info> allPeersInfoExcept(lk::PeerPoolBase& host, const lk::Address& address)
 {
     auto ret = host.allPeersInfo();
     ret.erase(std::find_if(ret.begin(), ret.end(), [address](const auto& cand) { return cand.address == address; }));
@@ -365,7 +365,7 @@ void CannotAcceptMessage::serialize(base::SerializationOArchive& oa,
 CannotAcceptMessage CannotAcceptMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto why_not_accepted = ia.deserialize<RefusionReason>();
-    auto peers_info = ia.deserialize<std::vector<lk::PeerBase::Info>>();
+    auto peers_info = ia.deserialize<std::vector<Peer::Info>>();
     return CannotAcceptMessage(why_not_accepted, std::move(peers_info));
 }
 
@@ -381,7 +381,7 @@ void CannotAcceptMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 
 
 CannotAcceptMessage::CannotAcceptMessage(CannotAcceptMessage::RefusionReason why_not_accepted,
-                                         std::vector<lk::PeerBase::Info> peers_info)
+                                         std::vector<Peer::Info> peers_info)
   : _why_not_accepted{ why_not_accepted }
   , _peers_info{ std::move(peers_info) }
 {}
@@ -649,7 +649,7 @@ constexpr lk::MessageType LookupResponseMessage::getHandledMessageType()
 
 void LookupResponseMessage::serialize(base::SerializationOArchive& oa,
                                       const lk::Address& address,
-                                      const std::vector<lk::PeerBase::Info>& peers_info)
+                                      const std::vector<Peer::Info>& peers_info)
 {
     oa.serialize(lk::MessageType::LOOKUP_RESPONSE);
     oa.serialize(address);
@@ -660,7 +660,7 @@ void LookupResponseMessage::serialize(base::SerializationOArchive& oa,
 LookupResponseMessage LookupResponseMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto address = ia.deserialize<lk::Address>();
-    auto peers_info = ia.deserialize<std::vector<lk::PeerBase::Info>>();
+    auto peers_info = ia.deserialize<std::vector<Peer::Info>>();
     return LookupResponseMessage(std::move(address), std::move(peers_info));
 }
 
@@ -679,7 +679,7 @@ void LookupResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 }
 
 
-LookupResponseMessage::LookupResponseMessage(lk::Address address, std::vector<lk::PeerBase::Info> peers_info)
+LookupResponseMessage::LookupResponseMessage(lk::Address address, std::vector<Peer::Info> peers_info)
   : _address{ std::move(address) }
   , _peers_info{ std::move(peers_info) }
 {}
@@ -888,7 +888,7 @@ void Peer::sendSessionEnd(std::function<void()> on_send)
 
 void Peer::lookup(const lk::Address& address,
                   const std::size_t alpha,
-                  std::function<void(std::vector<PeerBase::Info>)> callback)
+                  std::function<void(std::vector<Peer::Info>)> callback)
 {
     struct LookupData
     {

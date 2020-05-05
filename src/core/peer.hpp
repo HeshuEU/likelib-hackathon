@@ -33,55 +33,9 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
 )
 // clang-format on
 
+class PeerPoolBase;
 
-class PeerBase
-{
-  public:
-    //===========================
-    struct Info
-    {
-        net::Endpoint endpoint;
-        lk::Address address;
-
-        static Info deserialize(base::SerializationIArchive& ia);
-        void serialize(base::SerializationOArchive& oa) const;
-    };
-    //===========================
-    virtual bool isClosed() const = 0;
-    //===========================
-    virtual void send(const base::Bytes& data, net::Connection::SendHandler on_send = {}) = 0;
-    virtual void send(base::Bytes&& data, net::Connection::SendHandler on_send = {}) = 0;
-
-    virtual const lk::Address& getAddress() const noexcept = 0;
-    virtual Info getInfo() const = 0;
-    virtual base::Time getLastSeen() const = 0;
-    virtual net::Endpoint getEndpoint() const = 0;
-    virtual net::Endpoint getPublicEndpoint() const = 0;
-    //===========================
-    virtual bool tryAddToPool() = 0;
-    //===========================
-};
-
-
-class PeerPoolBase
-{
-  public:
-    virtual bool tryAddPeer(std::shared_ptr<PeerBase> peer) = 0;
-    virtual void removePeer(std::shared_ptr<PeerBase> peer) = 0;
-    virtual void removePeer(PeerBase* peer) = 0;
-
-    virtual void forEachPeer(std::function<void(const PeerBase&)> f) const = 0;
-    virtual void forEachPeer(std::function<void(PeerBase&)> f) = 0;
-
-    virtual void broadcast(const base::Bytes& bytes) = 0;
-
-    virtual std::vector<PeerBase::Info> lookup(const lk::Address& address, std::size_t alpha) = 0;
-
-    virtual std::vector<PeerBase::Info> allPeersInfo() const = 0;
-};
-
-
-class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
+class Peer : public std::enable_shared_from_this<Peer>
 {
   public:
     //================
@@ -98,15 +52,24 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
         REQUESTED_BLOCKS,
         SYNCHRONISED
     };
+
+    struct Info
+    {
+        net::Endpoint endpoint;
+        lk::Address address;
+
+        static Info deserialize(base::SerializationIArchive& ia);
+        void serialize(base::SerializationOArchive& oa) const;
+    };
     //================
     static std::shared_ptr<Peer> accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     static std::shared_ptr<Peer> connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     //================
-    bool tryAddToPool() override;
+    bool tryAddToPool();
     //================
-    base::Time getLastSeen() const override;
-    net::Endpoint getEndpoint() const override;
-    net::Endpoint getPublicEndpoint() const override;
+    base::Time getLastSeen() const;
+    net::Endpoint getEndpoint() const;
+    net::Endpoint getPublicEndpoint() const;
     bool wasConnectedTo() const noexcept;
 
     void setServerEndpoint(net::Endpoint endpoint);
@@ -114,18 +77,18 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     State getState() const noexcept;
 
     //================
-    const lk::Address& getAddress() const noexcept override;
+    const lk::Address& getAddress() const noexcept;
     void setAddress(lk::Address address);
     //================
-    Info getInfo() const override;
+    Info getInfo() const;
     bool isClosed() const;
     //================
     void addSyncBlock(lk::Block block);
     void applySyncs();
     const std::forward_list<lk::Block>& getSyncBlocks() const noexcept;
     //================
-    void send(const base::Bytes& data, net::Connection::SendHandler on_send) override;
-    void send(base::Bytes&& data, net::Connection::SendHandler on_send) override;
+    void send(const base::Bytes& data, net::Connection::SendHandler on_send);
+    void send(base::Bytes&& data, net::Connection::SendHandler on_send);
     //================
     void sendBlock(const lk::Block& block);
     void sendTransaction(const lk::Transaction& tx);
@@ -135,8 +98,8 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
 
     void lookup(const lk::Address& address,
                 std::size_t alpha,
-                std::function<void(std::vector<PeerBase::Info>)> callback);
-    std::multimap<lk::Address, std::function<void(std::vector<PeerBase::Info>)>>
+                std::function<void(std::vector<Info>)> callback);
+    std::multimap<lk::Address, std::function<void(std::vector<Info>)>>
       _lookup_callbacks; // TODO: refactor, of course
   private:
     //================
@@ -178,6 +141,25 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
         Peer& _peer;
     };
     //================
+};
+
+
+
+class PeerPoolBase
+{
+  public:
+    virtual bool tryAddPeer(std::shared_ptr<Peer> peer) = 0;
+    virtual void removePeer(std::shared_ptr<Peer> peer) = 0;
+    virtual void removePeer(Peer* peer) = 0;
+
+    virtual void forEachPeer(std::function<void(const Peer&)> f) const = 0;
+    virtual void forEachPeer(std::function<void(Peer&)> f) = 0;
+
+    virtual void broadcast(const base::Bytes& bytes) = 0;
+
+    virtual std::vector<Peer::Info> lookup(const lk::Address& address, std::size_t alpha) = 0;
+
+    virtual std::vector<Peer::Info> allPeersInfo() const = 0;
 };
 
 }
