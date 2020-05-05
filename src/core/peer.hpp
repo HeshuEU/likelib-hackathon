@@ -22,11 +22,14 @@ class Peer : public std::enable_shared_from_this<Peer>
 {
   public:
     //================
+    /**
+     * Classes that are required for network messages handling.
+     */
     struct Context
     {
-        lk::Core& core;
-        lk::Host& host;
-        lk::PeerPoolBase& pool;
+        lk::Core& core; //! for operating with blockchain
+        lk::Host& host; //! for operating with host data
+        lk::PeerPoolBase& pool; //! for new peer adding and gathering all peers info
     };
 
     enum class State
@@ -48,6 +51,11 @@ class Peer : public std::enable_shared_from_this<Peer>
     static std::shared_ptr<Peer> accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     static std::shared_ptr<Peer> connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     //================
+
+    /**
+     * Tries to add peer to a peer pool, to which it is attached.
+     * @return true if success, false - otherwise
+     */
     bool tryAddToPool();
     //================
     base::Time getLastSeen() const;
@@ -77,6 +85,10 @@ class Peer : public std::enable_shared_from_this<Peer>
     void sendTransaction(const lk::Transaction& tx);
     void sendSessionEnd(std::function<void()> on_send);
     //===============
+    /**
+     * If the peer was accepted, it responds to it whether the acception was successful or not.
+     * If the peer was connected to it waits for reply.
+     */
     void startSession();
 
     void lookup(const lk::Address& address,
@@ -112,6 +124,9 @@ class Peer : public std::enable_shared_from_this<Peer>
     //================
     void rejectedByPool();
     //================
+    /**
+     * Handler of session messages.
+     */
     class Handler : public net::Session::Handler
     {
       public:
