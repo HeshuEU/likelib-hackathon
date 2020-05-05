@@ -1,6 +1,7 @@
 #include "core.hpp"
 
 #include "base/log.hpp"
+#include "vm/error.hpp"
 #include "vm/tools.hpp"
 
 #include <algorithm>
@@ -26,7 +27,9 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
     _blockchain.load();
     for (lk::BlockDepth d = 1; d <= _blockchain.getTopBlock().getDepth(); ++d) {
         auto block = *_blockchain.findBlock(*_blockchain.findBlockHashByDepth(d));
-        _account_manager.update(block);
+        for (const auto& tx : block.getTransactions()) {
+            tryPerformTransaction(tx, block);
+        }
     }
 
     subscribeToBlockAddition([this](const lk::Block& block) { _host.broadcast(block); });
@@ -43,7 +46,7 @@ const lk::Block& Core::getGenesisBlock()
         lk::Address from{ lk::Address::null() };
         lk::Address to{ "28dpzpURpyqqLoWrEhnHrajndeCq" };
         lk::Balance amount{ 0xFFFFFFFF };
-        lk::Balance fee{ 0 };
+        std::uint64_t fee{ 0 };
 
         ret.addTransaction({ from, to, amount, fee, timestamp, lk::Transaction::Type::MESSAGE_CALL, base::Bytes{} });
         return ret;
@@ -227,7 +230,7 @@ void Core::applyBlockTransactions(const lk::Block& block)
         for (const auto& tx : block.getTransactions()) {
             tryPerformTransaction(tx, block);
         }
-        constexpr lk::Balance EMISSION_VALUE = 1000;
+        const lk::Balance EMISSION_VALUE = 1000;
         _account_manager.getAccount(block.getCoinbase()).addBalance(EMISSION_VALUE);
     }
 }
@@ -236,6 +239,7 @@ void Core::applyBlockTransactions(const lk::Block& block)
 bool Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx)
 {
     auto hash = base::Sha256::compute(base::toBytes(tx));
+    lk::AccountState from_account_recovery{ _account_manager.getAccount(tx.getFrom()) };
     if (tx.getType() == lk::Transaction::Type::CONTRACT_CREATION) {
         try {
             _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
@@ -259,30 +263,38 @@ bool Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
         return true;
     }
     else {
+        lk::AccountState to_account_recovery{ _account_manager.getAccount(tx.getTo()) };
         try {
             _account_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
             auto result = doMessageCall(tx, block_where_tx);
-            LOG_DEBUG << "Message call result: " << base::toHex(result.toOutputData());
-            base::SerializationOArchive oa;
-            oa.serialize(true);
-            oa.serialize(result.toOutputData());
-            oa.serialize(result.gasLeft());
-            {
-                std::unique_lock lk(_tx_outputs_mutex);
-                _tx_outputs[hash] = std::move(oa).getBytes();
+            if (result.ok()) {
+                LOG_DEBUG << "Message call result: " << base::toHex(result.toOutputData());
+                base::SerializationOArchive oa;
+                oa.serialize(true);
+                oa.serialize(result.toOutputData());
+                oa.serialize(result.gasLeft());
+                {
+                    std::unique_lock lk(_tx_outputs_mutex);
+                    _tx_outputs[hash] = std::move(oa).getBytes();
+                }
+                _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - result.gasLeft());
+                _account_manager.getAccount(tx.getFrom()).addBalance(result.gasLeft());
+                return true;
             }
-            _account_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - result.gasLeft());
-            _account_manager.getAccount(tx.getFrom()).addBalance(result.gasLeft());
-            return true;
+            else {
+                RAISE_ERROR(base::Error, "evm has not success execution status");
+            }
         }
         catch (const base::Error&) {
+            _account_manager.getAccount(tx.getFrom()) = from_account_recovery;
+            _account_manager.getAccount(tx.getTo()) = to_account_recovery;
             return false;
         }
     }
 }
 
 
-std::tuple<lk::Address, base::Bytes, lk::Balance> Core::doContractCreation(const lk::Transaction& tx,
+std::tuple<lk::Address, base::Bytes, std::uint64_t> Core::doContractCreation(const lk::Transaction& tx,
                                                                            const lk::Block& block_where_tx)
 {
     base::SerializationIArchive ia(tx.getData());
@@ -294,12 +306,18 @@ std::tuple<lk::Address, base::Bytes, lk::Balance> Core::doContractCreation(const
     lk::Address contract_address = _account_manager.newContract(tx.getFrom(), hash);
     LOG_DEBUG << "Deploying smart contract at address " << contract_address;
     if (tx.getAmount() != 0) {
-        if (!_account_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
+        if (!_account_manager.tryTransferMoney(tx.getFrom(), contract_address, tx.getAmount())) {
             RAISE_ERROR(base::Error, "cannot transfer money");
         }
     }
 
-    return _eth_adapter.createContract(contract_address, tx, block_where_tx);
+    try {
+        return _eth_adapter.createContract(contract_address, tx, block_where_tx);
+    }
+    catch (const vm::RevertError& e) {
+        _account_manager.deleteAccount(contract_address);
+        RAISE_ERROR(base::Error, "fail at contract creation");
+    }
 }
 
 

@@ -41,12 +41,6 @@ class Session
     //==================
     void start();
     void close();
-
-    /*
-     * similar to close, but is called immediately after connection or acception,
-     * if we want to close connection
-     */
-    void reject();
     //==================
     const Endpoint& getEndpoint() const noexcept;
     const base::Time& getLastSeen() const noexcept;

@@ -80,7 +80,7 @@ std::string Sign::toBase64() const
 Transaction::Transaction(lk::Address from,
                          lk::Address to,
                          lk::Balance amount,
-                         lk::Balance fee,
+                         std::uint64_t fee,
                          base::Time timestamp,
                          Transaction::Type transaction_type,
                          base::Bytes data,
@@ -124,7 +124,7 @@ const base::Time& Transaction::getTimestamp() const noexcept
 }
 
 
-const lk::Balance& Transaction::getFee() const noexcept
+const std::uint64_t& Transaction::getFee() const noexcept
 {
     return _fee;
 }
@@ -216,7 +216,7 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
     auto from = ia.deserialize<lk::Address>();
     auto to = ia.deserialize<lk::Address>();
     auto amount = ia.deserialize<lk::Balance>();
-    auto fee = ia.deserialize<lk::Balance>();
+    auto fee = ia.deserialize<std::uint64_t>();
     auto timestamp = ia.deserialize<base::Time>();
     auto tx_type = ia.deserialize<Type>();
     auto data = ia.deserialize<base::Bytes>();
@@ -308,7 +308,7 @@ void TransactionBuilder::setTimestamp(base::Time timestamp)
 }
 
 
-void TransactionBuilder::setFee(lk::Balance fee)
+void TransactionBuilder::setFee(std::uint64_t fee)
 {
     _fee = fee;
 }

@@ -46,7 +46,7 @@ class ActionTransfer : public ActionBase
     std::string _host_address;
     lk::Address _to_address{ lk::Address::null() };
     lk::Balance _amount;
-    lk::Balance _fee;
+    std::uint64_t _fee;
     std::filesystem::path _keys_dir;
     //====================================
 };
@@ -106,7 +106,7 @@ class ActionCreateContract : public ActionBase
     std::string _host_address;
     std::filesystem::path _keys_dir;
     lk::Balance _amount;
-    lk::Balance _gas;
+    std::uint64_t _fee;
     std::string _compiled_contract;
     std::string _message;
     //====================================
@@ -129,7 +129,7 @@ class ActionMessageCall : public ActionBase
     std::string _host_address;
     lk::Address _to_address{ lk::Address::null() };
     lk::Balance _amount;
-    lk::Balance _gas;
+    std::uint64_t _fee;
     std::filesystem::path _keys_dir;
     std::string _message;
     //====================================

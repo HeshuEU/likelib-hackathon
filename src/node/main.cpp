@@ -96,7 +96,7 @@ int main(int argc, char** argv)
         Node node(exe_config);
         node.run();
         //=====================
-        std::this_thread::sleep_for(std::chrono::seconds(4500));
+        std::this_thread::sleep_for(std::chrono::hours(24 * 366));
 
         return base::config::EXIT_OK;
     }

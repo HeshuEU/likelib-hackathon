@@ -20,7 +20,7 @@ class EthAdapter
 
     ~EthAdapter();
 
-    std::tuple<lk::Address, base::Bytes, lk::Balance> createContract(const lk::Address& bc_address,
+    std::tuple<lk::Address, base::Bytes, std::uint64_t> createContract(const lk::Address& bc_address,
                                                                      const lk::Transaction& associated_tx,
                                                                      const lk::Block& associated_block);
     vm::ExecutionResult call(const lk::Transaction& associated_tx, const lk::Block& associated_block);
@@ -34,7 +34,8 @@ class EthAdapter
     AccountManager& _account_manager;
     CodeManager& _code_manager;
 
-    mutable std::mutex _execution_mutex;
+    mutable std::recursive_mutex _call_mutex;
+    mutable std::mutex _create_mutex;
 };
 
 } // namespace core

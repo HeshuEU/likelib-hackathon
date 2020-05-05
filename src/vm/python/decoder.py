@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+import binascii
 
 import web3
 
@@ -33,20 +34,31 @@ def load(path_to_contract_folder):
     compiled_contract_file_path = os.path.join(
         path_to_contract_folder, "compiled_code.bin")
     if not os.path.exists(compiled_contract_file_path):
-        raise Exception(
-            f"contract file not exists by path: {compiled_contract_file_path}")
+        raise Exception(f"contract file not exists by path: {compiled_contract_file_path}")
     with open(compiled_contract_file_path, "rt") as f:
         bytecode = f.read()
 
     contract_metadata_file_path = os.path.join(
         path_to_contract_folder, "metadata.json")
     if not os.path.exists(contract_metadata_file_path):
-        raise Exception(
-            f"contract metadata file not exists by path: {contract_metadata_file_path}")
+        raise Exception(f"contract metadata file not exists by path: {contract_metadata_file_path}")
     with open(contract_metadata_file_path, "rt") as f:
         metadata = json.loads(f.read())
 
     return {"bytecode": bytecode, "metadata": metadata}
+
+
+def prepare_for_serialize(decoded_data):
+    if type(decoded_data) is list:
+        for item_num in range(len(decoded_data)):
+            decoded_data[item_num] = prepare_for_serialize(decoded_data[item_num])
+    elif type(decoded_data) is bytes:
+        b = binascii.hexlify(decoded_data)
+        return b.decode('utf8')
+    elif type(decoded_data) is dict:
+        for item_key in decoded_data.keys():
+            decoded_data[item_key] = prepare_for_serialize(decoded_data[item_key])
+    return decoded_data
 
 
 if __name__ == "__main__":
@@ -61,6 +73,6 @@ if __name__ == "__main__":
     contract_data = load(args.contract_path)
     decoded_data = decode_output(contract_data, args.method, args.data)
     if decoded_data:
-        print(decoded_data)
+        print(json.dumps(prepare_for_serialize(decoded_data)))
     else:
         exit(2)

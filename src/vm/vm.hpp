@@ -81,10 +81,11 @@ class ExecutionResult
     ExecutionResult& operator=(const ExecutionResult&) = delete;
     ~ExecutionResult() = default;
 
+    bool revert() const noexcept;
     bool ok() const noexcept;
 
     base::Bytes toOutputData() const;
-    int64_t gasLeft() const;
+    uint64_t gasLeft() const;
     base::Bytes createdAddress() const;
 
     evmc::result getResult() noexcept;

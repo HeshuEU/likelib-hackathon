@@ -7,8 +7,7 @@ By default it is config.json file of the following format:
 {
     "net": {
         "listen_addr": "0.0.0.0:20203",
-        "public_port": 20203,
-        "max_connections": 20
+        "public_port": 20203
     },
     "rpc": {
         "address": "0.0.0.0:50051"
@@ -33,7 +32,6 @@ Notes on parameters:
 * `net.public_port` - when node is connected to a remote machine over Internet, its 
 public IP gets known, but port - doesn't. We only know the client-socket IP address.
 Such things as port-forwarding with NAT, may change the port we need to connect to;
-* `net.max_connections` - maximal number of connections that node is allowed to have to other nodes
 * `rpc.address` - address on which RPC is listening on;
 * `miner.threads` - optional parameter, sets the number of threads that miner is using;
 * `nodes` - list of known nodes.
@@ -44,6 +42,9 @@ if file not exists generate new key pair and save by this path.
 
 
 ## Build
-1. Run: " sudo .doc/prepare_build.sh ". It will install conan and his dependencies
+1. Run: " sudo .doc/prepare_build.sh ". It will install conan and his dependencies.
 2. To generate CMake files use cmake command. 
-3. To build project use make command
+3. To build project use make command.
+4. Go to the bin folder and create config.json with the node settings in it.
+5. run the node(keys for the node will be created automatically, if you want to use the already existing ones
+you should put hem next to the files with the names lkkey and lkkey.pub)

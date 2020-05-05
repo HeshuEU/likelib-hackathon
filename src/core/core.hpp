@@ -84,7 +84,7 @@ class Core
     bool checkTransaction(const lk::Transaction& tx) const;
     //==================
     bool tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx);
-    std::tuple<lk::Address, base::Bytes, lk::Balance> doContractCreation(const lk::Transaction& tx,
+    std::tuple<lk::Address, base::Bytes, std::uint64_t> doContractCreation(const lk::Transaction& tx,
                                                                          const lk::Block& block_where_tx);
     vm::ExecutionResult doMessageCall(const lk::Transaction& tx, const lk::Block& block_where_tx);
     //==================

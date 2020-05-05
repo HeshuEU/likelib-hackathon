@@ -2,6 +2,7 @@
 
 #include "core/core.hpp"
 
+#include "vm/error.hpp"
 #include "vm/tools.hpp"
 #include "vm/vm.hpp"
 
@@ -96,13 +97,7 @@ class EthAdapter::EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_balance";
         auto address = vm::toNativeAddress(addr);
         auto balance = _account_manager.getBalance(address);
-        evmc::uint256be ret;
-        std::fill(std::begin(ret.bytes), std::end(ret.bytes), 0);
-        for (int i = sizeof(balance) * 8; i >= 0; --i) {
-            ret.bytes[i] = balance & 0xFF;
-            balance >>= 8;
-        }
-        return ret;
+        return vm::toEvmcUint256(balance);
     }
 
 
@@ -185,7 +180,7 @@ class EthAdapter::EthHost : public evmc::Host
 
         txb.setType(lk::Transaction::Type::MESSAGE_CALL);
 
-        lk::Balance fee = msg.gas;
+        std::uint64_t fee = msg.gas;
         txb.setFee(fee);
 
         lk::Address from = vm::toNativeAddress(msg.sender);
@@ -199,6 +194,9 @@ class EthAdapter::EthHost : public evmc::Host
 
         base::Bytes data(msg.input_data, msg.input_size);
         txb.setData(data);
+
+        auto timestamp = base::Time::now();
+        txb.setTimestamp(timestamp);
 
         auto tx = std::move(txb).build();
         auto result = _core.doMessageCall(tx, *_associated_block);
@@ -275,11 +273,11 @@ EthAdapter::EthAdapter(Core& core, AccountManager& account_manager, CodeManager&
 EthAdapter::~EthAdapter() = default;
 
 
-std::tuple<lk::Address, base::Bytes, lk::Balance> EthAdapter::createContract(const lk::Address& contract_address,
-                                                                             const lk::Transaction& associated_tx,
-                                                                             const lk::Block& associated_block)
+std::tuple<lk::Address, base::Bytes, std::uint64_t> EthAdapter::createContract(const lk::Address& contract_address,
+                                                                               const lk::Transaction& associated_tx,
+                                                                               const lk::Block& associated_block)
 {
-    std::lock_guard lk(_execution_mutex);
+    std::lock_guard lk(_create_mutex);
 
     base::SerializationIArchive ia(associated_tx.getData());
     auto contract_data = ia.deserialize<lk::ContractInitData>();
@@ -292,9 +290,13 @@ std::tuple<lk::Address, base::Bytes, lk::Balance> EthAdapter::createContract(con
                                               contract_data.getInit());
 
     _eth_host->setContext(&associated_tx, &associated_block);
-    if (auto result = _vm.execute(message); result.ok()) {
+    auto result = _vm.execute(message);
+    if (result.ok()) {
         // return {contract_address, result.toOutputData()}; -- toOutputData returns the bytecode of contract here
-        return { contract_address, {}, static_cast<lk::Balance>(result.gasLeft()) };
+        return { contract_address, {}, result.gasLeft() };
+    }
+    else if (result.revert()) {
+        RAISE_ERROR(vm::RevertError, "contract creation failed during execution");
     }
     else {
         RAISE_ERROR(base::Error, "contract creation failed during execution");
@@ -304,7 +306,7 @@ std::tuple<lk::Address, base::Bytes, lk::Balance> EthAdapter::createContract(con
 
 vm::ExecutionResult EthAdapter::call(const lk::Transaction& associated_tx, const lk::Block& associated_block)
 {
-    std::lock_guard lk(_execution_mutex);
+    std::lock_guard lk(_call_mutex);
 
     auto code_hash = _account_manager.getAccount(associated_tx.getTo()).getCodeHash();
 

@@ -36,20 +36,20 @@ rpc::OperationStatus GeneralServerService::test(uint32_t api_version)
 }
 
 
-lk::Balance GeneralServerService::balance(const lk::Address& address)
+std::string GeneralServerService::balance(const lk::Address& address)
 {
     try {
         LOG_TRACE << "Received RPC request {balance} with address[" << address.toString() << "]";
         auto ret = _core.getBalance(address);
-        return ret;
+        return ret.toString();
     }
     catch (const std::exception& e) {
         LOG_WARNING << "Exception caught during balance request: " << e.what();
-        return -1;
+        return std::to_string(-1);
     }
     catch (...) {
         LOG_WARNING << "Exception caught during balance request: unknown";
-        return -1;
+        return std::to_string(-1);
     }
 }
 
@@ -79,11 +79,11 @@ lk::Block GeneralServerService::get_block(const base::Sha256& block_hash)
 }
 
 
-std::tuple<rpc::OperationStatus, lk::Address, lk::Balance> GeneralServerService::transaction_create_contract(
+std::tuple<rpc::OperationStatus, lk::Address, std::uint64_t> GeneralServerService::transaction_create_contract(
   lk::Balance amount,
   const lk::Address& from_address,
   const base::Time& timestamp,
-  lk::Balance gas,
+  std::uint64_t gas,
   const std::string& hex_contract_code,
   const std::string& hex_init,
   const lk::Sign& signature)
@@ -130,7 +130,7 @@ std::tuple<rpc::OperationStatus, lk::Address, lk::Balance> GeneralServerService:
         }
         auto contract_address = ia.deserialize<lk::Address>();
         auto output = ia.deserialize<base::Bytes>();
-        auto gas_left = ia.deserialize<lk::Balance>();
+        auto gas_left = ia.deserialize<std::uint64_t>();
 
         std::string ret_str{ "Contract was successfully deployed" };
         if (!output.isEmpty()) {
@@ -147,12 +147,12 @@ std::tuple<rpc::OperationStatus, lk::Address, lk::Balance> GeneralServerService:
 }
 
 
-std::tuple<rpc::OperationStatus, std::string, lk::Balance> GeneralServerService::transaction_message_call(
+std::tuple<rpc::OperationStatus, std::string, std::uint64_t> GeneralServerService::transaction_message_call(
   lk::Balance amount,
   const lk::Address& from_address,
   const lk::Address& to_address,
   const base::Time& timestamp,
-  lk::Balance gas,
+  std::uint64_t gas,
   const std::string& hex_message,
   const lk::Sign& signature)
 {
@@ -189,7 +189,7 @@ std::tuple<rpc::OperationStatus, std::string, lk::Balance> GeneralServerService:
             return { rpc::OperationStatus::createFailed(std::string{ "Message call failed" }), std::string{}, gas };
         }
         auto result = ia.deserialize<base::Bytes>();
-        auto gas_left = ia.deserialize<lk::Balance>();
+        auto gas_left = ia.deserialize<std::uint64_t>();
         return { rpc::OperationStatus::createSuccess("Message call was successfully executed"),
                  base::toHex<base::Bytes>(result),
                  gas_left };

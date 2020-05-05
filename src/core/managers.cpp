@@ -117,12 +117,16 @@ bool AccountManager::deleteAccount(const lk::Address& address)
 
 lk::Address AccountManager::newContract(const lk::Address& address, base::Sha256 associated_code_hash)
 {
+    // address = Ripemd160(associated_code_hash + account_address + Bytes(to_string(nonce))
     auto& account = getAccount(address);
     auto nonce = account.getNonce() + 1;
     account.incNonce();
-    auto bytes_address = address.getBytes();
-    bytes_address[0] = (bytes_address[0] + nonce) & 0xFF; // TEMPORARILY!!
-    auto account_address = lk::Address(bytes_address);
+    base::Bytes nonce_string_data{ std::to_string(nonce) };
+
+    auto bytes_address = base::Ripemd160::compute(associated_code_hash.getBytes().toBytes() +
+                                                  address.getBytes().toBytes() + nonce_string_data);
+    auto account_address = lk::Address(bytes_address.getBytes());
+
     newAccount(account_address, std::move(associated_code_hash));
     return account_address;
 }
