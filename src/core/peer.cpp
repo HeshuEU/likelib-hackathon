@@ -7,6 +7,33 @@
 namespace lk
 {
 
+
+/**
+ * Connection protocol description:
+ *  1) Connection to a given endpoint.
+ *  2) Send CONNECT message, that contains IdentityInfo of host: public endpoint info and its LK address.
+ *  3) Waiting for response. Valid responses are ACCEPTED and CANNOT_ACCEPT
+ *      a) ACCEPTED response means that current peer was added to PeerTable of peers, that we are connecting to.
+ *         Now we're ready for synchronisation.
+ *      b) CANNOT_ACCEPT response means that current peer was rejected by some reason (this reason is provided in message)
+ *
+ * Acception protocol description:
+ *  1) Accepting connection.
+ *  2) Expecting CONNECT message, receive it and retrieve IdentityInfo of that peer.
+ *  3) Try to add peer to peer table.
+ *      a) If adding is succeeded, then send ACCEPTED message. Now we're ready to synchronise.
+ *      b) If adding is failed - send CANNOT_ACCEPT message. Shutdown the connection.
+ *
+ * Initial synchronisation protocol description.
+ *  1) Initiated during handshake: if peers top-block if futher then ours, then we request all blocks that we're lack of.
+ *  2) All blocks are applied sequentally.
+ *  3) When initial top-block is applied, we say that host is synchronised with given peer.
+ *
+ *
+ *  Fix: do a synchronisation during runtime.
+ */
+
+
 // clang-format off
 DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
 (NOT_AVAILABLE)
