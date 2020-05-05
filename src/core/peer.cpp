@@ -7,6 +7,24 @@
 namespace lk
 {
 
+// clang-format off
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
+                                          (NOT_AVAILABLE)
+                                            (CANNOT_ACCEPT)
+                                            (ACCEPTED)
+                                            (ACCEPTED_RESPONSE)
+                                            (PING)
+                                            (PONG)
+                                            (LOOKUP)
+                                            (LOOKUP_RESPONSE)
+                                            (TRANSACTION)
+                                            (GET_BLOCK)
+                                            (BLOCK)
+                                            (BLOCK_NOT_FOUND)
+                                            (CLOSE)
+)
+// clang-format on
+
 //========================================
 
 class CannotAcceptMessage
@@ -21,9 +39,9 @@ class CannotAcceptMessage
 
   private:
     RefusionReason _why_not_accepted;
-    std::vector<Peer::Info> _peers_info;
+    std::vector<Peer::IdentityInfo> _peers_info;
 
-    CannotAcceptMessage(RefusionReason why_not_accepted, std::vector<Peer::Info> peers_info);
+    CannotAcceptMessage(RefusionReason why_not_accepted, std::vector<Peer::IdentityInfo> peers_info);
 };
 
 //========================================
@@ -36,7 +54,7 @@ class AcceptedMessage
                           const lk::Block& top_block,
                           const lk::Address& address,
                           std::uint16_t public_port,
-                          const std::vector<lk::Peer::Info>& known_peers);
+                          const std::vector<lk::Peer::IdentityInfo>& known_peers);
     static AcceptedMessage deserialize(base::SerializationIArchive& ia);
     void handle(const Peer::Context& context, Peer& peer);
 
@@ -45,12 +63,12 @@ class AcceptedMessage
     lk::Address _address;
     std::uint16_t
       _public_port; // zero public port states that peer didn't provide information about his public endpoint
-    std::vector<lk::Peer::Info> _known_peers;
+    std::vector<lk::Peer::IdentityInfo> _known_peers;
 
     AcceptedMessage(lk::Block&& top_block,
                     lk::Address address,
                     std::uint16_t public_port,
-                    std::vector<lk::Peer::Info>&& known_peers);
+                    std::vector<lk::Peer::IdentityInfo>&& known_peers);
 };
 
 //========================================
@@ -63,7 +81,7 @@ class AcceptedResponseMessage
                           const lk::Block& top_block,
                           const lk::Address& address,
                           std::uint16_t public_port,
-                          const std::vector<lk::Peer::Info>& known_peers);
+                          const std::vector<lk::Peer::IdentityInfo>& known_peers);
     static AcceptedResponseMessage deserialize(base::SerializationIArchive& ia);
     void handle(const Peer::Context& context, Peer& peer);
 
@@ -72,12 +90,12 @@ class AcceptedResponseMessage
     lk::Address _address;
     std::uint16_t
       _public_port; // zero public port states that peer didn't provide information about his public endpoint
-    std::vector<lk::Peer::Info> _known_peers;
+    std::vector<lk::Peer::IdentityInfo> _known_peers;
 
     AcceptedResponseMessage(lk::Block&& top_block,
                             lk::Address address,
                             std::uint16_t public_port,
-                            std::vector<lk::Peer::Info>&& known_peers);
+                            std::vector<lk::Peer::IdentityInfo>&& known_peers);
 };
 
 //========================================
@@ -132,14 +150,14 @@ class LookupResponseMessage
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa,
                           const lk::Address& address,
-                          const std::vector<Peer::Info>& peers_info);
+                          const std::vector<Peer::IdentityInfo>& peers_info);
     static LookupResponseMessage deserialize(base::SerializationIArchive& ia);
     void handle(const Peer::Context& ctx, Peer& peer);
 
   private:
     lk::Address _address;
-    std::vector<Peer::Info> _peers_info;
-    LookupResponseMessage(lk::Address address, std::vector<Peer::Info> peers);
+    std::vector<Peer::IdentityInfo> _peers_info;
+    LookupResponseMessage(lk::Address address, std::vector<Peer::IdentityInfo> peers);
 };
 
 //============================================
@@ -222,16 +240,16 @@ class CloseMessage
 
 //============================================
 
-Peer::Info Peer::Info::deserialize(base::SerializationIArchive& ia)
+Peer::IdentityInfo Peer::IdentityInfo::deserialize(base::SerializationIArchive& ia)
 {
     auto endpoint = ia.deserialize<net::Endpoint>();
     auto address = ia.deserialize<lk::Address>();
-    Peer::Info ret{ std::move(endpoint), std::move(address) };
+    Peer::IdentityInfo ret{ std::move(endpoint), std::move(address) };
     return ret;
 }
 
 
-void Peer::Info::serialize(base::SerializationOArchive& oa) const
+void Peer::IdentityInfo::serialize(base::SerializationOArchive& oa) const
 {
     oa.serialize(endpoint);
     oa.serialize(address);
@@ -336,7 +354,7 @@ class MessageProcessor
 };
 
 
-std::vector<Peer::Info> allPeersInfoExcept(lk::PeerPoolBase& host, const lk::Address& address)
+std::vector<Peer::IdentityInfo> allPeersInfoExcept(lk::PeerPoolBase& host, const lk::Address& address)
 {
     auto ret = host.allPeersInfo();
     ret.erase(std::find_if(ret.begin(), ret.end(), [address](const auto& cand) { return cand.address == address; }));
@@ -365,7 +383,7 @@ void CannotAcceptMessage::serialize(base::SerializationOArchive& oa,
 CannotAcceptMessage CannotAcceptMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto why_not_accepted = ia.deserialize<RefusionReason>();
-    auto peers_info = ia.deserialize<std::vector<Peer::Info>>();
+    auto peers_info = ia.deserialize<std::vector<Peer::IdentityInfo>>();
     return CannotAcceptMessage(why_not_accepted, std::move(peers_info));
 }
 
@@ -381,7 +399,7 @@ void CannotAcceptMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 
 
 CannotAcceptMessage::CannotAcceptMessage(CannotAcceptMessage::RefusionReason why_not_accepted,
-                                         std::vector<Peer::Info> peers_info)
+                                         std::vector<Peer::IdentityInfo> peers_info)
   : _why_not_accepted{ why_not_accepted }
   , _peers_info{ std::move(peers_info) }
 {}
@@ -398,7 +416,7 @@ void AcceptedMessage::serialize(base::SerializationOArchive& oa,
                                 const lk::Block& block,
                                 const lk::Address& address,
                                 std::uint16_t public_port,
-                                const std::vector<lk::Peer::Info>& known_peers)
+                                const std::vector<lk::Peer::IdentityInfo>& known_peers)
 {
     oa.serialize(getHandledMessageType());
     oa.serialize(block);
@@ -413,7 +431,7 @@ AcceptedMessage AcceptedMessage::deserialize(base::SerializationIArchive& ia)
     auto top_block = ia.deserialize<lk::Block>();
     auto address = ia.deserialize<lk::Address>();
     auto public_port = ia.deserialize<std::uint16_t>();
-    auto known_peers = ia.deserialize<std::vector<lk::Peer::Info>>();
+    auto known_peers = ia.deserialize<std::vector<lk::Peer::IdentityInfo>>();
     return AcceptedMessage(std::move(top_block), std::move(address), public_port, std::move(known_peers));
 }
 
@@ -468,7 +486,7 @@ void AcceptedMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 AcceptedMessage::AcceptedMessage(lk::Block&& top_block,
                                  lk::Address address,
                                  std::uint16_t public_port,
-                                 std::vector<lk::Peer::Info>&& known_peers)
+                                 std::vector<lk::Peer::IdentityInfo>&& known_peers)
   : _theirs_top_block{ std::move(top_block) }
   , _address{ std::move(address) }
   , _public_port{ public_port }
@@ -487,7 +505,7 @@ void AcceptedResponseMessage::serialize(base::SerializationOArchive& oa,
                                         const lk::Block& block,
                                         const lk::Address& address,
                                         std::uint16_t public_port,
-                                        const std::vector<lk::Peer::Info>& known_peers)
+                                        const std::vector<lk::Peer::IdentityInfo>& known_peers)
 {
     oa.serialize(getHandledMessageType());
     oa.serialize(block);
@@ -502,7 +520,7 @@ AcceptedResponseMessage AcceptedResponseMessage::deserialize(base::Serialization
     auto top_block = ia.deserialize<lk::Block>();
     auto address = ia.deserialize<lk::Address>();
     auto public_port = ia.deserialize<std::uint16_t>();
-    auto known_peers = ia.deserialize<std::vector<lk::Peer::Info>>();
+    auto known_peers = ia.deserialize<std::vector<lk::Peer::IdentityInfo>>();
     return AcceptedResponseMessage(std::move(top_block), std::move(address), public_port, std::move(known_peers));
 }
 
@@ -551,7 +569,7 @@ void AcceptedResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 AcceptedResponseMessage::AcceptedResponseMessage(lk::Block&& top_block,
                                                  lk::Address address,
                                                  std::uint16_t public_port,
-                                                 std::vector<lk::Peer::Info>&& known_peers)
+                                                 std::vector<lk::Peer::IdentityInfo>&& known_peers)
   : _theirs_top_block{ std::move(top_block) }
   , _address{ std::move(address) }
   , _public_port{ public_port }
@@ -649,7 +667,7 @@ constexpr lk::MessageType LookupResponseMessage::getHandledMessageType()
 
 void LookupResponseMessage::serialize(base::SerializationOArchive& oa,
                                       const lk::Address& address,
-                                      const std::vector<Peer::Info>& peers_info)
+                                      const std::vector<Peer::IdentityInfo>& peers_info)
 {
     oa.serialize(lk::MessageType::LOOKUP_RESPONSE);
     oa.serialize(address);
@@ -660,7 +678,7 @@ void LookupResponseMessage::serialize(base::SerializationOArchive& oa,
 LookupResponseMessage LookupResponseMessage::deserialize(base::SerializationIArchive& ia)
 {
     auto address = ia.deserialize<lk::Address>();
-    auto peers_info = ia.deserialize<std::vector<Peer::Info>>();
+    auto peers_info = ia.deserialize<std::vector<Peer::IdentityInfo>>();
     return LookupResponseMessage(std::move(address), std::move(peers_info));
 }
 
@@ -679,7 +697,7 @@ void LookupResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
 }
 
 
-LookupResponseMessage::LookupResponseMessage(lk::Address address, std::vector<Peer::Info> peers_info)
+LookupResponseMessage::LookupResponseMessage(lk::Address address, std::vector<Peer::IdentityInfo> peers_info)
   : _address{ std::move(address) }
   , _peers_info{ std::move(peers_info) }
 {}
@@ -888,7 +906,7 @@ void Peer::sendSessionEnd(std::function<void()> on_send)
 
 void Peer::lookup(const lk::Address& address,
                   const std::size_t alpha,
-                  std::function<void(std::vector<Peer::Info>)> callback)
+                  std::function<void(std::vector<Peer::IdentityInfo>)> callback)
 {
     struct LookupData
     {
@@ -1068,9 +1086,9 @@ bool Peer::isClosed() const
 }
 
 
-Peer::Info Peer::getInfo() const
+Peer::IdentityInfo Peer::getInfo() const
 {
-    return Peer::Info{ _session->getEndpoint(), _address };
+    return Peer::IdentityInfo{ _session->getEndpoint(), _address };
 }
 
 

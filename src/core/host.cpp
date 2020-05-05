@@ -164,7 +164,7 @@ void PeerTable::broadcast(const base::Bytes& data)
 }
 
 
-std::vector<Peer::Info> PeerTable::lookup(const lk::Address& address, const std::size_t alpha)
+std::vector<Peer::IdentityInfo> PeerTable::lookup(const lk::Address& address, const std::size_t alpha)
 {
     auto ret = allPeersInfo();
     std::sort(ret.begin(), ret.end(), [this](const auto& a, const auto& b) {
@@ -179,9 +179,9 @@ std::vector<Peer::Info> PeerTable::lookup(const lk::Address& address, const std:
 }
 
 
-std::vector<Peer::Info> PeerTable::allPeersInfo() const
+std::vector<Peer::IdentityInfo> PeerTable::allPeersInfo() const
 {
-    std::vector<Peer::Info> ret;
+    std::vector<Peer::IdentityInfo> ret;
     forEachPeer([&ret](const Peer& peer) { ret.push_back(peer.getInfo()); });
     return ret;
 }
@@ -328,16 +328,16 @@ void Host::bootstrap()
                 if (peer) {
                     peer->lookup(_core.getThisNodeAddress(),
                                  base::config::NET_LOOKUP_ALPHA,
-                                 [this, peer](std::vector<Peer::Info> peers_info) {
+                                 [this, peer](std::vector<Peer::IdentityInfo> peers_info) {
                                      peer->startSession();
                                      for (const auto& peer_info : peers_info) {
                                          checkOutPeer(peer_info.endpoint, [this](std::shared_ptr<Peer> peer) {
                                              peer->lookup(_core.getThisNodeAddress(),
                                                           base::config::NET_LOOKUP_ALPHA,
-                                                          [this, peer](std::vector<Peer::Info> peers_info) {
+                                                          [this, peer](std::vector<Peer::IdentityInfo> peers_info) {
                                                               for (const auto& peer_info : peers_info) {
                                                                   checkOutPeer(peer_info.endpoint,
-                                                                               [this](std::shared_ptr<Peer> peer) {
+                                                                               [](std::shared_ptr<Peer> peer) {
                                                                                    peer->startSession();
                                                                                });
                                                               }
@@ -398,7 +398,7 @@ bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 }
 
 
-std::vector<Peer::Info> Host::allConnectedPeersInfo() const
+std::vector<Peer::IdentityInfo> Host::allConnectedPeersInfo() const
 {
     return _connected_peers.allPeersInfo();
 }

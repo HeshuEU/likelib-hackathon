@@ -50,9 +50,9 @@ class PeerTable : public PeerPoolBase
 
     void broadcast(const base::Bytes& data) override;
     //=================================
-    std::vector<Peer::Info> lookup(const lk::Address& address, std::size_t alpha) override;
+    std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) override;
 
-    std::vector<Peer::Info> allPeersInfo() const override;
+    std::vector<Peer::IdentityInfo> allPeersInfo() const override;
 
   private:
     //=================================
@@ -105,7 +105,7 @@ class Host
     void run();
     void join();
     //=================================
-    std::vector<Peer::Info> allConnectedPeersInfo() const;
+    std::vector<Peer::IdentityInfo> allConnectedPeersInfo() const;
     unsigned short getPublicPort() const noexcept;
     boost::asio::io_context& getIoContext() noexcept;
     //=================================

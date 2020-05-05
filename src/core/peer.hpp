@@ -12,28 +12,11 @@
 namespace lk
 {
 
+// peer context requirements for handling messages
 class Core;
 class Host;
-
-// clang-format off
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
-                                          (NOT_AVAILABLE)
-                                                  (CANNOT_ACCEPT)
-                                                  (ACCEPTED)
-                                                  (ACCEPTED_RESPONSE)
-                                                  (PING)
-                                                  (PONG)
-                                                  (LOOKUP)
-                                                  (LOOKUP_RESPONSE)
-                                                  (TRANSACTION)
-                                                  (GET_BLOCK)
-                                                  (BLOCK)
-                                                  (BLOCK_NOT_FOUND)
-                                                  (CLOSE)
-)
-// clang-format on
-
 class PeerPoolBase;
+//=======================
 
 class Peer : public std::enable_shared_from_this<Peer>
 {
@@ -53,12 +36,12 @@ class Peer : public std::enable_shared_from_this<Peer>
         SYNCHRONISED
     };
 
-    struct Info
+    struct IdentityInfo
     {
         net::Endpoint endpoint;
         lk::Address address;
 
-        static Info deserialize(base::SerializationIArchive& ia);
+        static IdentityInfo deserialize(base::SerializationIArchive& ia);
         void serialize(base::SerializationOArchive& oa) const;
     };
     //================
@@ -80,7 +63,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     const lk::Address& getAddress() const noexcept;
     void setAddress(lk::Address address);
     //================
-    Info getInfo() const;
+    IdentityInfo getInfo() const;
     bool isClosed() const;
     //================
     void addSyncBlock(lk::Block block);
@@ -98,8 +81,8 @@ class Peer : public std::enable_shared_from_this<Peer>
 
     void lookup(const lk::Address& address,
                 std::size_t alpha,
-                std::function<void(std::vector<Info>)> callback);
-    std::multimap<lk::Address, std::function<void(std::vector<Info>)>>
+                std::function<void(std::vector<IdentityInfo>)> callback);
+    std::multimap<lk::Address, std::function<void(std::vector<IdentityInfo>)>>
       _lookup_callbacks; // TODO: refactor, of course
   private:
     //================
@@ -157,9 +140,9 @@ class PeerPoolBase
 
     virtual void broadcast(const base::Bytes& bytes) = 0;
 
-    virtual std::vector<Peer::Info> lookup(const lk::Address& address, std::size_t alpha) = 0;
+    virtual std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) = 0;
 
-    virtual std::vector<Peer::Info> allPeersInfo() const = 0;
+    virtual std::vector<Peer::IdentityInfo> allPeersInfo() const = 0;
 };
 
 }
