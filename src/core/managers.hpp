@@ -48,7 +48,6 @@ class AccountState
     AccountType getType() const;
     //============================
     std::uint64_t getNonce() const noexcept;
-    //    void incNonce() noexcept;
     void addTransactionHash(base::Sha256 tx_hash);
     //============================
     lk::Balance getBalance() const noexcept;
@@ -89,19 +88,16 @@ class StateManager
     //================
     StateManager() = default;
     StateManager(const StateManager&) = delete;
-    StateManager(StateManager&&) = delete;
+    StateManager(StateManager&& other);
 
     StateManager& operator=(const StateManager&) = delete;
-    StateManager& operator=(StateManager&&) = delete;
+    StateManager& operator=(StateManager&&);
     ~StateManager() = default;
     //================
     void createClientAccount(const lk::Address& address);
     lk::Address createContractAccount(const lk::Address& from_account_address, base::Sha256 associated_code_hash);
-    //    void newAccount(const lk::Address& address, base::Sha256 code_hash);
     bool hasAccount(const lk::Address& address) const;
     bool deleteAccount(const lk::Address& address);
-    //================
-    //    lk::Address newContract(const lk::Address& account_address, base::Sha256 associated_code_hash);
     //================
     bool tryTransferMoney(const lk::Address& from, const lk::Address& to, lk::Balance amount);
     //================
@@ -111,30 +107,13 @@ class StateManager
     const AccountState& getAccount(const lk::Address& account_address) const;
     AccountState& getAccount(const lk::Address& address);
     //================
-    lk::Balance getBalance(const lk::Address& account) const;
-    //================
-    TransactionStatus getTransactionOutput(const base::Sha256& tx);
-    void addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status);
+    StateManager createCopy();
+    void applyChanges(StateManager&& state);
 
   private:
     //================
     std::map<lk::Address, AccountState> _states;
     mutable std::shared_mutex _rw_mutex;
-    //================
-    std::unordered_map<base::Sha256, TransactionStatus> _tx_outputs;
-    mutable std::shared_mutex _tx_outputs_mutex;
 };
-
-
-// class CodeManager
-//{
-//  public:
-//    std::optional<std::reference_wrapper<const base::Bytes>> getCode(const base::Sha256& hash) const;
-//    void saveCode(base::Bytes code);
-//
-//  private:
-//    std::map<base::Sha256, base::Bytes> _code_db;
-//};
-
 
 } // namespace core

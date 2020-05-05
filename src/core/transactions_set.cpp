@@ -124,6 +124,7 @@ TransactionsSet TransactionsSet::deserialize(base::SerializationIArchive& ia)
 
 std::map<Address, Balance> calcBalance(const TransactionsSet& txs)
 {
+    // TODO add fee calculation
     std::map<Address, Balance> result;
     for (const auto& tx : txs) {
 

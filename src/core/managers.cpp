@@ -31,8 +31,6 @@ void AccountState::addTransactionHash(base::Sha256 tx_hash)
     _transactions.emplace_back(std::move(tx_hash));
     ++_nonce;
 }
-//
-// void AccountState::incNonce() noexcept {}
 
 
 lk::Balance AccountState::getBalance() const noexcept
@@ -137,6 +135,21 @@ AccountInfo AccountState::toInfo() const
 }
 
 
+StateManager::StateManager(StateManager&& other)
+{
+    std::shared_lock lk(other._rw_mutex);
+    _states = other._states;
+}
+
+
+StateManager& StateManager::operator=(StateManager&& other)
+{
+    std::shared_lock lk(other._rw_mutex);
+    _states = other._states;
+    return *this;
+}
+
+
 void StateManager::createClientAccount(const lk::Address& address)
 {
     if (hasAccount(address)) {
@@ -152,10 +165,7 @@ void StateManager::createClientAccount(const lk::Address& address)
 lk::Address StateManager::createContractAccount(const lk::Address& from_account_address,
                                                 base::Sha256 associated_code_hash)
 {
-    // address = Ripemd160(associated_code_hash + account_address + Bytes(to_string(nonce))
     auto& account = getAccount(from_account_address);
-    //    auto nonce = account.getNonce() + 1;
-    //    account.addTransactionHash(tx.hashOfTransaction());
     base::Bytes nonce_string_data{ std::to_string(account.getNonce()) };
 
     auto bytes_address = base::Ripemd160::compute(associated_code_hash.getBytes().toBytes() +
@@ -167,18 +177,6 @@ lk::Address StateManager::createContractAccount(const lk::Address& from_account_
     _states[account_address] = std::move(state);
     return account_address;
 }
-
-// void StateManager::newAccount(const lk::Address& address, base::Sha256 code_hash)
-//{
-//    if (hasAccount(address)) {
-//        RAISE_ERROR(base::LogicError, "address already exists");
-//    }
-//
-//    std::unique_lock lk(_rw_mutex);
-//    AccountState state;
-//    state.setCodeHash(std::move(code_hash));
-//    _states[address] = std::move(state);
-//}
 
 
 bool StateManager::hasAccount(const lk::Address& address) const
@@ -199,23 +197,6 @@ bool StateManager::deleteAccount(const lk::Address& address)
         return false;
     }
 }
-
-
-// lk::Address StateManager::newContract(const lk::Address& address, base::Sha256 associated_code_hash)
-//{
-//    // address = Ripemd160(associated_code_hash + account_address + Bytes(to_string(nonce))
-//    auto& account = getAccount(address);
-//    auto nonce = account.getNonce() + 1;
-//    account.incNonce();
-//    base::Bytes nonce_string_data{ std::to_string(nonce) };
-//
-//    auto bytes_address = base::Ripemd160::compute(associated_code_hash.getBytes().toBytes() +
-//                                                  address.getBytes().toBytes() + nonce_string_data);
-//    auto account_address = lk::Address(bytes_address.getBytes());
-//
-//    newAccount(account_address, std::move(associated_code_hash));
-//    return account_address;
-//}
 
 
 const AccountState& StateManager::getAccount(const lk::Address& address) const
@@ -245,42 +226,33 @@ AccountState& StateManager::getAccount(const lk::Address& address)
 }
 
 
-lk::Balance StateManager::getBalance(const lk::Address& account_address) const
+StateManager StateManager::createCopy()
 {
-    if (hasAccount(account_address)) {
-        return getAccount(account_address).getBalance();
+    StateManager copy;
+    {
+        std::shared_lock lk(_rw_mutex);
+        copy._states = _states;
     }
-    else {
-        return 0;
-    }
+    return copy;
 }
 
 
-TransactionStatus StateManager::getTransactionOutput(const base::Sha256& tx)
+void StateManager::applyChanges(StateManager&& state)
 {
-    std::shared_lock lk(_tx_outputs_mutex);
-    if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
-        return it->second;
-    }
-    else {
-        return TransactionStatus{ TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::None, 0, "" };
-    }
-}
-
-
-void StateManager::addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status)
-{
-    _tx_outputs.insert({ tx, status });
+    std::unique_lock lk(_rw_mutex);
+    _states = std::move(state._states);
 }
 
 
 bool StateManager::checkTransaction(const lk::Transaction& tx) const
 {
-    std::shared_lock lk(_rw_mutex);
-    if (_states.find(tx.getFrom()) == _states.end()) {
-        return false;
+    {
+        std::shared_lock lk(_rw_mutex);
+        if (_states.find(tx.getFrom()) == _states.end()) {
+            return false;
+        }
     }
-    return getAccount(tx.getFrom()).getBalance() >= tx.getAmount();
+    return getAccount(tx.getFrom()).getBalance() >= tx.getAmount() + tx.getFee();
 }
 
 
@@ -304,37 +276,6 @@ bool StateManager::tryTransferMoney(const lk::Address& from, const lk::Address& 
 }
 
 
-// void StateManager::update(const lk::Transaction& tx)
-//{
-//    std::unique_lock lk(_rw_mutex);
-//    auto from_iter = _states.find(tx.getFrom());
-//
-//    if (from_iter == _states.end() || from_iter->second.getBalance() < tx.getAmount()) {
-//        RAISE_ERROR(base::LogicError, "account doesn't have enough funds to perform the operation");
-//    }
-//
-//    auto& from_state = from_iter->second;
-//    from_state.subBalance(tx.getAmount());
-//    if (auto to_iter = _states.find(tx.getTo()); to_iter != _states.end()) {
-//        to_iter->second.addBalance(tx.getAmount());
-//    }
-//    else {
-//        AccountState to_state;
-//        to_state.setBalance(tx.getAmount());
-//        _states.insert({ tx.getTo(), std::move(to_state) });
-//    }
-//    from_state.incNonce();
-//}
-//
-//
-// void StateManager::update(const lk::Block& block)
-//{
-//    for (const auto& tx : block.getTransactions()) {
-//        update(tx);
-//    }
-//}
-
-
 void StateManager::updateFromGenesis(const lk::Block& block)
 {
     std::unique_lock lk(_rw_mutex);
@@ -345,22 +286,5 @@ void StateManager::updateFromGenesis(const lk::Block& block)
     }
 }
 
-//
-// std::optional<std::reference_wrapper<const base::Bytes>> CodeManager::getCode(const base::Sha256& hash) const
-//{
-//    if (auto it = _code_db.find(hash); it == _code_db.end()) {
-//        return std::nullopt;
-//    }
-//    else {
-//        return it->second;
-//    }
-//}
-//
-//
-// void CodeManager::saveCode(base::Bytes code)
-//{
-//    auto hash = base::Sha256::compute(code);
-//    _code_db.insert({ std::move(hash), std::move(code) });
-//}
 
 } // namespace core

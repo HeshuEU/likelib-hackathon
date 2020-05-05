@@ -33,8 +33,6 @@ class Blockchain
     //===================
     const lk::Block& getTopBlock() const;
     //===================
-
-    //===================
   private:
     //===================
     const base::PropertyTree& _config;

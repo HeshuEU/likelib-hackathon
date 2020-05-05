@@ -8,58 +8,16 @@
 
 #include <vm/vm.hpp>
 
-#include "base/crypto.hpp"
-#include "base/property_tree.hpp"
-#include "base/utility.hpp"
+#include <base/crypto.hpp>
+#include <base/property_tree.hpp>
+#include <base/utility.hpp>
 
 #include <shared_mutex>
 
 namespace lk
 {
 
-class EthHost : public evmc::Host
-{
-  public:
-    EthHost(lk::Core& core, lk::StateManager& state_manager);
-
-    bool account_exists(const evmc::address& addr) const noexcept override;
-
-    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& ethKey) const noexcept override;
-
-    evmc_storage_status set_storage(const evmc::address& addr,
-                                    const evmc::bytes32& ekey,
-                                    const evmc::bytes32& evalue) noexcept override;
-    evmc::uint256be get_balance(const evmc::address& addr) const noexcept override;
-
-    size_t get_code_size(const evmc::address& addr) const noexcept override;
-
-    evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override;
-
-    size_t copy_code(const evmc::address& addr,
-                     size_t code_offset,
-                     uint8_t* buffer_data,
-                     size_t buffer_size) const noexcept override;
-
-    void selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept override;
-
-    evmc::result call(const evmc_message& msg) noexcept override;
-
-    evmc_tx_context get_tx_context() const noexcept override;
-
-    evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override;
-
-    void emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept;
-
-    void setContext(const lk::Transaction* associated_transaction, const lk::Block* associated_block);
-
-  private:
-    const lk::Transaction* _associated_tx{ nullptr };
-    const lk::Block* _associated_block{ nullptr };
-    //==================
-    lk::Core& _core;
-    lk::StateManager& _state_manager;
-};
-
+class EthHost;
 
 class Core
 {
@@ -88,7 +46,9 @@ class Core
     //==================
     bool addPendingTransaction(const lk::Transaction& tx);
     void addPendingTransactionAndWait(const lk::Transaction& tx);
+    //==================
     TransactionStatus getTransactionOutput(const base::Sha256& tx_hash);
+    void addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status);
     //==================
     bool tryAddBlock(const lk::Block& b);
     std::optional<lk::Block> findBlock(const base::Sha256& hash) const;
@@ -113,16 +73,17 @@ class Core
     base::Observable<const lk::Block&> _event_block_added;
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
     //==================
-    bool _is_account_manager_updated{ false };
     StateManager _state_manager;
     lk::Blockchain _blockchain;
     lk::Host _host;
     //==================
-    std::unique_ptr<EthHost> _eth_host;
     evmc::VM _vm;
     //==================
     lk::TransactionsSet _pending_transactions;
     mutable std::shared_mutex _pending_transactions_mutex;
+    //================
+    std::unordered_map<base::Sha256, TransactionStatus> _tx_outputs;
+    mutable std::shared_mutex _tx_outputs_mutex;
     //==================
     static const lk::Block& getGenesisBlock();
     void applyBlockTransactions(const lk::Block& block);
@@ -130,18 +91,30 @@ class Core
     bool checkBlock(const lk::Block& block) const;
     bool checkTransaction(const lk::Transaction& tx) const;
     //==================
-    bool tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx);
+    void tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx);
     //==================
-    evmc::result callInitContractVm(const lk::Transaction& tx,
+    evmc::result callInitContractVm(StateManager& state_manager,
+                                    const lk::Block& associated_block,
+                                    const lk::Transaction& tx,
                                     const lk::Address& contract_address,
                                     const base::Bytes& code);
-
-    evmc::result callContractVm(const lk::Transaction& tx, const base::Bytes& code, const base::Bytes& message_data);
-
-    evmc::result callContractAtViewModeVm(const lk::Address& sender_address,
+    evmc::result callContractVm(StateManager& state_manager,
+                                const lk::Block& associated_block,
+                                const lk::Transaction& tx,
+                                const base::Bytes& code,
+                                const base::Bytes& message_data);
+    evmc::result callContractAtViewModeVm(StateManager& state_manager,
+                                          const lk::Block& associated_block,
+                                          const lk::Transaction& associated_tx,
+                                          const lk::Address& sender_address,
                                           const lk::Address& contract_address,
                                           const base::Bytes& code,
                                           const base::Bytes& message_data);
+    evmc::result callVm(StateManager& state_manager,
+                        const lk::Block& associated_block,
+                        const lk::Transaction& associated_tx,
+                        const evmc_message& message,
+                        const base::Bytes& code);
 
   public:
     //==================
