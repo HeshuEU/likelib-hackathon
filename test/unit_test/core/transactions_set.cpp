@@ -12,35 +12,30 @@ lk::Transaction trans1{ lk::Address(base::generateKeys().first),
                         12398,
                         11,
                         base::Time(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
 lk::Transaction trans2{ lk::Address(base::generateKeys().first),
                         lk::Address(base::generateKeys().first),
                         5825285,
                         22,
                         base::Time::now(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
 lk::Transaction trans3{ lk::Address(base::generateKeys().first),
                         lk::Address(base::generateKeys().first),
                         12245398,
                         33,
                         base::Time(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
 lk::Transaction trans4{ lk::Address(base::generateKeys().first),
                         lk::Address(base::generateKeys().first),
                         168524347,
                         44,
                         base::Time(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
 lk::Transaction trans5{ lk::Address(base::generateKeys().first),
                         lk::Address(base::generateKeys().first),
                         1434457,
                         55,
                         base::Time::now(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
 
 lk::TransactionsSet getTestSet()
@@ -78,15 +73,9 @@ BOOST_AUTO_TEST_CASE(transactions_set_find)
                                              trans1.getAmount(),
                                              0,
                                              trans1.getTimestamp(),
-                                             lk::Transaction::Type::MESSAGE_CALL,
                                              base::Bytes{})));
-    BOOST_CHECK(!tx_set.find(lk::Transaction(trans3.getFrom(),
-                                             trans3.getTo(),
-                                             trans3.getAmount(),
-                                             0,
-                                             base::Time::now(),
-                                             lk::Transaction::Type::MESSAGE_CALL,
-                                             base::Bytes{})));
+    BOOST_CHECK(!tx_set.find(
+      lk::Transaction(trans3.getFrom(), trans3.getTo(), trans3.getAmount(), 0, base::Time::now(), base::Bytes{})));
 }
 
 
@@ -160,10 +149,10 @@ BOOST_AUTO_TEST_CASE(transaction_set_inEmpty)
     auto to = lk::Address(base::generateKeys().first);
     BOOST_CHECK(tx_set.isEmpty());
 
-    tx_set.add(lk::Transaction(from, to, 111, 0, base::Time(), lk::Transaction::Type::MESSAGE_CALL, base::Bytes{}));
+    tx_set.add(lk::Transaction(from, to, 111, 0, base::Time(), base::Bytes{}));
     BOOST_CHECK(!tx_set.isEmpty());
 
-    tx_set.remove(lk::Transaction(from, to, 111, 0, base::Time(), lk::Transaction::Type::MESSAGE_CALL, base::Bytes{}));
+    tx_set.remove(lk::Transaction(from, to, 111, 0, base::Time(), base::Bytes{}));
     BOOST_CHECK(tx_set.isEmpty());
 }
 

@@ -4,16 +4,14 @@
 
 #include <rpc/base_rpc.hpp>
 
-#include <base/config.hpp>
-#include <base/error.hpp>
-#include <base/log.hpp>
-
 #include <grpcpp/grpcpp.h>
 
 #include <memory>
 
+
 namespace rpc::grpc
 {
+
 
 /// Class implement receive gRPC messages and call similar method from LogicService instance and send answers or error
 /// messages
@@ -37,12 +35,16 @@ class Adapter final : public likelib::NodePublicInterface::Service
                                ::likelib::AccountInfo* response) override;
 
     ::grpc::Status get_node_info(::grpc::ServerContext* context,
-                                 const ::likelib::None* request,
+                                 [[maybe_unused]] const ::likelib::None* request,
                                  ::likelib::NodeInfo* response) override;
 
-    ::grpc::Status get_block(::grpc::ServerContext* context,
-                             const ::likelib::Hash* request,
-                             ::likelib::Block* response) override;
+    ::grpc::Status get_block_by_hash(::grpc::ServerContext* context,
+                                     const ::likelib::Hash* request,
+                                     ::likelib::Block* response) override;
+
+    ::grpc::Status get_block_by_number(::grpc::ServerContext* context,
+                                       const ::likelib::Number* request,
+                                       ::likelib::Block* response) override;
 
     ::grpc::Status get_transaction(::grpc::ServerContext* context,
                                    const ::likelib::Hash* request,
@@ -56,6 +58,12 @@ class Adapter final : public likelib::NodePublicInterface::Service
     ::grpc::Status get_transaction_result(::grpc::ServerContext* context,
                                           const ::likelib::Hash* request,
                                           ::likelib::TransactionStatus* response) override;
+
+
+    ::grpc::Status call_contract_view(::grpc::ServerContext* context,
+                                      const ::likelib::ViewCall* request,
+                                      ::likelib::Data* response) override;
 };
 
-} // namespace rpc
+
+} // namespace rpc::grpc

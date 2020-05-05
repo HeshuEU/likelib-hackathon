@@ -1,4 +1,5 @@
 #include "http_adapter.hpp"
+#include "tools.hpp"
 
 #include <cpprest/asyncrt_utils.h>
 #include <cpprest/json.h>
@@ -7,397 +8,471 @@
 #include <string>
 
 
-namespace detail
+namespace rpc::http
 {
-//
-//class ActionBase
-//{
-//  public:
-//    //====================================
-//    explicit ActionBase(std::shared_ptr<rpc::BaseRpc>& service);
-//    virtual ~ActionBase() = default;
-//    //====================================
-//    virtual const std::string& getName() const = 0;
-//    virtual void run(web::json::value& result) = 0;
-//    //====================================
-//  protected:
-//    std::shared_ptr<rpc::BaseRpc>& _service;
-//};
-//
-//
-//ActionBase::ActionBase(std::shared_ptr<rpc::BaseRpc>& service)
-//  : _service{ service }
-//{}
-//
-//
-//class ActionInfo : public ActionBase
-//{
-//  public:
-//    //====================================
-//    explicit ActionInfo(std::shared_ptr<rpc::BaseRpc>& service);
-//    virtual ~ActionInfo() = default;
-//    //====================================
-//    const std::string& getName() const override;
-//    void run(web::json::value& result) override;
-//};
-//
-//
-//ActionInfo::ActionInfo(std::shared_ptr<rpc::BaseRpc>& service)
-//  : ActionBase(service)
-//{}
-//
-//
-//const std::string& ActionInfo::getName() const
-//{
-//    static const std::string name = "info";
-//    return name;
-//}
-//
-//
-//void ActionInfo::run(web::json::value& result)
-//{
-//    auto top_block_hash = _service->info().top_block_hash.toHex();
-//    result[U("top_block_hash")] = web::json::value::string(top_block_hash);
-//}
-//
-//
-//class ActionGetApiVersion : public ActionBase
-//{
-//  public:
-//    //====================================
-//    explicit ActionGetApiVersion(std::shared_ptr<rpc::BaseRpc>& service);
-//    virtual ~ActionGetApiVersion() = default;
-//    //====================================
-//    const std::string& getName() const override;
-//    void run(web::json::value& result) override;
-//
-//  private:
-//};
-//
-//
-//ActionGetApiVersion::ActionGetApiVersion(std::shared_ptr<rpc::BaseRpc>& service)
-//  : ActionBase(service)
-//{}
-//
-//
-//const std::string& ActionGetApiVersion::getName() const
-//{
-//    static const std::string name = "get_api_version";
-//    return name;
-//}
-//
-//void ActionGetApiVersion::run(web::json::value& result)
-//{
-//    auto version = _service->get_api_version();
-//    result[U("api_version")] = web::json::value::number(version);
-//}
-//
-//
-//class ActionPostBase : public ActionBase
-//{
-//  public:
-//    //====================================
-//    explicit ActionPostBase(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-//    virtual ~ActionPostBase() = default;
-//    //====================================
-//  protected:
-//    web::json::value _input;
-//};
-//
-//
-//ActionPostBase::ActionPostBase(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-//  : ActionBase(service)
-//  , _input{ input }
-//{}
-//
-//
-//class ActionGetBalance : public ActionPostBase
-//{
-//  public:
-//    //====================================
-//    explicit ActionGetBalance(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-//    virtual ~ActionGetBalance() = default;
-//    //====================================
-//    const std::string& getName() const override;
-//    void run(web::json::value& result) override;
-//
-//  private:
-//};
-//
-//
-//ActionGetBalance::ActionGetBalance(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-//  : ActionPostBase(input, service)
-//{}
-//
-//
-//const std::string& ActionGetBalance::getName() const
-//{
-//    static const std::string name = "get_balance";
-//    return name;
-//}
-//
-//
-//void ActionGetBalance::run(web::json::value& result)
-//{
-//    auto block_hash_value = _input.at(U("address"));
-//    auto address = lk::Address{ block_hash_value.as_string() };
-//    auto balance = _service->balance(address);
-//    result[U("address")] = block_hash_value;
-//    result[U("balance")] = web::json::value::number(balance);
-//}
-//
-//
-//class ActionGetBlock : public ActionPostBase
-//{
-//  public:
-//    //====================================
-//    explicit ActionGetBlock(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-//    virtual ~ActionGetBlock() = default;
-//    //====================================
-//    const std::string& getName() const override;
-//    void run(web::json::value& result) override;
-//
-//  private:
-//};
-//
-//
-//ActionGetBlock::ActionGetBlock(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-//  : ActionPostBase(input, service)
-//{}
-//
-//
-//const std::string& ActionGetBlock::getName() const
-//{
-//    static const std::string name = "get_block";
-//    return name;
-//}
-//
-//
-//void ActionGetBlock::run(web::json::value& result)
-//{
-//    auto block_hash_value = _input.at(U("block_hash"));
-//    auto block_hash = base::Sha256{ base::fromHex<base::Bytes>(block_hash_value.as_string()) };
-//    auto block = _service->get_block(block_hash);
-//
-//    web::json::value block_value;
-//    block_value[U("block_depth")] = web::json::value::number(block.getDepth());
-//    block_value[U("nonce")] = web::json::value::number(block.getNonce());
-//    block_value[U("coinbase")] = web::json::value::string(block.getCoinbase().toString());
-//    block_value[U("previous_block_hash")] = web::json::value::string(block.getPrevBlockHash().toHex());
-//    block_value[U("timestamp")] = web::json::value::number(block.getTimestamp().getSecondsSinceEpoch());
-//
-//    std::vector<web::json::value> txs_values;
-//    for (auto& tx : block.getTransactions()) {
-//        web::json::value tx_value;
-//        tx_value[U("from")] = web::json::value::string(tx.getFrom().toString());
-//        tx_value[U("to")] = web::json::value::string(tx.getTo().toString());
-//        tx_value[U("amount")] = web::json::value::number(tx.getAmount());
-//        tx_value[U("fee")] = web::json::value::number(tx.getFee());
-//        tx_value[U("timestamp")] = web::json::value::number(tx.getTimestamp().getSecondsSinceEpoch());
-//        tx_value[U("type")] = web::json::value::number(static_cast<uint32_t>(tx.getType()));
-//        tx_value[U("data")] = web::json::value::string(base::toHex(tx.getData()));
-//        tx_value[U("sign")] =
-//          web::json::value::string(tx.getSign().toBase64()); // TODO: think about cross-language serialization
-//        txs_values.emplace_back(tx_value);
-//    }
-//    block_value[U("transactions")] = web::json::value::array(txs_values);
-//
-//    result[U("block_hash")] = block_hash_value;
-//    result[U("block")] = block_value;
-//}
-//
-//
-//class ActionMessageCall : public ActionPostBase
-//{
-//  public:
-//    //====================================
-//    explicit ActionMessageCall(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-//    virtual ~ActionMessageCall() = default;
-//    //====================================
-//    const std::string& getName() const override;
-//    void run(web::json::value& result) override;
-//
-//  private:
-//};
-//
-//
-//ActionMessageCall::ActionMessageCall(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-//  : ActionPostBase(input, service)
-//{}
-//
-//
-//const std::string& ActionMessageCall::getName() const
-//{
-//    static const std::string name = "message_call";
-//    return name;
-//}
-//
-//
-//void ActionMessageCall::run(web::json::value& result)
-//{
-//    auto amount = lk::Balance{ _input.at(U("amount")).as_number().to_uint64() };
-//    auto data = _input.at(U("data")).as_string();
-//    auto fee = lk::Balance{ _input.at(U("fee")).as_number().to_uint64() };
-//    auto from = lk::Address{ _input.at(U("from")).as_string() };
-//    auto to = lk::Address{ _input.at(U("to")).as_string() };
-//    auto sign = lk::Sign::fromBase64(_input.at(U("sign")).as_string());
-//    auto timestamp = base::Time(_input.at(U("timestamp")).as_number().to_uint32());
-//
-//    auto [status, contract_response, least_gas] =
-//      _service->transaction_message_call(amount, from, to, timestamp, fee, data, sign);
-//
-//    if (!status) {
-//        RAISE_ERROR(base::Error, "TODO Error!");
-//    }
-//
-//    result[U("gas_left")] = web::json::value::number(least_gas);
-//    result[U("contract_response")] = web::json::value::string(contract_response);
-//}
-//
-//
-//class ActionCreateContract : public ActionPostBase
-//{
-//  public:
-//    //====================================
-//    explicit ActionCreateContract(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-//    virtual ~ActionCreateContract() = default;
-//    //====================================
-//    const std::string& getName() const override;
-//    void run(web::json::value& result) override;
-//
-//  private:
-//};
-//
-//
-//ActionCreateContract::ActionCreateContract(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-//  : ActionPostBase(input, service)
-//{}
-//
-//
-//const std::string& ActionCreateContract::getName() const
-//{
-//    static const std::string name = "create_contract";
-//    return name;
-//}
-//
-//
-//void ActionCreateContract::run(web::json::value& result)
-//{
-//    auto amount = lk::Balance{ _input.at(U("amount")).as_number().to_uint64() };
-//    auto code = _input.at(U("code")).as_string();
-//    auto init_message = _input.at(U("init")).as_string();
-//    auto fee = lk::Balance{ _input.at(U("fee")).as_number().to_uint64() };
-//    auto from = lk::Address{ _input.at(U("from")).as_string() };
-//    auto sign = lk::Sign::fromBase64(_input.at(U("sign")).as_string());
-//    auto timestamp = base::Time(_input.at(U("timestamp")).as_number().to_uint32());
-//
-//    auto [status, contract_address, least_gas] =
-//      _service->transaction_create_contract(amount, from, timestamp, fee, code, init_message, sign);
-//
-//    if (!status) {
-//        RAISE_ERROR(base::Error, "TODO Error!");
-//    }
-//
-//    result[U("gas_left")] = web::json::value::number(least_gas);
-//    result[U("contract_address")] = web::json::value::string(contract_address.toString());
-//}
+
+
+class ActionBase
+{
+  public:
+    //====================================
+    explicit ActionBase(std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionBase() = default;
+    //====================================
+    virtual const std::string& getName() const = 0;
+    virtual void run(web::json::value& result) = 0;
+    //====================================
+  protected:
+    std::shared_ptr<rpc::BaseRpc>& _service;
+};
+
+
+ActionBase::ActionBase(std::shared_ptr<rpc::BaseRpc>& service)
+  : _service{ service }
+{}
+
+
+class ActionNodeInfo : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionNodeInfo(std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionNodeInfo() = default;
+    //====================================
+    const std::string& getName() const override;
+    void run(web::json::value& result) override;
+};
+
+
+ActionNodeInfo::ActionNodeInfo(std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionBase(service)
+{}
+
+
+const std::string& ActionNodeInfo::getName() const
+{
+    static const std::string name = "nodeInfo";
+    return name;
+}
+
+
+void ActionNodeInfo::run(web::json::value& result)
+{
+    auto info = _service->getNodeInfo();
+    result = serializeInfo(info);
+}
+
+
+class ActionJsonProcessBase : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionJsonProcessBase(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionJsonProcessBase() = default;
+    virtual bool loadArguments() = 0;
+    //====================================
+  protected:
+    web::json::value _input;
+};
+
+
+ActionJsonProcessBase::ActionJsonProcessBase(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionBase(service)
+  , _input{ input }
+{}
+
+
+class ActionGetAccount : public ActionJsonProcessBase
+{
+  public:
+    //====================================
+    explicit ActionGetAccount(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionGetAccount() = default;
+    //====================================
+    const std::string& getName() const override;
+    bool loadArguments() override;
+    void run(web::json::value& result) override;
+
+  private:
+    std::optional<lk::Address> _address;
+};
+
+
+ActionGetAccount::ActionGetAccount(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionJsonProcessBase(input, service)
+{}
+
+
+const std::string& ActionGetAccount::getName() const
+{
+    static const std::string name = "get_account";
+    return name;
+}
+
+
+bool ActionGetAccount::loadArguments()
+{
+    if (_input.has_field("address")) {
+        _address = deserializeAddress(_input.at("address").as_string());
+        return _address.has_value();
+    }
+    return false;
+}
+
+
+void ActionGetAccount::run(web::json::value& result)
+{
+    auto account_info = _service->getAccount(_address.value());
+    result = serializeAccountInfo(account_info);
+}
+
+
+class ActionGetBlock : public ActionJsonProcessBase
+{
+  public:
+    //====================================
+    explicit ActionGetBlock(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionGetBlock() = default;
+    //====================================
+    const std::string& getName() const override;
+    bool loadArguments() override;
+    void run(web::json::value& result) override;
+
+  private:
+    std::optional<base::Sha256> _block_hash;
+    std::optional<lk::BlockDepth> _block_number;
+};
+
+
+ActionGetBlock::ActionGetBlock(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionJsonProcessBase(input, service)
+{}
+
+
+const std::string& ActionGetBlock::getName() const
+{
+    static const std::string name = "get_block";
+    return name;
+}
+
+
+bool ActionGetBlock::loadArguments()
+{
+    if (_input.has_field("hash")) {
+        _block_hash = deserializeHash(_input.at("hash").as_string());
+        return _block_hash.has_value();
+    }
+    else if (_input.has_field("number")) {
+        _block_number = _input.at("number").as_number().to_uint64();
+        return _block_number.has_value();
+    }
+    return false;
+}
+
+
+void ActionGetBlock::run(web::json::value& result)
+{
+    if (_block_hash) {
+        auto block = _service->getBlock(_block_hash.value());
+        result = serializeBlock(block);
+    }
+    else if (_block_number) {
+        auto block = _service->getBlock(_block_number.value());
+        result = serializeBlock(block);
+    }
+    else {
+        RAISE_ERROR(base::InvalidArgument, "bad request");
+    }
+}
+
+
+class ActionGetTransaction : public ActionJsonProcessBase
+{
+  public:
+    //====================================
+    explicit ActionGetTransaction(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionGetTransaction() = default;
+    //====================================
+    const std::string& getName() const override;
+    bool loadArguments() override;
+    void run(web::json::value& result) override;
+
+  private:
+    std::optional<base::Sha256> _hash;
+};
+
+
+ActionGetTransaction::ActionGetTransaction(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionJsonProcessBase(input, service)
+{}
+
+
+const std::string& ActionGetTransaction::getName() const
+{
+    static const std::string name = "get_transaction";
+    return name;
+}
+
+
+bool ActionGetTransaction::loadArguments()
+{
+    if (_input.has_field("hash")) {
+        _hash = deserializeHash(_input.at("hash").as_string());
+        return _hash.has_value();
+    }
+    return false;
+}
+
+
+void ActionGetTransaction::run(web::json::value& result)
+{
+    auto tx = _service->getTransaction(_hash.value());
+    result = serializeTransaction(tx);
+}
+
+
+class ActionGetTransactionResult : public ActionJsonProcessBase
+{
+  public:
+    //====================================
+    explicit ActionGetTransactionResult(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionGetTransactionResult() = default;
+    //====================================
+    const std::string& getName() const override;
+    bool loadArguments() override;
+    void run(web::json::value& result) override;
+
+  private:
+    std::optional<base::Sha256> _hash;
+};
+
+
+ActionGetTransactionResult::ActionGetTransactionResult(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionJsonProcessBase(input, service)
+{}
+
+
+const std::string& ActionGetTransactionResult::getName() const
+{
+    static const std::string name = "get_transaction_result";
+    return name;
+}
+
+
+bool ActionGetTransactionResult::loadArguments()
+{
+    if (_input.has_field("hash")) {
+        _hash = deserializeHash(_input.at("hash").as_string());
+        return _hash.has_value();
+    }
+    return false;
+}
+
+
+void ActionGetTransactionResult::run(web::json::value& result)
+{
+    auto tx_result = _service->getTransactionResult(_hash.value());
+    result = serializeTransactionStatus(tx_result);
+}
+
+
+class ActionPushTransaction : public ActionJsonProcessBase
+{
+  public:
+    //====================================
+    explicit ActionPushTransaction(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionPushTransaction() = default;
+    //====================================
+    const std::string& getName() const override;
+    bool loadArguments() override;
+    void run(web::json::value& result) override;
+
+  private:
+    std::optional<lk::Transaction> _tx;
+};
+
+
+ActionPushTransaction::ActionPushTransaction(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionJsonProcessBase(input, service)
+{}
+
+
+const std::string& ActionPushTransaction::getName() const
+{
+    static const std::string name = "push_transaction";
+    return name;
+}
+
+
+bool ActionPushTransaction::loadArguments()
+{
+    _tx = deserializeTransaction(_input);
+    return _tx.has_value();
+}
+
+
+void ActionPushTransaction::run(web::json::value& result)
+{
+    auto tx_result = _service->pushTransaction(_tx.value());
+    result = serializeTransactionStatus(tx_result);
+}
+
+
+class ActionGetStorageValue : public ActionJsonProcessBase
+{
+  public:
+    //====================================
+    explicit ActionGetStorageValue(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionGetStorageValue() = default;
+    //====================================
+    const std::string& getName() const override;
+    bool loadArguments() override;
+    void run(web::json::value& result) override;
+
+  private:
+    std::optional<lk::Address> _from_address;
+    std::optional<lk::Address> _contract_address;
+    std::optional<base::Bytes> _message;
+};
+
+
+ActionGetStorageValue::ActionGetStorageValue(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+  : ActionJsonProcessBase(input, service)
+{}
+
+
+const std::string& ActionGetStorageValue::getName() const
+{
+    static const std::string name = "get_storage_value";
+    return name;
+}
+
+
+bool ActionGetStorageValue::loadArguments()
+{
+    if (_input.has_field("from")) {
+        _from_address = deserializeAddress(_input.at("from").as_string());
+    }
+    if (_input.has_field("to")) {
+        _contract_address = deserializeAddress(_input.at("to").as_string());
+    }
+    if (_input.has_field("message")) {
+        _message = deserializeBytes(_input.at("message").as_string());
+    }
+    return _from_address.has_value() && _contract_address.has_value() && _message.has_value();
+}
+
+
+void ActionGetStorageValue::run(web::json::value& result)
+{
+    auto call_result = _service->callContractView(_from_address.value(), _contract_address.value(), _message.value());
+    result = serializeBytes(call_result);
+}
 
 
 template<typename T>
-web::json::value run_get(std::shared_ptr<rpc::BaseRpc>& service)
+web::json::value run_empty(std::shared_ptr<rpc::BaseRpc>& service)
 {
     T action(service);
     web::json::value result;
-    result[U("method")] = web::json::value::string(action.getName());
+    result["method"] = web::json::value::string(action.getName());
     try {
         web::json::value action_result;
         action.run(action_result);
-        result[U("status")] = web::json::value::string("ok");
-        result[U("result")] = action_result;
+        result["status"] = web::json::value::string("ok");
+        result["result"] = action_result;
     }
     catch (const std::exception& e) {
-        result[U("status")] = web::json::value::string("error");
+        result["status"] = web::json::value::string("error");
     }
     return result;
 }
+
 
 template<typename T>
-web::json::value run_post(web::json::value& json_body, std::shared_ptr<rpc::BaseRpc>& service)
+web::json::value run_json_process(const web::http::http_request& message, std::shared_ptr<rpc::BaseRpc>& service)
 {
-    T action(json_body, service);
+    web::json::value request_json;
+    message.extract_json()
+      .then([&request_json](web::json::value request_body) { request_json = std::move(request_body); })
+      .wait();
+
+    T action(request_json, service);
     web::json::value result;
-    result[U("method")] = web::json::value::string(action.getName());
+    result["method"] = web::json::value::string(action.getName());
+
+    try {
+        if (!action.loadArguments()) {
+            result["status"] = web::json::value::string("error");
+            result["result"] = web::json::value::string("invalid input json");
+        }
+    }
+    catch (const std::exception& e) {
+        result["status"] = web::json::value::string("error");
+        result["result"] = web::json::value::string("error at input deserialization");
+    }
+
     try {
         web::json::value action_result;
         action.run(action_result);
-        result[U("status")] = web::json::value::string("ok");
-        result[U("result")] = action_result;
+        result["status"] = web::json::value::string("ok");
+        result["result"] = action_result;
     }
     catch (const std::exception& e) {
-        result[U("status")] = web::json::value::string("error");
+        result["status"] = web::json::value::string("error");
     }
     return result;
 }
 
-}
-
-namespace rpc::http
-{
 
 void Adapter::init(std::shared_ptr<BaseRpc> service)
 {
     _service = std::move(service);
 
-//    _get_processors.insert({ "info", detail::run_get<detail::ActionInfo> });
-//    _get_processors.insert({ "get_api_version", detail::run_get<detail::ActionGetApiVersion> });
-//
-//    _post_processors.insert({ "get_balance", detail::run_post<detail::ActionGetBalance> });
-//    _post_processors.insert({ "get_block", detail::run_post<detail::ActionGetBlock> });
-//    _post_processors.insert({ "message_call", detail::run_post<detail::ActionMessageCall> });
-//    _post_processors.insert({ "create_contract", detail::run_post<detail::ActionCreateContract> });
+    _empty_processors.insert({ "get_node_info", run_empty<ActionNodeInfo> });
+
+    _json_processors.insert({ "get_account", run_json_process<ActionGetAccount> });
+    _json_processors.insert({ "get_block", run_json_process<ActionGetBlock> });
+    _json_processors.insert({ "get_transaction", run_json_process<ActionGetTransaction> });
+    _json_processors.insert({ "get_transaction_result", run_json_process<ActionGetTransactionResult> });
+    _json_processors.insert({ "push_transaction", run_json_process<ActionPushTransaction> });
+    _json_processors.insert({ "get_storage_value", run_json_process<ActionGetStorageValue> });
 }
 
-void Adapter::handle_post(const web::http::http_request& message)
+
+void Adapter::handler(const web::http::http_request& message)
 {
     auto paths = web::http::uri::split_path(web::http::uri::decode(message.relative_uri().path()));
 
     if (paths.empty()) {
-        RAISE_ERROR(base::InvalidArgument, "inaccessible path");
+        LOG_ERROR << "no any route at request";
+        web::json::value result;
+        result["method"] = web::json::value::string("None");
+        result["status"] = web::json::value::string("error");
+        result["result"] = web::json::value::string("no any route at request");
+        message.reply(web::http::status_codes::Forbidden, result);
     }
 
     auto root_path = paths[0];
-    web::json::value request_json;
 
-    message.extract_json()
-      .then([&request_json](web::json::value request_body) { request_json = std::move(request_body); })
-      .wait();
-
-    if (auto it = _post_processors.find(root_path); it != _post_processors.end()) {
-        auto reply_json = it->second(request_json, _service);
+    if (auto json_it = _json_processors.find(root_path); json_it != _json_processors.end()) {
+        auto reply_json = json_it->second(message, _service);
+        message.reply(web::http::status_codes::OK, reply_json);
+        return;
+    }
+    else if (auto empty_it = _empty_processors.find(root_path); empty_it != _empty_processors.end()) {
+        auto reply_json = empty_it->second(_service);
         message.reply(web::http::status_codes::OK, reply_json);
         return;
     }
     else {
         RAISE_ERROR(base::InvalidArgument, "processor was not found");
-    }
-}
-
-void Adapter::handle_get(const web::http::http_request& message)
-{
-    auto paths = web::http::uri::split_path(web::http::uri::decode(message.relative_uri().path()));
-
-    if (paths.empty()) {
-        RAISE_ERROR(base::InvalidArgument, "inaccessible path");
-    }
-
-    auto root_path = paths[0];
-
-    if (auto it = _get_processors.find(root_path); it != _get_processors.end()) {
-        auto reply_json = it->second(_service);
-        message.reply(web::http::status_codes::OK, reply_json);
-    }
-    else {
-        RAISE_ERROR(base::InvalidArgument, "processor was not found");
+        LOG_ERROR << "no any processor wan found";
+        web::json::value result;
+        result["method"] = web::json::value::string("None");
+        result["status"] = web::json::value::string("error");
+        result["result"] = web::json::value::string("no any processor wan found");
+        message.reply(web::http::status_codes::BadGateway, result);
     }
 }
 

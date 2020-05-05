@@ -17,7 +17,10 @@ service NodePublicInterface {
     rpc get_node_info (None) returns (NodeInfo) {
     }
 
-    rpc get_block (Hash) returns (Block) {
+    rpc get_block_by_hash (Hash) returns (Block) {
+    }
+
+    rpc get_block_by_number (Number) returns (Block) {
     }
 
     rpc get_transaction (Hash) returns (Transaction) {
@@ -29,6 +32,9 @@ service NodePublicInterface {
     rpc get_transaction_result (Hash) returns (TransactionStatus) {
     }
 
+    rpc call_contract_view (ViewCall) returns (Data) {
+    }
+
 }
 
 //=====================================
@@ -36,8 +42,9 @@ service NodePublicInterface {
 
 message NodeInfo {
     Hash top_block_hash = 1;
-    uint32 interface_version = 2;
-    uint32 peers_number = 3;
+    uint64 top_block_number = 2;
+    uint32 interface_version = 3;
+    uint32 peers_number = 4;
 }
 
 
@@ -52,10 +59,16 @@ message Block {
 
 
 message AccountInfo {
-    Address address = 1;
-    CurrencyAmount balance = 2;
-    uint64 nonce = 3;
-    repeated Hash hashes = 4;
+    enum Type {
+        CLIENT = 0;
+        CONTRACT = 1;
+    }
+    Type type = 1;
+    Address address = 2;
+    CurrencyAmount balance = 3;
+    uint64 nonce = 4;
+    repeated Hash hashes = 5;
+    string serialized_abi = 6;
 }
 
 
@@ -65,7 +78,7 @@ message Transaction {
     CurrencyAmount value = 3;
     CurrencyAmount fee = 4;
     Time creation_time = 5;
-    Data data = 6;
+    TransactionData data = 6;
     Signature signature = 7;
 }
 
@@ -77,9 +90,23 @@ message TransactionStatus {
         Revert = 2;
         Failed = 3;
     }
+    enum ActionType {
+        None = 0;
+        Transfer = 1;
+        ContractCall = 2;
+        ContractCreation = 3;
+    };
     StatusCode status = 1;
-    string message = 2;
-    CurrencyAmount gas_left = 3;
+    ActionType type = 2;
+    string message = 3;
+    CurrencyAmount gas_left = 4;
+}
+
+
+message ViewCall {
+    Address from = 1;
+    Address to = 2;
+    Data message = 3;
 }
 
 
@@ -89,7 +116,7 @@ message Signature {
 
 
 message Time {
-    uint64 since_epoch = 1;
+    uint32 seconds_since_epoch = 1;
 }
 
 
@@ -108,8 +135,19 @@ message Hash {
 }
 
 
+message Number {
+    uint64 number = 1;
+}
+
+
 message Data {
     string bytes_base_64 = 1;
+}
+
+
+message TransactionData {
+    string message = 1;
+    string serialized_abi = 2;
 }
 
 

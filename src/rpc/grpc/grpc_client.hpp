@@ -6,11 +6,8 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include <string>
 
-namespace rpc
-{
-namespace grpc
+namespace rpc::grpc
 {
 
 /// Class implementing connect to node by gRPC and call methods
@@ -27,15 +24,20 @@ class NodeClient final : public BaseRpc
 
     lk::Block getBlock(const base::Sha256& block_hash) override;
 
+    lk::Block getBlock(uint64_t block_number) override;
+
     lk::Transaction getTransaction(const base::Sha256& transaction_hash) override;
 
-    TransactionStatus pushTransaction(const lk::Transaction& transaction) override;
+    lk::TransactionStatus pushTransaction(const lk::Transaction& transaction) override;
 
-    TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) override;
+    lk::TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) override;
+
+    base::Bytes callContractView(const lk::Address& from,
+                                 const lk::Address& contract_address,
+                                 const base::Bytes& message) override;
 
   private:
     std::unique_ptr<likelib::NodePublicInterface::Stub> _stub;
 };
 
-}
-} // namespace rpc
+} // namespace rpc::grpc

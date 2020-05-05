@@ -28,10 +28,8 @@ def encode_call(compiled_sol, call):
 
     if call['method'] == "constructor":
         call_data = new_contract.constructor(*call["args"]).data_in_transaction
-        call_data = call_data[len(compiled_sol['bytecode']):]
     else:
-        call_data = new_contract.encodeABI(
-            fn_name=call["method"], args=call["args"])
+        call_data = new_contract.encodeABI(fn_name=call["method"], args=call["args"])
 
         original = web3.Web3().eth.contract(abi=compiled_sol['metadata']['output']['abi'])
         target_hash = create_hash(original.get_function_by_name(call["method"]))

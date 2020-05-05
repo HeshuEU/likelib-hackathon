@@ -12,6 +12,29 @@ namespace lk
 {
 
 
+class ContractData
+{
+  public:
+    explicit ContractData() = default;
+    ContractData(base::Bytes message, base::PropertyTree abi);
+
+    ~ContractData() = default;
+
+    void setMessage(base::Bytes code);
+    void setAbi(base::PropertyTree abi);
+
+    const base::Bytes& getMessage() const noexcept;
+    const base::PropertyTree& getAbi() const noexcept;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static ContractData deserialize(base::SerializationIArchive& ia);
+
+  private:
+    base::Bytes _message;
+    base::PropertyTree _abi;
+};
+
+
 class Sign
 {
   public:
@@ -43,7 +66,6 @@ class Sign
 class Transaction
 {
   public:
-
     Transaction(lk::Address from,
                 lk::Address to,
                 lk::Balance amount,
@@ -72,7 +94,8 @@ class Transaction
     //=================
     bool operator==(const Transaction& other) const;
     bool operator!=(const Transaction& other) const;
-
+    //=================
+    base::Sha256 hashOfTransaction() const;
     //=================
     static Transaction deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
@@ -88,32 +111,11 @@ class Transaction
     lk::Sign _sign;
     //=================
     void serializeHeader(base::SerializationOArchive& oa) const;
-    base::Sha256 hashOfTxData() const;
     //=================
 };
 
 
 std::ostream& operator<<(std::ostream& os, const Transaction& tx);
-
-
-class ContractInitData
-{
-  public:
-    ContractInitData(base::Bytes code, base::Bytes init);
-
-    void setCode(base::Bytes code);
-    void setInit(base::Bytes init);
-
-    const base::Bytes& getCode() const noexcept;
-    const base::Bytes& getInit() const noexcept;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static ContractInitData deserialize(base::SerializationIArchive& ia);
-
-  private:
-    base::Bytes _code;
-    base::Bytes _init;
-};
 
 
 class TransactionBuilder
@@ -124,7 +126,6 @@ class TransactionBuilder
     void setAmount(lk::Balance amount);
     void setTimestamp(base::Time timestamp);
     void setFee(lk::Balance fee);
-    void setType(Transaction::Type type);
     void setData(base::Bytes data);
     void setSign(lk::Sign sign);
 
@@ -137,7 +138,6 @@ class TransactionBuilder
     std::optional<lk::Balance> _amount;
     std::optional<base::Time> _timestamp;
     std::optional<lk::Balance> _fee;
-    std::optional<Transaction::Type> _tx_type;
     std::optional<base::Bytes> _data;
     std::optional<lk::Sign> _sign;
 };
@@ -149,25 +149,31 @@ const Transaction& invalidTransaction();
 class TransactionStatus
 {
   public:
-    enum StatusCode : uint8_t
+    enum class StatusCode : uint8_t
     {
-        Success = 1,
-        Rejected = 2,
-        Revert = 3,
-        Failed = 4
+        Success = 0,
+        Rejected = 1,
+        Revert = 2,
+        Failed = 3
     };
 
-    explicit TransactionStatus(StatusCode status, const std::string& message, lk::Balance fee_left) noexcept;
+    enum class ActionType : uint8_t
+    {
+        None = 0,
+        Transfer = 1,
+        ContractCall = 2,
+        ContractCreation = 3
+    };
+
+    explicit TransactionStatus(StatusCode status,
+                               ActionType type,
+                               lk::Balance fee_left,
+                               const std::string& message = "") noexcept;
 
     TransactionStatus(const TransactionStatus&) = default;
     TransactionStatus(TransactionStatus&&) = default;
     TransactionStatus& operator=(const TransactionStatus&) = default;
     TransactionStatus& operator=(TransactionStatus&&) = default;
-
-    static TransactionStatus createSuccess(lk::Balance fee_left, const std::string& message = "") noexcept;
-    static TransactionStatus createRejected(lk::Balance fee_left = 0, const std::string& message = "") noexcept;
-    static TransactionStatus createRevert(lk::Balance fee_left = 0, const std::string& message = "") noexcept;
-    static TransactionStatus createFailed(lk::Balance fee_left = 0, const std::string& message = "") noexcept;
 
     operator bool() const noexcept;
 
@@ -178,10 +184,13 @@ class TransactionStatus
 
     StatusCode getStatus() const noexcept;
 
+    ActionType getType() const noexcept;
+
     lk::Balance getFeeLeft() const noexcept;
 
   private:
     StatusCode _status;
+    ActionType _action;
     std::string _message;
     lk::Balance _fee_left;
 };

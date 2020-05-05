@@ -6,6 +6,7 @@
 namespace rpc::grpc
 {
 
+
 NodeServer::NodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service)
   : _service()
   , _server_address(server_address)
@@ -13,10 +14,12 @@ NodeServer::NodeServer(const std::string& server_address, std::shared_ptr<BaseRp
     _service.init(std::move(service));
 }
 
+
 NodeServer::~NodeServer()
 {
     stop();
 }
+
 
 void NodeServer::run()
 {
@@ -31,6 +34,7 @@ void NodeServer::run()
     }
 }
 
+
 void NodeServer::stop()
 {
     if (_server) {
@@ -38,4 +42,5 @@ void NodeServer::stop()
     }
 }
 
-} // namespace rpc
+
+} // namespace rpc::grpc

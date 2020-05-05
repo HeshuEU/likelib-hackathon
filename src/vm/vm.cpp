@@ -1,186 +1,110 @@
 #include "vm.hpp"
 #include "error.hpp"
-#include "tools.hpp"
 
-#include "base/log.hpp"
+#include <base/log.hpp>
 
 #include <evmc/loader.h>
 
+#include <boost/process.hpp>
+
+#include <set>
 #include <filesystem>
 
-namespace vm
-{
+namespace bp = ::boost::process;
+
 
 namespace
 {
 
-base::Bytes getRuntimeCode(const base::Bytes& full_code)
+
+std::tuple<std::string, std::string> parseInfoLine(const std::string& path)
 {
-    static const std::string target{ "60806040" };
-    // TODO: make normal algorithm
-    auto hex_code = base::toHex<base::Bytes>(full_code);
-    auto index = hex_code.find(target, target.size());
-    if (index == 0) {
-        RAISE_ERROR(base::LogicError, "Not valid code");
+    constexpr std::size_t DELIM_SIZE = 8;
+    auto shrinked = path.substr(DELIM_SIZE, path.size() - DELIM_SIZE * 2);
+    auto delimiter_pos = shrinked.find(':');
+    auto source_file = shrinked.substr(0, delimiter_pos);
+    auto contract_name = shrinked.substr(delimiter_pos + 1, shrinked.size());
+    return std::make_tuple(source_file, contract_name);
+}
+
+
+std::vector<std::string> callCommand(const boost::filesystem::path& path_to_solc, const std::vector<std::string>& args)
+{
+    bp::ipstream out;
+    bp::child c(path_to_solc, args, bp::std_out > out);
+
+    std::vector<std::string> out_put_result_values;
+    std::string out_result;
+    while (c.running() && std::getline(out, out_result)) {
+        out_put_result_values.push_back(out_result);
     }
-    auto sub = hex_code.substr(index, hex_code.size());
-    return base::fromHex<base::Bytes>(sub);
+    c.wait();
+
+    if (c.exit_code()) {
+        std::ostringstream s;
+        for (const auto& item : out_put_result_values) {
+            s << item;
+        }
+        RAISE_ERROR(base::SystemCallFailed, s.str());
+    }
+
+    return out_put_result_values;
 }
 
-} // namespace
-
-
-SmartContract::SmartContract(const base::Bytes& contract_code)
-  : _revision(EVMC_ISTANBUL)
-  , _contract_code{ contract_code }
-{}
-
-
-SmartContractMessage SmartContract::createInitMessage(int64_t gas,
-                                                      const lk::Address& source,
-                                                      const lk::Address& destination,
-                                                      const lk::Balance& value,
-                                                      const base::Bytes& input) const
+std::vector<std::pair<std::string, base::Bytes>> callCompilationCommand(const boost::filesystem::path& path_to_solc,
+                                                                        const std::string& path_to_solidity_file)
 {
-    SmartContractMessage message{ _revision };
-    message._contract_code = _contract_code + input;
-    message._message.kind = evmc_call_kind::EVMC_CALL;
-    message._message.depth = 0;
-    message._message.gas = gas;
-    message._message.sender = toEthAddress(source);
-    message._message.destination = toEthAddress(destination);
-    message._message.value = toEvmcUint256(value);
-    message._message.create2_salt = evmc_bytes32();
-    return message;
-}
+    std::vector<std::string> args{ "--bin", path_to_solidity_file };
+    auto res = callCommand(path_to_solc, args);
 
+    std::vector<std::pair<std::string, base::Bytes>> contracts_byte_codes;
+    constexpr const size_t GROUP_SIZE = 4;
+    for (std::size_t i = 0; i < res.size() / GROUP_SIZE; i++) {
+        auto current_contract_index = i * GROUP_SIZE;
 
-SmartContractMessage SmartContract::createMessage(int64_t gas,
-                                                  const lk::Address& source,
-                                                  const lk::Address& destination,
-                                                  const lk::Balance& value,
-                                                  const base::Bytes& input) const
-{
-    SmartContractMessage message{ _revision };
-    message._contract_code = getRuntimeCode(_contract_code);
-    message._message.kind = evmc_call_kind::EVMC_CALL;
-    message._message.depth = 0;
-    message._message.gas = gas;
-    message._message.sender = toEthAddress(source);
-    message._message.destination = toEthAddress(destination);
-    message._message.value = toEvmcUint256(value);
-    message._message.create2_salt = evmc_bytes32();
-    message._input_data = input;
-    message._message.input_data = message._input_data.getData();
-    message._message.input_size = message._input_data.size();
-    return message;
+        auto info_line = res[current_contract_index + 1];
+        auto bytecode = base::fromHex<base::Bytes>(res[current_contract_index + 3]);
+
+        auto info = parseInfoLine(info_line);
+
+        contracts_byte_codes.push_back({ std::get<1>(info), std::move(bytecode) });
+    }
+
+    return contracts_byte_codes;
 }
 
 
-const evmc_message& SmartContractMessage::getMessage() const
+std::vector<std::pair<std::string, base::PropertyTree>> callMetadataCommand(const boost::filesystem::path& path_to_solc,
+                                                                            const std::string& path_to_solidity_file)
 {
-    return _message;
+    std::vector<std::string> args{ "--metadata", path_to_solidity_file };
+
+    auto res = callCommand(path_to_solc, args);
+
+    std::vector<std::pair<std::string, base::PropertyTree>> contracts_metadatas;
+    constexpr const size_t GROUP_SIZE = 4;
+    for (std::size_t i = 0; i < res.size() / GROUP_SIZE; i++) {
+        auto current_contract_index = i * GROUP_SIZE;
+
+        auto info_line = res[current_contract_index + 1];
+        auto metadata = base::parseJson(res[current_contract_index + 3]);
+
+        auto info = parseInfoLine(info_line);
+
+        contracts_metadatas.push_back({ std::get<1>(info), std::move(metadata) });
+    }
+
+    return contracts_metadatas;
 }
 
 
-int64_t SmartContractMessage::getGas() const
+std::string compilerName()
 {
-    return _message.gas;
+    static const std::string_view SOLC_NAME = "solc";
+    return std::string{ SOLC_NAME };
 }
 
 
-base::Bytes SmartContractMessage::getDestination() const
-{
-    return toBytes(_message.destination);
-}
-
-
-base::Bytes SmartContractMessage::getSender() const
-{
-    return toBytes(_message.sender);
-}
-
-
-base::Bytes SmartContractMessage::toInputData() const
-{
-    return copy(_message.input_data, _message.input_size);
-}
-
-
-base::Bytes SmartContractMessage::getCreate2Salt() const
-{
-    return toBytes(_message.create2_salt);
-}
-
-
-const base::Bytes& SmartContractMessage::getCode() const
-{
-    return _contract_code;
-}
-
-
-lk::Balance SmartContractMessage::getValue() const
-{
-    return toBalance(_message.value);
-}
-
-
-evmc_revision SmartContractMessage::getRevision() const
-{
-    return _revision;
-}
-
-
-SmartContractMessage::SmartContractMessage(evmc_revision revision)
-  : _message{}
-  , _contract_code{}
-  , _revision{ revision }
-{}
-
-
-ExecutionResult::ExecutionResult(evmc::result&& data)
-  : _data(std::move(data))
-{}
-
-
-bool ExecutionResult::revert() const noexcept
-{
-    return !_data || _data->status_code == evmc_status_code::EVMC_REVERT;
-}
-
-
-bool ExecutionResult::ok() const noexcept
-{
-    return !_data || _data->status_code == evmc_status_code::EVMC_SUCCESS;
-}
-
-
-base::Bytes ExecutionResult::toOutputData() const
-{
-    return copy(_data->output_data, _data->output_size);
-}
-
-
-int64_t ExecutionResult::gasLeft() const
-{
-    return _data->gas_left;
-}
-
-
-base::Bytes ExecutionResult::createdAddress() const
-{
-    return toBytes(_data->create_address);
-}
-
-
-evmc::result ExecutionResult::getResult() noexcept
-{
-    return std::move(*_data);
-}
-
-
-namespace
-{
 std::filesystem::path getVmPath()
 {
     static const std::filesystem::path lib_name = std::filesystem::absolute("libevmone.so.0.4");
@@ -202,9 +126,48 @@ std::filesystem::path getVmPath()
         RAISE_ERROR(base::InaccessibleFile, "Vm library was not found");
     }
 }
+
+
 } // namespace
 
-Vm Vm::load(evmc::Host& vm_host)
+namespace vm
+{
+
+
+CompiledContract::CompiledContract(std::string _name)
+  : name{ _name }
+{}
+
+
+std::optional<Contracts> compile(const std::string& path_to_solidity_file)
+{
+    boost::filesystem::path path_to_solc{ bp::search_path(compilerName()) };
+    if (!boost::filesystem::exists(path_to_solc)) {
+        RAISE_ERROR(base::InaccessibleFile, "Solidity compiler was not found");
+    }
+
+    auto compilation_output = callCompilationCommand(path_to_solc, path_to_solidity_file);
+    auto metadata_output = callMetadataCommand(path_to_solc, path_to_solidity_file);
+
+    Contracts contracts{};
+    for (const auto& contract_name_full_code_pair : compilation_output) {
+        CompiledContract contract{ contract_name_full_code_pair.first };
+        contract.code = contract_name_full_code_pair.second;
+
+        for (const auto& contract_name_metadata_pair : metadata_output) {
+            if (contract_name_metadata_pair.first == contract.name) {
+                contract.metadata = contract_name_metadata_pair.second;
+            }
+        }
+
+        contracts.push_back(std::move(contract));
+    }
+
+    return contracts;
+}
+
+
+evmc::VM load()
 {
     evmc_loader_error_code load_error_code;
 
@@ -225,28 +188,14 @@ Vm Vm::load(evmc::Host& vm_host)
         }
     }
 
-    return { vm_ptr, vm_host };
-}
+    evmc::VM vm_instance{ vm_ptr };
+    LOG_INFO << "Created EVM name: " << vm_instance.name() << ", version:" << vm_instance.version();
 
-
-ExecutionResult Vm::execute(const SmartContractMessage& msg)
-{
-    auto res = _vm.execute(_host, msg.getRevision(), msg.getMessage(), msg.getCode().getData(), msg.getCode().size());
-    return ExecutionResult{ std::move(res) };
-}
-
-
-Vm::Vm(evmc_vm* vm_instance_ptr, evmc::Host& vm_host)
-  : _vm{ vm_instance_ptr }
-  , _host{ vm_host }
-{
-    LOG_INFO << "Created EVM name: " << _vm.name() << ", version:" << _vm.version();
-
-    if (!_vm.is_abi_compatible()) {
+    if (!vm_instance.is_abi_compatible()) {
         RAISE_ERROR(VmError, " ABI version is incompatible.");
     }
 
-    auto vm_capabilities = _vm.get_capabilities();
+    auto vm_capabilities = vm_instance.get_capabilities();
 
     if (vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_EVM1) {
         LOG_INFO << "EVM compatible with EVM1 instructions";
@@ -259,6 +208,9 @@ Vm::Vm(evmc_vm* vm_instance_ptr, evmc::Host& vm_host)
     if (vm_capabilities & evmc_capabilities::EVMC_CAPABILITY_PRECOMPILES) {
         LOG_INFO << "EVM compatible with precompiles instructions";
     }
+
+    return vm_instance;
 }
+
 
 } // namespace vm

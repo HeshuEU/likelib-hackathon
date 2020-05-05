@@ -32,4 +32,4 @@ class NodeServer : public BaseRpcServer
 };
 
 
-} // namespace rpc
+} // namespace rpc::grpc

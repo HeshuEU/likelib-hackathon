@@ -5,6 +5,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <fstream>
+#include <sstream>
 
 namespace base
 {
@@ -47,6 +48,30 @@ void save(const PropertyTree& tree, const std::filesystem::path& path_to_save)
 bool PropertyTree::hasKey(const std::string& path) const
 {
     return static_cast<bool>(_ptree.get_child_optional(path));
+}
+
+
+bool PropertyTree::empty() const
+{
+    return _ptree.empty();
+}
+
+
+PropertyTree PropertyTree::getSubTree(const std::string& path) const
+{
+    return PropertyTree(_ptree.get_child(path));
+}
+
+
+std::string PropertyTree::toString() const
+{
+    std::ostringstream output;
+    boost::property_tree::write_json(output, _ptree);
+    return output.str();
+}
+
+boost::property_tree::ptree PropertyTree::toBoostTree() const {
+    return _ptree;
 }
 
 } // namespace base

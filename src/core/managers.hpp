@@ -11,6 +11,24 @@ namespace lk
 {
 
 
+enum class AccountType : uint8_t
+{
+    CLIENT = 0,
+    CONTRACT = 1
+};
+
+
+struct AccountInfo
+{
+    AccountType type;
+    lk::Address address;
+    lk::Balance balance;
+    std::uint64_t nonce;
+    std::vector<base::Sha256> transactions_hashes;
+    std::string serialized_abi;
+};
+
+
 class AccountState
 {
   public:
@@ -23,8 +41,15 @@ class AccountState
         bool was_modified{ false };
     };
     //============================
+    AccountState();
+    AccountState(AccountType type);
+    ~AccountState() = default;
+    //============================
+    AccountType getType() const;
+    //============================
     std::uint64_t getNonce() const noexcept;
-    void incNonce() noexcept;
+    //    void incNonce() noexcept;
+    void addTransactionHash(base::Sha256 tx_hash);
     //============================
     lk::Balance getBalance() const noexcept;
     void setBalance(lk::Balance new_balance);
@@ -34,42 +59,53 @@ class AccountState
     const base::Sha256& getCodeHash() const noexcept;
     void setCodeHash(base::Sha256 code_hash);
     //============================
+    void setAbi(const base::PropertyTree& abi);
+    const base::PropertyTree& getAbi() const;
+    //============================
+    void setRuntimeCode(const base::Bytes& code);
+    const base::Bytes& getRuntimeCode() const;
+    //============================
     bool checkStorageValue(const base::Sha256& key) const;
     StorageData getStorageValue(const base::Sha256& key) const;
     void setStorageValue(const base::Sha256& key, base::Bytes value);
     //============================
+    AccountInfo toInfo() const;
+
   private:
+    AccountType _type{ AccountType::CLIENT };
     std::uint64_t _nonce{ 0 };
     lk::Balance _balance{ 0 };
     base::Sha256 _code_hash{ base::Sha256::null() };
     std::vector<base::Sha256> _transactions;
     std::map<base::Sha256, StorageData> _storage;
+    base::Bytes _runtime_code;
+    base::PropertyTree _abi;
 };
 
 
-class AccountManager
+class StateManager
 {
   public:
     //================
-    AccountManager() = default;
-    AccountManager(const AccountManager& hash) = delete;
-    AccountManager(AccountManager&& hash) = delete;
+    StateManager() = default;
+    StateManager(const StateManager&) = delete;
+    StateManager(StateManager&&) = delete;
 
-    AccountManager& operator=(const AccountManager& another) = delete;
-    AccountManager& operator=(AccountManager&& another) = delete;
-    ~AccountManager() = default;
+    StateManager& operator=(const StateManager&) = delete;
+    StateManager& operator=(StateManager&&) = delete;
+    ~StateManager() = default;
     //================
-    void newAccount(const lk::Address& address, base::Sha256 code_hash);
+    void createClientAccount(const lk::Address& address);
+    lk::Address createContractAccount(const lk::Address& from_account_address, base::Sha256 associated_code_hash);
+    //    void newAccount(const lk::Address& address, base::Sha256 code_hash);
     bool hasAccount(const lk::Address& address) const;
     bool deleteAccount(const lk::Address& address);
     //================
-    lk::Address newContract(const lk::Address& account_address, base::Sha256 associated_code_hash);
+    //    lk::Address newContract(const lk::Address& account_address, base::Sha256 associated_code_hash);
     //================
     bool tryTransferMoney(const lk::Address& from, const lk::Address& to, lk::Balance amount);
     //================
     bool checkTransaction(const lk::Transaction& tx) const;
-    void update(const lk::Transaction& tx);
-    void update(const lk::Block& block);
     void updateFromGenesis(const lk::Block& block);
     //================
     const AccountState& getAccount(const lk::Address& account_address) const;
@@ -77,33 +113,28 @@ class AccountManager
     //================
     lk::Balance getBalance(const lk::Address& account) const;
     //================
-    //================
+    TransactionStatus getTransactionOutput(const base::Sha256& tx);
+    void addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status);
+
   private:
     //================
     std::map<lk::Address, AccountState> _states;
     mutable std::shared_mutex _rw_mutex;
     //================
+    std::unordered_map<base::Sha256, TransactionStatus> _tx_outputs;
+    mutable std::shared_mutex _tx_outputs_mutex;
 };
 
 
-class CodeManager
-{
-  public:
-    std::optional<std::reference_wrapper<const base::Bytes>> getCode(const base::Sha256& hash) const;
-    void saveCode(base::Bytes code);
-
-  private:
-    std::map<base::Sha256, base::Bytes> _code_db;
-};
-
-
-struct AccountInfo
-{
-    lk::Address address;
-    lk::Balance balance;
-    std::uint64_t nonce;
-    std::vector<base::Sha256> transactions_hashes;
-};
+// class CodeManager
+//{
+//  public:
+//    std::optional<std::reference_wrapper<const base::Bytes>> getCode(const base::Sha256& hash) const;
+//    void saveCode(base::Bytes code);
+//
+//  private:
+//    std::map<base::Sha256, base::Bytes> _code_db;
+//};
 
 
 } // namespace core

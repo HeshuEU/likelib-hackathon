@@ -1,6 +1,6 @@
 set(BASE_HEADERS
         assert.hpp
-	crypto.hpp
+		crypto.hpp
         big_integer.hpp
         big_integer.tpp
         error.hpp
@@ -24,6 +24,7 @@ set(BASE_HEADERS
         serialization.tpp
         time.hpp
         subprogram_router.hpp
+		keccak256.hpp
         )
 
 set(BASE_SOURCES
@@ -41,7 +42,7 @@ set(BASE_SOURCES
         serialization.cpp
         time.cpp
         subprogram_router.cpp
-        )
+        keccak256.cpp)
 
 add_library(base ${BASE_SOURCES} ${BASE_HEADERS})
 target_link_libraries(base Boost::log secp256k1_lib Boost::log_setup Boost::program_options OpenSSL::SSL dl backtrace leveldb::leveldb)

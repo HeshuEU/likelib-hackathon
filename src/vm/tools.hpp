@@ -1,8 +1,10 @@
 #pragma once
 
-#include "base/bytes.hpp"
-#include "core/address.hpp"
-#include "core/types.hpp"
+#include <core/address.hpp>
+#include <core/types.hpp>
+
+#include <base/bytes.hpp>
+#include <base/keccak256.hpp>
 
 #include <evmc/evmc.hpp>
 
@@ -49,6 +51,10 @@ base::Bytes encode(uint8_t value);
 lk::Address toNativeAddress(const evmc::address& addr);
 
 evmc::address toEthAddress(const lk::Address& address);
+
+bool isView(const base::PropertyTree& abi, const base::Bytes& message);
+
+base::Keccak256 methodHash(const boost::property_tree::ptree& method_abi);
 
 std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call);
 

@@ -24,7 +24,7 @@ bool TransactionsSet::find(const lk::Transaction& tx) const
 std::optional<Transaction> TransactionsSet::find(const base::Sha256& hash) const
 {
     auto it = std::find_if(
-      _txs.begin(), _txs.end(), [&hash](const auto& tx) { return base::Sha256::compute(base::toBytes(tx)) == hash; });
+      _txs.begin(), _txs.end(), [&hash](const auto& tx) { return tx.hashOfTransaction() == hash; });
 
     if (it == _txs.end()) {
         return std::nullopt;

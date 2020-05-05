@@ -20,8 +20,12 @@ lk::AccountInfo NodeClient::getAccount(const lk::Address& address)
 {
     // convert data for request
     likelib::Address request;
-    request.set_address_at_base_58(base::base58Encode(address.getBytes()));
-
+    try {
+        serializeAddress(address, &request);
+    }
+    catch (const base::Error& er) {
+        RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());
+    }
     // call remote host
     likelib::AccountInfo reply;
     ::grpc::ClientContext context;
@@ -29,18 +33,15 @@ lk::AccountInfo NodeClient::getAccount(const lk::Address& address)
 
     // return value if ok
     if (status.ok()) {
-        auto balance = reply.balance().value();
-        auto nonce = reply.nonce();
-        std::vector<base::Sha256> hashes;
-        for (auto& hs : reply.hashes()) {
-            base::Sha256 hash{ base::base64Decode(hs.bytes_base_64()) };
-            hashes.emplace_back(std::move(hash));
+        try {
+            return deserializeAccountInfo(&reply);
         }
-
-        return { address, balance, nonce, std::move(hashes) };
+        catch (const base::Error& er) {
+            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
+        }
     }
     else {
-        throw RpcError(status.error_message());
+        RAISE_ERROR(RpcError, status.error_message());
     }
 }
 
@@ -57,11 +58,15 @@ Info NodeClient::getNodeInfo()
 
     // return value if ok
     if (status.ok()) {
-        auto top_block_hash = base::Sha256{ base::base64Decode(reply.top_block_hash().bytes_base_64()) };
-        return { std::move(top_block_hash), reply.interface_version(), reply.peers_number() };
+        try {
+            return deserializeInfo(&reply);
+        }
+        catch (const base::Error& er) {
+            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
+        }
     }
     else {
-        throw RpcError(status.error_message());
+        RAISE_ERROR(RpcError, status.error_message());
     }
 }
 
@@ -70,32 +75,60 @@ lk::Block NodeClient::getBlock(const base::Sha256& block_hash)
 {
     // convert data for request
     likelib::Hash request;
-    request.set_bytes_base_64(base::base64Encode(block_hash.getBytes()));
+    try {
+        serializeHash(block_hash, &request);
+    }
+    catch (const base::Error& er) {
+        RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());
+    }
 
     // call remote host
     likelib::Block reply;
     ::grpc::ClientContext context;
-    auto status = _stub->get_block(&context, request, &reply);
+    auto status = _stub->get_block_by_hash(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
-        lk::BlockDepth depth{ reply.depth() };
-        base::Sha256 prev_block_hash{ base::base64Decode(reply.previous_block_hash().bytes_base_64()) };
-        base::Time timestamp(reply.timestamp().since_epoch());
-        lk::NonceInt nonce{ reply.nonce() };
-        lk::Address coinbase{ base::base58Decode(reply.coinbase().address_at_base_58()) };
-
-        lk::TransactionsSet txset;
-        for (const auto& txv : reply.transactions()) {
-            txset.add(deserializeTransaction(txv));
+        try {
+            return deserializeBlock(&reply);
         }
-
-        lk::Block blk{ depth, std::move(prev_block_hash), timestamp, std::move(coinbase), std::move(txset) };
-        blk.setNonce(nonce);
-        return blk;
+        catch (const base::Error& er) {
+            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
+        }
     }
     else {
-        throw RpcError(status.error_message());
+        RAISE_ERROR(RpcError, status.error_message());
+    }
+}
+
+
+lk::Block NodeClient::getBlock(uint64_t block_number)
+{
+    // convert data for request
+    likelib::Number request;
+    try {
+        serializeNumber(block_number, &request);
+    }
+    catch (const base::Error& er) {
+        RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());
+    }
+
+    // call remote host
+    likelib::Block reply;
+    ::grpc::ClientContext context;
+    auto status = _stub->get_block_by_number(&context, request, &reply);
+
+    // return value if ok
+    if (status.ok()) {
+        try {
+            return deserializeBlock(&reply);
+        }
+        catch (const base::Error& er) {
+            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
+        }
+    }
+    else {
+        RAISE_ERROR(RpcError, status.error_message());
     }
 }
 
@@ -104,7 +137,12 @@ lk::Transaction NodeClient::getTransaction(const base::Sha256& transaction_hash)
 {
     // convert data for request
     likelib::Hash request;
-    request.set_bytes_base_64(base::base64Encode(transaction_hash.getBytes()));
+    try {
+        serializeHash(transaction_hash, &request);
+    }
+    catch (const base::Error& er) {
+        RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());
+    }
 
     // call remote host
     likelib::Transaction reply;
@@ -113,56 +151,112 @@ lk::Transaction NodeClient::getTransaction(const base::Sha256& transaction_hash)
 
     // return value if ok
     if (status.ok()) {
-        return deserializeTransaction(reply);
+        try {
+            return deserializeTransaction(&reply);
+        }
+        catch (const base::Error& er) {
+            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
+        }
     }
     else {
-        throw RpcError(status.error_message());
+        RAISE_ERROR(RpcError, status.error_message());
     }
 }
 
 
-TransactionStatus NodeClient::pushTransaction(const lk::Transaction& transaction)
+lk::TransactionStatus NodeClient::pushTransaction(const lk::Transaction& transaction)
 {
     // convert data for request
     likelib::Transaction request;
-    serializeTransaction(transaction, request);
+    try {
+        serializeTransaction(transaction, &request);
+    }
+    catch (const base::Error& er) {
+        RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());
+    }
 
     // call remote host
     likelib::TransactionStatus reply;
     ::grpc::ClientContext context;
-
     auto status = _stub->push_transaction(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
-        return deserializeTransactionStatus(reply);
+        try {
+            return deserializeTransactionStatus(&reply);
+        }
+        catch (const base::Error& er) {
+            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
+        }
     }
     else {
-        throw RpcError(status.error_message());
+        RAISE_ERROR(RpcError, status.error_message());
     }
 }
 
 
-TransactionStatus NodeClient::getTransactionResult(const base::Sha256& transaction_hash)
+lk::TransactionStatus NodeClient::getTransactionResult(const base::Sha256& transaction_hash)
 {
     // convert data for request
     likelib::Hash request;
-    request.set_bytes_base_64(base::base64Encode(transaction_hash.getBytes()));
+    try {
+        serializeHash(transaction_hash, &request);
+    }
+    catch (const base::Error& er) {
+        RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());
+    }
 
     // call remote host
     likelib::TransactionStatus reply;
     ::grpc::ClientContext context;
-
     auto status = _stub->get_transaction_result(&context, request, &reply);
 
     // return value if ok
     if (status.ok()) {
-        return deserializeTransactionStatus(reply);
+        try {
+            return deserializeTransactionStatus(&reply);
+        }
+        catch (const base::Error& er) {
+            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
+        }
     }
     else {
-        throw RpcError(status.error_message());
+        RAISE_ERROR(RpcError, status.error_message());
     }
 }
 
 
-} // namespace rpc
+base::Bytes NodeClient::callContractView(const lk::Address& from,
+                                         const lk::Address& contract_address,
+                                         const base::Bytes& message)
+{
+    // convert data for request
+    likelib::ViewCall request;
+    try {
+        serializeViewCall(from, contract_address, message, &request);
+    }
+    catch (const base::Error& er) {
+        RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());
+    }
+
+    // call remote host
+    likelib::Data reply;
+    ::grpc::ClientContext context;
+    auto status = _stub->call_contract_view(&context, request, &reply);
+
+    // return value if ok
+    if (status.ok()) {
+        try {
+            return deserializeData(&reply);
+        }
+        catch (const base::Error& er) {
+            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
+        }
+    }
+    else {
+        RAISE_ERROR(RpcError, status.error_message());
+    }
+}
+
+
+} // namespace rpc::grpc

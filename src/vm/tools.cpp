@@ -2,7 +2,9 @@
 #include "error.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
 #include <boost/process.hpp>
+
 
 #include <algorithm>
 #include <regex>
@@ -192,6 +194,39 @@ evmc::address toEthAddress(const lk::Address& address)
     std::copy(byte_address.getData(), byte_address.getData() + byte_address.size(), ret.bytes);
     return ret;
 }
+
+
+bool isView(const base::PropertyTree& abi, const base::Bytes& message)
+{
+    static constexpr std::size_t START_POSITION = 0;
+    static constexpr std::size_t END_POSITION = 4;
+    auto target = message.takePart(START_POSITION, END_POSITION);
+    BOOST_FOREACH (const auto& method_abi, abi.getSubTree("abi").toBoostTree()) {
+        auto method_hash = methodHash(method_abi.second);
+        auto current = method_hash.getBytes().toBytes().takePart(START_POSITION, END_POSITION);
+        if (current == target && method_abi.second.get<std::string>("stateMutability") == "view") {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+base::Keccak256 methodHash(const boost::property_tree::ptree& method_abi)
+{
+    //    auto ser = base::PropertyTree(method_abi).toString();
+    std::string method =method_abi.get<std::string>("type") == "function" ? method_abi.get<std::string>("name") + '(' : "constructor(";
+
+    BOOST_FOREACH (const auto& argument, method_abi.get_child("inputs")) {
+        method += argument.second.get<std::string>("type") + ',';
+    }
+    if (method[method.size() - 1] == ',') {
+        method.erase(method.size() - 1, 1);
+    }
+    method += ')';
+    return base::Keccak256::compute(base::Bytes(method));
+}
+
 
 namespace
 {

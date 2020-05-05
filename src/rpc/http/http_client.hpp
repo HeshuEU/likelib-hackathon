@@ -23,11 +23,17 @@ class NodeClient final : public BaseRpc
 
     lk::Block getBlock(const base::Sha256& block_hash) override;
 
+    lk::Block getBlock(uint64_t block_number) override;
+
     lk::Transaction getTransaction(const base::Sha256& transaction_hash) override;
 
-    TransactionStatus pushTransaction(const lk::Transaction& transaction) override;
+    lk::TransactionStatus pushTransaction(const lk::Transaction& transaction) override;
 
-    virtual TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) override;
+    lk::TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) override;
+
+    base::Bytes callContractView(const lk::Address& from,
+                                 const lk::Address& contract_address,
+                                 const base::Bytes& message) override;
 
   private:
     web::http::client::http_client _client;

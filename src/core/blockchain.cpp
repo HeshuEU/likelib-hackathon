@@ -148,7 +148,7 @@ std::optional<lk::Transaction> Blockchain::findTransaction(const base::Sha256& t
     std::shared_lock lk(_blocks_mutex);
     for (const auto& block : _blocks) {
         for (const auto& tx : block.second.getTransactions()) {
-            if (base::Sha256::compute(base::toBytes(tx)) == tx_hash) {
+            if (tx.hashOfTransaction() == tx_hash) {
                 return tx;
             }
         }

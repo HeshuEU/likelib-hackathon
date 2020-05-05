@@ -42,10 +42,14 @@ response:
 		“method”: “get_account”,
 		“status”: “ok”/”error”,
 		“result”: {
-			“address ”: “<address encoded by base58>”,
+			“address”: “<address encoded by base58>”,
 			“balance”: “<uint256 integer at string format>”,
 			“nonce”: <integer>,
-			“transaction_hashes”: [<zero or more strings with hashes of transactions encoded by base64>]
+			"type": "client"/"contract"
+			## if "type" == "client" will be field "transaction_hashes"
+            “transaction_hashes”: [<zero or more strings with hashes of transactions encoded by base64>]
+            ## if "type" == "contract" will be field "abi"
+            “abi”: <contract abi object>
 		}
 	}
 
@@ -113,7 +117,7 @@ response:
 
 	### json object at body:
 	{
-		“method”: “get_block”,
+		“method”: “get_transaction_result”,
 		“status”: “ok”/”error”,
 		“result”: {
 			“status_code”: <number Success=0, Rejected=1, Revert=2, Failed=3>,
@@ -124,7 +128,7 @@ response:
 	}
 
 
-6. push_transaction
+### 6. push_transaction
 
 request:
 
@@ -148,9 +152,31 @@ response:
 
 	### json object at body:
 	{
-		“method”: “get_block”,
+		“method”: “push_transaction”,
 		“status”: “ok”/”error”,
 		“result”: <transaction result object see get_transaction_result method>
+	}
+
+### 7. get_storage_value
+
+request:
+
+	post to http:://<target url>/get_storage_value
+
+	### need json object at body:
+	{
+		“from”: “<address encoded by base58>”,
+		“to”: “<contract address encoded by base58>”,
+		“message”: “<binary encoded(for call) data string message then ecnoded by base64>”,
+	}
+
+response:
+
+	### json object at body:
+	{
+		“method”: “get_storage_value”,
+		“status”: “ok”/”error”,
+		“result”: “<encoded by base64 data from contract call in string type>”,
 	}
 
 

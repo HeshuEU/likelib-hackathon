@@ -30,6 +30,7 @@ class RpcSever : public BaseRpcServer
 
     std::unique_ptr<BaseRpcServer> _grpc_server;
     std::string _grpc_listening_address;
+
     std::unique_ptr<BaseRpcServer> _http_server;
     std::string _http_listening_address;
 };
@@ -83,6 +84,7 @@ void RpcSever::stop()
 
 }
 
+
 std::unique_ptr<BaseRpc> createRpcClient(ClientMode mode, const std::string& connect_address)
 {
     switch (mode) {
@@ -90,8 +92,9 @@ std::unique_ptr<BaseRpc> createRpcClient(ClientMode mode, const std::string& con
             return std::unique_ptr<BaseRpc>(new grpc::NodeClient(connect_address));
         case ClientMode::HTTP:
             return std::unique_ptr<BaseRpc>(new http::NodeClient(connect_address));
+        default:
+            RAISE_ERROR(base::LogicError, "Unexpected case");
     }
-    RAISE_ERROR(base::LogicError, "Unexpected case");
 }
 
 
