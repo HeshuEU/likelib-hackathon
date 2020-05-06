@@ -28,6 +28,6 @@
 
 #define ASSERT_SOFT(condition)                                                                                         \
     do {                                                                                                               \
-    } while
+    } while(false);
 
 #endif
