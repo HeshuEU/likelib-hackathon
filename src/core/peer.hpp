@@ -18,6 +18,45 @@ class Host;
 class PeerPoolBase;
 //=======================
 
+// messages available
+namespace msg
+{
+// clang-format off
+DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(Type, std::uint8_t,
+  (DEBUG_MIN)
+  (CONNECT)
+  (CANNOT_ACCEPT)
+  (ACCEPTED)
+  (ACCEPTED_RESPONSE)
+  (PING)
+  (PONG)
+  (LOOKUP)
+  (LOOKUP_RESPONSE)
+  (TRANSACTION)
+  (GET_BLOCK)
+  (BLOCK)
+  (BLOCK_NOT_FOUND)
+  (CLOSE)
+  (DEBUG_MAX)
+)
+// clang-format on
+
+struct Connect;
+struct CannotAccept;
+struct Accepted;
+struct AcceptedResponse;
+struct Ping;
+struct Pong;
+struct Lookup;
+struct LookupResponse;
+struct Transaction;
+struct GetBlock;
+struct Block;
+struct BlockNotFound;
+struct Close;
+}
+//=======================
+
 class Peer : public std::enable_shared_from_this<Peer>
 {
   public:
@@ -69,12 +108,8 @@ class Peer : public std::enable_shared_from_this<Peer>
     void applySyncs();
     const std::forward_list<lk::Block>& getSyncBlocks() const noexcept;
     //================
-    void send(const base::Bytes& data, net::Connection::SendHandler on_send);
-    void send(base::Bytes&& data, net::Connection::SendHandler on_send);
-    //================
     void sendBlock(const lk::Block& block);
     void sendTransaction(const lk::Transaction& tx);
-    void sendSessionEnd(std::function<void()> on_send);
     //===============
     /**
      * If the peer was accepted, it responds to it whether the acception was successful or not.
@@ -82,7 +117,9 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     void startSession();
 
-    void lookup(const lk::Address& address, std::size_t alpha, std::function<void(std::vector<IdentityInfo>)> callback);
+    void lookup(const lk::Address& address,
+                std::uint8_t alpha,
+                std::function<void(std::vector<IdentityInfo>)> callback);
     std::multimap<lk::Address, std::function<void(std::vector<IdentityInfo>)>>
       _lookup_callbacks; // TODO: refactor, of course
   private:
@@ -100,6 +137,9 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     bool tryAddToPool();
     //================
+    template<typename M>
+    void sendMessage(const M& msg, net::Connection::SendHandler on_send = {});
+
     /*
      * Handler of session messages.
      */
@@ -134,8 +174,163 @@ class Peer : public std::enable_shared_from_this<Peer>
     lk::Host& _host;
     //================
     // void rejectedByPool();
+    void process(const base::Bytes& received_data);
+    void handle(msg::Connect&& msg);
+    void handle(msg::CannotAccept&& msg);
+    void handle(msg::Accepted&& msg);
+    void handle(msg::AcceptedResponse&& msg);
+    void handle(msg::Ping&& msg);
+    void handle(msg::Pong&& msg);
+    void handle(msg::Lookup&& msg);
+    void handle(msg::LookupResponse&& msg);
+    void handle(msg::Transaction&& msg);
+    void handle(msg::GetBlock&& msg);
+    void handle(msg::Block&& msg);
+    void handle(msg::BlockNotFound&& msg);
+    void handle(msg::Close&& msg);
     //================
 };
+
+
+namespace msg
+{
+struct Connect
+{
+    static constexpr Type TYPE_ID = Type::CONNECT;
+
+    Peer::IdentityInfo peer_id;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Connect deserialize(base::SerializationIArchive& ia);
+};
+
+struct CannotAccept
+{
+    static constexpr Type TYPE_ID = Type::CANNOT_ACCEPT;
+
+    DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(RefusionReason,
+                                              std::uint8_t,
+                                              (NOT_AVAILABLE)(BUCKET_IS_FULL)(BAD_RATING));
+
+    RefusionReason why_not_accepted;
+    std::vector<Peer::IdentityInfo> peers_info;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static CannotAccept deserialize(base::SerializationIArchive& ia);
+};
+
+struct Accepted
+{
+    static constexpr Type TYPE_ID = Type::ACCEPTED;
+
+    lk::Block theirs_top_block;
+    lk::Address address;
+    std::uint16_t public_port; // zero public port states that peer didn't provide information about his public endpoint
+    std::vector<lk::Peer::IdentityInfo> known_peers;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Accepted deserialize(base::SerializationIArchive& ia);
+};
+
+struct AcceptedResponse
+{
+    static constexpr Type TYPE_ID = Type::ACCEPTED_RESPONSE;
+
+    lk::Block theirs_top_block;
+    lk::Address address;
+    std::uint16_t public_port; // zero public port states that peer didn't provide information about his public endpoint
+    std::vector<lk::Peer::IdentityInfo> known_peers;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static AcceptedResponse deserialize(base::SerializationIArchive& ia);
+};
+
+struct Ping
+{
+    static constexpr Type TYPE_ID = Type::PING;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Ping deserialize(base::SerializationIArchive& ia);
+};
+
+struct Pong
+{
+    static constexpr Type TYPE_ID = Type::PONG;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Pong deserialize(base::SerializationIArchive& ia);
+};
+
+struct Lookup
+{
+    static constexpr Type TYPE_ID = Type::LOOKUP;
+
+    lk::Address address;
+    std::uint8_t selection_size;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Lookup deserialize(base::SerializationIArchive& ia);
+};
+
+struct LookupResponse
+{
+    static constexpr Type TYPE_ID = Type::LOOKUP_RESPONSE;
+
+    lk::Address address;
+    std::vector<Peer::IdentityInfo> peers_info;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static LookupResponse deserialize(base::SerializationIArchive& ia);
+};
+
+struct Transaction
+{
+    static constexpr Type TYPE_ID = Type::TRANSACTION;
+
+    lk::Transaction tx;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Transaction deserialize(base::SerializationIArchive& ia);
+};
+
+struct GetBlock
+{
+    static constexpr Type TYPE_ID = Type::GET_BLOCK;
+
+    base::Sha256 block_hash;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static GetBlock deserialize(base::SerializationIArchive& ia);
+};
+
+struct Block
+{
+    static constexpr Type TYPE_ID = Type::BLOCK;
+
+    lk::Block block;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Block deserialize(base::SerializationIArchive& ia);
+};
+
+struct BlockNotFound
+{
+    static constexpr Type TYPE_ID = Type::BLOCK_NOT_FOUND;
+
+    base::Sha256 block_hash;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static BlockNotFound deserialize(base::SerializationIArchive& ia);
+};
+
+struct Close
+{
+    static constexpr Type TYPE_ID = Type::CLOSE;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static Close deserialize(base::SerializationIArchive& ia);
+};
+}
 
 
 class PeerPoolBase
@@ -148,11 +343,11 @@ class PeerPoolBase
     virtual void forEachPeer(std::function<void(const Peer&)> f) const = 0;
     virtual void forEachPeer(std::function<void(Peer&)> f) = 0;
 
-    virtual void broadcast(const base::Bytes& bytes) = 0;
-
     virtual std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) = 0;
 
     virtual std::vector<Peer::IdentityInfo> allPeersInfo() const = 0;
 };
 
 }
+
+#include "peer.tpp"

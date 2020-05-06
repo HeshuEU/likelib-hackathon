@@ -158,12 +158,6 @@ void PeerTable::forEachPeer(std::function<void(Peer&)> f)
 }
 
 
-void PeerTable::broadcast(const base::Bytes& data)
-{
-    forEachPeer([data](Peer& peer) { peer.send(data, {}); });
-}
-
-
 std::vector<Peer::IdentityInfo> PeerTable::lookup(const lk::Address& address, const std::size_t alpha)
 {
     auto ret = allPeersInfo();
@@ -364,13 +358,6 @@ void Host::join()
 void Host::dropZombiePeers()
 {
     _connected_peers.removeSilent();
-}
-
-
-void Host::broadcast(const base::Bytes& data)
-{
-    LOG_DEBUG << "Broadcasting data size = " << data.size();
-    _connected_peers.forEachPeer([data](Peer& peer) { peer.send(data, {}); });
 }
 
 

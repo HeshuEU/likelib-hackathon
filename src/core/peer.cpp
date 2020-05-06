@@ -15,7 +15,8 @@ namespace lk
  *  3) Waiting for response. Valid responses are ACCEPTED and CANNOT_ACCEPT
  *      a) ACCEPTED response means that current peer was added to PeerTable of peers, that we are connecting to.
  *         Now we're ready for synchronisation.
- *      b) CANNOT_ACCEPT response means that current peer was rejected by some reason (this reason is provided in message)
+ *      b) CANNOT_ACCEPT response means that current peer was rejected by some reason (this reason is provided in
+ * message)
  *
  * Acception protocol description:
  *  1) Accepting connection.
@@ -25,262 +26,202 @@ namespace lk
  *      b) If adding is failed - send CANNOT_ACCEPT message. Shutdown the connection.
  *
  * Initial synchronisation protocol description.
- *  1) Initiated during handshake: if peers top-block if futher then ours, then we request all blocks that we're lack of.
- *  2) All blocks are applied sequentally.
- *  3) When initial top-block is applied, we say that host is synchronised with given peer.
+ *  1) Initiated during handshake: if peers top-block if futher then ours, then we request all blocks that we're lack
+ * of. 2) All blocks are applied sequentally. 3) When initial top-block is applied, we say that host is synchronised
+ * with given peer.
  *
  *
  *  Fix: do a synchronisation during runtime.
  */
 
-
-// clang-format off
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
-(NOT_AVAILABLE)
-            (CONNECT)
-            (CANNOT_ACCEPT)
-            (ACCEPTED)
-            (ACCEPTED_RESPONSE)
-            (PING)
-            (PONG)
-            (LOOKUP)
-            (LOOKUP_RESPONSE)
-            (TRANSACTION)
-            (GET_BLOCK)
-            (BLOCK)
-            (BLOCK_NOT_FOUND)
-            (CLOSE)
-)
-// clang-format on
-
-//========================================
-
-class ConnectMessage
+std::vector<Peer::IdentityInfo> allPeersInfoExcept(lk::PeerPoolBase& host, const lk::Address& address)
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, Peer::IdentityInfo peer_id);
-    static ConnectMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
-
-  private:
-    Peer::IdentityInfo _peer_id;
-
-    ConnectMessage(Peer::IdentityInfo peer_id);
-};
-
-//========================================
-
-class CannotAcceptMessage
-{
-  public:
-    DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(RefusionReason, std::uint8_t, (NOT_AVAILABLE)(BUCKET_IS_FULL)(BAD_RATING))
-
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, RefusionReason why_not_accepted);
-    static CannotAcceptMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
-
-  private:
-    RefusionReason _why_not_accepted;
-    std::vector<Peer::IdentityInfo> _peers_info;
-
-    CannotAcceptMessage(RefusionReason why_not_accepted, std::vector<Peer::IdentityInfo> peers_info);
-};
-
-//========================================
-
-class AcceptedMessage
-{
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa,
-                          const lk::Block& top_block,
-                          const lk::Address& address,
-                          std::uint16_t public_port,
-                          const std::vector<lk::Peer::IdentityInfo>& known_peers);
-    static AcceptedMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& context, Peer& peer);
-
-  private:
-    lk::Block _theirs_top_block;
-    lk::Address _address;
-    std::uint16_t
-      _public_port; // zero public port states that peer didn't provide information about his public endpoint
-    std::vector<lk::Peer::IdentityInfo> _known_peers;
-
-    AcceptedMessage(lk::Block&& top_block,
-                    lk::Address address,
-                    std::uint16_t public_port,
-                    std::vector<lk::Peer::IdentityInfo>&& known_peers);
-};
-
-//========================================
-
-class AcceptedResponseMessage
-{
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa,
-                          const lk::Block& top_block,
-                          const lk::Address& address,
-                          std::uint16_t public_port,
-                          const std::vector<lk::Peer::IdentityInfo>& known_peers);
-    static AcceptedResponseMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& context, Peer& peer);
-
-  private:
-    lk::Block _theirs_top_block;
-    lk::Address _address;
-    std::uint16_t
-      _public_port; // zero public port states that peer didn't provide information about his public endpoint
-    std::vector<lk::Peer::IdentityInfo> _known_peers;
-
-    AcceptedResponseMessage(lk::Block&& top_block,
-                            lk::Address address,
-                            std::uint16_t public_port,
-                            std::vector<lk::Peer::IdentityInfo>&& known_peers);
-};
-
-//========================================
-
-class PingMessage
-{
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa);
-    static PingMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
-
-  private:
-    PingMessage() = default;
-};
+    auto ret = host.allPeersInfo();
+    ret.erase(std::find_if(ret.begin(), ret.end(), [address](const auto& cand) { return cand.address == address; }));
+    return ret;
+}
 
 //============================================
 
-class PongMessage
+namespace msg
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa);
-    static PongMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
 
-  private:
-    PongMessage() = default;
-};
-
-//============================================
-
-class LookupMessage
+void Connect::serialize(base::SerializationOArchive& oa) const
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const lk::Address& address, std::uint8_t selection_size);
-    static LookupMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
+    oa.serialize(peer_id);
+}
 
-  private:
-    lk::Address _address;
-    std::uint8_t _selection_size;
-    LookupMessage(lk::Address address, std::uint8_t selection_size);
-};
 
-//============================================
-
-class LookupResponseMessage
+Connect Connect::deserialize(base::SerializationIArchive& ia)
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa,
-                          const lk::Address& address,
-                          const std::vector<Peer::IdentityInfo>& peers_info);
-    static LookupResponseMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
+    auto peers_id = ia.deserialize<Peer::IdentityInfo>();
+    return Connect{ std::move(peers_id) };
+}
 
-  private:
-    lk::Address _address;
-    std::vector<Peer::IdentityInfo> _peers_info;
-    LookupResponseMessage(lk::Address address, std::vector<Peer::IdentityInfo> peers);
-};
 
-//============================================
-
-class TransactionMessage
+void CannotAccept::serialize(base::SerializationOArchive& oa) const
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const lk::Transaction& tx);
-    static TransactionMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
+    oa.serialize(why_not_accepted);
+    oa.serialize(peers_info);
+}
 
-  private:
-    lk::Transaction _tx;
 
-    explicit TransactionMessage(const lk::Transaction& tx);
-};
-
-//============================================
-
-class GetBlockMessage
+CannotAccept CannotAccept::deserialize(base::SerializationIArchive& ia)
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
-    static GetBlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
+    auto why_not_accepted = ia.deserialize<CannotAccept::RefusionReason>();
+    auto peers_info = ia.deserialize<std::vector<Peer::IdentityInfo>>();
+    return CannotAccept{ std::move(why_not_accepted), std::move(peers_info) };
+}
 
-  private:
-    base::Sha256 _block_hash;
 
-    explicit GetBlockMessage(base::Sha256 block_hash);
-};
-
-//============================================
-
-class BlockMessage
+void Accepted::serialize(base::SerializationOArchive& oa) const
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const lk::Block& block);
-    static BlockMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
+    oa.serialize(theirs_top_block);
+    oa.serialize(address);
+    oa.serialize(public_port);
+    oa.serialize(known_peers);
+}
 
-  private:
-    lk::Block _block;
 
-    explicit BlockMessage(lk::Block block);
-};
-
-//============================================
-
-class BlockNotFoundMessage
+Accepted Accepted::deserialize(base::SerializationIArchive& ia)
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash);
-    static BlockNotFoundMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
+    auto top_block = ia.deserialize<lk::Block>();
+    auto address = ia.deserialize<lk::Address>();
+    auto public_port = ia.deserialize<std::uint16_t>();
+    auto known_peers = ia.deserialize<std::vector<lk::Peer::IdentityInfo>>();
+    return Accepted{ std::move(top_block), std::move(address), public_port, std::move(known_peers) };
+}
 
-  private:
-    base::Sha256 _block_hash;
 
-    explicit BlockNotFoundMessage(base::Sha256 block_hash);
-};
-
-//============================================
-
-class CloseMessage
+void AcceptedResponse::serialize(base::SerializationOArchive& oa) const
 {
-  public:
-    static constexpr MessageType getHandledMessageType();
-    static void serialize(base::SerializationOArchive& oa);
-    static CloseMessage deserialize(base::SerializationIArchive& ia);
-    void handle(const Peer::Context& ctx, Peer& peer);
+    oa.serialize(TYPE_ID);
+    oa.serialize(theirs_top_block);
+    oa.serialize(address);
+    oa.serialize(public_port);
+    oa.serialize(known_peers);
+}
 
-  private:
-    CloseMessage();
-};
+
+AcceptedResponse AcceptedResponse::deserialize(base::SerializationIArchive& ia)
+{
+    auto top_block = ia.deserialize<lk::Block>();
+    auto address = ia.deserialize<lk::Address>();
+    auto public_port = ia.deserialize<std::uint16_t>();
+    auto known_peers = ia.deserialize<std::vector<lk::Peer::IdentityInfo>>();
+    return AcceptedResponse{ std::move(top_block), std::move(address), public_port, std::move(known_peers) };
+}
+
+
+void Ping::serialize(base::SerializationOArchive&) const {}
+
+
+Ping Ping::deserialize(base::SerializationIArchive&)
+{
+    return Ping{};
+}
+
+
+void Pong::serialize(base::SerializationOArchive&) const {}
+
+
+Pong Pong::deserialize(base::SerializationIArchive&)
+{
+    return Pong{};
+}
+
+
+void Lookup::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(address);
+    oa.serialize(selection_size);
+}
+
+
+Lookup Lookup::deserialize(base::SerializationIArchive& ia)
+{
+    auto address = ia.deserialize<lk::Address>();
+    auto selection_size = ia.deserialize<std::uint8_t>();
+    return Lookup{ std::move(address), selection_size };
+}
+
+
+void LookupResponse::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(address);
+    oa.serialize(peers_info);
+}
+
+
+LookupResponse LookupResponse::deserialize(base::SerializationIArchive& ia)
+{
+    auto address = ia.deserialize<lk::Address>();
+    auto peers_info = ia.deserialize<std::vector<Peer::IdentityInfo>>();
+    return LookupResponse{ std::move(address), std::move(peers_info) };
+}
+
+
+void Transaction::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(tx);
+}
+
+
+Transaction Transaction::deserialize(base::SerializationIArchive& ia)
+{
+    auto tx = lk::Transaction::deserialize(ia);
+    return Transaction{ std::move(tx) };
+}
+
+
+void GetBlock::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(block_hash);
+}
+
+
+GetBlock GetBlock::deserialize(base::SerializationIArchive& ia)
+{
+    auto block_hash = base::Sha256::deserialize(ia);
+    return GetBlock{ std::move(block_hash) };
+}
+
+
+void Block::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(block);
+}
+
+
+Block Block::deserialize(base::SerializationIArchive& ia)
+{
+    auto block = lk::Block::deserialize(ia);
+    return Block{ std::move(block) };
+}
+
+
+void BlockNotFound::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(block_hash);
+}
+
+
+BlockNotFound BlockNotFound::deserialize(base::SerializationIArchive& ia)
+{
+    auto block_hash = base::Sha256::deserialize(ia);
+    return BlockNotFound{ std::move(block_hash) };
+}
+
+
+void Close::serialize(base::SerializationOArchive&) const {}
+
+
+Close Close::deserialize(base::SerializationIArchive&)
+{
+    return Close{};
+}
+
+}
 
 //============================================
 
@@ -288,8 +229,7 @@ Peer::IdentityInfo Peer::IdentityInfo::deserialize(base::SerializationIArchive& 
 {
     auto endpoint = ia.deserialize<net::Endpoint>();
     auto address = ia.deserialize<lk::Address>();
-    Peer::IdentityInfo ret{ std::move(endpoint), std::move(address) };
-    return ret;
+    return Peer::IdentityInfo{ std::move(endpoint), std::move(address) };
 }
 
 
@@ -299,695 +239,23 @@ void Peer::IdentityInfo::serialize(base::SerializationOArchive& oa) const
     oa.serialize(address);
 }
 
-//================================
-
-/*
- * Some functions, that are implemented and later used inside templates are shown as not used.
- * So, warnings for unused functions are just disabled for this file.
- */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-
-namespace
-{
-
-template<typename M, typename... Args>
-base::Bytes prepareMessage(Args&&... args)
-{
-    LOG_TRACE << "Serializing " << enumToString(M::getHandledMessageType());
-    base::SerializationOArchive oa;
-    oa.serialize(M::getHandledMessageType());
-    (oa.serialize(std::forward<Args>(args)), ...);
-    return std::move(oa).getBytes();
-}
-
-
-class Dummy
-{};
-
-template<typename C, typename F, typename... O>
-bool runHandleImpl([[maybe_unused]] lk::MessageType mt, base::SerializationIArchive& ia, const C& ctx, Peer& peer)
-{
-    if constexpr (std::is_same<F, Dummy>::value) {
-        return false;
-    }
-    else {
-        if (F::getHandledMessageType() == mt) {
-            auto message = F::deserialize(ia);
-            message.handle(ctx, peer);
-            return true;
-        }
-        else {
-            return runHandleImpl<C, O...>(mt, ia, ctx, peer);
-        }
-    }
-}
-
-
-template<typename C, typename... Args>
-bool runHandle(lk::MessageType mt, base::SerializationIArchive& ia, const C& ctx, Peer& peer)
-{
-    return runHandleImpl<C, Args..., Dummy>(mt, ia, ctx, peer);
-}
-
-
-template<typename C>
-class MessageProcessor
-{
-  public:
-    //===============
-    explicit MessageProcessor(const C& context, Peer& peer)
-      : _ctx{ context }
-      , _peer{ peer }
-    {}
-
-    /*
-     * Decode and act according to received data.
-     * Throws if invalid message, or there is an error during handling.
-     */
-    void process(const base::Bytes& raw_message)
-    {
-        using namespace lk;
-
-        base::SerializationIArchive ia(raw_message);
-        auto type = ia.deserialize<lk::MessageType>();
-
-        if (runHandle<Peer::Context,
-                      ConnectMessage,
-                      CannotAcceptMessage,
-                      AcceptedMessage,
-                      AcceptedResponseMessage,
-                      PingMessage,
-                      PongMessage,
-                      LookupMessage,
-                      LookupResponseMessage,
-                      TransactionMessage,
-                      GetBlockMessage,
-                      BlockMessage,
-                      BlockNotFoundMessage,
-                      CloseMessage>(type, ia, _ctx, _peer)) {
-            LOG_DEBUG << "Processed " << enumToString(type) << " message";
-        }
-        else {
-            RAISE_ERROR(base::InvalidArgument, "invalid message type");
-        }
-    }
-
-  private:
-    const C& _ctx;
-    Peer& _peer;
-};
-
-
-std::vector<Peer::IdentityInfo> allPeersInfoExcept(lk::PeerPoolBase& host, const lk::Address& address)
-{
-    auto ret = host.allPeersInfo();
-    ret.erase(std::find_if(ret.begin(), ret.end(), [address](const auto& cand) { return cand.address == address; }));
-    return ret;
-}
-
-
-} // namespace
-
-//============================================
-
-constexpr lk::MessageType ConnectMessage::getHandledMessageType()
-{
-    return lk::MessageType::CONNECT;
-}
-
-
-void ConnectMessage::serialize(base::SerializationOArchive& oa, Peer::IdentityInfo peer_id)
-{
-    oa.serialize(getHandledMessageType());
-    oa.serialize(peer_id);
-}
-
-
-ConnectMessage ConnectMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto peers_id = ia.deserialize<Peer::IdentityInfo>();
-    return ConnectMessage(std::move(peers_id));
-}
-
-
-void ConnectMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    if(peer.tryAddToPool()) {
-        peer.send(prepareMessage<AcceptedMessage>());
-    }
-    else {
-        peer.send(prepareMessage<CannotAcceptMessage>());
-    }
-}
-
-
-ConnectMessage::ConnectMessage(Peer::IdentityInfo peer_id)
-  : _peer_id(std::move(peer_id))
-{}
-
-//============================================
-
-constexpr lk::MessageType CannotAcceptMessage::getHandledMessageType()
-{
-    return lk::MessageType::CANNOT_ACCEPT;
-}
-
-
-void CannotAcceptMessage::serialize(base::SerializationOArchive& oa,
-                                    CannotAcceptMessage::RefusionReason why_not_accepted)
-{
-    oa.serialize(getHandledMessageType());
-    oa.serialize(why_not_accepted);
-}
-
-
-CannotAcceptMessage CannotAcceptMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto why_not_accepted = ia.deserialize<RefusionReason>();
-    auto peers_info = ia.deserialize<std::vector<Peer::IdentityInfo>>();
-    return CannotAcceptMessage(why_not_accepted, std::move(peers_info));
-}
-
-
-void CannotAcceptMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    ctx.pool.removePeer(&peer);
-
-    for (const auto& peer : _peers_info) {
-        ctx.host.checkOutPeer(peer.endpoint, [](std::shared_ptr<Peer> peer) { if(peer) peer->startSession(); });
-    }
-}
-
-
-CannotAcceptMessage::CannotAcceptMessage(CannotAcceptMessage::RefusionReason why_not_accepted,
-                                         std::vector<Peer::IdentityInfo> peers_info)
-  : _why_not_accepted{ why_not_accepted }
-  , _peers_info{ std::move(peers_info) }
-{}
-
-//============================================
-
-constexpr lk::MessageType AcceptedMessage::getHandledMessageType()
-{
-    return lk::MessageType::ACCEPTED;
-}
-
-
-void AcceptedMessage::serialize(base::SerializationOArchive& oa,
-                                const lk::Block& block,
-                                const lk::Address& address,
-                                std::uint16_t public_port,
-                                const std::vector<lk::Peer::IdentityInfo>& known_peers)
-{
-    oa.serialize(getHandledMessageType());
-    oa.serialize(block);
-    oa.serialize(address);
-    oa.serialize(public_port);
-    oa.serialize(known_peers);
-}
-
-
-AcceptedMessage AcceptedMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto top_block = ia.deserialize<lk::Block>();
-    auto address = ia.deserialize<lk::Address>();
-    auto public_port = ia.deserialize<std::uint16_t>();
-    auto known_peers = ia.deserialize<std::vector<lk::Peer::IdentityInfo>>();
-    return AcceptedMessage(std::move(top_block), std::move(address), public_port, std::move(known_peers));
-}
-
-
-void AcceptedMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    const auto& ours_top_block = ctx.core.getTopBlock();
-
-    peer.send(prepareMessage<AcceptedResponseMessage>(ctx.core.getTopBlock(),
-                                                      ctx.core.getThisNodeAddress(),
-                                                      peer.getPublicEndpoint().getPort(),
-                                                      allPeersInfoExcept(ctx.host.getPool(), peer.getAddress())),
-              {});
-
-    if (_public_port) {
-        auto public_ep = peer.getEndpoint();
-        public_ep.setPort(_public_port);
-        peer.setServerEndpoint(public_ep);
-    }
-
-    for (const auto& peer_info : _known_peers) {
-        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) { if(peer) { peer->startSession(); } });
-    }
-
-    if (_theirs_top_block == ours_top_block) {
-        peer.setState(lk::Peer::State::SYNCHRONISED);
-        return; // nothing changes, because top blocks are equal
-    }
-    else {
-        if (ours_top_block.getDepth() > _theirs_top_block.getDepth()) {
-            peer.setState(lk::Peer::State::SYNCHRONISED);
-            // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
-            return;
-        }
-        else {
-            if (ctx.core.getTopBlock().getDepth() + 1 == _theirs_top_block.getDepth()) {
-                ctx.core.tryAddBlock(_theirs_top_block);
-                peer.setState(lk::Peer::State::SYNCHRONISED);
-            }
-            else {
-                base::SerializationOArchive oa;
-                GetBlockMessage::serialize(oa, _theirs_top_block.getPrevBlockHash());
-                peer.send(std::move(oa).getBytes(), {});
-                peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
-                peer.addSyncBlock(std::move(_theirs_top_block));
-            }
-        }
-    }
-}
-
-
-AcceptedMessage::AcceptedMessage(lk::Block&& top_block,
-                                 lk::Address address,
-                                 std::uint16_t public_port,
-                                 std::vector<lk::Peer::IdentityInfo>&& known_peers)
-  : _theirs_top_block{ std::move(top_block) }
-  , _address{ std::move(address) }
-  , _public_port{ public_port }
-  , _known_peers{ std::move(known_peers) }
-{}
-
-//============================================
-
-constexpr lk::MessageType AcceptedResponseMessage::getHandledMessageType()
-{
-    return lk::MessageType::ACCEPTED_RESPONSE;
-}
-
-
-void AcceptedResponseMessage::serialize(base::SerializationOArchive& oa,
-                                        const lk::Block& block,
-                                        const lk::Address& address,
-                                        std::uint16_t public_port,
-                                        const std::vector<lk::Peer::IdentityInfo>& known_peers)
-{
-    oa.serialize(getHandledMessageType());
-    oa.serialize(block);
-    oa.serialize(address);
-    oa.serialize(public_port);
-    oa.serialize(known_peers);
-}
-
-
-AcceptedResponseMessage AcceptedResponseMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto top_block = ia.deserialize<lk::Block>();
-    auto address = ia.deserialize<lk::Address>();
-    auto public_port = ia.deserialize<std::uint16_t>();
-    auto known_peers = ia.deserialize<std::vector<lk::Peer::IdentityInfo>>();
-    return AcceptedResponseMessage(std::move(top_block), std::move(address), public_port, std::move(known_peers));
-}
-
-
-void AcceptedResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    const auto& ours_top_block = ctx.core.getTopBlock();
-
-    if (_public_port) {
-        auto public_ep = peer.getEndpoint();
-        public_ep.setPort(_public_port);
-        peer.setServerEndpoint(public_ep);
-    }
-
-    for (const auto& peer_info : _known_peers) {
-        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) { if(peer) peer->startSession(); });
-    }
-
-    if (_theirs_top_block == ours_top_block) {
-        peer.setState(lk::Peer::State::SYNCHRONISED);
-        return; // nothing changes, because top blocks are equal
-    }
-    else {
-        if (ours_top_block.getDepth() > _theirs_top_block.getDepth()) {
-            peer.setState(lk::Peer::State::SYNCHRONISED);
-            // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
-            return;
-        }
-        else {
-            if (ctx.core.getTopBlock().getDepth() + 1 == _theirs_top_block.getDepth()) {
-                ctx.core.tryAddBlock(_theirs_top_block);
-                peer.setState(lk::Peer::State::SYNCHRONISED);
-            }
-            else {
-                base::SerializationOArchive oa;
-                GetBlockMessage::serialize(oa, _theirs_top_block.getPrevBlockHash());
-                peer.send(std::move(oa).getBytes(), {});
-                peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
-                peer.addSyncBlock(std::move(_theirs_top_block));
-            }
-        }
-    }
-}
-
-
-AcceptedResponseMessage::AcceptedResponseMessage(lk::Block&& top_block,
-                                                 lk::Address address,
-                                                 std::uint16_t public_port,
-                                                 std::vector<lk::Peer::IdentityInfo>&& known_peers)
-  : _theirs_top_block{ std::move(top_block) }
-  , _address{ std::move(address) }
-  , _public_port{ public_port }
-  , _known_peers{ std::move(known_peers) }
-{}
-
-//============================================
-
-constexpr lk::MessageType PingMessage::getHandledMessageType()
-{
-    return lk::MessageType::PING;
-}
-
-
-void PingMessage::serialize(base::SerializationOArchive& oa)
-{
-    oa.serialize(lk::MessageType::PING);
-}
-
-
-PingMessage PingMessage::deserialize(base::SerializationIArchive&)
-{
-    return {};
-}
-
-
-void PingMessage::handle(const Peer::Context&, lk::Peer& peer) {}
-
-
-//============================================
-
-constexpr lk::MessageType PongMessage::getHandledMessageType()
-{
-    return lk::MessageType::PONG;
-}
-
-
-void PongMessage::serialize(base::SerializationOArchive& oa)
-{
-    oa.serialize(lk::MessageType::PONG);
-}
-
-
-PongMessage PongMessage::deserialize(base::SerializationIArchive&)
-{
-    return {};
-}
-
-
-void PongMessage::handle(const Peer::Context&, Peer&) {}
-
-//============================================
-
-constexpr lk::MessageType LookupMessage::getHandledMessageType()
-{
-    return lk::MessageType::LOOKUP;
-}
-
-
-void LookupMessage::serialize(base::SerializationOArchive& oa, const lk::Address& address, std::uint8_t selection_size)
-{
-    oa.serialize(lk::MessageType::LOOKUP);
-    oa.serialize(address);
-    oa.serialize(selection_size);
-}
-
-
-LookupMessage LookupMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto address = ia.deserialize<lk::Address>();
-    auto selection_size = ia.deserialize<std::uint8_t>();
-    return LookupMessage{ std::move(address), selection_size };
-}
-
-
-void LookupMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    auto reply = ctx.pool.lookup(_address, _selection_size);
-    peer.send(prepareMessage<LookupResponseMessage>(reply), {});
-}
-
-
-LookupMessage::LookupMessage(lk::Address address, std::uint8_t selection_size)
-  : _address{ std::move(address) }
-  , _selection_size{ selection_size }
-{}
-
-//============================================
-
-constexpr lk::MessageType LookupResponseMessage::getHandledMessageType()
-{
-    return lk::MessageType::LOOKUP_RESPONSE;
-}
-
-
-void LookupResponseMessage::serialize(base::SerializationOArchive& oa,
-                                      const lk::Address& address,
-                                      const std::vector<Peer::IdentityInfo>& peers_info)
-{
-    oa.serialize(lk::MessageType::LOOKUP_RESPONSE);
-    oa.serialize(address);
-    oa.serialize(peers_info);
-}
-
-
-LookupResponseMessage LookupResponseMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto address = ia.deserialize<lk::Address>();
-    auto peers_info = ia.deserialize<std::vector<Peer::IdentityInfo>>();
-    return LookupResponseMessage(std::move(address), std::move(peers_info));
-}
-
-
-void LookupResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    // either we continue to ask for closest nodes or just connect to them
-    // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of
-    // communication: now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
-
-    if (auto it = peer._lookup_callbacks.find(_address); it != peer._lookup_callbacks.end()) {
-        auto callback = std::move(it->second);
-        peer._lookup_callbacks.erase(it);
-        callback(_peers_info);
-    }
-}
-
-
-LookupResponseMessage::LookupResponseMessage(lk::Address address, std::vector<Peer::IdentityInfo> peers_info)
-  : _address{ std::move(address) }
-  , _peers_info{ std::move(peers_info) }
-{}
-
-//============================================
-
-constexpr lk::MessageType TransactionMessage::getHandledMessageType()
-{
-    return lk::MessageType::TRANSACTION;
-}
-
-
-void TransactionMessage::serialize(base::SerializationOArchive& oa, const lk::Transaction& tx)
-{
-    oa.serialize(lk::MessageType::TRANSACTION);
-    oa.serialize(tx);
-}
-
-
-TransactionMessage TransactionMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto tx = lk::Transaction::deserialize(ia);
-    return TransactionMessage{ std::move(tx) };
-}
-
-
-void TransactionMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    ctx.core.addPendingTransaction(_tx);
-}
-
-
-TransactionMessage::TransactionMessage(const lk::Transaction& tx)
-  : _tx{ std::move(tx) }
-{}
-
-//============================================
-
-constexpr lk::MessageType GetBlockMessage::getHandledMessageType()
-{
-    return lk::MessageType::GET_BLOCK;
-}
-
-
-void GetBlockMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash)
-{
-    oa.serialize(lk::MessageType::GET_BLOCK);
-    oa.serialize(block_hash);
-}
-
-
-GetBlockMessage GetBlockMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto block_hash = base::Sha256::deserialize(ia);
-    return GetBlockMessage{ std::move(block_hash) };
-}
-
-
-void GetBlockMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    LOG_DEBUG << "Received GET_BLOCK on " << _block_hash;
-    auto block = ctx.core.findBlock(_block_hash);
-    if (block) {
-        peer.send(prepareMessage<BlockMessage>(*block), {});
-    }
-    else {
-        peer.send(prepareMessage<BlockNotFoundMessage>(_block_hash), {});
-    }
-}
-
-
-GetBlockMessage::GetBlockMessage(base::Sha256 block_hash)
-  : _block_hash{ std::move(block_hash) }
-{}
-
-//============================================
-
-constexpr lk::MessageType BlockMessage::getHandledMessageType()
-{
-    return lk::MessageType::BLOCK;
-}
-
-
-void BlockMessage::serialize(base::SerializationOArchive& oa, const lk::Block& block)
-{
-    oa.serialize(lk::MessageType::BLOCK);
-    oa.serialize(block);
-}
-
-
-BlockMessage BlockMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto block = lk::Block::deserialize(ia);
-    return BlockMessage{ std::move(block) };
-}
-
-
-void BlockMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
-{
-    if (peer.getState() == lk::Peer::State::SYNCHRONISED) {
-        // we're synchronised already
-
-        if (ctx.core.tryAddBlock(_block)) {
-            // block added, all is OK
-        }
-        else {
-            // in this case we are missing some blocks
-        }
-    }
-    else {
-        // we are in synchronization process
-        lk::BlockDepth block_depth = _block.getDepth();
-        peer.addSyncBlock(std::move(_block));
-
-        if (block_depth == ctx.core.getTopBlock().getDepth() + 1) {
-            peer.applySyncs();
-        }
-        else {
-            peer.send(prepareMessage<GetBlockMessage>(peer.getSyncBlocks().front().getPrevBlockHash()), {});
-        }
-    }
-}
-
-
-BlockMessage::BlockMessage(lk::Block block)
-  : _block{ std::move(block) }
-{}
-
-//============================================
-
-constexpr lk::MessageType BlockNotFoundMessage::getHandledMessageType()
-{
-    return lk::MessageType::BLOCK_NOT_FOUND;
-}
-
-
-void BlockNotFoundMessage::serialize(base::SerializationOArchive& oa, const base::Sha256& block_hash)
-{
-    oa.serialize(lk::MessageType::BLOCK_NOT_FOUND);
-    oa.serialize(block_hash);
-}
-
-
-BlockNotFoundMessage BlockNotFoundMessage::deserialize(base::SerializationIArchive& ia)
-{
-    auto block_hash = base::Sha256::deserialize(ia);
-    return BlockNotFoundMessage{ std::move(block_hash) };
-}
-
-
-void BlockNotFoundMessage::handle(const Peer::Context&, lk::Peer& peer)
-{
-    LOG_DEBUG << "Block not found " << _block_hash;
-}
-
-
-BlockNotFoundMessage::BlockNotFoundMessage(base::Sha256 block_hash)
-  : _block_hash{ std::move(block_hash) }
-{}
-
-//============================================
-
-constexpr lk::MessageType CloseMessage::getHandledMessageType()
-{
-    return lk::MessageType::CLOSE;
-}
-
-
-void CloseMessage::serialize(base::SerializationOArchive& oa)
-{
-    oa.serialize(getHandledMessageType());
-}
-
-
-CloseMessage CloseMessage::deserialize(base::SerializationIArchive&)
-{
-    return {};
-}
-
-
-void CloseMessage::handle(const Peer::Context&, Peer&) {}
-
-
-CloseMessage::CloseMessage() {}
-
-//============================================
-
 
 void Peer::sendBlock(const lk::Block& block)
 {
-    send(prepareMessage<BlockMessage>(block), {});
+    msg::Block msg{ block };
+    sendMessage(msg);
 }
 
 
 void Peer::sendTransaction(const lk::Transaction& tx)
 {
-    send(prepareMessage<TransactionMessage>(tx), {});
-}
-
-
-void Peer::sendSessionEnd(std::function<void()> on_send)
-{
-    send(prepareMessage<CloseMessage>(), std::move(on_send));
+    msg::Transaction msg{ tx };
+    sendMessage(msg);
 }
 
 
 void Peer::lookup(const lk::Address& address,
-                  const std::size_t alpha,
+                  const std::uint8_t alpha,
                   std::function<void(std::vector<Peer::IdentityInfo>)> callback)
 {
     struct LookupData
@@ -1014,10 +282,9 @@ void Peer::lookup(const lk::Address& address,
     _lookup_callbacks.insert(
       { address, [data, callback = std::move(callback)](auto peers_info) { callback(peers_info); } });
 
-    send(prepareMessage<LookupMessage>(address, alpha), {});
+    sendMessage(msg::Lookup{ address, alpha }, {});
 }
 
-#pragma GCC diagnostic pop
 
 std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
@@ -1098,18 +365,6 @@ const std::forward_list<lk::Block>& Peer::getSyncBlocks() const noexcept
 }
 
 
-void Peer::send(const base::Bytes& data, net::Connection::SendHandler on_send = {})
-{
-    _session->send(data, std::move(on_send));
-}
-
-
-void Peer::send(base::Bytes&& data, net::Connection::SendHandler on_send = {})
-{
-    _session->send(std::move(data), std::move(on_send));
-}
-
-
 const lk::Address& Peer::getAddress() const noexcept
 {
     return _address;
@@ -1142,14 +397,13 @@ void Peer::startSession()
         // TODO: _ctx.pool->schedule(_peer.close); schedule disconnection on timeout
         // now does nothing, since we wait for connected peer to send us something (HANDSHAKE message)
         if (tryAddToPool()) {
-            send(prepareMessage<AcceptedMessage>(_core.getTopBlock(),
-                                                 _core.getThisNodeAddress(),
-                                                 getPublicEndpoint().getPort(),
-                                                 allPeersInfoExcept(_pool, getAddress())));
+            sendMessage(msg::Accepted{ _core.getTopBlock(),
+                                       _core.getThisNodeAddress(),
+                                       getPublicEndpoint().getPort(),
+                                       allPeersInfoExcept(_pool, getAddress()) });
         }
         else {
-            send(prepareMessage<CannotAcceptMessage>(CannotAcceptMessage::RefusionReason::BUCKET_IS_FULL,
-                                                     _pool.allPeersInfo()));
+            sendMessage(msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _pool.allPeersInfo() });
             // and close peer properly
         }
     }
@@ -1193,8 +447,7 @@ Peer::Handler::Handler(Peer& peer)
 
 void Peer::Handler::onReceive(const base::Bytes& bytes)
 {
-    MessageProcessor processor(Peer::Context{ _peer._core, _peer._host, _peer._host.getPool() }, _peer);
-    processor.process(bytes);
+    _peer.process(bytes);
 }
 
 
@@ -1204,5 +457,281 @@ void Peer::Handler::onClose()
         _peer._pool.removePeer(&_peer);
     }
 }
+
+
+void Peer::process(const base::Bytes& received_data)
+{
+    base::SerializationIArchive ia(received_data);
+    auto msg_type = ia.deserialize<msg::Type>();
+    switch (msg_type) {
+        case msg::Connect::TYPE_ID: {
+            handle(ia.deserialize<msg::Connect>());
+            break;
+        }
+        case msg::CannotAccept::TYPE_ID: {
+            handle(ia.deserialize<msg::CannotAccept>());
+            break;
+        }
+        case msg::Accepted::TYPE_ID: {
+            handle(ia.deserialize<msg::Accepted>());
+            break;
+        }
+        case msg::AcceptedResponse::TYPE_ID: {
+            handle(ia.deserialize<msg::AcceptedResponse>());
+            break;
+        }
+        case msg::Ping::TYPE_ID: {
+            handle(ia.deserialize<msg::Ping>());
+            break;
+        }
+        case msg::Pong::TYPE_ID: {
+            handle(ia.deserialize<msg::Pong>());
+            break;
+        }
+        case msg::Lookup::TYPE_ID: {
+            handle(ia.deserialize<msg::Lookup>());
+            break;
+        }
+        case msg::LookupResponse::TYPE_ID: {
+            handle(ia.deserialize<msg::LookupResponse>());
+            break;
+        }
+        case msg::Transaction::TYPE_ID: {
+            handle(ia.deserialize<msg::Transaction>());
+            break;
+        }
+        case msg::GetBlock::TYPE_ID: {
+            handle(ia.deserialize<msg::GetBlock>());
+            break;
+        }
+        case msg::Block::TYPE_ID: {
+            handle(ia.deserialize<msg::Block>());
+            break;
+        }
+        case msg::BlockNotFound::TYPE_ID: {
+            handle(ia.deserialize<msg::BlockNotFound>());
+            break;
+        }
+        case msg::Close::TYPE_ID: {
+            handle(ia.deserialize<msg::Close>());
+            break;
+        }
+        default: {
+            // this assertion checks if someone forgot to add case to switch
+            ASSERT(static_cast<int>(msg::Type::DEBUG_MIN) >= static_cast<int>(msg_type) ||
+                   static_cast<int>(msg::Type::DEBUG_MAX) <= static_cast<int>(msg_type));
+
+            // invalid message type received
+            // TODO: reduce peer rating
+        }
+    }
+}
+
+
+void Peer::handle(lk::msg::Connect&& msg)
+{
+    if (tryAddToPool()) {
+        //        AcceptedMessage msg{};
+        //        sendMessage(msg);
+    }
+    else {
+        // send(prepareMessage<CannotAcceptMessage>());
+    }
+}
+
+
+void Peer::handle(lk::msg::CannotAccept&& msg)
+{
+    _pool.removePeer(this); // ???!!!
+
+    for (const auto& peer : msg.peers_info) {
+        _host.checkOutPeer(peer.endpoint, [](std::shared_ptr<Peer> peer) {
+            if (peer)
+                peer->startSession();
+        });
+    }
+}
+
+
+void Peer::handle(lk::msg::Accepted&& msg)
+{
+    const auto& ours_top_block = _core.getTopBlock();
+
+    sendMessage(msg::AcceptedResponse{ _core.getTopBlock(),
+                                       _core.getThisNodeAddress(),
+                                       getPublicEndpoint().getPort(),
+                                       allPeersInfoExcept(_host.getPool(), getAddress()) },
+                {});
+
+    if (msg.public_port) {
+        auto public_ep = getEndpoint();
+        public_ep.setPort(msg.public_port);
+        setServerEndpoint(public_ep);
+    }
+
+    for (const auto& peer_info : msg.known_peers) {
+        _host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) {
+            if (peer) {
+                peer->startSession();
+            }
+        });
+    }
+
+    if (msg.theirs_top_block == ours_top_block) {
+        setState(lk::Peer::State::SYNCHRONISED);
+        return; // nothing changes, because top blocks are equal
+    }
+    else {
+        if (ours_top_block.getDepth() > msg.theirs_top_block.getDepth()) {
+            setState(lk::Peer::State::SYNCHRONISED);
+            // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
+            return;
+        }
+        else {
+            if (_core.getTopBlock().getDepth() + 1 == msg.theirs_top_block.getDepth()) {
+                _core.tryAddBlock(msg.theirs_top_block);
+                setState(lk::Peer::State::SYNCHRONISED);
+            }
+            else {
+                base::SerializationOArchive oa;
+                sendMessage(msg::GetBlock{ msg.theirs_top_block.getPrevBlockHash() });
+                setState(lk::Peer::State::REQUESTED_BLOCKS);
+                addSyncBlock(std::move(msg.theirs_top_block));
+            }
+        }
+    }
+}
+
+
+void Peer::handle(lk::msg::AcceptedResponse&& msg)
+{
+    const auto& ours_top_block = _core.getTopBlock();
+
+    sendMessage(msg::AcceptedResponse{ _core.getTopBlock(),
+                                       _core.getThisNodeAddress(),
+                                       getPublicEndpoint().getPort(),
+                                       allPeersInfoExcept(_host.getPool(), getAddress()) },
+                {});
+
+    if (msg.public_port) {
+        auto public_ep = getEndpoint();
+        public_ep.setPort(msg.public_port);
+        setServerEndpoint(public_ep);
+    }
+
+    for (const auto& peer_info : msg.known_peers) {
+        _host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) {
+            if (peer) {
+                peer->startSession();
+            }
+        });
+    }
+
+    if (msg.theirs_top_block == ours_top_block) {
+        setState(lk::Peer::State::SYNCHRONISED);
+        return; // nothing changes, because top blocks are equal
+    }
+    else {
+        if (ours_top_block.getDepth() > msg.theirs_top_block.getDepth()) {
+            setState(lk::Peer::State::SYNCHRONISED);
+            // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
+            return;
+        }
+        else {
+            if (_core.getTopBlock().getDepth() + 1 == msg.theirs_top_block.getDepth()) {
+                _core.tryAddBlock(msg.theirs_top_block);
+                setState(lk::Peer::State::SYNCHRONISED);
+            }
+            else {
+                base::SerializationOArchive oa;
+                sendMessage(msg::GetBlock{ msg.theirs_top_block.getPrevBlockHash() });
+                setState(lk::Peer::State::REQUESTED_BLOCKS);
+                addSyncBlock(std::move(msg.theirs_top_block));
+            }
+        }
+    }
+}
+
+
+void Peer::handle(lk::msg::Ping&&) {}
+
+
+void Peer::handle(lk::msg::Pong&&) {}
+
+
+void Peer::handle(lk::msg::Lookup&& msg)
+{
+    auto reply = _pool.lookup(msg.address, msg.selection_size);
+    sendMessage(msg::LookupResponse{ msg.address, std::move(reply) });
+}
+
+
+void Peer::handle(lk::msg::LookupResponse&& msg)
+{
+    // either we continue to ask for closest nodes or just connect to them
+    // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of
+    // communication: now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
+
+    if (auto it = _lookup_callbacks.find(_address); it != _lookup_callbacks.end()) {
+        auto callback = std::move(it->second);
+        _lookup_callbacks.erase(it);
+        callback(msg.peers_info);
+    }
+}
+
+
+void Peer::handle(lk::msg::Transaction&& msg)
+{
+    _core.addPendingTransaction(msg.tx);
+}
+
+
+void Peer::handle(lk::msg::GetBlock&& msg)
+{
+    LOG_DEBUG << "Received GET_BLOCK on " << msg.block_hash;
+    auto block = _core.findBlock(msg.block_hash);
+    if (block) {
+        sendMessage(msg::Block{ (*block) });
+    }
+    else {
+        sendMessage(msg::BlockNotFound{ msg.block_hash });
+    }
+}
+
+
+void Peer::handle(lk::msg::Block&& msg)
+{
+    if (getState() == lk::Peer::State::SYNCHRONISED) {
+        // we're synchronised already
+
+        if (_core.tryAddBlock(msg.block)) {
+            // block added, all is OK
+        }
+        else {
+            // in this case we are missing some blocks
+        }
+    }
+    else {
+        // we are in synchronization process
+        lk::BlockDepth block_depth = msg.block.getDepth();
+        addSyncBlock(std::move(msg.block));
+
+        if (block_depth == _core.getTopBlock().getDepth() + 1) {
+            applySyncs();
+        }
+        else {
+            sendMessage(msg::GetBlock{ getSyncBlocks().front().getPrevBlockHash() });
+        }
+    }
+}
+
+
+void Peer::handle(lk::msg::BlockNotFound&& msg)
+{
+    LOG_DEBUG << "Block not found " << msg.block_hash;
+}
+
+
+void Peer::handle(lk::msg::Close&& msg) {}
 
 }

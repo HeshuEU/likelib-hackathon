@@ -47,8 +47,6 @@ class PeerTable : public PeerPoolBase
     // thread-safe
     void forEachPeer(std::function<void(const Peer&)> f) const override;
     void forEachPeer(std::function<void(Peer&)> f) override;
-
-    void broadcast(const base::Bytes& data) override;
     //=================================
     std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) override;
 
@@ -98,7 +96,6 @@ class Host
     PeerTable& getPool() noexcept;
     const PeerTable& getPool() const noexcept;
     //=================================
-    void broadcast(const base::Bytes& data);
     void broadcast(const lk::Block& block);
     void broadcast(const lk::Transaction& tx);
     //=================================
