@@ -128,7 +128,7 @@ std::map<Address, Balance> calcBalance(const TransactionsSet& txs)
     for (const auto& tx : txs) {
 
         auto from_address_in_result = result.find(tx.getFrom());
-        auto from_amount_modifier = lk::Balance() - tx.getAmount();    //TODO: rewrite this
+        auto from_amount_modifier = lk::Balance() - tx.getAmount(); // TODO: rewrite this
         if (from_address_in_result == result.end()) {
             result.insert({ tx.getFrom(), from_amount_modifier });
         }

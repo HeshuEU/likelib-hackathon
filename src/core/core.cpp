@@ -295,7 +295,7 @@ bool Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
 
 
 std::tuple<lk::Address, base::Bytes, std::uint64_t> Core::doContractCreation(const lk::Transaction& tx,
-                                                                           const lk::Block& block_where_tx)
+                                                                             const lk::Block& block_where_tx)
 {
     base::SerializationIArchive ia(tx.getData());
     auto contract_data = ia.deserialize<lk::ContractInitData>();

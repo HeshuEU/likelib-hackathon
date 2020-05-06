@@ -36,13 +36,14 @@ class GrpcNodeClient final : BaseRpc
       const std::string& init,
       const lk::Sign& signature) override;
 
-    std::tuple<OperationStatus, std::string, std::uint64_t> transaction_message_call(lk::Balance amount,
-                                                                                   const lk::Address& from_address,
-                                                                                   const lk::Address& to_address,
-                                                                                   const base::Time& transaction_time,
-                                                                                   std::uint64_t fee,
-                                                                                   const std::string& data,
-                                                                                   const lk::Sign& signature) override;
+    std::tuple<OperationStatus, std::string, std::uint64_t> transaction_message_call(
+      lk::Balance amount,
+      const lk::Address& from_address,
+      const lk::Address& to_address,
+      const base::Time& transaction_time,
+      std::uint64_t fee,
+      const std::string& data,
+      const lk::Sign& signature) override;
 
   private:
     std::unique_ptr<likelib::NodePublicInterface::Stub> _stub;

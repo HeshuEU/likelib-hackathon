@@ -38,7 +38,7 @@ base::Bytes encode(lk::Balance value)
 {
     base::Bytes ret(32);
     for (std::size_t i = 1; i <= ret.size(); ++i) {
-        ret[ret.size() - i] = (static_cast<base::Byte>(std::atoi((value % 256).toString().c_str())));   //TODO: rewrite
+        ret[ret.size() - i] = (static_cast<base::Byte>(std::atoi((value % 256).toString().c_str()))); // TODO: rewrite
         value /= 256;
     }
     return ret;
