@@ -393,6 +393,11 @@ bool Core::tryAddBlock(const lk::Block& b)
         return true;
     }
     else {
+        for (const auto& tx : b.getTransactions()) {
+            TransactionStatus status(
+              TransactionStatus::StatusCode::Rejected, TransactionStatus::ActionType::None, tx.getFee(), {});
+            addTransactionOutput(tx.hashOfTransaction(), status);
+        }
         return false;
     }
 }
@@ -421,12 +426,20 @@ bool Core::checkBlock(const lk::Block& block) const
     if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(block)))) {
         return false;
     }
-    auto current_pending_balance = lk::calcBalance(block.getTransactions());
-    for (const auto& [account_address, block_balance] : current_pending_balance) {
-        if (_state_manager.getAccount(account_address).getBalance() < block_balance) {
-            return false;
-        }
-    }
+    //     create calculation using int512 instead uint256
+    //    auto current_pending_balance = lk::calcBalance(block.getTransactions());
+    //    for (const auto& [account_address, block_balance] : current_pending_balance) {
+    //        if (_state_manager.hasAccount(account_address)) {
+    //            if (_state_manager.getAccount(account_address).getBalance() + block_balance < 0) {
+    //                return false;
+    //            }
+    //        }
+    //        else {
+    //            if (0 > block_balance) {
+    //                return false;
+    //            }
+    //        }
+    //    }
     return true;
 }
 
@@ -718,7 +731,8 @@ evmc::result Core::callInitContractVm(StateManager& state_manager,
                                       const base::Bytes& code)
 {
     evmc_message message;
-    message.kind = evmc_call_kind::EVMC_CREATE;
+    message.kind = evmc_call_kind::EVMC_CALL;
+    message.flags = 0;
     message.depth = 0;
     message.gas = tx.getFee();
     message.sender = vm::toEthAddress(tx.getFrom());
@@ -737,6 +751,7 @@ evmc::result Core::callContractVm(StateManager& state_manager,
 {
     evmc_message message;
     message.kind = evmc_call_kind::EVMC_CALL;
+    message.flags = 0;
     message.depth = 0;
     message.gas = tx.getFee();
     message.sender = vm::toEthAddress(tx.getFrom());
