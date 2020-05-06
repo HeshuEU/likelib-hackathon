@@ -194,6 +194,7 @@ class Peer : public std::enable_shared_from_this<Peer>
 
 namespace msg
 {
+
 struct Connect
 {
     static constexpr Type TYPE_ID = Type::CONNECT;
@@ -203,6 +204,7 @@ struct Connect
     void serialize(base::SerializationOArchive& oa) const;
     static Connect deserialize(base::SerializationIArchive& ia);
 };
+
 
 struct CannotAccept
 {
@@ -219,6 +221,7 @@ struct CannotAccept
     static CannotAccept deserialize(base::SerializationIArchive& ia);
 };
 
+
 struct Accepted
 {
     static constexpr Type TYPE_ID = Type::ACCEPTED;
@@ -231,6 +234,7 @@ struct Accepted
     void serialize(base::SerializationOArchive& oa) const;
     static Accepted deserialize(base::SerializationIArchive& ia);
 };
+
 
 struct AcceptedResponse
 {
@@ -245,6 +249,7 @@ struct AcceptedResponse
     static AcceptedResponse deserialize(base::SerializationIArchive& ia);
 };
 
+
 struct Ping
 {
     static constexpr Type TYPE_ID = Type::PING;
@@ -253,6 +258,7 @@ struct Ping
     static Ping deserialize(base::SerializationIArchive& ia);
 };
 
+
 struct Pong
 {
     static constexpr Type TYPE_ID = Type::PONG;
@@ -260,6 +266,7 @@ struct Pong
     void serialize(base::SerializationOArchive& oa) const;
     static Pong deserialize(base::SerializationIArchive& ia);
 };
+
 
 struct Lookup
 {
@@ -272,6 +279,7 @@ struct Lookup
     static Lookup deserialize(base::SerializationIArchive& ia);
 };
 
+
 struct LookupResponse
 {
     static constexpr Type TYPE_ID = Type::LOOKUP_RESPONSE;
@@ -283,6 +291,7 @@ struct LookupResponse
     static LookupResponse deserialize(base::SerializationIArchive& ia);
 };
 
+
 struct Transaction
 {
     static constexpr Type TYPE_ID = Type::TRANSACTION;
@@ -292,6 +301,7 @@ struct Transaction
     void serialize(base::SerializationOArchive& oa) const;
     static Transaction deserialize(base::SerializationIArchive& ia);
 };
+
 
 struct GetBlock
 {
@@ -303,6 +313,7 @@ struct GetBlock
     static GetBlock deserialize(base::SerializationIArchive& ia);
 };
 
+
 struct Block
 {
     static constexpr Type TYPE_ID = Type::BLOCK;
@@ -313,6 +324,7 @@ struct Block
     static Block deserialize(base::SerializationIArchive& ia);
 };
 
+
 struct BlockNotFound
 {
     static constexpr Type TYPE_ID = Type::BLOCK_NOT_FOUND;
@@ -322,6 +334,7 @@ struct BlockNotFound
     void serialize(base::SerializationOArchive& oa) const;
     static BlockNotFound deserialize(base::SerializationIArchive& ia);
 };
+
 
 struct Close
 {
