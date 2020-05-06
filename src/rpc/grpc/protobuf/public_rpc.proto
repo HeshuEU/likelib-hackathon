@@ -39,7 +39,6 @@ service NodePublicInterface {
 
 //=====================================
 
-
 message NodeInfo {
     Hash top_block_hash = 1;
     uint64 top_block_number = 2;
@@ -76,7 +75,7 @@ message Transaction {
     Address from = 1;
     Address to = 2;
     CurrencyAmount value = 3;
-    CurrencyAmount fee = 4;
+    uint64 fee = 4;
     Time creation_time = 5;
     TransactionData data = 6;
     Signature signature = 7;
@@ -99,7 +98,7 @@ message TransactionStatus {
     StatusCode status = 1;
     ActionType type = 2;
     string message = 3;
-    CurrencyAmount gas_left = 4;
+    uint64 gas_left = 4;
 }
 
 
@@ -121,7 +120,7 @@ message Time {
 
 
 message CurrencyAmount {
-    uint64 value = 1;
+    string value = 1;
 }
 
 

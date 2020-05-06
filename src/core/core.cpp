@@ -38,6 +38,7 @@ class EthHost : public evmc::Host
         }
     }
 
+
     evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& ethKey) const noexcept override
     {
 
@@ -124,7 +125,6 @@ class EthHost : public evmc::Host
         try {
             auto address = vm::toNativeAddress(addr);
             if (auto code = _state_manager.getAccount(address).getRuntimeCode(); code.isEmpty()) {
-                ASSERT(false);
                 return 0;
             }
             else {
@@ -161,7 +161,6 @@ class EthHost : public evmc::Host
             auto address = vm::toNativeAddress(addr);
 
             if (auto code = _state_manager.getAccount(address).getRuntimeCode(); code.isEmpty()) {
-                ASSERT(false);
                 return 0;
             }
             else {
@@ -304,7 +303,7 @@ const lk::Block& Core::getGenesisBlock()
         lk::Address from{ lk::Address::null() };
         lk::Address to{ "28dpzpURpyqqLoWrEhnHrajndeCq" };
         lk::Balance amount{ 0xFFFFFFFF };
-        lk::Balance fee{ 0 };
+        std::uint64_t fee{ 0 };
 
         ret.addTransaction({ from, to, amount, fee, timestamp, base::Bytes{} });
         return ret;
@@ -491,7 +490,9 @@ lk::Block Core::getBlockTemplate() const
 
 lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const
 {
-    return _state_manager.getAccount(address).toInfo();
+    auto info = _state_manager.getAccount(address).toInfo();
+    info.address = address;
+    return info;
 }
 
 
@@ -534,7 +535,7 @@ base::Bytes Core::callViewMethod(const lk::Address& from,
 
 void Core::applyBlockTransactions(const lk::Block& block)
 {
-    constexpr lk::Balance EMISSION_VALUE = 1000;
+    static const lk::Balance EMISSION_VALUE{ 1000 };
     _state_manager.getAccount(block.getCoinbase()).addBalance(EMISSION_VALUE);
 
     for (const auto& tx : block.getTransactions()) {
@@ -637,7 +638,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
 
                 if (tx.getAmount() > 0 && !tx_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
                     TransactionStatus status(TransactionStatus::StatusCode::Rejected,
-                                             TransactionStatus::ActionType::Transfer,
+                                             TransactionStatus::ActionType::ContractCall,
                                              tx.getFee(),
                                              {});
                     addTransactionOutput(transaction_hash, status);
@@ -664,7 +665,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                 }
                 else if (eval_result.status_code == evmc_status_code::EVMC_REVERT) {
                     TransactionStatus status(TransactionStatus::StatusCode::Revert,
-                                             TransactionStatus::ActionType::ContractCreation,
+                                             TransactionStatus::ActionType::ContractCall,
                                              eval_result.gas_left,
                                              "");
 
@@ -676,7 +677,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                 }
                 else {
                     TransactionStatus status(TransactionStatus::StatusCode::Failed,
-                                             TransactionStatus::ActionType::ContractCreation,
+                                             TransactionStatus::ActionType::ContractCall,
                                              eval_result.gas_left,
                                              "");
                     addTransactionOutput(transaction_hash, status);
@@ -688,7 +689,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
             }
             catch (const base::Error&) {
                 TransactionStatus status(
-                  TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::Transfer, tx.getFee(), "");
+                  TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::ContractCall, tx.getFee(), "");
                 addTransactionOutput(transaction_hash, status);
                 return;
             }
@@ -775,7 +776,7 @@ evmc::result Core::callContractAtViewModeVm(StateManager& state_manager,
     message.kind = evmc_call_kind::EVMC_CALL;
     message.flags = evmc_flags::EVMC_STATIC;
     message.depth = 0;
-    constexpr lk::Balance VIEW_FREE_MAX_VALUE = 5000;
+    constexpr std::uint64_t VIEW_FREE_MAX_VALUE = 5000;
     message.gas = VIEW_FREE_MAX_VALUE;
     message.sender = vm::toEthAddress(sender_address);
     message.destination = vm::toEthAddress(contract_address);

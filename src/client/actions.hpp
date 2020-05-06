@@ -214,7 +214,7 @@ class ActionTransfer : public ActionBase
     std::string _host_address;
     lk::Address _to_address{ lk::Address::null() };
     lk::Balance _amount;
-    lk::Balance _fee;
+    std::uint64_t _fee;
     std::filesystem::path _keys_dir;
     bool _is_http_mode{ false };
     //====================================
@@ -237,7 +237,7 @@ class ActionPushContract : public ActionBase
     std::string _host_address;
     std::filesystem::path _keys_dir;
     lk::Balance _amount;
-    lk::Balance _fee;
+    std::uint64_t _fee;
     base::PropertyTree _contract_abi;
     base::Bytes _message;
     bool _is_http_mode{ false };
@@ -261,7 +261,7 @@ class ActionContractCall : public ActionBase
     std::string _host_address;
     lk::Address _to_address{ lk::Address::null() };
     lk::Balance _amount;
-    lk::Balance _fee;
+    std::uint64_t _fee;
     std::filesystem::path _keys_dir;
     std::string _message;
     bool _is_http_mode{ false };

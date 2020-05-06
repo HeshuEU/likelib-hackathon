@@ -115,7 +115,7 @@ void serializeAccountInfo(const lk::AccountInfo& from, likelib::AccountInfo* to)
 {
     to->set_type(serializeAccountType(from.type));
     serializeAddress(from.address, to->mutable_address());
-    to->mutable_balance()->set_value(from.balance);
+    to->mutable_balance()->set_value(from.balance.toString());
     to->set_nonce(from.nonce);
     for (const auto& tx_hash : from.transactions_hashes) {
         serializeHash(tx_hash, to->mutable_hashes()->Add());
@@ -186,8 +186,8 @@ void serializeTransaction(const lk::Transaction& from, likelib::Transaction* to)
 {
     serializeAddress(from.getFrom(), to->mutable_from());
     serializeAddress(from.getTo(), to->mutable_to());
-    to->mutable_value()->set_value(from.getAmount());
-    to->mutable_fee()->set_value(from.getFee());
+    to->mutable_value()->set_value(from.getAmount().toString());
+    to->set_fee(from.getFee());
     to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSecondsSinceEpoch());
     if (from.getTo() == lk::Address::null()) {
         auto data = base::fromBytes<lk::ContractData>(from.getData());
@@ -208,7 +208,7 @@ lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx)
     lk::Address to_address = deserializeAddress(&tx->to());
     txb.setTo(to_address);
     txb.setAmount(tx->value().value());
-    txb.setFee(tx->fee().value());
+    txb.setFee(tx->fee());
     txb.setTimestamp(base::Time(tx->creation_time().seconds_since_epoch()));
     if (to_address == lk::Address::null()) {
         auto abi = base::parseJson(tx->data().serialized_abi());
@@ -261,7 +261,7 @@ lk::Block deserializeBlock(const likelib::Block* const block_to_deserialization)
 
 void serializeTransactionStatus(const lk::TransactionStatus& from, likelib::TransactionStatus* to)
 {
-    to->mutable_gas_left()->set_value(from.getFeeLeft());
+    to->set_gas_left(from.getFeeLeft());
     to->set_message(from.getMessage());
     to->set_status(serializeTransactionStatusCode(from.getStatus()));
     to->set_type(serializeTransactionActionType(from.getType()));
@@ -272,9 +272,7 @@ lk::TransactionStatus deserializeTransactionStatus(const likelib::TransactionSta
 {
     lk::TransactionStatus::StatusCode status_code = deserializeTransactionStatusCode(status->status());
     lk::TransactionStatus::ActionType action_type = deserializeTransactionActionType(status->type());
-    return lk::TransactionStatus{
-        status_code, action_type, lk::Balance{ status->gas_left().value() }, status->message()
-    };
+    return lk::TransactionStatus{ status_code, action_type, status->gas_left(), status->message() };
 }
 
 

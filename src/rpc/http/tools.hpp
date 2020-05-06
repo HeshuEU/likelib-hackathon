@@ -24,6 +24,10 @@ web::json::value serializeBalance(const lk::Balance& balance);
 
 std::optional<lk::Balance> deserializeBalance(const std::string& type);
 
+web::json::value serializeFee(std::uint64_t balance);
+
+std::optional<std::uint64_t> deserializeFee(const std::string& type);
+
 web::json::value serializeHash(const base::Sha256& hash);
 
 std::optional<base::Sha256> deserializeHash(const std::string& type);

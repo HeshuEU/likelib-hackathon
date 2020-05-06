@@ -79,14 +79,25 @@ std::optional<lk::TransactionStatus::ActionType> deserializeTransactionStatusAct
 
 web::json::value serializeBalance(const lk::Balance& balance)
 {
-    return web::json::value::string(std::to_string(balance));
+    return web::json::value::string(balance.toString());
 }
 
 
 std::optional<lk::Balance> deserializeBalance(const std::string& type)
 {
+    return lk::Balance{ type };
+}
+
+
+web::json::value serializeFee(std::uint64_t balance)
+{
+    return web::json::value::string(std::to_string(balance));
+}
+
+std::optional<std::uint64_t> deserializeFee(const std::string& type)
+{
     char* end = nullptr;
-    auto balance = lk::Balance{ static_cast<uint64_t>(std::strtoll(type.c_str(), &end, 10)) };
+    auto balance = static_cast<uint64_t>(std::strtoll(type.c_str(), &end, 10));
     if (end == nullptr) {
         return std::nullopt;
     }
@@ -226,7 +237,7 @@ web::json::value serializeTransaction(const lk::Transaction& input)
     web::json::value result;
     result["from"] = web::json::value::string(input.getFrom().toString());
     result["to"] = web::json::value::string(input.getTo().toString());
-    result["amount"] = web::json::value::string(std::to_string(input.getAmount()));
+    result["amount"] = web::json::value::string(input.getAmount().toString());
     result["fee"] = web::json::value::string(std::to_string(input.getFee()));
     result["timestamp"] = web::json::value::number(input.getTimestamp().getSecondsSinceEpoch());
 
@@ -257,7 +268,7 @@ std::optional<lk::Transaction> deserializeTransaction(const web::json::value& in
         auto amount = deserializeBalance(input.at("amount").as_string());
         txb.setAmount(amount.value());
 
-        auto fee = deserializeBalance(input.at("fee").as_string());
+        auto fee = deserializeFee(input.at("fee").as_string());
         txb.setFee(fee.value());
 
         auto from = deserializeAddress(input.at("from").as_string());
@@ -351,7 +362,7 @@ std::optional<lk::TransactionStatus> deserializeTransactionStatus(const web::jso
     try {
         auto status = deserializeTransactionStatusStatusCode(input.at("status_code").as_number().to_uint32());
         auto type = deserializeTransactionStatusActionType(input.at("action_type").as_number().to_uint32());
-        auto fee_left = deserializeBalance(input.at(U("gas_left")).as_string()).value();
+        auto fee_left = deserializeFee(input.at(U("gas_left")).as_string()).value();
         auto message = input.at("message").as_string();
 
         return lk::TransactionStatus{ status.value(), type.value(), fee_left, message };

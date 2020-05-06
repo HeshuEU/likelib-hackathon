@@ -2,8 +2,12 @@
 #include "error.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
 #include <boost/foreach.hpp>
 #include <boost/process.hpp>
+#include <boost/serialization/vector.hpp>
 
 
 #include <algorithm>
@@ -30,6 +34,17 @@ base::Bytes encode(N value)
 
     std::reverse(real.getData(), real.getData() + real.size());
     return base::Bytes(32 - sizeof(value)) + real;
+}
+
+
+base::Bytes encode(lk::Balance value)
+{
+    base::Bytes ret(32);
+    for (std::size_t i = 1; i <= ret.size(); ++i) {
+        ret[ret.size() - i] = (static_cast<base::Byte>(std::atoi((value % 256).toString().c_str())));   //TODO: rewrite
+        value /= 256;
+    }
+    return ret;
 }
 
 } // namespace detail
@@ -99,7 +114,6 @@ evmc_uint256be toEvmcUint256(const lk::Balance& balance)
     evmc_uint256be res;
 
     memcpy(res.bytes, bytes.getData(), bytes.size());
-
     return res;
 }
 

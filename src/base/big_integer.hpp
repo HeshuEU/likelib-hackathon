@@ -1,5 +1,7 @@
 #pragma once
 
+#include "base/serialization.hpp"
+
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include <istream>
@@ -37,6 +39,8 @@ class BigInteger
 
     BigInteger<T> operator/(const BigInteger<T>& other) const;
 
+    BigInteger<T> operator%(const BigInteger<T>& other) const;
+
     BigInteger<T>& operator+=(const BigInteger<T>& other);
 
     BigInteger<T>& operator-=(const BigInteger<T>& other);
@@ -72,6 +76,14 @@ class BigInteger
     //----------------------------------
 
     std::string toString() const noexcept;
+
+    boost::multiprecision::number<T> toMultiNumber() const noexcept;
+
+    //----------------------------------
+
+    void serialize(base::SerializationOArchive& oa) const;
+
+    static BigInteger<T> deserialize(base::SerializationIArchive& ia);
 
   private:
     boost::multiprecision::number<T> _number;

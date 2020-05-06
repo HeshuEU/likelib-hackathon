@@ -69,7 +69,7 @@ class Transaction
     Transaction(lk::Address from,
                 lk::Address to,
                 lk::Balance amount,
-                lk::Balance fee,
+                std::uint64_t fee,
                 base::Time timestamp,
                 base::Bytes data,
                 lk::Sign sign = lk::Sign{});
@@ -86,7 +86,7 @@ class Transaction
     const lk::Balance& getAmount() const noexcept;
     const base::Time& getTimestamp() const noexcept;
     const base::Bytes& getData() const noexcept;
-    const lk::Balance& getFee() const noexcept;
+    const std::uint64_t& getFee() const noexcept;
     //=================
     void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
     bool checkSign() const;
@@ -105,7 +105,7 @@ class Transaction
     lk::Address _from;
     lk::Address _to;
     lk::Balance _amount;
-    lk::Balance _fee;
+    std::uint64_t _fee;
     base::Time _timestamp;
     base::Bytes _data;
     lk::Sign _sign;
@@ -125,7 +125,7 @@ class TransactionBuilder
     void setTo(lk::Address to);
     void setAmount(lk::Balance amount);
     void setTimestamp(base::Time timestamp);
-    void setFee(lk::Balance fee);
+    void setFee(std::uint64_t fee);
     void setData(base::Bytes data);
     void setSign(lk::Sign sign);
 
@@ -137,7 +137,7 @@ class TransactionBuilder
     std::optional<lk::Address> _to;
     std::optional<lk::Balance> _amount;
     std::optional<base::Time> _timestamp;
-    std::optional<lk::Balance> _fee;
+    std::optional<std::uint64_t> _fee;
     std::optional<base::Bytes> _data;
     std::optional<lk::Sign> _sign;
 };
@@ -167,7 +167,7 @@ class TransactionStatus
 
     explicit TransactionStatus(StatusCode status,
                                ActionType type,
-                               lk::Balance fee_left,
+                               std::uint64_t fee_left,
                                const std::string& message = "") noexcept;
 
     TransactionStatus(const TransactionStatus&) = default;
@@ -186,13 +186,13 @@ class TransactionStatus
 
     ActionType getType() const noexcept;
 
-    lk::Balance getFeeLeft() const noexcept;
+    std::uint64_t getFeeLeft() const noexcept;
 
   private:
     StatusCode _status;
     ActionType _action;
     std::string _message;
-    lk::Balance _fee_left;
+    std::uint64_t _fee_left;
 };
 
 } // namespace lk

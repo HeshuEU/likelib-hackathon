@@ -752,7 +752,7 @@ void ActionTransfer::setupOptionsParser(base::ProgramOptionsParser& parser)
     parser.addOption<std::string>(TO_ADDRESS_OPTION, "address of recipient account");
     parser.addOption<lk::Balance>(AMOUNT_OPTION, "amount count");
     parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
-    parser.addOption<lk::Balance>(FEE_OPTION, "fee count");
+    parser.addOption<std::uint64_t>(FEE_OPTION, "fee count");
     parser.addFlag(IS_HTTP_CLIENT_OPTION, "is set enable http client call");
 }
 
@@ -777,7 +777,7 @@ int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser)
     if (checkOptionEmptyAndWriteMessage(parser, FEE_OPTION)) {
         return base::config::EXIT_FAIL;
     }
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
 
     if (checkOptionEmptyAndWriteMessage(parser, KEYS_DIRECTORY_OPTION)) {
         return base::config::EXIT_FAIL;
@@ -850,7 +850,7 @@ void ActionPushContract::setupOptionsParser(base::ProgramOptionsParser& parser)
 {
     parser.addOption<std::string>(HOST_OPTION, "address of host");
     parser.addOption<lk::Balance>(AMOUNT_OPTION, "amount of Lk to transfer");
-    parser.addOption<lk::Balance>(FEE_OPTION, "fee count");
+    parser.addOption<std::uint64_t>(FEE_OPTION, "fee count");
     parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addOption<std::string>(MESSAGE_OPTION, "message for initialize smart contract");
     parser.addOption<std::string>(CODE_PATH_OPTION, "compiled contract code folder");
@@ -878,7 +878,7 @@ int ActionPushContract::loadOptions(const base::ProgramOptionsParser& parser)
     if (checkOptionEmptyAndWriteMessage(parser, FEE_OPTION)) {
         return base::config::EXIT_FAIL;
     }
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
 
     if (parser.hasOption(MESSAGE_OPTION)) {
         _message = base::fromHex<base::Bytes>(parser.getValue<std::string>(MESSAGE_OPTION));
@@ -980,7 +980,7 @@ void ActionContractCall::setupOptionsParser(base::ProgramOptionsParser& parser)
     parser.addOption<std::string>(HOST_OPTION, "address of host");
     parser.addOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" contract");
     parser.addOption<lk::Balance>(AMOUNT_OPTION, "amount count");
-    parser.addOption<lk::Balance>(FEE_OPTION, "fee count");
+    parser.addOption<std::uint64_t>(FEE_OPTION, "fee count");
     parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addOption<std::string>(MESSAGE_OPTION, "message for call smart contract");
     parser.addFlag(IS_HTTP_CLIENT_OPTION, "is set enable http client call");
@@ -1007,7 +1007,7 @@ int ActionContractCall::loadOptions(const base::ProgramOptionsParser& parser)
     if (checkOptionEmptyAndWriteMessage(parser, FEE_OPTION)) {
         return base::config::EXIT_FAIL;
     }
-    _fee = parser.getValue<lk::Balance>(FEE_OPTION);
+    _fee = parser.getValue<std::uint64_t>(FEE_OPTION);
 
     if (checkOptionEmptyAndWriteMessage(parser, KEYS_DIRECTORY_OPTION)) {
         return base::config::EXIT_FAIL;

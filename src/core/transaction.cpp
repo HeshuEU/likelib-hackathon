@@ -127,7 +127,7 @@ std::string Sign::toBase64() const
 Transaction::Transaction(lk::Address from,
                          lk::Address to,
                          lk::Balance amount,
-                         lk::Balance fee,
+                         std::uint64_t fee,
                          base::Time timestamp,
                          base::Bytes data,
                          lk::Sign sign)
@@ -169,7 +169,7 @@ const base::Time& Transaction::getTimestamp() const noexcept
 }
 
 
-const lk::Balance& Transaction::getFee() const noexcept
+const std::uint64_t& Transaction::getFee() const noexcept
 {
     return _fee;
 }
@@ -236,7 +236,7 @@ base::Sha256 Transaction::hashOfTransaction() const
     // see http_specification.md
     auto from_address_str = base::base58Encode(_from.getBytes());
     auto to_address_str = base::base58Encode(_to.getBytes());
-    auto amount_str = std::to_string(_amount);
+    auto amount_str = _amount.toString();
     auto fee_str = std::to_string(_fee);
     auto timestamp_str = std::to_string(_timestamp.getSecondsSinceEpoch());
     auto data_str = _data.toString();
@@ -263,7 +263,7 @@ Transaction Transaction::deserialize(base::SerializationIArchive& ia)
     auto from = ia.deserialize<lk::Address>();
     auto to = ia.deserialize<lk::Address>();
     auto amount = ia.deserialize<lk::Balance>();
-    auto fee = ia.deserialize<lk::Balance>();
+    auto fee = ia.deserialize<std::uint64_t>();
     auto timestamp = ia.deserialize<base::Time>();
     auto data = ia.deserialize<base::Bytes>();
     auto sign = ia.deserialize<lk::Sign>();
@@ -314,7 +314,7 @@ void TransactionBuilder::setTimestamp(base::Time timestamp)
 }
 
 
-void TransactionBuilder::setFee(lk::Balance fee)
+void TransactionBuilder::setFee(std::uint64_t fee)
 {
     _fee = fee;
 }
@@ -379,7 +379,7 @@ const Transaction& invalidTransaction()
 
 TransactionStatus::TransactionStatus(StatusCode status,
                                      ActionType type,
-                                     lk::Balance fee_left,
+                                     std::uint64_t fee_left,
                                      const std::string& message) noexcept
   : _status{ status }
   , _action(type)
@@ -422,7 +422,7 @@ TransactionStatus::ActionType TransactionStatus::getType() const noexcept
     return _action;
 }
 
-lk::Balance TransactionStatus::getFeeLeft() const noexcept
+std::uint64_t TransactionStatus::getFeeLeft() const noexcept
 {
     return _fee_left;
 }
