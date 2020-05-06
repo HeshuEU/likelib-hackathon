@@ -512,6 +512,7 @@ class Node:
         return _BalanceParser.parse(result)
 
     def run_check_test(self, timeout=1):
+        time.sleep(1.0)
         TEST_CHECK(self.test(timeout=timeout), message=f"fail during connection test to node[{self.name}]")
 
     def run_check_balance(self, address, balance, timeout=1):
