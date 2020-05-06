@@ -37,6 +37,7 @@ namespace lk
 // clang-format off
 DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
 (NOT_AVAILABLE)
+            (CONNECT)
             (CANNOT_ACCEPT)
             (ACCEPTED)
             (ACCEPTED_RESPONSE)
@@ -51,6 +52,22 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(MessageType, std::uint8_t,
             (CLOSE)
 )
 // clang-format on
+
+//========================================
+
+class ConnectMessage
+{
+  public:
+    static constexpr MessageType getHandledMessageType();
+    static void serialize(base::SerializationOArchive& oa, Peer::IdentityInfo peer_id);
+    static ConnectMessage deserialize(base::SerializationIArchive& ia);
+    void handle(const Peer::Context& ctx, Peer& peer);
+
+  private:
+    Peer::IdentityInfo _peer_id;
+
+    ConnectMessage(Peer::IdentityInfo peer_id);
+};
 
 //========================================
 
@@ -356,6 +373,7 @@ class MessageProcessor
         auto type = ia.deserialize<lk::MessageType>();
 
         if (runHandle<Peer::Context,
+                      ConnectMessage,
                       CannotAcceptMessage,
                       AcceptedMessage,
                       AcceptedResponseMessage,
@@ -393,6 +411,43 @@ std::vector<Peer::IdentityInfo> allPeersInfoExcept(lk::PeerPoolBase& host, const
 
 //============================================
 
+constexpr lk::MessageType ConnectMessage::getHandledMessageType()
+{
+    return lk::MessageType::CONNECT;
+}
+
+
+void ConnectMessage::serialize(base::SerializationOArchive& oa, Peer::IdentityInfo peer_id)
+{
+    oa.serialize(getHandledMessageType());
+    oa.serialize(peer_id);
+}
+
+
+ConnectMessage ConnectMessage::deserialize(base::SerializationIArchive& ia)
+{
+    auto peers_id = ia.deserialize<Peer::IdentityInfo>();
+    return ConnectMessage(std::move(peers_id));
+}
+
+
+void ConnectMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
+{
+    if(peer.tryAddToPool()) {
+        peer.send(prepareMessage<AcceptedMessage>());
+    }
+    else {
+        peer.send(prepareMessage<CannotAcceptMessage>());
+    }
+}
+
+
+ConnectMessage::ConnectMessage(Peer::IdentityInfo peer_id)
+  : _peer_id(std::move(peer_id))
+{}
+
+//============================================
+
 constexpr lk::MessageType CannotAcceptMessage::getHandledMessageType()
 {
     return lk::MessageType::CANNOT_ACCEPT;
@@ -420,7 +475,7 @@ void CannotAcceptMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     ctx.pool.removePeer(&peer);
 
     for (const auto& peer : _peers_info) {
-        ctx.host.checkOutPeer(peer.endpoint, [](std::shared_ptr<Peer> peer) { peer->startSession(); });
+        ctx.host.checkOutPeer(peer.endpoint, [](std::shared_ptr<Peer> peer) { if(peer) peer->startSession(); });
     }
 }
 
@@ -480,7 +535,7 @@ void AcceptedMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     }
 
     for (const auto& peer_info : _known_peers) {
-        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) { peer->startSession(); });
+        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) { if(peer) { peer->startSession(); } });
     }
 
     if (_theirs_top_block == ours_top_block) {
@@ -563,7 +618,7 @@ void AcceptedResponseMessage::handle(const Peer::Context& ctx, lk::Peer& peer)
     }
 
     for (const auto& peer_info : _known_peers) {
-        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) { peer->startSession(); });
+        ctx.host.checkOutPeer(peer_info.endpoint, [](std::shared_ptr<Peer> peer) { if(peer) peer->startSession(); });
     }
 
     if (_theirs_top_block == ours_top_block) {
@@ -964,7 +1019,7 @@ void Peer::lookup(const lk::Address& address,
 
 #pragma GCC diagnostic pop
 
-std::shared_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core)
+std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
     std::shared_ptr<Peer> ret(new Peer(std::move(session), false, host.getIoContext(), host.getPool(), core, host));
     ret->startSession();
@@ -972,7 +1027,7 @@ std::shared_ptr<Peer> Peer::accepted(std::unique_ptr<net::Session> session, lk::
 }
 
 
-std::shared_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core)
+std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core)
 {
     std::shared_ptr<Peer> ret(new Peer(std::move(session), true, host.getIoContext(), host.getPool(), core, host));
     ret->startSession();
@@ -980,7 +1035,7 @@ std::shared_ptr<Peer> Peer::connected(std::unique_ptr<net::Session> session, lk:
 }
 
 
-Peer::Peer(std::unique_ptr<net::Session> session,
+Peer::Peer(std::shared_ptr<net::Session> session,
            bool is_connected,
            boost::asio::io_context& io_context,
            lk::PeerPoolBase& pool,

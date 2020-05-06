@@ -48,8 +48,8 @@ class Peer : public std::enable_shared_from_this<Peer>
         void serialize(base::SerializationOArchive& oa) const;
     };
     //================
-    static std::shared_ptr<Peer> accepted(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
-    static std::shared_ptr<Peer> connected(std::unique_ptr<net::Session> session, lk::Host& host, lk::Core& core);
+    static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core);
+    static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core);
     //================
     base::Time getLastSeen() const;
     net::Endpoint getEndpoint() const;
@@ -87,7 +87,7 @@ class Peer : public std::enable_shared_from_this<Peer>
       _lookup_callbacks; // TODO: refactor, of course
   private:
     //================
-    Peer(std::unique_ptr<net::Session> session,
+    Peer(std::shared_ptr<net::Session> session,
          bool is_connected,
          boost::asio::io_context& io_context,
          lk::PeerPoolBase& pool,
@@ -116,7 +116,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     };
     //================
 
-    std::unique_ptr<net::Session> _session;
+    std::shared_ptr<net::Session> _session;
     bool _is_started{ false };
     //================
     boost::asio::io_context& _io_context;

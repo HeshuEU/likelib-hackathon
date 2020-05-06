@@ -228,7 +228,7 @@ void Host::accept()
 
 void Host::onAccept(std::unique_ptr<net::Connection> connection)
 {
-    auto session = std::make_unique<net::Session>(std::move(connection));
+    auto session = std::make_shared<net::Session>(std::move(connection));
     _connected_peers.tryAddPeer(lk::Peer::accepted(std::move(session), *this, _core));
 }
 
@@ -259,7 +259,7 @@ void Host::checkOutPeer(const net::Endpoint& endpoint, std::function<void(std::s
       base::config::NET_CONNECT_TIMEOUT,
       [this, on_connect](std::unique_ptr<net::Connection> connection) {
           ASSERT(connection);
-          auto session = std::make_unique<net::Session>(std::move(connection));
+          auto session = std::make_shared<net::Session>(std::move(connection));
           auto peer = lk::Peer::connected(std::move(session), *this, _core);
           if (_connected_peers.tryAddPeer(peer)) {
               on_connect(peer);

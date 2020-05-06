@@ -97,15 +97,17 @@ void Session::close()
 
 void Session::receive()
 {
-    _connection->receive(SIZE_OF_MESSAGE_LENGTH_IN_BYTES, [this](const base::Bytes& data) {
-        _last_seen = base::Time::now();
+    _connection->receive(SIZE_OF_MESSAGE_LENGTH_IN_BYTES, [session = shared_from_this()](const base::Bytes& data) {
+        if(session->isClosed()) return;
+        session->_last_seen = base::Time::now();
         auto length = base::fromBytes<std::uint16_t>(data);
-        _connection->receive(length, [this](const base::Bytes& data) {
-            if (_handler) {
-                _handler->onReceive(data);
+        session->_connection->receive(length, [session1 = std::move(session)](const base::Bytes& data) {
+            if(session1->isClosed()) return;
+            if (session1->_handler) {
+                session1->_handler->onReceive(data);
             }
-            if (isActive()) {
-                receive();
+            if (session1->isActive()) {
+                session1->receive();
             }
         });
     });
