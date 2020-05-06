@@ -7,7 +7,7 @@ stages:
 
 Build:
   stage: build
-  image: heshuby/prepare_build:2020-03-12
+  image: heshuby/prepare_build:e6907a6a60dda94408d99323b9f707f9
   tags:
     - docker
   script:
@@ -26,7 +26,7 @@ Build:
 
 Code quality:
   stage: analyzers
-  image: heshuby/prepare_build:2020-03-12
+  image: heshuby/prepare_build:e6907a6a60dda94408d99323b9f707f9
   tags:
     - docker
   script:
@@ -54,7 +54,7 @@ Code quality:
 
 Unit tests:
   stage: unit-tests
-  image: heshuby/prepare_build:2020-03-12
+  image: heshuby/prepare_build:e6907a6a60dda94408d99323b9f707f9
   tags:
     - docker
   script:
@@ -68,7 +68,7 @@ Unit tests:
 Integration tests:
   timeout: 45m
   stage: integration-tests
-  image: heshuby/prepare_build:2020-03-12
+  image: heshuby/prepare_build:e6907a6a60dda94408d99323b9f707f9
   tags:
     - docker
   script:
@@ -88,7 +88,7 @@ Integration tests:
 
 Valgrind test:
   stage: analyzers
-  image: heshuby/prepare_build:2020-03-12
+  image: heshuby/prepare_build:e6907a6a60dda94408d99323b9f707f9
   tags:
     - docker
   script:
