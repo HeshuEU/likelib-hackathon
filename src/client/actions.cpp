@@ -1321,8 +1321,7 @@ int ActionGetTransactionStatus::execute()
     }
     else if (result.getStatus() == lk::TransactionStatus::StatusCode::Success &&
              result.getType() == lk::TransactionStatus::ActionType::ContractCall) {
-        std::cout << "\tMessage: "
-                  << "new contract address " << base::toHex(base::base64Decode(result.getMessage())) << std::endl;
+        std::cout << "\tMessage: " << base::toHex(base::base64Decode(result.getMessage())) << std::endl;
     }
     else {
         std::cout << "\tMessage: " << result.getMessage() << std::endl;

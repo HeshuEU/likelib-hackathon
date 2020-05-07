@@ -129,12 +129,13 @@ class EthHost : public evmc::Host
         try {
             auto address = vm::toNativeAddress(addr);
             LOG_DEBUG << "Core::get_code_size to address " << base::base58Encode(address.getBytes().toBytes());
-            if (auto code = _state_manager.getAccount(address).getRuntimeCode(); code.isEmpty()) {
-                return 0;
-            }
-            else {
+
+            if (_state_manager.hasAccount(address)) {
+                auto account = _state_manager.getAccount(address);
+                const auto& code = _state_manager.getAccount(address).getRuntimeCode();
                 return code.size();
             }
+            return 0;
         }
         catch (...) { // cannot pass exceptions since noexcept
             return 0;
@@ -554,6 +555,7 @@ void Core::applyBlockTransactions(const lk::Block& block)
 void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx)
 {
     auto transaction_hash = tx.hashOfTransaction();
+    LOG_DEBUG << "Performing transactions with hash[hex] " << transaction_hash;
     _state_manager.getAccount(tx.getFrom()).addTransactionHash(transaction_hash);
 
     auto tx_manager{ _state_manager.createCopy() };
@@ -576,6 +578,17 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                 return;
             }
 
+            static const auto CONTRACT_FLAG = base::fromHex<base::Bytes>("60806040");
+
+            if (contract_data.getMessage().takePart(0, CONTRACT_FLAG.size()) != CONTRACT_FLAG) {
+                TransactionStatus status(TransactionStatus::StatusCode::Failed,
+                                         TransactionStatus::ActionType::ContractCreation,
+                                         tx.getFee(),
+                                         "");
+                addTransactionOutput(transaction_hash, status);
+                return;
+            }
+
             auto eval_result =
               callInitContractVm(tx_manager, block_where_tx, tx, contract_address, contract_data.getMessage());
 
@@ -583,7 +596,8 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                 auto runtime_code = vm::copy(eval_result.output_data, eval_result.output_size);
                 tx_manager.getAccount(contract_address).setRuntimeCode(runtime_code);
                 tx_manager.getAccount(contract_address).setAbi(contract_data.getAbi());
-
+                LOG_DEBUG << "Deployed contract to address "
+                          << base::base58Encode(contract_address.getBytes().toBytes());
                 TransactionStatus status(TransactionStatus::StatusCode::Success,
                                          TransactionStatus::ActionType::ContractCreation,
                                          eval_result.gas_left,
@@ -592,7 +606,9 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                 addTransactionOutput(transaction_hash, status);
                 tx_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - eval_result.gas_left);
                 tx_manager.getAccount(tx.getFrom()).addBalance(eval_result.gas_left);
+
                 _state_manager.applyChanges(std::move(tx_manager));
+
                 return;
             }
             else if (eval_result.status_code == evmc_status_code::EVMC_REVERT) {
