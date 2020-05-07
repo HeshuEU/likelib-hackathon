@@ -495,6 +495,7 @@ class Node:
         return pipe.stdout.decode("utf8")
 
     def test(self, *, timeout=1):
+        time.sleep(2)
         result = self.__run_client_command(command="test", parameters=[], timeout=timeout)
         return _TestParser.parse(result)
 
@@ -512,7 +513,6 @@ class Node:
         return _BalanceParser.parse(result)
 
     def run_check_test(self, timeout=1):
-        time.sleep(1.0)
         TEST_CHECK(self.test(timeout=timeout), message=f"fail during connection test to node[{self.name}]")
 
     def run_check_balance(self, address, balance, timeout=1):
