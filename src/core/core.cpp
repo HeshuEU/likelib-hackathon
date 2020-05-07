@@ -31,6 +31,7 @@ class EthHost : public evmc::Host
         LOG_DEBUG << "Core::account_exists";
         try {
             auto address = vm::toNativeAddress(addr);
+            LOG_DEBUG << "Core::account_exists by address " << base::base58Encode(address.getBytes().toBytes());
             return _state_manager.hasAccount(address);
         }
         catch (...) { // cannot pass exceptions since noexcept
@@ -45,6 +46,7 @@ class EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_storage";
         try {
             auto address = vm::toNativeAddress(addr);
+            LOG_DEBUG << "Core::get_storage from address " << base::base58Encode(address.getBytes().toBytes());
             base::Bytes key(ethKey.bytes, 32);
             if (_state_manager.hasAccount(address)) {
                 auto storage_value = _state_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
@@ -66,6 +68,7 @@ class EthHost : public evmc::Host
         try {
             static const base::Bytes NULL_VALUE(32);
             auto address = vm::toNativeAddress(addr);
+            LOG_DEBUG << "Core::set_storage to address " << base::base58Encode(address.getBytes().toBytes());
             auto key = base::Sha256(base::Bytes(ekey.bytes, 32));
             base::Bytes new_value(evalue.bytes, 32);
 
@@ -107,6 +110,7 @@ class EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_balance";
         try {
             auto address = vm::toNativeAddress(addr);
+            LOG_DEBUG << "Core::get_balance to address " << base::base58Encode(address.getBytes().toBytes());
             if (_state_manager.hasAccount(address)) {
                 auto balance = _state_manager.getAccount(address).getBalance();
                 return vm::toEvmcUint256(balance);
@@ -124,6 +128,7 @@ class EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_code_size";
         try {
             auto address = vm::toNativeAddress(addr);
+            LOG_DEBUG << "Core::get_code_size to address " << base::base58Encode(address.getBytes().toBytes());
             if (auto code = _state_manager.getAccount(address).getRuntimeCode(); code.isEmpty()) {
                 return 0;
             }
@@ -142,6 +147,7 @@ class EthHost : public evmc::Host
         LOG_DEBUG << "Core::get_code_hash";
         try {
             auto address = vm::toNativeAddress(addr);
+            LOG_DEBUG << "Core::get_code_hash to address " << base::base58Encode(address.getBytes().toBytes());
             auto account_code_hash = _state_manager.getAccount(address).getCodeHash();
             return vm::toEvmcBytes32(account_code_hash.getBytes());
         }
@@ -159,7 +165,7 @@ class EthHost : public evmc::Host
         LOG_DEBUG << "Core::copy_code";
         try {
             auto address = vm::toNativeAddress(addr);
-
+            LOG_DEBUG << "Core::copy_code to address " << base::base58Encode(address.getBytes().toBytes());
             if (auto code = _state_manager.getAccount(address).getRuntimeCode(); code.isEmpty()) {
                 return 0;
             }
@@ -180,6 +186,7 @@ class EthHost : public evmc::Host
         LOG_DEBUG << "Core::selfdestruct";
         try {
             auto address = vm::toNativeAddress(eaddr);
+            LOG_DEBUG << "Core::selfdestruct to address " << base::base58Encode(address.getBytes().toBytes());
             auto account = _state_manager.getAccount(address);
 
             auto beneficiary_address = vm::toNativeAddress(ebeneficiary);
@@ -199,7 +206,7 @@ class EthHost : public evmc::Host
         LOG_DEBUG << "Core::call";
         try {
             lk::Address to = vm::toNativeAddress(msg.destination);
-
+            LOG_DEBUG << "Core::call to address " << base::base58Encode(to.getBytes().toBytes());
             if (_state_manager.hasAccount(to) && _state_manager.getAccount(to).getType() == lk::AccountType::CONTRACT) {
                 const auto& code = _state_manager.getAccount(to).getRuntimeCode();
                 return _core.callVm(_state_manager, _associated_block, _associated_tx, msg, code);
