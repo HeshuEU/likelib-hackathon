@@ -3,9 +3,9 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+#include <boost/foreach.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
-#include <boost/foreach.hpp>
 #include <boost/process.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -41,7 +41,7 @@ base::Bytes encode(lk::Balance value)
 {
     base::Bytes ret(32);
     for (std::size_t i = 1; i <= ret.size(); ++i) {
-        ret[ret.size() - i] = (static_cast<base::Byte>(std::atoi((value % 256).toString().c_str())));   //TODO: rewrite
+        ret[ret.size() - i] = (static_cast<base::Byte>(std::atoi((value % 256).toString().c_str()))); // TODO: rewrite
         value /= 256;
     }
     return ret;
@@ -229,7 +229,8 @@ bool isView(const base::PropertyTree& abi, const base::Bytes& message)
 base::Keccak256 methodHash(const boost::property_tree::ptree& method_abi)
 {
     //    auto ser = base::PropertyTree(method_abi).toString();
-    std::string method =method_abi.get<std::string>("type") == "function" ? method_abi.get<std::string>("name") + '(' : "constructor(";
+    std::string method =
+      method_abi.get<std::string>("type") == "function" ? method_abi.get<std::string>("name") + '(' : "constructor(";
 
     BOOST_FOREACH (const auto& argument, method_abi.get_child("inputs")) {
         method += argument.second.get<std::string>("type") + ',';

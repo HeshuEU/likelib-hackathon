@@ -412,18 +412,18 @@ BOOST_AUTO_TEST_CASE(BigNum_operator_iostream)
 
 BOOST_AUTO_TEST_CASE(BigNum_serialize)
 {
-    base::Uint256 num1{111999222333};
-    base::Uint256 num2{124939};
-    base::Uint256 num3{"1895036057192"};
+    base::Uint256 num1{ 111999222333 };
+    base::Uint256 num2{ 124939 };
+    base::Uint256 num3{ "1895036057192" };
     base::SerializationOArchive oa;
 
     oa.serialize(num1);
     oa.serialize(num2);
     oa.serialize(num3);
     base::SerializationIArchive ia(oa.getBytes());
-    auto num11 = ia.deserialize<base::Uint256 >();
-    auto num22 = ia.deserialize<base::Uint256 >();
-    auto num33 = ia.deserialize<base::Uint256 >();
+    auto num11 = ia.deserialize<base::Uint256>();
+    auto num22 = ia.deserialize<base::Uint256>();
+    auto num33 = ia.deserialize<base::Uint256>();
 
     BOOST_CHECK(num11 == num1);
     BOOST_CHECK(num22 == num2);

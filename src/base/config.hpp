@@ -75,7 +75,7 @@ constexpr int EXIT_ASSERT_FAILED = 2;
 // net
 constexpr std::size_t NET_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
 constexpr std::size_t NET_PING_FREQUENCY = 3600;           // seconds
-constexpr std::size_t NET_CONNECT_TIMEOUT = 10; // seconds
+constexpr std::size_t NET_CONNECT_TIMEOUT = 10;            // seconds
 //------------------------
 
 // blockchain

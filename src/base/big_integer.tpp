@@ -180,16 +180,16 @@ boost::multiprecision::number<T> BigInteger<T>::toMultiNumber() const noexcept
 
 
 template<typename T>
-void BigInteger<T>::serialize(base::SerializationOArchive& oa) const    //TODO: plug
+void BigInteger<T>::serialize(base::SerializationOArchive& oa) const // TODO: plug
 {
     oa.serialize(toString());
 }
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::deserialize(base::SerializationIArchive& ia)   //TODO: plug
+BigInteger<T> BigInteger<T>::deserialize(base::SerializationIArchive& ia) // TODO: plug
 {
-    return BigInteger<T>{ia.deserialize<std::string>()};
+    return BigInteger<T>{ ia.deserialize<std::string>() };
 }
 
 

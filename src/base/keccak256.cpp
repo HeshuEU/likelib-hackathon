@@ -79,156 +79,156 @@ typedef struct SHA3_CTX
 
 extern "C"
 {
-void keccak_init(SHA3_CTX* ctx) { memset(ctx, 0, sizeof(SHA3_CTX)); }
-static void keccak_theta(uint64_t* A)
-{
-    uint64_t C[5], D[5];
+    void keccak_init(SHA3_CTX* ctx) { memset(ctx, 0, sizeof(SHA3_CTX)); }
+    static void keccak_theta(uint64_t* A)
+    {
+        uint64_t C[5], D[5];
 
-    for (uint8_t i = 0; i < 5; i++) {
-        C[i] = A[i];
-        for (uint8_t j = 5; j < 25; j += 5) {
-            C[i] ^= A[i + j];
+        for (uint8_t i = 0; i < 5; i++) {
+            C[i] = A[i];
+            for (uint8_t j = 5; j < 25; j += 5) {
+                C[i] ^= A[i + j];
+            }
+        }
+
+        for (uint8_t i = 0; i < 5; i++) {
+            D[i] = ROTL64(C[(i + 1) % 5], 1) ^ C[(i + 4) % 5];
+        }
+
+        for (uint8_t i = 0; i < 5; i++) {
+            for (uint8_t j = 0; j < 25; j += 5) {
+                A[i + j] ^= D[i];
+            }
         }
     }
 
-    for (uint8_t i = 0; i < 5; i++) {
-        D[i] = ROTL64(C[(i + 1) % 5], 1) ^ C[(i + 4) % 5];
+    static void keccak_pi(uint64_t* A)
+    {
+        uint64_t A1 = A[1];
+        for (uint8_t i = 1; i < 24; i++) {
+            A[getConstant(TYPE_PI_TRANSFORM, i - 1)] = A[getConstant(TYPE_PI_TRANSFORM, i)];
+        }
+        A[10] = A1;
     }
 
-    for (uint8_t i = 0; i < 5; i++) {
-        for (uint8_t j = 0; j < 25; j += 5) {
-            A[i + j] ^= D[i];
+    /*
+    ketch uses 30084 bytes (93%) of program storage space. Maximum is 32256 bytes.
+    Global variables use 743 bytes (36%) of dynamic memory, leaving 1305 bytes for local variables. Maximum is 2048
+    bytes.
+    */
+    /* Keccak chi() transformation */
+    static void keccak_chi(uint64_t* A)
+    {
+        for (uint8_t i = 0; i < 25; i += 5) {
+            uint64_t A0 = A[0 + i], A1 = A[1 + i];
+            A[0 + i] ^= ~A1 & A[2 + i];
+            A[1 + i] ^= ~A[2 + i] & A[3 + i];
+            A[2 + i] ^= ~A[3 + i] & A[4 + i];
+            A[3 + i] ^= ~A[4 + i] & A0;
+            A[4 + i] ^= ~A0 & A1;
         }
     }
-}
 
-static void keccak_pi(uint64_t* A)
-{
-    uint64_t A1 = A[1];
-    for (uint8_t i = 1; i < 24; i++) {
-        A[getConstant(TYPE_PI_TRANSFORM, i - 1)] = A[getConstant(TYPE_PI_TRANSFORM, i)];
+    static void sha3_permutation(uint64_t* state)
+    {
+        for (uint8_t round = 0; round < 24; round++) {
+            keccak_theta(state);
+
+            for (uint8_t i = 1; i < 25; i++) {
+                state[i] = ROTL64(state[i], getConstant(TYPE_RHO_TRANSFORM, i - 1));
+            }
+
+            keccak_pi(state);
+            keccak_chi(state);
+
+            *state ^= get_round_constant(round);
+        }
     }
-    A[10] = A1;
-}
 
-/*
-ketch uses 30084 bytes (93%) of program storage space. Maximum is 32256 bytes.
-Global variables use 743 bytes (36%) of dynamic memory, leaving 1305 bytes for local variables. Maximum is 2048
-bytes.
-*/
-/* Keccak chi() transformation */
-static void keccak_chi(uint64_t* A)
-{
-    for (uint8_t i = 0; i < 25; i += 5) {
-        uint64_t A0 = A[0 + i], A1 = A[1 + i];
-        A[0 + i] ^= ~A1 & A[2 + i];
-        A[1 + i] ^= ~A[2 + i] & A[3 + i];
-        A[2 + i] ^= ~A[3 + i] & A[4 + i];
-        A[3 + i] ^= ~A[4 + i] & A0;
-        A[4 + i] ^= ~A0 & A1;
-    }
-}
-
-static void sha3_permutation(uint64_t* state)
-{
-    for (uint8_t round = 0; round < 24; round++) {
-        keccak_theta(state);
-
-        for (uint8_t i = 1; i < 25; i++) {
-            state[i] = ROTL64(state[i], getConstant(TYPE_RHO_TRANSFORM, i - 1));
+    /**
+     * The core transformation. Process the specified block of data.
+     *
+     * @param hash the algorithm state
+     * @param block the message block to process
+     * @param block_size the size of the processed block in bytes
+     */
+    static void sha3_process_block(uint64_t hash[25], const uint64_t* block)
+    {
+        for (uint8_t i = 0; i < 17; i++) {
+            hash[i] ^= le2me_64(block[i]);
         }
 
-        keccak_pi(state);
-        keccak_chi(state);
-
-        *state ^= get_round_constant(round);
-    }
-}
-
-/**
- * The core transformation. Process the specified block of data.
- *
- * @param hash the algorithm state
- * @param block the message block to process
- * @param block_size the size of the processed block in bytes
- */
-static void sha3_process_block(uint64_t hash[25], const uint64_t* block)
-{
-    for (uint8_t i = 0; i < 17; i++) {
-        hash[i] ^= le2me_64(block[i]);
+        /* make a permutation of the hash */
+        sha3_permutation(hash);
     }
 
-    /* make a permutation of the hash */
-    sha3_permutation(hash);
-}
+    //#define SHA3_FINALIZED 0x80000000
+    //#define SHA3_FINALIZED 0x8000
 
-//#define SHA3_FINALIZED 0x80000000
-//#define SHA3_FINALIZED 0x8000
+    /**
+     * Calculate message hash.
+     * Can be called repeatedly with chunks of the message to be hashed.
+     *
+     * @param ctx the algorithm context containing current hashing state
+     * @param msg message chunk
+     * @param size length of the message chunk
+     */
+    void keccak_update(SHA3_CTX* ctx, const unsigned char* msg, uint16_t size)
+    {
+        uint16_t idx = (uint16_t)ctx->rest;
 
-/**
- * Calculate message hash.
- * Can be called repeatedly with chunks of the message to be hashed.
- *
- * @param ctx the algorithm context containing current hashing state
- * @param msg message chunk
- * @param size length of the message chunk
- */
-void keccak_update(SHA3_CTX* ctx, const unsigned char* msg, uint16_t size)
-{
-    uint16_t idx = (uint16_t)ctx->rest;
+        ctx->rest = (unsigned)((ctx->rest + size) % BLOCK_SIZE);
 
-    ctx->rest = (unsigned)((ctx->rest + size) % BLOCK_SIZE);
+        if (idx) {
+            uint16_t left = BLOCK_SIZE - idx;
+            memcpy((char*)ctx->message + idx, msg, (size < left ? size : left));
+            if (size < left)
+                return;
 
-    if (idx) {
-        uint16_t left = BLOCK_SIZE - idx;
-        memcpy((char*)ctx->message + idx, msg, (size < left ? size : left));
-        if (size < left)
-            return;
+            sha3_process_block(ctx->hash, ctx->message);
+            msg += left;
+            size -= left;
+        }
+
+        while (size >= BLOCK_SIZE) {
+            uint64_t* aligned_message_block;
+            if (IS_ALIGNED_64(msg)) {
+                aligned_message_block = (uint64_t*)(void*)msg;
+            }
+            else {
+                memcpy(ctx->message, msg, BLOCK_SIZE);
+                aligned_message_block = ctx->message;
+            }
+
+            sha3_process_block(ctx->hash, aligned_message_block);
+            msg += BLOCK_SIZE;
+            size -= BLOCK_SIZE;
+        }
+
+        if (size) {
+            memcpy(ctx->message, msg, size);
+        }
+    }
+    /**
+     * Store calculated hash into the given array.
+     *
+     * @param ctx the algorithm context containing current hashing state
+     * @param result calculated hash in binary form
+     */
+    void keccak_final(SHA3_CTX* ctx, unsigned char* result)
+    {
+        uint16_t digest_length = 100 - BLOCK_SIZE / 2;
+
+        memset((char*)ctx->message + ctx->rest, 0, BLOCK_SIZE - ctx->rest);
+        ((char*)ctx->message)[ctx->rest] |= 0x01;
+        ((char*)ctx->message)[BLOCK_SIZE - 1] |= 0x80;
 
         sha3_process_block(ctx->hash, ctx->message);
-        msg += left;
-        size -= left;
-    }
 
-    while (size >= BLOCK_SIZE) {
-        uint64_t* aligned_message_block;
-        if (IS_ALIGNED_64(msg)) {
-            aligned_message_block = (uint64_t*)(void*)msg;
+        if (result) {
+            me64_to_le_str(result, ctx->hash, digest_length);
         }
-        else {
-            memcpy(ctx->message, msg, BLOCK_SIZE);
-            aligned_message_block = ctx->message;
-        }
-
-        sha3_process_block(ctx->hash, aligned_message_block);
-        msg += BLOCK_SIZE;
-        size -= BLOCK_SIZE;
     }
-
-    if (size) {
-        memcpy(ctx->message, msg, size);
-    }
-}
-/**
- * Store calculated hash into the given array.
- *
- * @param ctx the algorithm context containing current hashing state
- * @param result calculated hash in binary form
- */
-void keccak_final(SHA3_CTX* ctx, unsigned char* result)
-{
-    uint16_t digest_length = 100 - BLOCK_SIZE / 2;
-
-    memset((char*)ctx->message + ctx->rest, 0, BLOCK_SIZE - ctx->rest);
-    ((char*)ctx->message)[ctx->rest] |= 0x01;
-    ((char*)ctx->message)[BLOCK_SIZE - 1] |= 0x80;
-
-    sha3_process_block(ctx->hash, ctx->message);
-
-    if (result) {
-        me64_to_le_str(result, ctx->hash, digest_length);
-    }
-}
 }
 }
 

@@ -23,8 +23,8 @@ bool TransactionsSet::find(const lk::Transaction& tx) const
 
 std::optional<Transaction> TransactionsSet::find(const base::Sha256& hash) const
 {
-    auto it = std::find_if(
-      _txs.begin(), _txs.end(), [&hash](const auto& tx) { return tx.hashOfTransaction() == hash; });
+    auto it =
+      std::find_if(_txs.begin(), _txs.end(), [&hash](const auto& tx) { return tx.hashOfTransaction() == hash; });
 
     if (it == _txs.end()) {
         return std::nullopt;
@@ -129,7 +129,7 @@ std::map<Address, Balance> calcBalance(const TransactionsSet& txs)
     for (const auto& tx : txs) {
 
         auto from_address_in_result = result.find(tx.getFrom());
-        auto from_amount_modifier = lk::Balance() - tx.getAmount();    //TODO: rewrite this
+        auto from_amount_modifier = lk::Balance() - tx.getAmount(); // TODO: rewrite this
         if (from_address_in_result == result.end()) {
             result.insert({ tx.getFrom(), from_amount_modifier });
         }

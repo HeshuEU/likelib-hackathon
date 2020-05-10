@@ -10,7 +10,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor1)
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 42;
-    lk::Transaction tx(from, to, amount, fee, time,  base::Bytes{});
+    lk::Transaction tx(from, to, amount, fee, time, base::Bytes{});
 
     BOOST_CHECK(tx.getFrom().toString() == from.toString());
     BOOST_CHECK(tx.getTo().toString() == to.toString());
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 123;
-    lk::Transaction tx1(from, to, amount, fee, time,  base::Bytes{});
+    lk::Transaction tx1(from, to, amount, fee, time, base::Bytes{});
     lk::Transaction tx2(tx1);
 
     BOOST_CHECK(tx2.getFrom().toString() == from.toString());
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_move)
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 123;
-    lk::Transaction tx1(from, to, amount, fee, time,  base::Bytes{});
+    lk::Transaction tx1(from, to, amount, fee, time, base::Bytes{});
     lk::Transaction tx2(std::move(tx1));
 
     BOOST_CHECK(tx2.getFrom().toString() == from.toString());
@@ -63,8 +63,8 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee{ 23213213 };
-    lk::Transaction tx1(from, to, amount, fee, time,  base::Bytes{});
-    lk::Transaction tx2(from, to, 821481368, fee, time,  base::Bytes{});
+    lk::Transaction tx1(from, to, amount, fee, time, base::Bytes{});
+    lk::Transaction tx2(from, to, 821481368, fee, time, base::Bytes{});
 
     BOOST_CHECK(tx1 != tx2);
     tx2 = tx1;
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee{ 213213 };
-    lk::Transaction tx1(from, to, amount, fee, time,  base::Bytes{});
+    lk::Transaction tx1(from, to, amount, fee, time, base::Bytes{});
     lk::Transaction tx2(from, to, 821481368, fee, time, base::Bytes{});
 
     BOOST_CHECK(tx1 != tx2);
