@@ -2,7 +2,7 @@
 
 #include "base/serialization.hpp"
 
-namespace msg
+namespace lk::msg
 {
 
 void Connect::serialize(base::SerializationOArchive& oa) const
