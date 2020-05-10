@@ -68,7 +68,6 @@ class Peer : public std::enable_shared_from_this<Peer>
     {
         lk::Core& core;         //! for operating with blockchain
         lk::Host& host;         //! for operating with host data
-        lk::PeerPoolBase& pool; //! for new peer adding and gathering all peers info
     };
 
     enum class State
@@ -229,7 +228,6 @@ struct Accepted
     lk::Block theirs_top_block;
     lk::Address address;
     std::uint16_t public_port; // zero public port states that peer didn't provide information about his public endpoint
-    std::vector<lk::Peer::IdentityInfo> known_peers;
 
     void serialize(base::SerializationOArchive& oa) const;
     static Accepted deserialize(base::SerializationIArchive& ia);
@@ -243,7 +241,6 @@ struct AcceptedResponse
     lk::Block theirs_top_block;
     lk::Address address;
     std::uint16_t public_port; // zero public port states that peer didn't provide information about his public endpoint
-    std::vector<lk::Peer::IdentityInfo> known_peers;
 
     void serialize(base::SerializationOArchive& oa) const;
     static AcceptedResponse deserialize(base::SerializationIArchive& ia);
