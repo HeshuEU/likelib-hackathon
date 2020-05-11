@@ -214,7 +214,16 @@ void Host::accept()
 {
     _acceptor.accept([this](std::unique_ptr<net::Connection> connection) {
         ASSERT(connection);
-        onAccept(std::move(connection));
+        {
+            std::unique_lock lk(_pcm);
+            if (_connected.count(connection->getEndpoint())) {
+                connection->close();
+            }
+            else {
+                _connected.insert(connection->getEndpoint());
+                onAccept(std::move(connection));
+            }
+        }
         accept();
     });
 }
@@ -223,18 +232,31 @@ void Host::accept()
 void Host::onAccept(std::unique_ptr<net::Connection> connection)
 {
     auto session = std::make_shared<net::Session>(std::move(connection));
-    _connected_peers.tryAddPeer(lk::Peer::accepted(std::move(session), *this, _core));
+    _temp.insert(lk::Peer::accepted(std::move(session), Peer::Context{ _core, *this }));
 }
 
 
-void Host::checkOutPeer(const net::Endpoint& endpoint, std::function<void(std::shared_ptr<Peer>)> on_connect)
+void Host::checkOutPeer(const net::Endpoint& endpoint, const lk::Address& address)
 {
+    if(_core.getThisNodeAddress() == address) {
+        return;
+    }
+
     if (_listen_ip == endpoint) {
         return;
     }
 
     if (isConnectedTo(endpoint)) {
         return;
+    }
+
+    {
+        std::unique_lock lk(_pcm);
+        if(_connected.count(endpoint)) {
+            return;
+        }
+
+        _connected.insert(endpoint);
     }
 
     bool have_peer_with_endpoint = false;
@@ -251,20 +273,13 @@ void Host::checkOutPeer(const net::Endpoint& endpoint, std::function<void(std::s
     _connector.connect(
       endpoint,
       base::config::NET_CONNECT_TIMEOUT,
-      [this, on_connect](std::unique_ptr<net::Connection> connection) {
+      [this](std::unique_ptr<net::Connection> connection) {
           ASSERT(connection);
           auto session = std::make_shared<net::Session>(std::move(connection));
-          auto peer = lk::Peer::connected(std::move(session), *this, _core);
-          if (_connected_peers.tryAddPeer(peer)) {
-              on_connect(peer);
-          }
-          else {
-              on_connect(nullptr);
-          }
+          _temp.insert(lk::Peer::connected(std::move(session), Peer::Context{ _core, *this }));
       },
-      [on_connect](const net::Connector::ConnectError&) {
-          // TODO: remember, call another callback
-          on_connect(nullptr);
+      [this](const net::Connector::ConnectError&) {
+          // TODO: error handling
       });
     LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
 }
@@ -318,30 +333,7 @@ void Host::bootstrap()
 {
     if (_config.hasKey("nodes")) {
         for (const auto& node : _config.getVector<std::string>("nodes")) {
-            checkOutPeer(net::Endpoint(node), [this](std::shared_ptr<Peer> peer) {
-                if (peer) {
-                    peer->lookup(_core.getThisNodeAddress(),
-                                 base::config::NET_LOOKUP_ALPHA,
-                                 [this, peer](std::vector<Peer::IdentityInfo> peers_info) {
-                                     peer->startSession();
-                                     for (const auto& peer_info : peers_info) {
-                                         checkOutPeer(peer_info.endpoint, [this](std::shared_ptr<Peer> peer) {
-                                             peer->lookup(_core.getThisNodeAddress(),
-                                                          base::config::NET_LOOKUP_ALPHA,
-                                                          [this, peer](std::vector<Peer::IdentityInfo> peers_info) {
-                                                              for (const auto& peer_info : peers_info) {
-                                                                  checkOutPeer(peer_info.endpoint,
-                                                                               [](std::shared_ptr<Peer> peer) {
-                                                                                   peer->startSession();
-                                                                               });
-                                                              }
-                                                          });
-                                             peer->startSession();
-                                         });
-                                     }
-                                 });
-                }
-            });
+            checkOutPeer(net::Endpoint(node));
         }
     }
 }

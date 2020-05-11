@@ -27,7 +27,6 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(Type, std::uint8_t,
   (CONNECT)
   (CANNOT_ACCEPT)
   (ACCEPTED)
-  (ACCEPTED_RESPONSE)
   (PING)
   (PONG)
   (LOOKUP)
@@ -44,7 +43,6 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(Type, std::uint8_t,
 struct Connect;
 struct CannotAccept;
 struct Accepted;
-struct AcceptedResponse;
 struct Ping;
 struct Pong;
 struct Lookup;
@@ -66,8 +64,8 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     struct Context
     {
-        lk::Core& core;         //! for operating with blockchain
-        lk::Host& host;         //! for operating with host data
+        lk::Core& core; //! for operating with blockchain
+        lk::Host& host; //! for operating with host data
     };
 
     enum class State
@@ -86,8 +84,8 @@ class Peer : public std::enable_shared_from_this<Peer>
         void serialize(base::SerializationOArchive& oa) const;
     };
     //================
-    static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core);
-    static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core);
+    static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, Context context);
+    static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, Context context);
     //================
     base::Time getLastSeen() const;
     net::Endpoint getEndpoint() const;
@@ -116,11 +114,8 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     void startSession();
 
-    void lookup(const lk::Address& address,
-                std::uint8_t alpha,
-                std::function<void(std::vector<IdentityInfo>)> callback);
-    std::multimap<lk::Address, std::function<void(std::vector<IdentityInfo>)>>
-      _lookup_callbacks; // TODO: refactor, of course
+    void requestLookup(const lk::Address& address,
+                       const uint8_t alpha);
   private:
     //================
     Peer(std::shared_ptr<net::Session> session,
@@ -172,12 +167,10 @@ class Peer : public std::enable_shared_from_this<Peer>
     lk::Core& _core;
     lk::Host& _host;
     //================
-    // void rejectedByPool();
     void process(const base::Bytes& received_data);
     void handle(msg::Connect&& msg);
     void handle(msg::CannotAccept&& msg);
     void handle(msg::Accepted&& msg);
-    void handle(msg::AcceptedResponse&& msg);
     void handle(msg::Ping&& msg);
     void handle(msg::Pong&& msg);
     void handle(msg::Lookup&& msg);
@@ -198,7 +191,9 @@ struct Connect
 {
     static constexpr Type TYPE_ID = Type::CONNECT;
 
-    Peer::IdentityInfo peer_id;
+    lk::Address address;
+    std::uint16_t public_port;
+    lk::Block top_block;
 
     void serialize(base::SerializationOArchive& oa) const;
     static Connect deserialize(base::SerializationIArchive& ia);
@@ -231,19 +226,6 @@ struct Accepted
 
     void serialize(base::SerializationOArchive& oa) const;
     static Accepted deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct AcceptedResponse
-{
-    static constexpr Type TYPE_ID = Type::ACCEPTED_RESPONSE;
-
-    lk::Block theirs_top_block;
-    lk::Address address;
-    std::uint16_t public_port; // zero public port states that peer didn't provide information about his public endpoint
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static AcceptedResponse deserialize(base::SerializationIArchive& ia);
 };
 
 

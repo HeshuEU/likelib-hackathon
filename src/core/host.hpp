@@ -91,7 +91,7 @@ class Host
     explicit Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core);
     ~Host();
     //=================================
-    void checkOutPeer(const net::Endpoint& address, std::function<void(std::shared_ptr<Peer>)> on_connect);
+    void checkOutPeer(const net::Endpoint& endpoint, const lk::Address& address = lk::Address::null());
     bool isConnectedTo(const net::Endpoint& endpoint) const;
     PeerTable& getPool() noexcept;
     const PeerTable& getPool() const noexcept;
@@ -120,7 +120,11 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
+    std::shared_mutex _pcm;
+    std::set<net::Endpoint> _connected;
+
     PeerTable _connected_peers;
+    std::set< std::shared_ptr<Peer> > _temp;
     void bootstrap();
 
     boost::asio::steady_timer _heartbeat_timer;

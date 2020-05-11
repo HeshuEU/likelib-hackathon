@@ -63,9 +63,8 @@ void Peer::sendTransaction(const lk::Transaction& tx)
 }
 
 
-void Peer::lookup(const lk::Address& address,
-                  const std::uint8_t alpha,
-                  std::function<void(std::vector<Peer::IdentityInfo>)> callback)
+void Peer::requestLookup(const lk::Address& address,
+                         const std::uint8_t alpha)
 {
     struct LookupData
     {
@@ -85,27 +84,25 @@ void Peer::lookup(const lk::Address& address,
 
     data->timer.async_wait([this, data](const auto& ec) {
         data->was_responded = true;
-        _lookup_callbacks.erase(_lookup_callbacks.find(data->address));
     });
-
-    _lookup_callbacks.insert(
-      { address, [data, callback = std::move(callback)](auto peers_info) { callback(peers_info); } });
 
     sendMessage(msg::Lookup{ address, alpha }, {});
 }
 
 
-std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core)
+std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Context context)
 {
-    std::shared_ptr<Peer> ret(new Peer(std::move(session), false, host.getIoContext(), host.getPool(), core, host));
+    std::shared_ptr<Peer> ret(new Peer(
+      std::move(session), false, context.host.getIoContext(), context.host.getPool(), context.core, context.host));
     ret->startSession();
     return ret;
 }
 
 
-std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, lk::Host& host, lk::Core& core)
+std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Context context)
 {
-    std::shared_ptr<Peer> ret(new Peer(std::move(session), true, host.getIoContext(), host.getPool(), core, host));
+    std::shared_ptr<Peer> ret(new Peer(
+      std::move(session), true, context.host.getIoContext(), context.host.getPool(), context.core, context.host));
     ret->startSession();
     return ret;
 }
@@ -195,25 +192,7 @@ void Peer::startSession()
 
     _session->start();
     if (wasConnectedTo()) {
-        /*
-         * we connected to a node, so now we are waiting for:
-         * 1) success response ---> handshake message
-         * 2) failure response ---> cannot accept message
-         * 3) for timeout
-         */
-    }
-    else {
-        // TODO: _ctx.pool->schedule(_peer.close); schedule disconnection on timeout
-        // now does nothing, since we wait for connected peer to send us something (HANDSHAKE message)
-        if (tryAddToPool()) {
-            sendMessage(msg::Accepted{ _core.getTopBlock(),
-                                       _core.getThisNodeAddress(),
-                                       getPublicEndpoint().getPort() });
-        }
-        else {
-            sendMessage(msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _pool.allPeersInfo() });
-            // and close peer properly
-        }
+        sendMessage<msg::Connect>({_core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlock()});
     }
 }
 
@@ -271,6 +250,7 @@ void Peer::process(const base::Bytes& received_data)
 {
     base::SerializationIArchive ia(received_data);
     auto msg_type = ia.deserialize<msg::Type>();
+    LOG_DEBUG << "Processing " << enumToString(msg_type);
     switch (msg_type) {
         case msg::Connect::TYPE_ID: {
             handle(ia.deserialize<msg::Connect>());
@@ -282,10 +262,6 @@ void Peer::process(const base::Bytes& received_data)
         }
         case msg::Accepted::TYPE_ID: {
             handle(ia.deserialize<msg::Accepted>());
-            break;
-        }
-        case msg::AcceptedResponse::TYPE_ID: {
-            handle(ia.deserialize<msg::AcceptedResponse>());
             break;
         }
         case msg::Ping::TYPE_ID: {
@@ -333,15 +309,49 @@ void Peer::process(const base::Bytes& received_data)
             // TODO: reduce peer rating
         }
     }
+    LOG_DEBUG << "Processed " << enumToString(msg_type);
 }
 
 
 void Peer::handle(lk::msg::Connect&& msg)
 {
+    if (msg.public_port) {
+        auto public_ep = getEndpoint();
+        public_ep.setPort(msg.public_port);
+        setServerEndpoint(public_ep);
+    }
+    _address = msg.address;
+
+
     if (tryAddToPool()) {
-        sendMessage(msg::Accepted{ _core.getTopBlock(),
-                                   _core.getThisNodeAddress(),
-                                   getPublicEndpoint().getPort() });
+        sendMessage(msg::Accepted{ _core.getTopBlock(), _core.getThisNodeAddress(), getPublicEndpoint().getPort() });
+
+        requestLookup(getAddress(), base::config::NET_LOOKUP_ALPHA);
+
+        const auto& ours_top_block = _core.getTopBlock();
+        if (msg.top_block == ours_top_block) {
+            setState(lk::Peer::State::SYNCHRONISED);
+            return; // nothing changes, because top blocks are equal
+        }
+        else {
+            if (ours_top_block.getDepth() > msg.top_block.getDepth()) {
+                setState(lk::Peer::State::SYNCHRONISED);
+                // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
+                return;
+            }
+            else {
+                if (_core.getTopBlock().getDepth() + 1 == msg.top_block.getDepth()) {
+                    _core.tryAddBlock(msg.top_block);
+                    setState(lk::Peer::State::SYNCHRONISED);
+                }
+                else {
+                    base::SerializationOArchive oa;
+                    sendMessage(msg::GetBlock{ msg.top_block.getPrevBlockHash() });
+                    setState(lk::Peer::State::REQUESTED_BLOCKS);
+                    addSyncBlock(std::move(msg.top_block));
+                }
+            }
+        }
     }
     else {
         sendMessage(
@@ -354,91 +364,52 @@ void Peer::handle(lk::msg::Connect&& msg)
 void Peer::handle(lk::msg::CannotAccept&& msg)
 {
     for (const auto& peer : msg.peers_info) {
-        _host.checkOutPeer(peer.endpoint, [](std::shared_ptr<Peer> peer) {
-            if (peer)
-                peer->startSession();
-        });
+        _host.checkOutPeer(peer.endpoint, peer.address);
     }
 }
 
 
 void Peer::handle(lk::msg::Accepted&& msg)
 {
-    const auto& ours_top_block = _core.getTopBlock();
-
-    sendMessage(msg::AcceptedResponse{ _core.getTopBlock(),
-                                       _core.getThisNodeAddress(),
-                                       getPublicEndpoint().getPort() },
-                {});
-
-    sendMessage(msg::Lookup{getAddress(), base::config::NET_LOOKUP_ALPHA});
-
     if (msg.public_port) {
         auto public_ep = getEndpoint();
         public_ep.setPort(msg.public_port);
         setServerEndpoint(public_ep);
     }
 
-    if (msg.theirs_top_block == ours_top_block) {
-        setState(lk::Peer::State::SYNCHRONISED);
-        return; // nothing changes, because top blocks are equal
-    }
-    else {
-        if (ours_top_block.getDepth() > msg.theirs_top_block.getDepth()) {
+    sendMessage(msg::Lookup{ getAddress(), base::config::NET_LOOKUP_ALPHA });
+
+    if (tryAddToPool()) {
+        const auto& ours_top_block = _core.getTopBlock();
+
+        if (msg.theirs_top_block == ours_top_block) {
             setState(lk::Peer::State::SYNCHRONISED);
-            // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
-            return;
+            return; // nothing changes, because top blocks are equal
         }
         else {
-            if (_core.getTopBlock().getDepth() + 1 == msg.theirs_top_block.getDepth()) {
-                _core.tryAddBlock(msg.theirs_top_block);
+            if (ours_top_block.getDepth() > msg.theirs_top_block.getDepth()) {
                 setState(lk::Peer::State::SYNCHRONISED);
+                // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
+                return;
             }
             else {
-                base::SerializationOArchive oa;
-                sendMessage(msg::GetBlock{ msg.theirs_top_block.getPrevBlockHash() });
-                setState(lk::Peer::State::REQUESTED_BLOCKS);
-                addSyncBlock(std::move(msg.theirs_top_block));
+                if (_core.getTopBlock().getDepth() + 1 == msg.theirs_top_block.getDepth()) {
+                    _core.tryAddBlock(msg.theirs_top_block);
+                    setState(lk::Peer::State::SYNCHRONISED);
+                }
+                else {
+                    base::SerializationOArchive oa;
+                    sendMessage(msg::GetBlock{ msg.theirs_top_block.getPrevBlockHash() });
+                    setState(lk::Peer::State::REQUESTED_BLOCKS);
+                    addSyncBlock(std::move(msg.theirs_top_block));
+                }
             }
         }
-    }
-}
-
-
-void Peer::handle(lk::msg::AcceptedResponse&& msg)
-{
-    sendMessage(msg::Lookup{getAddress(), base::config::NET_LOOKUP_ALPHA});
-
-    const auto& ours_top_block = _core.getTopBlock();
-
-    if (msg.public_port) {
-        auto public_ep = getEndpoint();
-        public_ep.setPort(msg.public_port);
-        setServerEndpoint(public_ep);
-    }
-
-    if (msg.theirs_top_block == ours_top_block) {
-        setState(lk::Peer::State::SYNCHRONISED);
-        return; // nothing changes, because top blocks are equal
     }
     else {
-        if (ours_top_block.getDepth() > msg.theirs_top_block.getDepth()) {
-            setState(lk::Peer::State::SYNCHRONISED);
-            // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
-            return;
-        }
-        else {
-            if (_core.getTopBlock().getDepth() + 1 == msg.theirs_top_block.getDepth()) {
-                _core.tryAddBlock(msg.theirs_top_block);
-                setState(lk::Peer::State::SYNCHRONISED);
-            }
-            else {
-                base::SerializationOArchive oa;
-                sendMessage(msg::GetBlock{ msg.theirs_top_block.getPrevBlockHash() });
-                setState(lk::Peer::State::REQUESTED_BLOCKS);
-                addSyncBlock(std::move(msg.theirs_top_block));
-            }
-        }
+        sendMessage(
+          msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
+        // and close peer properly
     }
 }
 
@@ -462,10 +433,10 @@ void Peer::handle(lk::msg::LookupResponse&& msg)
     // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of
     // communication: now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
 
-    if (auto it = _lookup_callbacks.find(_address); it != _lookup_callbacks.end()) {
-        auto callback = std::move(it->second);
-        _lookup_callbacks.erase(it);
-        callback(msg.peers_info);
+    LOG_DEBUG << "Lookup response peer entries:";
+    for (const auto& pi : msg.peers_info) {
+        LOG_DEBUG << pi.endpoint << ' ' << pi.address;
+        _host.checkOutPeer(pi.endpoint, pi.address);
     }
 }
 
@@ -498,7 +469,7 @@ void Peer::handle(lk::msg::Block&& msg)
             // block added, all is OK
         }
         else {
-            // in this case we are missing some blocks
+            // in this case we might be missing some blocks
         }
     }
     else {

@@ -7,14 +7,18 @@ namespace lk::msg
 
 void Connect::serialize(base::SerializationOArchive& oa) const
 {
-    oa.serialize(peer_id);
+    oa.serialize(address);
+    oa.serialize(public_port);
+    oa.serialize(top_block);
 }
 
 
 Connect Connect::deserialize(base::SerializationIArchive& ia)
 {
-    auto peers_id = ia.deserialize<Peer::IdentityInfo>();
-    return Connect{ std::move(peers_id) };
+    auto address = ia.deserialize<lk::Address>();
+    auto peers_id = ia.deserialize<std::uint16_t>();
+    auto top_block = ia.deserialize<lk::Block>();
+    return Connect{ std::move(address), peers_id, std::move(top_block) };
 }
 
 
@@ -47,23 +51,6 @@ Accepted Accepted::deserialize(base::SerializationIArchive& ia)
     auto address = ia.deserialize<lk::Address>();
     auto public_port = ia.deserialize<std::uint16_t>();
     return Accepted{ std::move(top_block), std::move(address), public_port };
-}
-
-
-void AcceptedResponse::serialize(base::SerializationOArchive& oa) const
-{
-    oa.serialize(theirs_top_block);
-    oa.serialize(address);
-    oa.serialize(public_port);
-}
-
-
-AcceptedResponse AcceptedResponse::deserialize(base::SerializationIArchive& ia)
-{
-    auto top_block = ia.deserialize<lk::Block>();
-    auto address = ia.deserialize<lk::Address>();
-    auto public_port = ia.deserialize<std::uint16_t>();
-    return AcceptedResponse{ std::move(top_block), std::move(address), public_port };
 }
 
 
