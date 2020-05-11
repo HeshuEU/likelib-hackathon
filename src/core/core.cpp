@@ -32,7 +32,7 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
         }
     }
 
-    subscribeToBlockAddition([this](const lk::Block& block) { _host.broadcast(block); });
+    subscribeToBlockAddition([this](const base::Sha256& block_hash, const lk::Block& block) { _host.broadcast(block_hash, block); });
     subscribeToNewPendingTransaction([this](const lk::Transaction& tx) { _host.broadcast(tx); });
 }
 
@@ -86,7 +86,7 @@ void Core::addPendingTransactionAndWait(const lk::Transaction& tx)
     std::mutex mt;
     bool is_tx_mined = false;
 
-    auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](const lk::Block& block) {
+    auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](base::Sha256 block_hash, const lk::Block& block) {
         if (block.getTransactions().find(tx)) {
             is_tx_mined = true;
             cv.notify_all();
@@ -122,7 +122,8 @@ bool Core::tryAddBlock(const lk::Block& b)
         }
         LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
         applyBlockTransactions(b);
-        _event_block_added.notify(b);
+        auto block_hash = base::Sha256::compute(base::toBytes(b));
+        _event_block_added.notify(std::move(block_hash), b);
         return true;
     }
     else {

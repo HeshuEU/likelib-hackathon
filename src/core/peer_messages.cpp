@@ -110,7 +110,7 @@ void Transaction::serialize(base::SerializationOArchive& oa) const
 
 Transaction Transaction::deserialize(base::SerializationIArchive& ia)
 {
-    auto tx = lk::Transaction::deserialize(ia);
+    auto tx = ia.deserialize<lk::Transaction>();
     return Transaction{ std::move(tx) };
 }
 
@@ -123,21 +123,23 @@ void GetBlock::serialize(base::SerializationOArchive& oa) const
 
 GetBlock GetBlock::deserialize(base::SerializationIArchive& ia)
 {
-    auto block_hash = base::Sha256::deserialize(ia);
+    auto block_hash = ia.deserialize<base::Sha256>();
     return GetBlock{ std::move(block_hash) };
 }
 
 
 void Block::serialize(base::SerializationOArchive& oa) const
 {
+    oa.serialize(block_hash);
     oa.serialize(block);
 }
 
 
 Block Block::deserialize(base::SerializationIArchive& ia)
 {
-    auto block = lk::Block::deserialize(ia);
-    return Block{ std::move(block) };
+    auto block_hash = ia.deserialize<base::Sha256>();
+    auto block = ia.deserialize<lk::Block>();
+    return Block{ std::move(block_hash), std::move(block) };
 }
 
 
@@ -149,7 +151,7 @@ void BlockNotFound::serialize(base::SerializationOArchive& oa) const
 
 BlockNotFound BlockNotFound::deserialize(base::SerializationIArchive& ia)
 {
-    auto block_hash = base::Sha256::deserialize(ia);
+    auto block_hash = ia.deserialize<base::Sha256>();
     return BlockNotFound{ std::move(block_hash) };
 }
 

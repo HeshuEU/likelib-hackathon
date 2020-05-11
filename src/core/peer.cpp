@@ -96,17 +96,15 @@ void Peer::IdentityInfo::serialize(base::SerializationOArchive& oa) const
 }
 
 
-void Peer::sendBlock(const lk::Block& block)
+void Peer::sendBlock(const base::Sha256& block_hash, const lk::Block& block)
 {
-    msg::Block msg{ block };
-    sendMessage(msg);
+    sendMessage(msg::Block{ block_hash, block });
 }
 
 
 void Peer::sendTransaction(const lk::Transaction& tx)
 {
-    msg::Transaction msg{ tx };
-    sendMessage(msg);
+    sendMessage(msg::Transaction{ tx });
 }
 
 
@@ -130,7 +128,13 @@ void Peer::requestLookup(const lk::Address& address, const std::uint8_t alpha)
 
     data->timer.async_wait([data](const auto& ec) { data->was_responded = true; });
 
-    sendMessage(msg::Lookup{ address, alpha }, {});
+    sendMessage(msg::Lookup{ address, alpha });
+}
+
+
+void Peer::requestBlock(const base::Sha256& block_hash)
+{
+    sendMessage(msg::GetBlock{block_hash});
 }
 
 
@@ -222,27 +226,6 @@ base::Time Peer::getLastSeen() const
 }
 
 
-void Peer::addSyncBlock(lk::Block block)
-{
-    _sync_blocks.push_front(std::move(block));
-}
-
-
-void Peer::applySyncs()
-{
-    for (auto&& sync : _sync_blocks) {
-        _core.tryAddBlock(sync);
-    }
-    _sync_blocks.clear();
-}
-
-
-const std::forward_list<lk::Block>& Peer::getSyncBlocks() const noexcept
-{
-    return _sync_blocks;
-}
-
-
 const lk::Address& Peer::getAddress() const noexcept
 {
     return _address;
@@ -318,9 +301,9 @@ Peer::Synchronizer::Synchronizer(Peer& peer)
 {}
 
 
-void Peer::Synchronizer::run(const base::Sha256& peers_top_block)
+void Peer::Synchronizer::handleReceivedTopBlockHash(const base::Sha256& peers_top_block)
 {
-    const auto& ours_top_block_hash = base::Sha256::compute(base::toBytes(_peer._core.getTopBlock()));
+    const auto& ours_top_block_hash = _peer._core.getTopBlockHash();
 
     if (peers_top_block == ours_top_block_hash) {
         _peer.setState(lk::Peer::State::SYNCHRONISED);
@@ -341,15 +324,31 @@ void Peer::Synchronizer::run(const base::Sha256& peers_top_block)
 }
 
 
-bool Peer::Synchronizer::handleReceivedBlock(const Block& block)
+bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Block& block)
 {
-    return false;
+    ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
+
+    if(_requested_block && *_requested_block == hash) {
+
+    }
 }
 
 
 bool Peer::Synchronizer::isSynchronised() const
 {
     return true;
+}
+
+
+void Peer::Synchronizer::requestBlock(base::Sha256 block_hash)
+{
+    if(_requested_block) {
+        RAISE_ERROR(base::RuntimeError, "block was already requested and not answered yet");
+    }
+    else {
+        _peer.requestBlock(block_hash);
+        _requested_block = std::move(block_hash);
+    }
 }
 
 //===============================================
@@ -459,7 +458,7 @@ void Peer::handle(lk::msg::Connect&& msg)
           msg::Accepted{ _core.getThisNodeAddress(), getPublicEndpoint().getPort(), _core.getTopBlockHash() });
 
         requestLookup(getAddress(), base::config::NET_LOOKUP_ALPHA);
-        _synchronizer.run(msg.top_block_hash);
+        _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
         sendMessage(
@@ -492,7 +491,7 @@ void Peer::handle(lk::msg::Accepted&& msg)
         _non_handshaked_pool.removePeer(this);
         const auto& ours_top_block = _core.getTopBlock();
 
-        _synchronizer.run(msg.top_block_hash);
+        _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
         sendMessage(
@@ -521,9 +520,16 @@ void Peer::handle(lk::msg::LookupResponse&& msg)
     // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of
     // communication: now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
 
-    LOG_DEBUG << "Lookup response peer entries:";
+    if constexpr(base::config::IS_DEBUG) {
+        std::ostringstream ss;
+        ss << "Lookup response peer entries:\n";
+        for(const auto& pi : msg.peers_info) {
+            ss << pi.endpoint << ' ' << pi.address << '\n';
+        }
+        LOG_DEBUG << ss.str();
+    }
+
     for (const auto& pi : msg.peers_info) {
-        LOG_DEBUG << pi.endpoint << ' ' << pi.address;
         _host.checkOutPeer(pi.endpoint, pi.address);
     }
 }
@@ -538,9 +544,8 @@ void Peer::handle(lk::msg::Transaction&& msg)
 void Peer::handle(lk::msg::GetBlock&& msg)
 {
     LOG_DEBUG << "Received GET_BLOCK on " << msg.block_hash;
-    auto block = _core.findBlock(msg.block_hash);
-    if (block) {
-        sendMessage(msg::Block{ (*block) });
+    if (auto block = _core.findBlock(msg.block_hash)) {
+        sendMessage(msg::Block{ msg.block_hash, *block });
     }
     else {
         sendMessage(msg::BlockNotFound{ msg.block_hash });
@@ -550,9 +555,12 @@ void Peer::handle(lk::msg::GetBlock&& msg)
 
 void Peer::handle(lk::msg::Block&& msg)
 {
-    if (_synchronizer.handleReceivedBlock(msg.block)) {
+    if(msg.block_hash != base::Sha256::compute(base::toBytes(msg.block))) {
+        _rating.invalidMessage();
+        return;
     }
-    else {
+
+    if (!_synchronizer.handleReceivedBlock(msg.block_hash, msg.block)) {
         // strange block received, decrease rating
         _rating.badBlock();
     }

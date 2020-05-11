@@ -120,7 +120,7 @@ class Host
     BasicPeerPool& getNonHandshakedPool() noexcept;
     KademliaPeerPool& getHandshakedPool() noexcept;
     //=================================
-    void broadcast(const lk::Block& block);
+    void broadcast(const base::Sha256& block_hash, const lk::Block& block);
     void broadcast(const lk::Transaction& tx);
     //=================================
     void run();

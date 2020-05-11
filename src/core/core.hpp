@@ -61,7 +61,7 @@ class Core
     const base::KeyVault& _vault;
     const lk::Address _this_node_address;
     //==================
-    base::Observable<const lk::Block&> _event_block_added;
+    base::Observable<base::Sha256, const lk::Block&> _event_block_added;
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
     //==================
     bool _is_account_manager_updated{ false };

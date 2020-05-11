@@ -118,11 +118,10 @@ class Peer : public std::enable_shared_from_this<Peer>
     IdentityInfo getInfo() const;
     bool isClosed() const;
     //=========================
-    void addSyncBlock(lk::Block block);
-    void applySyncs();
-    const std::forward_list<lk::Block>& getSyncBlocks() const noexcept;
-    //=========================
-    void sendBlock(const lk::Block& block);
+    void requestLookup(const lk::Address& address, uint8_t alpha);
+    void requestBlock(const base::Sha256& block_hash);
+
+    void sendBlock(const base::Sha256& block_hash, const lk::Block& block);
     void sendTransaction(const lk::Transaction& tx);
     //=========================
     /**
@@ -130,9 +129,6 @@ class Peer : public std::enable_shared_from_this<Peer>
      * If the peer was connected to it waits for reply.
      */
     void startSession();
-
-    void requestLookup(const lk::Address& address, uint8_t alpha);
-
   private:
     //=========================
     Peer(std::shared_ptr<net::Session> session,
@@ -183,19 +179,21 @@ class Peer : public std::enable_shared_from_this<Peer>
     void setState(State state);
     State getState() const noexcept;
     //=========================
-    std::forward_list<lk::Block> _sync_blocks;
-
     class Synchronizer
     {
       public:
-        Synchronizer(Peer& peer);
+        explicit Synchronizer(Peer& peer);
 
-        void run(const base::Sha256& peers_top_block);
-        bool handleReceivedBlock(const Block& block);
+        void handleReceivedTopBlockHash(const base::Sha256& peers_top_block);
+        bool handleReceivedBlock(const base::Sha256& hash, const Block& block);
         bool isSynchronised() const;
 
       private:
         Peer& _peer;
+
+        void requestBlock(base::Sha256 block_hash);
+
+        std::optional<base::Sha256> _requested_block;
     };
 
     Synchronizer _synchronizer{ *this };
@@ -337,6 +335,7 @@ struct Block
 {
     static constexpr Type TYPE_ID = Type::BLOCK;
 
+    base::Sha256 block_hash;
     lk::Block block;
 
     void serialize(base::SerializationOArchive& oa) const;
