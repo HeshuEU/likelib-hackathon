@@ -47,6 +47,7 @@ class Core
     std::optional<lk::Block> findBlock(const base::Sha256& hash) const;
     std::optional<base::Sha256> findBlockHash(const lk::BlockDepth& depth) const;
     const lk::Block& getTopBlock() const;
+    base::Sha256 getTopBlockHash() const;
     //==================
     lk::Block getBlockTemplate() const;
     //==================

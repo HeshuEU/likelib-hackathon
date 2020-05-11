@@ -32,13 +32,11 @@ class Blockchain
     std::optional<lk::Transaction> findTransaction(const base::Sha256& tx_hash) const;
     //===================
     const lk::Block& getTopBlock() const;
-    //===================
-
+    base::Sha256 getTopBlockHash() const;
     //===================
   private:
     //===================
     const base::PropertyTree& _config;
-    bool _is_loaded;
     //===================
     std::unordered_map<base::Sha256, Block> _blocks;
     std::map<lk::BlockDepth, base::Sha256> _blocks_by_depth;

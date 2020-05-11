@@ -59,7 +59,7 @@ struct Close;
 class Peer : public std::enable_shared_from_this<Peer>
 {
   public:
-    //================
+    //=========================
     /**
      * Classes that are required for network messages handling.
      */
@@ -84,31 +84,29 @@ class Peer : public std::enable_shared_from_this<Peer>
         static IdentityInfo deserialize(base::SerializationIArchive& ia);
         void serialize(base::SerializationOArchive& oa) const;
     };
-    //================
+    //=========================
     static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, Context context);
     static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, Context context);
-    //================
+
+    ~Peer();
+    //=========================
     base::Time getLastSeen() const;
     net::Endpoint getEndpoint() const;
     net::Endpoint getPublicEndpoint() const;
     bool wasConnectedTo() const noexcept;
-
-    void setServerEndpoint(net::Endpoint endpoint);
-    void setState(State state);
-    State getState() const noexcept;
-    //================
+    //=========================
     const lk::Address& getAddress() const noexcept;
-    //================
+    //=========================
     IdentityInfo getInfo() const;
     bool isClosed() const;
-    //================
+    //=========================
     void addSyncBlock(lk::Block block);
     void applySyncs();
     const std::forward_list<lk::Block>& getSyncBlocks() const noexcept;
-    //================
+    //=========================
     void sendBlock(const lk::Block& block);
     void sendTransaction(const lk::Transaction& tx);
-    //===============
+    //=========================
     /**
      * If the peer was accepted, it responds to it whether the acception was successful or not.
      * If the peer was connected to it waits for reply.
@@ -118,7 +116,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     void requestLookup(const lk::Address& address, uint8_t alpha);
 
   private:
-    //================
+    //=========================
     Peer(std::shared_ptr<net::Session> session,
          bool was_connected_to,
          boost::asio::io_context& io_context,
@@ -126,51 +124,70 @@ class Peer : public std::enable_shared_from_this<Peer>
          lk::KademliaPeerPoolBase& handshaked_pool,
          lk::Core& core,
          lk::Host& host);
-    //================
+    //=========================
     /*
      * Tries to add peer to a peer pool, to which it is attached.
      * @return true if success, false - otherwise
      */
     bool tryAddToPool();
-    //================
-    template<typename M>
-    void sendMessage(const M& msg, net::Connection::SendHandler on_send = {});
-
+    void removeFromPools(); // only called inside onClose or inside destructor
+    //=========================
     /*
      * Handler of session messages.
      */
     class Handler : public net::Session::Handler
     {
       public:
-        Handler(Peer& peer);
+        Handler(std::weak_ptr<Peer> peer);
 
         void onReceive(const base::Bytes& bytes) override;
         void onClose() override;
 
       private:
-        Peer& _peer;
+        std::weak_ptr<Peer> _peer;
     };
-    //================
 
+    template<typename M>
+    void sendMessage(const M& msg, net::Connection::SendHandler on_send = {});
+    //=========================
     std::shared_ptr<net::Session> _session;
     bool _is_started{ false };
     bool _was_connected_to; // peer was connected to or accepted?
-    //================
+    //=========================
     boost::asio::io_context& _io_context;
-    //================
+    //=========================
     State _state{ State::JUST_ESTABLISHED };
     std::optional<net::Endpoint> _endpoint_for_incoming_connections;
     lk::Address _address;
-    //================
+
+    void setServerEndpoint(net::Endpoint endpoint);
+    void setState(State state);
+    State getState() const noexcept;
+    //=========================
     std::forward_list<lk::Block> _sync_blocks;
+
+    class Synchronizer
+    {
+      public:
+        Synchronizer(Peer& peer);
+
+        void run(const base::Sha256& peers_top_block);
+        bool handleReceivedBlock(const Block& block);
+        bool isSynchronised() const;
+      private:
+        Peer& _peer;
+    };
+
+    Synchronizer _synchronizer{*this};
     //================
     lk::PeerPoolBase& _non_handshaked_pool;
     bool _is_attached_to_handshaked_pool{ false };
     lk::KademliaPeerPoolBase& _handshaked_pool;
     lk::Core& _core;
     lk::Host& _host;
-    //================
+    //=========================
     void process(const base::Bytes& received_data);
+    //=========================
     void handle(msg::Connect&& msg);
     void handle(msg::CannotAccept&& msg);
     void handle(msg::Accepted&& msg);
@@ -183,7 +200,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     void handle(msg::Block&& msg);
     void handle(msg::BlockNotFound&& msg);
     void handle(msg::Close&& msg);
-    //================
+    //=========================
 };
 
 
@@ -196,7 +213,7 @@ struct Connect
 
     lk::Address address;
     std::uint16_t public_port;
-    lk::Block top_block;
+    base::Sha256 top_block_hash;
 
     void serialize(base::SerializationOArchive& oa) const;
     static Connect deserialize(base::SerializationIArchive& ia);
@@ -223,9 +240,9 @@ struct Accepted
 {
     static constexpr Type TYPE_ID = Type::ACCEPTED;
 
-    lk::Block theirs_top_block;
     lk::Address address;
-    std::uint16_t public_port; // zero public port states that peer didn't provide information about his public endpoint
+    uint16_t public_port; // zero public port states that peer didn't provide information about his public endpoint
+    base::Sha256 top_block_hash;
 
     void serialize(base::SerializationOArchive& oa) const;
     static Accepted deserialize(base::SerializationIArchive& ia);

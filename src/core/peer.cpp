@@ -149,7 +149,13 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _core{ core }
   , _host{ host }
 {
-    _session->setHandler(std::make_unique<Handler>(*this));
+    _session->setHandler(std::make_unique<Handler>(weak_from_this()));
+}
+
+
+Peer::~Peer()
+{
+    removeFromPools();
 }
 
 
@@ -219,7 +225,7 @@ void Peer::startSession()
 
     _session->start();
     if (wasConnectedTo()) {
-        sendMessage<msg::Connect>({ _core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlock() });
+        sendMessage<msg::Connect>({ _core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlockHash() });
     }
 }
 
@@ -256,24 +262,80 @@ bool Peer::tryAddToPool()
 }
 
 
-Peer::Handler::Handler(Peer& peer)
-  : _peer{ peer }
+void Peer::removeFromPools()
+{
+    if (_is_attached_to_handshaked_pool) {
+        _handshaked_pool.removePeer(this);
+    }
+    else {
+        _non_handshaked_pool.removePeer(this);
+    }
+}
+
+//===============================================
+
+Peer::Synchronizer::Synchronizer(Peer& peer)
+    : _peer{peer}
+{}
+
+
+void Peer::Synchronizer::run(const base::Sha256& peers_top_block)
+{
+    const auto& ours_top_block_hash = base::Sha256::compute(base::toBytes(_peer._core.getTopBlock()));
+
+    if (peers_top_block == ours_top_block_hash) {
+        _peer.setState(lk::Peer::State::SYNCHRONISED);
+        return; // nothing changes, because top blocks are equal
+    }
+    else {
+        if (_peer._core.findBlock(peers_top_block)) {
+            _peer.setState(lk::Peer::State::SYNCHRONISED);
+            // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
+            return;
+        }
+        else {
+            base::SerializationOArchive oa;
+            _peer.sendMessage(msg::GetBlock{ peers_top_block });
+            _peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
+        }
+    }
+}
+
+
+bool Peer::Synchronizer::handleReceivedBlock(const Block& block)
+{
+    return false;
+}
+
+
+bool Peer::Synchronizer::isSynchronised() const
+{
+    return true;
+}
+
+//===============================================
+
+Peer::Handler::Handler(std::weak_ptr<Peer> peer)
+  : _peer{ std::move(peer) }
 {}
 
 
 void Peer::Handler::onReceive(const base::Bytes& bytes)
 {
-    _peer.process(bytes);
+    if(auto p = _peer.lock()) {
+        p->process(bytes);
+    }
 }
 
 
 void Peer::Handler::onClose()
 {
-    if (_peer._is_attached_to_handshaked_pool) {
-        _peer._handshaked_pool.removePeer(&_peer);
+    if(auto p = _peer.lock()) {
+        p->removeFromPools();
     }
 }
 
+//===============================================
 
 void Peer::process(const base::Bytes& received_data)
 {
@@ -341,6 +403,7 @@ void Peer::process(const base::Bytes& received_data)
     LOG_DEBUG << "Processed " << enumToString(msg_type);
 }
 
+//===============================================
 
 void Peer::handle(lk::msg::Connect&& msg)
 {
@@ -353,34 +416,10 @@ void Peer::handle(lk::msg::Connect&& msg)
 
     if (tryAddToPool()) {
         _non_handshaked_pool.removePeer(this);
-        sendMessage(msg::Accepted{ _core.getTopBlock(), _core.getThisNodeAddress(), getPublicEndpoint().getPort() });
+        sendMessage(msg::Accepted{ _core.getThisNodeAddress(), getPublicEndpoint().getPort(), _core.getTopBlockHash() });
 
         requestLookup(getAddress(), base::config::NET_LOOKUP_ALPHA);
-
-        const auto& ours_top_block = _core.getTopBlock();
-        if (msg.top_block == ours_top_block) {
-            setState(lk::Peer::State::SYNCHRONISED);
-            return; // nothing changes, because top blocks are equal
-        }
-        else {
-            if (ours_top_block.getDepth() > msg.top_block.getDepth()) {
-                setState(lk::Peer::State::SYNCHRONISED);
-                // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
-                return;
-            }
-            else {
-                if (_core.getTopBlock().getDepth() + 1 == msg.top_block.getDepth()) {
-                    _core.tryAddBlock(msg.top_block);
-                    setState(lk::Peer::State::SYNCHRONISED);
-                }
-                else {
-                    base::SerializationOArchive oa;
-                    sendMessage(msg::GetBlock{ msg.top_block.getPrevBlockHash() });
-                    setState(lk::Peer::State::REQUESTED_BLOCKS);
-                    addSyncBlock(std::move(msg.top_block));
-                }
-            }
-        }
+        _synchronizer.run(msg.top_block_hash);
     }
     else {
         sendMessage(
@@ -413,29 +452,7 @@ void Peer::handle(lk::msg::Accepted&& msg)
         _non_handshaked_pool.removePeer(this);
         const auto& ours_top_block = _core.getTopBlock();
 
-        if (msg.theirs_top_block == ours_top_block) {
-            setState(lk::Peer::State::SYNCHRONISED);
-            return; // nothing changes, because top blocks are equal
-        }
-        else {
-            if (ours_top_block.getDepth() > msg.theirs_top_block.getDepth()) {
-                setState(lk::Peer::State::SYNCHRONISED);
-                // do nothing, because we are ahead of this peer and we don't need to sync: this node might sync
-                return;
-            }
-            else {
-                if (_core.getTopBlock().getDepth() + 1 == msg.theirs_top_block.getDepth()) {
-                    _core.tryAddBlock(msg.theirs_top_block);
-                    setState(lk::Peer::State::SYNCHRONISED);
-                }
-                else {
-                    base::SerializationOArchive oa;
-                    sendMessage(msg::GetBlock{ msg.theirs_top_block.getPrevBlockHash() });
-                    setState(lk::Peer::State::REQUESTED_BLOCKS);
-                    addSyncBlock(std::move(msg.theirs_top_block));
-                }
-            }
-        }
+        _synchronizer.run(msg.top_block_hash);
     }
     else {
         sendMessage(
@@ -493,27 +510,11 @@ void Peer::handle(lk::msg::GetBlock&& msg)
 
 void Peer::handle(lk::msg::Block&& msg)
 {
-    if (getState() == lk::Peer::State::SYNCHRONISED) {
-        // we're synchronised already
+    if(_synchronizer.handleReceivedBlock(msg.block)) {
 
-        if (_core.tryAddBlock(msg.block)) {
-            // block added, all is OK
-        }
-        else {
-            // in this case we might be missing some blocks
-        }
     }
     else {
-        // we are in synchronization process
-        lk::BlockDepth block_depth = msg.block.getDepth();
-        addSyncBlock(std::move(msg.block));
-
-        if (block_depth == _core.getTopBlock().getDepth() + 1) {
-            applySyncs();
-        }
-        else {
-            sendMessage(msg::GetBlock{ getSyncBlocks().front().getPrevBlockHash() });
-        }
+        // strange block received, decrease rating
     }
 }
 
@@ -527,3 +528,5 @@ void Peer::handle(lk::msg::BlockNotFound&& msg)
 void Peer::handle(lk::msg::Close&& msg) {}
 
 }
+
+//===============================================

@@ -9,7 +9,7 @@ void Connect::serialize(base::SerializationOArchive& oa) const
 {
     oa.serialize(address);
     oa.serialize(public_port);
-    oa.serialize(top_block);
+    oa.serialize(top_block_hash);
 }
 
 
@@ -17,8 +17,8 @@ Connect Connect::deserialize(base::SerializationIArchive& ia)
 {
     auto address = ia.deserialize<lk::Address>();
     auto peers_id = ia.deserialize<std::uint16_t>();
-    auto top_block = ia.deserialize<lk::Block>();
-    return Connect{ std::move(address), peers_id, std::move(top_block) };
+    auto top_block_hash = ia.deserialize<base::Sha256>();
+    return Connect{ std::move(address), peers_id, std::move(top_block_hash) };
 }
 
 
@@ -39,18 +39,18 @@ CannotAccept CannotAccept::deserialize(base::SerializationIArchive& ia)
 
 void Accepted::serialize(base::SerializationOArchive& oa) const
 {
-    oa.serialize(theirs_top_block);
     oa.serialize(address);
     oa.serialize(public_port);
+    oa.serialize(top_block_hash);
 }
 
 
 Accepted Accepted::deserialize(base::SerializationIArchive& ia)
 {
-    auto top_block = ia.deserialize<lk::Block>();
     auto address = ia.deserialize<lk::Address>();
     auto public_port = ia.deserialize<std::uint16_t>();
-    return Accepted{ std::move(top_block), std::move(address), public_port };
+    auto top_block_hash = ia.deserialize<base::Sha256>();
+    return Accepted{ std::move(address), public_port, std::move(top_block_hash) };
 }
 
 

@@ -214,6 +214,12 @@ const lk::Block& Core::getTopBlock() const
 }
 
 
+base::Sha256 Core::getTopBlockHash() const
+{
+    return _blockchain.getTopBlockHash();
+}
+
+
 const lk::Address& Core::getThisNodeAddress() const noexcept
 {
     return _this_node_address;
