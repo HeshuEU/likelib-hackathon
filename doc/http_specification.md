@@ -167,7 +167,7 @@ request:
 	{
 		“from”: “<address encoded by base58>”,
 		“to”: “<contract address encoded by base58>”,
-		“message”: “<binary encoded(for call) data string message then ecnoded by base64>”,
+		“message”: “<binary encoded(for call) data message ecnoded by base64>”,
 	}
 
 response:

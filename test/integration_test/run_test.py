@@ -2,13 +2,15 @@ import argparse
 
 import tester
 
-import test_connection
-import test_transfer
-import test_contract
-import test_multi_network
-import test_multi_transfer
-import test_contract_functions
-import test_auction_contract
+import test_communication_base
+import test_common_process
+
+# import test_transfer
+# import test_contract
+# import test_multi_network
+# import test_multi_transfer
+# import test_contract_functions
+# import test_auction_contract
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test execution params')
