@@ -34,6 +34,45 @@ namespace lk
  *  Fix: do a synchronisation during runtime.
  */
 
+
+Rating::Rating(std::int_fast32_t initial_value)
+    : _value{initial_value}
+{}
+
+
+std::int_fast32_t Rating::getValue() const noexcept
+{
+    return _value;
+}
+
+
+Rating::operator bool() const noexcept
+{
+    return _value > 0;
+}
+
+
+Rating& Rating::nonExpectedMessage() noexcept
+{
+    _value -= 20;
+    return *this;
+}
+
+
+Rating& Rating::invalidMessage() noexcept
+{
+    _value -= 30;
+    return *this;
+}
+
+
+Rating& Rating::badBlock() noexcept
+{
+    _value -= 10;
+    return *this;
+}
+
+
 std::vector<Peer::IdentityInfo> PeerPoolBase::allPeersInfo() const
 {
     std::vector<Peer::IdentityInfo> ret;
@@ -105,7 +144,7 @@ std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Cont
                                        context.core,
                                        context.host));
 
-    if(!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
+    if (!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
         RAISE_ERROR(base::Error, "cannot add peer");
     }
 
@@ -124,7 +163,7 @@ std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Con
                                        context.core,
                                        context.host));
 
-    if(!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
+    if (!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
         RAISE_ERROR(base::Error, "cannot add peer");
     }
 
@@ -275,7 +314,7 @@ void Peer::removeFromPools()
 //===============================================
 
 Peer::Synchronizer::Synchronizer(Peer& peer)
-    : _peer{peer}
+  : _peer{ peer }
 {}
 
 
@@ -322,7 +361,7 @@ Peer::Handler::Handler(std::weak_ptr<Peer> peer)
 
 void Peer::Handler::onReceive(const base::Bytes& bytes)
 {
-    if(auto p = _peer.lock()) {
+    if (auto p = _peer.lock()) {
         p->process(bytes);
     }
 }
@@ -330,7 +369,7 @@ void Peer::Handler::onReceive(const base::Bytes& bytes)
 
 void Peer::Handler::onClose()
 {
-    if(auto p = _peer.lock()) {
+    if (auto p = _peer.lock()) {
         p->removeFromPools();
     }
 }
@@ -396,8 +435,8 @@ void Peer::process(const base::Bytes& received_data)
             ASSERT(static_cast<int>(msg::Type::DEBUG_MIN) >= static_cast<int>(msg_type) ||
                    static_cast<int>(msg::Type::DEBUG_MAX) <= static_cast<int>(msg_type));
 
-            // invalid message type received
-            // TODO: reduce peer rating
+            // invalid message type received - decrease rating
+            _rating.invalidMessage();
         }
     }
     LOG_DEBUG << "Processed " << enumToString(msg_type);
@@ -416,7 +455,8 @@ void Peer::handle(lk::msg::Connect&& msg)
 
     if (tryAddToPool()) {
         _non_handshaked_pool.removePeer(this);
-        sendMessage(msg::Accepted{ _core.getThisNodeAddress(), getPublicEndpoint().getPort(), _core.getTopBlockHash() });
+        sendMessage(
+          msg::Accepted{ _core.getThisNodeAddress(), getPublicEndpoint().getPort(), _core.getTopBlockHash() });
 
         requestLookup(getAddress(), base::config::NET_LOOKUP_ALPHA);
         _synchronizer.run(msg.top_block_hash);
@@ -510,11 +550,11 @@ void Peer::handle(lk::msg::GetBlock&& msg)
 
 void Peer::handle(lk::msg::Block&& msg)
 {
-    if(_synchronizer.handleReceivedBlock(msg.block)) {
-
+    if (_synchronizer.handleReceivedBlock(msg.block)) {
     }
     else {
         // strange block received, decrease rating
+        _rating.badBlock();
     }
 }
 

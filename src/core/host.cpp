@@ -63,13 +63,12 @@ bool BasicPeerPool::hasPeerWithEndpoint(const net::Endpoint& endpoint) const
 {
     bool have_peer_with_endpoint = false;
     forEachPeer([&have_peer_with_endpoint, endpoint](const Peer& peer) {
-      if (peer.getPublicEndpoint() == endpoint || peer.getEndpoint() == endpoint) {
-          have_peer_with_endpoint = true;
-      }
+        if (peer.getPublicEndpoint() == endpoint || peer.getEndpoint() == endpoint) {
+            have_peer_with_endpoint = true;
+        }
     });
     return have_peer_with_endpoint;
 }
-
 
 
 KademliaPeerPool::KademliaPeerPool(lk::Address host_address)

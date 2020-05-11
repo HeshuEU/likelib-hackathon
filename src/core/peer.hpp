@@ -56,6 +56,24 @@ struct Close;
 }
 //=======================
 
+class Rating
+{
+  public:
+    // TODO: remember peer rating during several node runs
+
+    explicit Rating(std::int_fast32_t initial_value = base::config::NET_INITIAL_PEER_RATING);
+
+    std::int_fast32_t getValue() const noexcept;
+    operator bool() const noexcept; // if false, then the peer is too bad
+
+    Rating& nonExpectedMessage() noexcept;
+    Rating& invalidMessage() noexcept;
+    Rating& badBlock() noexcept;
+  private:
+    std::int_fast32_t _value;
+};
+
+
 class Peer : public std::enable_shared_from_this<Peer>
 {
   public:
@@ -156,6 +174,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     //=========================
     boost::asio::io_context& _io_context;
     //=========================
+    Rating _rating;
     State _state{ State::JUST_ESTABLISHED };
     std::optional<net::Endpoint> _endpoint_for_incoming_connections;
     lk::Address _address;
@@ -174,11 +193,12 @@ class Peer : public std::enable_shared_from_this<Peer>
         void run(const base::Sha256& peers_top_block);
         bool handleReceivedBlock(const Block& block);
         bool isSynchronised() const;
+
       private:
         Peer& _peer;
     };
 
-    Synchronizer _synchronizer{*this};
+    Synchronizer _synchronizer{ *this };
     //================
     lk::PeerPoolBase& _non_handshaked_pool;
     bool _is_attached_to_handshaked_pool{ false };
