@@ -1,7 +1,10 @@
-import re
 import hashlib
+import os
+import re
+import subprocess
+import time
 
-from .base import InvalidArgumentsException
+from .base import Logger, InvalidArgumentsException, TimeOutException
 
 
 class _TestConnectionParser:
@@ -270,10 +273,6 @@ class _GetTransactionParser:
 #
 #         return result
 #
-
-
-#
-
 #
 # class DeployedContract:
 #     def __init__(self, address=None, gas_left=None):
@@ -366,14 +365,133 @@ class _GetTransactionParser:
 #         return json.loads(text)
 #
 
-__parsers = {"connection_test": _TestConnectionParser,
-             "node_info": _NodeInfoParser,
-             "generate_keys": _GenerateKeysParser,
-             "keys_info": _KeysInfoParser,
-             "get_balance": _GetBalanceParser,
-             "transfer": _TransferParser,
-             "get_transaction": _GetTransactionParser}
+
+ZERO_WAIT = 0
+MINIMUM_TX_WAIT = 3
+SIMPLE_PROCESS_TIMEOUT = 2
+TRANSACTION_TIMEOUT = 5
+NODE_START_WAIT = 2
 
 
-def parser(name: str):
-    return __parsers.get(name)
+class Client:
+    def __init__(self, *, name: str, client_file_path: str, work_dir: str, node_address: str, is_http: bool,
+                 logger: Logger):
+        self.name = name
+        self.client_file_path = client_file_path
+        self.work_dir = work_dir
+        self.connect_params = ["--host", node_address]
+        if is_http:
+            self.connect_params.append("--http")
+        self.logger = logger
+
+    def __run_standalone_command(self, *, command, parameters, timeout):
+        run_commands = [self.client_file_path, command, *parameters]
+        try:
+            pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
+        except subprocess.TimeoutExpired as e:
+            message = f"{self.name} - client slow command execution {run_commands}"
+            self.logger.info(message)
+            raise TimeOutException(message)
+        except Exception as e:
+            raise Exception(f"exception at command execution {run_commands}: {e}")
+
+        if pipe.returncode != 0:
+            raise Exception(f"not success command execution {run_commands}: {pipe.stderr.decode('utf8')}")
+        return pipe.stdout.decode("utf8")
+
+    def __run_client_command(self, *, command, parameters, timeout, wait):
+        run_commands = [self.client_file_path, command, *self.connect_params, *parameters]
+        try:
+            pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
+        except subprocess.TimeoutExpired as e:
+            message = f"{self.name} - client slow command execution {command} with parameters {parameters}"
+            self.logger.info(message)
+            raise TimeOutException(message)
+        except Exception as e:
+            raise Exception(f"exception at command execution {run_commands}: {e}")
+
+        if pipe.returncode != 0:
+            raise Exception(f"not success command execution {run_commands}: {pipe.stderr.decode('utf8')}")
+        time.sleep(wait)
+        return pipe.stdout.decode("utf8")
+
+    def connection_test(self, *, timeout=SIMPLE_PROCESS_TIMEOUT, wait=ZERO_WAIT) -> bool:
+        result = self.__run_client_command(command="connection_test", parameters=[], timeout=timeout, wait=wait)
+        return _TestConnectionParser.parse(result)
+
+    def node_info(self, *, timeout=SIMPLE_PROCESS_TIMEOUT, wait=ZERO_WAIT) -> NodeInfo:
+        result = self.__run_client_command(command="node_info", parameters=[], timeout=timeout, wait=wait)
+        return _NodeInfoParser.parse(result)
+
+    def generate_keys(self, *, keys_path: str, timeout=SIMPLE_PROCESS_TIMEOUT) -> Address:
+        path = os.path.abspath(keys_path)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        result = self.__run_standalone_command(command="generate_keys", parameters=["--keys", path], timeout=timeout)
+        return _GenerateKeysParser.parse(result)
+
+    def load_address(self, *, keys_path: str, timeout=SIMPLE_PROCESS_TIMEOUT) -> Address:
+        result = self.__run_standalone_command(command="keys_info", parameters=["--keys", keys_path], timeout=timeout)
+        return Address(keys_path, _KeysInfoParser.parse(result))
+
+    def get_balance(self, *, address: Address, timeout=SIMPLE_PROCESS_TIMEOUT, wait=ZERO_WAIT) -> int:
+        result = self.__run_client_command(command="get_balance", parameters=["--address", address.address],
+                                           timeout=timeout, wait=wait)
+        return _GetBalanceParser.parse(result)
+
+    def transfer(self, *, to_address: Address, amount: int, from_address: Address, fee: int, wait=ZERO_WAIT,
+                 timeout=TRANSACTION_TIMEOUT) -> TransferResult:
+        parameters = ["--to", to_address.address, "--amount", str(amount), "--keys", from_address.key_path, "--fee",
+                      str(fee)]
+        result = self.__run_client_command(command="transfer", parameters=parameters, timeout=timeout, wait=wait)
+        return _TransferParser.parse(result)
+
+    def get_transaction(self, *, tx_hash: str, wait=ZERO_WAIT, timeout=TRANSACTION_TIMEOUT) -> Transaction:
+        parameters = ["--hash", tx_hash]
+        result = self.__run_client_command(command="get_transaction", parameters=parameters, timeout=timeout, wait=wait)
+        return _GetTransactionParser.parse(result)
+
+    # def get_block(self, block_hash=None, block_number=None, *, is_http=False, timeout=SIMPLE_PROCESS_TIMEOUT,
+    #               wait=ZERO_WAIT):
+    #     if block_hash is not None:
+    #         result = self.__run_client_command(command="get_block", parameters=["--hash", block_hash], timeout=timeout,
+    #                                            is_http=is_http,
+    #                                            wait=wait)
+    #     elif block_number is not None:
+    #         result = self.__run_client_command(command="get_block", parameters=["--number", block_number],
+    #                                            timeout=timeout,
+    #                                            is_http=is_http,
+    #                                            wait=wait)
+    #     else:
+    #         raise InvalidArgumentsException("block_hash and block_number were not set")
+    #     return parser("get_block").parse(result)
+
+    # def compile_file(self, *, code: str) -> list:  # TODO
+    #     result = self.__run_standalone_command(command="compile", parameters=["--code", code])
+    #     return parser("compile").parse(result)
+    #
+    # def encode_message(self, *, code: str, message: str) -> str:  # TODO
+    #     result = self.__run_standalone_command(command="encode", parameters=["--code", code, "--data", message])
+    #     return parser("encode").parse(result)
+    #
+    # def decode_message(self, *, code: str, method: str, message: ContractResult) -> dict:  # TODO
+    #     result = self.__run_standalone_command(command="decode",
+    #                                            parameters=["--code", code, "--method", method, "--data",
+    #                                                        message.message])
+    #     return parser("decode").parse(result)
+    #
+    # def push_contract(self, *, from_address: Address, code: str, gas: int, amount: int, init_message: str,
+    #                   timeout=TRANSACTION_TIMEOUT, wait=0) -> DeployedContract:  # TODO
+    #     parameters = ["--keys", from_address.key_path, "--code", code, "--amount",
+    #                   str(amount), "--gas", str(gas), "--init", init_message]
+    #     result = self.__run_client_command(command="create_contract", parameters=parameters,
+    #                                        timeout=timeout, wait=wait)
+    #     return parser("create_contract").parse(result)
+    #
+    # def message_call(self, *, from_address: Address, to_address: DeployedContract, gas: int, amount: int, message: str,
+    #                  timeout=TRANSACTION_TIMEOUT, wait=0) -> ContractResult:  # TODO
+    #     parameters = ["--keys", from_address.key_path, "--to", to_address.address,
+    #                   "--amount", str(amount), "--gas", str(gas), "--message", message]
+    #     result = self.__run_client_command(command="message_call", parameters=parameters,
+    #                                        timeout=timeout, wait=wait)
+    #     return parser("message_call").parse(result)

@@ -1,10 +1,9 @@
-import os
-import shutil
+import datetime
 import datetime
 import re
 import traceback
 
-from .base import Logger, CheckFailedException
+from .base import CheckFailedException
 from .env import Env
 
 
@@ -39,32 +38,15 @@ __enabled_tests = dict()
 __disabled_tests = dict()
 
 
-def test_case(registration_test_case_name=None, disable=False):
-    def test_case_registrator(func):
-        if registration_test_case_name:
-            test_name = registration_test_case_name
-        else:
-            test_name = func.__name__
-
-        __test_case_work_dir = os.path.join(os.getcwd(), test_name)
-
-        def test_case_runner(dependencies_folder):
-            # change work directory for test
-            if os.path.exists(__test_case_work_dir):
-                shutil.rmtree(__test_case_work_dir, ignore_errors=True)
-            os.makedirs(__test_case_work_dir)
-            os.chdir(__test_case_work_dir)
-            logger = Logger(test_name, test_name + ".log")
-
-            def test_case_exception_wrapper(environment_folder):
-                try:
-                    env = Env(environment_folder)
-                    return func(env, logger)
-                except Exception as error:
-                    print(error, flush=True)
-                    return 2
-
-            return test_case_exception_wrapper(dependencies_folder)
+def test_case(test_name, disable=False):
+    def test_case_register(func):
+        def test_case_runner(dependencies_folder, run_folder):
+            try:
+                with Env(binary_path=dependencies_folder, run_folder=run_folder, test_name=test_name) as env:
+                    return func(env)
+            except Exception as error:
+                print(error, flush=True)
+                return 2
 
         if test_name in __enabled_tests.keys() or test_name in __disabled_tests.keys():
             raise Exception(f"Test with this name[{test_name}] is exists")
@@ -78,10 +60,10 @@ def test_case(registration_test_case_name=None, disable=False):
 
         return test_case_runner
 
-    return test_case_registrator
+    return test_case_register
 
 
-def run_registered_test_cases(pattern, dependencies_folder):
+def run_registered_test_cases(pattern, dependencies_folder, run_folder):
     success_tests = 0
     failed_tests = 0
     skipped_tests = 0
@@ -106,7 +88,7 @@ def run_registered_test_cases(pattern, dependencies_folder):
         print(f"Test case [{registered_test_case_name}] started.", flush=True)
 
         test_case_start_time = datetime.datetime.now()
-        return_code = registered_test_case_runner(dependencies_folder)
+        return_code = registered_test_case_runner(dependencies_folder, run_folder)
         test_case_execute_time = datetime.datetime.now() - test_case_start_time
 
         if return_code == 0:

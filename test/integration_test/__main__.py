@@ -1,6 +1,7 @@
 import argparse
+import os
 
-import tester
+from tester import run_registered_test_cases
 
 import test_communication_base
 import test_common_process
@@ -17,8 +18,9 @@ if __name__ == "__main__":
     parser.add_argument('-b', '--bin', type=str, help='path to folder with dependencies')
     parser.add_argument('-t', '--tests', type=str, default="",
                         help='pattern for test execution')
+    parser.add_argument('-d', '--dir', type=str, default=os.getcwd(), help='directory for evaluate tests')
 
     args = parser.parse_args()
 
-    return_code = tester.run_registered_test_cases(args.tests, args.bin)
+    return_code = run_registered_test_cases(args.tests, args.bin, args.dir)
     exit(return_code)

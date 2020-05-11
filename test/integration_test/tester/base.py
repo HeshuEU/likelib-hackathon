@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 
 class TimeOutException(Exception):
@@ -15,6 +15,10 @@ class CheckFailedException(Exception):
 
 
 class InvalidArgumentsException(Exception):
+    pass
+
+
+class LogicException(Exception):
     pass
 
 
