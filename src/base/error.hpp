@@ -12,23 +12,14 @@ class Error : public std::exception
 {
   public:
     Error() = default;
-
     Error(const std::string& message);
-
     Error(const Error&) = default;
-
     Error(Error&&) = default;
-
     ~Error() = default;
-
     Error& operator=(const Error&) = default;
-
     Error& operator=(Error&&) = default;
-
     const std::string& toStdString() const noexcept;
-
     const char* what() const noexcept override;
-
   private:
     std::string _message;
 };
@@ -64,6 +55,11 @@ class CryptoError : public Error
 };
 
 class LogicError : public Error
+{
+    using Error::Error;
+};
+
+class RuntimeError : public Error
 {
     using Error::Error;
 };
