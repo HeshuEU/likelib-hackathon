@@ -16,6 +16,7 @@ namespace lk
 class Core;
 class Host;
 class PeerPoolBase;
+class KademliaPeerPoolBase;
 //=======================
 
 // messages available
@@ -114,14 +115,15 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     void startSession();
 
-    void requestLookup(const lk::Address& address,
-                       const uint8_t alpha);
+    void requestLookup(const lk::Address& address, uint8_t alpha);
+
   private:
     //================
     Peer(std::shared_ptr<net::Session> session,
-         bool is_connected,
+         bool was_connected_to,
          boost::asio::io_context& io_context,
-         lk::PeerPoolBase& pool,
+         lk::PeerPoolBase& non_handshaked_pool,
+         lk::KademliaPeerPoolBase& handshaked_pool,
          lk::Core& core,
          lk::Host& host);
     //================
@@ -152,6 +154,7 @@ class Peer : public std::enable_shared_from_this<Peer>
 
     std::shared_ptr<net::Session> _session;
     bool _is_started{ false };
+    bool _was_connected_to; // peer was connected to or accepted?
     //================
     boost::asio::io_context& _io_context;
     //================
@@ -161,9 +164,9 @@ class Peer : public std::enable_shared_from_this<Peer>
     //================
     std::forward_list<lk::Block> _sync_blocks;
     //================
-    bool _was_connected_to; // peer was connected to or accepted?
-    bool _is_attached_to_pool{ false };
-    lk::PeerPoolBase& _pool;
+    lk::PeerPoolBase& _non_handshaked_pool;
+    bool _is_attached_to_handshaked_pool{ false };
+    lk::KademliaPeerPoolBase& _handshaked_pool;
     lk::Core& _core;
     lk::Host& _host;
     //================
@@ -335,9 +338,15 @@ class PeerPoolBase
     virtual void forEachPeer(std::function<void(const Peer&)> f) const = 0;
     virtual void forEachPeer(std::function<void(Peer&)> f) = 0;
 
-    virtual std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) = 0;
+    virtual bool hasPeerWithEndpoint(const net::Endpoint& endpoint) const = 0;
 
-    virtual std::vector<Peer::IdentityInfo> allPeersInfo() const = 0;
+    std::vector<Peer::IdentityInfo> allPeersInfo() const;
+};
+
+class KademliaPeerPoolBase : public PeerPoolBase
+{
+  public:
+    virtual std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) = 0;
 };
 
 }

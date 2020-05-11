@@ -12,8 +12,8 @@
 #include <boost/asio/steady_timer.hpp>
 
 #include <list>
+#include <map>
 #include <memory>
-#include <set>
 #include <shared_mutex>
 #include <thread>
 
@@ -22,11 +22,34 @@ namespace lk
 
 class Core;
 
-class PeerTable : public PeerPoolBase
+
+class BasicPeerPool : public PeerPoolBase
+{
+  public:
+    bool tryAddPeer(std::shared_ptr<Peer> peer) override;
+
+    void removePeer(std::shared_ptr<Peer> peer) override;
+
+    void removePeer(Peer* peer) override;
+    //=================================
+
+    // thread-safe
+    void forEachPeer(std::function<void(const Peer&)> f) const override;
+    void forEachPeer(std::function<void(Peer&)> f) override;
+
+    bool hasPeerWithEndpoint(const net::Endpoint& endpoint) const override;
+    //=================================
+  private:
+    std::map<Peer*, std::shared_ptr<Peer>> _pool;
+    mutable std::shared_mutex _pool_mutex;
+};
+
+
+class KademliaPeerPool : public KademliaPeerPoolBase
 {
   public:
     //=================================
-    explicit PeerTable(lk::Address host_address);
+    explicit KademliaPeerPool(lk::Address host_address);
     //=================================
     /*
      * Trying to add peer to a table. If succeeded, then std::unique_ptr is moved; if failed --
@@ -47,10 +70,11 @@ class PeerTable : public PeerPoolBase
     // thread-safe
     void forEachPeer(std::function<void(const Peer&)> f) const override;
     void forEachPeer(std::function<void(Peer&)> f) override;
-    //=================================
-    std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) override;
 
-    std::vector<Peer::IdentityInfo> allPeersInfo() const override;
+    bool hasPeerWithEndpoint(const net::Endpoint& endpoint) const override;
+    //=================================
+
+    std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) override;
 
   private:
     //=================================
@@ -93,8 +117,8 @@ class Host
     //=================================
     void checkOutPeer(const net::Endpoint& endpoint, const lk::Address& address = lk::Address::null());
     bool isConnectedTo(const net::Endpoint& endpoint) const;
-    PeerTable& getPool() noexcept;
-    const PeerTable& getPool() const noexcept;
+    BasicPeerPool& getNonHandshakedPool() noexcept;
+    KademliaPeerPool& getHandshakedPool() noexcept;
     //=================================
     void broadcast(const lk::Block& block);
     void broadcast(const lk::Transaction& tx);
@@ -120,11 +144,8 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
-    std::shared_mutex _pcm;
-    std::set<net::Endpoint> _connected;
-
-    PeerTable _connected_peers;
-    std::set< std::shared_ptr<Peer> > _temp;
+    BasicPeerPool _non_handshaked_peers;
+    KademliaPeerPool _handshaked_peers;
     void bootstrap();
 
     boost::asio::steady_timer _heartbeat_timer;

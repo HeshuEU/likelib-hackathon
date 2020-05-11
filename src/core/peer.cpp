@@ -13,7 +13,7 @@ namespace lk
  *  1) Connection to a given endpoint.
  *  2) Send CONNECT message, that contains IdentityInfo of host: public endpoint info and its LK address.
  *  3) Waiting for response. Valid responses are ACCEPTED and CANNOT_ACCEPT
- *      a) ACCEPTED response means that current peer was added to PeerTable of peers, that we are connecting to.
+ *      a) ACCEPTED response means that current peer was added to KademliaPeerPool of peers, that we are connecting to.
  *         Now we're ready for synchronisation.
  *      b) CANNOT_ACCEPT response means that current peer was rejected by some reason (this reason is provided in
  * message)
@@ -33,6 +33,14 @@ namespace lk
  *
  *  Fix: do a synchronisation during runtime.
  */
+
+std::vector<Peer::IdentityInfo> PeerPoolBase::allPeersInfo() const
+{
+    std::vector<Peer::IdentityInfo> ret;
+    forEachPeer([&ret](const Peer& peer) { ret.push_back(peer.getInfo()); });
+    return ret;
+}
+
 
 Peer::IdentityInfo Peer::IdentityInfo::deserialize(base::SerializationIArchive& ia)
 {
@@ -63,8 +71,7 @@ void Peer::sendTransaction(const lk::Transaction& tx)
 }
 
 
-void Peer::requestLookup(const lk::Address& address,
-                         const std::uint8_t alpha)
+void Peer::requestLookup(const lk::Address& address, const std::uint8_t alpha)
 {
     struct LookupData
     {
@@ -82,9 +89,7 @@ void Peer::requestLookup(const lk::Address& address,
 
     auto data = std::make_shared<LookupData>(_host.getIoContext(), address);
 
-    data->timer.async_wait([this, data](const auto& ec) {
-        data->was_responded = true;
-    });
+    data->timer.async_wait([data](const auto& ec) { data->was_responded = true; });
 
     sendMessage(msg::Lookup{ address, alpha }, {});
 }
@@ -92,8 +97,18 @@ void Peer::requestLookup(const lk::Address& address,
 
 std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Context context)
 {
-    std::shared_ptr<Peer> ret(new Peer(
-      std::move(session), false, context.host.getIoContext(), context.host.getPool(), context.core, context.host));
+    std::shared_ptr<Peer> ret(new Peer(std::move(session),
+                                       false,
+                                       context.host.getIoContext(),
+                                       static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
+                                       static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
+                                       context.core,
+                                       context.host));
+
+    if(!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
+        RAISE_ERROR(base::Error, "cannot add peer");
+    }
+
     ret->startSession();
     return ret;
 }
@@ -101,24 +116,36 @@ std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Cont
 
 std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Context context)
 {
-    std::shared_ptr<Peer> ret(new Peer(
-      std::move(session), true, context.host.getIoContext(), context.host.getPool(), context.core, context.host));
+    std::shared_ptr<Peer> ret(new Peer(std::move(session),
+                                       true,
+                                       context.host.getIoContext(),
+                                       static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
+                                       static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
+                                       context.core,
+                                       context.host));
+
+    if(!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
+        RAISE_ERROR(base::Error, "cannot add peer");
+    }
+
     ret->startSession();
     return ret;
 }
 
 
 Peer::Peer(std::shared_ptr<net::Session> session,
-           bool is_connected,
+           bool was_connected_to,
            boost::asio::io_context& io_context,
-           lk::PeerPoolBase& pool,
+           lk::PeerPoolBase& non_handshaked_pool,
+           lk::KademliaPeerPoolBase& handshaked_pool,
            lk::Core& core,
            lk::Host& host)
   : _session{ std::move(session) }
+  , _was_connected_to{ was_connected_to }
   , _io_context{ io_context }
   , _address{ lk::Address::null() }
-  , _was_connected_to{ is_connected }
-  , _pool{ pool }
+  , _non_handshaked_pool{ non_handshaked_pool }
+  , _handshaked_pool{ handshaked_pool }
   , _core{ core }
   , _host{ host }
 {
@@ -192,7 +219,7 @@ void Peer::startSession()
 
     _session->start();
     if (wasConnectedTo()) {
-        sendMessage<msg::Connect>({_core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlock()});
+        sendMessage<msg::Connect>({ _core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlock() });
     }
 }
 
@@ -223,7 +250,9 @@ Peer::State Peer::getState() const noexcept
 
 bool Peer::tryAddToPool()
 {
-    return _pool.tryAddPeer(shared_from_this());
+    LOG_DEBUG << this;
+    LOG_DEBUG << shared_from_this().get();
+    return _handshaked_pool.tryAddPeer(shared_from_this());
 }
 
 
@@ -240,8 +269,8 @@ void Peer::Handler::onReceive(const base::Bytes& bytes)
 
 void Peer::Handler::onClose()
 {
-    if (_peer._is_attached_to_pool) {
-        _peer._pool.removePeer(&_peer);
+    if (_peer._is_attached_to_handshaked_pool) {
+        _peer._handshaked_pool.removePeer(&_peer);
     }
 }
 
@@ -322,8 +351,8 @@ void Peer::handle(lk::msg::Connect&& msg)
     }
     _address = msg.address;
 
-
     if (tryAddToPool()) {
+        _non_handshaked_pool.removePeer(this);
         sendMessage(msg::Accepted{ _core.getTopBlock(), _core.getThisNodeAddress(), getPublicEndpoint().getPort() });
 
         requestLookup(getAddress(), base::config::NET_LOOKUP_ALPHA);
@@ -376,10 +405,12 @@ void Peer::handle(lk::msg::Accepted&& msg)
         public_ep.setPort(msg.public_port);
         setServerEndpoint(public_ep);
     }
+    _address = msg.address;
 
     sendMessage(msg::Lookup{ getAddress(), base::config::NET_LOOKUP_ALPHA });
 
     if (tryAddToPool()) {
+        _non_handshaked_pool.removePeer(this);
         const auto& ours_top_block = _core.getTopBlock();
 
         if (msg.theirs_top_block == ours_top_block) {
@@ -422,7 +453,7 @@ void Peer::handle(lk::msg::Pong&&) {}
 
 void Peer::handle(lk::msg::Lookup&& msg)
 {
-    auto reply = _pool.lookup(msg.address, msg.selection_size);
+    auto reply = _handshaked_pool.lookup(msg.address, msg.selection_size);
     sendMessage(msg::LookupResponse{ msg.address, std::move(reply) });
 }
 
