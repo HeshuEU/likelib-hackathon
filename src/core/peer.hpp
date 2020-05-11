@@ -69,6 +69,7 @@ class Rating
     Rating& nonExpectedMessage() noexcept;
     Rating& invalidMessage() noexcept;
     Rating& badBlock() noexcept;
+    Rating& differentGenesis() noexcept;
   private:
     std::int_fast32_t _value;
 };
@@ -190,10 +191,10 @@ class Peer : public std::enable_shared_from_this<Peer>
 
       private:
         Peer& _peer;
+        std::optional<base::Sha256> _requested_block;
+        std::vector<lk::Block> _sync_blocks;
 
         void requestBlock(base::Sha256 block_hash);
-
-        std::optional<base::Sha256> _requested_block;
     };
 
     Synchronizer _synchronizer{ *this };

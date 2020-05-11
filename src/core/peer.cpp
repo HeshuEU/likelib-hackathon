@@ -73,6 +73,13 @@ Rating& Rating::badBlock() noexcept
 }
 
 
+Rating& Rating::differentGenesis() noexcept
+{
+    _value -= 2 * base::config::NET_INITIAL_PEER_RATING;
+    return *this;
+}
+
+
 std::vector<Peer::IdentityInfo> PeerPoolBase::allPeersInfo() const
 {
     std::vector<Peer::IdentityInfo> ret;
@@ -303,6 +310,7 @@ Peer::Synchronizer::Synchronizer(Peer& peer)
 
 void Peer::Synchronizer::handleReceivedTopBlockHash(const base::Sha256& peers_top_block)
 {
+    // TODO: choose longest chain here
     const auto& ours_top_block_hash = _peer._core.getTopBlockHash();
 
     if (peers_top_block == ours_top_block_hash) {
@@ -329,14 +337,36 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
     ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
 
     if(_requested_block && *_requested_block == hash) {
-
+        _requested_block.reset();
+        _sync_blocks.push_back(block);
+        const auto& next = block.getPrevBlockHash();
+        if(next == base::Sha256::null()) {
+            if(!_peer._rating.differentGenesis()) {
+                // need to disconnect this peer since in has different genesis block, this is fatal
+                // TODO: disconnect
+            }
+            return true;
+        }
+        else if(_peer._core.findBlock(next)) {
+            // apply everything
+        }
+        else {
+            requestBlock(block.getPrevBlockHash());
+        }
+        return true;
+    }
+    else if(_peer._core.tryAddBlock(block)) {
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
 
 bool Peer::Synchronizer::isSynchronised() const
 {
-    return true;
+    return !_requested_block;
 }
 
 
@@ -489,8 +519,6 @@ void Peer::handle(lk::msg::Accepted&& msg)
 
     if (tryAddToPool()) {
         _non_handshaked_pool.removePeer(this);
-        const auto& ours_top_block = _core.getTopBlock();
-
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
