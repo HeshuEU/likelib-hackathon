@@ -99,9 +99,11 @@ void PeerTable::removePeer(std::shared_ptr<PeerBase> peer)
 
 void PeerTable::removePeer(PeerBase* peer)
 {
-    std::unique_lock lk{_buckets_mutex};
-    for(auto& bucket : _buckets) {
-        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [peer](const auto& candidate) { return peer == candidate.get(); }), bucket.end());
+    std::unique_lock lk{ _buckets_mutex };
+    for (auto& bucket : _buckets) {
+        bucket.erase(std::remove_if(
+                       bucket.begin(), bucket.end(), [peer](const auto& candidate) { return peer == candidate.get(); }),
+                     bucket.end());
     }
 }
 
@@ -230,12 +232,16 @@ void Host::checkOutPeer(const net::Endpoint& endpoint)
     }
 
     LOG_DEBUG << "Connecting to node " << endpoint;
-    _connector.connect(endpoint, base::config::NET_CONNECT_TIMEOUT, [this](std::unique_ptr<net::Connection> connection) {
-        ASSERT(connection);
-        onConnect(std::move(connection));
-    }, [](const net::Connector::ConnectError&) {
-        // TODO: remember
-    });
+    _connector.connect(
+      endpoint,
+      base::config::NET_CONNECT_TIMEOUT,
+      [this](std::unique_ptr<net::Connection> connection) {
+          ASSERT(connection);
+          onConnect(std::move(connection));
+      },
+      [](const net::Connector::ConnectError&) {
+          // TODO: remember
+      });
     LOG_DEBUG << "Connection to " << endpoint << " is added to queue";
 }
 

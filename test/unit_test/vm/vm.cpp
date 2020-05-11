@@ -17,14 +17,14 @@ class HostImplementation : public evmc::Host
 
     bool account_exists(const evmc::address& addr) const noexcept override
     {
-//        std::cout << "account_exists method call: address[ " << vm::toBytes(addr) << "].\n";
+        //        std::cout << "account_exists method call: address[ " << vm::toBytes(addr) << "].\n";
         return false;
     }
 
     evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& key) const noexcept override
     {
-//        std::cout << "get_storage method call: address[" << vm::toBytes(addr) << "], key[" << vm::toBytes(key)
-//                  << "].\n";
+        //        std::cout << "get_storage method call: address[" << vm::toBytes(addr) << "], key[" << vm::toBytes(key)
+        //                  << "].\n";
         auto it = _storage.find(key);
         if (it != _storage.end()) {
             auto val = it->second;
@@ -37,8 +37,8 @@ class HostImplementation : public evmc::Host
                                     const evmc::bytes32& key,
                                     const evmc::bytes32& value) noexcept override
     {
-//        std::cout << "set_storage method call: address[" << base::toHex(vm::toBytes(addr)) << "], key["
-//                  << vm::toBytes(key) << "], value[" << vm::toBytes(value) << "].\n";
+        //        std::cout << "set_storage method call: address[" << base::toHex(vm::toBytes(addr)) << "], key["
+        //                  << vm::toBytes(key) << "], value[" << vm::toBytes(value) << "].\n";
         auto f = _storage.find(key);
         if (f != _storage.end()) {
             f->second = value;
@@ -51,56 +51,55 @@ class HostImplementation : public evmc::Host
 
     evmc::uint256be get_balance(const evmc::address& addr) const noexcept override
     {
-//        std::cout << "get_balance method call: address[" << vm::toBytes(addr) << "].\n";
+        //        std::cout << "get_balance method call: address[" << vm::toBytes(addr) << "].\n";
         return evmc::uint256be();
     }
 
     size_t get_code_size(const evmc::address& addr) const noexcept override
     {
-//        std::cout << "get_code_size method call: address: " << vm::toBytes(addr) << "].\n";
+        //        std::cout << "get_code_size method call: address: " << vm::toBytes(addr) << "].\n";
         return 0;
     }
 
     evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override
     {
-//        std::cout << "get_code_hash call method call: " << vm::toBytes(addr) << "].\n";
+        //        std::cout << "get_code_hash call method call: " << vm::toBytes(addr) << "].\n";
         return evmc::bytes32();
     }
 
-    size_t copy_code(const evmc::address& addr,
-                     size_t code_offset,
-                     uint8_t* /*buffer_data*/,
-                     size_t buffer_size) const noexcept override
+    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* /*buffer_data*/, size_t buffer_size) const
+      noexcept override
     {
-//        std::cout << "copy_code call method call: " << vm::toBytes(addr)
-//                  << ", code_offset: " << std::to_string(code_offset)
-//                  << ", buffer_size: " << std::to_string(buffer_size) << "].\n";
+        //        std::cout << "copy_code call method call: " << vm::toBytes(addr)
+        //                  << ", code_offset: " << std::to_string(code_offset)
+        //                  << ", buffer_size: " << std::to_string(buffer_size) << "].\n";
         return 0;
     }
 
     void selfdestruct(const evmc::address& addr, const evmc::address& beneficiary) noexcept override
     {
-//        std::cout << "selfdestruct method call: address[" << vm::toBytes(addr) << "], beneficiary["
-//                  << vm::toBytes(beneficiary) << "].\n";
+        //        std::cout << "selfdestruct method call: address[" << vm::toBytes(addr) << "], beneficiary["
+        //                  << vm::toBytes(beneficiary) << "].\n";
     }
 
     evmc::result call(const evmc_message& msg) noexcept override
     {
-//        std::cout << "call method call: snd[" << vm::toBytes(msg.sender) << "], dest[" << vm::toBytes(msg.destination)
-//                  << "].\n";
+        //        std::cout << "call method call: snd[" << vm::toBytes(msg.sender) << "], dest[" <<
+        //        vm::toBytes(msg.destination)
+        //                  << "].\n";
         evmc::result res{ evmc_status_code::EVMC_SUCCESS, 0, nullptr, 0 };
         return res;
     }
 
     evmc_tx_context get_tx_context() const noexcept override
     {
-//        std::cout << "get_tx_context method call \n";
+        //        std::cout << "get_tx_context method call \n";
         return evmc_tx_context();
     }
 
     evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override
     {
-//        std::cout << "get_block_hash method call: block_number[" << std::to_string(block_number) << "].\n";
+        //        std::cout << "get_block_hash method call: block_number[" << std::to_string(block_number) << "].\n";
         return evmc::bytes32();
     }
 
@@ -110,8 +109,8 @@ class HostImplementation : public evmc::Host
                   const evmc::bytes32[] /*topics*/,
                   size_t num_topics) noexcept override
     {
-//        std::cout << "emit_log method call: address[" << vm::toBytes(addr) << "], topics_number["
-//                  << std::to_string(num_topics) << "].\n";
+        //        std::cout << "emit_log method call: address[" << vm::toBytes(addr) << "], topics_number["
+        //                  << std::to_string(num_topics) << "].\n";
     }
 };
 

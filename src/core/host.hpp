@@ -52,6 +52,7 @@ class PeerTable : public PeerPoolBase
     //=================================
 
     std::vector<Peer::Info> allPeersInfo() const override;
+
   private:
     //=================================
     const lk::Address _host_address;

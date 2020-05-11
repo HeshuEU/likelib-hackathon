@@ -70,7 +70,8 @@ std::string PropertyTree::toString() const
     return output.str();
 }
 
-boost::property_tree::ptree PropertyTree::toBoostTree() const {
+boost::property_tree::ptree PropertyTree::toBoostTree() const
+{
     return _ptree;
 }
 
