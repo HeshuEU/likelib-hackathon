@@ -5,9 +5,8 @@ from tester import run_registered_test_cases
 
 import test_communication_base
 import test_common_process
+import test_contract
 
-# import test_transfer
-# import test_contract
 # import test_multi_network
 # import test_multi_transfer
 # import test_contract_functions

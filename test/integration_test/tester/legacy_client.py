@@ -1,22 +1,18 @@
-import hashlib
+import json
 import os
 import re
 import subprocess
 import time
 
-from .base import Logger, InvalidArgumentsException, TimeOutException
+from .base import Logger, InvalidArgumentsException, TimeOutException, LogicException
+from .client import NodeInfo, Keys, AccountInfo, TransferResult, Transaction, Block, DeployedContract, ContractResult, \
+    TransactionStatus, BaseClient
 
 
 class _TestConnectionParser:
     @staticmethod
     def parse(text: str) -> bool:
         return text == "Connection test passed\n"
-
-
-class NodeInfo:
-    def __init__(self, top_block_hash: str, top_block_number: int):
-        self.top_block_hash = top_block_hash
-        self.top_block_number = top_block_number
 
 
 class _NodeInfoParser:
@@ -28,22 +24,14 @@ class _NodeInfoParser:
     @staticmethod
     def parse(text: str) -> NodeInfo:
         result = dict()
-        for line in text.split('\n'):
-            for key, rx in _NodeInfoParser._RE.items():
-                match = rx[0].search(line)
-                if match:
-                    result[key] = _NodeInfoParser._RE[key][1](
-                        match.group(key))
+        for key, rx in _NodeInfoParser._RE.items():
+            match = rx[0].search(text)
+            if match:
+                result[key] = _NodeInfoParser._RE[key][1](match.group(key))
 
         if len(result) != len(_NodeInfoParser._RE):
             raise InvalidArgumentsException("Not full message")
         return NodeInfo(result["top_block_hash"], result["top_block_number"])
-
-
-class Address:
-    def __init__(self, key_path: str, address: str):
-        self.key_path = key_path
-        self.address = address
 
 
 class _GenerateKeysParser:
@@ -53,18 +41,17 @@ class _GenerateKeysParser:
     }
 
     @staticmethod
-    def parse(text: str) -> Address:
+    def parse(text: str) -> Keys:
         result = dict()
         for line in text.split('\n'):
             for key, rx in _GenerateKeysParser._RE.items():
                 match = rx[0].search(line)
                 if match:
-                    result[key] = _GenerateKeysParser._RE[key][1](
-                        match.group(key))
+                    result[key] = _GenerateKeysParser._RE[key][1](match.group(key))
 
         if len(result) != len(_GenerateKeysParser._RE):
             raise InvalidArgumentsException("Not full message")
-        return Address(result["keys_path"], result["address"])
+        return Keys(result["keys_path"], result["address"])
 
 
 class _KeysInfoParser:
@@ -92,11 +79,44 @@ class _GetBalanceParser:
         return int(match.group(_GetBalanceParser._TARGET))
 
 
-class TransferResult:
-    def __init__(self, transaction_hash: str, result: bool, fail_message: str):
-        self.transaction_hash = transaction_hash
-        self.result = result
-        self.fail_message = fail_message
+class _GetAccountInfoParser:
+    _BALANCE_TARGET = "balance"
+    _BALANCE_RE_PARSER = re.compile(r'Balance: (?P<balance>\d+)')
+    _ADDRESS_TARGET = "address"
+    _ADDRESS_RE_PARSER = re.compile(r'address: (?P<address>.*)')
+    _NONCE_TARGET = "nonce"
+    _NONCE_RE_PARSER = re.compile(r'Nonce: (?P<nonce>\d+)')
+    _TYPE_TARGET = "type"
+    _TYPE_RE_PARSER = re.compile(r'(?P<type>.*) address: ')
+    _ABI_TARGET = "abi"
+    _ABI_RE_PARSER = re.compile(r'ABI: \n(?P<abi>.*)')  # TODO
+
+    @staticmethod
+    def parse(text: str) -> AccountInfo:
+        print(text)
+        result = dict()
+        lines = text.split('\n')
+        header_lines = lines[0:len(_GetAccountInfoParser._RE)]
+        for line in header_lines:
+            for key, rx in _GetAccountInfoParser._RE.items():
+                match = rx[0].search(line)
+                if match:
+                    result[key] = _GetAccountInfoParser._RE[key][1](match.group(key))
+
+        if len(result) != len(_GetAccountInfoParser._RE):
+            raise InvalidArgumentsException("Not full message")
+
+        number_of_hashes = len(lines) - len(_GetAccountInfoParser._RE) - 1
+        result["tx_hashes"] = list()
+        tx_hash_re = re.compile(r'(?P<tx_hash>.*),')
+        for hash_number in range(number_of_hashes):
+            tx_hash_line = lines[len(_GetAccountInfoParser._RE) + number_of_hashes]
+            match = tx_hash_re.search(tx_hash_line)
+            if match:
+                result["tx_hashes"].append(match.group("tx_hash"))
+            else:
+                raise InvalidArgumentsException("Bad hash string")
+        return AccountInfo(result['type'], result['address'], result['balance'], result['nonce'], result['tx_hashes'])
 
 
 class _TransferParser:
@@ -126,33 +146,6 @@ class _TransferParser:
                 raise InvalidArgumentsException("No any fail message")
 
 
-class Transaction:
-    TRANSFER_TYPE = "transfer"
-    CONTRACT_CREATION_TYPE = "contract_creation"
-    CONTRACT_CALL_TYPE = "contract_call"
-
-    def __init__(self, tx_type: str, from_address: str, to_address: str, value: int, fee: int, timestamp: int,
-                 data: str, verified: bool):
-        self.tx_type = tx_type
-        self.from_address = from_address
-        self.to_address = to_address
-        self.value = value
-        self.fee = fee
-        self.timestamp = timestamp
-        if data == "<empty>":
-            self.data = ""
-        else:
-            self.data = data
-        self.verified = verified
-
-    def hash(self) -> str:
-        string_for_hash = self.from_address + self.to_address + str(self.value) + str(self.fee) + str(
-            self.timestamp) + self.data
-        m = hashlib.sha256()
-        m.update(string_for_hash.encode("utf8"))
-        return m.hexdigest()
-
-
 def _signature_checker(signature_status):
     return signature_status == "verified"
 
@@ -170,14 +163,13 @@ class _GetTransactionParser:
     }
 
     @staticmethod
-    def parse(text) -> Transaction:
+    def parse(text: str) -> Transaction:
         result = dict()
         for line in text.split('\n'):
             for key, rx in _GetTransactionParser._RE.items():
                 match = rx[0].search(line)
                 if match:
-                    result[key] = _GetTransactionParser._RE[key][1](
-                        match.group(key))
+                    result[key] = _GetTransactionParser._RE[key][1](match.group(key))
 
         if len(result) != len(_GetTransactionParser._RE):
             raise InvalidArgumentsException("Not full message")
@@ -185,195 +177,136 @@ class _GetTransactionParser:
                            result["fee"], result["timestamp"], result["data"], result["signature"])
 
 
-#
-# class Block:
-#     def __init__(self, init_value):
-#         self.init_value = init_value
-#         for key in init_value.keys():
-#             if type(init_value[key]) is dict:
-#                 self.__dict__[key] = BlockObject(init_value[key])
-#             elif type(init_value[key]) is list:
-#                 self.__dict__[key] = list()
-#                 for item in init_value[key]:
-#                     self.__dict__[key].append(BlockObject(item))
-#             else:
-#                 self.__dict__[key] = init_value[key]
-#
-#     def serialize(self):
-#         return self.init_value
-#
-#
-# class _GetBlockParser:
-#     _BLOCK_RE = {
-#         'block_hash': (re.compile(r'Block hash (?P<block_hash>.*)'), str),
-#         'depth': (re.compile(r'Depth: (?P<depth>\d+)'), int),
-#         'timestamp': (re.compile(r'Timestamp: (?P<timestamp>\d+)'), int),
-#         'coinbase': (re.compile(r'Coinbase: (?P<coinbase>.*)'), str),
-#         'previous_block_hash': (re.compile(r'Previous block hash: (?P<previous_block_hash>.*)'), str),
-#         'number_of_transactions': (re.compile(r'Number of transactions: (?P<number_of_transactions>\d+)'), int)
-#     }
-#
-#     _TX_RE = {
-#         'number': (re.compile(r'Transaction #(?P<number>\d+)'), int),
-#         'type': (re.compile(r'Type: (?P<type>.*)'), str),
-#         'from': (re.compile(r'From: (?P<from>.*)'), str),
-#         'to': (re.compile(r'To: (?P<to>.*)'), str),
-#         'value': (re.compile(r'Value: (?P<value>\d+)'), int),
-#         'fee': (re.compile(r'Fee: (?P<fee>\d+)'), int),
-#         'timestamp': (re.compile(r'Timestamp: (?P<timestamp>\d+)'), int),
-#         'data': (re.compile(r'Data: (?P<data>.*)'), str),
-#         'signature': (re.compile(r'Signature: (?P<signature>.*)'), _signature_checker)
-#     }
-#
-#     @staticmethod
-#     def _parse_line(rx_dict, line):
-#         for key, rx in rx_dict.items():
-#             match = rx[0].search(line)
-#             if match:
-#                 return key, match
-#         return None, None
-#
-#     @staticmethod
-#     def _add(result, key, match, target, target_type):
-#         if key == target:
-#             result[target] = target_type(match.group(target))
-#
-#     @staticmethod
-#     def _parse_transaction(lines):
-#         result = dict()
-#         for line in lines:
-#             key, match = _GetBlockParser._parse_line(_GetBlockParser._TX_RE, line)
-#             for target in _GetBlockParser._TX_RE:
-#                 _GetBlockParser._add(result, key, match, target,
-#                                      _GetBlockParser._TX_RE[key][1])
-#         if len(result) != len(_GetBlockParser._TX_RE):
-#             return None
-#         return result
-#
-#     @staticmethod
-#     def parse(text):
-#         result = dict()
-#         lines = text.split('\n')
-#         header_lines = lines[0:len(_GetBlockParser._BLOCK_RE)]
-#         for line in header_lines:
-#             key, match = _GetBlockParser._parse_line(_GetBlockParser._BLOCK_RE, line)
-#             for target in _GetBlockParser._BLOCK_RE:
-#                 _GetBlockParser._add(result, key, match, target,
-#                                      _GetBlockParser._BLOCK_RE[key][1])
-#         if len(result) != len(_GetBlockParser._BLOCK_RE):
-#             return None
-#
-#         result["transactions"] = list()
-#         for tx_number in range(result["number_of_transactions"]):
-#             tx_lines = lines[len(_GetBlockParser._BLOCK_RE) + tx_number *
-#                              len(_GetBlockParser._TX_RE):len(_GetBlockParser._BLOCK_RE) + (tx_number + 1) * len(
-#                 _GetBlockParser._TX_RE)]
-#             result["transactions"].append(
-#                 _GetBlockParser._parse_transaction(tx_lines))
-#
-#         return result
-#
-#
-# class DeployedContract:
-#     def __init__(self, address=None, gas_left=None):
-#         self.address = address
-#         self.gas_left = gas_left
-#
-#
-# class _PushContractParser:
-#     _ADDRESS_TARGET = "address"
-#     _GAS_LEFT_TARGET = "gas_left"
-#     _RE_PARSER = re.compile(
-#         r'Remote call of creation smart contract success -> \[Contract was successfully deployed\], contract created at \[(?P<address>.*)\], gas left\[(?P<gas_left>\d+)\]')
-#
-#     @staticmethod
-#     def parse(text):
-#         result = DeployedContract()
-#         for line in text.split('\n'):
-#             match = _PushContractParser._RE_PARSER.search(line)
-#             if not match:
-#                 continue
-#             result.address = match.group(_PushContractParser._ADDRESS_TARGET)
-#             result.gas_left = int(match.group(_PushContractParser._GAS_LEFT_TARGET))
-#
-#         if result:
-#             return result
-#         else:
-#             return None
-#
-#
-# class ContractResult:
-#     def __init__(self, gas_left=None, message=None):
-#         self.gas_left = gas_left
-#         self.message = message
-#
-#
-# class _MessageCallParser:
-#     _MESSAGE_TARGET = "message"
-#     _GAS_LEFT_TARGET = "gas_left"
-#     _RE_PARSER = re.compile(
-#         r'Remote call of smart contract call success -> \[Message call was successfully executed\], contract response\[(?P<message>.*)\], gas left\[(?P<gas_left>\d+)\]')
-#
-#     @staticmethod
-#     def parse(text):
-#         result = ContractResult()
-#         for line in text.split('\n'):
-#             match = _MessageCallParser._RE_PARSER.search(line)
-#             if not match:
-#                 continue
-#             result.message = match.group(_MessageCallParser._MESSAGE_TARGET)
-#             result.gas_left = int(match.group(_MessageCallParser._GAS_LEFT_TARGET))
-#
-#         if result:
-#             return result
-#         else:
-#             return None
-#
-#
-# class _TransferParser:
-#     @staticmethod
-#     def parse(text):
-#         return text == "Transaction successfully performed\n"
-#
-#
-# class _CompileContractParser:
-#     @staticmethod
-#     def parse(text):
-#         result = list()
-#         is_valid = False
-#         for line in text.split('\n'):
-#             if line == 'Compiled contracts:':
-#                 is_valid = True
-#                 continue
-#             if is_valid and line:
-#                 result.append(line.strip())
-#         if result:
-#             return result
-#         else:
-#             return None
-#
-#
-# class _EncodeParser:
-#     @staticmethod
-#     def parse(text):
-#         return text[:len(text) - 1]
-#
-#
-# class _DecodeParser:
-#     @staticmethod
-#     def parse(text):
-#         return json.loads(text)
-#
+class _GetBlockParser:
+    _RE = {
+        'block_hash': (re.compile(r'Block hash (?P<block_hash>.*)'), str),
+        'depth': (re.compile(r'Depth: (?P<depth>\d+)'), int),
+        'timestamp': (re.compile(r'Timestamp: (?P<timestamp>\d+)'), int),
+        'coinbase': (re.compile(r'Coinbase: (?P<coinbase>.*)'), str),
+        'previous_block_hash': (re.compile(r'Previous block hash: (?P<previous_block_hash>.*)'), str),
+        'number_of_transactions': (re.compile(r'Number of transactions: (?P<number_of_transactions>\d+)'), int)
+    }
+
+    @staticmethod
+    def parse(text: str) -> Block:
+        result = dict()
+        lines = text.split('\n')
+        header_lines = lines[0:len(_GetBlockParser._RE)]
+        for line in header_lines:
+            for key, rx in _GetBlockParser._RE.items():
+                match = rx[0].search(line)
+                if match:
+                    result[key] = _GetBlockParser._RE[key][1](match.group(key))
+
+        if len(result) != len(_GetBlockParser._RE):
+            raise InvalidArgumentsException("Not full message")
+
+        result["transactions"] = list()
+        for tx_number in range(result["number_of_transactions"]):
+            tx_lines = lines[len(_GetBlockParser._RE) + 1 + tx_number * len(_GetTransactionParser._RE):len(
+                _GetBlockParser._RE) + (tx_number + 1) * len(_GetTransactionParser._RE) + 1]
+
+            result["transactions"].append(_GetTransactionParser.parse("\n".join(tx_lines)))
+
+        return Block(result["block_hash"], result["depth"], result["timestamp"], result["coinbase"],
+                     result["previous_block_hash"], result["transactions"])
+
+
+class _PushContractParser:
+    _HASH_TARGET = "transaction_hash"
+    _HASH_RE_PARSER = re.compile(r'Created transaction with hash\[hex\]: (?P<transaction_hash>.*)\n')
+    _ADDRESS_TARGET = "address"
+    _FEE_LEFT_TARGET = "fee_left"
+    _RE_PARSER = re.compile(
+        r'Remote call of creation smart contract success -> contract created at \[(?P<address>.*)\], fee left\[(?P<fee_left>\d+)\]\n')
+
+    @staticmethod
+    def parse(text: str) -> DeployedContract:
+        match = _PushContractParser._RE_PARSER.search(text)
+        if not match:
+            raise InvalidArgumentsException("Not full message")
+        address = match.group(_PushContractParser._ADDRESS_TARGET)
+        gas_left = int(match.group(_PushContractParser._FEE_LEFT_TARGET))
+
+        match = _PushContractParser._HASH_RE_PARSER.search(text)
+        if not match:
+            raise InvalidArgumentsException("Not full message")
+        tx_hash = match.group(_PushContractParser._HASH_TARGET)
+        return DeployedContract(tx_hash, address, gas_left)
+
+
+class _MessageCallParser:
+    _HASH_TARGET = "transaction_hash"
+    _HASH_RE_PARSER = re.compile(r'Created transaction with hash\[hex\]: (?P<transaction_hash>.*)\n')
+    _MESSAGE_TARGET = "message"
+    _FEE_LEFT_TARGET = "fee_left"
+    _RE_PARSER = re.compile(
+        r'Remote call of smart contract call success -> contract response\[(?P<message>.*)\], fee left\[(?P<fee_left>\d+)\]')
+
+    @staticmethod
+    def parse(text: str) -> ContractResult:
+        match = _MessageCallParser._RE_PARSER.search(text)
+        if not match:
+            raise InvalidArgumentsException("Not full message")
+        message = match.group(_MessageCallParser._MESSAGE_TARGET)
+        fee_left = int(match.group(_MessageCallParser._FEE_LEFT_TARGET))
+
+        match = _MessageCallParser._HASH_RE_PARSER.search(text)
+        if not match:
+            raise InvalidArgumentsException("Not full message")
+        tx_hash = match.group(_PushContractParser._HASH_TARGET)
+
+        return ContractResult(tx_hash, fee_left, message)
+
+
+class _CompileContractParser:
+    @staticmethod
+    def parse(text: str) -> list:
+        result = list()
+        is_valid = False
+        for line in text.split('\n'):
+            if line == 'Compiled contracts:':
+                is_valid = True
+                continue
+            if is_valid and line:
+                result.append(line.strip())
+        return result
+
+
+class _EncodeParser:
+    @staticmethod
+    def parse(text: str) -> str:
+        return text[:len(text) - 1]
+
+
+class _DecodeParser:
+    @staticmethod
+    def parse(text: str) -> dict:
+        return json.loads(text)
+
+
+class _CallViewParser:
+    _TARGET = "response"
+    _RE_PARSER = re.compile(r'View of smart contract response: (?P<response>.*)\n')
+
+    @staticmethod
+    def parse(text: str) -> str:
+        match = _CallViewParser._RE_PARSER.search(text)
+        if not match:
+            raise InvalidArgumentsException("Invalid message")
+        message = match.group(_CallViewParser._TARGET)
+        return message
 
 
 ZERO_WAIT = 0
 MINIMUM_TX_WAIT = 3
-SIMPLE_PROCESS_TIMEOUT = 2
-TRANSACTION_TIMEOUT = 5
-NODE_START_WAIT = 2
+MINIMAL_CALL_TIMEOUT = 7
+MINIMAL_STANDALONE_TIMEOUT = 5
+MINIMAL_TRANSACTION_TIMEOUT = 10
+MINIMAL_CONTRACT_TIMEOUT = 15
 
 
-class Client:
+class Client(BaseClient):
     def __init__(self, *, name: str, client_file_path: str, work_dir: str, node_address: str, is_http: bool,
                  logger: Logger):
         self.name = name
@@ -384,7 +317,7 @@ class Client:
             self.connect_params.append("--http")
         self.logger = logger
 
-    def __run_standalone_command(self, *, command, parameters, timeout):
+    def __run_standalone_command(self, *, command, parameters, timeout) -> str:
         run_commands = [self.client_file_path, command, *parameters]
         try:
             pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
@@ -399,7 +332,7 @@ class Client:
             raise Exception(f"not success command execution {run_commands}: {pipe.stderr.decode('utf8')}")
         return pipe.stdout.decode("utf8")
 
-    def __run_client_command(self, *, command, parameters, timeout, wait):
+    def __run_client_command(self, *, command, parameters, timeout, wait) -> str:
         run_commands = [self.client_file_path, command, *self.connect_params, *parameters]
         try:
             pipe = subprocess.run(run_commands, cwd=self.work_dir, capture_output=True, timeout=timeout)
@@ -415,83 +348,93 @@ class Client:
         time.sleep(wait)
         return pipe.stdout.decode("utf8")
 
-    def connection_test(self, *, timeout=SIMPLE_PROCESS_TIMEOUT, wait=ZERO_WAIT) -> bool:
+    def connection_test(self, *, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> bool:
         result = self.__run_client_command(command="connection_test", parameters=[], timeout=timeout, wait=wait)
         return _TestConnectionParser.parse(result)
 
-    def node_info(self, *, timeout=SIMPLE_PROCESS_TIMEOUT, wait=ZERO_WAIT) -> NodeInfo:
+    def node_info(self, *, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> NodeInfo:
         result = self.__run_client_command(command="node_info", parameters=[], timeout=timeout, wait=wait)
         return _NodeInfoParser.parse(result)
 
-    def generate_keys(self, *, keys_path: str, timeout=SIMPLE_PROCESS_TIMEOUT) -> Address:
+    def generate_keys(self, *, keys_path: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> Keys:
         path = os.path.abspath(keys_path)
         if not os.path.exists(path):
             os.makedirs(path)
         result = self.__run_standalone_command(command="generate_keys", parameters=["--keys", path], timeout=timeout)
         return _GenerateKeysParser.parse(result)
 
-    def load_address(self, *, keys_path: str, timeout=SIMPLE_PROCESS_TIMEOUT) -> Address:
+    def load_address(self, *, keys_path: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> Keys:
         result = self.__run_standalone_command(command="keys_info", parameters=["--keys", keys_path], timeout=timeout)
-        return Address(keys_path, _KeysInfoParser.parse(result))
+        return Keys(keys_path, _KeysInfoParser.parse(result))
 
-    def get_balance(self, *, address: Address, timeout=SIMPLE_PROCESS_TIMEOUT, wait=ZERO_WAIT) -> int:
-        result = self.__run_client_command(command="get_balance", parameters=["--address", address.address],
-                                           timeout=timeout, wait=wait)
+    def get_balance(self, *, address: str, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> int:
+        parameters = ["--address", address]
+        result = self.__run_client_command(command="get_balance", parameters=parameters, timeout=timeout, wait=wait)
         return _GetBalanceParser.parse(result)
 
-    def transfer(self, *, to_address: Address, amount: int, from_address: Address, fee: int, wait=ZERO_WAIT,
-                 timeout=TRANSACTION_TIMEOUT) -> TransferResult:
-        parameters = ["--to", to_address.address, "--amount", str(amount), "--keys", from_address.key_path, "--fee",
+    def get_account_info(self, *, address: str, timeout=MINIMAL_CALL_TIMEOUT,
+                         wait=ZERO_WAIT) -> AccountInfo:  # TODO fix parser for different account types
+        parameters = ["--address", address]
+        result = self.__run_client_command(command="get_account_info", parameters=parameters, timeout=timeout,
+                                           wait=wait)
+        return _GetAccountInfoParser.parse(result)
+
+    def transfer(self, *, to_address: str, amount: int, from_address: Keys, fee: int, wait=MINIMUM_TX_WAIT,
+                 timeout=MINIMAL_TRANSACTION_TIMEOUT) -> TransferResult:
+        parameters = ["--to", to_address, "--amount", str(amount), "--keys", from_address.keys_path, "--fee",
                       str(fee)]
         result = self.__run_client_command(command="transfer", parameters=parameters, timeout=timeout, wait=wait)
         return _TransferParser.parse(result)
 
-    def get_transaction(self, *, tx_hash: str, wait=ZERO_WAIT, timeout=TRANSACTION_TIMEOUT) -> Transaction:
+    def get_transaction_status(self, *, tx_hash: str, wait: int, timeout: int) -> TransactionStatus:
+        raise LogicException("method is not implemented")
+
+    def get_transaction(self, *, tx_hash: str, wait=ZERO_WAIT, timeout=MINIMAL_CALL_TIMEOUT) -> Transaction:
         parameters = ["--hash", tx_hash]
         result = self.__run_client_command(command="get_transaction", parameters=parameters, timeout=timeout, wait=wait)
         return _GetTransactionParser.parse(result)
 
-    # def get_block(self, block_hash=None, block_number=None, *, is_http=False, timeout=SIMPLE_PROCESS_TIMEOUT,
-    #               wait=ZERO_WAIT):
-    #     if block_hash is not None:
-    #         result = self.__run_client_command(command="get_block", parameters=["--hash", block_hash], timeout=timeout,
-    #                                            is_http=is_http,
-    #                                            wait=wait)
-    #     elif block_number is not None:
-    #         result = self.__run_client_command(command="get_block", parameters=["--number", block_number],
-    #                                            timeout=timeout,
-    #                                            is_http=is_http,
-    #                                            wait=wait)
-    #     else:
-    #         raise InvalidArgumentsException("block_hash and block_number were not set")
-    #     return parser("get_block").parse(result)
+    def get_block(self, block_hash=None, block_number=None, *, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> Block:
+        if block_hash is not None:
+            result = self.__run_client_command(command="get_block", parameters=["--hash", block_hash], timeout=timeout,
+                                               wait=wait)
+        elif block_number is not None:
+            result = self.__run_client_command(command="get_block", parameters=["--number", str(block_number)],
+                                               timeout=timeout, wait=wait)
+        else:
+            raise InvalidArgumentsException("block_hash and block_number were not set")
+        return _GetBlockParser.parse(result)
 
-    # def compile_file(self, *, code: str) -> list:  # TODO
-    #     result = self.__run_standalone_command(command="compile", parameters=["--code", code])
-    #     return parser("compile").parse(result)
-    #
-    # def encode_message(self, *, code: str, message: str) -> str:  # TODO
-    #     result = self.__run_standalone_command(command="encode", parameters=["--code", code, "--data", message])
-    #     return parser("encode").parse(result)
-    #
-    # def decode_message(self, *, code: str, method: str, message: ContractResult) -> dict:  # TODO
-    #     result = self.__run_standalone_command(command="decode",
-    #                                            parameters=["--code", code, "--method", method, "--data",
-    #                                                        message.message])
-    #     return parser("decode").parse(result)
-    #
-    # def push_contract(self, *, from_address: Address, code: str, gas: int, amount: int, init_message: str,
-    #                   timeout=TRANSACTION_TIMEOUT, wait=0) -> DeployedContract:  # TODO
-    #     parameters = ["--keys", from_address.key_path, "--code", code, "--amount",
-    #                   str(amount), "--gas", str(gas), "--init", init_message]
-    #     result = self.__run_client_command(command="create_contract", parameters=parameters,
-    #                                        timeout=timeout, wait=wait)
-    #     return parser("create_contract").parse(result)
-    #
-    # def message_call(self, *, from_address: Address, to_address: DeployedContract, gas: int, amount: int, message: str,
-    #                  timeout=TRANSACTION_TIMEOUT, wait=0) -> ContractResult:  # TODO
-    #     parameters = ["--keys", from_address.key_path, "--to", to_address.address,
-    #                   "--amount", str(amount), "--gas", str(gas), "--message", message]
-    #     result = self.__run_client_command(command="message_call", parameters=parameters,
-    #                                        timeout=timeout, wait=wait)
-    #     return parser("message_call").parse(result)
+    def compile_file(self, *, code: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> list:
+        result = self.__run_standalone_command(command="compile_contract", parameters=["--code", code], timeout=timeout)
+        return _CompileContractParser.parse(result)
+
+    def encode_message(self, *, code: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> str:
+        parameters = ["--code", code, "--message", message]
+        result = self.__run_standalone_command(command="encode_message", parameters=parameters, timeout=timeout)
+        return _EncodeParser.parse(result)
+
+    def decode_message(self, *, code: str, method: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> dict:
+        parameters = ["--code", code, "--method", method, "--message", message]
+        result = self.__run_standalone_command(command="decode_message", parameters=parameters, timeout=timeout)
+        return _DecodeParser.parse(result)
+
+    def push_contract(self, *, from_address: Keys, code: str, fee: int, amount: int, init_message: str,
+                      timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> DeployedContract:
+        parameters = ["--keys", from_address.keys_path, "--code", code, "--amount",
+                      str(amount), "--fee", str(fee), "--message", init_message]
+        result = self.__run_client_command(command="push_contract", parameters=parameters, timeout=timeout, wait=wait)
+        return _PushContractParser.parse(result)
+
+    def message_call(self, *, from_address: Keys, to_address: str, fee: int, amount: int, message: str,
+                     timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> ContractResult:
+        parameters = ["--keys", from_address.keys_path, "--to", to_address,
+                      "--amount", str(amount), "--fee", str(fee), "--message", message]
+        result = self.__run_client_command(command="call_contract", parameters=parameters, timeout=timeout, wait=wait)
+        return _MessageCallParser.parse(result)
+
+    def call_view(self, *, from_address: Keys, to_address: str, message: str, timeout=MINIMAL_CALL_TIMEOUT,
+                  wait=ZERO_WAIT) -> str:
+        parameters = ["--keys", from_address.keys_path, "--to", to_address, "--message", message]
+        result = self.__run_client_command(command="call_view", parameters=parameters, timeout=timeout, wait=wait)
+        return _CallViewParser.parse(result)

@@ -442,6 +442,7 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
 
 void Adapter::handler(const web::http::http_request& message)
 {
+    LOG_ERROR << "registrated connection: " << message.remote_address();
     auto paths = web::http::uri::split_path(web::http::uri::decode(message.relative_uri().path()));
 
     if (paths.empty()) {

@@ -1138,7 +1138,7 @@ int ActionCallContractView::execute()
     auto data = base::fromHex<base::Bytes>(_message);
     auto responce = client->callContractView(from_address, _to_address, std::move(data));
 
-    std::cout << "View of smart contract responce: " << base::toHex(responce) << std::endl;
+    std::cout << "View of smart contract response: " << base::toHex(responce) << std::endl;
 
     return base::config::EXIT_OK;
 }

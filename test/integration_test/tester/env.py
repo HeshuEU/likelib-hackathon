@@ -4,7 +4,9 @@ import shutil
 
 from .base import Logger, InvalidArgumentsException, LogicException
 from .node import Node
+from .client import BaseClient
 from .legacy_client import Client as LegacyClient
+from .http_client import Client as HttpClient
 
 
 class Id:
@@ -121,9 +123,6 @@ class NodeConfig:
     def is_clean_up(self, value: bool) -> None:
         self.__settings_dict["is_clean_up"] = value
 
-    def __hash__(self):
-        pass
-
     def copy(self):
         new_config = NodeConfig()
         new_config.__settings_dict = self.__settings_dict.copy()
@@ -133,6 +132,7 @@ class NodeConfig:
 class Env:
     CLIENT_LEGACY_GRPC_TYPE = "legacy/grpc"
     CLIENT_LEGACY_HTTP_TYPE = "legacy/http"
+    CLIENT_PYTHON_HTTP_TYPE = "python/http"
     CLIENT_NAME = "client"
     ENCODER_NAME = "encoder.py"
     DECODER_NAME = "decoder.py"
@@ -312,7 +312,16 @@ class Env:
         return LegacyClient(name=client_name, client_file_path=client_file_path, work_dir=client_work_dir,
                             node_address=connection_address, is_http=is_http, logger=self.logger)
 
-    def get_client(self, client_type: str, node_id: Id) -> LegacyClient:
+    def __get_http_client(self, node_id: Id) -> HttpClient:
+        if not node_id.is_enable_http:
+            raise InvalidArgumentsException("connection node doesn't support http protocol")
+        client_name = "Client_python_to_node_http_" + str(node_id.http_port)
+
+        client_work_dir = os.path.join(self.dir, client_name)
+        return HttpClient(name=client_name, work_dir=client_work_dir, connection_address=node_id.connect_http_address,
+                          logger=self.logger)
+
+    def get_client(self, client_type: str, node_id: Id) -> BaseClient:
         if not self.is_node_started(node_id):
             raise InvalidArgumentsException(f"node doesn't exists: {node_id}")
 
@@ -321,6 +330,8 @@ class Env:
             return self.__get_legacy_client(node_id, False)
         elif client_type == Env.CLIENT_LEGACY_HTTP_TYPE:
             return self.__get_legacy_client(node_id, True)
+        elif client_type == Env.CLIENT_PYTHON_HTTP_TYPE:
+            return self.__get_http_client(node_id)
         else:
             raise LogicException("no client type:" + client_type)
 
