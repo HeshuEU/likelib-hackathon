@@ -199,7 +199,6 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _core{ core }
   , _host{ host }
 {
-    _session->setHandler(std::make_unique<Handler>(weak_from_this()));
 }
 
 
@@ -251,7 +250,7 @@ void Peer::startSession()
         return;
     }
     _is_started = true;
-
+    _session->setHandler(std::make_unique<Handler>(weak_from_this()));
     _session->start();
     if (wasConnectedTo()) {
         sendMessage<msg::Connect>({ _core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlockHash() });
@@ -552,7 +551,7 @@ void Peer::handle(lk::msg::LookupResponse&& msg)
         std::ostringstream ss;
         ss << "Lookup response peer entries:\n";
         for(const auto& pi : msg.peers_info) {
-            ss << pi.endpoint << ' ' << pi.address << '\n';
+            ss << '\t' << pi.endpoint << ' ' << pi.address << '\n';
         }
         LOG_DEBUG << ss.str();
     }
