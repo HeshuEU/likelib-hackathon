@@ -107,7 +107,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, Context context);
     static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, Context context);
 
-    ~Peer();
+    ~Peer() = default;
     //=========================
     base::Time getLastSeen() const;
     net::Endpoint getEndpoint() const;
@@ -130,6 +130,9 @@ class Peer : public std::enable_shared_from_this<Peer>
      * If the peer was connected to it waits for reply.
      */
     void startSession();
+
+    template<typename T>
+    void endSession(T last_message);
   private:
     //=========================
     Peer(std::shared_ptr<net::Session> session,
@@ -145,7 +148,7 @@ class Peer : public std::enable_shared_from_this<Peer>
      * @return true if success, false - otherwise
      */
     bool tryAddToPool();
-    void removeFromPools(); // only called inside onClose or inside destructor
+    void detachFromPools(); // only called inside onClose or inside destructor
     //=========================
     /*
      * Handler of session messages.

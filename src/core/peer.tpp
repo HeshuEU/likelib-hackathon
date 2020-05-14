@@ -12,4 +12,25 @@ void Peer::sendMessage(const M& msg, net::Connection::SendHandler on_send)
     _session->send(std::move(oa).getBytes(), std::move(on_send));
 }
 
+
+template<typename T>
+void Peer::endSession(T last_message)
+{
+    LOG_DEBUG << "ending session";
+    try {
+        detachFromPools();
+        sendMessage(last_message, [keeper = shared_from_this()] {
+          keeper->_session->close();
+        });
+    }
+    catch(const std::exception& e) {
+        LOG_WARNING << "Error during peer shutdown: " << e.what();
+    }
+    catch(...) {
+        LOG_WARNING << "Unknown error during peer shutdown";
+    }
+}
+
+
+
 }

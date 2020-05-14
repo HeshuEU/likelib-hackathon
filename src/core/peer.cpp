@@ -202,12 +202,6 @@ Peer::Peer(std::shared_ptr<net::Session> session,
 }
 
 
-Peer::~Peer()
-{
-    removeFromPools();
-}
-
-
 net::Endpoint Peer::getEndpoint() const
 {
     return _session->getEndpoint();
@@ -290,7 +284,7 @@ bool Peer::tryAddToPool()
 }
 
 
-void Peer::removeFromPools()
+void Peer::detachFromPools()
 {
     if (_is_attached_to_handshaked_pool) {
         _handshaked_pool.removePeer(this);
@@ -342,7 +336,7 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         if(next == base::Sha256::null()) {
             if(!_peer._rating.differentGenesis()) {
                 // need to disconnect this peer since in has different genesis block, this is fatal
-                // TODO: disconnect
+                _peer.endSession(msg::Close{});
             }
             return true;
         }
@@ -398,7 +392,7 @@ void Peer::Handler::onReceive(const base::Bytes& bytes)
 void Peer::Handler::onClose()
 {
     if (auto p = _peer.lock()) {
-        p->removeFromPools();
+        p->detachFromPools();
     }
 }
 
@@ -490,9 +484,8 @@ void Peer::handle(lk::msg::Connect&& msg)
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
-        sendMessage(
+        endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
-        // and close peer properly
     }
 }
 
@@ -521,9 +514,8 @@ void Peer::handle(lk::msg::Accepted&& msg)
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
-        sendMessage(
+        endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
-        // and close peer properly
     }
 }
 
@@ -600,7 +592,10 @@ void Peer::handle(lk::msg::BlockNotFound&& msg)
 }
 
 
-void Peer::handle(lk::msg::Close&& msg) {}
+void Peer::handle(lk::msg::Close&& msg) {
+    detachFromPools();
+    _session->close();
+}
 
 }
 

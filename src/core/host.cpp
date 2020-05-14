@@ -30,14 +30,16 @@ bool BasicPeerPool::tryAddPeer(std::shared_ptr<Peer> peer)
 void BasicPeerPool::removePeer(std::shared_ptr<Peer> peer)
 {
     std::unique_lock lk(_pool_mutex);
-    _pool.erase(_pool.find(peer.get()));
+    removePeer(peer.get());
 }
 
 
 void BasicPeerPool::removePeer(Peer* peer)
 {
     std::unique_lock lk(_pool_mutex);
-    _pool.erase(_pool.find(peer));
+    if(auto it = _pool.find(peer); it != _pool.end()) {
+        _pool.erase(it);
+    }
 }
 
 
@@ -173,9 +175,9 @@ void KademliaPeerPool::removePeer(Peer* peer)
 {
     std::unique_lock lk{ _buckets_mutex };
     for (auto& bucket : _buckets) {
-        bucket.erase(std::remove_if(
-                       bucket.begin(), bucket.end(), [peer](const auto& candidate) { return peer == candidate.get(); }),
-                     bucket.end());
+        if(auto it = std::find_if(bucket.cbegin(), bucket.cend(), [peer](const auto& cand) { return peer == cand.get(); }); it != bucket.cend()) {
+            bucket.erase(it);
+        }
     }
 }
 
