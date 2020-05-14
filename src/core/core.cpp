@@ -278,7 +278,7 @@ class EthHost : public evmc::Host
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
   : _config{ config }
   , _vault{ key_vault }
-  , _this_node_address{ _vault.getPublicKey() }
+  , _this_node_address{ _vault.getKey().toPublicKey() }
   , _blockchain{ _config }
   , _host{ _config, 0xFFFF, *this }
   , _vm{ std::move(vm::load()) }
@@ -307,7 +307,7 @@ const lk::Block& Core::getGenesisBlock()
 
         lk::Block ret{ 0, base::Sha256(base::Bytes(32)), timestamp, lk::Address::null(), {} };
         lk::Address from{ lk::Address::null() };
-        lk::Address to{ "28dpzpURpyqqLoWrEhnHrajndeCq" };
+        lk::Address to{ "2joqPCePiwZ4J6hBdakWx9WATeTm" };
         lk::Balance amount{ 0xFFFFFFFF };
         std::uint64_t fee{ 0 };
 

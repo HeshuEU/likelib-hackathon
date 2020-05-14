@@ -7,32 +7,32 @@
 namespace
 {
 
-lk::Transaction trans1{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans1{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         12398,
                         11,
                         base::Time(),
                         base::Bytes{} };
-lk::Transaction trans2{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans2{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         5825285,
                         22,
                         base::Time::now(),
                         base::Bytes{} };
-lk::Transaction trans3{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans3{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         12245398,
                         33,
                         base::Time(),
                         base::Bytes{} };
-lk::Transaction trans4{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans4{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         168524347,
                         44,
                         base::Time(),
                         base::Bytes{} };
-lk::Transaction trans5{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans5{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         1434457,
                         55,
                         base::Time::now(),
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(transactions_set_find)
     BOOST_CHECK(tx_set.find(trans5));
 
     BOOST_CHECK(!tx_set.find(lk::Transaction(trans1.getFrom(),
-                                             lk::Address(base::generateKeys().first),
+                                             lk::Address(base::Secp256PrivateKey().toPublicKey()),
                                              trans1.getAmount(),
                                              0,
                                              trans1.getTimestamp(),
@@ -145,8 +145,8 @@ BOOST_AUTO_TEST_CASE(transactions_set_remove_set2)
 BOOST_AUTO_TEST_CASE(transaction_set_inEmpty)
 {
     lk::TransactionsSet tx_set;
-    auto from = lk::Address(base::generateKeys().first);
-    auto to = lk::Address(base::generateKeys().first);
+    auto from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    auto to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     BOOST_CHECK(tx_set.isEmpty());
 
     tx_set.add(lk::Transaction(from, to, 111, 0, base::Time(), base::Bytes{}));

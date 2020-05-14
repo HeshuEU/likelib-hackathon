@@ -34,33 +34,35 @@ class ContractData
     base::PropertyTree _abi;
 };
 
+//
+// class Sign
+//{
+//  public:
+//    Sign() = default;
+//    Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash);
+//
+//    bool isNull() const noexcept;
+//
+//    const base::RsaPublicKey& getPublicKey() const;
+//    const base::Bytes& getRsaEncryptedHash() const;
+//
+//    static Sign fromBase64(const std::string& base64_signature);
+//    std::string toBase64() const;
+//
+//    void serialize(base::SerializationOArchive& oa) const;
+//    static Sign deserialize(base::SerializationIArchive& ia);
+//
+//  private:
+//    struct Data
+//    {
+//        base::RsaPublicKey sender_public_key;
+//        base::Bytes rsa_encrypted_hash;
+//    };
+//
+//    std::optional<Data> _data;
+//};
 
-class Sign
-{
-  public:
-    Sign() = default;
-    Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash);
-
-    bool isNull() const noexcept;
-
-    const base::RsaPublicKey& getPublicKey() const;
-    const base::Bytes& getRsaEncryptedHash() const;
-
-    static Sign fromBase64(const std::string& base64_signature);
-    std::string toBase64() const;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Sign deserialize(base::SerializationIArchive& ia);
-
-  private:
-    struct Data
-    {
-        base::RsaPublicKey sender_public_key;
-        base::Bytes rsa_encrypted_hash;
-    };
-
-    std::optional<Data> _data;
-};
+using Sign = base::FixedBytes<base::Secp256PrivateKey::SECP256_SIGNATURE_SIZE>;
 
 
 class Transaction
@@ -88,7 +90,7 @@ class Transaction
     const base::Bytes& getData() const noexcept;
     const std::uint64_t& getFee() const noexcept;
     //=================
-    void sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv);
+    void sign(const base::Secp256PrivateKey& key);
     bool checkSign() const;
     const lk::Sign& getSign() const noexcept;
     //=================

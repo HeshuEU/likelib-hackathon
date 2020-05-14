@@ -41,23 +41,24 @@ constexpr const char* HASH_OPTION = "hash";
 constexpr const char* NUMBER_OPTION = "number";
 
 
-std::pair<base::RsaPublicKey, base::RsaPrivateKey> loadKeys(const std::filesystem::path& dir)
-{
-    auto public_key_path = base::config::makePublicKeyPath(dir);
-    if (!std::filesystem::exists(public_key_path)) {
-        RAISE_ERROR(base::InaccessibleFile, "cannot find public key file by path \"" + public_key_path.string() + '\"');
-    }
-    auto public_key = base::RsaPublicKey::load(public_key_path);
-
-    auto private_key_path = base::config::makePrivateKeyPath(dir);
-    if (!std::filesystem::exists(private_key_path)) {
-        RAISE_ERROR(base::InaccessibleFile,
-                    "cannot find private key file by path \"" + private_key_path.string() + '\"');
-    }
-    auto private_key = base::RsaPrivateKey::load(private_key_path);
-
-    return { std::move(public_key), std::move(private_key) };
-}
+// std::pair<base::RsaPublicKey, base::RsaPrivateKey> loadKeys(const std::filesystem::path& dir)
+//{
+//    auto public_key_path = base::config::makePublicKeyPath(dir);
+//    if (!std::filesystem::exists(public_key_path)) {
+//        RAISE_ERROR(base::InaccessibleFile, "cannot find public key file by path \"" + public_key_path.string() +
+//        '\"');
+//    }
+//    auto public_key = base::RsaPublicKey::load(public_key_path);
+//
+//    auto private_key_path = base::config::makePrivateKeyPath(dir);
+//    if (!std::filesystem::exists(private_key_path)) {
+//        RAISE_ERROR(base::InaccessibleFile,
+//                    "cannot find private key file by path \"" + private_key_path.string() + '\"');
+//    }
+//    auto private_key = base::RsaPrivateKey::load(private_key_path);
+//
+//    return { std::move(public_key), std::move(private_key) };
+//}
 
 bool checkOptionEmptyAndWriteMessage(const base::ProgramOptionsParser& parser, const char* const option)
 {
@@ -282,17 +283,7 @@ int ActionGenerateKeys::loadOptions(const base::ProgramOptionsParser& parser)
 
 int ActionGenerateKeys::execute()
 {
-    LOG_INFO << "Generating key pair at " << _keys_dir;
-    std::cout << "Generating key pair at " << _keys_dir << std::endl;
-
-    const auto& [pub, priv] = base::generateKeys();
-
-    auto public_path = base::config::makePublicKeyPath(_keys_dir);
-    if (std::filesystem::exists(public_path)) {
-        std::cerr << "Error: " << public_path << " already exists.\n";
-        LOG_ERROR << public_path << " file already exists";
-        return base::config::EXIT_FAIL;
-    }
+    const auto& priv = base::Secp256PrivateKey();
 
     auto private_path = base::config::makePrivateKeyPath(_keys_dir);
     if (std::filesystem::exists(private_path)) {
@@ -301,17 +292,15 @@ int ActionGenerateKeys::execute()
         return base::config::EXIT_FAIL;
     }
 
-    pub.save(public_path);
+    priv.save(private_path);
 
-    std::cout << "Generated public key at " << public_path << std::endl;
-    std::cout << "Address: " << lk::Address(pub) << std::endl;
-    std::cout << "Hash of public key: " << base::Sha256::compute(pub.toBytes()) << std::endl;
-    std::cout << "Hash of private key: " << base::Sha256::compute(priv.toBytes()) << std::endl;
-    LOG_INFO << "Generated public key at " << public_path;
+    std::cout << "Generated key at " << _keys_dir << std::endl;
+    std::cout << "Address: " << lk::Address(priv.toPublicKey()) << std::endl;
+    std::cout << "Hash of public key: " << base::Sha256::compute(priv.toPublicKey().toBytes()) << std::endl;
+    std::cout << "Hash of private key: " << base::Sha256::compute(priv.getBytes().toBytes()) << std::endl;
+    LOG_INFO << "Generated key at " << _keys_dir;
 
     priv.save(private_path);
-    std::cout << "Generated private key at " << private_path << std::endl;
-    LOG_INFO << "Generated private key at " << private_path;
 
     return base::config::EXIT_OK;
 }
@@ -359,13 +348,6 @@ int ActionKeysInfo::loadOptions(const base::ProgramOptionsParser& parser)
 
 int ActionKeysInfo::execute()
 {
-    auto public_path = base::config::makePublicKeyPath(_keys_dir);
-    if (!std::filesystem::exists(public_path)) {
-        std::cerr << "Error: " << public_path << " doesn't exist.\n";
-        LOG_ERROR << public_path << " file not exists";
-        return base::config::EXIT_FAIL;
-    }
-
     auto private_path = base::config::makePrivateKeyPath(_keys_dir);
     if (!std::filesystem::exists(private_path)) {
         std::cerr << "Error: " << private_path << " doesn't exist.\n";
@@ -373,12 +355,11 @@ int ActionKeysInfo::execute()
         return base::config::EXIT_FAIL;
     }
 
-    auto pub = base::RsaPublicKey::load(public_path);
-    auto priv = base::RsaPrivateKey::load(private_path);
+    auto priv = base::Secp256PrivateKey::load(private_path);
 
-    std::cout << "Address: " << lk::Address(pub) << std::endl;
-    std::cout << "Hash of public key: " << base::Sha256::compute(pub.toBytes()) << std::endl;
-    std::cout << "Hash of private key: " << base::Sha256::compute(priv.toBytes()) << std::endl;
+    std::cout << "Address: " << lk::Address(priv.toPublicKey()) << std::endl;
+    std::cout << "Hash of public key: " << base::Sha256::compute(priv.toPublicKey()) << std::endl;
+    std::cout << "Hash of private key: " << base::Sha256::compute(priv.getBytes()) << std::endl;
 
     return base::config::EXIT_OK;
 }
@@ -792,8 +773,9 @@ int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser)
 
 int ActionTransfer::execute()
 {
-    auto [pub, priv] = loadKeys(_keys_dir);
-    auto from_address = lk::Address(pub);
+    auto private_key_path = base::config::makePrivateKeyPath(_keys_dir);
+    auto priv = base::Secp256PrivateKey::load(private_key_path);
+    auto from_address = lk::Address(priv.toPublicKey());
 
     lk::TransactionBuilder txb;
     txb.setFrom(std::move(from_address));
@@ -804,7 +786,7 @@ int ActionTransfer::execute()
     txb.setData({});
     auto tx = std::move(txb).build();
 
-    tx.sign(pub, priv);
+    tx.sign(priv);
 
     auto tx_hash = tx.hashOfTransaction();
     std::cout << "Created transaction with hash[hex]: " << tx_hash << std::endl;
@@ -916,8 +898,9 @@ int ActionPushContract::loadOptions(const base::ProgramOptionsParser& parser)
 
 int ActionPushContract::execute()
 {
-    auto [pub, priv] = loadKeys(_keys_dir);
-    auto from_address = lk::Address(pub);
+    auto private_key_path = base::config::makePrivateKeyPath(_keys_dir);
+    auto priv = base::Secp256PrivateKey::load(private_key_path);
+    auto from_address = lk::Address(priv.toPublicKey());
 
     lk::TransactionBuilder txb;
     txb.setAmount(_amount);
@@ -930,7 +913,7 @@ int ActionPushContract::execute()
     txb.setData(base::toBytes(data));
 
     auto tx = std::move(txb).build();
-    tx.sign(pub, priv);
+    tx.sign(priv);
 
     auto tx_hash = tx.hashOfTransaction();
     std::cout << "Created transaction with hash[hex]: " << tx_hash << std::endl;
@@ -1027,8 +1010,9 @@ int ActionContractCall::loadOptions(const base::ProgramOptionsParser& parser)
 
 int ActionContractCall::execute()
 {
-    auto [pub, priv] = loadKeys(_keys_dir);
-    auto from_address = lk::Address(pub);
+    auto private_key_path = base::config::makePrivateKeyPath(_keys_dir);
+    auto priv = base::Secp256PrivateKey::load(private_key_path);
+    auto from_address = lk::Address(priv.toPublicKey());
 
     lk::TransactionBuilder txb;
     txb.setAmount(_amount);
@@ -1039,7 +1023,7 @@ int ActionContractCall::execute()
     txb.setData(base::fromHex<base::Bytes>(_message));
 
     auto tx = std::move(txb).build();
-    tx.sign(pub, priv);
+    tx.sign(priv);
 
     auto tx_hash = tx.hashOfTransaction();
     std::cout << "Created transaction with hash[hex]: " << tx_hash << std::endl;
@@ -1123,8 +1107,9 @@ int ActionCallContractView::loadOptions(const base::ProgramOptionsParser& parser
 
 int ActionCallContractView::execute()
 {
-    auto [pub, priv] = loadKeys(_keys_dir);
-    auto from_address = lk::Address(pub);
+    auto private_key_path = base::config::makePrivateKeyPath(_keys_dir);
+    auto priv = base::Secp256PrivateKey::load(private_key_path);
+    auto from_address = lk::Address(priv.toPublicKey());
 
     LOG_INFO << "Try to connect to rpc server by: " << _host_address;
     std::unique_ptr<rpc::BaseRpc> client;

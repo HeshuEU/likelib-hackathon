@@ -197,7 +197,7 @@ void serializeTransaction(const lk::Transaction& from, likelib::Transaction* to)
     else {
         to->mutable_data()->set_message(base::base64Encode(from.getData()));
     }
-    to->mutable_signature()->set_signature_bytes_at_base_64(from.getSign().toBase64());
+    to->mutable_signature()->set_signature_bytes_at_base_64(base::base64Encode(from.getSign()));
 }
 
 
@@ -220,7 +220,7 @@ lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx)
         txb.setData(base::base64Decode(tx->data().message()));
     }
 
-    txb.setSign(lk::Sign::fromBase64(tx->signature().signature_bytes_at_base_64()));
+    txb.setSign(lk::Sign(base::base64Decode(tx->signature().signature_bytes_at_base_64())));
 
     return std::move(txb).build();
 }

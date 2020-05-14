@@ -36,7 +36,7 @@ class _NodeInfoParser:
 
 class _GenerateKeysParser:
     _RE = {
-        'keys_path': (re.compile(r'Generating key pair at "(?P<keys_path>.*)"'), str),
+        'keys_path': (re.compile(r'Generated key at "(?P<keys_path>.*)"'), str),
         'address': (re.compile(r'Address: (?P<address>.*)'), str),
     }
 

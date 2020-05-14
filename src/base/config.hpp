@@ -94,7 +94,7 @@ constexpr bool DATABASE_COMPRESS_DATA = false;                           // no c
 //--------------------
 
 // keys paths
-std::filesystem::path makePublicKeyPath(const std::filesystem::path& path);
+//std::filesystem::path makePublicKeyPath(const std::filesystem::path& path);
 std::filesystem::path makePrivateKeyPath(const std::filesystem::path& path);
 
 } // namespace base::config

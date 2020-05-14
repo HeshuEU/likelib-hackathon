@@ -51,77 +51,77 @@ ContractData ContractData::deserialize(base::SerializationIArchive& ia)
     return { std::move(message), std::move(abi) };
 }
 
-
-Sign::Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash)
-  : _data{ Data{ std::move(sender_public_key), std::move(rsa_encrypted_hash) } }
-{}
-
-
-bool Sign::isNull() const noexcept
-{
-    return !_data.has_value();
-}
-
-
-const base::RsaPublicKey& Sign::getPublicKey() const
-{
-    if (isNull()) {
-        RAISE_ERROR(base::LogicError, "attemping to get on null lk::Sign");
-    }
-    return _data->sender_public_key;
-}
-
-
-const base::Bytes& Sign::getRsaEncryptedHash() const
-{
-    if (isNull()) {
-        RAISE_ERROR(base::LogicError, "attemping to get on null lk::Sign");
-    }
-    return _data->rsa_encrypted_hash;
-}
-
-
-void Sign::serialize(base::SerializationOArchive& oa) const
-{
-    if (!_data) {
-        oa.serialize(base::Byte{ false });
-    }
-    else {
-        oa.serialize(base::Byte{ true });
-        oa.serialize(_data->sender_public_key);
-        oa.serialize(_data->rsa_encrypted_hash);
-    }
-}
-
-
-Sign Sign::deserialize(base::SerializationIArchive& ia)
-{
-    auto flag = ia.deserialize<base::Byte>();
-    if (flag) {
-        auto sender_rsa_public_key = base::RsaPublicKey::deserialize(ia);
-        auto rsa_encrypted_hash = ia.deserialize<base::Bytes>();
-        return Sign{ std::move(sender_rsa_public_key), std::move(rsa_encrypted_hash) };
-    }
-    else {
-        return Sign{};
-    }
-}
-
-
-Sign Sign::fromBase64(const std::string& base64_signature)
-{
-    const auto& signature_bytes = base::base64Decode(base64_signature);
-    base::SerializationIArchive ia(signature_bytes);
-    return deserialize(ia);
-}
-
-
-std::string Sign::toBase64() const
-{
-    base::SerializationOArchive oa;
-    serialize(oa);
-    return base::base64Encode(oa.getBytes());
-}
+//
+// Sign::Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash)
+//  : _data{ Data{ std::move(sender_public_key), std::move(rsa_encrypted_hash) } }
+//{}
+//
+//
+// bool Sign::isNull() const noexcept
+//{
+//    return !_data.has_value();
+//}
+//
+//
+// const base::RsaPublicKey& Sign::getPublicKey() const
+//{
+//    if (isNull()) {
+//        RAISE_ERROR(base::LogicError, "attemping to get on null lk::Sign");
+//    }
+//    return _data->sender_public_key;
+//}
+//
+//
+// const base::Bytes& Sign::getRsaEncryptedHash() const
+//{
+//    if (isNull()) {
+//        RAISE_ERROR(base::LogicError, "attemping to get on null lk::Sign");
+//    }
+//    return _data->rsa_encrypted_hash;
+//}
+//
+//
+// void Sign::serialize(base::SerializationOArchive& oa) const
+//{
+//    if (!_data) {
+//        oa.serialize(base::Byte{ false });
+//    }
+//    else {
+//        oa.serialize(base::Byte{ true });
+//        oa.serialize(_data->sender_public_key);
+//        oa.serialize(_data->rsa_encrypted_hash);
+//    }
+//}
+//
+//
+// Sign Sign::deserialize(base::SerializationIArchive& ia)
+//{
+//    auto flag = ia.deserialize<base::Byte>();
+//    if (flag) {
+//        auto sender_rsa_public_key = base::RsaPublicKey::deserialize(ia);
+//        auto rsa_encrypted_hash = ia.deserialize<base::Bytes>();
+//        return Sign{ std::move(sender_rsa_public_key), std::move(rsa_encrypted_hash) };
+//    }
+//    else {
+//        return Sign{};
+//    }
+//}
+//
+//
+// Sign Sign::fromBase64(const std::string& base64_signature)
+//{
+//    const auto& signature_bytes = base::base64Decode(base64_signature);
+//    base::SerializationIArchive ia(signature_bytes);
+//    return deserialize(ia);
+//}
+//
+//
+// std::string Sign::toBase64() const
+//{
+//    base::SerializationOArchive oa;
+//    serialize(oa);
+//    return base::base64Encode(oa.getBytes());
+//}
 
 
 Transaction::Transaction(lk::Address from,
@@ -181,36 +181,33 @@ const base::Bytes& Transaction::getData() const noexcept
 }
 
 
-void Transaction::sign(base::RsaPublicKey pub, const base::RsaPrivateKey& priv)
+void Transaction::sign(const base::Secp256PrivateKey& key)
 {
     auto hash = hashOfTransaction();
-    base::Bytes rsa_encrypted_hash = priv.encrypt(hash.getBytes().toBytes());
-    _sign = Sign{ std::move(pub), rsa_encrypted_hash };
+    _sign = key.sign(hash.getBytes());
 }
 
 
 bool Transaction::checkSign() const
 {
-    if (_sign.isNull()) {
+    if (_sign.toBytes().isEmpty()) {
         return false;
     }
     else {
-        const auto& pub = _sign.getPublicKey();
-        const auto& enc_hash = _sign.getRsaEncryptedHash();
-        auto derived_addr = lk::Address(pub);
-        if (_from != derived_addr) {
+        auto valid_hash = hashOfTransaction();
+        try {
+            auto pub = base::Secp256PrivateKey::decodeSignatureToPublicKey(_sign, valid_hash.getBytes());
+            auto derived_addr = lk::Address(pub);
+            return _from == derived_addr;
+        }
+        catch (const base::CryptoError& ex) {
             return false;
         }
-        auto valid_hash = hashOfTransaction();
-        if (pub.decrypt(enc_hash) == valid_hash.getBytes().toBytes()) {
-            return true;
-        }
-        return false;
     }
 }
 
 
-const Sign& Transaction::getSign() const noexcept
+const lk::Sign& Transaction::getSign() const noexcept
 {
     return _sign;
 }

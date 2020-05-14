@@ -5,8 +5,8 @@
 
 BOOST_AUTO_TEST_CASE(transaction_constructor1)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 42;
@@ -22,8 +22,8 @@ BOOST_AUTO_TEST_CASE(transaction_constructor1)
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 123;
@@ -40,8 +40,8 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_copy)
 
 BOOST_AUTO_TEST_CASE(transaction_constructor_move)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 123;
@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE(transaction_constructor_move)
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee{ 23213213 };
@@ -78,8 +78,8 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_copy)
 
 BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee{ 213213 };
@@ -98,14 +98,14 @@ BOOST_AUTO_TEST_CASE(transaction_operator_equal_move)
 
 BOOST_AUTO_TEST_CASE(transaction_sign)
 {
-    auto [pub_key, priv_key] = base::generateKeys();
-    lk::Address from = lk::Address(pub_key);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    auto priv_key = base::Secp256PrivateKey();
+    lk::Address from = lk::Address(priv_key.toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 42;
     lk::Transaction tx(from, to, amount, fee, time, base::Bytes{});
-    tx.sign(pub_key, priv_key);
+    tx.sign(priv_key);
 
     BOOST_CHECK(tx.checkSign());
 }
@@ -113,8 +113,8 @@ BOOST_AUTO_TEST_CASE(transaction_sign)
 
 BOOST_AUTO_TEST_CASE(transaction_serialization1)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 123;
@@ -131,8 +131,8 @@ BOOST_AUTO_TEST_CASE(transaction_serialization1)
 
 BOOST_AUTO_TEST_CASE(transaction_serialization2)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee{ 506 };
@@ -149,8 +149,8 @@ BOOST_AUTO_TEST_CASE(transaction_serialization2)
 
 BOOST_AUTO_TEST_CASE(transaction_builder_set_all1)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee = 150;
@@ -176,8 +176,8 @@ BOOST_AUTO_TEST_CASE(transaction_builder_set_all1)
 
 BOOST_AUTO_TEST_CASE(transaction_builder_set_all2)
 {
-    lk::Address from = lk::Address(base::generateKeys().first);
-    lk::Address to = lk::Address(base::generateKeys().first);
+    lk::Address from = lk::Address(base::Secp256PrivateKey().toPublicKey());
+    lk::Address to = lk::Address(base::Secp256PrivateKey().toPublicKey());
     lk::Balance amount = 1239823409;
     auto time = base::Time::now();
     std::uint64_t fee{ 229 };

@@ -255,7 +255,7 @@ web::json::value serializeTransaction(const lk::Transaction& input)
 
     result["data"] = data_value;
 
-    result["sign"] = web::json::value::string(input.getSign().toBase64());
+    result["sign"] = web::json::value::string(base::base64Encode(input.getSign().toBytes()));
     return result;
 }
 
@@ -291,7 +291,7 @@ std::optional<lk::Transaction> deserializeTransaction(const web::json::value& in
             txb.setData(deserializeBytes(data.at("message").as_string()).value());
         }
 
-        auto sign = lk::Sign::fromBase64(input.at("sign").as_string());
+        auto sign = lk::Sign(base::base64Decode((input.at("sign").as_string())));
         txb.setSign(sign);
 
         auto tx = txb.build();
