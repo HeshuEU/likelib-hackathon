@@ -495,7 +495,7 @@ class Node:
         return pipe.stdout.decode("utf8")
 
     def test(self, *, timeout=1):
-        time.sleep(1)
+        time.sleep(1.5)
         result = self.__run_client_command(command="test", parameters=[], timeout=timeout)
         return _TestParser.parse(result)
 
