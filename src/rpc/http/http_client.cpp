@@ -291,7 +291,7 @@ base::Bytes NodeClient::callContractView(const lk::Address& from,
 
     std::optional<base::Bytes> opt_bytes;
 
-    _client.request(createPostRequest("/get_storage_value", request_body))
+    _client.request(createPostRequest("/call_contract_view", request_body))
       .then([&](web::http::http_response response) {
           response.extract_json()
             .then([&](web::json::value request_body) {

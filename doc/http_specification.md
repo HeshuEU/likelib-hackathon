@@ -157,11 +157,11 @@ response:
 		“result”: <transaction result object see get_transaction_result method>
 	}
 
-### 7. get_storage_value
+### 7. call_contract_view
 
 request:
 
-	post to http:://<target url>/get_storage_value
+	post to http:://<target url>/call_contract_view
 
 	### need json object at body:
 	{
@@ -174,7 +174,7 @@ response:
 
 	### json object at body:
 	{
-		“method”: “get_storage_value”,
+		“method”: “call_contract_view”,
 		“status”: “ok”/”error”,
 		“result”: “<encoded by base64 data from contract call in string type>”,
 	}
@@ -185,6 +185,13 @@ response:
 - if “status” is “error” field “result” may be absent  or “result” will be a error message string.
 - address is Ripemd160 of sha256 of public key bytes.
 - null address is 20 bytes of zeros
+- for sign using secp256k1. Hash of transaction using as signing message.
 - transaction hash is sha256 of concatenated stringified fields:
 
 		“<from address encoded by base58>” + “<to address or null address if transaction for contract creation encoded by base58>” + “<amount as uint256 integer at string format>” + “<fee as uint256 integer at string format>” + “<timestamp integer is seconds from epoch start at string>” + “data if "to" is null address, data will be: “<binary contract code string message>” + “<binary constructor encoded(for call) data string message>”+“<contract abi object serialized to string>”, if address is not null address, data will be: “<message binary encoded(for call) data string message or empty string if "to" not a contract address>” “
+
+- data string message:
+
+        data = message_len_to_8_bytes + message_bytes + serialized_abi_as_bytes_len_to_8_bytes + serialized_abi_as_bytes
+    
+   

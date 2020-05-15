@@ -75,6 +75,19 @@ class _TransferParser:
         return TransferResult(tx_hash, result['status_code'] == 0, result['message'])
 
 
+class _DeployedContract:
+    @staticmethod
+    def parse(result: dict, tx_hash: str) -> DeployedContract:
+        if result['action_type'] == 3 and result['status_code'] == 0:
+            return DeployedContract(tx_hash, result["message"], int(result["gas_left"]))
+
+
+class _ContractCallParser:
+    @staticmethod
+    def parse(result: dict, tx_hash: str) -> ContractResult:
+        return ContractResult(tx_hash, int(result["gas_left"]), result['message'])
+
+
 class Client(BaseClient):
     def __init__(self, *, name: str, work_dir: str, connection_address: str, logger: Logger):
         self.name = name
@@ -180,12 +193,66 @@ class Client(BaseClient):
 
     def push_contract(self, *, from_address: Keys, code: str, fee: int, amount: int, init_message: str,
                       timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> DeployedContract:
-        raise LogicException("method is not realized")
+        from_address_priv_key = _load_key(from_address.keys_path)
+        from_address_address = _key_to_address(from_address_priv_key)
+        timestamp = int(datetime.datetime.now().timestamp())
+        to_address = base58.b58encode(bytes.fromhex('00' * 20)).decode()
+
+        message_bytes = bytes.fromhex(init_message)
+        message_len = len(message_bytes)
+        message_len_bytes = message_len.to_bytes(8, byteorder='big')
+        code_bytes = code.encode()
+        code_len = len(code_bytes)
+        code_len_bytes = code_len.to_bytes(8, byteorder='big')
+
+        data = message_len_bytes + message_bytes + code_len_bytes + code_bytes
+
+        tx = Transaction(Transaction.TRANSFER_TYPE, from_address_address, to_address, amount, fee, timestamp,
+                         base64.b64encode(data).decode(), True)
+        tx_hash = bytes.fromhex(tx.hash())
+        sign_bytes = from_address_priv_key.sign_recoverable(tx_hash)
+        sign = base64.b64encode(sign_bytes)
+        encoded_message = base64.b64encode(message_bytes)
+        tx_json = {'from': from_address_address,
+                   'to': to_address,
+                   'amount': str(amount),
+                   'fee': str(fee),
+                   'timestamp': timestamp,
+                   'data': {'message': encoded_message, "abi": code},
+                   'sign': sign}
+        result = self.__run_client_command(route="/push_transaction", input_json=tx_json, timeout=timeout,
+                                           wait=wait)
+        return _DeployedContract.parse(result, tx.hash())
 
     def message_call(self, *, from_address: Keys, to_address: str, fee: int, amount: int, message: str,
                      timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> ContractResult:
-        raise LogicException("method is not realized")
+        from_address_priv_key = _load_key(from_address.keys_path)
+        from_address_address = _key_to_address(from_address_priv_key)
+        timestamp = int(datetime.datetime.now().timestamp())
+        data = base64.b64encode(bytes.fromhex(message)).decode()
+        tx = Transaction(Transaction.TRANSFER_TYPE, from_address_address, to_address, amount, fee, timestamp, data,
+                         True)
+        tx_hash = bytes.fromhex(tx.hash())
+        sign_bytes = from_address_priv_key.sign_recoverable(tx_hash)
+        sign = base64.b64encode(sign_bytes)
+        tx_json = {'from': from_address_address,
+                   'to': to_address,
+                   'amount': str(amount),
+                   'fee': str(fee),
+                   'timestamp': timestamp,
+                   'data': {'message': data},
+                   'sign': sign}
+        result = self.__run_client_command(route="/push_transaction", input_json=tx_json, timeout=timeout,
+                                           wait=wait)
+        return _ContractCallParser.parse(result, tx.hash())
 
     def call_view(self, *, from_address: Keys, to_address: str, message: str, timeout=MINIMAL_CALL_TIMEOUT,
                   wait=ZERO_WAIT) -> str:
-        raise LogicException("method is not realized")
+        from_address_priv_key = _load_key(from_address.keys_path)
+        from_address_address = _key_to_address(from_address_priv_key)
+        tx_json = {'from': from_address_address,
+                   'to': to_address,
+                   'message': base64.b64encode(bytes.fromhex(message)).decode()}
+        result = self.__run_client_command(route="/call_contract_view", input_json=tx_json, timeout=timeout,
+                                           wait=wait)
+        return result

@@ -343,7 +343,7 @@ ActionGetStorageValue::ActionGetStorageValue(web::json::value& input, std::share
 
 const std::string& ActionGetStorageValue::getName() const
 {
-    static const std::string name = "get_storage_value";
+    static const std::string name = "call_contract_view";
     return name;
 }
 
@@ -436,7 +436,7 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
     _json_processors.insert({ "get_transaction", run_json_process<ActionGetTransaction> });
     _json_processors.insert({ "get_transaction_result", run_json_process<ActionGetTransactionResult> });
     _json_processors.insert({ "push_transaction", run_json_process<ActionPushTransaction> });
-    _json_processors.insert({ "get_storage_value", run_json_process<ActionGetStorageValue> });
+    _json_processors.insert({ "call_contract_view", run_json_process<ActionGetStorageValue> });
 }
 
 

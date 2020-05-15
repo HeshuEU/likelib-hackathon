@@ -158,8 +158,10 @@ class EthHost : public evmc::Host
     }
 
 
-    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-      noexcept override
+    size_t copy_code(const evmc::address& addr,
+                     size_t code_offset,
+                     uint8_t* buffer_data,
+                     size_t buffer_size) const noexcept override
     {
         LOG_DEBUG << "Core::copy_code";
         try {

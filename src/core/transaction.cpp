@@ -238,7 +238,7 @@ base::Sha256 Transaction::hashOfTransaction() const
     auto amount_str = _amount.toString();
     auto fee_str = std::to_string(_fee);
     auto timestamp_str = std::to_string(_timestamp.getSecondsSinceEpoch());
-    auto data_str = _data.toString();
+    auto data_str = base::base64Encode(_data);
 
     auto contactanated_data = from_address_str + to_address_str + amount_str + fee_str + timestamp_str + data_str;
 

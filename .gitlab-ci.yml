@@ -78,7 +78,7 @@ Integration tests:
     - TEST_DIR="intergation_test_run"
     - mkdir ${TEST_DIR}
     - cd ${TEST_DIR}
-    - python3 ${SOURCE_DIR}/test/integration_test/run_test.py -b "${SOURCE_DIR}/build/bin"
+    - python3 ${SOURCE_DIR}/test/integration_test/__main__.py -b "${SOURCE_DIR}/build/bin"
   artifacts:
     when: always
     paths:
