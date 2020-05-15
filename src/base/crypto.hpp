@@ -134,40 +134,38 @@ namespace base
 class Secp256PrivateKey
 {
   public:
-    static constexpr std::size_t SECP256_DATA_SIZE = 32;
     static constexpr std::size_t SECP256_PRIVATE_KEY_SIZE = 32;
     static constexpr std::size_t SECP256_SIGNATURE_SIZE = 65;
-    static constexpr std::size_t SECP256_PUBLIC_KEY_SIZE = 64;
+    static constexpr std::size_t SECP256_PUBLIC_KEY_SIZE = 65;
+    using Signature = base::FixedBytes<SECP256_SIGNATURE_SIZE>;
     //---------------------------
     Secp256PrivateKey();
-    Secp256PrivateKey(const base::Bytes& private_key_bytes);
+    //    Secp256PrivateKey(const base::Bytes& private_key_bytes);
     Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& private_key_bytes);
     Secp256PrivateKey(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey(Secp256PrivateKey&& other) = default;
     Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
     //---------------------------
+    bool is_valid() const;
     base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> toPublicKey() const;
     //---------------------------
-    base::FixedBytes<SECP256_SIGNATURE_SIZE> sign(const base::FixedBytes<SECP256_DATA_SIZE>& bytes) const;
-    static base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> decodeSignatureToPublicKey(
-      const base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> signature,
-      const base::FixedBytes<SECP256_DATA_SIZE>& bytes);
+    Signature sign(const base::Bytes& bytes_to_sign) const;
+    static base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> decodeSignatureToPublicKey(const Signature& signature,
+                                                                                const base::Bytes& bytes_to_check);
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PrivateKey load(const std::filesystem::path& path);
     //---------------------------
     static Secp256PrivateKey deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
-    //---------------------------
-    base::FixedBytes<SECP256_PRIVATE_KEY_SIZE> getBytes() const;
-
+    const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& getBytes() const;
   private:
     base::FixedBytes<SECP256_PRIVATE_KEY_SIZE> _secp_key;
 };
 
 
-//class Secp256PublicKey
+// class Secp256PublicKey
 //{
 //  public:
 //    static constexpr std::size_t SECP256_PUBLIC_KEY_SIZE = 64;
@@ -220,6 +218,6 @@ class KeyVault
 };
 
 //
-//std::pair<Secp256PublicKey, Secp256PrivateKey> generateSecp256Key();
+// std::pair<Secp256PublicKey, Secp256PrivateKey> generateSecp256Key();
 
 } // namespace base

@@ -12,7 +12,7 @@ class Address
   public:
     //=============================
     static constexpr std::size_t ADDRESS_BYTES_LENGTH = 20;
-    static constexpr std::size_t SIGNATURE_LENGTH = 64;
+    static constexpr std::size_t SIGNATURE_LENGTH = 65;
     //=============================
     explicit Address(const std::string_view& base58_address);
     explicit Address(const base::Bytes& raw);

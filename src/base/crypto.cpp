@@ -625,85 +625,131 @@ const base::Secp256PrivateKey& KeyVault::getKey() const noexcept
 Secp256PrivateKey::Secp256PrivateKey()
   : _secp_key(generate_bytes(SECP256_PRIVATE_KEY_SIZE))
 {
-    std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
-      secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
-    if (secp256k1_ec_seckey_verify(context.get(), _secp_key.getData()) == 0) {
-        RAISE_ERROR(base::CryptoError, "error create secp_key");
+    if (!is_valid()) {
+        RAISE_ERROR(base::CryptoError, "error at creation secp256k1 key");
     }
 }
 
-
-Secp256PrivateKey::Secp256PrivateKey(const base::Bytes& private_key_bytes)
-  : _secp_key(private_key_bytes)
-{
-    if (private_key_bytes.size() != SECP256_PRIVATE_KEY_SIZE) {
-        RAISE_ERROR(base::InvalidArgument, "Invalid size of bytes for Secp256PrivateKey");
-    }
-}
+//
+// Secp256PrivateKey::Secp256PrivateKey(const base::Bytes& private_key_bytes)
+//  : _secp_key(private_key_bytes)
+//{
+//    if (private_key_bytes.size() != SECP256_PRIVATE_KEY_SIZE) {
+//        RAISE_ERROR(base::InvalidArgument, "Invalid size of bytes for Secp256PrivateKey");
+//    }
+//}
 
 
 Secp256PrivateKey::Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& private_key_bytes)
   : _secp_key(private_key_bytes)
-{}
+{
+    if (!is_valid()) {
+        RAISE_ERROR(base::CryptoError, "error at creation secp256k1 key");
+    }
+}
+
+
+bool Secp256PrivateKey::is_valid() const
+{
+    std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
+      secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
+    return secp256k1_ec_seckey_verify(context.get(), _secp_key.getData()) == 1;
+}
 
 
 base::FixedBytes<Secp256PrivateKey::SECP256_PUBLIC_KEY_SIZE> Secp256PrivateKey::toPublicKey() const
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
-      secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
+      secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
     secp256k1_pubkey pubkey;
     if (secp256k1_ec_pubkey_create(context.get(), &pubkey, _secp_key.toBytes().getData()) == 0) {
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
-    return base::FixedBytes<64>(pubkey.data, SECP256_PUBLIC_KEY_SIZE);
+
+    base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> output;
+    std::size_t output_size = output.size();
+
+    secp256k1_ec_pubkey_serialize(context.get(), output.getData(), &output_size, &pubkey, SECP256K1_EC_UNCOMPRESSED);
+    if (output_size == 0) {
+        RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
+    }
+
+    return output;
 }
 
 
-base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> Secp256PrivateKey::sign(
-  const base::FixedBytes<32>& bytes) const
+Secp256PrivateKey::Signature Secp256PrivateKey::sign(const base::Bytes& bytes_to_sign) const
 {
+    auto hash = base::Sha256::compute(bytes_to_sign);
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
-      secp256k1_context_create(SECP256K1_CONTEXT_SIGN), secp256k1_context_destroy);
+      secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
     if (secp256k1_ecdsa_sign_recoverable(
-          context.get(), &recoverable_signature, bytes.getData(), _secp_key.getData(), nullptr, nullptr) == 0) {
-        RAISE_ERROR(base::CryptoError, "error signing transaction");
+          context.get(), &recoverable_signature, hash.getBytes().getData(), _secp_key.getData(), nullptr, nullptr) ==
+        0) {
+        RAISE_ERROR(base::CryptoError, "error signing bytes");
     }
-    return base::FixedBytes<SECP256_SIGNATURE_SIZE>(recoverable_signature.data, SECP256_SIGNATURE_SIZE);
+    int rec_id = -1;
+    base::Bytes serialized_recoverable_signature(64);
+    secp256k1_ecdsa_recoverable_signature_serialize_compact(
+      context.get(), serialized_recoverable_signature.getData(), &rec_id, &recoverable_signature);
+
+    if (rec_id == -1){
+        RAISE_ERROR(base::CryptoError, "signature serialization failed");
+    }
+    serialized_recoverable_signature.append(static_cast<base::Byte>(rec_id));
+    return Signature{ serialized_recoverable_signature };
 }
 
 
 base::FixedBytes<Secp256PrivateKey::SECP256_PUBLIC_KEY_SIZE> Secp256PrivateKey::decodeSignatureToPublicKey(
-  const base::FixedBytes<Secp256PrivateKey::SECP256_SIGNATURE_SIZE> signature,
-  const base::FixedBytes<SECP256_DATA_SIZE>& bytes)
+  const Signature& signature,
+  const base::Bytes& bytes_to_check)
 {
+    auto hash = base::Sha256::compute(bytes_to_check);
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
-      secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
-    secp256k1_pubkey pubkey;
+      secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
+
+    auto sig_data = signature.toBytes();
     secp256k1_ecdsa_recoverable_signature recoverable_signature;
-    memcpy(recoverable_signature.data, signature.getData(), Secp256PrivateKey::SECP256_SIGNATURE_SIZE);
-    if (secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, bytes.getData()) == 0) {
+    if (secp256k1_ecdsa_recoverable_signature_parse_compact(
+          context.get(), &recoverable_signature, sig_data.getData(), static_cast<int>(sig_data[sig_data.size() - 1])) ==
+        0) {
+        RAISE_ERROR(base::CryptoError, "could not parsed signature");
+    }
+
+    secp256k1_pubkey pubkey;
+    if (secp256k1_ecdsa_recover(context.get(), &pubkey, &recoverable_signature, hash.getBytes().getData()) == 0) {
+        RAISE_ERROR(base::CryptoError, "recover public key is invalid");
+    }
+
+    base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> output;
+    std::size_t output_size = output.size();
+
+    secp256k1_ec_pubkey_serialize(context.get(), output.getData(), &output_size, &pubkey, SECP256K1_EC_UNCOMPRESSED);
+    if (output_size == 0) {
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
-    return base::FixedBytes<SECP256_PUBLIC_KEY_SIZE>(pubkey.data, SECP256_PUBLIC_KEY_SIZE);
+
+    return output;
 }
 
 
 void Secp256PrivateKey::save(const std::filesystem::path& path) const
 {
-    writeFile(path, base::base64Encode(_secp_key.toBytes()));
+    writeFile(path, base::toHex(_secp_key));
 }
 
 
 Secp256PrivateKey Secp256PrivateKey::load(const std::filesystem::path& path)
 {
-    return Secp256PrivateKey(base::base64Decode(readAllFile(path)));
+    return Secp256PrivateKey(base::fromHex<base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>>(readAllFile(path)));
 }
 
 
 Secp256PrivateKey Secp256PrivateKey::deserialize(base::SerializationIArchive& ia)
 {
-    auto bytes = ia.deserialize<FixedBytes<32>>();
+    auto bytes = ia.deserialize<FixedBytes<SECP256_PRIVATE_KEY_SIZE>>();
     return { bytes };
 }
 
@@ -714,7 +760,7 @@ void Secp256PrivateKey::serialize(base::SerializationOArchive& oa) const
 }
 
 
-base::FixedBytes<Secp256PrivateKey::SECP256_PRIVATE_KEY_SIZE> Secp256PrivateKey::getBytes() const
+const base::FixedBytes<Secp256PrivateKey::SECP256_PRIVATE_KEY_SIZE>& Secp256PrivateKey::getBytes() const
 {
     return _secp_key;
 }

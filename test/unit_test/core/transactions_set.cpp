@@ -83,11 +83,11 @@ BOOST_AUTO_TEST_CASE(transactions_set_find_sha)
 {
     auto tx_set = getTestSet();
 
-    BOOST_CHECK(tx_set.find(base::Sha256::compute(base::toBytes(trans1))).value() == trans1);
-    BOOST_CHECK(tx_set.find(base::Sha256::compute(base::toBytes(trans2))).value() == trans2);
-    BOOST_CHECK(tx_set.find(base::Sha256::compute(base::toBytes(trans3))).value() == trans3);
-    BOOST_CHECK(tx_set.find(base::Sha256::compute(base::toBytes(trans4))).value() == trans4);
-    BOOST_CHECK(tx_set.find(base::Sha256::compute(base::toBytes(trans5))).value() == trans5);
+    BOOST_CHECK(tx_set.find(trans1.hashOfTransaction()).value() == trans1);
+    BOOST_CHECK(tx_set.find(trans2.hashOfTransaction()).value() == trans2);
+    BOOST_CHECK(tx_set.find(trans3.hashOfTransaction()).value() == trans3);
+    BOOST_CHECK(tx_set.find(trans4.hashOfTransaction()).value() == trans4);
+    BOOST_CHECK(tx_set.find(trans5.hashOfTransaction()).value() == trans5);
 }
 
 

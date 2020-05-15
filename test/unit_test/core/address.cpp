@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(address_operator_equal)
     auto priv_key1 = base::Secp256PrivateKey();
     auto priv_key2 = base::Secp256PrivateKey();
     lk::Address address1(priv_key1.toPublicKey());
-    lk::Address address2(priv_key1.toPublicKey());
+    lk::Address address2(priv_key2.toPublicKey());
     BOOST_CHECK(address1.toString() != address2.toString());
     address2 = address1;
     BOOST_CHECK(address1 == address2);

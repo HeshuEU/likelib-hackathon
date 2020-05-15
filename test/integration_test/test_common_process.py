@@ -63,23 +63,25 @@ def main(env: Env) -> int:
     return 0
 
 
-# @test_case("python_http_transfer")
-# def main(env: Env) -> int:
-#     node_id = Id(20201, http_port=50052)
-#     env.start_node(NodeConfig(node_id))
-#     client = env.get_client(env.CLIENT_PYTHON_HTTP_TYPE, node_id)
-#     distributor_address = client.load_address(keys_path=DISTRIBUTOR_ADDRESS_PATH)
-#     target_address = client.generate_keys(keys_path="user_1")
-#     distributor_init_balance = client.get_balance(address=distributor_address.address, timeout=500)
-#     transaction_fee = 10
-#     target_amount = 500000
-#     transfer_result = client.transfer(to_address=target_address.address, amount=target_amount,
-#                                       from_address=distributor_address, fee=transaction_fee, timeout=500)
-#     TEST_CHECK(transfer_result.result)
-#     distributor_process_balance = client.get_balance(address=distributor_address.address, timeout=500)
-#     TEST_CHECK_EQUAL(distributor_process_balance + transaction_fee + target_amount, distributor_init_balance)
-#
-#     return 0
+@test_case("python_http_transfer")
+def main(env: Env) -> int:
+    node_id = Id(20201, http_port=50052)
+    env.start_node(NodeConfig(node_id))
+    client = env.get_client(env.CLIENT_PYTHON_HTTP_TYPE, node_id)
+    distributor_address = client.load_address(keys_path=DISTRIBUTOR_ADDRESS_PATH)
+    target_address = client.generate_keys(keys_path="user_1")
+    distributor_init_balance = client.get_balance(address=distributor_address.address, timeout=500)
+    transaction_fee = 10
+    target_amount = 500000
+    transfer_result = client.transfer(to_address=target_address.address, amount=target_amount,
+                                      from_address=distributor_address, fee=transaction_fee, timeout=500)
+    TEST_CHECK(transfer_result.result)
+    distributor_process_balance = client.get_balance(address=distributor_address.address, timeout=500)
+    TEST_CHECK_EQUAL(distributor_process_balance + transaction_fee + target_amount, distributor_init_balance)
+
+    target_process_balance = client.get_balance(address=target_address.address, timeout=500)
+    TEST_CHECK_EQUAL(target_process_balance, target_amount)
+    return 0
 
 
 @test_case("grpc_get_account_info", True)

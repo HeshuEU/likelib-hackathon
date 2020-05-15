@@ -184,7 +184,8 @@ const base::Bytes& Transaction::getData() const noexcept
 void Transaction::sign(const base::Secp256PrivateKey& key)
 {
     auto hash = hashOfTransaction();
-    _sign = key.sign(hash.getBytes());
+    LOG_DEBUG << hash.toHex();
+    _sign = key.sign(hash.getBytes().toBytes());
 }
 
 
@@ -195,8 +196,9 @@ bool Transaction::checkSign() const
     }
     else {
         auto valid_hash = hashOfTransaction();
+        LOG_DEBUG << valid_hash.toHex();
         try {
-            auto pub = base::Secp256PrivateKey::decodeSignatureToPublicKey(_sign, valid_hash.getBytes());
+            auto pub = base::Secp256PrivateKey::decodeSignatureToPublicKey(_sign, valid_hash.getBytes().toBytes());
             auto derived_addr = lk::Address(pub);
             return _from == derived_addr;
         }

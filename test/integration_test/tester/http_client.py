@@ -1,10 +1,15 @@
+import os
 import time
+import hashlib
 import base64
+import base58
 import requests
-from Crypto.PublicKey import RSA
+import datetime
+import coincurve
 
-from .base import Logger, LogicException, TimeOutException
-from .client import NodeInfo, Keys, AccountInfo, TransferResult, Transaction, Block, DeployedContract, ContractResult, TransactionStatus, BaseClient
+from .base import Logger, LogicException, TimeOutException, InvalidArgumentsException
+from .client import NodeInfo, Keys, AccountInfo, TransferResult, Transaction, Block, DeployedContract, ContractResult, \
+    TransactionStatus, BaseClient
 
 ZERO_WAIT = 0
 MINIMUM_TX_WAIT = 3
@@ -14,16 +19,60 @@ MINIMAL_TRANSACTION_TIMEOUT = 10
 MINIMAL_CONTRACT_TIMEOUT = 15
 
 
-def base64_to_hex(input_str: str) -> str:
-    base64_bytes = input_str.encode('ascii')
+def _load_key(key_folder: str):
+    path = os.path.abspath(key_folder)
+    if not os.path.exists(path):
+        InvalidArgumentsException(f"path not found {path}")
+
+    key_path = os.path.join(path, "lkkey")
+    try:
+        with open(key_path, "rb") as file_out:
+            private_bytes = file_out.read()
+    except OSError as e:
+        raise InvalidArgumentsException(e)
+    return coincurve.PrivateKey.from_hex(private_bytes.decode())
+
+
+def _save_key(key_folder: str, pk: coincurve.PrivateKey):
+    path = os.path.abspath(key_folder)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    with open(os.path.join(path, "lkkey"), "wb") as file_out:
+        file_out.write(pk.to_hex().encode())
+
+    return path
+
+
+def _key_to_address(key: coincurve.PrivateKey):
+    pub_bytes = key.public_key.format(False)
+    s = hashlib.new('sha256', pub_bytes).digest()
+    r = hashlib.new('ripemd160', s).digest()
+    return base58.b58encode(r).decode()
+
+
+def _base64_to_hex(input_str: str) -> str:
+    base64_bytes = input_str.encode()
     message_bytes = base64.b64decode(base64_bytes)
-    return message_bytes.hex()
+    return base58.b58encode(message_bytes).decode()
 
 
 class _NodeInfoParser:
     @staticmethod
     def parse(result: dict) -> NodeInfo:
-        return NodeInfo(base64_to_hex(result["top_block_hash"]), result["top_block_number"])
+        return NodeInfo(_base64_to_hex(result["top_block_hash"]), result["top_block_number"])
+
+
+class _GetBalanceParser:
+    @staticmethod
+    def parse(result: dict) -> int:
+        return int(result["balance"])
+
+
+class _TransferParser:
+    @staticmethod
+    def parse(result: dict, tx_hash: str) -> TransferResult:
+        return TransferResult(tx_hash, result['status_code'] == 0, result['message'])
 
 
 class Client(BaseClient):
@@ -71,28 +120,45 @@ class Client(BaseClient):
         return _NodeInfoParser.parse(result)
 
     def generate_keys(self, *, keys_path: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> Keys:
-        key = RSA.generate(2048)
-        private_key = key.export_key()
-        with open("private.pem", "wb") as file_out:
-            file_out.write(private_key)
+        pk = coincurve.PrivateKey()
+        path = _save_key(keys_path, pk)
+        address = _key_to_address(pk)
 
-        public_key = key.publickey().export_key()
-        with open("receiver.pem", "wb") as file_out:
-            file_out.write(public_key)
-        raise LogicException("method is not realized")
+        return Keys(path, address)
 
     def load_address(self, *, keys_path: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> Keys:
-        raise LogicException("method is not realized")
+        pk = _load_key(keys_path)
+        address = _key_to_address(pk)
+
+        return Keys(keys_path, address)
 
     def get_balance(self, *, address: str, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> int:
-        raise LogicException("method is not realized")
+        result = self.__run_client_command(route="/get_account", input_json={"address": address}, timeout=timeout,
+                                           wait=wait)
+        return _GetBalanceParser.parse(result)
 
     def get_account_info(self, *, address: str, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> AccountInfo:
         raise LogicException("method is not realized")
 
     def transfer(self, *, to_address: str, amount: int, from_address: Keys, fee: int, wait=MINIMUM_TX_WAIT,
                  timeout=MINIMAL_TRANSACTION_TIMEOUT) -> TransferResult:
-        raise LogicException("method is not realized")
+        from_address_priv_key = _load_key(from_address.keys_path)
+        from_address_address = _key_to_address(from_address_priv_key)
+        timestamp = int(datetime.datetime.now().timestamp())
+        tx = Transaction(Transaction.TRANSFER_TYPE, from_address_address, to_address, amount, fee, timestamp, "", True)
+        tx_hash = bytes.fromhex(tx.hash())
+        sign_bytes = from_address_priv_key.sign_recoverable(tx_hash)
+        sign = base64.b64encode(sign_bytes)
+        tx_json = {'from': from_address_address,
+                   'to': to_address,
+                   'amount': str(amount),
+                   'fee': str(fee),
+                   'timestamp': timestamp,
+                   'data': {'message': ""},
+                   'sign': sign}
+        result = self.__run_client_command(route="/push_transaction", input_json=tx_json, timeout=timeout,
+                                           wait=wait)
+        return _TransferParser.parse(result, tx.hash())
 
     def get_transaction_status(self, *, tx_hash: str, wait: int, timeout: int) -> TransactionStatus:
         raise LogicException("method is not implemented")
