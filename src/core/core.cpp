@@ -799,7 +799,7 @@ evmc::result Core::callContractAtViewModeVm(StateManager& state_manager,
     message.kind = evmc_call_kind::EVMC_CALL;
     message.flags = evmc_flags::EVMC_STATIC;
     message.depth = 0;
-    constexpr std::uint64_t VIEW_FREE_MAX_VALUE = 5000;
+    constexpr std::uint64_t VIEW_FREE_MAX_VALUE = 100000;
     message.gas = VIEW_FREE_MAX_VALUE;
     message.sender = vm::toEthAddress(sender_address);
     message.destination = vm::toEthAddress(contract_address);
