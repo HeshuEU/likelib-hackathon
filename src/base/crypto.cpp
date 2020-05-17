@@ -694,7 +694,7 @@ Secp256PrivateKey::Signature Secp256PrivateKey::sign(const base::Bytes& bytes_to
     secp256k1_ecdsa_recoverable_signature_serialize_compact(
       context.get(), serialized_recoverable_signature.getData(), &rec_id, &recoverable_signature);
 
-    if (rec_id == -1){
+    if (rec_id == -1) {
         RAISE_ERROR(base::CryptoError, "signature serialization failed");
     }
     serialized_recoverable_signature.append(static_cast<base::Byte>(rec_id));

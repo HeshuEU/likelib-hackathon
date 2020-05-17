@@ -4,7 +4,7 @@
 
 #include <base/crypto.hpp>
 //
-//BOOST_AUTO_TEST_CASE(Rsa_pub_encrypt_priv_decrypt_check)
+// BOOST_AUTO_TEST_CASE(Rsa_pub_encrypt_priv_decrypt_check)
 //{
 //    auto rsa = base::generateKeys(3688);
 //
@@ -14,7 +14,7 @@
 //    BOOST_CHECK(msg == dec_msg);
 //}
 //
-//BOOST_AUTO_TEST_CASE(Rsa_priv_encrypt_pub_decrypt_check)
+// BOOST_AUTO_TEST_CASE(Rsa_priv_encrypt_pub_decrypt_check)
 //{
 //    auto rsa = base::generateKeys(2644);
 //
@@ -24,7 +24,7 @@
 //    BOOST_CHECK(msg == dec_msg);
 //}
 //
-//BOOST_AUTO_TEST_CASE(Rsa_stress_pub_encrypt_priv_decrypt_check)
+// BOOST_AUTO_TEST_CASE(Rsa_stress_pub_encrypt_priv_decrypt_check)
 //{
 //    auto rsa = base::generateKeys(2048);
 //
@@ -34,7 +34,7 @@
 //    BOOST_CHECK(stress_msg == dec_msg);
 //}
 //
-//BOOST_AUTO_TEST_CASE(Rsa_stress_priv_encrypt_pub_decrypt_check)
+// BOOST_AUTO_TEST_CASE(Rsa_stress_priv_encrypt_pub_decrypt_check)
 //{
 //    auto rsa = base::generateKeys(3888);
 //
@@ -44,7 +44,7 @@
 //    BOOST_CHECK(stress_msg == dec_msg);
 //}
 //
-//BOOST_AUTO_TEST_CASE(Rsa_constructor_random_keys)
+// BOOST_AUTO_TEST_CASE(Rsa_constructor_random_keys)
 //{
 //    auto rsa1 = base::generateKeys(3422);
 //    auto rsa2 = base::generateKeys(1898);
@@ -59,7 +59,7 @@
 //    BOOST_CHECK(enc_msg1 != enc_msg2);
 //}
 //
-//BOOST_AUTO_TEST_CASE(Rsa_serialization_constructor)
+// BOOST_AUTO_TEST_CASE(Rsa_serialization_constructor)
 //{
 //    auto rsa = base::generateKeys(3456);
 //    base::RsaPublicKey pub_key(rsa.first.toBytes());
@@ -75,7 +75,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(RsaPubKey_constructor_from_file_save_in_file)
+// BOOST_AUTO_TEST_CASE(RsaPubKey_constructor_from_file_save_in_file)
 //{
 //    auto [pub_rsa, priv_rsa] = base::generateKeys(2012);
 //    base::RsaPublicKey pub_rsa2(pub_rsa);
@@ -95,7 +95,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_save_in_file)
+// BOOST_AUTO_TEST_CASE(Rsa_constructor_from_file_save_in_file)
 //{
 //    auto [pub_rsa, priv_rsa] = base::generateKeys(3738);
 //    std::filesystem::path private_key_path{ "ssh/rsa.priv" };
@@ -125,7 +125,7 @@
 //    std::filesystem::remove(public_key_path);
 //}
 //
-//BOOST_AUTO_TEST_CASE(RsaAes_constructor_encrypt_decrypt)
+// BOOST_AUTO_TEST_CASE(RsaAes_constructor_encrypt_decrypt)
 //{
 //    auto rsa = base::generateKeys(2894);
 //    base::Bytes msg("f1rst RsaAes_tes!");
@@ -134,7 +134,7 @@
 //    BOOST_CHECK(msg == dec_msg);
 //}
 //
-//BOOST_AUTO_TEST_CASE(RsaAes_small_key_encrypt_decrypt)
+// BOOST_AUTO_TEST_CASE(RsaAes_small_key_encrypt_decrypt)
 //{
 //    auto rsa = base::generateKeys(1024);
 //    base::Bytes msg("f1rst RsaAes_tes!");
@@ -143,7 +143,7 @@
 //    BOOST_CHECK(msg == dec_msg);
 //}
 //
-//BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit)
+// BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit)
 //{
 //    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
 //    base::AesKey key;
@@ -152,7 +152,7 @@
 //    BOOST_CHECK_EQUAL(msg.toString(), decrypt_target.toString());
 //}
 //
-//BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit_by_serialized_key)
+// BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_256bit_by_serialized_key)
 //{
 //    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
 //    base::AesKey key;
@@ -163,7 +163,7 @@
 //    BOOST_CHECK_EQUAL(msg.toString(), decrypt_target.toString());
 //}
 //
-//BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit)
+// BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit)
 //{
 //    base::Bytes msg("dfjbvalgecnhq=ygrbnf5xgvidytnwucgfim2y139sv7yx");
 //    base::AesKey key(base::AesKey::KeyType::K128BIT);
@@ -172,7 +172,7 @@
 //    BOOST_CHECK_EQUAL(msg.toString(), decrypt_target.toString());
 //}
 //
-//BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit_by_serialized_key)
+// BOOST_AUTO_TEST_CASE(aes_encrypt_decrypt_128bit_by_serialized_key)
 //{
 //    base::Bytes msg("djbvalcnhq=ygrn3f5xvidytwugfim2yx19vyx");
 //    base::AesKey key(base::AesKey::KeyType::K128BIT);
@@ -183,7 +183,7 @@
 //    BOOST_CHECK_EQUAL(msg.toString(), decrypt_target.toString());
 //}
 //
-//BOOST_AUTO_TEST_CASE(aes_double_encrypt_128bit)
+// BOOST_AUTO_TEST_CASE(aes_double_encrypt_128bit)
 //{
 //    base::Bytes msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
 //    base::AesKey key(base::AesKey::KeyType ::K128BIT);
@@ -193,7 +193,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(aes_serialization_256bit)
+// BOOST_AUTO_TEST_CASE(aes_serialization_256bit)
 //{
 //    base::Bytes target_msg("dfjbvalgecnhq=ygrbn3f5xgvidytnwucgfim2yx139sv7yx");
 //    base::AesKey target_key(base::AesKey::KeyType ::K128BIT);
@@ -210,7 +210,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(secp256_sign_verify)
+// BOOST_AUTO_TEST_CASE(secp256_sign_verify)
 //{
 //    auto [pub_key, priv_key] = base::generateSecp256Keys();
 //    auto hash = base::Sha256::compute(base::Bytes("111"));
@@ -219,7 +219,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_copy)
+// BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_copy)
 //{
 //    auto [pub_key, priv_key] = base::generateSecp256Keys();
 //    auto pub_key2{ pub_key };
@@ -231,7 +231,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_bytes_copy)
+// BOOST_AUTO_TEST_CASE(secp256_sign_verify_from_bytes_copy)
 //{
 //    auto [pub_key, priv_key] = base::generateSecp256Keys();
 //    base::Secp256PublicKey pub_key2{ pub_key.getBytes() };
@@ -249,7 +249,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(secp256_sign_verify_with_another_key)
+// BOOST_AUTO_TEST_CASE(secp256_sign_verify_with_another_key)
 //{
 //    auto [pub_key1, priv_key1] = base::generateSecp256Keys();
 //    auto [pub_key2, priv_key2] = base::generateSecp256Keys();
@@ -266,7 +266,7 @@
 //}
 //
 //
-//BOOST_AUTO_TEST_CASE(secp256_save_load)
+// BOOST_AUTO_TEST_CASE(secp256_save_load)
 //{
 //    auto [pub_key1, priv_key1] = base::generateSecp256Keys();
 //    std::filesystem::path private_key_path{ "ssh/rsa.priv" };
@@ -292,7 +292,7 @@
 //    std::filesystem::remove(public_key_path);
 //}
 //
-//BOOST_AUTO_TEST_CASE(secp256_serialization)
+// BOOST_AUTO_TEST_CASE(secp256_serialization)
 //{
 //    auto [pub_key1, priv_key1] = base::generateSecp256Keys();
 //

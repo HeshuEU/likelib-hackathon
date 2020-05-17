@@ -160,6 +160,7 @@ class Secp256PrivateKey
     static Secp256PrivateKey deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
     const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& getBytes() const;
+
   private:
     base::FixedBytes<SECP256_PRIVATE_KEY_SIZE> _secp_key;
 };
