@@ -169,37 +169,37 @@ import coincurve
 import base64
 
 
-@test_case("temp")
-def main(env: Env):
-    target = "gNGef0RHsbMnXnULJAV9hT6zJzf2Awv+GciKrXitRuQNBIBKJywAs7gJS4WEWm2FbApfgrIVAguJb/mmWoaRKgE="
-    temp = "bUzmPA=="
-    string_for_hash = "49cfqVfB1gTGw5XZSu6nZDrntLr1" + "3TjeuoZkrmxFDiGaMe4CEwsPZ7KZ" + str(0) + str(100000) + str(
-        1589904067) + temp
-
-    m = hashlib.sha256()
-    m.update(string_for_hash.encode())
-    hash_data = m.digest()
-    from_address_private_key = coincurve.PrivateKey.from_hex(
-        "2aef91bc6d2df7c41bd605caa267e8d357e18b741c4a785e06650d649d650409")
-
-    sign = base64.b64encode(from_address_private_key.sign_recoverable(hash_data)).decode()
-    TEST_CHECK_EQUAL(target, sign)
-
-    temp2 = bytes.fromhex(
-        "6a714c8300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002")
-    string_for_hash2 = "4XXBBPDk6SpLxaRZstg6B9rPrPnQ" + "2iV6HUM5ELNDFeWBCQnneSJ6nVDQ" + str(0) + str(20000) + str(
-        1589873155) + base64.b64encode(temp2).decode()
-
-    print(string_for_hash2)
-    m = hashlib.sha256()
-    m.update(string_for_hash2.encode())
-    hash_data2 = m.digest()
-    print(hash_data2.hex())
-
-    from_address_private_key2 = coincurve.PrivateKey.from_hex(
-        "43d5d6f90fbe17c53e803a9ff8d5f419dc5553efaaddd4a20f9bb2f36b306933")
-
-    sign2 = base64.b64encode(from_address_private_key2.sign_recoverable(hash_data2)).decode()
-    print(sign2)
-
-    return 0
+# @test_case("temp")
+# def main(env: Env):
+#     target = "gNGef0RHsbMnXnULJAV9hT6zJzf2Awv+GciKrXitRuQNBIBKJywAs7gJS4WEWm2FbApfgrIVAguJb/mmWoaRKgE="
+#     temp = "bUzmPA=="
+#     string_for_hash = "49cfqVfB1gTGw5XZSu6nZDrntLr1" + "3TjeuoZkrmxFDiGaMe4CEwsPZ7KZ" + str(0) + str(100000) + str(
+#         1589904067) + temp
+#
+#     m = hashlib.sha256()
+#     m.update(string_for_hash.encode())
+#     hash_data = m.digest()
+#     from_address_private_key = coincurve.PrivateKey.from_hex(
+#         "2aef91bc6d2df7c41bd605caa267e8d357e18b741c4a785e06650d649d650409")
+#
+#     sign = base64.b64encode(from_address_private_key.sign_recoverable(hash_data)).decode()
+#     TEST_CHECK_EQUAL(target, sign)
+#
+#     temp2 = bytes.fromhex(
+#         "6a714c8300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002")
+#     string_for_hash2 = "4XXBBPDk6SpLxaRZstg6B9rPrPnQ" + "2iV6HUM5ELNDFeWBCQnneSJ6nVDQ" + str(0) + str(20000) + str(
+#         1589873155) + base64.b64encode(temp2).decode()
+#
+#     print(string_for_hash2)
+#     m = hashlib.sha256()
+#     m.update(string_for_hash2.encode())
+#     hash_data2 = m.digest()
+#     print(hash_data2.hex())
+#
+#     from_address_private_key2 = coincurve.PrivateKey.from_hex(
+#         "43d5d6f90fbe17c53e803a9ff8d5f419dc5553efaaddd4a20f9bb2f36b306933")
+#
+#     sign2 = base64.b64encode(from_address_private_key2.sign_recoverable(hash_data2)).decode()
+#     print(sign2)
+#
+#     return 0

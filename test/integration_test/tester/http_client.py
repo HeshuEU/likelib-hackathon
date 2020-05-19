@@ -174,7 +174,6 @@ class Client(BaseClient):
                    'timestamp': timestamp,
                    'data': message,
                    'sign': sign}
-        print(json.dumps(tx_json))
         return self.__run_client_command(route="/push_transaction", input_json=tx_json, timeout=timeout,
                                          wait=wait)
 
