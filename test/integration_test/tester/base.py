@@ -24,6 +24,8 @@ class LogicException(Exception):
 
 # logger
 class Logger:
+    LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+
     def __init__(self, log_name, file_path, log_level=logging.DEBUG):
         self.logger = logging.getLogger(log_name)
         self.logger.setLevel(log_level)
@@ -31,8 +33,7 @@ class Logger:
         fh = logging.FileHandler(os.path.abspath(file_path))
         fh.setLevel(log_level)
 
-        formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(Logger.LOG_FORMAT)
         fh.setFormatter(formatter)
 
         self.logger.addHandler(fh)

@@ -6,55 +6,27 @@ import base58
 import requests
 import datetime
 import coincurve
+import subprocess
+import binascii
+import json
+import copy
+import web3
 
-from .base import Logger, LogicException, TimeOutException, InvalidArgumentsException
+from .base import Logger, LogicException, TimeOutException, InvalidArgumentsException, BadResultException
 from .client import NodeInfo, Keys, AccountInfo, TransferResult, Transaction, Block, DeployedContract, ContractResult, \
     TransactionStatus, BaseClient
-
-ZERO_WAIT = 0
-MINIMUM_TX_WAIT = 3
-MINIMAL_CALL_TIMEOUT = 7
-MINIMAL_STANDALONE_TIMEOUT = 5
-MINIMAL_TRANSACTION_TIMEOUT = 10
-MINIMAL_CONTRACT_TIMEOUT = 15
-
-
-def _load_key(key_folder: str):
-    path = os.path.abspath(key_folder)
-    if not os.path.exists(path):
-        InvalidArgumentsException(f"path not found {path}")
-
-    key_path = os.path.join(path, "lkkey")
-    try:
-        with open(key_path, "rb") as file_out:
-            private_bytes = file_out.read()
-    except OSError as e:
-        raise InvalidArgumentsException(e)
-    return coincurve.PrivateKey.from_hex(private_bytes.decode())
-
-
-def _save_key(key_folder: str, pk: coincurve.PrivateKey):
-    path = os.path.abspath(key_folder)
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    with open(os.path.join(path, "lkkey"), "wb") as file_out:
-        file_out.write(pk.to_hex().encode())
-
-    return path
-
-
-def _key_to_address(key: coincurve.PrivateKey):
-    pub_bytes = key.public_key.format(False)
-    s = hashlib.new('sha256', pub_bytes).digest()
-    r = hashlib.new('ripemd160', s).digest()
-    return base58.b58encode(r).decode()
 
 
 def _base64_to_hex(input_str: str) -> str:
     base64_bytes = input_str.encode()
     message_bytes = base64.b64decode(base64_bytes)
     return base58.b58encode(message_bytes).decode()
+
+
+class _TestConnectionParser:
+    @staticmethod
+    def parse(result: dict):
+        return result['api_version'] == 1
 
 
 class _NodeInfoParser:
@@ -66,6 +38,12 @@ class _NodeInfoParser:
 class _GetBalanceParser:
     @staticmethod
     def parse(result: dict) -> int:
+        return int(result["balance"])
+
+
+class _GetAccountInfoParser:
+    @staticmethod
+    def parse(result: dict) -> AccountInfo:
         return int(result["balance"])
 
 
@@ -85,15 +63,71 @@ class _DeployedContract:
 class _ContractCallParser:
     @staticmethod
     def parse(result: dict, tx_hash: str) -> ContractResult:
-        return ContractResult(tx_hash, int(result["gas_left"]), result['message'])
+        return ContractResult(tx_hash, int(result["gas_left"]), base64.b64decode(result['message']).hex())
+
+
+ZERO_WAIT = 0
+MINIMUM_TX_WAIT = 3
+MINIMAL_CALL_TIMEOUT = 7
+MINIMAL_STANDALONE_TIMEOUT = 5
+MINIMAL_TRANSACTION_TIMEOUT = 10
+MINIMAL_CONTRACT_TIMEOUT = 15
 
 
 class Client(BaseClient):
+    KEY_FILE_NAME = "lkkey"
+    CODE_FILE_NAME = "compiled_code.bin"
+    METADATA_FILE_NAME = "metadata.json"
+    COMPILER_NAME = 'solc'
+
     def __init__(self, *, name: str, work_dir: str, connection_address: str, logger: Logger):
         self.name = name
         self.work_dir = work_dir
         self.connection_address = "http://" + connection_address
         self.logger = logger
+
+    @staticmethod
+    def __load_key(key_folder: str):
+        path = os.path.abspath(key_folder)
+        if not os.path.exists(path):
+            InvalidArgumentsException(f"path not found {path}")
+
+        key_path = os.path.join(path, Client.KEY_FILE_NAME)
+        try:
+            with open(key_path, "rb") as file_out:
+                private_bytes = file_out.read()
+        except OSError as e:
+            raise InvalidArgumentsException(e)
+        return coincurve.PrivateKey.from_hex(private_bytes.decode())
+
+    @staticmethod
+    def __save_key(key_folder: str, pk: coincurve.PrivateKey):
+        path = os.path.abspath(key_folder)
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        with open(os.path.join(path, Client.KEY_FILE_NAME), "wb") as file_out:
+            file_out.write(pk.to_hex().encode())
+
+        return path
+
+    @staticmethod
+    def __generate_null_address():
+        return base58.b58encode(bytes.fromhex('00' * 20)).decode()
+
+    @staticmethod
+    def __calculate_hash(from_address: str, to_address: str, value: int, fee: int, timestamp: int, data: str) -> bytes:
+        string_for_hash = from_address + to_address + str(value) + str(fee) + str(timestamp) + data
+        m = hashlib.sha256()
+        m.update(string_for_hash.encode())
+        return m.digest()
+
+    @staticmethod
+    def __key_to_address(key: coincurve.PrivateKey):
+        pub_bytes = key.public_key.format(False)
+        s = hashlib.new('sha256', pub_bytes).digest()
+        r = hashlib.new('ripemd160', s).digest()
+        return base58.b58encode(r).decode()
 
     def __run_client_command(self, *, route: str, input_json: dict, timeout: int, wait: int):
         command = self.connection_address + route
@@ -124,54 +158,73 @@ class Client(BaseClient):
         except Exception as e:
             raise Exception(f"exception at command execution to {command}: {e}")
 
-    def connection_test(self, *, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> bool:
-        result = self.__run_client_command(route="/get_node_info", input_json={}, timeout=timeout, wait=wait)
-        return result is not None
+    def __get_node_info(self, *, timeout, wait) -> dict:
+        return self.__run_client_command(route="/get_node_info", input_json={}, timeout=timeout, wait=wait)
 
-    def node_info(self, *, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> NodeInfo:
-        result = self.__run_client_command(route="/get_node_info", input_json={}, timeout=timeout, wait=wait)
-        return _NodeInfoParser.parse(result)
+    def __get_account_info(self, *, address: str, timeout: int, wait: int):
+        return self.__run_client_command(route="/get_account", input_json={"address": address}, timeout=timeout,
+                                         wait=wait)
 
-    def generate_keys(self, *, keys_path: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> Keys:
-        pk = coincurve.PrivateKey()
-        path = _save_key(keys_path, pk)
-        address = _key_to_address(pk)
-
-        return Keys(path, address)
-
-    def load_address(self, *, keys_path: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> Keys:
-        pk = _load_key(keys_path)
-        address = _key_to_address(pk)
-
-        return Keys(keys_path, address)
-
-    def get_balance(self, *, address: str, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> int:
-        result = self.__run_client_command(route="/get_account", input_json={"address": address}, timeout=timeout,
-                                           wait=wait)
-        return _GetBalanceParser.parse(result)
-
-    def get_account_info(self, *, address: str, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> AccountInfo:
-        raise LogicException("method is not realized")
-
-    def transfer(self, *, to_address: str, amount: int, from_address: Keys, fee: int, wait=MINIMUM_TX_WAIT,
-                 timeout=MINIMAL_TRANSACTION_TIMEOUT) -> TransferResult:
-        from_address_priv_key = _load_key(from_address.keys_path)
-        from_address_address = _key_to_address(from_address_priv_key)
-        timestamp = int(datetime.datetime.now().timestamp())
-        tx = Transaction(Transaction.TRANSFER_TYPE, from_address_address, to_address, amount, fee, timestamp, "", True)
-        tx_hash = bytes.fromhex(tx.hash())
-        sign_bytes = from_address_priv_key.sign_recoverable(tx_hash)
-        sign = base64.b64encode(sign_bytes)
-        tx_json = {'from': from_address_address,
+    def __push_transaction(self, *, from_address: str, to_address: str, amount: int, fee: int, timestamp: int,
+                           message: str, sign: str, timeout: int, wait: int):
+        tx_json = {'from': from_address,
                    'to': to_address,
                    'amount': str(amount),
                    'fee': str(fee),
                    'timestamp': timestamp,
-                   'data': {'message': ""},
+                   'data': message,
                    'sign': sign}
-        result = self.__run_client_command(route="/push_transaction", input_json=tx_json, timeout=timeout,
-                                           wait=wait)
-        return _TransferParser.parse(result, tx.hash())
+        print(json.dumps(tx_json))
+        return self.__run_client_command(route="/push_transaction", input_json=tx_json, timeout=timeout,
+                                         wait=wait)
+
+    def __call_contract_view(self, *, from_address: str, to_address: str, message: str, timeout: int, wait: int):
+        tx_json = {'from': from_address,
+                   'to': to_address,
+                   'message': message}
+        return self.__run_client_command(route="/call_contract_view", input_json=tx_json, timeout=timeout,
+                                         wait=wait)
+
+    def connection_test(self, *, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> bool:
+        result = self.__get_node_info(timeout=timeout, wait=wait)
+        return _TestConnectionParser.parse(result)
+
+    def node_info(self, *, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> NodeInfo:
+        result = self.__get_node_info(timeout=timeout, wait=wait)
+        return _NodeInfoParser.parse(result)
+
+    def generate_keys(self, *, keys_path: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> Keys:
+        pk = coincurve.PrivateKey()
+        path = Client.__save_key(keys_path, pk)
+        address = Client.__key_to_address(pk)
+        return Keys(path, address)
+
+    def load_address(self, *, keys_path: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> Keys:
+        pk = Client.__load_key(keys_path)
+        address = Client.__key_to_address(pk)
+        return Keys(keys_path, address)
+
+    def get_balance(self, *, address: str, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> int:
+        result = self.__get_account_info(address=address, timeout=timeout, wait=wait)
+        return _GetBalanceParser.parse(result)
+
+    def get_account_info(self, *, address: str, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> AccountInfo:
+        result = self.__get_account_info(address=address, timeout=timeout, wait=wait)
+        return _GetAccountInfoParser.parse(result)
+
+    def transfer(self, *, to_address: str, amount: int, from_address: Keys, fee: int, wait=MINIMUM_TX_WAIT,
+                 timeout=MINIMAL_TRANSACTION_TIMEOUT) -> TransferResult:
+        from_address_private_key = Client.__load_key(from_address.keys_path)
+        from_address = Client.__key_to_address(from_address_private_key)
+
+        timestamp = int(datetime.datetime.now().timestamp())
+
+        tx_hash = Client.__calculate_hash(from_address, to_address, amount, fee, timestamp, "")
+        sign = base64.b64encode(from_address_private_key.sign_recoverable(tx_hash)).decode()
+
+        result = self.__push_transaction(from_address=from_address, to_address=to_address, amount=amount, fee=fee,
+                                         timestamp=timestamp, message="", sign=sign, timeout=timeout, wait=wait)
+        return _TransferParser.parse(result, tx_hash.hex())
 
     def get_transaction_status(self, *, tx_hash: str, wait: int, timeout: int) -> TransactionStatus:
         raise LogicException("method is not implemented")
@@ -182,77 +235,213 @@ class Client(BaseClient):
     def get_block(self, block_hash=None, block_number=None, *, timeout=MINIMAL_CALL_TIMEOUT, wait=ZERO_WAIT) -> Block:
         raise LogicException("method is not realized")
 
+    @staticmethod
+    def __parse_solidity_output(output) -> dict:
+        output_lines = output.split('\n')
+        group_number = 4
+        result = dict()
+        for i in range(int(len(output_lines) / group_number)):
+            starter_index = i * group_number
+            header = output_lines[starter_index + 1]
+            data = output_lines[starter_index + 3]
+            contract_name = header.split(" ")[1].split(':')[1]
+            result[contract_name] = data
+        return result
+
+    def __compile_solidity_file(self, solidity_file_path: str, timeout: int):
+        try:
+            pipe = subprocess.run([Client.COMPILER_NAME, "--bin", solidity_file_path], cwd=self.work_dir,
+                                  capture_output=True, timeout=timeout)
+            if pipe.returncode != 0:
+                raise BadResultException(
+                    f"failed at compilation of file success compilation {solidity_file_path}: {pipe.stderr.decode('utf8')}")
+            binary_output = pipe.stdout.decode('utf8')
+        except subprocess.TimeoutExpired:
+            message = f"{self.name} - slow compilation of file {solidity_file_path}"
+            self.logger.info(message)
+            raise TimeOutException(message)
+
+        return self.__parse_solidity_output(binary_output)
+
+    def __create_metadata_of_solidity_file(self, solidity_file_path: str, timeout: int):
+        try:
+            pipe = subprocess.run([Client.COMPILER_NAME, "--metadata", solidity_file_path], cwd=self.work_dir,
+                                  capture_output=True, timeout=timeout)
+            if pipe.returncode != 0:
+                raise BadResultException(
+                    f"not success abi generation {solidity_file_path}: {pipe.stderr.decode('utf8')}")
+            abi_output = pipe.stdout.decode('utf8')
+        except subprocess.TimeoutExpired as e:
+            message = f"{self.name} - slow abi generation by file {solidity_file_path}"
+            self.logger.info(message)
+            raise TimeOutException(message)
+
+        return self.__parse_solidity_output(abi_output)
+
     def compile_file(self, *, code: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> list:
-        raise LogicException("method is not realized")
+        solidity_file_path = os.path.abspath(code)
+        binary_result = self.__compile_solidity_file(solidity_file_path, timeout)
+
+        for contract_name in binary_result.keys():
+            contract_folder = os.path.join(self.work_dir, contract_name)
+            if not os.path.exists(contract_folder):
+                os.makedirs(contract_folder)
+
+            with open(os.path.join(contract_folder, Client.CODE_FILE_NAME), 'wt', encoding='ascii') as f:
+                f.write(binary_result[contract_name])
+
+        abi_result = self.__create_metadata_of_solidity_file(solidity_file_path, timeout)
+        result = list()
+        for contract_name in abi_result.keys():
+            contract_folder = os.path.join(self.work_dir, contract_name)
+            result.append(contract_folder)
+
+            serialized_abi = json.dumps(json.loads(abi_result[contract_name]), separators=(',', ': '), indent=4)
+            with open(os.path.join(contract_folder, Client.METADATA_FILE_NAME), 'wt', encoding='ascii') as f:
+                f.write(serialized_abi)
+        return result
+
+    @staticmethod
+    def __create_hash(function):
+        name = function.abi['name']
+        str_view = str(function)
+        signature = str_view[str_view.find(" ") + 1: len(str_view) - 1]
+        sha3_hash = web3.Web3.solidityKeccak(['bytes'], [signature.encode('ascii')]).hex()
+        return name, signature, sha3_hash[2:10]
+
+    @staticmethod
+    def __encode_call(compiled_sol, call):
+        new_contract_data_abi = copy.deepcopy(compiled_sol['metadata']['output']['abi'])
+        for item in new_contract_data_abi:
+            for input_item in item["inputs"]:
+                if input_item["type"] == "address":
+                    input_item["internalType"] = "bytes32"
+                    input_item["type"] = "bytes32"
+
+        new_contract = web3.Web3().eth.contract(abi=new_contract_data_abi, bytecode=compiled_sol['bytecode'])
+
+        if call['method'] == "constructor":
+            call_data = new_contract.constructor(*call["args"]).data_in_transaction
+            call_data = call_data[2:]
+        else:
+            call_data = new_contract.encodeABI(fn_name=call["method"], args=call["args"])
+
+            original = web3.Web3().eth.contract(abi=compiled_sol['metadata']['output']['abi'])
+            target_hash = Client.__create_hash(original.get_function_by_name(call["method"]))
+            call_data = target_hash[2] + call_data[10:]
+
+        return call_data
+
+    @staticmethod
+    def __load_contract_data(path_to_contract_folder):
+        compiled_contract_file_path = os.path.join(path_to_contract_folder, Client.CODE_FILE_NAME)
+        if not os.path.exists(compiled_contract_file_path):
+            raise InvalidArgumentsException(f"contract file not exists by path: {compiled_contract_file_path}")
+        with open(compiled_contract_file_path, "rt") as f:
+            bytecode = f.read()
+
+        contract_metadata_file_path = os.path.join(path_to_contract_folder, Client.METADATA_FILE_NAME)
+        if not os.path.exists(contract_metadata_file_path):
+            raise InvalidArgumentsException(f"contract metadata file not exists by path: {contract_metadata_file_path}")
+        with open(contract_metadata_file_path, "rt") as f:
+            metadata = json.loads(f.read())
+
+        return {"bytecode": bytecode, "metadata": metadata}
+
+    @staticmethod
+    def __parse_call(call_string):
+        bracket_index = call_string.find('(')
+        method_name = call_string[0: bracket_index]
+        argument_data = f"[{call_string[bracket_index + 1: len(call_string) - 1]}]"
+        arguments = json.loads(argument_data)
+        return {"method": method_name, "args": arguments}
 
     def encode_message(self, *, code: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> str:
-        raise LogicException("method is not realized")
+        parsed_call = Client.__parse_call(message)
+        contract_data = Client.__load_contract_data(code)
+        call_data = Client.__encode_call(contract_data, parsed_call)
+        if not call_data:
+            raise BadResultException("dad encoding")
+        return call_data
+
+    @staticmethod
+    def __decode_output(compiled_sol, method, data):
+        web3_interface = web3.Web3()
+
+        for abi_fn in compiled_sol['metadata']['output']['abi']:
+            if abi_fn["type"] == "function":
+                if abi_fn["name"] == method:
+                    remake_abi = abi_fn
+                    remake_abi['inputs'] = remake_abi['outputs']
+                    remake_abi['outputs'] = ""
+                    remake_contract = web3_interface.eth.contract(abi=[remake_abi])
+                    target_hash = Client.__create_hash(remake_contract.get_function_by_name(method))
+                    return remake_contract.decode_function_input(target_hash[2] + data)[1]
+        return None
+
+    @staticmethod
+    def __prepare_for_serialize(decoded_data):
+        if type(decoded_data) is list:
+            for item_num in range(len(decoded_data)):
+                decoded_data[item_num] = Client.__prepare_for_serialize(decoded_data[item_num])
+        elif type(decoded_data) is bytes:
+            b = binascii.hexlify(decoded_data)
+            return b.decode('utf8')
+        elif type(decoded_data) is dict:
+            for item_key in decoded_data.keys():
+                decoded_data[item_key] = Client.__prepare_for_serialize(decoded_data[item_key])
+        return decoded_data
 
     def decode_message(self, *, code: str, method: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> dict:
-        raise LogicException("method is not realized")
+        contract_data = Client.__load_contract_data(code)
+        decoded_data = Client.__decode_output(contract_data, method, message)
+        if not decoded_data:
+            raise BadResultException("dad encoding")
+
+        return Client.__prepare_for_serialize(decoded_data)
 
     def push_contract(self, *, from_address: Keys, code: str, fee: int, amount: int, init_message: str,
                       timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> DeployedContract:
-        from_address_priv_key = _load_key(from_address.keys_path)
-        from_address_address = _key_to_address(from_address_priv_key)
+
+        from_address_private_key = Client.__load_key(from_address.keys_path)
+        from_address = Client.__key_to_address(from_address_private_key)
+        to_address = Client.__generate_null_address()
         timestamp = int(datetime.datetime.now().timestamp())
-        to_address = base58.b58encode(bytes.fromhex('00' * 20)).decode()
-
         message_bytes = bytes.fromhex(init_message)
-        message_len = len(message_bytes)
-        message_len_bytes = message_len.to_bytes(8, byteorder='big')
-        code_bytes = code.encode()
-        code_len = len(code_bytes)
-        code_len_bytes = code_len.to_bytes(8, byteorder='big')
 
-        data = message_len_bytes + message_bytes + code_len_bytes + code_bytes
+        tx_hash = Client.__calculate_hash(from_address, to_address, amount, fee, timestamp,
+                                          base64.b64encode(message_bytes).decode())
 
-        tx = Transaction(Transaction.TRANSFER_TYPE, from_address_address, to_address, amount, fee, timestamp,
-                         base64.b64encode(data).decode(), True)
-        tx_hash = bytes.fromhex(tx.hash())
-        sign_bytes = from_address_priv_key.sign_recoverable(tx_hash)
-        sign = base64.b64encode(sign_bytes)
-        encoded_message = base64.b64encode(message_bytes)
-        tx_json = {'from': from_address_address,
-                   'to': to_address,
-                   'amount': str(amount),
-                   'fee': str(fee),
-                   'timestamp': timestamp,
-                   'data': {'message': encoded_message, "abi": code},
-                   'sign': sign}
-        result = self.__run_client_command(route="/push_transaction", input_json=tx_json, timeout=timeout,
-                                           wait=wait)
-        return _DeployedContract.parse(result, tx.hash())
+        sign = base64.b64encode(from_address_private_key.sign_recoverable(tx_hash)).decode()
+
+        result = self.__push_transaction(from_address=from_address, to_address=to_address, amount=amount, fee=fee,
+                                         timestamp=timestamp, message=base64.b64encode(message_bytes).decode(),
+                                         sign=sign, timeout=timeout, wait=wait)
+        return _DeployedContract.parse(result, tx_hash.hex())
 
     def message_call(self, *, from_address: Keys, to_address: str, fee: int, amount: int, message: str,
                      timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> ContractResult:
-        from_address_priv_key = _load_key(from_address.keys_path)
-        from_address_address = _key_to_address(from_address_priv_key)
+        from_address_private_key = Client.__load_key(from_address.keys_path)
+        from_address = Client.__key_to_address(from_address_private_key)
+
         timestamp = int(datetime.datetime.now().timestamp())
+
         data = base64.b64encode(bytes.fromhex(message)).decode()
-        tx = Transaction(Transaction.TRANSFER_TYPE, from_address_address, to_address, amount, fee, timestamp, data,
-                         True)
-        tx_hash = bytes.fromhex(tx.hash())
-        sign_bytes = from_address_priv_key.sign_recoverable(tx_hash)
-        sign = base64.b64encode(sign_bytes)
-        tx_json = {'from': from_address_address,
-                   'to': to_address,
-                   'amount': str(amount),
-                   'fee': str(fee),
-                   'timestamp': timestamp,
-                   'data': {'message': data},
-                   'sign': sign}
-        result = self.__run_client_command(route="/push_transaction", input_json=tx_json, timeout=timeout,
-                                           wait=wait)
-        return _ContractCallParser.parse(result, tx.hash())
+
+        tx_hash = Client.__calculate_hash(from_address, to_address, amount, fee, timestamp, data)
+        sign = base64.b64encode(from_address_private_key.sign_recoverable(tx_hash)).decode()
+
+        result = self.__push_transaction(from_address=from_address, to_address=to_address, amount=amount, fee=fee,
+                                         timestamp=timestamp, message=data, sign=sign, timeout=timeout, wait=wait)
+        return _ContractCallParser.parse(result, tx_hash.hex())
 
     def call_view(self, *, from_address: Keys, to_address: str, message: str, timeout=MINIMAL_CALL_TIMEOUT,
                   wait=ZERO_WAIT) -> str:
-        from_address_priv_key = _load_key(from_address.keys_path)
-        from_address_address = _key_to_address(from_address_priv_key)
-        tx_json = {'from': from_address_address,
-                   'to': to_address,
-                   'message': base64.b64encode(bytes.fromhex(message)).decode()}
-        result = self.__run_client_command(route="/call_contract_view", input_json=tx_json, timeout=timeout,
-                                           wait=wait)
-        return result
+        from_address_private_key = Client.__load_key(from_address.keys_path)
+        from_address = Client.__key_to_address(from_address_private_key)
+
+        message = base64.b64encode(bytes.fromhex(message)).decode()
+
+        result = self.__call_contract_view(from_address=from_address, to_address=to_address, message=message,
+                                           timeout=timeout, wait=wait)
+        return base64.b64decode(result).hex()

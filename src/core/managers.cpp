@@ -72,18 +72,6 @@ void AccountState::setCodeHash(base::Sha256 code_hash)
 }
 
 
-void AccountState::setAbi(const base::PropertyTree& abi)
-{
-    _abi = abi;
-}
-
-
-const base::PropertyTree& AccountState::getAbi() const
-{
-    return _abi;
-}
-
-
 void AccountState::setRuntimeCode(const base::Bytes& code)
 {
     _runtime_code = code;
@@ -124,12 +112,11 @@ void AccountState::setStorageValue(const base::Sha256& key, base::Bytes value)
 AccountInfo AccountState::toInfo() const
 {
     if (_code_hash == base::Sha256::null()) {
-        AccountInfo info{ AccountType::CLIENT, lk::Address::null(), _balance, _nonce, _transactions, "" };
+        AccountInfo info{ AccountType::CLIENT, lk::Address::null(), _balance, _nonce, _transactions };
         return info;
     }
     else {
-        auto serialized_abi = _abi.toString();
-        AccountInfo info{ AccountType::CONTRACT, lk::Address::null(), _balance, _nonce, _transactions, serialized_abi };
+        AccountInfo info{ AccountType::CONTRACT, lk::Address::null(), _balance, _nonce, _transactions};
         return info;
     }
 }

@@ -67,7 +67,6 @@ message AccountInfo {
     CurrencyAmount balance = 3;
     uint64 nonce = 4;
     repeated Hash hashes = 5;
-    string serialized_abi = 6;
 }
 
 
@@ -77,7 +76,7 @@ message Transaction {
     CurrencyAmount value = 3;
     uint64 fee = 4;
     Time creation_time = 5;
-    TransactionData data = 6;
+    string data = 6;
     Signature signature = 7;
 }
 
@@ -141,12 +140,6 @@ message Number {
 
 message Data {
     string bytes_base_64 = 1;
-}
-
-
-message TransactionData {
-    string message = 1;
-    string serialized_abi = 2;
 }
 
 

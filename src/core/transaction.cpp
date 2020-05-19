@@ -6,50 +6,50 @@
 namespace lk
 {
 
-
-ContractData::ContractData(base::Bytes message, base::PropertyTree abi)
-  : _message{ std::move(message) }
-  , _abi{ std::move(abi) }
-{}
-
-
-void ContractData::setMessage(base::Bytes message)
-{
-    _message = std::move(message);
-}
-
-
-void ContractData::setAbi(base::PropertyTree abi)
-{
-    _abi = std::move(abi);
-}
-
-
-const base::Bytes& ContractData::getMessage() const noexcept
-{
-    return _message;
-}
-
-
-const base::PropertyTree& ContractData::getAbi() const noexcept
-{
-    return _abi;
-}
-
-
-void ContractData::serialize(base::SerializationOArchive& oa) const
-{
-    oa.serialize(_message);
-    oa.serialize(base::Bytes(_abi.toString()));
-}
-
-
-ContractData ContractData::deserialize(base::SerializationIArchive& ia)
-{
-    auto message = ia.deserialize<base::Bytes>();
-    auto abi = base::parseJson(ia.deserialize<base::Bytes>().toString());
-    return { std::move(message), std::move(abi) };
-}
+//
+//ContractData::ContractData(base::Bytes message, base::PropertyTree abi)
+//  : _message{ std::move(message) }
+//  , _abi{ std::move(abi) }
+//{}
+//
+//
+//void ContractData::setMessage(base::Bytes message)
+//{
+//    _message = std::move(message);
+//}
+//
+//
+//void ContractData::setAbi(base::PropertyTree abi)
+//{
+//    _abi = std::move(abi);
+//}
+//
+//
+//const base::Bytes& ContractData::getMessage() const noexcept
+//{
+//    return _message;
+//}
+//
+//
+//const base::PropertyTree& ContractData::getAbi() const noexcept
+//{
+//    return _abi;
+//}
+//
+//
+//void ContractData::serialize(base::SerializationOArchive& oa) const
+//{
+//    oa.serialize(_message);
+//    oa.serialize(base::Bytes(_abi.toString()));
+//}
+//
+//
+//ContractData ContractData::deserialize(base::SerializationIArchive& ia)
+//{
+//    auto message = ia.deserialize<base::Bytes>();
+//    auto abi = base::parseJson(ia.deserialize<base::Bytes>().toString());
+//    return { std::move(message), std::move(abi) };
+//}
 
 //
 // Sign::Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash)
@@ -184,7 +184,6 @@ const base::Bytes& Transaction::getData() const noexcept
 void Transaction::sign(const base::Secp256PrivateKey& key)
 {
     auto hash = hashOfTransaction();
-    LOG_DEBUG << hash.toHex();
     _sign = key.sign(hash.getBytes().toBytes());
 }
 
@@ -196,7 +195,6 @@ bool Transaction::checkSign() const
     }
     else {
         auto valid_hash = hashOfTransaction();
-        LOG_DEBUG << valid_hash.toHex();
         try {
             auto pub = base::Secp256PrivateKey::decodeSignatureToPublicKey(_sign, valid_hash.getBytes().toBytes());
             auto derived_addr = lk::Address(pub);

@@ -141,10 +141,7 @@ request:
 		“amount”: “<uint256 integer at string format>”,
 		“fee”: “<uint256 integer at string format>”,
 		“timestamp”: <integer is seconds from epoch start>,
-		“data”: {
-			“message”: “<binary encoded(for call) data string message then ecnoded by base64 or empty string if "to" is not a contract address>”,
-			“abi”: <if "to" is null address then field will be an empty string, if "to" is not null address then field wiil be a contract abi object>	
-		},
+		“data”: “<binary encoded(for call) data string message then ecnoded by base64 or empty string if "to" is not a contract address>”,
 		“sign”: “<transaction hash encrypted by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
 	}
 
@@ -189,9 +186,5 @@ response:
 - transaction hash is sha256 of concatenated stringified fields:
 
 		“<from address encoded by base58>” + “<to address or null address if transaction for contract creation encoded by base58>” + “<amount as uint256 integer at string format>” + “<fee as uint256 integer at string format>” + “<timestamp integer is seconds from epoch start at string>” + “data if "to" is null address, data will be: “<binary contract code string message>” + “<binary constructor encoded(for call) data string message>”+“<contract abi object serialized to string>”, if address is not null address, data will be: “<message binary encoded(for call) data string message or empty string if "to" not a contract address>” “
-
-- data string message:
-
-        data = message_len_to_8_bytes + message_bytes + serialized_abi_as_bytes_len_to_8_bytes + serialized_abi_as_bytes
     
    

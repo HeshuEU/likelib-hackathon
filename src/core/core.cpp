@@ -523,19 +523,14 @@ base::Bytes Core::callViewMethod(const lk::Address& from,
     if (_state_manager.hasAccount(contract_address) &&
         _state_manager.getAccount(contract_address).getType() == lk::AccountType::CONTRACT) {
         auto contract_account = _state_manager.getAccount(contract_address);
-        if (vm::isView(contract_account.getAbi(), message)) {
-            const auto& tx = invalidTransaction();
-            const auto& block = invalidBlock();
+        const auto& tx = invalidTransaction();
+        const auto& block = invalidBlock();
 
-            auto eval_result = callContractAtViewModeVm(
-              _state_manager, block, tx, from, contract_address, contract_account.getRuntimeCode(), message);
+        auto eval_result = callContractAtViewModeVm(
+          _state_manager, block, tx, from, contract_address, contract_account.getRuntimeCode(), message);
 
-            auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
-            return output_data;
-        }
-        else {
-            RAISE_ERROR(base::InvalidArgument, "not a view method");
-        }
+        auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
+        return output_data;
     }
     RAISE_ERROR(base::InvalidArgument, std::string("no contract by address: ") + contract_address.toString());
 }
@@ -564,9 +559,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
         try {
             tx_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
 
-            auto contract_data = base::fromBytes<lk::ContractData>(tx.getData());
-
-            auto contract_data_hash = base::Sha256::compute(contract_data.getMessage());
+            auto contract_data_hash = base::Sha256::compute(tx.getData());
             lk::Address contract_address = tx_manager.createContractAccount(tx.getFrom(), contract_data_hash);
 
             if (!tx_manager.tryTransferMoney(tx.getFrom(), contract_address, tx.getAmount())) {
@@ -578,24 +571,11 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                 return;
             }
 
-            static const auto CONTRACT_FLAG = base::fromHex<base::Bytes>("60806040");
-
-            if (contract_data.getMessage().takePart(0, CONTRACT_FLAG.size()) != CONTRACT_FLAG) {
-                TransactionStatus status(TransactionStatus::StatusCode::Failed,
-                                         TransactionStatus::ActionType::ContractCreation,
-                                         tx.getFee(),
-                                         "");
-                addTransactionOutput(transaction_hash, status);
-                return;
-            }
-
-            auto eval_result =
-              callInitContractVm(tx_manager, block_where_tx, tx, contract_address, contract_data.getMessage());
+            auto eval_result = callInitContractVm(tx_manager, block_where_tx, tx, contract_address, tx.getData());
 
             if (eval_result.status_code == evmc_status_code::EVMC_SUCCESS) {
                 auto runtime_code = vm::copy(eval_result.output_data, eval_result.output_size);
                 tx_manager.getAccount(contract_address).setRuntimeCode(runtime_code);
-                tx_manager.getAccount(contract_address).setAbi(contract_data.getAbi());
                 LOG_DEBUG << "Deployed contract to address "
                           << base::base58Encode(contract_address.getBytes().toBytes());
                 TransactionStatus status(TransactionStatus::StatusCode::Success,

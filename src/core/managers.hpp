@@ -25,7 +25,6 @@ struct AccountInfo
     lk::Balance balance;
     std::uint64_t nonce;
     std::vector<base::Sha256> transactions_hashes;
-    std::string serialized_abi;
 };
 
 
@@ -58,9 +57,6 @@ class AccountState
     const base::Sha256& getCodeHash() const noexcept;
     void setCodeHash(base::Sha256 code_hash);
     //============================
-    void setAbi(const base::PropertyTree& abi);
-    const base::PropertyTree& getAbi() const;
-    //============================
     void setRuntimeCode(const base::Bytes& code);
     const base::Bytes& getRuntimeCode() const;
     //============================
@@ -78,7 +74,6 @@ class AccountState
     std::vector<base::Sha256> _transactions;
     std::map<base::Sha256, StorageData> _storage;
     base::Bytes _runtime_code;
-    base::PropertyTree _abi;
 };
 
 

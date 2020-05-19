@@ -1,11 +1,11 @@
-from tester import test_case, Env, NodeConfig, Id, TEST_CHECK, TEST_CHECK_EQUAL, DISTRIBUTOR_ADDRESS_PATH
+from tester import test_case, Env, NodeConfig, Id, TEST_CHECK, TEST_CHECK_EQUAL, ClientType, get_distributor_address_path
 
 
 @test_case("grpc_block_get")
 def main(env: Env) -> int:
     node_id = Id(20211, grpc_port=50061)
     env.start_node(NodeConfig(node_id))
-    client = env.get_client(env.CLIENT_LEGACY_GRPC_TYPE, node_id)
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
 
     block = client.get_block(block_number=0)
     TEST_CHECK_EQUAL(block.depth, 0)
@@ -17,7 +17,7 @@ def main(env: Env) -> int:
 def main(env: Env) -> int:
     node_id = Id(20211, http_port=50061)
     env.start_node(NodeConfig(node_id))
-    client = env.get_client(env.CLIENT_LEGACY_HTTP_TYPE, node_id)
+    client = env.get_client(ClientType.LEGACY_HTTP, node_id)
 
     block = client.get_block(block_number=0)
     TEST_CHECK_EQUAL(block.depth, 0)
@@ -28,9 +28,9 @@ def main(env: Env) -> int:
 @test_case("legacy_grpc_transfer")
 def main(env: Env) -> int:
     node_id = Id(20209, grpc_port=50059)
-    env.start_node(NodeConfig(node_id))
-    client = env.get_client(env.CLIENT_LEGACY_GRPC_TYPE, node_id)
-    distributor_address = client.load_address(keys_path=DISTRIBUTOR_ADDRESS_PATH)
+    env.start_node(NodeConfig(node_id), 3)
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
     target_address = client.generate_keys(keys_path="user_1")
     distributor_init_balance = client.get_balance(address=distributor_address.address)
     transaction_fee = 10
@@ -47,9 +47,9 @@ def main(env: Env) -> int:
 @test_case("legacy_http_transfer")
 def main(env: Env) -> int:
     node_id = Id(20210, http_port=50060)
-    env.start_node(NodeConfig(node_id))
-    client = env.get_client(env.CLIENT_LEGACY_HTTP_TYPE, node_id)
-    distributor_address = client.load_address(keys_path=DISTRIBUTOR_ADDRESS_PATH)
+    env.start_node(NodeConfig(node_id), 3)
+    client = env.get_client(ClientType.LEGACY_HTTP, node_id)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
     target_address = client.generate_keys(keys_path="user_1")
     distributor_init_balance = client.get_balance(address=distributor_address.address)
     transaction_fee = 10
@@ -67,8 +67,8 @@ def main(env: Env) -> int:
 def main(env: Env) -> int:
     node_id = Id(20201, http_port=50052)
     env.start_node(NodeConfig(node_id))
-    client = env.get_client(env.CLIENT_PYTHON_HTTP_TYPE, node_id)
-    distributor_address = client.load_address(keys_path=DISTRIBUTOR_ADDRESS_PATH)
+    client = env.get_client(ClientType.PYTHON_HTTP, node_id)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
     target_address = client.generate_keys(keys_path="user_1")
     distributor_init_balance = client.get_balance(address=distributor_address.address, timeout=500)
     transaction_fee = 10
@@ -88,8 +88,8 @@ def main(env: Env) -> int:
 def main(env: Env) -> int:
     node_id = Id(20212, grpc_port=50062)
     env.start_node(NodeConfig(node_id))
-    client = env.get_client(env.CLIENT_LEGACY_GRPC_TYPE, node_id)
-    distributor_address = client.load_address(keys_path=DISTRIBUTOR_ADDRESS_PATH)
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
     target_address = client.generate_keys(keys_path="user_1")
     distributor_init_account_info = client.get_account_info(address=distributor_address.address)
     TEST_CHECK_EQUAL(distributor_init_account_info.nonce, 0)
@@ -112,9 +112,9 @@ def main(env: Env) -> int:
 def main(env: Env) -> int:
     node_id = Id(20213, grpc_port=50063)
     env.start_node(NodeConfig(node_id))
-    client = env.get_client(env.CLIENT_LEGACY_GRPC_TYPE, node_id)
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
 
-    distributor_address = client.load_address(keys_path=DISTRIBUTOR_ADDRESS_PATH)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
     target_address = client.generate_keys(keys_path="user_1")
     distributor_init_balance = client.get_balance(address=distributor_address.address)
     transaction_fee = 10
@@ -140,9 +140,9 @@ def main(env: Env) -> int:
 def main(env: Env) -> int:
     node_id = Id(20214, http_port=50064)
     env.start_node(NodeConfig(node_id))
-    client = env.get_client(env.CLIENT_LEGACY_HTTP_TYPE, node_id)
+    client = env.get_client(ClientType.LEGACY_HTTP, node_id)
 
-    distributor_address = client.load_address(keys_path=DISTRIBUTOR_ADDRESS_PATH)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
     target_address = client.generate_keys(keys_path="user_1")
     distributor_init_balance = client.get_balance(address=distributor_address.address)
     transaction_fee = 10

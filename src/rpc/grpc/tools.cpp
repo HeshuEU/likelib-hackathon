@@ -120,7 +120,6 @@ void serializeAccountInfo(const lk::AccountInfo& from, likelib::AccountInfo* to)
     for (const auto& tx_hash : from.transactions_hashes) {
         serializeHash(tx_hash, to->mutable_hashes()->Add());
     }
-    to->set_serialized_abi(from.serialized_abi);
 }
 
 
@@ -138,7 +137,7 @@ lk::AccountInfo deserializeAccountInfo(const likelib::AccountInfo* const info)
 
     lk::Address address = deserializeAddress(&(info->address()));
 
-    return { type, address, balance, nonce, std::move(hashes), info->serialized_abi() };
+    return { type, address, balance, nonce, std::move(hashes) };
 }
 
 
@@ -189,14 +188,7 @@ void serializeTransaction(const lk::Transaction& from, likelib::Transaction* to)
     to->mutable_value()->set_value(from.getAmount().toString());
     to->set_fee(from.getFee());
     to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSecondsSinceEpoch());
-    if (from.getTo() == lk::Address::null()) {
-        auto data = base::fromBytes<lk::ContractData>(from.getData());
-        to->mutable_data()->set_message(base::base64Encode(data.getMessage()));
-        to->mutable_data()->set_serialized_abi(data.getAbi().toString());
-    }
-    else {
-        to->mutable_data()->set_message(base::base64Encode(from.getData()));
-    }
+    to->set_data(base::base64Encode(from.getData()));
     to->mutable_signature()->set_signature_bytes_at_base_64(base::base64Encode(from.getSign()));
 }
 
@@ -210,16 +202,7 @@ lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx)
     txb.setAmount(tx->value().value());
     txb.setFee(tx->fee());
     txb.setTimestamp(base::Time(tx->creation_time().seconds_since_epoch()));
-    if (to_address == lk::Address::null()) {
-        auto abi = base::parseJson(tx->data().serialized_abi());
-        auto message = base::base64Decode(tx->data().message());
-        lk::ContractData data(message, abi);
-        txb.setData(base::toBytes(data));
-    }
-    else {
-        txb.setData(base::base64Decode(tx->data().message()));
-    }
-
+    txb.setData(base::base64Decode(tx->data()));
     txb.setSign(lk::Sign(base::base64Decode(tx->signature().signature_bytes_at_base_64())));
 
     return std::move(txb).build();

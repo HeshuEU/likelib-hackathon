@@ -12,27 +12,27 @@ namespace lk
 {
 
 
-class ContractData
-{
-  public:
-    explicit ContractData() = default;
-    ContractData(base::Bytes message, base::PropertyTree abi);
-
-    ~ContractData() = default;
-
-    void setMessage(base::Bytes code);
-    void setAbi(base::PropertyTree abi);
-
-    const base::Bytes& getMessage() const noexcept;
-    const base::PropertyTree& getAbi() const noexcept;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static ContractData deserialize(base::SerializationIArchive& ia);
-
-  private:
-    base::Bytes _message;
-    base::PropertyTree _abi;
-};
+//class ContractData
+//{
+//  public:
+//    explicit ContractData() = default;
+//    ContractData(base::Bytes message, base::PropertyTree abi);
+//
+//    ~ContractData() = default;
+//
+//    void setMessage(base::Bytes code);
+//    void setAbi(base::PropertyTree abi);
+//
+//    const base::Bytes& getMessage() const noexcept;
+//    const base::PropertyTree& getAbi() const noexcept;
+//
+//    void serialize(base::SerializationOArchive& oa) const;
+//    static ContractData deserialize(base::SerializationIArchive& ia);
+//
+//  private:
+//    base::Bytes _message;
+//    base::PropertyTree _abi;
+//};
 
 //
 // class Sign

@@ -492,12 +492,9 @@ int ActionGetAccountInfo::execute()
     }
     else {
         std::cout << "Contract address: " << result.address.toString() << '\n'
-                  << "\tBalance: " << result.balance << '\n'
-                  << "\tABI: \n"
-                  << result.serialized_abi << std::endl;
+                  << "\tBalance: " << result.balance << std::endl;
 
-        LOG_INFO << "Remote call of GetAccountInfo(" << _account_address << ") -> balance[" << result.balance
-                 << "], ABI[" << result.serialized_abi << "]";
+        LOG_INFO << "Remote call of GetAccountInfo(" << _account_address << ") -> balance[" << result.balance << "]";
     }
 
     return base::config::EXIT_OK;
@@ -866,20 +863,12 @@ int ActionPushContract::loadOptions(const base::ProgramOptionsParser& parser)
         _message = base::fromHex<base::Bytes>(parser.getValue<std::string>(MESSAGE_OPTION));
     }
 
-    if (checkOptionEmptyAndWriteMessage(parser, CODE_PATH_OPTION)) {
-        return base::config::EXIT_FAIL;
-    }
-    std::filesystem::path code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
-    auto code_abi_file_path = code_folder_path / std::filesystem::path(config::METADATA_JSON_FILE);
-    if (!std::filesystem::exists(code_abi_file_path)) {
-        RAISE_ERROR(base::InvalidArgument,
-                    "the file with this path[" + code_abi_file_path.string() + "] does not exist");
-    }
-    auto metadata = base::readConfig(code_abi_file_path);
-    static constexpr const char* ABI_PATH = "output";
-    _contract_abi = metadata.getSubTree(ABI_PATH);
-
     if (_message.isEmpty()) {
+        if (checkOptionEmptyAndWriteMessage(parser, CODE_PATH_OPTION)) {
+            return base::config::EXIT_FAIL;
+        }
+        std::filesystem::path code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
+
         auto code_binary_file_path = code_folder_path / std::filesystem::path(config::CONTRACT_BINARY_FILE);
         if (!std::filesystem::exists(code_binary_file_path)) {
             RAISE_ERROR(base::InvalidArgument,
@@ -908,9 +897,7 @@ int ActionPushContract::execute()
     txb.setTo(lk::Address::null());
     txb.setTimestamp(base::Time::now());
     txb.setFee(_fee);
-
-    lk::ContractData data(_message, _contract_abi);
-    txb.setData(base::toBytes(data));
+    txb.setData(_message);
 
     auto tx = std::move(txb).build();
     tx.sign(priv);

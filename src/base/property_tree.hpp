@@ -31,8 +31,6 @@ class PropertyTree
 
     std::string toString() const;
 
-    boost::property_tree::ptree toBoostTree() const;
-
   private:
     boost::property_tree::ptree _ptree;
 };

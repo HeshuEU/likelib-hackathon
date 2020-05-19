@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import enum
 
 from .base import Logger, InvalidArgumentsException, LogicException
 from .node import Node
@@ -10,9 +11,9 @@ from .http_client import Client as HttpClient
 
 
 class Id:
-    def __init__(self, sync_port, *, grpc_port=None, http_port=None, listening_addres="0.0.0.0",
+    def __init__(self, sync_port, *, grpc_port=None, http_port=None, listening_address="0.0.0.0",
                  absolute_address="127.0.0.1"):
-        self.listening_addres = listening_addres
+        self.listening_address = listening_address
         self.absolute_address = absolute_address
         self.sync_port = sync_port
         self.grpc_port = grpc_port
@@ -20,7 +21,7 @@ class Id:
 
     @property
     def listen_sync_address(self) -> str:
-        return f"{self.listening_addres}:{self.sync_port}"
+        return f"{self.listening_address}:{self.sync_port}"
 
     @property
     def connect_sync_address(self) -> str:
@@ -33,7 +34,7 @@ class Id:
     @property
     def listen_grpc_address(self) -> str:
         if self.is_enable_grpc:
-            return f"{self.listening_addres}:{self.grpc_port}"
+            return f"{self.listening_address}:{self.grpc_port}"
         else:
             raise InvalidArgumentsException("grpc mode is off")
 
@@ -51,7 +52,7 @@ class Id:
     @property
     def listen_http_address(self) -> str:
         if self.is_enable_http:
-            return f"{self.listening_addres}:{self.http_port}"
+            return f"{self.listening_address}:{self.http_port}"
         else:
             raise InvalidArgumentsException("http mode is off")
 
@@ -129,10 +130,16 @@ class NodeConfig:
         return new_config
 
 
+NODE_STARTUP_TIME = 2
+
+
+class ClientType(enum.Enum):
+    LEGACY_GRPC = "legacy/grpc"
+    LEGACY_HTTP = "legacy/http"
+    PYTHON_HTTP = "python/http"
+
+
 class Env:
-    CLIENT_LEGACY_GRPC_TYPE = "legacy/grpc"
-    CLIENT_LEGACY_HTTP_TYPE = "legacy/http"
-    CLIENT_PYTHON_HTTP_TYPE = "python/http"
     CLIENT_NAME = "client"
     ENCODER_NAME = "encoder.py"
     DECODER_NAME = "decoder.py"
@@ -151,7 +158,7 @@ class Env:
         Env.__prepare_directory(self.dir)
         os.chdir(self.dir)
 
-        log_file_path = os.path.join(self.dir, "Test.log")
+        log_file_path = os.path.join(self.dir, "test.log")
         self.logger = Logger(test_name, log_file_path)
         self.__started_nodes = dict()
         self.__id_pool = dict()
@@ -162,7 +169,7 @@ class Env:
         if os.path.exists(file_path):
             return file_path
         else:
-            raise Exception(f"file not found: {file_path}")
+            raise InvalidArgumentsException(f"file not found: {file_path}")
 
     @staticmethod
     def __prepare_directory(directory: str) -> None:
@@ -266,7 +273,7 @@ class Env:
     def is_node_started(self, node_id: Id) -> bool:
         return self.__find_node_id(node_id) is not None
 
-    def start_node(self, config: NodeConfig) -> None:
+    def start_node(self, config: NodeConfig, startup_time=NODE_STARTUP_TIME) -> None:
         if self.is_node_started(config.id):
             raise InvalidArgumentsException(f"node already exists: {config.id}")
         for other_id in config.nodes:
@@ -291,7 +298,7 @@ class Env:
         node = Node(name=node_name, work_dir=node_work_dir, config_file_path=node_config_file_path,
                     node_file_path=node_file_path, logger=self.logger)
 
-        node.start(startup_time=2)
+        node.start(startup_time=startup_time)
         self.__append_node(config.id, node)
 
     def __get_legacy_client(self, node_id: Id, is_http: bool) -> LegacyClient:
@@ -318,23 +325,31 @@ class Env:
         client_name = "Client_python_to_node_http_" + str(node_id.http_port)
 
         client_work_dir = os.path.join(self.dir, client_name)
+        if not os.path.exists(client_work_dir):
+            os.makedirs(client_work_dir)
+        else:
+            raise InvalidArgumentsException(f"client directory already exists:{client_work_dir}")
+
         return HttpClient(name=client_name, work_dir=client_work_dir, connection_address=node_id.connect_http_address,
                           logger=self.logger)
 
-    def get_client(self, client_type: str, node_id: Id) -> BaseClient:
+    def get_client(self, client_type: ClientType, node_id: Id) -> BaseClient:
         if not self.is_node_started(node_id):
-            raise InvalidArgumentsException(f"node doesn't exists: {node_id}")
+            raise InvalidArgumentsException(f"node does not exists: {node_id}")
 
-        # TODO several client types
-        if client_type == Env.CLIENT_LEGACY_GRPC_TYPE:
+        if not isinstance(client_type, ClientType):
+            raise InvalidArgumentsException("not a client type")
+
+        if client_type == ClientType.LEGACY_GRPC:
             return self.__get_legacy_client(node_id, False)
-        elif client_type == Env.CLIENT_LEGACY_HTTP_TYPE:
+        elif client_type == ClientType.LEGACY_HTTP:
             return self.__get_legacy_client(node_id, True)
-        elif client_type == Env.CLIENT_PYTHON_HTTP_TYPE:
+        elif client_type == ClientType.PYTHON_HTTP:
             return self.__get_http_client(node_id)
         else:
-            raise LogicException("no client type:" + client_type)
+            raise LogicException()
 
 
-DISTRIBUTOR_ADDRESS_PATH = os.path.realpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "doc", "base-account-keys"))
+def get_distributor_address_path():
+    return os.path.realpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "doc", "base-account-keys"))

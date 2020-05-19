@@ -168,10 +168,7 @@ web::json::value serializeAccountInfo(const lk::AccountInfo& account_info)
     for (const auto& tx_hash : account_info.transactions_hashes) {
         txs_hashes.emplace_back(serializeHash(tx_hash));
     }
-
     result["transaction_hashes"] = web::json::value::array(txs_hashes);
-    result["abi"] = web::json::value::string(account_info.serialized_abi);
-
     return result;
 }
 
@@ -194,8 +191,7 @@ std::optional<lk::AccountInfo> deserializeAccountInfo(const web::json::value& in
             transactions_hashes.emplace_back(deserializeHash(res_tx_hash.as_string()).value());
         }
 
-        return lk::AccountInfo{ type.value(), address.value(),     balance.value(),
-                                nonce,        transactions_hashes, serialized_abi };
+        return lk::AccountInfo{ type.value(), address.value(), balance.value(), nonce, transactions_hashes };
     }
     catch (const std::exception& e) {
         LOG_ERROR << "deserialization error" << e.what();
@@ -240,21 +236,7 @@ web::json::value serializeTransaction(const lk::Transaction& input)
     result["amount"] = web::json::value::string(input.getAmount().toString());
     result["fee"] = web::json::value::string(std::to_string(input.getFee()));
     result["timestamp"] = web::json::value::number(input.getTimestamp().getSecondsSinceEpoch());
-
-    web::json::value data_value;
-    if (input.getTo() == lk::Address::null()) {
-        base::SerializationIArchive io(input.getData());
-        auto contract_data = lk::ContractData::deserialize(io);
-        data_value["message"] = web::json::value::string(base::base64Encode(contract_data.getMessage()));
-        data_value["abi"] = web::json::value::string(contract_data.getAbi().toString());
-    }
-    else {
-        data_value["message"] = web::json::value::string(base::base64Encode(input.getData()));
-        data_value["abi"] = web::json::value::string("");
-    }
-
-    result["data"] = data_value;
-
+    result["data"] = web::json::value::string(base::base64Encode(input.getData()));
     result["sign"] = web::json::value::string(base::base64Encode(input.getSign().toBytes()));
     return result;
 }
@@ -279,18 +261,7 @@ std::optional<lk::Transaction> deserializeTransaction(const web::json::value& in
 
         auto timestamp = base::Time(input.at("timestamp").as_number().to_uint32());
         txb.setTimestamp(timestamp);
-
-        auto data = input.at("data");
-        if (to == lk::Address::null()) {
-            auto code = deserializeBytes(data.at("message").as_string());
-            auto abi = base::parseJson(data.at("abi").as_string());
-            lk::ContractData contract_data(code.value(), abi);
-            txb.setData(base::toBytes(contract_data));
-        }
-        else {
-            txb.setData(deserializeBytes(data.at("message").as_string()).value());
-        }
-
+        txb.setData(deserializeBytes(input.at("data").as_string()).value());
         auto sign = lk::Sign(base::base64Decode((input.at("sign").as_string())));
         txb.setSign(sign);
 

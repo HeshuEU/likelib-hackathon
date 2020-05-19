@@ -1,4 +1,3 @@
-import hashlib
 from abc import ABCMeta
 
 from .base import LogicException
@@ -57,13 +56,6 @@ class Transaction:
         else:
             self.data = data
         self.verified = verified
-
-    def hash(self) -> str:
-        string_for_hash = self.from_address + self.to_address + str(self.value) + str(self.fee) + str(
-            self.timestamp) + self.data
-        m = hashlib.sha256()
-        m.update(string_for_hash.encode("utf8"))
-        return m.hexdigest()
 
 
 class Block:

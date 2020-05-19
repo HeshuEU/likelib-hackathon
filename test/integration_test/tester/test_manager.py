@@ -1,5 +1,4 @@
 import datetime
-import datetime
 import re
 import traceback
 
@@ -13,8 +12,8 @@ def TEST_CHECK(boolean_value, *, message=""):
         traceback_list = traceback.format_stack()
         log_message = ""
         for i in range(len(traceback_list)):
-            if (traceback_list[i].find('in test_case_exception_wrapper') > 0) and (
-                    traceback_list[i].find('return func(env, logger)\n') > 0):
+            if (traceback_list[i].find('in test_case_runner') > 0) and (
+                    traceback_list[i].find('return func(env)\n') > 0):
                 for log_line in traceback_list[i + 1:-1]:
                     log_message = log_message + log_line
                 break
@@ -75,8 +74,7 @@ def run_registered_test_cases(pattern, dependencies_folder, run_folder):
         print(f"Invalid pattern: {e}", flush=True)
         exit(2)
 
-    print(
-        f"Enabled tests: {len(__enabled_tests)}. Disabled tests: {len(__disabled_tests)}.", flush=True)
+    print(f"Enabled tests: {len(__enabled_tests)}. Disabled tests: {len(__disabled_tests)}.", flush=True)
 
     for registered_test_case_name in __enabled_tests:
         if matcher.match(registered_test_case_name) is None:
@@ -92,13 +90,13 @@ def run_registered_test_cases(pattern, dependencies_folder, run_folder):
         test_case_execute_time = datetime.datetime.now() - test_case_start_time
 
         if return_code == 0:
-            print(
-                f"Test case [{registered_test_case_name}] success. Execute time: {test_case_execute_time}.", flush=True)
+            status = f"[{registered_test_case_name}] success"
             success_tests += 1
         else:
-            print(
-                f"Test case [{registered_test_case_name}] failed. Execute time: {test_case_execute_time}.", flush=True)
+            status = f"[{registered_test_case_name}] failed"
             failed_tests += 1
+
+        print(f"Test case {status}. Execute time: {test_case_execute_time}.", flush=True)
 
     all_tests = success_tests + failed_tests + skipped_tests
     print(
