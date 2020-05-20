@@ -72,9 +72,16 @@ class ValueNotFound : public RuntimeError
 
 std::ostream& operator<<(std::ostream& os, const Error& error);
 
-#define RAISE_ERROR(error_type, message)                                                                               \
+#define _RAISE_ERROR1(error_type)                                                                                        \
+    throw error_type(std::string{ __FILE__ } + std::string{ ":" } + std::to_string(__LINE__) + std::string{ " :: " } + \
+                     std::string{ BOOST_CURRENT_FUNCTION })
+
+#define _RAISE_ERROR2(error_type, message)                                                                               \
     throw error_type(std::string{ __FILE__ } + std::string{ ":" } + std::to_string(__LINE__) + std::string{ " :: " } + \
                      std::string{ BOOST_CURRENT_FUNCTION } + std::string{ " :: " } + (message))
+
+#define GET_RAISE_ERROR(_1, _2, _3, NAME, ...) NAME
+#define RAISE_ERROR(...) GET_RAISE_ERROR(__VA_ARGS__, _RAISE_ERROR2, _RAISE_ERROR1)(__VA_ARGS__)
 
 
 #define CLARIFY_ERROR(error_type, expr, message)                                                                       \
