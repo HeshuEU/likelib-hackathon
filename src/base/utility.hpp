@@ -4,9 +4,13 @@
 #include <boost/type_index.hpp>
 
 #include <functional>
+#include <shared_mutex>
+#include <set>
 
 namespace base
 {
+
+//================================================
 
 #define X_DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS_TOSTRING_CASE(r, data, elem)                                       \
     case data::elem:                                                                                                   \
@@ -27,6 +31,7 @@ namespace base
         }                                                                                                              \
     }
 
+//================================================
 
 template<typename... Types>
 struct TypeList
@@ -49,6 +54,24 @@ class Observable
 };
 
 #define TYPE_NAME(t) boost::typeindex::type_id<t>().pretty_name()
+
+
+template<typename T>
+class PoolMt
+{
+  public:
+    bool add(const T& value);
+    bool add(T&& value);
+
+    bool contains(const T& value) const;
+
+    void remove(const T& value);
+    bool tryRemove(const T& value);
+  private:
+    std::set<T> _pool;
+    mutable std::shared_mutex _pool_mutex;
+};
+
 
 } // namespace base
 
