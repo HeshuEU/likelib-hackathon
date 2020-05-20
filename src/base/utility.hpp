@@ -67,8 +67,11 @@ class OwningPoolMt
     void remove(const T* value);
     bool tryRemove(const T* value);
 
+    void forEach(std::function<void(const T&)> f) const;
+    void forEach(std::function<void(T&)> f);
+
   private:
-    std::map<T*, std::shared_ptr<T>> _pool;
+    std::map<const T*, std::shared_ptr<T>> _pool;
     mutable std::shared_mutex _pool_mutex;
 };
 

@@ -84,4 +84,24 @@ bool OwningPoolMt<T>::contains(const T* value) const
 }
 
 
+template<typename T>
+void OwningPoolMt<T>::forEach(std::function<void(const T&)> f) const
+{
+    std::shared_lock lk(_pool_mutex);
+    for (const auto& p : _pool) {
+        f(p.second);
+    }
+}
+
+
+template<typename T>
+void OwningPoolMt<T>::forEach(std::function<void(T&)> f)
+{
+    std::unique_lock lk(_pool_mutex);
+    for (const auto& p : _pool) {
+        f(p.second);
+    }
+}
+
+
 } // namespace base
