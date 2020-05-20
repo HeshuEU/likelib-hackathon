@@ -1,6 +1,6 @@
 set(BASE_HEADERS
         assert.hpp
-	crypto.hpp
+        crypto.hpp
         big_integer.hpp
         big_integer.tpp
         error.hpp
@@ -24,6 +24,8 @@ set(BASE_HEADERS
         serialization.tpp
         time.hpp
         subprogram_router.hpp
+
+		utility.tpp
         )
 
 set(BASE_SOURCES
