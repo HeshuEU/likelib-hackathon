@@ -64,6 +64,12 @@ class RuntimeError : public Error
     using Error::Error;
 };
 
+class ValueNotFound : public RuntimeError
+{
+    using RuntimeError::RuntimeError;
+};
+
+
 std::ostream& operator<<(std::ostream& os, const Error& error);
 
 #define RAISE_ERROR(error_type, message)                                                                               \
