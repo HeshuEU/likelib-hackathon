@@ -57,15 +57,15 @@ class Observable
 
 
 template<typename T>
-class OwningPoolMt
+class OwningPool
 {
   public:
-    bool add(std::shared_ptr<T> value);
+    bool own(std::shared_ptr<T> value);
 
-    bool contains(const T* value) const;
+    bool isOwning(const T* value) const;
 
-    void remove(const T* value);
-    bool tryRemove(const T* value);
+    void disown(const T* value);
+    bool tryDisown(const T* value);
 
     void forEach(std::function<void(const T&)> f) const;
     void forEach(std::function<void(T&)> f);

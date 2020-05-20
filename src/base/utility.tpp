@@ -41,7 +41,7 @@ void Observable<Args...>::notify(Args... args)
 
 
 template<typename T>
-bool OwningPoolMt<T>::add(std::shared_ptr<T> value)
+bool OwningPool<T>::own(std::shared_ptr<T> value)
 {
     std::unique_lock lk(_pool_mutex);
     auto ptr = value.get();
@@ -50,7 +50,7 @@ bool OwningPoolMt<T>::add(std::shared_ptr<T> value)
 
 
 template<typename T>
-void OwningPoolMt<T>::remove(const T* value)
+void OwningPool<T>::disown(const T* value)
 {
     std::unique_lock lk(_pool_mutex);
     if (auto it = _pool.find(value); it == _pool.end()) {
@@ -63,7 +63,7 @@ void OwningPoolMt<T>::remove(const T* value)
 
 
 template<typename T>
-bool OwningPoolMt<T>::tryRemove(const T* value)
+bool OwningPool<T>::tryDisown(const T* value)
 {
     std::unique_lock lk(_pool_mutex);
     if (auto it = _pool.find(value); it == _pool.end()) {
@@ -77,7 +77,7 @@ bool OwningPoolMt<T>::tryRemove(const T* value)
 
 
 template<typename T>
-bool OwningPoolMt<T>::contains(const T* value) const
+bool OwningPool<T>::isOwning(const T* value) const
 {
     std::shared_lock lk(_pool_mutex);
     return _pool.find(value) != _pool.end();
@@ -85,7 +85,7 @@ bool OwningPoolMt<T>::contains(const T* value) const
 
 
 template<typename T>
-void OwningPoolMt<T>::forEach(std::function<void(const T&)> f) const
+void OwningPool<T>::forEach(std::function<void(const T&)> f) const
 {
     std::shared_lock lk(_pool_mutex);
     for (const auto& p : _pool) {
@@ -95,7 +95,7 @@ void OwningPoolMt<T>::forEach(std::function<void(const T&)> f) const
 
 
 template<typename T>
-void OwningPoolMt<T>::forEach(std::function<void(T&)> f)
+void OwningPool<T>::forEach(std::function<void(T&)> f)
 {
     std::unique_lock lk(_pool_mutex);
     for (const auto& p : _pool) {
