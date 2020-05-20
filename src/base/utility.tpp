@@ -41,26 +41,19 @@ void Observable<Args...>::notify(Args... args)
 
 
 template<typename T>
-bool PoolMt<T>::add(const T& value)
+bool OwningPoolMt<T>::add(std::shared_ptr<T> value)
 {
     std::unique_lock lk(_pool_mutex);
-    return _pool.insert(value).second;
+    auto ptr = value.get();
+    return _pool.insert({ ptr, std::move(value) }).second;
 }
 
 
 template<typename T>
-bool PoolMt<T>::add(T&& value)
+void OwningPoolMt<T>::remove(const T* value)
 {
     std::unique_lock lk(_pool_mutex);
-    return _pool.insert(std::move(value)).second;
-}
-
-
-template<typename T>
-void PoolMt<T>::remove(const T& value)
-{
-    std::unique_lock lk(_pool_mutex);
-    if(auto it = _pool.find(value); it == _pool.end()) {
+    if (auto it = _pool.find(value); it == _pool.end()) {
         RAISE_ERROR(base::ValueNotFound, "no such value in pool");
     }
     else {
@@ -70,10 +63,10 @@ void PoolMt<T>::remove(const T& value)
 
 
 template<typename T>
-bool PoolMt<T>::tryRemove(const T& value)
+bool OwningPoolMt<T>::tryRemove(const T* value)
 {
     std::unique_lock lk(_pool_mutex);
-    if(auto it = _pool.find(value); it == _pool.end()) {
+    if (auto it = _pool.find(value); it == _pool.end()) {
         return false;
     }
     else {
@@ -84,7 +77,7 @@ bool PoolMt<T>::tryRemove(const T& value)
 
 
 template<typename T>
-bool PoolMt<T>::contains(const T &value) const
+bool OwningPoolMt<T>::contains(const T* value) const
 {
     std::shared_lock lk(_pool_mutex);
     return _pool.find(value) != _pool.end();

@@ -4,8 +4,8 @@
 #include <boost/type_index.hpp>
 
 #include <functional>
+#include <map>
 #include <shared_mutex>
-#include <set>
 
 namespace base
 {
@@ -57,18 +57,18 @@ class Observable
 
 
 template<typename T>
-class PoolMt
+class OwningPoolMt
 {
   public:
-    bool add(const T& value);
-    bool add(T&& value);
+    bool add(std::shared_ptr<T> value);
 
-    bool contains(const T& value) const;
+    bool contains(const T* value) const;
 
-    void remove(const T& value);
-    bool tryRemove(const T& value);
+    void remove(const T* value);
+    bool tryRemove(const T* value);
+
   private:
-    std::set<T> _pool;
+    std::map<T*, std::shared_ptr<T>> _pool;
     mutable std::shared_mutex _pool_mutex;
 };
 

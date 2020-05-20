@@ -36,7 +36,7 @@ namespace lk
 
 
 Rating::Rating(std::int_fast32_t initial_value)
-    : _value{initial_value}
+  : _value{ initial_value }
 {}
 
 
@@ -141,7 +141,7 @@ void Peer::requestLookup(const lk::Address& address, const std::uint8_t alpha)
 
 void Peer::requestBlock(const base::Sha256& block_hash)
 {
-    sendMessage(msg::GetBlock{block_hash});
+    sendMessage(msg::GetBlock{ block_hash });
 }
 
 
@@ -198,8 +198,7 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _handshaked_pool{ handshaked_pool }
   , _core{ core }
   , _host{ host }
-{
-}
+{}
 
 
 net::Endpoint Peer::getEndpoint() const
@@ -329,18 +328,18 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
 {
     ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
 
-    if(_requested_block && *_requested_block == hash) {
+    if (_requested_block && *_requested_block == hash) {
         _requested_block.reset();
         _sync_blocks.push_back(block);
         const auto& next = block.getPrevBlockHash();
-        if(next == base::Sha256::null()) {
-            if(!_peer._rating.differentGenesis()) {
+        if (next == base::Sha256::null()) {
+            if (!_peer._rating.differentGenesis()) {
                 // need to disconnect this peer since in has different genesis block, this is fatal
                 _peer.endSession(msg::Close{});
             }
             return true;
         }
-        else if(_peer._core.findBlock(next)) {
+        else if (_peer._core.findBlock(next)) {
             // apply everything
         }
         else {
@@ -348,7 +347,7 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         }
         return true;
     }
-    else if(_peer._core.tryAddBlock(block)) {
+    else if (_peer._core.tryAddBlock(block)) {
         return true;
     }
     else {
@@ -365,7 +364,7 @@ bool Peer::Synchronizer::isSynchronised() const
 
 void Peer::Synchronizer::requestBlock(base::Sha256 block_hash)
 {
-    if(_requested_block) {
+    if (_requested_block) {
         RAISE_ERROR(base::RuntimeError, "block was already requested and not answered yet");
     }
     else {
@@ -539,10 +538,10 @@ void Peer::handle(lk::msg::LookupResponse&& msg)
     // TODO: a peer table, where we ask for LOOKUP, and collect their responds + change the very beginning of
     // communication: now it is not necessary to do a HANDSHAKE if we just want to ask for LOOKUP
 
-    if constexpr(base::config::IS_DEBUG) {
+    if constexpr (base::config::IS_DEBUG) {
         std::ostringstream ss;
         ss << "Lookup response peer entries:\n";
-        for(const auto& pi : msg.peers_info) {
+        for (const auto& pi : msg.peers_info) {
             ss << '\t' << pi.endpoint << ' ' << pi.address << '\n';
         }
         LOG_DEBUG << ss.str();
@@ -574,7 +573,7 @@ void Peer::handle(lk::msg::GetBlock&& msg)
 
 void Peer::handle(lk::msg::Block&& msg)
 {
-    if(msg.block_hash != base::Sha256::compute(base::toBytes(msg.block))) {
+    if (msg.block_hash != base::Sha256::compute(base::toBytes(msg.block))) {
         _rating.invalidMessage();
         return;
     }
@@ -592,7 +591,8 @@ void Peer::handle(lk::msg::BlockNotFound&& msg)
 }
 
 
-void Peer::handle(lk::msg::Close&& msg) {
+void Peer::handle(lk::msg::Close&& msg)
+{
     detachFromPools();
     _session->close();
 }

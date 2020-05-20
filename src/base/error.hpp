@@ -20,6 +20,7 @@ class Error : public std::exception
     Error& operator=(Error&&) = default;
     const std::string& toStdString() const noexcept;
     const char* what() const noexcept override;
+
   private:
     std::string _message;
 };
@@ -72,16 +73,16 @@ class ValueNotFound : public RuntimeError
 
 std::ostream& operator<<(std::ostream& os, const Error& error);
 
-#define _RAISE_ERROR1(error_type)                                                                                        \
+#define RAISE_ERROR1(error_type)                                                                                       \
     throw error_type(std::string{ __FILE__ } + std::string{ ":" } + std::to_string(__LINE__) + std::string{ " :: " } + \
                      std::string{ BOOST_CURRENT_FUNCTION })
 
-#define _RAISE_ERROR2(error_type, message)                                                                               \
+#define RAISE_ERROR2(error_type, message)                                                                              \
     throw error_type(std::string{ __FILE__ } + std::string{ ":" } + std::to_string(__LINE__) + std::string{ " :: " } + \
                      std::string{ BOOST_CURRENT_FUNCTION } + std::string{ " :: " } + (message))
 
-#define GET_RAISE_ERROR(_1, _2, _3, NAME, ...) NAME
-#define RAISE_ERROR(...) GET_RAISE_ERROR(__VA_ARGS__, _RAISE_ERROR2, _RAISE_ERROR1)(__VA_ARGS__)
+#define GET_RAISE_ERROR(_1, _2, NAME, ...) NAME
+#define RAISE_ERROR(...) GET_RAISE_ERROR(__VA_ARGS__, RAISE_ERROR2, RAISE_ERROR1)(__VA_ARGS__)
 
 
 #define CLARIFY_ERROR(error_type, expr, message)                                                                       \

@@ -19,18 +19,15 @@ void Peer::endSession(T last_message)
     LOG_DEBUG << "ending session";
     try {
         detachFromPools();
-        sendMessage(last_message, [keeper = shared_from_this()] {
-          keeper->_session->close();
-        });
+        sendMessage(last_message, [keeper = shared_from_this()] { keeper->_session->close(); });
     }
-    catch(const std::exception& e) {
+    catch (const std::exception& e) {
         LOG_WARNING << "Error during peer shutdown: " << e.what();
     }
-    catch(...) {
+    catch (...) {
         LOG_WARNING << "Unknown error during peer shutdown";
     }
 }
-
 
 
 }

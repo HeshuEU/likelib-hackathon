@@ -1,9 +1,11 @@
 #pragma once
 
+#include "base/error.hpp"
 #include "base/time.hpp"
 #include "base/utility.hpp"
 #include "core/address.hpp"
 #include "core/block.hpp"
+#include "net/error.hpp"
 #include "net/session.hpp"
 
 #include <forward_list>
@@ -41,6 +43,9 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(Type, std::uint8_t,
 )
 // clang-format on
 
+class Message
+{};
+
 struct Connect;
 struct CannotAccept;
 struct Accepted;
@@ -64,15 +69,20 @@ class Rating
     explicit Rating(std::int_fast32_t initial_value = base::config::NET_INITIAL_PEER_RATING);
 
     std::int_fast32_t getValue() const noexcept;
-    operator bool() const noexcept; // if false, then the peer is too bad
+    explicit operator bool() const noexcept; // if false, then the peer is too bad
 
     Rating& nonExpectedMessage() noexcept;
     Rating& invalidMessage() noexcept;
     Rating& badBlock() noexcept;
     Rating& differentGenesis() noexcept;
+
   private:
     std::int_fast32_t _value;
 };
+
+
+class Message
+{};
 
 
 class Peer : public std::enable_shared_from_this<Peer>
@@ -133,6 +143,7 @@ class Peer : public std::enable_shared_from_this<Peer>
 
     template<typename T>
     void endSession(T last_message);
+
   private:
     //=========================
     Peer(std::shared_ptr<net::Session> session,
@@ -163,6 +174,91 @@ class Peer : public std::enable_shared_from_this<Peer>
 
       private:
         std::weak_ptr<Peer> _peer;
+    };
+
+    class Requests
+    {
+        using MessageIdType = std::uint16_t;
+
+      public:
+        Requests(std::weak_ptr<net::Session> session)
+          : _session{ std::move(session) }
+        {
+            if (auto s = _session.lock()) {
+                // s->setHandler();
+            }
+            else {
+                RAISE_ERROR(net::ClosedSession);
+            }
+        }
+
+        void onMessageReceive(const base::Bytes& received_bytes)
+        {
+            base::SerializationIArchive ia(received_bytes);
+            auto msg_id = ia.deserialize<MessageIdType>();
+        }
+
+        void onClose() {}
+
+        class SessionHandler : public net::Session::Handler
+        {
+          public:
+            SessionHandler(Requests& requests)
+              : _r{ requests }
+            {}
+
+            void onReceive(const base::Bytes& bytes) override { _r.onMessageReceive(bytes); }
+
+            void onClose() override { _r.onClose(); }
+
+          private:
+            Requests& _r;
+        };
+
+
+        class Request
+        {
+          public:
+            MessageIdType id;
+            std::function<void(const base::Bytes&)> _callback;
+            boost::asio::steady_timer _timer;
+        };
+
+        void requestSilent(const Message& msg)
+        {
+            if (auto s = _session.lock()) {
+                s->send(prepareMessage(msg));
+            }
+            else {
+                RAISE_ERROR(net::SendOnClosedConnection, "attempt to request on closed connection");
+            }
+        }
+
+
+        void requestWaitResponseById(const Message& msg, std::function<void(Message msg)> callback)
+        {
+            if (auto s = _session.lock()) {
+                // _requests.add(callback);
+                s->send(prepareMessage(msg));
+            }
+            else {
+                RAISE_ERROR(net::SendOnClosedConnection, "attempt to request on closed connection");
+            }
+        }
+
+      private:
+        std::weak_ptr<net::Session> _session;
+        std::vector<Message> _requested;
+        std::uint16_t _next_message_id{ 0 };
+        base::OwningPoolMt<Request> _active_requests;
+
+        base::Bytes prepareMessage(const Message& msg)
+        {
+            base::SerializationOArchive oa;
+            oa.serialize(_next_message_id++);
+            oa.serialize(msg);
+            return std::move(oa).getBytes();
+        }
     };
 
     template<typename M>
@@ -229,7 +325,7 @@ class Peer : public std::enable_shared_from_this<Peer>
 namespace msg
 {
 
-struct Connect
+struct Connect : Message
 {
     static constexpr Type TYPE_ID = Type::CONNECT;
 
@@ -242,7 +338,7 @@ struct Connect
 };
 
 
-struct CannotAccept
+struct CannotAccept : Message
 {
     static constexpr Type TYPE_ID = Type::CANNOT_ACCEPT;
 
@@ -258,7 +354,7 @@ struct CannotAccept
 };
 
 
-struct Accepted
+struct Accepted : Message
 {
     static constexpr Type TYPE_ID = Type::ACCEPTED;
 
@@ -271,7 +367,7 @@ struct Accepted
 };
 
 
-struct Ping
+struct Ping : Message
 {
     static constexpr Type TYPE_ID = Type::PING;
 
@@ -280,7 +376,7 @@ struct Ping
 };
 
 
-struct Pong
+struct Pong : Message
 {
     static constexpr Type TYPE_ID = Type::PONG;
 
@@ -289,7 +385,7 @@ struct Pong
 };
 
 
-struct Lookup
+struct Lookup : Message
 {
     static constexpr Type TYPE_ID = Type::LOOKUP;
 
@@ -301,7 +397,7 @@ struct Lookup
 };
 
 
-struct LookupResponse
+struct LookupResponse : Message
 {
     static constexpr Type TYPE_ID = Type::LOOKUP_RESPONSE;
 
@@ -313,7 +409,7 @@ struct LookupResponse
 };
 
 
-struct Transaction
+struct Transaction : Message
 {
     static constexpr Type TYPE_ID = Type::TRANSACTION;
 
@@ -324,7 +420,7 @@ struct Transaction
 };
 
 
-struct GetBlock
+struct GetBlock : Message
 {
     static constexpr Type TYPE_ID = Type::GET_BLOCK;
 
@@ -335,7 +431,7 @@ struct GetBlock
 };
 
 
-struct Block
+struct Block : Message
 {
     static constexpr Type TYPE_ID = Type::BLOCK;
 
@@ -347,7 +443,7 @@ struct Block
 };
 
 
-struct BlockNotFound
+struct BlockNotFound : Message
 {
     static constexpr Type TYPE_ID = Type::BLOCK_NOT_FOUND;
 
@@ -358,7 +454,7 @@ struct BlockNotFound
 };
 
 
-struct Close
+struct Close : Message
 {
     static constexpr Type TYPE_ID = Type::CLOSE;
 

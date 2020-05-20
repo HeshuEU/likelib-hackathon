@@ -32,7 +32,8 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
         }
     }
 
-    subscribeToBlockAddition([this](const base::Sha256& block_hash, const lk::Block& block) { _host.broadcast(block_hash, block); });
+    subscribeToBlockAddition(
+      [this](const base::Sha256& block_hash, const lk::Block& block) { _host.broadcast(block_hash, block); });
     subscribeToNewPendingTransaction([this](const lk::Transaction& tx) { _host.broadcast(tx); });
 }
 
