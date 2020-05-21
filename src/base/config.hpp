@@ -78,6 +78,7 @@ constexpr std::size_t NET_PING_FREQUENCY = 3600;           // seconds
 constexpr std::size_t NET_CONNECT_TIMEOUT = 10;            // seconds
 constexpr std::size_t NET_LOOKUP_ALPHA = 5;                // how many peers to return during lookup
 constexpr std::int_fast32_t NET_INITIAL_PEER_RATING = 100; // new peer rating at start of interaction
+constexpr std::size_t NET_REQUEST_TIMEOUT = 10; // how many seconds do we wait for a request, until we call it lost
 //------------------------
 
 // blockchain
