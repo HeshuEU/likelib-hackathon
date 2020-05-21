@@ -89,7 +89,7 @@ void OwningPool<T>::forEach(std::function<void(const T&)> f) const
 {
     std::shared_lock lk(_pool_mutex);
     for (const auto& p : _pool) {
-        f(p.second);
+        f(*p.second);
     }
 }
 
@@ -99,8 +99,46 @@ void OwningPool<T>::forEach(std::function<void(T&)> f)
 {
     std::unique_lock lk(_pool_mutex);
     for (const auto& p : _pool) {
-        f(p.second);
+        f(*p.second);
     }
+}
+
+
+template<typename T>
+void OwningPool<T>::disownIf(std::function<void(const T&)> f) const
+{
+    std::unique_lock lk(_pool_mutex);
+    for (auto it = _pool.begin(); it != _pool.end();) {
+        if (f(*it->second)) {
+            it = _pool.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+}
+
+
+template<typename T>
+void OwningPool<T>::disownIf(std::function<void(T&)> f)
+{
+    std::unique_lock lk(_pool_mutex);
+    for (auto it = _pool.begin(); it != _pool.end();) {
+        if (f(*it->second)) {
+            it = _pool.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+}
+
+
+template<typename T>
+void OwningPool<T>::clear()
+{
+    std::unique_lock lk(_pool_mutex);
+    _pool.clear();
 }
 
 

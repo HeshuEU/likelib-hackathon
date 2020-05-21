@@ -10,6 +10,8 @@
 namespace base
 {
 
+#define TYPE_NAME(t) boost::typeindex::type_id<t>().pretty_name()
+
 //================================================
 
 #define X_DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS_TOSTRING_CASE(r, data, elem)                                       \
@@ -53,8 +55,6 @@ class Observable
     std::size_t _next_id = 0;
 };
 
-#define TYPE_NAME(t) boost::typeindex::type_id<t>().pretty_name()
-
 
 template<typename T>
 class OwningPool
@@ -66,9 +66,13 @@ class OwningPool
 
     void disown(const T* value);
     bool tryDisown(const T* value);
+    void disownIf(std::function<void(const T&)> f) const;
+    void disownIf(std::function<void(T&)> f);
 
     void forEach(std::function<void(const T&)> f) const;
     void forEach(std::function<void(T&)> f);
+
+    void clear();
 
   private:
     std::map<const T*, std::shared_ptr<T>> _pool;
