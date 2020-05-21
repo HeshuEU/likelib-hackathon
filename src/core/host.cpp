@@ -227,7 +227,7 @@ void KademliaPeerPool::forEachPeer(std::function<void(Peer&)> f)
 }
 
 
-std::vector<Peer::IdentityInfo> KademliaPeerPool::lookup(const lk::Address& address, std::size_t alpha)
+std::vector<msg::NodeIdentityInfo> KademliaPeerPool::lookup(const lk::Address& address, std::size_t alpha)
 {
     auto ret = allPeersInfo();
     std::sort(ret.begin(), ret.end(), [address](const auto& a, const auto& b) {
@@ -416,7 +416,7 @@ bool Host::isConnectedTo(const net::Endpoint& endpoint) const
 }
 
 
-std::vector<Peer::IdentityInfo> Host::allConnectedPeersInfo() const
+std::vector<msg::NodeIdentityInfo> Host::allConnectedPeersInfo() const
 {
     return _handshaked_peers.allPeersInfo();
 }

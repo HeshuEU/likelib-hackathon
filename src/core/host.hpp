@@ -74,7 +74,7 @@ class KademliaPeerPool : public KademliaPeerPoolBase
     bool hasPeerWithEndpoint(const net::Endpoint& endpoint) const override;
     //=================================
 
-    std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) override;
+    std::vector<msg::NodeIdentityInfo> lookup(const lk::Address& address, std::size_t alpha) override;
 
   private:
     //=================================
@@ -126,7 +126,7 @@ class Host
     void run();
     void join();
     //=================================
-    std::vector<Peer::IdentityInfo> allConnectedPeersInfo() const;
+    std::vector<msg::NodeIdentityInfo> allConnectedPeersInfo() const;
     unsigned short getPublicPort() const noexcept;
     boost::asio::io_context& getIoContext() noexcept;
     //=================================

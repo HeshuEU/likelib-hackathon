@@ -21,7 +21,7 @@ set(CORE_SOURCES
         host.cpp
         managers.cpp
         peer.cpp
-        peer_messages.cpp
+        messages.cpp
         transaction.cpp
         transactions_set.cpp
         )

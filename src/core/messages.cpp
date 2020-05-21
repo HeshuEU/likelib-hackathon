@@ -1,9 +1,24 @@
-#include "peer.hpp"
+#include "messages.hpp"
 
 #include "base/serialization.hpp"
 
 namespace lk::msg
 {
+
+NodeIdentityInfo NodeIdentityInfo::deserialize(base::SerializationIArchive& ia)
+{
+    auto endpoint = ia.deserialize<net::Endpoint>();
+    auto address = ia.deserialize<lk::Address>();
+    return NodeIdentityInfo{ std::move(endpoint), std::move(address) };
+}
+
+
+void NodeIdentityInfo::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(endpoint);
+    oa.serialize(address);
+}
+
 
 void Connect::serialize(base::SerializationOArchive& oa) const
 {
@@ -32,7 +47,7 @@ void CannotAccept::serialize(base::SerializationOArchive& oa) const
 CannotAccept CannotAccept::deserialize(base::SerializationIArchive& ia)
 {
     auto why_not_accepted = ia.deserialize<CannotAccept::RefusionReason>();
-    auto peers_info = ia.deserialize<std::vector<Peer::IdentityInfo>>();
+    auto peers_info = ia.deserialize<std::vector<NodeIdentityInfo>>();
     return CannotAccept{ std::move(why_not_accepted), std::move(peers_info) };
 }
 
@@ -97,7 +112,7 @@ void LookupResponse::serialize(base::SerializationOArchive& oa) const
 LookupResponse LookupResponse::deserialize(base::SerializationIArchive& ia)
 {
     auto address = ia.deserialize<lk::Address>();
-    auto peers_info = ia.deserialize<std::vector<Peer::IdentityInfo>>();
+    auto peers_info = ia.deserialize<std::vector<NodeIdentityInfo>>();
     return LookupResponse{ std::move(address), std::move(peers_info) };
 }
 

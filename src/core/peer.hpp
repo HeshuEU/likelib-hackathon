@@ -5,6 +5,7 @@
 #include "base/utility.hpp"
 #include "core/address.hpp"
 #include "core/block.hpp"
+#include "core/messages.hpp"
 #include "net/error.hpp"
 #include "net/session.hpp"
 
@@ -20,43 +21,6 @@ class Core;
 class Host;
 class PeerPoolBase;
 class KademliaPeerPoolBase;
-//=======================
-
-// messages available
-namespace msg
-{
-// clang-format off
-DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(Type, std::uint8_t,
-  (DEBUG_MIN)
-  (CONNECT)
-  (CANNOT_ACCEPT)
-  (ACCEPTED)
-  (PING)
-  (PONG)
-  (LOOKUP)
-  (LOOKUP_RESPONSE)
-  (TRANSACTION)
-  (GET_BLOCK)
-  (BLOCK)
-  (BLOCK_NOT_FOUND)
-  (CLOSE)
-  (DEBUG_MAX)
-)
-// clang-format on
-
-struct Connect;
-struct CannotAccept;
-struct Accepted;
-struct Ping;
-struct Pong;
-struct Lookup;
-struct LookupResponse;
-struct Transaction;
-struct GetBlock;
-struct Block;
-struct BlockNotFound;
-struct Close;
-}
 //=======================
 
 class Rating
@@ -99,14 +63,6 @@ class Peer : public std::enable_shared_from_this<Peer>
         SYNCHRONISED
     };
 
-    struct IdentityInfo
-    {
-        net::Endpoint endpoint;
-        lk::Address address;
-
-        static IdentityInfo deserialize(base::SerializationIArchive& ia);
-        void serialize(base::SerializationOArchive& oa) const;
-    };
     //=========================
     static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, Context context);
     static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, Context context);
@@ -120,7 +76,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     //=========================
     const lk::Address& getAddress() const noexcept;
     //=========================
-    IdentityInfo getInfo() const;
+    msg::NodeIdentityInfo getInfo() const;
     bool isClosed() const;
     //=========================
     void requestLookup(const lk::Address& address, uint8_t alpha);
@@ -287,148 +243,6 @@ class Peer : public std::enable_shared_from_this<Peer>
 };
 
 
-namespace msg
-{
-
-struct Connect
-{
-    static constexpr Type TYPE_ID = Type::CONNECT;
-
-    lk::Address address;
-    std::uint16_t public_port;
-    base::Sha256 top_block_hash;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Connect deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct CannotAccept
-{
-    static constexpr Type TYPE_ID = Type::CANNOT_ACCEPT;
-
-    DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(RefusionReason,
-                                              std::uint8_t,
-                                              (NOT_AVAILABLE)(BUCKET_IS_FULL)(BAD_RATING));
-
-    RefusionReason why_not_accepted;
-    std::vector<Peer::IdentityInfo> peers_info;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static CannotAccept deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct Accepted
-{
-    static constexpr Type TYPE_ID = Type::ACCEPTED;
-
-    lk::Address address;
-    uint16_t public_port; // zero public port states that peer didn't provide information about his public endpoint
-    base::Sha256 top_block_hash;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Accepted deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct Ping
-{
-    static constexpr Type TYPE_ID = Type::PING;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Ping deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct Pong
-{
-    static constexpr Type TYPE_ID = Type::PONG;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Pong deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct Lookup
-{
-    static constexpr Type TYPE_ID = Type::LOOKUP;
-
-    lk::Address address;
-    std::uint8_t selection_size;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Lookup deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct LookupResponse
-{
-    static constexpr Type TYPE_ID = Type::LOOKUP_RESPONSE;
-
-    lk::Address address;
-    std::vector<Peer::IdentityInfo> peers_info;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static LookupResponse deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct Transaction
-{
-    static constexpr Type TYPE_ID = Type::TRANSACTION;
-
-    lk::Transaction tx;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Transaction deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct GetBlock
-{
-    static constexpr Type TYPE_ID = Type::GET_BLOCK;
-
-    base::Sha256 block_hash;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static GetBlock deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct Block
-{
-    static constexpr Type TYPE_ID = Type::BLOCK;
-
-    base::Sha256 block_hash;
-    lk::Block block;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Block deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct BlockNotFound
-{
-    static constexpr Type TYPE_ID = Type::BLOCK_NOT_FOUND;
-
-    base::Sha256 block_hash;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static BlockNotFound deserialize(base::SerializationIArchive& ia);
-};
-
-
-struct Close
-{
-    static constexpr Type TYPE_ID = Type::CLOSE;
-
-    void serialize(base::SerializationOArchive& oa) const;
-    static Close deserialize(base::SerializationIArchive& ia);
-};
-}
-
-
 class PeerPoolBase
 {
   public:
@@ -441,13 +255,13 @@ class PeerPoolBase
 
     virtual bool hasPeerWithEndpoint(const net::Endpoint& endpoint) const = 0;
 
-    std::vector<Peer::IdentityInfo> allPeersInfo() const;
+    std::vector<msg::NodeIdentityInfo> allPeersInfo() const;
 };
 
 class KademliaPeerPoolBase : public PeerPoolBase
 {
   public:
-    virtual std::vector<Peer::IdentityInfo> lookup(const lk::Address& address, std::size_t alpha) = 0;
+    virtual std::vector<msg::NodeIdentityInfo> lookup(const lk::Address& address, std::size_t alpha) = 0;
 };
 
 }

@@ -80,26 +80,11 @@ Rating& Rating::differentGenesis() noexcept
 }
 
 
-std::vector<Peer::IdentityInfo> PeerPoolBase::allPeersInfo() const
+std::vector<msg::NodeIdentityInfo> PeerPoolBase::allPeersInfo() const
 {
-    std::vector<Peer::IdentityInfo> ret;
+    std::vector<msg::NodeIdentityInfo> ret;
     forEachPeer([&ret](const Peer& peer) { ret.push_back(peer.getInfo()); });
     return ret;
-}
-
-
-Peer::IdentityInfo Peer::IdentityInfo::deserialize(base::SerializationIArchive& ia)
-{
-    auto endpoint = ia.deserialize<net::Endpoint>();
-    auto address = ia.deserialize<lk::Address>();
-    return Peer::IdentityInfo{ std::move(endpoint), std::move(address) };
-}
-
-
-void Peer::IdentityInfo::serialize(base::SerializationOArchive& oa) const
-{
-    oa.serialize(endpoint);
-    oa.serialize(address);
 }
 
 
@@ -257,9 +242,9 @@ bool Peer::isClosed() const
 }
 
 
-Peer::IdentityInfo Peer::getInfo() const
+msg::NodeIdentityInfo Peer::getInfo() const
 {
-    return Peer::IdentityInfo{ getPublicEndpoint(), _address };
+    return msg::NodeIdentityInfo{ getPublicEndpoint(), _address };
 }
 
 
