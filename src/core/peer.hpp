@@ -8,6 +8,7 @@
 #include "net/error.hpp"
 #include "net/session.hpp"
 
+#include <atomic>
 #include <forward_list>
 #include <memory>
 
@@ -176,29 +177,11 @@ class Peer : public std::enable_shared_from_this<Peer>
         std::weak_ptr<Peer> _peer;
     };
 
+    //===========================================================
+
     class Requests
     {
         using MessageIdType = std::uint16_t;
-
-      public:
-        Requests(std::weak_ptr<net::Session> session)
-          : _session{ std::move(session) }
-        {
-            if (auto s = _session.lock()) {
-                // s->setHandler();
-            }
-            else {
-                RAISE_ERROR(net::ClosedSession);
-            }
-        }
-
-        void onMessageReceive(const base::Bytes& received_bytes)
-        {
-            base::SerializationIArchive ia(received_bytes);
-            auto msg_id = ia.deserialize<MessageIdType>();
-        }
-
-        void onClose() {}
 
         class SessionHandler : public net::Session::Handler
         {
@@ -215,14 +198,80 @@ class Peer : public std::enable_shared_from_this<Peer>
             Requests& _r;
         };
 
+      public:
+        Requests(std::weak_ptr<net::Session> session, boost::asio::io_context& io_context)
+          : _session{ std::move(session) }
+          , _io_context{ io_context }
+        {
+            if (auto s = _session.lock()) {
+                s->setHandler(std::make_shared<SessionHandler>(*this));
+            }
+            else {
+                RAISE_ERROR(net::ClosedSession);
+            }
+        }
 
-        class Request
+        void onMessageReceive(const base::Bytes& received_bytes)
+        {
+            base::SerializationIArchive ia(received_bytes);
+            auto msg_id = ia.deserialize<MessageIdType>();
+
+            _active_requests.disownIf([msg_id, &received_bytes](Request& request) {
+                if (request.getId() == msg_id) {
+                    request.runCallback(received_bytes);
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            });
+        }
+
+        void onClose() {}
+
+        class Request : std::enable_shared_from_this<Request>
         {
           public:
-            MessageIdType id;
-            std::function<void(const base::Bytes&)> _callback;
+            using Callback = std::function<void(const base::Bytes&)>;
+
+            Request(base::OwningPool<Request>& active_requests,
+                    MessageIdType id,
+                    Callback callback,
+                    boost::asio::io_context& io_context)
+              : _active_requests{ active_requests }
+              , _id{ id }
+              , _callback{ std::move(callback) }
+              , _timer{ io_context }
+            {
+                _timer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
+                _timer.async_wait([request_weak = weak_from_this()](const boost::system::error_code& ec) {
+                    if (auto r = request_weak.lock()) {
+                        if (!r->_is_already_processed.test_and_set()) {
+                            r->_active_requests.disown(r.get());
+                        }
+                    }
+                });
+            }
+
+
+            MessageIdType getId() const noexcept { return _id; }
+
+
+            void runCallback(const base::Bytes& data)
+            {
+                if (!_is_already_processed.test_and_set()) {
+                    _callback(data);
+                }
+            }
+
+          private:
+            base::OwningPool<Request>& _active_requests;
+            MessageIdType _id;
+            Callback _callback;
             boost::asio::steady_timer _timer;
+            std::atomic_flag _is_already_processed;
         };
+
 
         void requestSilent(const Message& msg)
         {
@@ -235,10 +284,12 @@ class Peer : public std::enable_shared_from_this<Peer>
         }
 
 
-        void requestWaitResponseById(const Message& msg, std::function<void(Message msg)> callback)
+        void requestWaitResponseById(const Message& msg, Request::Callback callback)
         {
             if (auto s = _session.lock()) {
-                // _requests.add(callback);
+                auto r =
+                  std::make_shared<Request>(_active_requests, _next_message_id++, std::move(callback), _io_context);
+                _active_requests.own(std::move(r));
                 s->send(prepareMessage(msg));
             }
             else {
@@ -248,9 +299,10 @@ class Peer : public std::enable_shared_from_this<Peer>
 
       private:
         std::weak_ptr<net::Session> _session;
+        boost::asio::io_context& _io_context;
         std::vector<Message> _requested;
-        std::uint16_t _next_message_id{ 0 };
-        base::OwningPoolMt<Request> _active_requests;
+        MessageIdType _next_message_id{ 0 };
+        base::OwningPool<Request> _active_requests;
 
         base::Bytes prepareMessage(const Message& msg)
         {
@@ -260,6 +312,8 @@ class Peer : public std::enable_shared_from_this<Peer>
             return std::move(oa).getBytes();
         }
     };
+
+    //===========================================================
 
     template<typename M>
     void sendMessage(const M& msg, net::Connection::SendHandler on_send = {});
