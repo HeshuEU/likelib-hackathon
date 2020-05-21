@@ -66,8 +66,8 @@ class OwningPool
 
     void disown(const T* value);
     bool tryDisown(const T* value);
-    void disownIf(std::function<void(const T&)> f) const;
-    void disownIf(std::function<void(T&)> f);
+    void disownIf(std::function<bool(const T&)> f) const;
+    void disownIf(std::function<bool(T&)> f);
 
     void forEach(std::function<void(const T&)> f) const;
     void forEach(std::function<void(T&)> f);

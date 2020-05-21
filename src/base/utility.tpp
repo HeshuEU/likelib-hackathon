@@ -105,7 +105,7 @@ void OwningPool<T>::forEach(std::function<void(T&)> f)
 
 
 template<typename T>
-void OwningPool<T>::disownIf(std::function<void(const T&)> f) const
+void OwningPool<T>::disownIf(std::function<bool(const T&)> f) const
 {
     std::unique_lock lk(_pool_mutex);
     for (auto it = _pool.begin(); it != _pool.end();) {
@@ -120,7 +120,7 @@ void OwningPool<T>::disownIf(std::function<void(const T&)> f) const
 
 
 template<typename T>
-void OwningPool<T>::disownIf(std::function<void(T&)> f)
+void OwningPool<T>::disownIf(std::function<bool(T&)> f)
 {
     std::unique_lock lk(_pool_mutex);
     for (auto it = _pool.begin(); it != _pool.end();) {
