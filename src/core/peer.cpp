@@ -573,6 +573,107 @@ void Peer::handle(lk::msg::Close&& msg)
     _session->close();
 }
 
-}
 
 //===============================================
+
+
+Peer::Requests::SessionHandler::SessionHandler(Peer::Requests& requests)
+  : _r{ requests }
+{}
+
+
+void Peer::Requests::SessionHandler::onReceive(const base::Bytes& bytes)
+{
+    _r.onMessageReceive(bytes);
+}
+
+
+void Peer::Requests::SessionHandler::onClose()
+{
+    _r.onClose();
+}
+
+
+Peer::Requests::Request::Request(base::OwningPool<Request>& active_requests,
+                                 MessageId id,
+                                 ResponseCallback response_callback,
+                                 TimeoutCallback timeout_callback,
+                                 boost::asio::io_context& io_context)
+  : _active_requests{ active_requests }
+  , _id{ id }
+  , _response_callback{ std::move(response_callback) }
+  , _timeout_callback{ std::move(timeout_callback) }
+  , _timer{ io_context }
+{
+    _timer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
+    _timer.async_wait([request_weak = weak_from_this()](const boost::system::error_code& ec) {
+        if (auto r = request_weak.lock()) {
+            if (!r->_is_already_processed.test_and_set()) {
+                r->_active_requests.disown(r.get());
+                r->_timeout_callback();
+            }
+        }
+    });
+}
+
+
+Peer::Requests::MessageId Peer::Requests::Request::getId() const noexcept
+{
+    return _id;
+}
+
+
+void Peer::Requests::Request::runCallback(base::SerializationIArchive&& ia)
+{
+    if (!_is_already_processed.test_and_set()) {
+        _response_callback(std::move(ia));
+    }
+}
+
+
+Peer::Requests::Requests(std::weak_ptr<net::Session> session,
+                         boost::asio::io_context& io_context,
+                         Request::ResponseCallback default_callback)
+  : _session{ std::move(session) }
+  , _io_context{ io_context }
+  , _default_callback{ std::move(default_callback) }
+{
+    if (auto s = _session.lock()) {
+        s->setHandler(std::make_shared<SessionHandler>(*this));
+    }
+    else {
+        RAISE_ERROR(net::ClosedSession);
+    }
+}
+
+
+void Peer::Requests::onMessageReceive(const base::Bytes& received_bytes)
+{
+    LOG_TRACE << "message received";
+    base::SerializationIArchive ia(received_bytes);
+    auto msg_id = ia.deserialize<MessageId>();
+
+    bool is_handled = false;
+    _active_requests.disownIf([msg_id, &received_bytes, &is_handled, &ia](Request& request) {
+        if (request.getId() == msg_id) {
+            is_handled = true;
+            request.runCallback(std::move(ia));
+            return true;
+        }
+        else {
+            return false;
+        }
+    });
+
+    if (!is_handled) {
+        _default_callback(std::move(ia));
+    }
+}
+
+
+void Peer::Requests::onClose()
+{
+    LOG_DEBUG << "Requests::onClose called";
+}
+
+}
