@@ -105,13 +105,13 @@ void Peer::IdentityInfo::serialize(base::SerializationOArchive& oa) const
 
 void Peer::sendBlock(const base::Sha256& block_hash, const lk::Block& block)
 {
-    sendMessage(msg::Block{ block_hash, block });
+    _requests.send(msg::Block{ block_hash, block });
 }
 
 
 void Peer::sendTransaction(const lk::Transaction& tx)
 {
-    sendMessage(msg::Transaction{ tx });
+    _requests.send(msg::Transaction{ tx });
 }
 
 
@@ -135,13 +135,13 @@ void Peer::requestLookup(const lk::Address& address, const std::uint8_t alpha)
 
     data->timer.async_wait([data](const auto& ec) { data->was_responded = true; });
 
-    sendMessage(msg::Lookup{ address, alpha });
+    _requests.send(msg::Lookup{ address, alpha });
 }
 
 
 void Peer::requestBlock(const base::Sha256& block_hash)
 {
-    sendMessage(msg::GetBlock{ block_hash });
+    _requests.send(msg::GetBlock{ block_hash });
 }
 
 
@@ -198,6 +198,7 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _handshaked_pool{ handshaked_pool }
   , _core{ core }
   , _host{ host }
+  , _requests{ std::weak_ptr{ _session }, _io_context, std::bind(&Peer::process, this, std::placeholders::_1) }
 {}
 
 
@@ -243,10 +244,9 @@ void Peer::startSession()
         return;
     }
     _is_started = true;
-    _session->setHandler(std::make_unique<Handler>(weak_from_this()));
     _session->start();
     if (wasConnectedTo()) {
-        sendMessage<msg::Connect>({ _core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlockHash() });
+        _requests.send(msg::Connect{ _core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlockHash() });
     }
 }
 
@@ -277,8 +277,6 @@ Peer::State Peer::getState() const noexcept
 
 bool Peer::tryAddToPool()
 {
-    LOG_DEBUG << this;
-    LOG_DEBUG << shared_from_this().get();
     return _handshaked_pool.tryAddPeer(shared_from_this());
 }
 
@@ -317,7 +315,7 @@ void Peer::Synchronizer::handleReceivedTopBlockHash(const base::Sha256& peers_to
         }
         else {
             base::SerializationOArchive oa;
-            _peer.sendMessage(msg::GetBlock{ peers_top_block });
+            _peer._requests.send(msg::GetBlock{ peers_top_block });
             _peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
         }
     }
@@ -375,32 +373,10 @@ void Peer::Synchronizer::requestBlock(base::Sha256 block_hash)
 
 //===============================================
 
-Peer::Handler::Handler(std::weak_ptr<Peer> peer)
-  : _peer{ std::move(peer) }
-{}
-
-
-void Peer::Handler::onReceive(const base::Bytes& bytes)
+void Peer::process(base::SerializationIArchive&& ia)
 {
-    if (auto p = _peer.lock()) {
-        p->process(bytes);
-    }
-}
-
-
-void Peer::Handler::onClose()
-{
-    if (auto p = _peer.lock()) {
-        p->detachFromPools();
-    }
-}
-
-//===============================================
-
-void Peer::process(const base::Bytes& received_data)
-{
-    base::SerializationIArchive ia(received_data);
     auto msg_type = ia.deserialize<msg::Type>();
+    LOG_DEBUG << "msg_type = " << static_cast<int>(msg_type);
     LOG_DEBUG << "Processing " << enumToString(msg_type);
     switch (msg_type) {
         case msg::Connect::TYPE_ID: {
@@ -476,7 +452,7 @@ void Peer::handle(lk::msg::Connect&& msg)
 
     if (tryAddToPool()) {
         _non_handshaked_pool.removePeer(this);
-        sendMessage(
+        _requests.send(
           msg::Accepted{ _core.getThisNodeAddress(), getPublicEndpoint().getPort(), _core.getTopBlockHash() });
 
         requestLookup(getAddress(), base::config::NET_LOOKUP_ALPHA);
@@ -506,7 +482,7 @@ void Peer::handle(lk::msg::Accepted&& msg)
     }
     _address = msg.address;
 
-    sendMessage(msg::Lookup{ getAddress(), base::config::NET_LOOKUP_ALPHA });
+    _requests.send(msg::Lookup{ getAddress(), base::config::NET_LOOKUP_ALPHA });
 
     if (tryAddToPool()) {
         _non_handshaked_pool.removePeer(this);
@@ -528,7 +504,7 @@ void Peer::handle(lk::msg::Pong&&) {}
 void Peer::handle(lk::msg::Lookup&& msg)
 {
     auto reply = _handshaked_pool.lookup(msg.address, msg.selection_size);
-    sendMessage(msg::LookupResponse{ msg.address, std::move(reply) });
+    _requests.send(msg::LookupResponse{ msg.address, std::move(reply) });
 }
 
 
@@ -563,10 +539,10 @@ void Peer::handle(lk::msg::GetBlock&& msg)
 {
     LOG_DEBUG << "Received GET_BLOCK on " << msg.block_hash;
     if (auto block = _core.findBlock(msg.block_hash)) {
-        sendMessage(msg::Block{ msg.block_hash, *block });
+        _requests.send(msg::Block{ msg.block_hash, *block });
     }
     else {
-        sendMessage(msg::BlockNotFound{ msg.block_hash });
+        _requests.send(msg::BlockNotFound{ msg.block_hash });
     }
 }
 

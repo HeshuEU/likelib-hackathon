@@ -44,9 +44,6 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(Type, std::uint8_t,
 )
 // clang-format on
 
-class Message
-{};
-
 struct Connect;
 struct CannotAccept;
 struct Accepted;
@@ -80,10 +77,6 @@ class Rating
   private:
     std::int_fast32_t _value;
 };
-
-
-class Message
-{};
 
 
 class Peer : public std::enable_shared_from_this<Peer>
@@ -161,27 +154,12 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     bool tryAddToPool();
     void detachFromPools(); // only called inside onClose or inside destructor
-    //=========================
-    /*
-     * Handler of session messages.
-     */
-    class Handler : public net::Session::Handler
-    {
-      public:
-        Handler(std::weak_ptr<Peer> peer);
-
-        void onReceive(const base::Bytes& bytes) override;
-        void onClose() override;
-
-      private:
-        std::weak_ptr<Peer> _peer;
-    };
 
     //===========================================================
 
     class Requests
     {
-        using MessageIdType = std::uint16_t;
+        using MessageId = std::uint16_t;
 
         class SessionHandler : public net::Session::Handler
         {
@@ -198,10 +176,63 @@ class Peer : public std::enable_shared_from_this<Peer>
             Requests& _r;
         };
 
+
+        class Request : std::enable_shared_from_this<Request>
+        {
+          public:
+            using ResponseCallback = std::function<void(base::SerializationIArchive&&)>;
+            using TimeoutCallback = std::function<void()>;
+
+            Request(base::OwningPool<Request>& active_requests,
+                    MessageId id,
+                    ResponseCallback response_callback,
+                    TimeoutCallback timeout_callback,
+                    boost::asio::io_context& io_context)
+              : _active_requests{ active_requests }
+              , _id{ id }
+              , _response_callback{ std::move(response_callback) }
+              , _timeout_callback{ std::move(timeout_callback) }
+              , _timer{ io_context }
+            {
+                _timer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
+                _timer.async_wait([request_weak = weak_from_this()](const boost::system::error_code& ec) {
+                    if (auto r = request_weak.lock()) {
+                        if (!r->_is_already_processed.test_and_set()) {
+                            r->_active_requests.disown(r.get());
+                            r->_timeout_callback();
+                        }
+                    }
+                });
+            }
+
+
+            MessageId getId() const noexcept { return _id; }
+
+
+            void runCallback(base::SerializationIArchive&& ia)
+            {
+                if (!_is_already_processed.test_and_set()) {
+                    _response_callback(std::move(ia));
+                }
+            }
+
+          private:
+            base::OwningPool<Request>& _active_requests;
+            MessageId _id;
+            ResponseCallback _response_callback;
+            TimeoutCallback _timeout_callback;
+            boost::asio::steady_timer _timer;
+            std::atomic_flag _is_already_processed;
+        };
+
+
       public:
-        Requests(std::weak_ptr<net::Session> session, boost::asio::io_context& io_context)
+        Requests(std::weak_ptr<net::Session> session,
+                 boost::asio::io_context& io_context,
+                 Request::ResponseCallback default_callback)
           : _session{ std::move(session) }
           , _io_context{ io_context }
+          , _default_callback{ std::move(default_callback) }
         {
             if (auto s = _session.lock()) {
                 s->setHandler(std::make_shared<SessionHandler>(*this));
@@ -213,67 +244,31 @@ class Peer : public std::enable_shared_from_this<Peer>
 
         void onMessageReceive(const base::Bytes& received_bytes)
         {
+            LOG_TRACE << "message received";
             base::SerializationIArchive ia(received_bytes);
-            auto msg_id = ia.deserialize<MessageIdType>();
+            auto msg_id = ia.deserialize<MessageId>();
 
-            _active_requests.disownIf([msg_id, &received_bytes](Request& request) {
+            bool is_handled = false;
+            _active_requests.disownIf([msg_id, &received_bytes, &is_handled, &ia](Request& request) {
                 if (request.getId() == msg_id) {
-                    request.runCallback(received_bytes);
+                    is_handled = true;
+                    request.runCallback(std::move(ia));
                     return true;
                 }
                 else {
                     return false;
                 }
             });
+
+            if (!is_handled) {
+                _default_callback(std::move(ia));
+            }
         }
 
-        void onClose() {}
+        void onClose() { LOG_DEBUG << "Requests::onClose called"; }
 
-        class Request : std::enable_shared_from_this<Request>
-        {
-          public:
-            using Callback = std::function<void(const base::Bytes&)>;
-
-            Request(base::OwningPool<Request>& active_requests,
-                    MessageIdType id,
-                    Callback callback,
-                    boost::asio::io_context& io_context)
-              : _active_requests{ active_requests }
-              , _id{ id }
-              , _callback{ std::move(callback) }
-              , _timer{ io_context }
-            {
-                _timer.expires_after(std::chrono::seconds(base::config::NET_PING_FREQUENCY));
-                _timer.async_wait([request_weak = weak_from_this()](const boost::system::error_code& ec) {
-                    if (auto r = request_weak.lock()) {
-                        if (!r->_is_already_processed.test_and_set()) {
-                            r->_active_requests.disown(r.get());
-                        }
-                    }
-                });
-            }
-
-
-            MessageIdType getId() const noexcept { return _id; }
-
-
-            void runCallback(const base::Bytes& data)
-            {
-                if (!_is_already_processed.test_and_set()) {
-                    _callback(data);
-                }
-            }
-
-          private:
-            base::OwningPool<Request>& _active_requests;
-            MessageIdType _id;
-            Callback _callback;
-            boost::asio::steady_timer _timer;
-            std::atomic_flag _is_already_processed;
-        };
-
-
-        void requestSilent(const Message& msg)
+        template<typename T>
+        void send(const T& msg)
         {
             if (auto s = _session.lock()) {
                 s->send(prepareMessage(msg));
@@ -284,12 +279,17 @@ class Peer : public std::enable_shared_from_this<Peer>
         }
 
 
-        void requestWaitResponseById(const Message& msg, Request::Callback callback)
+        template<typename T>
+        void requestWaitResponseById(const T& msg,
+                                     Request::ResponseCallback response_callback,
+                                     Request::TimeoutCallback timeout_callback)
         {
             if (auto s = _session.lock()) {
-                auto r =
-                  std::make_shared<Request>(_active_requests, _next_message_id++, std::move(callback), _io_context);
-                _active_requests.own(std::move(r));
+                _active_requests.own(std::make_shared<Request>(_active_requests,
+                                                               _next_message_id++,
+                                                               std::move(response_callback),
+                                                               std::move(timeout_callback),
+                                                               _io_context));
                 s->send(prepareMessage(msg));
             }
             else {
@@ -300,24 +300,22 @@ class Peer : public std::enable_shared_from_this<Peer>
       private:
         std::weak_ptr<net::Session> _session;
         boost::asio::io_context& _io_context;
-        std::vector<Message> _requested;
-        MessageIdType _next_message_id{ 0 };
+        MessageId _next_message_id{ 0 };
         base::OwningPool<Request> _active_requests;
+        Request::ResponseCallback _default_callback;
 
-        base::Bytes prepareMessage(const Message& msg)
+        template<typename T>
+        base::Bytes prepareMessage(const T& msg)
         {
             base::SerializationOArchive oa;
             oa.serialize(_next_message_id++);
+            oa.serialize(T::TYPE_ID);
             oa.serialize(msg);
             return std::move(oa).getBytes();
         }
     };
 
     //===========================================================
-
-    template<typename M>
-    void sendMessage(const M& msg, net::Connection::SendHandler on_send = {});
-    //=========================
     std::shared_ptr<net::Session> _session;
     bool _is_started{ false };
     bool _was_connected_to; // peer was connected to or accepted?
@@ -358,7 +356,8 @@ class Peer : public std::enable_shared_from_this<Peer>
     lk::Core& _core;
     lk::Host& _host;
     //=========================
-    void process(const base::Bytes& received_data);
+    Requests _requests;
+    void process(base::SerializationIArchive&& ia);
     //=========================
     void handle(msg::Connect&& msg);
     void handle(msg::CannotAccept&& msg);
@@ -379,7 +378,7 @@ class Peer : public std::enable_shared_from_this<Peer>
 namespace msg
 {
 
-struct Connect : Message
+struct Connect
 {
     static constexpr Type TYPE_ID = Type::CONNECT;
 
@@ -392,7 +391,7 @@ struct Connect : Message
 };
 
 
-struct CannotAccept : Message
+struct CannotAccept
 {
     static constexpr Type TYPE_ID = Type::CANNOT_ACCEPT;
 
@@ -408,7 +407,7 @@ struct CannotAccept : Message
 };
 
 
-struct Accepted : Message
+struct Accepted
 {
     static constexpr Type TYPE_ID = Type::ACCEPTED;
 
@@ -421,7 +420,7 @@ struct Accepted : Message
 };
 
 
-struct Ping : Message
+struct Ping
 {
     static constexpr Type TYPE_ID = Type::PING;
 
@@ -430,7 +429,7 @@ struct Ping : Message
 };
 
 
-struct Pong : Message
+struct Pong
 {
     static constexpr Type TYPE_ID = Type::PONG;
 
@@ -439,7 +438,7 @@ struct Pong : Message
 };
 
 
-struct Lookup : Message
+struct Lookup
 {
     static constexpr Type TYPE_ID = Type::LOOKUP;
 
@@ -451,7 +450,7 @@ struct Lookup : Message
 };
 
 
-struct LookupResponse : Message
+struct LookupResponse
 {
     static constexpr Type TYPE_ID = Type::LOOKUP_RESPONSE;
 
@@ -463,7 +462,7 @@ struct LookupResponse : Message
 };
 
 
-struct Transaction : Message
+struct Transaction
 {
     static constexpr Type TYPE_ID = Type::TRANSACTION;
 
@@ -474,7 +473,7 @@ struct Transaction : Message
 };
 
 
-struct GetBlock : Message
+struct GetBlock
 {
     static constexpr Type TYPE_ID = Type::GET_BLOCK;
 
@@ -485,7 +484,7 @@ struct GetBlock : Message
 };
 
 
-struct Block : Message
+struct Block
 {
     static constexpr Type TYPE_ID = Type::BLOCK;
 
@@ -497,7 +496,7 @@ struct Block : Message
 };
 
 
-struct BlockNotFound : Message
+struct BlockNotFound
 {
     static constexpr Type TYPE_ID = Type::BLOCK_NOT_FOUND;
 
@@ -508,7 +507,7 @@ struct BlockNotFound : Message
 };
 
 
-struct Close : Message
+struct Close
 {
     static constexpr Type TYPE_ID = Type::CLOSE;
 
