@@ -43,7 +43,6 @@ message NodeInfo {
     Hash top_block_hash = 1;
     uint64 top_block_number = 2;
     uint32 interface_version = 3;
-    uint32 peers_number = 4;
 }
 
 
@@ -53,7 +52,7 @@ message Block {
     uint64 depth = 3;
     uint64 nonce = 4;
     Hash previous_block_hash = 5;
-    repeated Transaction transactions = 6;
+    repeated Transaction transactions = 7;
 }
 
 
@@ -77,16 +76,19 @@ message Transaction {
     uint64 fee = 4;
     Time creation_time = 5;
     string data = 6;
-    Signature signature = 7;
+    Signature signature = 8;
 }
 
 
 message TransactionStatus {
     enum StatusCode {
         Success = 0;
-        Rejected = 1;
-        Revert = 2;
-        Failed = 3;
+        Pending = 1;
+        BadQueryForm = 2;
+        BadSign = 3;
+        NotEnoughBalance = 4;
+        Revert = 5;
+        Failed = 6;
     }
     enum ActionType {
         None = 0;
@@ -97,7 +99,7 @@ message TransactionStatus {
     StatusCode status = 1;
     ActionType type = 2;
     string message = 3;
-    uint64 gas_left = 4;
+    uint64 fee_left = 4;
 }
 
 
@@ -105,6 +107,8 @@ message ViewCall {
     Address from = 1;
     Address to = 2;
     Data message = 3;
+    Time creation_time = 4;
+    Signature signature = 5;
 }
 
 

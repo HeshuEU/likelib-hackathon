@@ -3,7 +3,6 @@
 namespace rpc::http
 {
 
-
 web::json::value serializeAccountType(lk::AccountType type)
 {
     switch (type) {
@@ -26,6 +25,7 @@ std::optional<lk::AccountType> deserializeAccountType(const std::string& type)
         return lk::AccountType::CONTRACT;
     }
     else {
+        LOG_ERROR << "Failed to deserialize AccountType";
         return std::nullopt;
     }
 }
@@ -43,12 +43,19 @@ std::optional<lk::TransactionStatus::StatusCode> deserializeTransactionStatusSta
         case 0:
             return lk::TransactionStatus::StatusCode::Success;
         case 1:
-            return lk::TransactionStatus::StatusCode::Rejected;
+            return lk::TransactionStatus::StatusCode::Pending;
         case 2:
-            return lk::TransactionStatus::StatusCode::Revert;
+            return lk::TransactionStatus::StatusCode::BadQueryForm;
         case 3:
+            return lk::TransactionStatus::StatusCode::BadSign;
+        case 4:
+            return lk::TransactionStatus::StatusCode::NotEnoughBalance;
+        case 5:
+            return lk::TransactionStatus::StatusCode::Revert;
+        case 6:
             return lk::TransactionStatus::StatusCode::Failed;
         default:
+            LOG_ERROR << "Failed to deserialize StatusCode";
             return std::nullopt;
     }
 }
@@ -72,6 +79,7 @@ std::optional<lk::TransactionStatus::ActionType> deserializeTransactionStatusAct
         case 3:
             return lk::TransactionStatus::ActionType::ContractCreation;
         default:
+            LOG_ERROR << "Failed to deserialize ActionType";
             return std::nullopt;
     }
 }
@@ -85,7 +93,13 @@ web::json::value serializeBalance(const lk::Balance& balance)
 
 std::optional<lk::Balance> deserializeBalance(const std::string& type)
 {
-    return lk::Balance{ type };
+    try {
+        return lk::Balance{type};
+    }
+    catch (const base::Error& e) {
+        LOG_ERROR << "Failed to deserialize Balance";
+        return std::nullopt;
+    }
 }
 
 
@@ -94,11 +108,13 @@ web::json::value serializeFee(std::uint64_t balance)
     return web::json::value::string(std::to_string(balance));
 }
 
+
 std::optional<std::uint64_t> deserializeFee(const std::string& type)
 {
     char* end = nullptr;
     auto balance = static_cast<uint64_t>(std::strtoll(type.c_str(), &end, 10));
     if (end == nullptr) {
+        LOG_ERROR << "Failed to deserialize fee";
         return std::nullopt;
     }
     return balance;
@@ -111,12 +127,22 @@ web::json::value serializeHash(const base::Sha256& hash)
 }
 
 
-std::optional<base::Sha256> deserializeHash(const std::string& type)
+std::optional<base::Sha256> deserializeHash(const std::string& hash_str)
 {
-    try {
-        return base::Sha256{ base::base64Decode(type) };
+    base::Bytes decoded_bytes;
+    try{
+        decoded_bytes = base::base64Decode(hash_str);
     }
     catch (const base::Error& e) {
+        LOG_ERROR << "Failed to deserialize hash data";
+        return std::nullopt;
+    }
+
+    try {
+        return base::Sha256{decoded_bytes};
+    }
+    catch (const base::Error& e) {
+        LOG_ERROR << "Failed to deserialize hash";
         return std::nullopt;
     }
 }
@@ -128,12 +154,22 @@ web::json::value serializeAddress(const lk::Address& address)
 }
 
 
-std::optional<lk::Address> deserializeAddress(const std::string& type)
+std::optional<lk::Address> deserializeAddress(const std::string& address_str)
 {
-    try {
-        return lk::Address{ base::base58Decode(type) };
+    base::Bytes decoded_bytes;
+    try{
+        decoded_bytes = base::base58Decode(address_str);
     }
     catch (const base::Error& e) {
+        LOG_ERROR << "Failed to deserialize address data";
+        return std::nullopt;
+    }
+
+    try {
+        return lk::Address{decoded_bytes};
+    }
+    catch (const base::Error& e) {
+        LOG_ERROR << "Failed to deserialize address";
         return std::nullopt;
     }
 }
@@ -151,8 +187,19 @@ std::optional<base::Bytes> deserializeBytes(const std::string& data)
         return base::base64Decode(data);
     }
     catch (const base::Error& e) {
+        LOG_ERROR << "Failed to deserialize data bytes";
         return std::nullopt;
     }
+}
+
+
+std::optional<lk::Sign> deserializeSign(const std::string& data){
+    auto sign_data = deserializeBytes(data);
+    if (!sign_data){
+        LOG_ERROR << "base sign format";
+        return std::nullopt;
+    }
+    return lk::Sign(sign_data.value());
 }
 
 
@@ -163,7 +210,6 @@ web::json::value serializeAccountInfo(const lk::AccountInfo& account_info)
     result["balance"] = serializeBalance(account_info.balance);
     result["nonce"] = web::json::value::number(account_info.nonce);
     result["type"] = serializeAccountType(account_info.type);
-
     std::vector<web::json::value> txs_hashes;
     for (const auto& tx_hash : account_info.transactions_hashes) {
         txs_hashes.emplace_back(serializeHash(tx_hash));
@@ -176,25 +222,80 @@ web::json::value serializeAccountInfo(const lk::AccountInfo& account_info)
 std::optional<lk::AccountInfo> deserializeAccountInfo(const web::json::value& input)
 {
     try {
-        auto type = deserializeAccountType(input.at("type").as_string());
-        auto balance = deserializeBalance(input.at("balance").as_string());
-        auto nonce = input.at("nonce").as_number().to_uint64();
-        auto address = deserializeAddress(input.at("address").as_string());
-
-        std::string serialized_abi;
-        if (type == lk::AccountType::CONTRACT) {
-            serialized_abi = input.at("abi").as_string();
+        std::optional<lk::AccountType> type;
+        if (input.has_string_field("type")) {
+            type = deserializeAccountType(input.at("type").as_string());
+        } else{
+            LOG_ERROR << "type field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::Balance> balance;
+        if (input.has_string_field("balance")) {
+            balance = deserializeBalance(input.at("balance").as_string());
+        } else{
+            LOG_ERROR << "balance field is not exists";
+            return std::nullopt;
+        }
+        std::optional<std::uint64_t> nonce;
+        if (input.has_number_field("nonce")) {
+            nonce = input.at("nonce").as_number().to_uint64();
+        } else{
+            LOG_ERROR << "nonce field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::Address> address;
+        if (input.has_string_field("address")) {
+            address = deserializeAddress(input.at("address").as_string());
+        } else{
+            LOG_ERROR << "address field is not exists";
+            return std::nullopt;
         }
 
         std::vector<base::Sha256> transactions_hashes;
-        for (const auto& res_tx_hash : input.at("transaction_hashes").as_array()) {
-            transactions_hashes.emplace_back(deserializeHash(res_tx_hash.as_string()).value());
+        if (input.has_array_field("transaction_hashes")) {
+            for (const auto &res_tx_hash : input.at("transaction_hashes").as_array()) {
+                if (res_tx_hash.is_string()) {
+                    auto hash_opt = deserializeHash(res_tx_hash.as_string());
+                    if (hash_opt) {
+                        transactions_hashes.emplace_back(*hash_opt);
+                    } else{
+                        LOG_ERROR << "error at hash deserialization";
+                        return std::nullopt;
+                    }
+                } else{
+                    LOG_ERROR << "bad hash format";
+                    return std::nullopt;
+                }
+            }
+        } else{
+            LOG_ERROR << "transaction_hashes field is not exists";
+            return std::nullopt;
         }
 
-        return lk::AccountInfo{ type.value(), address.value(), balance.value(), nonce, transactions_hashes };
+        if (!type) {
+            LOG_ERROR << "error at type deserialization";
+            return std::nullopt;
+        }
+
+        if (!address) {
+            LOG_ERROR << "error at address deserialization";
+            return std::nullopt;
+        }
+
+        if (!balance) {
+            LOG_ERROR << "error at balance deserialization";
+            return std::nullopt;
+        }
+
+        if (!nonce) {
+            LOG_ERROR << "error at nonce deserialization";
+            return std::nullopt;
+        }
+
+        return lk::AccountInfo{ type.value(), address.value(), balance.value(), nonce.value(), transactions_hashes };
     }
-    catch (const std::exception& e) {
-        LOG_ERROR << "deserialization error" << e.what();
+    catch (const base::Error& e) {
+        LOG_ERROR << "Failed to deserialize Account Info";
         return std::nullopt;
     }
 }
@@ -206,7 +307,6 @@ web::json::value serializeInfo(const Info& info)
     result["top_block_hash"] = serializeHash(info.top_block_hash);
     result["top_block_number"] = web::json::value::number(info.top_block_number);
     result["api_version"] = web::json::value::number(info.api_version);
-    result["peers_number"] = web::json::value::number(info.peers_number);
     return result;
 }
 
@@ -214,15 +314,46 @@ web::json::value serializeInfo(const Info& info)
 std::optional<Info> deserializeInfo(const web::json::value& input)
 {
     try {
-        auto top_block_hash = deserializeHash(input.at("top_block_hash").as_string());
-        auto top_block_number = input.at("top_block_number").as_number().to_uint64();
-        auto api_version = input.at("api_version").as_number().to_uint32();
-        auto peers_number = input.at("peers_number").as_number().to_uint64();
+        std::optional<base::Sha256> top_block_hash;
+        if (input.has_string_field("top_block_hash")) {
+            top_block_hash = deserializeHash(input.at("top_block_hash").as_string());
+        } else{
+            LOG_ERROR << "top_block_hash field is not exists";
+            return std::nullopt;
+        }
+        std::optional<std::uint64_t> top_block_number;
+        if (input.has_number_field("top_block_number")) {
+            top_block_number = input.at("top_block_number").as_number().to_uint64();
+        } else{
+            LOG_ERROR << "top_block_number field is not exists";
+            return std::nullopt;
+        }
+        std::optional<std::uint32_t> api_version;
+        if (input.has_number_field("api_version")) {
+            api_version = input.at("api_version").as_number().to_uint32();
+        } else{
+            LOG_ERROR << "api_version field is not exists";
+            return std::nullopt;
+        }
 
-        return Info{ top_block_hash.value(), top_block_number, api_version, peers_number };
+        if (!top_block_hash) {
+            LOG_ERROR << "error at top_block_hash deserialization";
+            return std::nullopt;
+        }
+
+        if (!top_block_number) {
+            LOG_ERROR << "error at top_block_number deserialization";
+            return std::nullopt;
+        }
+
+        if (!api_version) {
+            LOG_ERROR << "error at api_version deserialization";
+            return std::nullopt;
+        }
+        return Info{ top_block_hash.value(), top_block_number.value(), api_version.value()};
     }
     catch (const std::exception& e) {
-        LOG_ERROR << "deserialization error" << e.what();
+        LOG_ERROR << "Failed to deserialize Info";
         return std::nullopt;
     }
 }
@@ -245,31 +376,83 @@ web::json::value serializeTransaction(const lk::Transaction& input)
 std::optional<lk::Transaction> deserializeTransaction(const web::json::value& input)
 {
     try {
-        lk::TransactionBuilder txb;
-
-        auto amount = deserializeBalance(input.at("amount").as_string());
-        txb.setAmount(amount.value());
-
-        auto fee = deserializeFee(input.at("fee").as_string());
-        txb.setFee(fee.value());
-
-        auto from = deserializeAddress(input.at("from").as_string());
-        txb.setFrom(from.value());
-
-        auto to = deserializeAddress(input.at("to").as_string());
-        txb.setTo(to.value());
-
-        auto timestamp = base::Time(input.at("timestamp").as_number().to_uint32());
-        txb.setTimestamp(timestamp);
-        txb.setData(deserializeBytes(input.at("data").as_string()).value());
-        auto sign = lk::Sign(base::base64Decode((input.at("sign").as_string())));
-        txb.setSign(sign);
-
-        auto tx = txb.build();
-        return tx;
+        std::optional<lk::Balance> amount;
+        if (input.has_string_field("amount")) {
+            amount = deserializeBalance(input.at("amount").as_string());
+        } else{
+            LOG_ERROR << "amount field is not exists";
+            return std::nullopt;
+        }
+        std::optional<std::uint64_t> fee;
+        if (input.has_number_field("fee")) {
+            fee = input.at("fee").as_number().to_uint64();
+        } else{
+            LOG_ERROR << "fee field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::Address> from;
+        if (input.has_string_field("from")) {
+            from = deserializeAddress(input.at("from").as_string());
+        } else{
+            LOG_ERROR << "from field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::Address> to;
+        if (input.has_string_field("to")) {
+            from = deserializeAddress(input.at("to").as_string());
+        } else{
+            LOG_ERROR << "to field is not exists";
+            return std::nullopt;
+        }
+        std::optional<base::Time> timestamp;
+        if (input.has_number_field("timestamp")) {
+            timestamp = base::Time(input.at("timestamp").as_number().to_uint32());
+        } else{
+            LOG_ERROR << "timestamp field is not exists";
+            return std::nullopt;
+        }
+        std::optional<base::Bytes> data;
+        if (input.has_string_field("data")) {
+            data = deserializeBytes(input.at("data").as_string());
+        } else{
+            LOG_ERROR << "data field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::Sign> sign;
+        if (input.has_string_field("sign")) {
+            sign = deserializeSign(input.at("sign").as_string());
+        } else{
+            LOG_ERROR << "sign field is not exists";
+            return std::nullopt;
+        }
+        if (!from) {
+            LOG_ERROR << "error at from deserialization";
+            return std::nullopt;
+        }
+        if (!to) {
+            LOG_ERROR << "error at to deserialization";
+            return std::nullopt;
+        }
+        if (!fee) {
+            LOG_ERROR << "error at fee deserialization";
+            return std::nullopt;
+        }
+        if (!timestamp) {
+            LOG_ERROR << "error at timestamp deserialization";
+            return std::nullopt;
+        }
+        if (!data) {
+            LOG_ERROR << "error at data deserialization";
+            return std::nullopt;
+        }
+        if (!sign) {
+            LOG_ERROR << "error at sign deserialization";
+            return std::nullopt;
+        }
+        return lk::Transaction{from.value(), to.value(),  amount.value(), fee.value(), timestamp.value(), data.value(), sign.value()};
     }
     catch (const std::exception& e) {
-        LOG_ERROR << "deserialization error" << e.what();
+        LOG_ERROR << "Failed to deserialize Transaction";
         return std::nullopt;
     }
 }
@@ -296,22 +479,90 @@ web::json::value serializeBlock(const lk::Block& block)
 std::optional<lk::Block> deserializeBlock(const web::json::value& input)
 {
     try {
-        auto depth = input.at("depth").as_number().to_uint64();
-        auto nonce = input.at("nonce").as_number().to_uint64();
-        auto timestamp = base::Time(input.at("timestamp").as_number().to_uint64());
-        auto previous_block_hash = deserializeHash(input.at("previous_block_hash").as_string());
-        auto coinbase = deserializeAddress(input.at("coinbase").as_string());
+        std::optional<std::uint64_t> depth;
+        if (input.has_number_field("depth")) {
+            depth = input.at("depth").as_number().to_uint64();
+        } else{
+            LOG_ERROR << "depth field is not exists";
+            return std::nullopt;
+        }
+        std::optional<std::uint64_t> nonce;
+        if (input.has_number_field("nonce")) {
+            nonce = input.at("nonce").as_number().to_uint64();
+        } else{
+            LOG_ERROR << "nonce field is not exists";
+            return std::nullopt;
+        }
+        std::optional<base::Time> timestamp;
+        if (input.has_number_field("timestamp")) {
+            timestamp = base::Time(input.at("timestamp").as_number().to_uint32());
+        } else{
+            LOG_ERROR << "timestamp field is not exists";
+            return std::nullopt;
+        }
+        std::optional<base::Sha256> previous_block_hash;
+        if (input.has_string_field("previous_block_hash")) {
+            previous_block_hash = deserializeHash(input.at("previous_block_hash").as_string());
+        } else{
+            LOG_ERROR << "previous_block_hash field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::Address> coinbase;
+        if (input.has_string_field("coinbase")) {
+            coinbase = deserializeAddress(input.at("coinbase").as_string());
+        } else{
+            LOG_ERROR << "coinbase field is not exists";
+            return std::nullopt;
+        }
+
+        if (!depth) {
+            LOG_ERROR << "error at depth deserialization";
+            return std::nullopt;
+        }
+        if (!nonce) {
+            LOG_ERROR << "error at nonce deserialization";
+            return std::nullopt;
+        }
+        if (!timestamp) {
+            LOG_ERROR << "error at timestamp deserialization";
+            return std::nullopt;
+        }
+        if (!previous_block_hash) {
+            LOG_ERROR << "error at previous_block_hash deserialization";
+            return std::nullopt;
+        }
+        if (!coinbase) {
+            LOG_ERROR << "error at coinbase deserialization";
+            return std::nullopt;
+        }
 
         lk::TransactionsSet txs;
-        for (const auto& res_tx : input.at("transactions").as_array()) {
-            txs.add(deserializeTransaction(res_tx).value());
+        if (input.has_array_field("transactions")) {
+            for (const auto &res_tx : input.at("transactions").as_array()) {
+                if (res_tx.is_string()) {
+                    auto tx_opt = deserializeTransaction(res_tx);
+                    if (tx_opt) {
+                        txs.add(*tx_opt);
+                    } else{
+                        LOG_ERROR << "error at hash deserialization";
+                        return std::nullopt;
+                    }
+                } else{
+                    LOG_ERROR << "bad transaction format";
+                    return std::nullopt;
+                }
+            }
+        } else{
+            LOG_ERROR << "transactions field is not exists";
+            return std::nullopt;
         }
-        lk::Block block{ depth, previous_block_hash.value(), timestamp, coinbase.value(), txs };
-        block.setNonce(nonce);
+
+        lk::Block block{ depth.value(), previous_block_hash.value(), timestamp.value(), coinbase.value(), txs };
+        block.setNonce(nonce.value());
         return block;
     }
     catch (const std::exception& e) {
-        LOG_ERROR << "deserialization error" << e.what();
+        LOG_ERROR << "Failed to deserialize Block";
         return std::nullopt;
     }
 }
@@ -331,18 +582,138 @@ web::json::value serializeTransactionStatus(const lk::TransactionStatus& status)
 std::optional<lk::TransactionStatus> deserializeTransactionStatus(const web::json::value& input)
 {
     try {
-        auto status = deserializeTransactionStatusStatusCode(input.at("status_code").as_number().to_uint32());
-        auto type = deserializeTransactionStatusActionType(input.at("action_type").as_number().to_uint32());
-        auto fee_left = deserializeFee(input.at(U("gas_left")).as_string()).value();
-        auto message = input.at("message").as_string();
+        std::optional<lk::TransactionStatus::StatusCode> status_code;
+        if (input.has_number_field("status_code")) {
+            status_code = deserializeTransactionStatusStatusCode(input.at("status_code").as_number().to_uint32());
+        } else{
+            LOG_ERROR << "status_code field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::TransactionStatus::ActionType> action_type;
+        if (input.has_number_field("action_type")) {
+            action_type = deserializeTransactionStatusActionType(input.at("action_type").as_number().to_uint32());
+        } else{
+            LOG_ERROR << "action_type field is not exists";
+            return std::nullopt;
+        }
+        std::optional<std::uint64_t> fee;
+        if (input.has_number_field("fee")) {
+            fee = input.at("fee").as_number().to_uint64();
+        } else{
+            LOG_ERROR << "fee field is not exists";
+            return std::nullopt;
+        }
+        std::optional<std::string> message;
+        if (input.has_string_field("message")) {
+            message = input.at("message").as_string();
+        } else{
+            LOG_ERROR << "message field is not exists";
+            return std::nullopt;
+        }
 
-        return lk::TransactionStatus{ status.value(), type.value(), fee_left, message };
+        if (!status_code) {
+            LOG_ERROR << "error at status_code deserialization";
+            return std::nullopt;
+        }
+        if (!action_type) {
+            LOG_ERROR << "error at action_type deserialization";
+            return std::nullopt;
+        }
+        if (!fee) {
+            LOG_ERROR << "error at fee deserialization";
+            return std::nullopt;
+        }
+        if (!message) {
+            LOG_ERROR << "error at message deserialization";
+            return std::nullopt;
+        }
+        return lk::TransactionStatus{ status_code.value(), action_type.value(), fee.value(), message.value() };
     }
     catch (const std::exception& e) {
-        LOG_ERROR << "deserialization error" << e.what();
+        LOG_ERROR << "Failed to deserialize TransactionStatus";
         return std::nullopt;
     }
 }
 
+
+web::json::value serializeViewCall(const lk::ViewCall& call)
+{
+    web::json::value result;
+    result["from"] = serializeAddress(call.getFrom());
+    result["to"] = serializeAddress(call.getContractAddress());
+    result["timestamp"] = web::json::value::number(call.getTimestamp().getSecondsSinceEpoch());
+    result["message"] = web::json::value::string(base::base64Encode(call.getData()));
+    result["sign"] = web::json::value::string(base::base64Encode(call.getSign()));
+    return result;
+}
+
+
+std::optional<lk::ViewCall> deserializeViewCall(const web::json::value& input)
+{
+    try {
+
+        std::optional<lk::Address> from;
+        if (input.has_string_field("from")) {
+            from = deserializeAddress(input.at("from").as_string());
+        } else{
+            LOG_ERROR << "from field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::Address> to;
+        if (input.has_string_field("to")) {
+            from = deserializeAddress(input.at("to").as_string());
+        } else{
+            LOG_ERROR << "to field is not exists";
+            return std::nullopt;
+        }
+        std::optional<base::Time> timestamp;
+        if (input.has_number_field("timestamp")) {
+            timestamp = base::Time(input.at("timestamp").as_number().to_uint32());
+        } else{
+            LOG_ERROR << "timestamp field is not exists";
+            return std::nullopt;
+        }
+        std::optional<base::Bytes> message;
+        if (input.has_string_field("message")) {
+            message = deserializeBytes(input.at("message").as_string());
+        } else{
+            LOG_ERROR << "message field is not exists";
+            return std::nullopt;
+        }
+        std::optional<lk::Sign> sign;
+        if (input.has_string_field("sign")) {
+            sign = deserializeSign(input.at("sign").as_string());
+        } else{
+            LOG_ERROR << "sign field is not exists";
+            return std::nullopt;
+        }
+
+        if (!from) {
+            LOG_ERROR << "error at from deserialization";
+            return std::nullopt;
+        }
+        if (!to) {
+            LOG_ERROR << "error at to deserialization";
+            return std::nullopt;
+        }
+        if (!timestamp) {
+            LOG_ERROR << "error at timestamp deserialization";
+            return std::nullopt;
+        }
+        if (!message) {
+            LOG_ERROR << "error at message deserialization";
+            return std::nullopt;
+        }
+        if (!sign) {
+            LOG_ERROR << "error at sign deserialization";
+            return std::nullopt;
+        }
+        return lk::ViewCall{ from.value(), to.value(), timestamp.value(), message.value(), sign.value() };
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR << "Failed to deserialize ViewCall";
+        return std::nullopt;
+    }
+}
 
 }

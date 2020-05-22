@@ -1,10 +1,8 @@
 #include "property_tree.hpp"
-
-#include "base/error.hpp"
+#include "error.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 
-#include <fstream>
 #include <sstream>
 
 namespace base
@@ -14,9 +12,11 @@ PropertyTree::PropertyTree()
   : _ptree{}
 {}
 
+
 PropertyTree::PropertyTree(const boost::property_tree::ptree& ptree)
   : _ptree{ ptree }
 {}
+
 
 PropertyTree readConfig(const std::filesystem::path& config_file)
 {
@@ -29,6 +29,7 @@ PropertyTree readConfig(const std::filesystem::path& config_file)
     return ret;
 }
 
+
 PropertyTree parseJson(const std::string& json_string)
 {
     std::istringstream input{ json_string };
@@ -37,6 +38,7 @@ PropertyTree parseJson(const std::string& json_string)
     return ret;
 }
 
+
 void save(const PropertyTree& tree, const std::filesystem::path& path_to_save)
 {
     std::ofstream file;
@@ -44,6 +46,7 @@ void save(const PropertyTree& tree, const std::filesystem::path& path_to_save)
     boost::property_tree::write_json(file, tree._ptree);
     file.close();
 }
+
 
 bool PropertyTree::hasKey(const std::string& path) const
 {

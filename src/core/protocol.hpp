@@ -1,10 +1,12 @@
 #pragma once
 
-#include "base/utility.hpp"
 #include "core/block.hpp"
 #include "core/peer.hpp"
 #include "core/transaction.hpp"
+
 #include "net/session.hpp"
+
+#include "base/utility.hpp"
 
 namespace lk
 {

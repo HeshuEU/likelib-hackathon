@@ -1,7 +1,6 @@
 include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
 
 find_path(SECP256K1_INCLUDE_DIR include/secp256k1_recovery.h)
-# set(SECP256K1_INCLUDE_DIR "${_SECP256K1_INCLUDE_DIR}/include")
 mark_as_advanced(SECP256K1_INCLUDE_DIR)
 
 find_library(SECP256K1_LIBS NAMES secp256k1)

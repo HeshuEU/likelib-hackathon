@@ -1,8 +1,9 @@
 #include "host.hpp"
 
+#include "core/core.hpp"
+
 #include "base/assert.hpp"
 #include "base/log.hpp"
-#include "core/core.hpp"
 
 #include <boost/asio/error.hpp>
 

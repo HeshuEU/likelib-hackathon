@@ -1,8 +1,7 @@
 #pragma once
 
-#include "base/bytes.hpp"
-#include "base/serialization.hpp"
-
+#include "bytes.hpp"
+#include "serialization.hpp"
 
 namespace base
 {
@@ -42,15 +41,19 @@ class Keccak256
     base::FixedBytes<KECCAK256_SIZE> _bytes;
 };
 
+
 std::ostream& operator<<(std::ostream& os, const Keccak256& sha);
 
 } // namespace base
 
+
 namespace std
 {
+
 template<>
 struct hash<base::Keccak256>
 {
     std::size_t operator()(const base::Keccak256& k) const;
 };
+
 } // namespace std

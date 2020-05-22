@@ -7,10 +7,8 @@
 
 #include <string>
 
-
 namespace rpc::http
 {
-
 
 class ActionBase
 {
@@ -122,7 +120,7 @@ bool ActionGetAccount::loadArguments()
 
 void ActionGetAccount::run(web::json::value& result)
 {
-    auto account_info = _service->getAccount(_address.value());
+    auto account_info = _service->getAccountInfo(_address.value());
     result = serializeAccountInfo(account_info);
 }
 
@@ -330,9 +328,7 @@ class ActionGetStorageValue : public ActionJsonProcessBase
     void run(web::json::value& result) override;
 
   private:
-    std::optional<lk::Address> _from_address;
-    std::optional<lk::Address> _contract_address;
-    std::optional<base::Bytes> _message;
+    std::optional<lk::ViewCall> _call;
 };
 
 
@@ -350,22 +346,14 @@ const std::string& ActionGetStorageValue::getName() const
 
 bool ActionGetStorageValue::loadArguments()
 {
-    if (_input.has_field("from")) {
-        _from_address = deserializeAddress(_input.at("from").as_string());
-    }
-    if (_input.has_field("to")) {
-        _contract_address = deserializeAddress(_input.at("to").as_string());
-    }
-    if (_input.has_field("message")) {
-        _message = deserializeBytes(_input.at("message").as_string());
-    }
-    return _from_address.has_value() && _contract_address.has_value() && _message.has_value();
+    _call = deserializeViewCall(_input);
+    return _call.has_value();
 }
 
 
 void ActionGetStorageValue::run(web::json::value& result)
 {
-    auto call_result = _service->callContractView(_from_address.value(), _contract_address.value(), _message.value());
+    auto call_result = _service->callContractView(_call.value());
     result = serializeBytes(call_result);
 }
 
@@ -384,6 +372,7 @@ web::json::value run_empty(std::shared_ptr<rpc::BaseRpc>& service)
     }
     catch (const std::exception& e) {
         result["status"] = web::json::value::string("error");
+        result["result"] = web::json::value::string(e.what());
     }
     return result;
 }
@@ -409,7 +398,7 @@ web::json::value run_json_process(const web::http::http_request& message, std::s
     }
     catch (const std::exception& e) {
         result["status"] = web::json::value::string("error");
-        result["result"] = web::json::value::string("error at input deserialization");
+        result["result"] = web::json::value::string(e.what());
     }
 
     try {
@@ -420,6 +409,7 @@ web::json::value run_json_process(const web::http::http_request& message, std::s
     }
     catch (const std::exception& e) {
         result["status"] = web::json::value::string("error");
+        result["result"] = web::json::value::string(e.what());
     }
     return result;
 }
@@ -442,7 +432,7 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
 
 void Adapter::handler(const web::http::http_request& message)
 {
-    LOG_ERROR << "registrated connection: " << message.remote_address();
+    LOG_ERROR << "incoming connection: " << message.remote_address();
     auto paths = web::http::uri::split_path(web::http::uri::decode(message.relative_uri().path()));
 
     if (paths.empty()) {
@@ -451,7 +441,7 @@ void Adapter::handler(const web::http::http_request& message)
         result["method"] = web::json::value::string("None");
         result["status"] = web::json::value::string("error");
         result["result"] = web::json::value::string("no any route at request");
-        message.reply(web::http::status_codes::Forbidden, result);
+        message.reply(web::http::status_codes::BadGateway, result);
     }
 
     auto root_path = paths[0];
@@ -467,13 +457,12 @@ void Adapter::handler(const web::http::http_request& message)
         return;
     }
     else {
-        RAISE_ERROR(base::InvalidArgument, "processor was not found");
-        LOG_ERROR << "no any processor wan found";
         web::json::value result;
         result["method"] = web::json::value::string("None");
         result["status"] = web::json::value::string("error");
-        result["result"] = web::json::value::string("no any processor wan found");
+        result["result"] = web::json::value::string("no any processor was found");
         message.reply(web::http::status_codes::BadGateway, result);
+        LOG_ERROR << "no any processor wan found";
     }
 }
 

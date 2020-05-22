@@ -1,9 +1,9 @@
 #include "grpc_adapter.hpp"
 #include "tools.hpp"
 
-#include <base/config.hpp>
-#include <base/error.hpp>
-#include <base/log.hpp>
+#include "base/config.hpp"
+#include "base/error.hpp"
+#include "base/log.hpp"
 
 
 namespace rpc::grpc
@@ -24,9 +24,9 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
     try {
         auto address = deserializeAddress(request);
 
-        auto account = _service->getAccount(address);
+        auto accountInfo = _service->getAccountInfo(address);
 
-        serializeAccountInfo(account, response);
+        serializeAccountInfo(accountInfo, response);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();
@@ -186,11 +186,9 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
 {
     LOG_DEBUG << "received RPC call_contract_view method call from " << context->peer();
     try {
-        auto from_address = deserializeAddress(&(request->from()));
-        auto to_address = deserializeAddress(&(request->to()));
-        auto message = base::base64Decode(request->message().bytes_base_64());
+        auto call = deserializeViewCall(request);
 
-        auto result = _service->callContractView(from_address, to_address, message);
+        auto result = _service->callContractView(call);
 
         response->set_bytes_base_64(base::base64Encode(result));
     }

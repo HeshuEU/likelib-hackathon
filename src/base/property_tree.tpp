@@ -1,8 +1,7 @@
 #pragma once
 
 #include "property_tree.hpp"
-
-#include "base/error.hpp"
+#include "error.hpp"
 
 namespace base
 {
@@ -18,6 +17,7 @@ R PropertyTree::get(const std::string& path) const
                     std::string{ "Cannot get given value from configuration. Additional info = " } + e.what());
     }
 }
+
 
 template<typename R>
 std::vector<R> PropertyTree::getVector(const std::string& path) const

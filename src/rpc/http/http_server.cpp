@@ -3,7 +3,6 @@
 namespace rpc::http
 {
 
-
 NodeServer::NodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service)
   : _listener(server_address)
 {

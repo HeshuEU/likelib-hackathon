@@ -1,12 +1,10 @@
 #include "hash.hpp"
-
-#include "base/assert.hpp"
-#include "base/error.hpp"
+#include "assert.hpp"
+#include "error.hpp"
 
 #include <openssl/evp.h>
 #include <openssl/ripemd.h>
 #include <openssl/sha.h>
-
 
 namespace base
 {
@@ -114,8 +112,10 @@ std::size_t std::hash<base::Sha256>::operator()(const base::Sha256& k) const
     return std::hash<base::FixedBytes<base::Sha256::SHA256_SIZE>>{}(k.getBytes());
 }
 
+
 namespace base
 {
+
 Sha1::Sha1(const Bytes& data)
   : _bytes(data)
 {
@@ -210,6 +210,7 @@ std::size_t std::hash<base::Sha1>::operator()(const base::Sha1& k) const
 
 namespace base
 {
+
 Ripemd160::Ripemd160(const Bytes& data)
   : _bytes(data)
 {

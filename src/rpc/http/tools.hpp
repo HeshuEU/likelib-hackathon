@@ -1,9 +1,8 @@
 #pragma once
 
-#include <rpc/base_rpc.hpp>
+#include "rpc/base_rpc.hpp"
 
 #include <cpprest/http_client.h>
-
 
 namespace rpc::http
 {
@@ -40,6 +39,8 @@ web::json::value serializeBytes(const base::Bytes& data);
 
 std::optional<base::Bytes> deserializeBytes(const std::string& data);
 
+std::optional<lk::Sign> deserializeSign(const std::string& data);
+
 web::json::value serializeAccountInfo(const lk::AccountInfo& account_info);
 
 std::optional<lk::AccountInfo> deserializeAccountInfo(const web::json::value& input);
@@ -59,5 +60,9 @@ std::optional<lk::Block> deserializeBlock(const web::json::value& input);
 web::json::value serializeTransactionStatus(const lk::TransactionStatus& status);
 
 std::optional<lk::TransactionStatus> deserializeTransactionStatus(const web::json::value& input);
+
+web::json::value serializeViewCall(const lk::ViewCall& call);
+
+std::optional<lk::ViewCall> deserializeViewCall(const web::json::value& input);
 
 }

@@ -1,6 +1,5 @@
 #include "log.hpp"
-
-#include "base/config.hpp"
+#include "config.hpp"
 
 #include <boost/core/null_deleter.hpp>
 #include <boost/log/core.hpp>
@@ -18,7 +17,6 @@
 
 namespace
 {
-
 
 std::string dateAsString()
 {
@@ -80,6 +78,7 @@ void disableLogger()
 }
 
 } // namespace
+
 
 namespace base
 {

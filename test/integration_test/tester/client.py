@@ -43,9 +43,10 @@ class Transaction:
     CONTRACT_CREATION_TYPE = "contract_creation"
     CONTRACT_CALL_TYPE = "contract_call"
 
-    def __init__(self, tx_type: str, from_address: str, to_address: str, value: int, fee: int, timestamp: int,
-                 data: str, verified: bool):
+    def __init__(self, tx_type: str, tx_hash: str, from_address: str, to_address: str, value: int, fee: int,
+                 timestamp: int, data: str, verified: bool):
         self.tx_type = tx_type
+        self.tx_hash = tx_hash
         self.from_address = from_address
         self.to_address = to_address
         self.value = value
@@ -59,9 +60,10 @@ class Transaction:
 
 
 class Block:
-    def __init__(self, block_hash: str, depth: int, timestamp: int, coinbase: str, previous_block_hash: str,
+    def __init__(self, block_hash: str, depth: int, nonce: int, timestamp: int, coinbase: str, previous_block_hash: str,
                  transactions: list):
         self.block_hash = block_hash
+        self.nonce = nonce
         self.depth = depth
         self.timestamp = timestamp
         self.coinbase = coinbase

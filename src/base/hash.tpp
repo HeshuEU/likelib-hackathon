@@ -4,6 +4,7 @@
 
 namespace base
 {
+
 template<std::size_t S>
 Sha256 Sha256::compute(const FixedBytes<S>& data)
 {
@@ -40,4 +41,5 @@ Ripemd160 Ripemd160::compute(const FixedBytes<S>& data)
     }
     return Ripemd160(ret);
 }
+
 } // namespace base

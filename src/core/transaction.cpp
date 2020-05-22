@@ -1,128 +1,10 @@
 #include "transaction.hpp"
 
-#include <base/error.hpp>
+#include "base/error.hpp"
 
 
 namespace lk
 {
-
-//
-//ContractData::ContractData(base::Bytes message, base::PropertyTree abi)
-//  : _message{ std::move(message) }
-//  , _abi{ std::move(abi) }
-//{}
-//
-//
-//void ContractData::setMessage(base::Bytes message)
-//{
-//    _message = std::move(message);
-//}
-//
-//
-//void ContractData::setAbi(base::PropertyTree abi)
-//{
-//    _abi = std::move(abi);
-//}
-//
-//
-//const base::Bytes& ContractData::getMessage() const noexcept
-//{
-//    return _message;
-//}
-//
-//
-//const base::PropertyTree& ContractData::getAbi() const noexcept
-//{
-//    return _abi;
-//}
-//
-//
-//void ContractData::serialize(base::SerializationOArchive& oa) const
-//{
-//    oa.serialize(_message);
-//    oa.serialize(base::Bytes(_abi.toString()));
-//}
-//
-//
-//ContractData ContractData::deserialize(base::SerializationIArchive& ia)
-//{
-//    auto message = ia.deserialize<base::Bytes>();
-//    auto abi = base::parseJson(ia.deserialize<base::Bytes>().toString());
-//    return { std::move(message), std::move(abi) };
-//}
-
-//
-// Sign::Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash)
-//  : _data{ Data{ std::move(sender_public_key), std::move(rsa_encrypted_hash) } }
-//{}
-//
-//
-// bool Sign::isNull() const noexcept
-//{
-//    return !_data.has_value();
-//}
-//
-//
-// const base::RsaPublicKey& Sign::getPublicKey() const
-//{
-//    if (isNull()) {
-//        RAISE_ERROR(base::LogicError, "attemping to get on null lk::Sign");
-//    }
-//    return _data->sender_public_key;
-//}
-//
-//
-// const base::Bytes& Sign::getRsaEncryptedHash() const
-//{
-//    if (isNull()) {
-//        RAISE_ERROR(base::LogicError, "attemping to get on null lk::Sign");
-//    }
-//    return _data->rsa_encrypted_hash;
-//}
-//
-//
-// void Sign::serialize(base::SerializationOArchive& oa) const
-//{
-//    if (!_data) {
-//        oa.serialize(base::Byte{ false });
-//    }
-//    else {
-//        oa.serialize(base::Byte{ true });
-//        oa.serialize(_data->sender_public_key);
-//        oa.serialize(_data->rsa_encrypted_hash);
-//    }
-//}
-//
-//
-// Sign Sign::deserialize(base::SerializationIArchive& ia)
-//{
-//    auto flag = ia.deserialize<base::Byte>();
-//    if (flag) {
-//        auto sender_rsa_public_key = base::RsaPublicKey::deserialize(ia);
-//        auto rsa_encrypted_hash = ia.deserialize<base::Bytes>();
-//        return Sign{ std::move(sender_rsa_public_key), std::move(rsa_encrypted_hash) };
-//    }
-//    else {
-//        return Sign{};
-//    }
-//}
-//
-//
-// Sign Sign::fromBase64(const std::string& base64_signature)
-//{
-//    const auto& signature_bytes = base::base64Decode(base64_signature);
-//    base::SerializationIArchive ia(signature_bytes);
-//    return deserialize(ia);
-//}
-//
-//
-// std::string Sign::toBase64() const
-//{
-//    base::SerializationOArchive oa;
-//    serialize(oa);
-//    return base::base64Encode(oa.getBytes());
-//}
-
 
 Transaction::Transaction(lk::Address from,
                          lk::Address to,
@@ -228,8 +110,6 @@ bool Transaction::operator!=(const Transaction& other) const
 
 base::Sha256 Transaction::hashOfTransaction() const
 {
-    base::SerializationOArchive oa;
-    serializeHeader(oa);
     // see http_specification.md
     auto from_address_str = base::base58Encode(_from.getBytes());
     auto to_address_str = base::base58Encode(_to.getBytes());
@@ -238,20 +118,9 @@ base::Sha256 Transaction::hashOfTransaction() const
     auto timestamp_str = std::to_string(_timestamp.getSecondsSinceEpoch());
     auto data_str = base::base64Encode(_data);
 
-    auto contactanated_data = from_address_str + to_address_str + amount_str + fee_str + timestamp_str + data_str;
+    auto concatenated_data = from_address_str + to_address_str + amount_str + fee_str + timestamp_str + data_str;
 
-    return base::Sha256::compute(base::Bytes(contactanated_data));
-}
-
-
-void Transaction::serializeHeader(base::SerializationOArchive& oa) const
-{
-    oa.serialize(_from);
-    oa.serialize(_to);
-    oa.serialize(_amount);
-    oa.serialize(_fee);
-    oa.serialize(_timestamp);
-    oa.serialize(_data);
+    return base::Sha256::compute(base::Bytes(concatenated_data));
 }
 
 

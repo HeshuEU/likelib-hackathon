@@ -1,6 +1,6 @@
 #include "tools.hpp"
 
-#include <rpc/error.hpp>
+#include "rpc/error.hpp"
 
 namespace rpc::grpc
 {
@@ -41,12 +41,19 @@ likelib::TransactionStatus_StatusCode serializeTransactionStatusCode(lk::Transac
             return ::likelib::TransactionStatus::StatusCode::TransactionStatus_StatusCode_Failed;
         case lk::TransactionStatus::StatusCode::Revert:
             return ::likelib::TransactionStatus::StatusCode::TransactionStatus_StatusCode_Revert;
-        case lk::TransactionStatus::StatusCode::Rejected:
-            return ::likelib::TransactionStatus::StatusCode::TransactionStatus_StatusCode_Rejected;
+        case lk::TransactionStatus::StatusCode::BadQueryForm:
+            return ::likelib::TransactionStatus::StatusCode::TransactionStatus_StatusCode_BadQueryForm;
+        case lk::TransactionStatus::StatusCode::BadSign:
+            return ::likelib::TransactionStatus::StatusCode::TransactionStatus_StatusCode_BadSign;
+        case lk::TransactionStatus::StatusCode::Pending:
+            return ::likelib::TransactionStatus::StatusCode::TransactionStatus_StatusCode_Pending;
+        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
+            return ::likelib::TransactionStatus::StatusCode::TransactionStatus_StatusCode_NotEnoughBalance;
         default:
             RAISE_ERROR(base::InvalidArgument, "Invalid type");
     }
 }
+
 
 lk::TransactionStatus::StatusCode deserializeTransactionStatusCode(likelib::TransactionStatus_StatusCode status_code)
 {
@@ -57,8 +64,14 @@ lk::TransactionStatus::StatusCode deserializeTransactionStatusCode(likelib::Tran
             return lk::TransactionStatus::StatusCode::Failed;
         case likelib::TransactionStatus_StatusCode::TransactionStatus_StatusCode_Revert:
             return lk::TransactionStatus::StatusCode::Revert;
-        case likelib::TransactionStatus_StatusCode::TransactionStatus_StatusCode_Rejected:
-            return lk::TransactionStatus::StatusCode::Rejected;
+        case likelib::TransactionStatus_StatusCode::TransactionStatus_StatusCode_BadQueryForm:
+            return lk::TransactionStatus::StatusCode::BadQueryForm;
+        case likelib::TransactionStatus_StatusCode::TransactionStatus_StatusCode_BadSign:
+            return lk::TransactionStatus::StatusCode::BadSign;
+        case likelib::TransactionStatus_StatusCode::TransactionStatus_StatusCode_Pending:
+            return lk::TransactionStatus::StatusCode::Pending;
+        case likelib::TransactionStatus_StatusCode::TransactionStatus_StatusCode_NotEnoughBalance:
+            return lk::TransactionStatus::StatusCode::NotEnoughBalance;
         default:
             RAISE_ERROR(base::InvalidArgument, "Invalid type");
     }
@@ -127,16 +140,12 @@ lk::AccountInfo deserializeAccountInfo(const likelib::AccountInfo* const info)
 {
     auto balance = info->balance().value();
     auto nonce = info->nonce();
-
     std::vector<base::Sha256> hashes;
     for (const auto& hs : info->hashes()) {
         hashes.emplace_back(deserializeHash(&hs));
     }
-
     lk::AccountType type = deserializeAccountType(info->type());
-
     lk::Address address = deserializeAddress(&(info->address()));
-
     return { type, address, balance, nonce, std::move(hashes) };
 }
 
@@ -158,14 +167,13 @@ void serializeInfo(const Info& from, likelib::NodeInfo* to)
     serializeHash(from.top_block_hash, to->mutable_top_block_hash());
     to->set_top_block_number(from.top_block_number);
     to->set_interface_version(from.api_version);
-    to->set_peers_number(from.peers_number);
 }
 
 
 Info deserializeInfo(const likelib::NodeInfo* const info)
 {
     auto top_block_hash = deserializeHash(&(info->top_block_hash()));
-    return { top_block_hash, info->top_block_number(), info->interface_version(), info->peers_number() };
+    return { top_block_hash, info->top_block_number(), info->interface_version() };
 }
 
 
@@ -204,7 +212,6 @@ lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx)
     txb.setTimestamp(base::Time(tx->creation_time().seconds_since_epoch()));
     txb.setData(base::base64Decode(tx->data()));
     txb.setSign(lk::Sign(base::base64Decode(tx->signature().signature_bytes_at_base_64())));
-
     return std::move(txb).build();
 }
 
@@ -216,7 +223,6 @@ void serializeBlock(const lk::Block& from, likelib::Block* to)
     serializeHash(from.getPrevBlockHash(), to->mutable_previous_block_hash());
     serializeAddress(from.getCoinbase(), to->mutable_coinbase());
     to->mutable_timestamp()->set_seconds_since_epoch(from.getTimestamp().getSecondsSinceEpoch());
-
     for (const auto& tx : from.getTransactions()) {
         serializeTransaction(tx, to->mutable_transactions()->Add());
     }
@@ -230,12 +236,10 @@ lk::Block deserializeBlock(const likelib::Block* const block_to_deserialization)
     base::Time timestamp{ block_to_deserialization->timestamp().seconds_since_epoch() };
     lk::NonceInt nonce{ block_to_deserialization->nonce() };
     lk::Address coinbase = deserializeAddress(&(block_to_deserialization->coinbase()));
-
     lk::TransactionsSet txset;
     for (const auto& txv : block_to_deserialization->transactions()) {
         txset.add(deserializeTransaction(&txv));
     }
-
     lk::Block blk{ depth, prev_block_hash, timestamp, coinbase, std::move(txset) };
     blk.setNonce(nonce);
     return blk;
@@ -244,7 +248,7 @@ lk::Block deserializeBlock(const likelib::Block* const block_to_deserialization)
 
 void serializeTransactionStatus(const lk::TransactionStatus& from, likelib::TransactionStatus* to)
 {
-    to->set_gas_left(from.getFeeLeft());
+    to->set_fee_left(from.getFeeLeft());
     to->set_message(from.getMessage());
     to->set_status(serializeTransactionStatusCode(from.getStatus()));
     to->set_type(serializeTransactionActionType(from.getType()));
@@ -255,19 +259,28 @@ lk::TransactionStatus deserializeTransactionStatus(const likelib::TransactionSta
 {
     lk::TransactionStatus::StatusCode status_code = deserializeTransactionStatusCode(status->status());
     lk::TransactionStatus::ActionType action_type = deserializeTransactionActionType(status->type());
-    return lk::TransactionStatus{ status_code, action_type, status->gas_left(), status->message() };
+    return lk::TransactionStatus{ status_code, action_type, status->fee_left(), status->message() };
 }
 
 
-void serializeViewCall(const lk::Address& from_address,
-                       const lk::Address& contract_address,
-                       const base::Bytes& contract_message,
-                       likelib::ViewCall* to)
+void serializeViewCall(const lk::ViewCall& from, likelib::ViewCall* to)
 {
-    serializeAddress(from_address, to->mutable_from());
-    serializeAddress(contract_address, to->mutable_to());
-    to->mutable_message()->set_bytes_base_64(base::base64Encode(contract_message));
+    serializeAddress(from.getFrom(), to->mutable_from());
+    serializeAddress(from.getContractAddress(), to->mutable_to());
+    to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSecondsSinceEpoch());
+    to->mutable_message()->set_bytes_base_64(base::base64Encode(from.getData()));
+    to->mutable_signature()->set_signature_bytes_at_base_64(base::base64Encode(from.getSign()));
 }
 
+
+lk::ViewCall deserializeViewCall(const likelib::ViewCall* const call)
+{
+    auto from_address = deserializeAddress(&call->from());
+    auto to_address = deserializeAddress(&call->to());
+    auto timestamp = base::Time(call->creation_time().seconds_since_epoch());
+    auto message = base::base64Decode(call->message().bytes_base_64());
+    auto sign = lk::Sign(base::base64Decode(call->signature().signature_bytes_at_base_64()));
+    return lk::ViewCall{ from_address, to_address, timestamp, message, sign };
+}
 
 }

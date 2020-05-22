@@ -1,8 +1,9 @@
 #include "blockchain.hpp"
 
+#include "core/host.hpp"
+
 #include "base/assert.hpp"
 #include "base/log.hpp"
-#include "core/host.hpp"
 
 #include <optional>
 

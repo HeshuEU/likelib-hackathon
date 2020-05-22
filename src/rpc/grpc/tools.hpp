@@ -1,8 +1,8 @@
 #pragma once
 
-#include <rpc/base_rpc.hpp>
+#include "public_rpc.grpc.pb.h"
 
-#include <public_rpc.grpc.pb.h>
+#include "rpc/base_rpc.hpp"
 
 namespace rpc::grpc
 {
@@ -51,8 +51,8 @@ void serializeTransactionStatus(const lk::TransactionStatus& from, likelib::Tran
 
 lk::TransactionStatus deserializeTransactionStatus(const likelib::TransactionStatus* const status);
 
-void serializeViewCall(const lk::Address& from_address,
-                       const lk::Address& contract_address,
-                       const base::Bytes& contract_message,
-                       likelib::ViewCall* to);
+void serializeViewCall(const lk::ViewCall& from, likelib::ViewCall* to);
+
+lk::ViewCall deserializeViewCall(const likelib::ViewCall* const call);
+
 }

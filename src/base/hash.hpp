@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/serialization.hpp"
+#include "serialization.hpp"
 
 #include <functional>
 #include <iosfwd>

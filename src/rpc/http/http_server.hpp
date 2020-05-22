@@ -2,7 +2,7 @@
 
 #include "http_adapter.hpp"
 
-#include <rpc/rpc.hpp>
+#include "rpc/rpc.hpp"
 
 namespace rpc::http
 {

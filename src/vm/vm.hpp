@@ -1,10 +1,10 @@
 #pragma once
 
-#include <core/address.hpp>
-#include <core/types.hpp>
+#include "core/address.hpp"
+#include "core/types.hpp"
 
-#include <base/bytes.hpp>
-#include <base/property_tree.hpp>
+#include "base/bytes.hpp"
+#include "base/property_tree.hpp"
 
 #include <evmc/evmc.hpp>
 
@@ -15,7 +15,6 @@
 
 namespace vm
 {
-
 
 struct CompiledContract
 {
@@ -40,6 +39,5 @@ std::optional<Contracts> compile(const std::string& path_to_solidity_file);
 
 
 evmc::VM load();
-
 
 } // namespace vm

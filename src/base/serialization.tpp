@@ -1,14 +1,12 @@
 #pragma once
 
 #include "serialization.hpp"
-
-#include "base/assert.hpp"
+#include "assert.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/endian/conversion.hpp>
 
 #include <functional>
-
 
 namespace impl
 {
@@ -20,8 +18,11 @@ struct TrickFalse : std::false_type
 
 struct Base
 {};
+
+
 struct Derived : Base
 {};
+
 
 template<typename T>
 struct IntHolder

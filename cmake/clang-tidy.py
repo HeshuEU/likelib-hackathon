@@ -19,9 +19,8 @@ try:
     output = subprocess.check_output(l, stderr=subprocess.STDOUT)
     with open(os.path.join(PATH_TO_LOGS, LOG_NAME), "at") as f:
         f.write('\n'.join(output))
-
 except Exception as e:
-    with open(os.path.join(PATH_TO_LOGS, LOG_NAME), "at") as f:
-        f.write(e.output.decode("utf-8"))
+    with open(os.path.join(PATH_TO_LOGS, LOG_NAME), "at", encoding='utf8') as f:
+        f.write(str(e))
     open(os.path.join(PATH_TO_LOGS, ".error-flag"), "w").close()
-    exit(0)
+    exit(1)

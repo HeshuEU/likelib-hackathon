@@ -1,11 +1,12 @@
 #include "hard_config.hpp"
 #include "soft_config.hpp"
 
-#include <base/assert.hpp>
-#include <base/config.hpp>
-#include <base/log.hpp>
-#include <base/program_options.hpp>
-#include <node/node.hpp>
+#include "node/node.hpp"
+
+#include "base/assert.hpp"
+#include "base/config.hpp"
+#include "base/log.hpp"
+#include "base/program_options.hpp"
 
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>

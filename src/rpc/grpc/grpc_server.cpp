@@ -1,7 +1,8 @@
 #include "grpc_server.hpp"
 
-#include <base/error.hpp>
-#include <rpc/error.hpp>
+#include "rpc/error.hpp"
+
+#include "base/error.hpp"
 
 namespace rpc::grpc
 {

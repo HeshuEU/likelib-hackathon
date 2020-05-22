@@ -1,28 +1,25 @@
 #include "actions.hpp"
 #include "config.hpp"
 
-#include <core/transaction.hpp>
+#include "core/transaction.hpp"
 
-#include <rpc/error.hpp>
-#include <rpc/rpc.hpp>
+#include "rpc/error.hpp"
+#include "rpc/rpc.hpp"
 
-#include <vm/tools.hpp>
-#include <vm/vm.hpp>
+#include "vm/tools.hpp"
+#include "vm/vm.hpp"
 
-#include <base/config.hpp>
-#include <base/directory.hpp>
-#include <base/hash.hpp>
-#include <base/log.hpp>
-#include <base/property_tree.hpp>
-#include <base/subprogram_router.hpp>
-#include <base/time.hpp>
+#include "base/config.hpp"
+#include "base/directory.hpp"
+#include "base/hash.hpp"
+#include "base/log.hpp"
+#include "base/property_tree.hpp"
+#include "base/subprogram_router.hpp"
+#include "base/time.hpp"
 
 #include <cstring>
 #include <iostream>
 #include <string>
-
-
-//====================================
 
 namespace
 {
@@ -40,25 +37,6 @@ constexpr const char* MESSAGE_OPTION = "message";
 constexpr const char* HASH_OPTION = "hash";
 constexpr const char* NUMBER_OPTION = "number";
 
-
-// std::pair<base::RsaPublicKey, base::RsaPrivateKey> loadKeys(const std::filesystem::path& dir)
-//{
-//    auto public_key_path = base::config::makePublicKeyPath(dir);
-//    if (!std::filesystem::exists(public_key_path)) {
-//        RAISE_ERROR(base::InaccessibleFile, "cannot find public key file by path \"" + public_key_path.string() +
-//        '\"');
-//    }
-//    auto public_key = base::RsaPublicKey::load(public_key_path);
-//
-//    auto private_key_path = base::config::makePrivateKeyPath(dir);
-//    if (!std::filesystem::exists(private_key_path)) {
-//        RAISE_ERROR(base::InaccessibleFile,
-//                    "cannot find private key file by path \"" + private_key_path.string() + '\"');
-//    }
-//    auto private_key = base::RsaPrivateKey::load(private_key_path);
-//
-//    return { std::move(public_key), std::move(private_key) };
-//}
 
 bool checkOptionEmptyAndWriteMessage(const base::ProgramOptionsParser& parser, const char* const option)
 {
@@ -416,7 +394,7 @@ int ActionGetBalance::execute()
         client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
     }
 
-    auto result = client->getAccount(_account_address);
+    auto result = client->getAccountInfo(_account_address);
     std::cout << "Balance of " << _account_address << " is " << result.balance << std::endl;
 
     LOG_INFO << "Remote call of GetBalance(" << _account_address << ") -> [" << result.balance << "]";
@@ -475,7 +453,7 @@ int ActionGetAccountInfo::execute()
         client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
     }
 
-    auto result = client->getAccount(_account_address);
+    auto result = client->getAccountInfo(_account_address);
 
     if (result.type == lk::AccountType::CLIENT) {
         std::cout << "Client address: " << result.address.toString() << '\n'
@@ -1060,6 +1038,7 @@ void ActionCallContractView::setupOptionsParser(base::ProgramOptionsParser& pars
     parser.addOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" contract");
     parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addOption<std::string>(MESSAGE_OPTION, "message for call smart contract");
+    parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addFlag(IS_HTTP_CLIENT_OPTION, "is set enable http client call");
 }
 
@@ -1095,8 +1074,8 @@ int ActionCallContractView::loadOptions(const base::ProgramOptionsParser& parser
 int ActionCallContractView::execute()
 {
     auto private_key_path = base::config::makePrivateKeyPath(_keys_dir);
-    auto priv = base::Secp256PrivateKey::load(private_key_path);
-    auto from_address = lk::Address(priv.toPublicKey());
+    auto private_key = base::Secp256PrivateKey::load(private_key_path);
+    auto from_address = lk::Address(private_key.toPublicKey());
 
     LOG_INFO << "Try to connect to rpc server by: " << _host_address;
     std::unique_ptr<rpc::BaseRpc> client;
@@ -1108,9 +1087,12 @@ int ActionCallContractView::execute()
     }
 
     auto data = base::fromHex<base::Bytes>(_message);
-    auto responce = client->callContractView(from_address, _to_address, std::move(data));
+    lk::ViewCall call{from_address, _to_address, base::Time::now(), std::move(data) };
+    call.sign(private_key);
 
-    std::cout << "View of smart contract response: " << base::toHex(responce) << std::endl;
+    auto response = client->callContractView(call);
+
+    std::cout << "View of smart contract response: " << base::toHex(response) << std::endl;
 
     return base::config::EXIT_OK;
 }
@@ -1271,8 +1253,17 @@ int ActionGetTransactionStatus::execute()
         case lk::TransactionStatus::StatusCode::Success:
             status_message = "success";
             break;
-        case lk::TransactionStatus::StatusCode::Rejected:
-            status_message = "rejected";
+        case lk::TransactionStatus::StatusCode::Pending:
+            status_message = "pending";
+            break;
+        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
+            status_message = "not enough balance";
+            break;
+        case lk::TransactionStatus::StatusCode::BadQueryForm:
+            status_message = "bad query form";
+            break;
+        case lk::TransactionStatus::StatusCode::BadSign:
+            status_message = "bad sign";
             break;
         case lk::TransactionStatus::StatusCode::Revert:
             status_message = "revert";

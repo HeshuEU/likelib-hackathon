@@ -5,6 +5,7 @@
 
 namespace
 {
+
 #define BLOCK_SIZE ((1600 - 256 * 2) / 8)
 
 #define I64(x) x##LL
@@ -33,11 +34,13 @@ const uint8_t constants[]  = {
 };
 // clang-format on
 
+
 uint8_t getConstant(uint8_t type, uint8_t index)
 {
     return constants[type + index];
     // return pgm_read_byte(&constants[type + index]);
 }
+
 
 static uint64_t get_round_constant(uint8_t round)
 {
@@ -68,6 +71,7 @@ static uint64_t get_round_constant(uint8_t round)
 
     return result;
 }
+
 
 typedef struct SHA3_CTX
 {
@@ -230,10 +234,12 @@ extern "C"
         }
     }
 }
+
 }
 
 namespace base
 {
+
 Keccak256::Keccak256(const Bytes& data)
   : _bytes(data)
 {

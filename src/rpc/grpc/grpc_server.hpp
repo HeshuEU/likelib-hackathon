@@ -2,7 +2,7 @@
 
 #include "grpc_adapter.hpp"
 
-#include <rpc/rpc.hpp>
+#include "rpc/rpc.hpp"
 
 namespace rpc::grpc
 {

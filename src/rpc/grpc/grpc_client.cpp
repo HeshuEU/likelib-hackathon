@@ -1,7 +1,7 @@
 #include "grpc_client.hpp"
 #include "tools.hpp"
 
-#include <rpc/error.hpp>
+#include "rpc/error.hpp"
 
 
 namespace rpc::grpc
@@ -16,7 +16,7 @@ NodeClient::NodeClient(const std::string& connect_address)
 }
 
 
-lk::AccountInfo NodeClient::getAccount(const lk::Address& address)
+lk::AccountInfo NodeClient::getAccountInfo(const lk::Address& address)
 {
     // convert data for request
     likelib::Address request;
@@ -226,14 +226,12 @@ lk::TransactionStatus NodeClient::getTransactionResult(const base::Sha256& trans
 }
 
 
-base::Bytes NodeClient::callContractView(const lk::Address& from,
-                                         const lk::Address& contract_address,
-                                         const base::Bytes& message)
+base::Bytes NodeClient::callContractView(const lk::ViewCall& call)
 {
     // convert data for request
     likelib::ViewCall request;
     try {
-        serializeViewCall(from, contract_address, message, &request);
+        serializeViewCall(call, &request);
     }
     catch (const base::Error& er) {
         RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());

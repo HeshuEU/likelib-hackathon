@@ -6,9 +6,9 @@
 ### 1. get_node_info
 
 request: 
-	
+
 	post to http:://<target url>/get_node_info
-	
+
 	### without body
 
 response:
@@ -29,7 +29,7 @@ response:
 request:
 
 	post to http:://<target url>/get_account
-	
+
 	### need json object at body:
     {
         “address”: “<address encoded by base58>”,
@@ -39,17 +39,15 @@ response:
 
 	### json object at body:
 	{
-		“method”: “get_account”,
-		“status”: “ok”/”error”,
-		“result”: {
-			“address”: “<address encoded by base58>”,
-			“balance”: “<uint256 integer at string format>”,
-			“nonce”: <integer>,
-			"type": "client"/"contract"
-			## if "type" == "client" will be field "transaction_hashes"
+        “method”: “get_account”,
+        “status”: “ok”/”error”,
+        “result”: {
+            “address”: “<address encoded by base58>”,
+            “balance”: “<uint256 integer at string format>”,
+            “nonce”: <integer>,
+            "type": "client"/"contract"
+            ## if "type" == "client" will be field "transaction_hashes"
             “transaction_hashes”: [<zero or more strings with hashes of transactions encoded by base64>]
-            ## if "type" == "contract" will be field "abi"
-            “abi”: <contract abi object>
 		}
 	}
 
@@ -63,29 +61,29 @@ request:
     {
         "hash": "<hash encoded by base64>"
         ## or
-    	“number”: <integer block number>,
+        “number”: <integer block number>,
     }
-    
+
 response:
 
 	### json object at body:
 	{
-		“method”: “get_block”,
-		“status”: “ok”/”error”,
-		“result”: {
-			“depth”: <integer>,
-			“nonce”: <integer>,
-			“timestamp”: <integer is seconds from epoch start>,
-			“previous_block_hash”: “<block hash encoded by base64>”,
-			“coinbase ”: “<address encoded by base58>”,
-			“transactions”: [<one or more transactions objects(see push_transaction)>]
+        “method”: “get_block”,
+        “status”: “ok”/”error”,
+        “result”: {
+            “depth”: <integer>,
+            “nonce”: <integer>,
+            “timestamp”: <integer is seconds from epoch start>,
+            “previous_block_hash”: “<block hash encoded by base64>”,
+            “coinbase ”: “<address encoded by base58>”,
+            “transactions”: [<one or more transactions objects(see push_transaction)>]
 		}
 	}
 
 ### 4. get_transaction
 
 request:
-	
+
 	post to http:://<target url>/get_transaction
 
 	### need json object at body:
@@ -102,31 +100,30 @@ response:
 		“result”: <one transaction object(see push_transaction)>
 	}
 
-### 5. get_transaction_result
+### 5. get_transaction_status
 
 request:
 
-	post to http:://<target url>/get_transaction_result
+	post to http:://<target url>/get_transaction_status
 
 	### need json object at body:
     {
         "hash": "<hash encoded by base64>"
     }
-    
+
 response:
 
 	### json object at body:
 	{
-		“method”: “get_transaction_result”,
+		“method”: “get_transaction_status”,
 		“status”: “ok”/”error”,
 		“result”: {
-			“status_code”: <number Success=0, Rejected=1, Revert=2, Failed=3>,
+			“status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
 			“action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
-			“gas_left”: “<uint256 integer at string format>”,
-			“message”: “<If action_type == 1 then the message is empty string. If action_type == 2 then the message is encoded by base64 data from contract call in string type. If action_type == 3 then the message is address encoded by base58 in string type.>”,
+			“fee_left”: “<uint256 integer at string format>”,
+			“message”: “<All will be at such format if status_code == 0. If action_type == 1 then the message is empty string. If action_type == 2 then the message is encoded by base64 data from contract call in string type. If action_type == 3 then the message is address encoded by base58 in string type.>”,
 		}
 	}
-
 
 ### 6. push_transaction
 
@@ -141,8 +138,8 @@ request:
 		“amount”: “<uint256 integer at string format>”,
 		“fee”: “<uint256 integer at string format>”,
 		“timestamp”: <integer is seconds from epoch start>,
-		“data”: “<binary encoded(for call) data string message then ecnoded by base64 or empty string if "to" is not a contract address>”,
-		“sign”: “<transaction hash encrypted by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
+		“data”: “<message ecnoded by base64 or empty string if "to" is not a contract address>”,
+		“sign”: “<transaction hash signed by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
 	}
 
 response:
@@ -151,7 +148,7 @@ response:
 	{
 		“method”: “push_transaction”,
 		“status”: “ok”/”error”,
-		“result”: <transaction result object see get_transaction_result method>
+		“result”: <transaction result object see get_transaction_status method>
 	}
 
 ### 7. call_contract_view
@@ -164,7 +161,9 @@ request:
 	{
 		“from”: “<address encoded by base58>”,
 		“to”: “<contract address encoded by base58>”,
+		“timestamp”: <integer is seconds from epoch start>,
 		“message”: “<binary encoded(for call) data message ecnoded by base64>”,
+		“sign”: “<call hash signed by private key of sender(from address) encoded by base64 (see format notes for more information)>”                                                               	
 	}
 
 response:
@@ -176,15 +175,18 @@ response:
 		“result”: “<encoded by base64 data from contract call in string type>”,
 	}
 
-
 ## Format notes:
 
 - if “status” is “error” field “result” may be absent  or “result” will be a error message string.
-- address is Ripemd160 of sha256 of public key bytes.
-- null address is 20 bytes of zeros
-- for sign using secp256k1. Hash of transaction using as signing message.
-- transaction hash is sha256 of concatenated stringified fields:
+- address is Ripemd160 of sha256 of serialized public key bytes.
+- null address is 20 bytes of zeros.
+- for sign using secp256k1. Hash of transaction using as signing message. singing function is sign_recoverable with sha256 hash function.
+- transaction hash is sha256 of concatenated string:
 
-		“<from address encoded by base58>” + “<to address or null address if transaction for contract creation encoded by base58>” + “<amount as uint256 integer at string format>” + “<fee as uint256 integer at string format>” + “<timestamp integer is seconds from epoch start at string>” + “data if "to" is null address, data will be: “<binary contract code string message>” + “<binary constructor encoded(for call) data string message>”+“<contract abi object serialized to string>”, if address is not null address, data will be: “<message binary encoded(for call) data string message or empty string if "to" not a contract address>” “
-    
+		“<from address encoded by base58>” + “<to address or null address if transaction for contract creation encoded by base58>” + “<amount as uint256 integer at string format>” + “<fee as uint256 integer at string format>” + “<timestamp integer is seconds from epoch start at string>” + “<binary encoded data message ecnoded by base64 or empty string>”
+
+- call hash is sha256 of concatenated string:
+ 
+ 		“<from address encoded by base58>” + “<to address encoded by base58>”  + “<timestamp integer is seconds from epoch start at string>” + “<binary encoded(for call) data message ecnoded by base64>”
+     
    

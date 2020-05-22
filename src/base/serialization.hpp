@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/bytes.hpp"
+#include "bytes.hpp"
 
 #include <cstdint>
 #include <functional>

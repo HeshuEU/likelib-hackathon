@@ -1,7 +1,7 @@
 #pragma once
 
-#include "base/config.hpp"
-#include "base/log.hpp"
+#include "config.hpp"
+#include "log.hpp"
 
 #include <boost/stacktrace.hpp>
 
@@ -25,6 +25,7 @@
     } while (false)
 
 #else
+
 #define ASSERT(condition)                                                                                              \
     do {                                                                                                               \
         if (!(condition)) {                                                                                            \

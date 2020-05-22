@@ -2,11 +2,10 @@
 
 #include "base_rpc.hpp"
 
-#include <base/property_tree.hpp>
+#include "base/property_tree.hpp"
 
 namespace rpc
 {
-
 
 enum class ClientMode
 {
@@ -30,6 +29,5 @@ class BaseRpcServer
 
 
 std::unique_ptr<BaseRpcServer> create_rpc_server(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface);
-
 
 } // namespace rpc

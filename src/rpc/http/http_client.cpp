@@ -1,12 +1,12 @@
 #include "http_client.hpp"
 #include "tools.hpp"
 
-#include <rpc/error.hpp>
+#include "rpc/error.hpp"
 
 namespace
 {
 
-web::http::http_request createPostRequest(const std::string& url, web::json::value request)
+web::http::http_request createPostRequest(const std::string& url, const web::json::value& request)
 {
     web::http::uri_builder builder(url);
 
@@ -24,13 +24,12 @@ web::http::http_request createPostRequest(const std::string& url, web::json::val
 namespace rpc::http
 {
 
-
 NodeClient::NodeClient(const std::string& connect_address)
   : _client{ "http://" + U(connect_address) }
 {}
 
 
-lk::AccountInfo NodeClient::getAccount(const lk::Address& address)
+lk::AccountInfo NodeClient::getAccountInfo(const lk::Address& address)
 {
     web::json::value request_body;
     request_body["address"] = web::json::value::string(base::base58Encode(address.getBytes()));
@@ -38,7 +37,7 @@ lk::AccountInfo NodeClient::getAccount(const lk::Address& address)
     std::optional<lk::AccountInfo> opt_account_info;
 
     _client.request(createPostRequest("/get_account", request_body))
-      .then([&](web::http::http_response response) {
+      .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
@@ -73,7 +72,7 @@ Info NodeClient::getNodeInfo()
     std::optional<Info> opt_info;
 
     _client.request(createPostRequest("/get_node_info", request_body))
-      .then([&](web::http::http_response response) {
+      .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
@@ -109,7 +108,7 @@ lk::Block NodeClient::getBlock(const base::Sha256& block_hash)
     std::optional<lk::Block> opt_block;
 
     _client.request(createPostRequest("/get_block", request_body))
-      .then([&](web::http::http_response response) {
+      .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
@@ -145,7 +144,7 @@ lk::Block NodeClient::getBlock(uint64_t block_number)
     std::optional<lk::Block> opt_block;
 
     _client.request(createPostRequest("/get_block", request_body))
-      .then([&](web::http::http_response response) {
+      .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
@@ -181,7 +180,7 @@ lk::Transaction NodeClient::getTransaction(const base::Sha256& transaction_hash)
     std::optional<lk::Transaction> opt_tx;
 
     _client.request(createPostRequest("/get_transaction", request_body))
-      .then([&](web::http::http_response response) {
+      .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
@@ -216,7 +215,7 @@ lk::TransactionStatus NodeClient::pushTransaction(const lk::Transaction& transac
     std::optional<lk::TransactionStatus> opt_tx_status;
 
     _client.request(createPostRequest("/push_transaction", request_body))
-      .then([&](web::http::http_response response) {
+      .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
@@ -252,7 +251,7 @@ lk::TransactionStatus NodeClient::getTransactionResult(const base::Sha256& trans
     std::optional<lk::TransactionStatus> opt_tx_status;
 
     _client.request(createPostRequest("/get_transaction_result", request_body))
-      .then([&](web::http::http_response response) {
+      .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
@@ -280,19 +279,14 @@ lk::TransactionStatus NodeClient::getTransactionResult(const base::Sha256& trans
 }
 
 
-base::Bytes NodeClient::callContractView(const lk::Address& from,
-                                         const lk::Address& contract_address,
-                                         const base::Bytes& message)
+base::Bytes NodeClient::callContractView(const lk::ViewCall& call)
 {
-    web::json::value request_body;
-    request_body[U("from")] = serializeAddress(from);
-    request_body[U("to")] = serializeAddress(contract_address);
-    request_body[U("message")] = serializeBytes(message);
+    auto request_body = serializeViewCall(call);
 
     std::optional<base::Bytes> opt_bytes;
 
     _client.request(createPostRequest("/call_contract_view", request_body))
-      .then([&](web::http::http_response response) {
+      .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
@@ -318,6 +312,5 @@ base::Bytes NodeClient::callContractView(const lk::Address& from,
         RAISE_ERROR(base::InvalidArgument, "deserialization error");
     }
 }
-
 
 } // namespace rpc

@@ -1,15 +1,95 @@
 #include "core.hpp"
 
-#include <vm/error.hpp>
-#include <vm/tools.hpp>
+#include "vm/error.hpp"
+#include "vm/tools.hpp"
 
-#include <base/log.hpp>
+#include "base/log.hpp"
 
 #include <algorithm>
 
-
 namespace lk
 {
+
+ViewCall::ViewCall(lk::Address from,
+                   lk::Address contract_address,
+                   base::Time timestamp,
+                   base::Bytes data,
+                   lk::Sign sign)
+  : _from{ std::move(from) }
+  , _contract_address{ std::move(contract_address) }
+  , _data{ std::move(data) }
+  , _timestamp{ std::move(timestamp) }
+  , _sign{ std::move(sign) }
+{}
+
+
+const lk::Address& ViewCall::getFrom() const noexcept
+{
+    return _from;
+}
+
+
+const lk::Address& ViewCall::getContractAddress() const noexcept
+{
+    return _contract_address;
+}
+
+
+const base::Time& ViewCall::getTimestamp() const noexcept
+{
+    return _timestamp;
+}
+
+
+const base::Bytes& ViewCall::getData() const noexcept
+{
+    return _data;
+}
+
+
+void ViewCall::sign(const base::Secp256PrivateKey& key)
+{
+    auto hash = hashOfCall();
+    _sign = key.sign(hash.getBytes().toBytes());
+}
+
+
+bool ViewCall::checkSign() const
+{
+    if (_sign.toBytes().isEmpty()) {
+        return false;
+    }
+    else {
+        auto valid_hash = hashOfCall();
+        try {
+            auto pub = base::Secp256PrivateKey::decodeSignatureToPublicKey(_sign, valid_hash.getBytes().toBytes());
+            auto derived_addr = lk::Address(pub);
+            return _from == derived_addr;
+        }
+        catch (const base::CryptoError& ex) {
+            return false;
+        }
+    }
+}
+
+
+const lk::Sign& ViewCall::getSign() const noexcept
+{
+    return _sign;
+}
+
+
+base::Sha256 ViewCall::hashOfCall() const
+{
+    auto from_address_str = _from.toString();
+    auto to_address_str = _contract_address.toString();
+    auto timestamp_str = std::to_string(_timestamp.getSecondsSinceEpoch());
+    auto data_str = base::base64Encode(_data);
+
+    auto concatenated_data = from_address_str + to_address_str + timestamp_str + data_str;
+
+    return base::Sha256::compute(base::Bytes(concatenated_data));
+}
 
 
 class EthHost : public evmc::Host
@@ -158,8 +238,10 @@ class EthHost : public evmc::Host
     }
 
 
-    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-      noexcept override
+    size_t copy_code(const evmc::address& addr,
+                     size_t code_offset,
+                     uint8_t* buffer_data,
+                     size_t buffer_size) const noexcept override
     {
         LOG_DEBUG << "Core::copy_code";
         try {
@@ -324,47 +406,70 @@ void Core::run()
 }
 
 
-bool Core::addPendingTransaction(const lk::Transaction& tx)
+TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
 {
-    if (checkTransaction(tx)) {
-        {
-            LOG_DEBUG << "Adding tx to pending";
-            std::unique_lock lk(_pending_transactions_mutex);
-            _pending_transactions.add(tx);
-        }
-        _event_new_pending_transaction.notify(tx);
-        return true;
+    auto transaction_hash = tx.hashOfTransaction();
+    auto transaction_cost = tx.getAmount() + tx.getFee();
+
+    if (!tx.checkSign()) {
+        LOG_DEBUG << "Failed signature verification";
+        TransactionStatus status{ TransactionStatus::StatusCode::BadSign, TransactionStatus::ActionType::None, tx.getFee(), "" };
+        addTransactionOutput(transaction_hash, status);
+        return status;
     }
-    return false;
+
+    if (_blockchain.findTransaction(transaction_hash)) {
+        auto output_opt = getTransactionOutput(transaction_hash);
+        if (output_opt) {
+            return *output_opt;
+        }
+        TransactionStatus status{ TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::None, tx.getFee(), "" };
+        addTransactionOutput(transaction_hash, status);
+        return status;
+    }
+
+    std::map<lk::Address, lk::Balance> current_pending_balance;
+    {
+        std::shared_lock lk(_pending_transactions_mutex);
+        if (_pending_transactions.find(tx)) {
+            TransactionStatus status{TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""};
+            addTransactionOutput(transaction_hash, status);
+            return status;
+        }
+
+        current_pending_balance = lk::calcCost(_pending_transactions);
+    }
+
+    const auto& pending_from_account_balance = current_pending_balance.find(tx.getFrom());
+    if ((pending_from_account_balance != current_pending_balance.end() )&& (_state_manager.hasAccount(tx.getFrom()))) {
+        auto current_account_balance = _state_manager.getAccount(tx.getFrom()).getBalance();
+        if (pending_from_account_balance->second + transaction_cost < current_account_balance) {
+            TransactionStatus status{TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""};
+            addTransactionOutput(transaction_hash, status);
+            return status;
+        }
+    }
+
+    if( !_state_manager.checkTransaction(tx) ){
+        TransactionStatus status{TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""};
+        addTransactionOutput(transaction_hash, status);
+        return status;
+    }
+
+    LOG_DEBUG << "Adding tx to pending:" << transaction_hash;
+    {
+        std::unique_lock lk(_pending_transactions_mutex);
+        _pending_transactions.add(tx);
+    }
+
+    _event_new_pending_transaction.notify(tx);
+    TransactionStatus status{TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""};
+    addTransactionOutput(transaction_hash, status);
+    return status;
 }
 
 
-void Core::addPendingTransactionAndWait(const lk::Transaction& tx)
-{
-    if (!checkTransaction(tx)) {
-        RAISE_ERROR(base::InvalidArgument, "invalid transaction");
-    }
-
-    std::condition_variable cv;
-    std::mutex mt;
-    bool is_tx_mined = false;
-
-    auto id = _event_block_added.subscribe([&cv, &tx, &is_tx_mined](const lk::Block& block) {
-        if (block.getTransactions().find(tx)) {
-            is_tx_mined = true;
-            cv.notify_all();
-        }
-    });
-
-    addPendingTransaction(tx);
-
-    std::unique_lock lk(mt);
-    cv.wait(lk, [&is_tx_mined] { return is_tx_mined; });
-    _event_block_added.unsubscribe(id);
-}
-
-
-TransactionStatus Core::getTransactionOutput(const base::Sha256& tx)
+std::optional<TransactionStatus> Core::getTransactionOutput(const base::Sha256& tx)
 {
     std::shared_lock lk(_tx_outputs_mutex);
     if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
@@ -397,14 +502,7 @@ bool Core::tryAddBlock(const lk::Block& b)
         _event_block_added.notify(b);
         return true;
     }
-    else {
-        for (const auto& tx : b.getTransactions()) {
-            TransactionStatus status(
-              TransactionStatus::StatusCode::Rejected, TransactionStatus::ActionType::None, tx.getFee(), {});
-            addTransactionOutput(tx.hashOfTransaction(), status);
-        }
-        return false;
-    }
+    return false;
 }
 
 
@@ -431,56 +529,20 @@ bool Core::checkBlock(const lk::Block& block) const
     if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(block)))) {
         return false;
     }
-    //     create calculation using int512 instead uint256
-    //    auto current_pending_balance = lk::calcBalance(block.getTransactions());
-    //    for (const auto& [account_address, block_balance] : current_pending_balance) {
-    //        if (_state_manager.hasAccount(account_address)) {
-    //            if (_state_manager.getAccount(account_address).getBalance() + block_balance < 0) {
-    //                return false;
-    //            }
-    //        }
-    //        else {
-    //            if (0 > block_balance) {
-    //                return false;
-    //            }
-    //        }
-    //    }
-    return true;
-}
-
-
-bool Core::checkTransaction(const lk::Transaction& tx) const
-{
-    if (!tx.checkSign()) {
-        LOG_DEBUG << "Failed signature verification";
-        return false;
-    }
-
-    if (_blockchain.findTransaction(tx.hashOfTransaction())) {
-        return false;
-    }
-
-    std::map<lk::Address, lk::Balance> current_pending_balance;
-    {
-        std::shared_lock lk(_pending_transactions_mutex);
-        if (_pending_transactions.find(tx)) {
+    auto block_balance = lk::calcCost(block.getTransactions());
+    for (const auto& tx : block.getTransactions()) {
+        if (_state_manager.hasAccount(tx.getFrom())) {
+            auto current_account_balance = _state_manager.getAccount(tx.getFrom()).getBalance();
+            auto block_account_cost = block_balance.find(tx.getFrom());
+            ASSERT(block_account_cost != block_balance.end());
+            if (block_account_cost->second > current_account_balance) {
+                return false;
+            }
+        } else{
             return false;
         }
-
-        current_pending_balance = lk::calcBalance(_pending_transactions);
     }
-
-    auto pending_from_account_balance = current_pending_balance.find(tx.getFrom());
-    if (pending_from_account_balance != current_pending_balance.end()) {
-        if (_state_manager.hasAccount(tx.getFrom())) {
-            auto balance = _state_manager.getAccount(tx.getFrom()).getBalance();
-            return pending_from_account_balance->second + balance >= tx.getAmount() + tx.getFee();
-        }
-        return pending_from_account_balance->second >= tx.getAmount() + tx.getFee();
-    }
-    else {
-        return _state_manager.checkTransaction(tx);
-    }
+    return true;
 }
 
 
@@ -514,23 +576,26 @@ const lk::Address& Core::getThisNodeAddress() const noexcept
 }
 
 
-base::Bytes Core::callViewMethod(const lk::Address& from,
-                                 const lk::Address& contract_address,
-                                 const base::Bytes& message)
+base::Bytes Core::callViewMethod(const lk::ViewCall& call)
 {
-    if (_state_manager.hasAccount(contract_address) &&
-        _state_manager.getAccount(contract_address).getType() == lk::AccountType::CONTRACT) {
-        auto contract_account = _state_manager.getAccount(contract_address);
+    if(!call.checkSign()){
+        RAISE_ERROR(base::InvalidArgument, "Signature check failed");
+    }
+
+    if (_state_manager.hasAccount(call.getContractAddress()) && _state_manager.getAccount(call.getContractAddress()).getType() == lk::AccountType::CONTRACT) {
+        auto contract_account = _state_manager.getAccount(call.getContractAddress());
         const auto& tx = invalidTransaction();
         const auto& block = invalidBlock();
 
-        auto eval_result = callContractAtViewModeVm(
-          _state_manager, block, tx, from, contract_address, contract_account.getRuntimeCode(), message);
+        auto eval_result = callContractAtViewModeVm(_state_manager, block, tx, call.getFrom(), call.getContractAddress(), contract_account.getRuntimeCode(), call.getData());
 
-        auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
-        return output_data;
+        if (eval_result.status_code == EVMC_SUCCESS){
+            auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
+            return output_data;
+        }
+        RAISE_ERROR(base::InvalidArgument, "Failed at vm call");
     }
-    RAISE_ERROR(base::InvalidArgument, std::string("no contract by address: ") + contract_address.toString());
+    RAISE_ERROR(base::InvalidArgument, std::string("no contract by address: ") + call.getContractAddress().toString());
 }
 
 
@@ -561,7 +626,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
             lk::Address contract_address = tx_manager.createContractAccount(tx.getFrom(), contract_data_hash);
 
             if (!tx_manager.tryTransferMoney(tx.getFrom(), contract_address, tx.getAmount())) {
-                TransactionStatus status(TransactionStatus::StatusCode::Rejected,
+                TransactionStatus status(TransactionStatus::StatusCode::NotEnoughBalance,
                                          TransactionStatus::ActionType::ContractCreation,
                                          tx.getFee(),
                                          {});
@@ -601,7 +666,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                 return;
             }
             else {
-                TransactionStatus status(TransactionStatus::StatusCode::Failed,
+                TransactionStatus status(TransactionStatus::StatusCode::BadQueryForm,
                                          TransactionStatus::ActionType::ContractCreation,
                                          eval_result.gas_left,
                                          "");
@@ -629,7 +694,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
             try {
 
                 if (tx.getData().isEmpty()) {
-                    TransactionStatus status(TransactionStatus::StatusCode::Rejected,
+                    TransactionStatus status(TransactionStatus::StatusCode::BadQueryForm,
                                              TransactionStatus::ActionType::ContractCall,
                                              tx.getFee(),
                                              "");
@@ -638,7 +703,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                 }
 
                 if (tx.getAmount() > 0 && !tx_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
-                    TransactionStatus status(TransactionStatus::StatusCode::Rejected,
+                    TransactionStatus status(TransactionStatus::StatusCode::NotEnoughBalance,
                                              TransactionStatus::ActionType::ContractCall,
                                              tx.getFee(),
                                              {});
@@ -677,7 +742,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
                     return;
                 }
                 else {
-                    TransactionStatus status(TransactionStatus::StatusCode::Failed,
+                    TransactionStatus status(TransactionStatus::StatusCode::BadQueryForm,
                                              TransactionStatus::ActionType::ContractCall,
                                              eval_result.gas_left,
                                              "");
@@ -698,7 +763,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
         else {
             try {
                 if (!tx_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
-                    TransactionStatus status(TransactionStatus::StatusCode::Rejected,
+                    TransactionStatus status(TransactionStatus::StatusCode::NotEnoughBalance,
                                              TransactionStatus::ActionType::Transfer,
                                              tx.getFee(),
                                              {});
@@ -732,7 +797,7 @@ evmc::result Core::callInitContractVm(StateManager& state_manager,
                                       const lk::Address& contract_address,
                                       const base::Bytes& code)
 {
-    evmc_message message;
+    evmc_message message{};
     message.kind = evmc_call_kind::EVMC_CALL;
     message.flags = 0;
     message.depth = 0;
@@ -751,7 +816,7 @@ evmc::result Core::callContractVm(StateManager& state_manager,
                                   const base::Bytes& code,
                                   const base::Bytes& message_data)
 {
-    evmc_message message;
+    evmc_message message{};
     message.kind = evmc_call_kind::EVMC_CALL;
     message.flags = 0;
     message.depth = 0;
@@ -773,11 +838,11 @@ evmc::result Core::callContractAtViewModeVm(StateManager& state_manager,
                                             const base::Bytes& code,
                                             const base::Bytes& message_data)
 {
-    evmc_message message;
+    evmc_message message{};
     message.kind = evmc_call_kind::EVMC_CALL;
     message.flags = evmc_flags::EVMC_STATIC;
     message.depth = 0;
-    constexpr std::uint64_t VIEW_FREE_MAX_VALUE = 100000;
+    constexpr std::uint64_t VIEW_FREE_MAX_VALUE = 200000;
     message.gas = VIEW_FREE_MAX_VALUE;
     message.sender = vm::toEthAddress(sender_address);
     message.destination = vm::toEthAddress(contract_address);
@@ -809,6 +874,5 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 {
     _event_new_pending_transaction.subscribe(std::move(callback));
 }
-
 
 } // namespace core

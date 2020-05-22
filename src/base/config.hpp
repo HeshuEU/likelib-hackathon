@@ -22,6 +22,7 @@ constexpr bool IS_DEBUG =
 #else
 #define CONFIG_IS_DEBUG
 #endif
+
 //------------------------
 
 // macro CONFIG_OS_FAMILY_NAME definition
@@ -55,8 +56,8 @@ constexpr const char* const OS_NAME =
   "Unix"
 #endif
   ;
-//------------------------
 
+//------------------------
 
 // logging configuration
 constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H-%M-%S_%N.log";
@@ -70,20 +71,24 @@ constexpr int EXIT_OK = 0;
 constexpr int EXIT_FAIL = 1;
 // to better see when ASSERTIONS failed during debug
 constexpr int EXIT_ASSERT_FAILED = 2;
+
 //------------------------
 
 // net
 constexpr std::size_t NET_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
 constexpr std::size_t NET_PING_FREQUENCY = 3600;           // seconds
 constexpr std::size_t NET_CONNECT_TIMEOUT = 10;            // seconds
+
 //------------------------
 
 // blockchain
 constexpr std::size_t BC_MAX_TRANSACTIONS_IN_BLOCK = 100;
+
 //------------------------
 
 // rpc
 constexpr const uint32_t RPC_PUBLIC_API_VERSION = 1;
+
 //--------------------
 
 // database
@@ -91,10 +96,10 @@ constexpr std::size_t DATABASE_WRITE_BUFFER_SIZE = 50 * 1024 * 1024;     // 50MB
 constexpr std::size_t DATABASE_DATA_BLOCK_SIZE = 10 * 1024;              // 10KB data-block size
 constexpr std::size_t DATABASE_DATA_BLOCK_CACHE_SIZE = 50 * 1024 * 1024; // 50MB data-block cache size
 constexpr bool DATABASE_COMPRESS_DATA = false;                           // no compress data
+
 //--------------------
 
 // keys paths
-// std::filesystem::path makePublicKeyPath(const std::filesystem::path& path);
 std::filesystem::path makePrivateKeyPath(const std::filesystem::path& path);
 
 } // namespace base::config

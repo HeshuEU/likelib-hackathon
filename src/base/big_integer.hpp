@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/serialization.hpp"
+#include "serialization.hpp"
 
 #include <boost/multiprecision/cpp_int.hpp>
 
@@ -108,6 +108,7 @@ using Uint512 = BigInteger<
                                                    boost::multiprecision::cpp_integer_type::unsigned_magnitude,
                                                    boost::multiprecision::cpp_int_check_type::checked,
                                                    void>>;
+
 } // namespace base
 
 #include "big_integer.tpp"

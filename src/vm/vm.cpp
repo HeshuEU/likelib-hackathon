@@ -1,7 +1,7 @@
 #include "vm.hpp"
 #include "error.hpp"
 
-#include <base/log.hpp>
+#include "base/log.hpp"
 
 #include <evmc/loader.h>
 
@@ -12,10 +12,8 @@
 
 namespace bp = ::boost::process;
 
-
 namespace
 {
-
 
 std::tuple<std::string, std::string> parseInfoLine(const std::string& path)
 {
@@ -50,6 +48,7 @@ std::vector<std::string> callCommand(const boost::filesystem::path& path_to_solc
 
     return out_put_result_values;
 }
+
 
 std::vector<std::pair<std::string, base::Bytes>> callCompilationCommand(const boost::filesystem::path& path_to_solc,
                                                                         const std::string& path_to_solidity_file)
@@ -127,12 +126,11 @@ std::filesystem::path getVmPath()
     }
 }
 
-
 } // namespace
+
 
 namespace vm
 {
-
 
 CompiledContract::CompiledContract(std::string _name)
   : name{ _name }
@@ -211,6 +209,5 @@ evmc::VM load()
 
     return vm_instance;
 }
-
 
 } // namespace vm

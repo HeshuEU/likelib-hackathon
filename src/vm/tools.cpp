@@ -9,19 +9,17 @@
 #include <boost/process.hpp>
 #include <boost/serialization/vector.hpp>
 
-
 #include <algorithm>
 #include <regex>
-
 
 namespace bp = ::boost::process;
 
 namespace vm
 {
 
-
 namespace detail
 {
+
 template<typename N>
 base::Bytes encode(N value)
 {
@@ -286,8 +284,10 @@ std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_cod
     return std::nullopt;
 }
 
+
 namespace
 {
+
 constexpr const char* PATH_VARIABLE_NAME = "PATH";
 constexpr const char* PATH_DELIMITER_NAME = ":";
 constexpr const char* PYTHON_EXEC = "python3.7";
@@ -309,6 +309,7 @@ std::optional<std::string> findPython()
 }
 
 } // namespace
+
 
 std::string callPython(std::vector<std::string>& args)
 {
@@ -338,6 +339,5 @@ std::string callPython(std::vector<std::string>& args)
     }
     return s.str();
 }
-
 
 } // namespace vm

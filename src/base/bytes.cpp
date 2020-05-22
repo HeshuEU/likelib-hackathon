@@ -1,19 +1,13 @@
 #include "bytes.hpp"
-
-#include "base/assert.hpp"
-#include "base/error.hpp"
+#include "assert.hpp"
+#include "error.hpp"
 
 #include <openssl/pem.h>
 
 #include <boost/container_hash/hash.hpp>
 
-#include <iterator>
-
 namespace base
 {
-
-Bytes::Bytes() {}
-
 
 Bytes::Bytes(std::size_t size)
   : _raw(size)

@@ -1,8 +1,9 @@
 #include "protocol.hpp"
 
+#include "core/core.hpp"
+
 #include "base/log.hpp"
 #include "base/serialization.hpp"
-#include "core/core.hpp"
 
 /*
  * Some functions, that are implemented and later used inside templates are shown as not used.

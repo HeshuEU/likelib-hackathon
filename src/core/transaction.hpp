@@ -3,64 +3,13 @@
 #include "address.hpp"
 #include "types.hpp"
 
-#include <base/crypto.hpp>
-#include <base/serialization.hpp>
-#include <base/time.hpp>
+#include "base/crypto.hpp"
+#include "base/serialization.hpp"
+#include "base/time.hpp"
 
 
 namespace lk
 {
-
-
-//class ContractData
-//{
-//  public:
-//    explicit ContractData() = default;
-//    ContractData(base::Bytes message, base::PropertyTree abi);
-//
-//    ~ContractData() = default;
-//
-//    void setMessage(base::Bytes code);
-//    void setAbi(base::PropertyTree abi);
-//
-//    const base::Bytes& getMessage() const noexcept;
-//    const base::PropertyTree& getAbi() const noexcept;
-//
-//    void serialize(base::SerializationOArchive& oa) const;
-//    static ContractData deserialize(base::SerializationIArchive& ia);
-//
-//  private:
-//    base::Bytes _message;
-//    base::PropertyTree _abi;
-//};
-
-//
-// class Sign
-//{
-//  public:
-//    Sign() = default;
-//    Sign(base::RsaPublicKey sender_public_key, base::Bytes rsa_encrypted_hash);
-//
-//    bool isNull() const noexcept;
-//
-//    const base::RsaPublicKey& getPublicKey() const;
-//    const base::Bytes& getRsaEncryptedHash() const;
-//
-//    static Sign fromBase64(const std::string& base64_signature);
-//    std::string toBase64() const;
-//
-//    void serialize(base::SerializationOArchive& oa) const;
-//    static Sign deserialize(base::SerializationIArchive& ia);
-//
-//  private:
-//    struct Data
-//    {
-//        base::RsaPublicKey sender_public_key;
-//        base::Bytes rsa_encrypted_hash;
-//    };
-//
-//    std::optional<Data> _data;
-//};
 
 using Sign = base::FixedBytes<base::Secp256PrivateKey::SECP256_SIGNATURE_SIZE>;
 
@@ -112,8 +61,6 @@ class Transaction
     base::Bytes _data;
     lk::Sign _sign;
     //=================
-    void serializeHeader(base::SerializationOArchive& oa) const;
-    //=================
 };
 
 
@@ -154,9 +101,12 @@ class TransactionStatus
     enum class StatusCode : uint8_t
     {
         Success = 0,
-        Rejected = 1,
-        Revert = 2,
-        Failed = 3
+        Pending = 1,
+        BadQueryForm = 2,
+        BadSign = 3,
+        NotEnoughBalance = 4,
+        Revert = 5,
+        Failed = 6
     };
 
     enum class ActionType : uint8_t

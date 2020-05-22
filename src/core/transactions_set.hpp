@@ -1,7 +1,8 @@
 #pragma once
 
-#include "base/serialization.hpp"
 #include "transaction.hpp"
+
+#include "base/serialization.hpp"
 
 #include <map>
 #include <vector>
@@ -38,6 +39,6 @@ class TransactionsSet
 };
 
 
-std::map<Address, Balance> calcBalance(const TransactionsSet& txs);
+std::map<Address, Balance> calcCost(const TransactionsSet& txs);
 
 } // namespace lk

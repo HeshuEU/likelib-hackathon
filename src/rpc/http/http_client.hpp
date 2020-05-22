@@ -1,6 +1,6 @@
 #pragma once
 
-#include <rpc/base_rpc.hpp>
+#include "rpc/base_rpc.hpp"
 
 #include <cpprest/http_client.h>
 
@@ -17,7 +17,7 @@ class NodeClient final : public BaseRpc
 
     ~NodeClient() override = default;
 
-    lk::AccountInfo getAccount(const lk::Address& address) override;
+    lk::AccountInfo getAccountInfo(const lk::Address& address) override;
 
     Info getNodeInfo() override;
 
@@ -31,9 +31,7 @@ class NodeClient final : public BaseRpc
 
     lk::TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) override;
 
-    base::Bytes callContractView(const lk::Address& from,
-                                 const lk::Address& contract_address,
-                                 const base::Bytes& message) override;
+    base::Bytes callContractView(const lk::ViewCall& call) override;
 
   private:
     web::http::client::http_client _client;
