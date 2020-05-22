@@ -80,13 +80,13 @@ void Peer::requestBlock(const base::Sha256& block_hash)
 
 std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Context context)
 {
-    std::shared_ptr<Peer> peer{new Peer(std::move(session),
-                                       false,
-                                       context.host.getIoContext(),
-                                       static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
-                                       static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
-                                       context.core,
-                                       context.host)};
+    std::shared_ptr<Peer> peer{ new Peer(std::move(session),
+                                         false,
+                                         context.host.getIoContext(),
+                                         static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
+                                         static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
+                                         context.core,
+                                         context.host) };
 
     auto ret = peer->shared_from_this();
 
@@ -101,13 +101,13 @@ std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Cont
 
 std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Context context)
 {
-    std::shared_ptr<Peer> peer{new Peer(std::move(session),
-                                       true,
-                                       context.host.getIoContext(),
-                                       static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
-                                       static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
-                                       context.core,
-                                       context.host)};
+    std::shared_ptr<Peer> peer{ new Peer(std::move(session),
+                                         true,
+                                         context.host.getIoContext(),
+                                         static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
+                                         static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
+                                         context.core,
+                                         context.host) };
 
     auto ret = peer->shared_from_this();
 
@@ -135,10 +135,13 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _handshaked_pool{ handshaked_pool }
   , _core{ core }
   , _host{ host }
-  , _requests{ std::weak_ptr{ _session }, _io_context, std::bind(&Peer::process, this, std::placeholders::_1), [p = this, &non_handshaked_pool, &handshaked_pool] {
-    non_handshaked_pool.removePeer(p);
-    handshaked_pool.removePeer(p);
-  } }
+  , _requests{ std::weak_ptr{ _session },
+               _io_context,
+               std::bind(&Peer::process, this, std::placeholders::_1),
+               [p = this, &non_handshaked_pool, &handshaked_pool] {
+                   non_handshaked_pool.removePeer(p);
+                   handshaked_pool.removePeer(p);
+               } }
 {}
 
 

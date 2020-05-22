@@ -23,7 +23,9 @@ class Connection : public std::enable_shared_from_this<Connection>
     using SendHandler = std::function<void()>;
     using CloseHandler = std::function<void()>;
     //====================
-    Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, CloseHandler close_handler = {});
+    Connection(boost::asio::io_context& io_context,
+               boost::asio::ip::tcp::socket&& socket,
+               CloseHandler close_handler = {});
 
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection& other) = delete;

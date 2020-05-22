@@ -16,7 +16,9 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, CloseHandler close_handler)
+Connection::Connection(boost::asio::io_context& io_context,
+                       boost::asio::ip::tcp::socket&& socket,
+                       CloseHandler close_handler)
   : _io_context{ io_context }
   , _socket{ std::move(socket) }
   , _close_handler{ std::move(close_handler) }
@@ -59,7 +61,7 @@ void Connection::close()
         }
     }
 
-    if(_close_handler) {
+    if (_close_handler) {
         std::lock_guard lk(_close_handler_mutex);
         _close_handler();
     }
@@ -98,8 +100,8 @@ void Connection::receive(std::size_t bytes_to_receive, net::Connection::ReceiveH
                        }
                        else if (ec) {
                            switch (ec.value()) {
-                           case ba::error::eof:
-                           case ba::error::connection_reset: {
+                               case ba::error::eof:
+                               case ba::error::connection_reset: {
                                    LOG_WARNING << "Connection to " << getEndpoint() << " closed";
                                    if (!_is_closed) {
                                        close();
