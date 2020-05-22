@@ -67,7 +67,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, Context context);
     static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, Context context);
 
-    ~Peer() = default;
+    ~Peer();
     //=========================
     base::Time getLastSeen() const;
     net::Endpoint getEndpoint() const;
@@ -156,9 +156,12 @@ class Peer : public std::enable_shared_from_this<Peer>
 
 
       public:
+        using CloseCallback = std::function<void()>;
+
         Requests(std::weak_ptr<net::Session> session,
                  boost::asio::io_context& io_context,
-                 Request::ResponseCallback default_callback);
+                 Request::ResponseCallback default_callback,
+                 CloseCallback close_callback);
 
         void onMessageReceive(const base::Bytes& received_bytes);
 
@@ -178,6 +181,7 @@ class Peer : public std::enable_shared_from_this<Peer>
         MessageId _next_message_id{ 0 };
         base::OwningPool<Request> _active_requests;
         Request::ResponseCallback _default_callback;
+        CloseCallback _close_callback;
 
         template<typename T>
         base::Bytes prepareMessage(const T& msg);

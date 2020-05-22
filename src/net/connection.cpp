@@ -16,9 +16,10 @@ namespace ba = boost::asio;
 namespace net
 {
 
-Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket)
+Connection::Connection(boost::asio::io_context& io_context, boost::asio::ip::tcp::socket&& socket, CloseHandler close_handler)
   : _io_context{ io_context }
   , _socket{ std::move(socket) }
+  , _close_handler{ std::move(close_handler) }
   , _read_buffer(base::config::NET_MESSAGE_BUFFER_SIZE)
 {
     ASSERT(_socket.is_open());
@@ -57,12 +58,24 @@ void Connection::close()
             LOG_WARNING << "Error occurred while closing connection: " << ec.message();
         }
     }
+
+    if(_close_handler) {
+        std::lock_guard lk(_close_handler_mutex);
+        _close_handler();
+    }
 }
 
 
 bool Connection::isClosed() const noexcept
 {
     return _is_closed;
+}
+
+
+void Connection::setCloseHandler(CloseHandler handler)
+{
+    std::lock_guard lk(_close_handler_mutex);
+    _close_handler = std::move(handler);
 }
 
 
@@ -85,7 +98,8 @@ void Connection::receive(std::size_t bytes_to_receive, net::Connection::ReceiveH
                        }
                        else if (ec) {
                            switch (ec.value()) {
-                               case ba::error::eof: {
+                           case ba::error::eof:
+                           case ba::error::connection_reset: {
                                    LOG_WARNING << "Connection to " << getEndpoint() << " closed";
                                    if (!_is_closed) {
                                        close();
@@ -166,7 +180,7 @@ void Connection::sendPendingMessages()
           }
           else if (ec) {
               LOG_WARNING << "Error while sending message: " << ec << ' ' << ec.message();
-              // TODO: do something
+              // TODO: do something, check if connection is dropped
           }
           else {
               LOG_DEBUG << "Sent " << bytes_sent << " bytes to " << _connect_endpoint->toString();

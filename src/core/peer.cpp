@@ -34,59 +34,7 @@ namespace lk
  *  Fix: do a synchronisation during runtime.
  */
 
-
-Rating::Rating(std::int_fast32_t initial_value)
-  : _value{ initial_value }
-{}
-
-
-std::int_fast32_t Rating::getValue() const noexcept
-{
-    return _value;
-}
-
-
-Rating::operator bool() const noexcept
-{
-    return _value > 0;
-}
-
-
-Rating& Rating::nonExpectedMessage() noexcept
-{
-    _value -= 20;
-    return *this;
-}
-
-
-Rating& Rating::invalidMessage() noexcept
-{
-    _value -= 30;
-    return *this;
-}
-
-
-Rating& Rating::badBlock() noexcept
-{
-    _value -= 10;
-    return *this;
-}
-
-
-Rating& Rating::differentGenesis() noexcept
-{
-    _value -= 2 * base::config::NET_INITIAL_PEER_RATING;
-    return *this;
-}
-
-
-std::vector<msg::NodeIdentityInfo> PeerPoolBase::allPeersInfo() const
-{
-    std::vector<msg::NodeIdentityInfo> ret;
-    forEachPeer([&ret](const Peer& peer) { ret.push_back(peer.getInfo()); });
-    return ret;
-}
-
+//===============================================
 
 void Peer::sendBlock(const base::Sha256& block_hash, const lk::Block& block)
 {
@@ -132,13 +80,15 @@ void Peer::requestBlock(const base::Sha256& block_hash)
 
 std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Context context)
 {
-    std::shared_ptr<Peer> ret(new Peer(std::move(session),
+    std::shared_ptr<Peer> peer{new Peer(std::move(session),
                                        false,
                                        context.host.getIoContext(),
                                        static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
                                        static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
                                        context.core,
-                                       context.host));
+                                       context.host)};
+
+    auto ret = peer->shared_from_this();
 
     if (!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
         RAISE_ERROR(base::Error, "cannot add peer");
@@ -151,13 +101,15 @@ std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Cont
 
 std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Context context)
 {
-    std::shared_ptr<Peer> ret(new Peer(std::move(session),
+    std::shared_ptr<Peer> peer{new Peer(std::move(session),
                                        true,
                                        context.host.getIoContext(),
                                        static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
                                        static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
                                        context.core,
-                                       context.host));
+                                       context.host)};
+
+    auto ret = peer->shared_from_this();
 
     if (!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
         RAISE_ERROR(base::Error, "cannot add peer");
@@ -183,8 +135,17 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _handshaked_pool{ handshaked_pool }
   , _core{ core }
   , _host{ host }
-  , _requests{ std::weak_ptr{ _session }, _io_context, std::bind(&Peer::process, this, std::placeholders::_1) }
+  , _requests{ std::weak_ptr{ _session }, _io_context, std::bind(&Peer::process, this, std::placeholders::_1), [p = this, &non_handshaked_pool, &handshaked_pool] {
+    non_handshaked_pool.removePeer(p);
+    handshaked_pool.removePeer(p);
+  } }
 {}
+
+
+Peer::~Peer()
+{
+    LOG_DEBUG << "Peer for " << getEndpoint() << " (public " << getPublicEndpoint() << ") is destroyed";
+}
 
 
 net::Endpoint Peer::getEndpoint() const
@@ -269,11 +230,67 @@ bool Peer::tryAddToPool()
 void Peer::detachFromPools()
 {
     if (_is_attached_to_handshaked_pool) {
+        LOG_DEBUG << "Detaching " << getEndpoint() << " from handshaked pool";
         _handshaked_pool.removePeer(this);
     }
     else {
+        LOG_DEBUG << "Detaching " << getEndpoint() << " from non-handshaked pool";
         _non_handshaked_pool.removePeer(this);
     }
+}
+
+//===============================================
+
+Rating::Rating(std::int_fast32_t initial_value)
+  : _value{ initial_value }
+{}
+
+
+std::int_fast32_t Rating::getValue() const noexcept
+{
+    return _value;
+}
+
+
+Rating::operator bool() const noexcept
+{
+    return _value > 0;
+}
+
+
+Rating& Rating::nonExpectedMessage() noexcept
+{
+    _value -= 20;
+    return *this;
+}
+
+
+Rating& Rating::invalidMessage() noexcept
+{
+    _value -= 30;
+    return *this;
+}
+
+
+Rating& Rating::badBlock() noexcept
+{
+    _value -= 10;
+    return *this;
+}
+
+
+Rating& Rating::differentGenesis() noexcept
+{
+    _value -= 2 * base::config::NET_INITIAL_PEER_RATING;
+    return *this;
+}
+
+
+std::vector<msg::NodeIdentityInfo> PeerPoolBase::allPeersInfo() const
+{
+    std::vector<msg::NodeIdentityInfo> ret;
+    forEachPeer([&ret](const Peer& peer) { ret.push_back(peer.getInfo()); });
+    return ret;
 }
 
 //===============================================
@@ -575,6 +592,7 @@ void Peer::Requests::SessionHandler::onReceive(const base::Bytes& bytes)
 
 void Peer::Requests::SessionHandler::onClose()
 {
+    _r._active_requests.clear();
     _r.onClose();
 }
 
@@ -618,10 +636,12 @@ void Peer::Requests::Request::runCallback(base::SerializationIArchive&& ia)
 
 Peer::Requests::Requests(std::weak_ptr<net::Session> session,
                          boost::asio::io_context& io_context,
-                         Request::ResponseCallback default_callback)
+                         Request::ResponseCallback default_callback,
+                         Peer::Requests::CloseCallback close_callback)
   : _session{ std::move(session) }
   , _io_context{ io_context }
   , _default_callback{ std::move(default_callback) }
+  , _close_callback{ std::move(close_callback) }
 {
     if (auto s = _session.lock()) {
         s->setHandler(std::make_shared<SessionHandler>(*this));
@@ -639,7 +659,7 @@ void Peer::Requests::onMessageReceive(const base::Bytes& received_bytes)
     auto msg_id = ia.deserialize<MessageId>();
 
     bool is_handled = false;
-    _active_requests.disownIf([msg_id, &received_bytes, &is_handled, &ia](Request& request) {
+    _active_requests.disownIf([msg_id, &is_handled, &ia](Request& request) {
         if (request.getId() == msg_id) {
             is_handled = true;
             request.runCallback(std::move(ia));
@@ -659,6 +679,7 @@ void Peer::Requests::onMessageReceive(const base::Bytes& received_bytes)
 void Peer::Requests::onClose()
 {
     LOG_DEBUG << "Requests::onClose called";
+    _close_callback();
 }
 
 }
