@@ -136,12 +136,7 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _core{ core }
   , _host{ host }
   , _requests{ std::weak_ptr{ _session },
-               _io_context,
-               std::bind(&Peer::process, this, std::placeholders::_1),
-               [p = this, &non_handshaked_pool, &handshaked_pool] {
-                   non_handshaked_pool.removePeer(p);
-                   handshaked_pool.removePeer(p);
-               } }
+               _io_context}
 {}
 
 
@@ -193,6 +188,21 @@ void Peer::startSession()
         return;
     }
     _is_started = true;
+
+    _requests.setDefaultCallback([peer_holder = weak_from_this()](base::SerializationIArchive&& ia) {
+        if(auto peer = peer_holder.lock()) {
+            peer->process(std::move(ia));
+        }
+    });
+
+    _requests.setCloseCallback([peer_holder = weak_from_this()] {
+      if(auto peer = peer_holder.lock()) {
+          if(!peer->isClosed()) {
+              peer->detachFromPools();
+          }
+      }
+    });
+
     _session->start();
     if (wasConnectedTo()) {
         _requests.send(msg::Connect{ _core.getThisNodeAddress(), _host.getPublicPort(), _core.getTopBlockHash() });
@@ -451,6 +461,7 @@ void Peer::handle(lk::msg::Connect&& msg)
     if (msg.public_port) {
         auto public_ep = getEndpoint();
         public_ep.setPort(msg.public_port);
+        LOG_DEBUG << "setting public endpoint to " << public_ep << " while msg.public_port = " << msg.public_port << " and getEndpoint() = " << getEndpoint();
         setServerEndpoint(public_ep);
     }
     _address = msg.address;
@@ -480,11 +491,7 @@ void Peer::handle(lk::msg::CannotAccept&& msg)
 
 void Peer::handle(lk::msg::Accepted&& msg)
 {
-    if (msg.public_port) {
-        auto public_ep = getEndpoint();
-        public_ep.setPort(msg.public_port);
-        setServerEndpoint(public_ep);
-    }
+    setServerEndpoint(getEndpoint());
     _address = msg.address;
 
     _requests.send(msg::Lookup{ getAddress(), base::config::NET_LOOKUP_ALPHA });
@@ -582,29 +589,29 @@ void Peer::handle(lk::msg::Close&& msg)
 //===============================================
 
 
-Peer::Requests::SessionHandler::SessionHandler(Peer::Requests& requests)
+Requests::SessionHandler::SessionHandler(Requests& requests)
   : _r{ requests }
 {}
 
 
-void Peer::Requests::SessionHandler::onReceive(const base::Bytes& bytes)
+void Requests::SessionHandler::onReceive(const base::Bytes& bytes)
 {
     _r.onMessageReceive(bytes);
 }
 
 
-void Peer::Requests::SessionHandler::onClose()
+void Requests::SessionHandler::onClose()
 {
     _r._active_requests.clear();
     _r.onClose();
 }
 
 
-Peer::Requests::Request::Request(base::OwningPool<Request>& active_requests,
-                                 MessageId id,
-                                 ResponseCallback response_callback,
-                                 TimeoutCallback timeout_callback,
-                                 boost::asio::io_context& io_context)
+Request::Request(base::OwningPool<Request>& active_requests,
+                 MessageId id,
+                 ResponseCallback response_callback,
+                 TimeoutCallback timeout_callback,
+                 boost::asio::io_context& io_context)
   : _active_requests{ active_requests }
   , _id{ id }
   , _response_callback{ std::move(response_callback) }
@@ -623,13 +630,13 @@ Peer::Requests::Request::Request(base::OwningPool<Request>& active_requests,
 }
 
 
-Peer::Requests::MessageId Peer::Requests::Request::getId() const noexcept
+Request::MessageId Request::getId() const noexcept
 {
     return _id;
 }
 
 
-void Peer::Requests::Request::runCallback(base::SerializationIArchive&& ia)
+void Request::runCallback(base::SerializationIArchive&& ia)
 {
     if (!_is_already_processed.test_and_set()) {
         _response_callback(std::move(ia));
@@ -637,17 +644,14 @@ void Peer::Requests::Request::runCallback(base::SerializationIArchive&& ia)
 }
 
 
-Peer::Requests::Requests(std::weak_ptr<net::Session> session,
-                         boost::asio::io_context& io_context,
-                         Request::ResponseCallback default_callback,
-                         Peer::Requests::CloseCallback close_callback)
+Requests::Requests(std::weak_ptr<net::Session> session,
+                   boost::asio::io_context& io_context)
   : _session{ std::move(session) }
   , _io_context{ io_context }
-  , _default_callback{ std::move(default_callback) }
-  , _close_callback{ std::move(close_callback) }
 {
     if (auto s = _session.lock()) {
-        s->setHandler(std::make_shared<SessionHandler>(*this));
+        _session_handler = std::make_shared<SessionHandler>(*this);
+        s->setHandler(_session_handler);
     }
     else {
         RAISE_ERROR(net::ClosedSession);
@@ -655,11 +659,23 @@ Peer::Requests::Requests(std::weak_ptr<net::Session> session,
 }
 
 
-void Peer::Requests::onMessageReceive(const base::Bytes& received_bytes)
+void Requests::setDefaultCallback(Request::ResponseCallback cb)
+{
+    _default_callback = std::move(cb);
+}
+
+
+void Requests::setCloseCallback(Requests::CloseCallback cb)
+{
+    _close_callback = std::move(cb);
+}
+
+
+void Requests::onMessageReceive(const base::Bytes& received_bytes)
 {
     LOG_TRACE << "message received";
     base::SerializationIArchive ia(received_bytes);
-    auto msg_id = ia.deserialize<MessageId>();
+    auto msg_id = ia.deserialize<Request::MessageId>();
 
     bool is_handled = false;
     _active_requests.disownIf([msg_id, &is_handled, &ia](Request& request) {
@@ -673,16 +689,18 @@ void Peer::Requests::onMessageReceive(const base::Bytes& received_bytes)
         }
     });
 
-    if (!is_handled) {
+    if (!is_handled && _default_callback) {
         _default_callback(std::move(ia));
     }
 }
 
 
-void Peer::Requests::onClose()
+void Requests::onClose()
 {
     LOG_DEBUG << "Requests::onClose called";
-    _close_callback();
+    if(_close_callback) {
+        _close_callback();
+    }
 }
 
 }

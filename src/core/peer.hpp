@@ -42,6 +42,87 @@ class Rating
     std::int_fast32_t _value;
 };
 
+//===========================================================
+
+class Request : std::enable_shared_from_this<Request>
+{
+  public:
+    using MessageId = std::uint16_t;
+
+    using ResponseCallback = std::function<void(base::SerializationIArchive&&)>;
+    using TimeoutCallback = std::function<void()>;
+
+    Request(base::OwningPool<Request>& active_requests,
+            MessageId id,
+            ResponseCallback response_callback,
+            TimeoutCallback timeout_callback,
+            boost::asio::io_context& io_context);
+
+    MessageId getId() const noexcept;
+
+    void runCallback(base::SerializationIArchive&& ia);
+
+  private:
+    base::OwningPool<Request>& _active_requests;
+    MessageId _id;
+    ResponseCallback _response_callback;
+    TimeoutCallback _timeout_callback;
+    boost::asio::steady_timer _timer;
+    std::atomic_flag _is_already_processed;
+};
+
+
+class Requests
+{
+    class SessionHandler : public net::Session::Handler
+    {
+      public:
+        explicit SessionHandler(Requests& requests);
+
+        void onReceive(const base::Bytes& bytes) override;
+        void onClose() override;
+
+      private:
+        Requests& _r;
+    };
+
+  public:
+    using CloseCallback = std::function<void()>;
+
+    Requests(std::weak_ptr<net::Session> session,
+             boost::asio::io_context& io_context);
+
+    void setDefaultCallback(Request::ResponseCallback cb);
+
+    void setCloseCallback(CloseCallback cb);
+
+    void onMessageReceive(const base::Bytes& received_bytes);
+
+    void onClose();
+
+    template<typename T>
+    void send(const T& msg, net::Connection::SendHandler cb = {});
+
+    template<typename T>
+    void requestWaitResponseById(const T& msg,
+                                 Request::ResponseCallback response_callback,
+                                 Request::TimeoutCallback timeout_callback,
+                                 net::Connection::SendHandler cb = {});
+
+  private:
+    std::weak_ptr<net::Session> _session;
+    boost::asio::io_context& _io_context;
+    Request::MessageId _next_message_id{ 0 };
+    base::OwningPool<Request> _active_requests;
+    Request::ResponseCallback _default_callback;
+    CloseCallback _close_callback;
+    std::shared_ptr<SessionHandler> _session_handler;
+
+    template<typename T>
+    base::Bytes prepareMessage(const T& msg);
+};
+
+//===========================================================
 
 class Peer : public std::enable_shared_from_this<Peer>
 {
@@ -110,82 +191,6 @@ class Peer : public std::enable_shared_from_this<Peer>
      */
     bool tryAddToPool();
     void detachFromPools(); // only called inside onClose or inside destructor
-
-    //===========================================================
-
-    class Requests
-    {
-        using MessageId = std::uint16_t;
-
-        class SessionHandler : public net::Session::Handler
-        {
-          public:
-            explicit SessionHandler(Requests& requests);
-
-            void onReceive(const base::Bytes& bytes) override;
-            void onClose() override;
-
-          private:
-            Requests& _r;
-        };
-
-        class Request : std::enable_shared_from_this<Request>
-        {
-          public:
-            using ResponseCallback = std::function<void(base::SerializationIArchive&&)>;
-            using TimeoutCallback = std::function<void()>;
-
-            Request(base::OwningPool<Request>& active_requests,
-                    MessageId id,
-                    ResponseCallback response_callback,
-                    TimeoutCallback timeout_callback,
-                    boost::asio::io_context& io_context);
-
-            MessageId getId() const noexcept;
-
-            void runCallback(base::SerializationIArchive&& ia);
-
-          private:
-            base::OwningPool<Request>& _active_requests;
-            MessageId _id;
-            ResponseCallback _response_callback;
-            TimeoutCallback _timeout_callback;
-            boost::asio::steady_timer _timer;
-            std::atomic_flag _is_already_processed;
-        };
-
-
-      public:
-        using CloseCallback = std::function<void()>;
-
-        Requests(std::weak_ptr<net::Session> session,
-                 boost::asio::io_context& io_context,
-                 Request::ResponseCallback default_callback,
-                 CloseCallback close_callback);
-
-        void onMessageReceive(const base::Bytes& received_bytes);
-
-        void onClose();
-
-        template<typename T>
-        void send(const T& msg);
-
-        template<typename T>
-        void requestWaitResponseById(const T& msg,
-                                     Request::ResponseCallback response_callback,
-                                     Request::TimeoutCallback timeout_callback);
-
-      private:
-        std::weak_ptr<net::Session> _session;
-        boost::asio::io_context& _io_context;
-        MessageId _next_message_id{ 0 };
-        base::OwningPool<Request> _active_requests;
-        Request::ResponseCallback _default_callback;
-        CloseCallback _close_callback;
-
-        template<typename T>
-        base::Bytes prepareMessage(const T& msg);
-    };
 
     //===========================================================
     std::shared_ptr<net::Session> _session;

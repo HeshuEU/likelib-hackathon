@@ -9,8 +9,7 @@ void Peer::endSession(T last_message)
     LOG_DEBUG << "ending session";
     try {
         detachFromPools();
-        // _requests.send(last_message, [keeper = shared_from_this()] { keeper->_session->close(); });
-        _requests.send(last_message);
+        _requests.send(last_message, [keeper = shared_from_this()] { keeper->_session->close(); });
     }
     catch (const std::exception& e) {
         LOG_WARNING << "Error during peer shutdown: " << e.what();
@@ -22,7 +21,7 @@ void Peer::endSession(T last_message)
 
 
 template<typename T>
-base::Bytes Peer::Requests::prepareMessage(const T& msg)
+base::Bytes Requests::prepareMessage(const T& msg)
 {
     base::SerializationOArchive oa;
     oa.serialize(_next_message_id++);
@@ -33,10 +32,10 @@ base::Bytes Peer::Requests::prepareMessage(const T& msg)
 
 
 template<typename T>
-void Peer::Requests::send(const T& msg)
+void Requests::send(const T& msg, net::Connection::SendHandler cb)
 {
     if (auto s = _session.lock()) {
-        s->send(prepareMessage(msg));
+        s->send(prepareMessage(msg), std::move(cb));
     }
     else {
         RAISE_ERROR(net::SendOnClosedConnection, "attempt to request on closed connection");
@@ -45,9 +44,10 @@ void Peer::Requests::send(const T& msg)
 
 
 template<typename T>
-void Peer::Requests::requestWaitResponseById(const T& msg,
-                                             Request::ResponseCallback response_callback,
-                                             Request::TimeoutCallback timeout_callback)
+void Requests::requestWaitResponseById(const T& msg,
+                                       Request::ResponseCallback response_callback,
+                                       Request::TimeoutCallback timeout_callback,
+                                       net::Connection::SendHandler cb)
 {
     if (auto s = _session.lock()) {
         _active_requests.own(std::make_shared<Request>(_active_requests,
@@ -55,7 +55,7 @@ void Peer::Requests::requestWaitResponseById(const T& msg,
                                                        std::move(response_callback),
                                                        std::move(timeout_callback),
                                                        _io_context));
-        s->send(prepareMessage(msg));
+        s->send(prepareMessage(msg), std::move(cb));
     }
     else {
         RAISE_ERROR(net::SendOnClosedConnection, "attempt to request on closed connection");

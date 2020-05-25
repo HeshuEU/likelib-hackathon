@@ -135,13 +135,16 @@ bool KademliaPeerPool::tryAddPeer(std::shared_ptr<Peer> peer)
 {
     std::unique_lock lk{ _buckets_mutex };
 
+    LOG_DEBUG << "BUCKETS";
     for (const auto& bucket : _buckets) {
         for (const auto& p : bucket) {
+            LOG_DEBUG << p->getPublicEndpoint() << ' ' << peer->getPublicEndpoint() << ' ' << p->getEndpoint() << ' ' << peer->getEndpoint();
             if (p->getPublicEndpoint() == peer->getPublicEndpoint() || p->getEndpoint() == peer->getEndpoint()) {
                 return false;
             }
         }
     }
+    LOG_DEBUG << "==================";
 
     std::size_t bucket_index = calcBucketIndex(peer->getAddress());
     if (_buckets[bucket_index].size() < MAX_BUCKET_SIZE) {
