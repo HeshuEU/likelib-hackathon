@@ -1,7 +1,7 @@
 #pragma once
 
-#include "serialization.hpp"
 #include "assert.hpp"
+#include "serialization.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/endian/conversion.hpp>

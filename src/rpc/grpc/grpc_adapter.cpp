@@ -9,7 +9,6 @@
 namespace rpc::grpc
 {
 
-
 void Adapter::init(std::shared_ptr<BaseRpc> service)
 {
     _service = std::move(service);

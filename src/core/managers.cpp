@@ -116,7 +116,7 @@ AccountInfo AccountState::toInfo() const
         return info;
     }
     else {
-        AccountInfo info{ AccountType::CONTRACT, lk::Address::null(), _balance, _nonce, _transactions};
+        AccountInfo info{ AccountType::CONTRACT, lk::Address::null(), _balance, _nonce, _transactions };
         return info;
     }
 }

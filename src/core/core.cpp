@@ -413,7 +413,9 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
 
     if (!tx.checkSign()) {
         LOG_DEBUG << "Failed signature verification";
-        TransactionStatus status{ TransactionStatus::StatusCode::BadSign, TransactionStatus::ActionType::None, tx.getFee(), "" };
+        TransactionStatus status{
+            TransactionStatus::StatusCode::BadSign, TransactionStatus::ActionType::None, tx.getFee(), ""
+        };
         addTransactionOutput(transaction_hash, status);
         return status;
     }
@@ -423,7 +425,9 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
         if (output_opt) {
             return *output_opt;
         }
-        TransactionStatus status{ TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::None, tx.getFee(), "" };
+        TransactionStatus status{
+            TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::None, tx.getFee(), ""
+        };
         addTransactionOutput(transaction_hash, status);
         return status;
     }
@@ -432,7 +436,9 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
     {
         std::shared_lock lk(_pending_transactions_mutex);
         if (_pending_transactions.find(tx)) {
-            TransactionStatus status{TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""};
+            TransactionStatus status{
+                TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""
+            };
             addTransactionOutput(transaction_hash, status);
             return status;
         }
@@ -441,17 +447,21 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
     }
 
     const auto& pending_from_account_balance = current_pending_balance.find(tx.getFrom());
-    if ((pending_from_account_balance != current_pending_balance.end() )&& (_state_manager.hasAccount(tx.getFrom()))) {
+    if ((pending_from_account_balance != current_pending_balance.end()) && (_state_manager.hasAccount(tx.getFrom()))) {
         auto current_account_balance = _state_manager.getAccount(tx.getFrom()).getBalance();
         if (pending_from_account_balance->second + transaction_cost < current_account_balance) {
-            TransactionStatus status{TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""};
+            TransactionStatus status{
+                TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""
+            };
             addTransactionOutput(transaction_hash, status);
             return status;
         }
     }
 
-    if( !_state_manager.checkTransaction(tx) ){
-        TransactionStatus status{TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""};
+    if (!_state_manager.checkTransaction(tx)) {
+        TransactionStatus status{
+            TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""
+        };
         addTransactionOutput(transaction_hash, status);
         return status;
     }
@@ -463,7 +473,9 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
     }
 
     _event_new_pending_transaction.notify(tx);
-    TransactionStatus status{TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""};
+    TransactionStatus status{
+        TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""
+    };
     addTransactionOutput(transaction_hash, status);
     return status;
 }
@@ -487,7 +499,7 @@ void Core::addTransactionOutput(const base::Sha256& tx, const TransactionStatus&
     if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
         it->second = status;
     }
-    else{
+    else {
         _tx_outputs.insert({ tx, status });
     }
 }
@@ -543,7 +555,8 @@ bool Core::checkBlock(const lk::Block& block) const
             if (block_account_cost->second > current_account_balance) {
                 return false;
             }
-        } else{
+        }
+        else {
             return false;
         }
     }
@@ -583,18 +596,25 @@ const lk::Address& Core::getThisNodeAddress() const noexcept
 
 base::Bytes Core::callViewMethod(const lk::ViewCall& call)
 {
-    if(!call.checkSign()){
+    if (!call.checkSign()) {
         RAISE_ERROR(base::InvalidArgument, "Signature check failed");
     }
 
-    if (_state_manager.hasAccount(call.getContractAddress()) && _state_manager.getAccount(call.getContractAddress()).getType() == lk::AccountType::CONTRACT) {
+    if (_state_manager.hasAccount(call.getContractAddress()) &&
+        _state_manager.getAccount(call.getContractAddress()).getType() == lk::AccountType::CONTRACT) {
         auto contract_account = _state_manager.getAccount(call.getContractAddress());
         const auto& tx = invalidTransaction();
         const auto& block = invalidBlock();
 
-        auto eval_result = callContractAtViewModeVm(_state_manager, block, tx, call.getFrom(), call.getContractAddress(), contract_account.getRuntimeCode(), call.getData());
+        auto eval_result = callContractAtViewModeVm(_state_manager,
+                                                    block,
+                                                    tx,
+                                                    call.getFrom(),
+                                                    call.getContractAddress(),
+                                                    contract_account.getRuntimeCode(),
+                                                    call.getData());
 
-        if (eval_result.status_code == EVMC_SUCCESS){
+        if (eval_result.status_code == EVMC_SUCCESS) {
             auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
             return output_data;
         }

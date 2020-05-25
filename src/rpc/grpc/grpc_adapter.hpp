@@ -8,10 +8,8 @@
 
 #include <memory>
 
-
 namespace rpc::grpc
 {
-
 
 /// Class implement receive gRPC messages and call similar method from LogicService instance and send answers or error
 /// messages

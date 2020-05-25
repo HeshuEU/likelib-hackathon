@@ -7,7 +7,6 @@
 namespace rpc::grpc
 {
 
-
 NodeClient::NodeClient(const std::string& connect_address)
 {
     auto channel_credentials = ::grpc::InsecureChannelCredentials();

@@ -238,7 +238,7 @@ namespace base
 
 class Keccak256
 {
-public:
+  public:
     static constexpr std::size_t KECCAK256_SIZE = 32;
     //----------------------------------
     Keccak256(const Keccak256&) = default;
@@ -264,7 +264,7 @@ public:
     void serialize(SerializationOArchive& oa) const;
     static Keccak256 deserialize(SerializationIArchive& ia);
     //----------------------------------
-private:
+  private:
     base::FixedBytes<KECCAK256_SIZE> _bytes;
 };
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "bytes.hpp"
 #include "assert.hpp"
+#include "bytes.hpp"
 #include "error.hpp"
 
 #include <openssl/pem.h>

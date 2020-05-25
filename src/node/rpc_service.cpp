@@ -26,7 +26,7 @@ rpc::Info GeneralServerService::getNodeInfo()
     LOG_TRACE << "Received RPC request {getNodeInfo}";
     auto& top_block = _core.getTopBlock();
     auto hash = base::Sha256::compute(base::toBytes(top_block));
-    return { hash, top_block.getDepth(), base::config::RPC_PUBLIC_API_VERSION};
+    return { hash, top_block.getDepth(), base::config::RPC_PUBLIC_API_VERSION };
 }
 
 
@@ -75,7 +75,8 @@ lk::TransactionStatus GeneralServerService::getTransactionResult(const base::Sha
     if (auto transaction_output_opt = _core.getTransactionOutput(transaction_hash); transaction_output_opt) {
         return *transaction_output_opt;
     }
-    RAISE_ERROR(base::InvalidArgument, std::string("TransactionOutput was not found. hash[hex]:") + transaction_hash.toHex());
+    RAISE_ERROR(base::InvalidArgument,
+                std::string("TransactionOutput was not found. hash[hex]:") + transaction_hash.toHex());
 }
 
 

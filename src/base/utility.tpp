@@ -1,7 +1,7 @@
 #pragma once
 
-#include "utility.hpp"
 #include "error.hpp"
+#include "utility.hpp"
 
 #include <utility>
 

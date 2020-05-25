@@ -1,7 +1,7 @@
 #pragma once
 
-#include "program_options.hpp"
 #include "error.hpp"
+#include "program_options.hpp"
 
 namespace base
 {

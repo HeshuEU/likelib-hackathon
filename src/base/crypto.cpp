@@ -438,7 +438,8 @@ KeyVault::KeyVault(const std::string_view& keys_folder)
 }
 
 
-const base::Secp256PrivateKey& KeyVault::getKey() const noexcept{
+const base::Secp256PrivateKey& KeyVault::getKey() const noexcept
+{
     return _key;
 }
 

@@ -5,7 +5,6 @@
 namespace rpc::grpc
 {
 
-
 likelib::AccountInfo_Type serializeAccountType(lk::AccountType type)
 {
     switch (type) {

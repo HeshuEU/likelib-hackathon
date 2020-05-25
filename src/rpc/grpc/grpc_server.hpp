@@ -7,7 +7,6 @@
 namespace rpc::grpc
 {
 
-
 /// Template server was implemented logic to start listening messages by gRPC
 class NodeServer : public BaseRpcServer
 {

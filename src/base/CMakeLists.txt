@@ -1,18 +1,17 @@
 set(BASE_TEMPLATE
-		hash.tpp
+        hash.tpp
         big_integer.tpp
-		database.tpp
-		property_tree.tpp
-		serialization.tpp
+        database.tpp
+        property_tree.tpp
+        serialization.tpp
         program_options.tpp)
 
 set(BASE_HEADERS
         assert.hpp
-		crypto.hpp
+        crypto.hpp
         big_integer.hpp
         error.hpp
         utility.hpp
-        assert.hpp
         config.hpp
         log.hpp
         types.hpp
@@ -25,7 +24,7 @@ set(BASE_HEADERS
         database.hpp
         serialization.hpp
         time.hpp
-		)
+        )
 
 set(BASE_SOURCES
         config.cpp
@@ -41,7 +40,7 @@ set(BASE_SOURCES
         database.cpp
         serialization.cpp
         time.cpp
-		)
+        )
 
 add_library(base ${BASE_HEADERS} ${BASE_TEMPLATE} ${BASE_SOURCES})
-target_link_libraries(base Boost::log secp256k1_lib Boost::log_setup Boost::program_options OpenSSL::SSL dl backtrace leveldb::leveldb)
+target_link_libraries(base Boost::log Boost::log_setup Boost::program_options OpenSSL::SSL dl backtrace leveldb::leveldb secp256k1_lib)

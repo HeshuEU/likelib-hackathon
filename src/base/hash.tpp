@@ -1,8 +1,8 @@
 #include "hash.hpp"
 
+#include <openssl/evp.h>
 #include <openssl/ripemd.h>
 #include <openssl/sha.h>
-#include <openssl/evp.h>
 
 namespace base
 {

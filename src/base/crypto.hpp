@@ -14,18 +14,18 @@
 namespace base
 {
 
- class AesKey
+class AesKey
 {
   public:
-     //------------------------
+    //------------------------
     enum class KeyType : std::size_t
     {
         K256BIT = 32, // 32(bytes)
         K128BIT = 16  // 16(bytes)
     };
-     //------------------------
+    //------------------------
     static constexpr std::size_t iv_cbc_size = 16;
-     //------------------------
+    //------------------------
     AesKey();
     explicit AesKey(KeyType type);
     explicit AesKey(const Bytes& bytes_key);
@@ -34,30 +34,30 @@ namespace base
     AesKey& operator=(const AesKey&) = default;
     AesKey& operator=(AesKey&&) = default;
     ~AesKey() = default;
-     //------------------------
+    //------------------------
     [[nodiscard]] Bytes toBytes() const;
     [[nodiscard]] Bytes encrypt(const Bytes& data) const;
     [[nodiscard]] Bytes decrypt(const Bytes& data) const;
-     //------------------------
+    //------------------------
     std::size_t size() const;
-     //------------------------
+    //------------------------
     void save(const std::filesystem::path& path);
     static AesKey read(const std::filesystem::path& path);
-     //------------------------
+    //------------------------
   private:
-     //------------------------
+    //------------------------
     KeyType _type;
     Bytes _key;
     FixedBytes<16> _iv;
-     //------------------------
+    //------------------------
     static Bytes generateKey(KeyType type);
     static Bytes generateIv();
-     //------------------------
+    //------------------------
     [[nodiscard]] Bytes encrypt256Aes(const Bytes& data) const;
     [[nodiscard]] Bytes decrypt256Aes(const Bytes& data) const;
     [[nodiscard]] Bytes encrypt128Aes(const Bytes& data) const;
     [[nodiscard]] Bytes decrypt128Aes(const Bytes& data) const;
-     //------------------------
+    //------------------------
 };
 
 

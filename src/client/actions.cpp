@@ -1159,7 +1159,7 @@ int ActionCallContractView::execute()
     }
 
     auto data = base::fromHex<base::Bytes>(_message);
-    lk::ViewCall call{from_address, _to_address, base::Time::now(), std::move(data) };
+    lk::ViewCall call{ from_address, _to_address, base::Time::now(), std::move(data) };
     call.sign(private_key);
 
     auto response = client->callContractView(call);

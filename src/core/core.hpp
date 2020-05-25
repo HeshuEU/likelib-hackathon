@@ -42,6 +42,7 @@ class ViewCall
     const lk::Sign& getSign() const noexcept;
     //=================
     base::Sha256 hashOfCall() const;
+
   private:
     lk::Address _from;
     lk::Address _contract_address;
@@ -95,6 +96,7 @@ class Core
     const lk::Address& getThisNodeAddress() const noexcept;
     //==================
     base::Bytes callViewMethod(const lk::ViewCall& call);
+
   private:
     //==================
     const base::PropertyTree& _config;
