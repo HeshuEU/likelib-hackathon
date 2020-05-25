@@ -484,7 +484,12 @@ std::optional<TransactionStatus> Core::getTransactionOutput(const base::Sha256& 
 void Core::addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status)
 {
     std::unique_lock lk(_tx_outputs_mutex);
-    _tx_outputs.insert({ tx, status });
+    if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
+        it->second = status;
+    }
+    else{
+        _tx_outputs.insert({ tx, status });
+    }
 }
 
 

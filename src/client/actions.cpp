@@ -775,18 +775,44 @@ int ActionTransfer::execute()
     else {
         client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
     }
-    auto status = client->pushTransaction(tx);
+    auto result = client->pushTransaction(tx);
 
-    if (status) {
-        std::cout << "Transaction successfully performed" << std::endl;
+    int exit_code = base::config::EXIT_FAIL;
+    std::string status_message;
+    switch (result.getStatus()) {
+        case lk::TransactionStatus::StatusCode::Success:
+            status_message = "success";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Pending:
+            status_message = "pending";
+            exit_code = base::config::EXIT_OK;
+            break;
+        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
+            status_message = "not enough balance";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::BadQueryForm:
+            status_message = "bad query form";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::BadSign:
+            status_message = "bad sign";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Revert:
+            status_message = "revert";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Failed:
+            status_message = "failed";
+            exit_code = base::config::EXIT_FAIL;
+            break;
     }
-    else {
-        std::cerr << "Transaction failed with message: " << status.getMessage() << std::endl;
-    }
 
-    LOG_INFO << "Remote call of Transfer(" << tx_hash << ") -> [" << status.getMessage() << "]";
+    std::cout << "Transfer status: " << status_message << std::endl;
 
-    return base::config::EXIT_OK;
+    return exit_code;
 }
 
 //====================================
@@ -892,21 +918,44 @@ int ActionPushContract::execute()
         client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
     }
 
-    auto status = client->pushTransaction(tx);
+    auto result = client->pushTransaction(tx);
 
-    if (status) {
-        lk::Address contract_address(base::base58Decode(status.getMessage()));
-        std::cout << "Remote call of creation smart contract success -> contract created at ["
-                  << contract_address.toString() << "], fee left[" << status.getFeeLeft() << "]" << std::endl;
-        return base::config::EXIT_OK;
-    }
-    else {
-        std::cout << "Remote call of creation smart contract is failed -> [" << status.getMessage() << "]" << std::endl;
-        return base::config::EXIT_FAIL;
+    int exit_code = base::config::EXIT_FAIL;
+    std::string status_message;
+    switch (result.getStatus()) {
+        case lk::TransactionStatus::StatusCode::Success:
+            status_message = "success";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Pending:
+            status_message = "pending";
+            exit_code = base::config::EXIT_OK;
+            break;
+        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
+            status_message = "not enough balance";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::BadQueryForm:
+            status_message = "bad query form";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::BadSign:
+            status_message = "bad sign";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Revert:
+            status_message = "revert";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Failed:
+            status_message = "failed";
+            exit_code = base::config::EXIT_FAIL;
+            break;
     }
 
-    LOG_INFO << "Remote call of PushContract(" << tx_hash << ") -> [" << status.getMessage() << "]";
-    return base::config::EXIT_OK;
+    std::cout << "Contract push status: " << status_message << std::endl;
+
+    return exit_code;
 }
 
 //====================================
@@ -1002,20 +1051,44 @@ int ActionContractCall::execute()
         client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
     }
 
-    auto status = client->pushTransaction(tx);
+    auto result = client->pushTransaction(tx);
 
-    if (status) {
-        auto success_message = base::base64Decode(status.getMessage());
-        std::cout << "Remote call of smart contract call success -> contract response[" << base::toHex(success_message)
-                  << "], fee left[" << status.getFeeLeft() << "]" << std::endl;
-        return base::config::EXIT_OK;
-    }
-    else {
-        std::cout << "Remote call of smart contract call is failed -> [" << status.getMessage() << "]" << std::endl;
-        return base::config::EXIT_FAIL;
+    int exit_code = base::config::EXIT_FAIL;
+    std::string status_message;
+    switch (result.getStatus()) {
+        case lk::TransactionStatus::StatusCode::Success:
+            status_message = "success";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Pending:
+            status_message = "pending";
+            exit_code = base::config::EXIT_OK;
+            break;
+        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
+            status_message = "not enough balance";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::BadQueryForm:
+            status_message = "bad query form";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::BadSign:
+            status_message = "bad sign";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Revert:
+            status_message = "revert";
+            exit_code = base::config::EXIT_FAIL;
+            break;
+        case lk::TransactionStatus::StatusCode::Failed:
+            status_message = "failed";
+            exit_code = base::config::EXIT_FAIL;
+            break;
     }
 
-    return base::config::EXIT_OK;
+    std::cout << "Contract status: " << status_message << std::endl;
+
+    return exit_code;
 }
 
 //====================================
@@ -1038,7 +1111,6 @@ void ActionCallContractView::setupOptionsParser(base::ProgramOptionsParser& pars
     parser.addOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" contract");
     parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addOption<std::string>(MESSAGE_OPTION, "message for call smart contract");
-    parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
     parser.addFlag(IS_HTTP_CLIENT_OPTION, "is set enable http client call");
 }
 
@@ -1232,7 +1304,6 @@ int ActionGetTransactionStatus::execute()
     auto result = client->getTransactionResult(_transaction_hash);
 
     std::string type_message;
-
     switch (result.getType()) {
         case lk::TransactionStatus::ActionType::Transfer:
             type_message = "transfer";
@@ -1244,8 +1315,8 @@ int ActionGetTransactionStatus::execute()
             type_message = "contract creation";
             break;
         case lk::TransactionStatus::ActionType::None:
-            std::cout << "Cannot find given transaction result" << std::endl;
-            return base::config::EXIT_OK;
+            type_message = "Can not be classified";
+            break;
     }
 
     std::string status_message;

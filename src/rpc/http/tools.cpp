@@ -193,6 +193,11 @@ std::optional<base::Bytes> deserializeBytes(const std::string& data)
 }
 
 
+web::json::value serializeSign(const lk::Sign& sign){
+    return web::json::value::string(base::base64Encode(sign.toBytes()));
+}
+
+
 std::optional<lk::Sign> deserializeSign(const std::string& data){
     auto sign_data = deserializeBytes(data);
     if (!sign_data){
@@ -362,13 +367,13 @@ std::optional<Info> deserializeInfo(const web::json::value& input)
 web::json::value serializeTransaction(const lk::Transaction& input)
 {
     web::json::value result;
-    result["from"] = web::json::value::string(input.getFrom().toString());
-    result["to"] = web::json::value::string(input.getTo().toString());
-    result["amount"] = web::json::value::string(input.getAmount().toString());
-    result["fee"] = web::json::value::string(std::to_string(input.getFee()));
+    result["from"] = serializeAddress(input.getFrom());
+    result["to"] = serializeAddress(input.getTo());
+    result["amount"] = serializeBalance(input.getAmount());
+    result["fee"] = serializeFee(input.getFee());
     result["timestamp"] = web::json::value::number(input.getTimestamp().getSecondsSinceEpoch());
-    result["data"] = web::json::value::string(base::base64Encode(input.getData()));
-    result["sign"] = web::json::value::string(base::base64Encode(input.getSign().toBytes()));
+    result["data"] = serializeBytes(input.getData());
+    result["sign"] = serializeSign(input.getSign());
     return result;
 }
 
@@ -384,8 +389,8 @@ std::optional<lk::Transaction> deserializeTransaction(const web::json::value& in
             return std::nullopt;
         }
         std::optional<std::uint64_t> fee;
-        if (input.has_number_field("fee")) {
-            fee = input.at("fee").as_number().to_uint64();
+        if (input.has_string_field("fee")) {
+            fee = deserializeFee(input.at("fee").as_string());
         } else{
             LOG_ERROR << "fee field is not exists";
             return std::nullopt;
@@ -399,7 +404,7 @@ std::optional<lk::Transaction> deserializeTransaction(const web::json::value& in
         }
         std::optional<lk::Address> to;
         if (input.has_string_field("to")) {
-            from = deserializeAddress(input.at("to").as_string());
+            to = deserializeAddress(input.at("to").as_string());
         } else{
             LOG_ERROR << "to field is not exists";
             return std::nullopt;
@@ -573,7 +578,7 @@ web::json::value serializeTransactionStatus(const lk::TransactionStatus& status)
     web::json::value result;
     result["status_code"] = serializeTransactionStatusStatusCode(status.getStatus());
     result["action_type"] = serializeTransactionStatusActionType(status.getType());
-    result["gas_left"] = web::json::value::string(std::to_string(status.getFeeLeft()));
+    result["fee_left"] = serializeFee(status.getFeeLeft());
     result["message"] = web::json::value::string(status.getMessage());
     return result;
 }
@@ -597,10 +602,10 @@ std::optional<lk::TransactionStatus> deserializeTransactionStatus(const web::jso
             return std::nullopt;
         }
         std::optional<std::uint64_t> fee;
-        if (input.has_number_field("fee")) {
-            fee = input.at("fee").as_number().to_uint64();
+        if (input.has_string_field("fee_left")) {
+            fee = deserializeFee(input.at("fee_left").as_string());
         } else{
-            LOG_ERROR << "fee field is not exists";
+            LOG_ERROR << "fee_left field is not exists";
             return std::nullopt;
         }
         std::optional<std::string> message;
@@ -642,8 +647,8 @@ web::json::value serializeViewCall(const lk::ViewCall& call)
     result["from"] = serializeAddress(call.getFrom());
     result["to"] = serializeAddress(call.getContractAddress());
     result["timestamp"] = web::json::value::number(call.getTimestamp().getSecondsSinceEpoch());
-    result["message"] = web::json::value::string(base::base64Encode(call.getData()));
-    result["sign"] = web::json::value::string(base::base64Encode(call.getSign()));
+    result["message"] = serializeBytes(call.getData());
+    result["sign"] = serializeSign(call.getSign());
     return result;
 }
 
@@ -651,7 +656,6 @@ web::json::value serializeViewCall(const lk::ViewCall& call)
 std::optional<lk::ViewCall> deserializeViewCall(const web::json::value& input)
 {
     try {
-
         std::optional<lk::Address> from;
         if (input.has_string_field("from")) {
             from = deserializeAddress(input.at("from").as_string());
@@ -661,7 +665,7 @@ std::optional<lk::ViewCall> deserializeViewCall(const web::json::value& input)
         }
         std::optional<lk::Address> to;
         if (input.has_string_field("to")) {
-            from = deserializeAddress(input.at("to").as_string());
+            to = deserializeAddress(input.at("to").as_string());
         } else{
             LOG_ERROR << "to field is not exists";
             return std::nullopt;

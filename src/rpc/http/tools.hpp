@@ -39,6 +39,8 @@ web::json::value serializeBytes(const base::Bytes& data);
 
 std::optional<base::Bytes> deserializeBytes(const std::string& data);
 
+web::json::value serializeSign(const lk::Sign& sign);
+
 std::optional<lk::Sign> deserializeSign(const std::string& data);
 
 web::json::value serializeAccountInfo(const lk::AccountInfo& account_info);
