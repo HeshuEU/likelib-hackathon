@@ -7,7 +7,6 @@
 #include <iostream>
 #include <map>
 
-
 class HostImplementation : public evmc::Host
 {
     std::map<evmc::bytes32, evmc::bytes32> _storage;
@@ -15,13 +14,13 @@ class HostImplementation : public evmc::Host
   public:
     ~HostImplementation() noexcept override = default;
 
-    bool account_exists(const evmc::address& addr) const noexcept override
+    bool account_exists([[maybe_unused]] const evmc::address& addr) const noexcept override
     {
         //        std::cout << "account_exists method call: address[ " << vm::toBytes(addr) << "].\n";
         return false;
     }
 
-    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& key) const noexcept override
+    evmc::bytes32 get_storage([[maybe_unused]] const evmc::address& addr, const evmc::bytes32& key) const noexcept override
     {
         //        std::cout << "get_storage method call: address[" << vm::toBytes(addr) << "], key[" << vm::toBytes(key)
         //                  << "].\n";
@@ -33,7 +32,7 @@ class HostImplementation : public evmc::Host
         return evmc::bytes32();
     }
 
-    evmc_storage_status set_storage(const evmc::address& addr,
+    evmc_storage_status set_storage([[maybe_unused]] const evmc::address& addr,
                                     const evmc::bytes32& key,
                                     const evmc::bytes32& value) noexcept override
     {
@@ -49,25 +48,25 @@ class HostImplementation : public evmc::Host
         return evmc_storage_status::EVMC_STORAGE_ADDED;
     }
 
-    evmc::uint256be get_balance(const evmc::address& addr) const noexcept override
+    evmc::uint256be get_balance([[maybe_unused]] const evmc::address& addr) const noexcept override
     {
         //        std::cout << "get_balance method call: address[" << vm::toBytes(addr) << "].\n";
         return evmc::uint256be();
     }
 
-    size_t get_code_size(const evmc::address& addr) const noexcept override
+    size_t get_code_size([[maybe_unused]] const evmc::address& addr) const noexcept override
     {
         //        std::cout << "get_code_size method call: address: " << vm::toBytes(addr) << "].\n";
         return 0;
     }
 
-    evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override
+    evmc::bytes32 get_code_hash([[maybe_unused]] const evmc::address& addr) const noexcept override
     {
         //        std::cout << "get_code_hash call method call: " << vm::toBytes(addr) << "].\n";
         return evmc::bytes32();
     }
 
-    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* /*buffer_data*/, size_t buffer_size) const
+    size_t copy_code([[maybe_unused]] const evmc::address& addr,[[maybe_unused]] size_t code_offset,[[maybe_unused]] uint8_t* /*buffer_data*/,[[maybe_unused]] size_t buffer_size) const
       noexcept override
     {
         //        std::cout << "copy_code call method call: " << vm::toBytes(addr)
@@ -76,13 +75,13 @@ class HostImplementation : public evmc::Host
         return 0;
     }
 
-    void selfdestruct(const evmc::address& addr, const evmc::address& beneficiary) noexcept override
+    void selfdestruct([[maybe_unused]] const evmc::address& addr,[[maybe_unused]] const evmc::address& beneficiary) noexcept override
     {
         //        std::cout << "selfdestruct method call: address[" << vm::toBytes(addr) << "], beneficiary["
         //                  << vm::toBytes(beneficiary) << "].\n";
     }
 
-    evmc::result call(const evmc_message& msg) noexcept override
+    evmc::result call([[maybe_unused]] const evmc_message& msg) noexcept override
     {
         //        std::cout << "call method call: snd[" << vm::toBytes(msg.sender) << "], dest[" <<
         //        vm::toBytes(msg.destination)
@@ -97,17 +96,17 @@ class HostImplementation : public evmc::Host
         return evmc_tx_context();
     }
 
-    evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override
+    evmc::bytes32 get_block_hash([[maybe_unused]] int64_t block_number) const noexcept override
     {
         //        std::cout << "get_block_hash method call: block_number[" << std::to_string(block_number) << "].\n";
         return evmc::bytes32();
     }
 
-    void emit_log(const evmc::address& addr,
-                  const uint8_t* /*data*/,
-                  size_t /*data_size*/,
-                  const evmc::bytes32[] /*topics*/,
-                  size_t num_topics) noexcept override
+    void emit_log([[maybe_unused]] const evmc::address& addr,
+                  [[maybe_unused]] const uint8_t* /*data*/,
+                  [[maybe_unused]] size_t /*data_size*/,
+                  [[maybe_unused]] const evmc::bytes32[] /*topics*/,
+                  [[maybe_unused]] size_t num_topics) noexcept override
     {
         //        std::cout << "emit_log method call: address[" << vm::toBytes(addr) << "], topics_number["
         //                  << std::to_string(num_topics) << "].\n";
@@ -161,7 +160,7 @@ contract SimpleStorage {
     auto target_value_1 = 1u;
     auto message_1_data = vm::encode(target_value_1);
 
-    evmc_message message_1;
+    evmc_message message_1{};
     message_1.kind = evmc_call_kind::EVMC_CALL;
     message_1.flags = 0;
     message_1.depth = 0;
@@ -178,7 +177,7 @@ contract SimpleStorage {
 
     auto message_2_data = base::fromHex<base::Bytes>("6d4ce63c");
 
-    evmc_message message_2;
+    evmc_message message_2{};
     message_2.kind = evmc_call_kind::EVMC_CALL;
     message_2.flags = 0;
     message_2.depth = 0;
@@ -199,7 +198,7 @@ contract SimpleStorage {
     auto target_value_2 = 69u;
 
     auto message_3_data = base::fromHex<base::Bytes>("60fe47b1") + vm::encode(target_value_2);
-    evmc_message message_3;
+    evmc_message message_3{};
     message_3.kind = evmc_call_kind::EVMC_CALL;
     message_3.flags = 0;
     message_3.depth = 0;
@@ -215,7 +214,7 @@ contract SimpleStorage {
     BOOST_CHECK(res3.status_code == evmc_status_code::EVMC_SUCCESS);
 
     auto message_4_data = base::fromHex<base::Bytes>("6d4ce63c");
-    evmc_message message_4;
+    evmc_message message_4{};
     message_4.kind = evmc_call_kind::EVMC_CALL;
     message_4.flags = 0;
     message_4.depth = 0;

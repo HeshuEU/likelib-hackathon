@@ -14,7 +14,7 @@ class Sha256
     static constexpr std::size_t SHA256_SIZE = 32;
     //----------------------------------
     Sha256(const Sha256&) = default;
-    Sha256(Sha256&&) = default;
+    explicit Sha256(Sha256&&) = default;
     explicit Sha256(const Bytes& data);
     Sha256(Bytes&& data);
     Sha256(const FixedBytes<SHA256_SIZE>& data);

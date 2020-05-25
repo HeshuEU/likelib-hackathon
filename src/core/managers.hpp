@@ -6,10 +6,8 @@
 #include <map>
 #include <shared_mutex>
 
-
 namespace lk
 {
-
 
 enum class AccountType : uint8_t
 {
@@ -40,8 +38,8 @@ class AccountState
         bool was_modified{ false };
     };
     //============================
-    AccountState();
-    AccountState(AccountType type);
+    explicit AccountState();
+    explicit AccountState(AccountType type);
     ~AccountState() = default;
     //============================
     AccountType getType() const;
@@ -86,7 +84,7 @@ class StateManager
     StateManager(StateManager&& other);
 
     StateManager& operator=(const StateManager&) = delete;
-    StateManager& operator=(StateManager&&);
+    StateManager& operator=(StateManager&&) noexcept;
     ~StateManager() = default;
     //================
     void createClientAccount(const lk::Address& address);
@@ -94,7 +92,7 @@ class StateManager
     bool hasAccount(const lk::Address& address) const;
     bool deleteAccount(const lk::Address& address);
     //================
-    bool tryTransferMoney(const lk::Address& from, const lk::Address& to, lk::Balance amount);
+    bool tryTransferMoney(const lk::Address& from, const lk::Address& to, const lk::Balance& amount);
     //================
     bool checkTransaction(const lk::Transaction& tx) const;
     void updateFromGenesis(const lk::Block& block);

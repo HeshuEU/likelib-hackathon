@@ -6,13 +6,13 @@
 namespace lk
 {
 
-Transaction::Transaction(lk::Address from,
-                         lk::Address to,
-                         lk::Balance amount,
-                         std::uint64_t fee,
+Transaction::Transaction(Address from,
+                         Address to,
+                         Balance amount,
+                         Fee fee,
                          base::Time timestamp,
                          base::Bytes data,
-                         lk::Sign sign)
+                         Sign sign)
   : _from{ std::move(from) }
   , _to{ std::move(to) }
   , _amount{ amount }
@@ -27,19 +27,19 @@ Transaction::Transaction(lk::Address from,
 }
 
 
-const lk::Address& Transaction::getFrom() const noexcept
+const Address& Transaction::getFrom() const noexcept
 {
     return _from;
 }
 
 
-const lk::Address& Transaction::getTo() const noexcept
+const Address& Transaction::getTo() const noexcept
 {
     return _to;
 }
 
 
-const lk::Balance& Transaction::getAmount() const noexcept
+const Balance& Transaction::getAmount() const noexcept
 {
     return _amount;
 }
@@ -51,7 +51,7 @@ const base::Time& Transaction::getTimestamp() const noexcept
 }
 
 
-const std::uint64_t& Transaction::getFee() const noexcept
+const Fee& Transaction::getFee() const noexcept
 {
     return _fee;
 }
@@ -89,7 +89,7 @@ bool Transaction::checkSign() const
 }
 
 
-const lk::Sign& Transaction::getSign() const noexcept
+const Sign& Transaction::getSign() const noexcept
 {
     return _sign;
 }
@@ -156,19 +156,19 @@ std::ostream& operator<<(std::ostream& os, const Transaction& tx)
 }
 
 
-void TransactionBuilder::setFrom(lk::Address from)
+void TransactionBuilder::setFrom(Address from)
 {
     _from = std::move(from);
 }
 
 
-void TransactionBuilder::setTo(lk::Address to)
+void TransactionBuilder::setTo(Address to)
 {
     _to = std::move(to);
 }
 
 
-void TransactionBuilder::setAmount(lk::Balance amount)
+void TransactionBuilder::setAmount(Balance amount)
 {
     _amount = amount;
 }
@@ -180,13 +180,13 @@ void TransactionBuilder::setTimestamp(base::Time timestamp)
 }
 
 
-void TransactionBuilder::setFee(std::uint64_t fee)
+void TransactionBuilder::setFee(Fee fee)
 {
     _fee = fee;
 }
 
 
-void TransactionBuilder::setSign(lk::Sign sign)
+void TransactionBuilder::setSign(Sign sign)
 {
     _sign = std::move(sign);
 }
@@ -238,14 +238,14 @@ Transaction TransactionBuilder::build() &&
 
 const Transaction& invalidTransaction()
 {
-    static const Transaction invalid_tx{ lk::Address::null(), lk::Address::null(), 0, 1, base::Time(), {} };
+    static const Transaction invalid_tx{ Address::null(), Address::null(), 0, 1, base::Time(), {} };
     return invalid_tx;
 }
 
 
 TransactionStatus::TransactionStatus(StatusCode status,
                                      ActionType type,
-                                     std::uint64_t fee_left,
+                                     Fee fee_left,
                                      const std::string& message) noexcept
   : _status{ status }
   , _action(type)
@@ -288,7 +288,7 @@ TransactionStatus::ActionType TransactionStatus::getType() const noexcept
     return _action;
 }
 
-std::uint64_t TransactionStatus::getFeeLeft() const noexcept
+Fee TransactionStatus::getFeeLeft() const noexcept
 {
     return _fee_left;
 }

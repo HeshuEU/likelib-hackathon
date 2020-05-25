@@ -92,271 +92,6 @@ base::Sha256 ViewCall::hashOfCall() const
 }
 
 
-class EthHost : public evmc::Host
-{
-  public:
-    EthHost(lk::Core& core,
-            lk::StateManager& state_manager,
-            const lk::Block& associated_block,
-            const lk::Transaction& associated_tx)
-      : _core{ core }
-      , _state_manager{ state_manager }
-      , _associated_block{ associated_block }
-      , _associated_tx{ associated_tx }
-    {}
-
-
-    bool account_exists(const evmc::address& addr) const noexcept override
-    {
-        LOG_DEBUG << "Core::account_exists";
-        try {
-            auto address = vm::toNativeAddress(addr);
-            LOG_DEBUG << "Core::account_exists by address " << base::base58Encode(address.getBytes().toBytes());
-            return _state_manager.hasAccount(address);
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return false;
-        }
-    }
-
-
-    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& ethKey) const noexcept override
-    {
-
-        LOG_DEBUG << "Core::get_storage";
-        try {
-            auto address = vm::toNativeAddress(addr);
-            LOG_DEBUG << "Core::get_storage from address " << base::base58Encode(address.getBytes().toBytes());
-            base::Bytes key(ethKey.bytes, 32);
-            if (_state_manager.hasAccount(address)) {
-                auto storage_value = _state_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
-                return vm::toEvmcBytes32(storage_value);
-            }
-            return {};
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return {};
-        }
-    }
-
-
-    evmc_storage_status set_storage(const evmc::address& addr,
-                                    const evmc::bytes32& ekey,
-                                    const evmc::bytes32& evalue) noexcept override
-    {
-        LOG_DEBUG << "Core::set_storage";
-        try {
-            static const base::Bytes NULL_VALUE(32);
-            auto address = vm::toNativeAddress(addr);
-            LOG_DEBUG << "Core::set_storage to address " << base::base58Encode(address.getBytes().toBytes());
-            auto key = base::Sha256(base::Bytes(ekey.bytes, 32));
-            base::Bytes new_value(evalue.bytes, 32);
-
-            auto& account_state = _state_manager.getAccount(address);
-
-            if (!account_state.checkStorageValue(key)) {
-                if (new_value == NULL_VALUE) {
-                    return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
-                }
-                else {
-                    account_state.setStorageValue(key, new_value);
-                    return evmc_storage_status::EVMC_STORAGE_ADDED;
-                }
-            }
-            else {
-                auto old_storage_data = account_state.getStorageValue(key);
-                const auto& old_value = old_storage_data.data;
-
-                account_state.setStorageValue(key, new_value);
-                if (old_value == new_value) {
-                    return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
-                }
-                else if (new_value == NULL_VALUE) {
-                    return evmc_storage_status::EVMC_STORAGE_DELETED;
-                }
-                else {
-                    return evmc_storage_status::EVMC_STORAGE_MODIFIED;
-                }
-            }
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return {};
-        }
-    }
-
-
-    evmc::uint256be get_balance(const evmc::address& addr) const noexcept override
-    {
-        LOG_DEBUG << "Core::get_balance";
-        try {
-            auto address = vm::toNativeAddress(addr);
-            LOG_DEBUG << "Core::get_balance to address " << base::base58Encode(address.getBytes().toBytes());
-            if (_state_manager.hasAccount(address)) {
-                auto balance = _state_manager.getAccount(address).getBalance();
-                return vm::toEvmcUint256(balance);
-            }
-            return {};
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return {};
-        }
-    }
-
-
-    size_t get_code_size(const evmc::address& addr) const noexcept override
-    {
-        LOG_DEBUG << "Core::get_code_size";
-        try {
-            auto address = vm::toNativeAddress(addr);
-            LOG_DEBUG << "Core::get_code_size to address " << base::base58Encode(address.getBytes().toBytes());
-
-            if (_state_manager.hasAccount(address)) {
-                auto account = _state_manager.getAccount(address);
-                const auto& code = _state_manager.getAccount(address).getRuntimeCode();
-                return code.size();
-            }
-            return 0;
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return 0;
-        }
-    }
-
-
-    evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override
-    {
-        LOG_DEBUG << "Core::get_code_hash";
-        try {
-            auto address = vm::toNativeAddress(addr);
-            LOG_DEBUG << "Core::get_code_hash to address " << base::base58Encode(address.getBytes().toBytes());
-            auto account_code_hash = _state_manager.getAccount(address).getCodeHash();
-            return vm::toEvmcBytes32(account_code_hash.getBytes());
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return {};
-        }
-    }
-
-
-    size_t copy_code(const evmc::address& addr,
-                     size_t code_offset,
-                     uint8_t* buffer_data,
-                     size_t buffer_size) const noexcept override
-    {
-        LOG_DEBUG << "Core::copy_code";
-        try {
-            auto address = vm::toNativeAddress(addr);
-            LOG_DEBUG << "Core::copy_code to address " << base::base58Encode(address.getBytes().toBytes());
-            if (auto code = _state_manager.getAccount(address).getRuntimeCode(); code.isEmpty()) {
-                return 0;
-            }
-            else {
-                std::size_t bytes_to_copy = std::min(buffer_size, code.size() - code_offset);
-                std::copy_n(code.getData() + code_offset, bytes_to_copy, buffer_data);
-                return bytes_to_copy;
-            }
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return 0;
-        }
-    }
-
-
-    void selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept override
-    {
-        LOG_DEBUG << "Core::selfdestruct";
-        try {
-            auto address = vm::toNativeAddress(eaddr);
-            LOG_DEBUG << "Core::selfdestruct to address " << base::base58Encode(address.getBytes().toBytes());
-            auto account = _state_manager.getAccount(address);
-
-            auto beneficiary_address = vm::toNativeAddress(ebeneficiary);
-            auto beneficiary_account = _state_manager.getAccount(beneficiary_address);
-
-            _state_manager.tryTransferMoney(address, beneficiary_address, account.getBalance());
-            _state_manager.deleteAccount(address);
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return;
-        }
-    }
-
-
-    evmc::result call(const evmc_message& msg) noexcept override
-    {
-        LOG_DEBUG << "Core::call";
-        try {
-            lk::Address to = vm::toNativeAddress(msg.destination);
-            LOG_DEBUG << "Core::call to address " << base::base58Encode(to.getBytes().toBytes());
-            if (_state_manager.hasAccount(to) && _state_manager.getAccount(to).getType() == lk::AccountType::CONTRACT) {
-                const auto& code = _state_manager.getAccount(to).getRuntimeCode();
-                return _core.callVm(_state_manager, _associated_block, _associated_tx, msg, code);
-            }
-            else {
-                lk::Address from = vm::toNativeAddress(msg.sender);
-                _state_manager.tryTransferMoney(from, to, vm::toBalance(msg.value));
-                evmc::result result{ evmc_status_code::EVMC_SUCCESS, msg.gas, nullptr, 0 };
-                return result;
-            }
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return evmc::result{ evmc_status_code::EVMC_FAILURE, msg.gas, nullptr, 0 };
-        }
-    }
-
-
-    evmc_tx_context get_tx_context() const noexcept override
-    {
-        LOG_DEBUG << "Core::get_tx_context";
-        try {
-            evmc_tx_context ret;
-            std::fill(std::begin(ret.tx_gas_price.bytes), std::end(ret.tx_gas_price.bytes), 0);
-            ret.tx_origin = vm::toEthAddress(_associated_tx.getFrom());
-            ret.block_number = _associated_block.getDepth();
-            ret.block_timestamp = _associated_block.getTimestamp().getSecondsSinceEpoch();
-            ret.block_coinbase = vm::toEthAddress(_associated_block.getCoinbase());
-            // ret.block_gas_limit
-            std::fill(std::begin(ret.block_difficulty.bytes), std::end(ret.block_difficulty.bytes), 0);
-            ret.block_difficulty.bytes[2] = 0x28;
-
-            return ret;
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return {};
-        }
-    }
-
-
-    evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override
-    {
-        LOG_DEBUG << "Core::get_block_hash";
-        try {
-            auto hash = _core.findBlockHash(block_number);
-            if (hash) {
-                return vm::toEvmcBytes32(hash->getBytes());
-            }
-            return {};
-        }
-        catch (...) { // cannot pass exceptions since noexcept
-            return {};
-        }
-    }
-
-
-    void emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept
-    {
-        LOG_DEBUG << "Core::emit_log";
-        LOG_WARNING << "emit_log is denied. For more information, see docs";
-    }
-
-  private:
-    lk::Core& _core;
-    lk::StateManager& _state_manager;
-    const lk::Block& _associated_block;
-    const lk::Transaction& _associated_tx;
-};
-
-
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
   : _config{ config }
   , _vault{ key_vault }
@@ -899,5 +634,261 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 {
     _event_new_pending_transaction.subscribe(std::move(callback));
 }
+
+
+EthHost::EthHost(lk::Core& core,
+                 lk::StateManager& state_manager,
+                 const lk::Block& associated_block,
+                 const lk::Transaction& associated_tx)
+  : _core{ core }
+  , _state_manager{ state_manager }
+  , _associated_block{ associated_block }
+  , _associated_tx{ associated_tx }
+{}
+
+
+bool EthHost::account_exists(const evmc::address& addr) const noexcept
+{
+    LOG_DEBUG << "Core::account_exists";
+    try {
+        auto address = vm::toNativeAddress(addr);
+        LOG_DEBUG << "Core::account_exists by address " << base::base58Encode(address.getBytes().toBytes());
+        return _state_manager.hasAccount(address);
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return false;
+    }
+}
+
+
+evmc::bytes32 EthHost::get_storage(const evmc::address& addr, const evmc::bytes32& ethKey) const noexcept
+{
+
+    LOG_DEBUG << "Core::get_storage";
+    try {
+        auto address = vm::toNativeAddress(addr);
+        LOG_DEBUG << "Core::get_storage from address " << base::base58Encode(address.getBytes().toBytes());
+        base::Bytes key(ethKey.bytes, 32);
+        if (_state_manager.hasAccount(address)) {
+            auto storage_value = _state_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
+            return vm::toEvmcBytes32(storage_value);
+        }
+        return {};
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return {};
+    }
+}
+
+
+evmc_storage_status EthHost::set_storage(const evmc::address& addr,
+                                         const evmc::bytes32& ekey,
+                                         const evmc::bytes32& evalue) noexcept
+{
+    LOG_DEBUG << "Core::set_storage";
+    try {
+        static const base::Bytes NULL_VALUE(32);
+        auto address = vm::toNativeAddress(addr);
+        LOG_DEBUG << "Core::set_storage to address " << base::base58Encode(address.getBytes().toBytes());
+        auto key = base::Sha256(base::Bytes(ekey.bytes, 32));
+        base::Bytes new_value(evalue.bytes, 32);
+
+        auto& account_state = _state_manager.getAccount(address);
+
+        if (!account_state.checkStorageValue(key)) {
+            if (new_value == NULL_VALUE) {
+                return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
+            }
+            else {
+                account_state.setStorageValue(key, new_value);
+                return evmc_storage_status::EVMC_STORAGE_ADDED;
+            }
+        }
+        else {
+            auto old_storage_data = account_state.getStorageValue(key);
+            const auto& old_value = old_storage_data.data;
+
+            account_state.setStorageValue(key, new_value);
+            if (old_value == new_value) {
+                return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
+            }
+            else if (new_value == NULL_VALUE) {
+                return evmc_storage_status::EVMC_STORAGE_DELETED;
+            }
+            else {
+                return evmc_storage_status::EVMC_STORAGE_MODIFIED;
+            }
+        }
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return {};
+    }
+}
+
+
+evmc::uint256be EthHost::get_balance(const evmc::address& addr) const noexcept
+{
+    LOG_DEBUG << "Core::get_balance";
+    try {
+        auto address = vm::toNativeAddress(addr);
+        LOG_DEBUG << "Core::get_balance to address " << base::base58Encode(address.getBytes().toBytes());
+        if (_state_manager.hasAccount(address)) {
+            auto balance = _state_manager.getAccount(address).getBalance();
+            return vm::toEvmcUint256(balance);
+        }
+        return {};
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return {};
+    }
+}
+
+
+size_t EthHost::get_code_size(const evmc::address& addr) const noexcept
+{
+    LOG_DEBUG << "Core::get_code_size";
+    try {
+        auto address = vm::toNativeAddress(addr);
+        LOG_DEBUG << "Core::get_code_size to address " << base::base58Encode(address.getBytes().toBytes());
+
+        if (_state_manager.hasAccount(address)) {
+            auto account = _state_manager.getAccount(address);
+            const auto& code = _state_manager.getAccount(address).getRuntimeCode();
+            return code.size();
+        }
+        return 0;
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return 0;
+    }
+}
+
+
+evmc::bytes32 EthHost::get_code_hash(const evmc::address& addr) const noexcept
+{
+    LOG_DEBUG << "Core::get_code_hash";
+    try {
+        auto address = vm::toNativeAddress(addr);
+        LOG_DEBUG << "Core::get_code_hash to address " << base::base58Encode(address.getBytes().toBytes());
+        auto account_code_hash = _state_manager.getAccount(address).getCodeHash();
+        return vm::toEvmcBytes32(account_code_hash.getBytes());
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return {};
+    }
+}
+
+
+size_t EthHost::copy_code(const evmc::address& addr,
+                          size_t code_offset,
+                          uint8_t* buffer_data,
+                          size_t buffer_size) const noexcept
+{
+    LOG_DEBUG << "Core::copy_code";
+    try {
+        auto address = vm::toNativeAddress(addr);
+        LOG_DEBUG << "Core::copy_code to address " << base::base58Encode(address.getBytes().toBytes());
+        if (auto code = _state_manager.getAccount(address).getRuntimeCode(); code.isEmpty()) {
+            return 0;
+        }
+        else {
+            std::size_t bytes_to_copy = std::min(buffer_size, code.size() - code_offset);
+            std::copy_n(code.getData() + code_offset, bytes_to_copy, buffer_data);
+            return bytes_to_copy;
+        }
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return 0;
+    }
+}
+
+
+void EthHost::selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept
+{
+    LOG_DEBUG << "Core::selfdestruct";
+    try {
+        auto address = vm::toNativeAddress(eaddr);
+        LOG_DEBUG << "Core::selfdestruct to address " << base::base58Encode(address.getBytes().toBytes());
+        auto account = _state_manager.getAccount(address);
+
+        auto beneficiary_address = vm::toNativeAddress(ebeneficiary);
+        auto beneficiary_account = _state_manager.getAccount(beneficiary_address);
+
+        _state_manager.tryTransferMoney(address, beneficiary_address, account.getBalance());
+        _state_manager.deleteAccount(address);
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return;
+    }
+}
+
+
+evmc::result EthHost::call(const evmc_message& msg) noexcept
+{
+    LOG_DEBUG << "Core::call";
+    try {
+        lk::Address to = vm::toNativeAddress(msg.destination);
+        LOG_DEBUG << "Core::call to address " << base::base58Encode(to.getBytes().toBytes());
+        if (_state_manager.hasAccount(to) && _state_manager.getAccount(to).getType() == lk::AccountType::CONTRACT) {
+            const auto& code = _state_manager.getAccount(to).getRuntimeCode();
+            return _core.callVm(_state_manager, _associated_block, _associated_tx, msg, code);
+        }
+        else {
+            lk::Address from = vm::toNativeAddress(msg.sender);
+            _state_manager.tryTransferMoney(from, to, vm::toBalance(msg.value));
+            evmc::result result{ evmc_status_code::EVMC_SUCCESS, msg.gas, nullptr, 0 };
+            return result;
+        }
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return evmc::result{ evmc_status_code::EVMC_FAILURE, msg.gas, nullptr, 0 };
+    }
+}
+
+
+evmc_tx_context EthHost::get_tx_context() const noexcept
+{
+    LOG_DEBUG << "Core::get_tx_context";
+    try {
+        evmc_tx_context ret;
+        std::fill(std::begin(ret.tx_gas_price.bytes), std::end(ret.tx_gas_price.bytes), 0);
+        ret.tx_origin = vm::toEthAddress(_associated_tx.getFrom());
+        ret.block_number = _associated_block.getDepth();
+        ret.block_timestamp = _associated_block.getTimestamp().getSecondsSinceEpoch();
+        ret.block_coinbase = vm::toEthAddress(_associated_block.getCoinbase());
+        // ret.block_gas_limit
+        std::fill(std::begin(ret.block_difficulty.bytes), std::end(ret.block_difficulty.bytes), 0);
+        ret.block_difficulty.bytes[2] = 0x28;
+
+        return ret;
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return {};
+    }
+}
+
+
+evmc::bytes32 EthHost::get_block_hash(int64_t block_number) const noexcept
+{
+    LOG_DEBUG << "Core::get_block_hash";
+    try {
+        auto hash = _core.findBlockHash(block_number);
+        if (hash) {
+            return vm::toEvmcBytes32(hash->getBytes());
+        }
+        return {};
+    }
+    catch (...) { // cannot pass exceptions since noexcept
+        return {};
+    }
+}
+
+
+void EthHost::emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept
+{
+    LOG_DEBUG << "Core::emit_log";
+    LOG_WARNING << "emit_log is denied. For more information, see docs";
+}
+
 
 } // namespace core

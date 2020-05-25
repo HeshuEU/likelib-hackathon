@@ -41,7 +41,7 @@ lk::Balance AccountState::getBalance() const noexcept
 
 void AccountState::setBalance(lk::Balance new_balance)
 {
-    _balance = new_balance;
+    _balance = std::move(new_balance);
 }
 
 
@@ -129,7 +129,7 @@ StateManager::StateManager(StateManager&& other)
 }
 
 
-StateManager& StateManager::operator=(StateManager&& other)
+StateManager& StateManager::operator=(StateManager&& other) noexcept
 {
     std::shared_lock lk(other._rw_mutex);
     _states = other._states;
@@ -243,7 +243,7 @@ bool StateManager::checkTransaction(const lk::Transaction& tx) const
 }
 
 
-bool StateManager::tryTransferMoney(const lk::Address& from, const lk::Address& to, lk::Balance amount)
+bool StateManager::tryTransferMoney(const lk::Address& from, const lk::Address& to, const lk::Balance& amount)
 {
     if (!hasAccount(from)) {
         return false;

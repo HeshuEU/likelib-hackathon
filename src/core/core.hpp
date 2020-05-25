@@ -17,7 +17,6 @@
 namespace lk
 {
 
-
 class ViewCall
 {
   public:
@@ -156,6 +155,51 @@ class Core
     // notifies if some transaction was added to set of pending
     void subscribeToNewPendingTransaction(decltype(_event_new_pending_transaction)::CallbackType callback);
     //==================
+};
+
+
+class EthHost : public evmc::Host
+{
+  public:
+    EthHost(lk::Core& core,
+            lk::StateManager& state_manager,
+            const lk::Block& associated_block,
+            const lk::Transaction& associated_tx);
+
+    bool account_exists(const evmc::address& addr) const noexcept override;
+
+    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& ethKey) const noexcept override;
+
+    evmc_storage_status set_storage(const evmc::address& addr,
+                                    const evmc::bytes32& ekey,
+                                    const evmc::bytes32& evalue) noexcept override;
+
+    evmc::uint256be get_balance(const evmc::address& addr) const noexcept override;
+
+    size_t get_code_size(const evmc::address& addr) const noexcept override;
+
+    evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override;
+
+    size_t copy_code(const evmc::address& addr,
+                     size_t code_offset,
+                     uint8_t* buffer_data,
+                     size_t buffer_size) const noexcept override;
+
+    void selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept override;
+
+    evmc::result call(const evmc_message& msg) noexcept override;
+
+    evmc_tx_context get_tx_context() const noexcept override;
+
+    evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override;
+
+    void emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept;
+
+  private:
+    lk::Core& _core;
+    lk::StateManager& _state_manager;
+    const lk::Block& _associated_block;
+    const lk::Transaction& _associated_tx;
 };
 
 } // namespace core

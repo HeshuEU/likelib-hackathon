@@ -16,13 +16,13 @@ using Sign = base::FixedBytes<base::Secp256PrivateKey::SECP256_SIGNATURE_SIZE>;
 class Transaction
 {
   public:
-    Transaction(lk::Address from,
-                lk::Address to,
-                lk::Balance amount,
-                std::uint64_t fee,
+    Transaction(Address from,
+                Address to,
+                Balance amount,
+                Fee fee,
                 base::Time timestamp,
                 base::Bytes data,
-                lk::Sign sign = lk::Sign{});
+                Sign sign = lk::Sign{});
     Transaction(const Transaction&) = default;
     Transaction(Transaction&&) = default;
 
@@ -52,13 +52,13 @@ class Transaction
     //=================
   private:
     //=================
-    lk::Address _from;
-    lk::Address _to;
-    lk::Balance _amount;
-    std::uint64_t _fee;
+    Address _from;
+    Address _to;
+    Balance _amount;
+    Fee _fee;
     base::Time _timestamp;
     base::Bytes _data;
-    lk::Sign _sign;
+    Sign _sign;
     //=================
 };
 
@@ -69,25 +69,25 @@ std::ostream& operator<<(std::ostream& os, const Transaction& tx);
 class TransactionBuilder
 {
   public:
-    void setFrom(lk::Address from);
-    void setTo(lk::Address to);
-    void setAmount(lk::Balance amount);
+    void setFrom(Address from);
+    void setTo(Address to);
+    void setAmount(Balance amount);
     void setTimestamp(base::Time timestamp);
-    void setFee(std::uint64_t fee);
+    void setFee(Fee fee);
     void setData(base::Bytes data);
-    void setSign(lk::Sign sign);
+    void setSign(Sign sign);
 
     [[nodiscard]] Transaction build() const&;
     [[nodiscard]] Transaction build() &&;
 
   private:
-    std::optional<lk::Address> _from;
-    std::optional<lk::Address> _to;
-    std::optional<lk::Balance> _amount;
+    std::optional<Address> _from;
+    std::optional<Address> _to;
+    std::optional<Balance> _amount;
     std::optional<base::Time> _timestamp;
-    std::optional<std::uint64_t> _fee;
+    std::optional<Fee> _fee;
     std::optional<base::Bytes> _data;
-    std::optional<lk::Sign> _sign;
+    std::optional<Sign> _sign;
 };
 
 
@@ -143,7 +143,7 @@ class TransactionStatus
     StatusCode _status;
     ActionType _action;
     std::string _message;
-    std::uint64_t _fee_left;
+    Fee _fee_left;
 };
 
 } // namespace lk
