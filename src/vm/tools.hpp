@@ -4,7 +4,6 @@
 #include "core/types.hpp"
 
 #include "base/bytes.hpp"
-#include "base/keccak256.hpp"
 
 #include <evmc/evmc.hpp>
 

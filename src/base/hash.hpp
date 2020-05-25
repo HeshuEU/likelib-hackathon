@@ -49,13 +49,16 @@ std::ostream& operator<<(std::ostream& os, const Sha256& sha);
 
 } // namespace base
 
+
 namespace std
 {
+
 template<>
 struct hash<base::Sha256>
 {
     std::size_t operator()(const base::Sha256& k) const;
 };
+
 } // namespace std
 
 
@@ -104,11 +107,13 @@ std::ostream& operator<<(std::ostream& os, const Sha1& sha);
 
 namespace std
 {
+
 template<>
 struct hash<base::Sha1>
 {
     std::size_t operator()(const base::Sha1& k) const;
 };
+
 } // namespace std
 
 
@@ -154,13 +159,16 @@ std::ostream& operator<<(std::ostream& os, const Ripemd160& sha);
 
 } // namespace base
 
+
 namespace std
 {
+
 template<>
 struct hash<base::Ripemd160>
 {
     std::size_t operator()(const base::Ripemd160& k) const;
 };
+
 } // namespace std
 
 
@@ -208,7 +216,6 @@ class Sha3
     base::Bytes _bytes;
 };
 
-
 std::ostream& operator<<(std::ostream& os, const Sha3& sha);
 
 } // namespace base
@@ -216,11 +223,65 @@ std::ostream& operator<<(std::ostream& os, const Sha3& sha);
 
 namespace std
 {
+
 template<>
 struct hash<base::Sha3>
 {
     std::size_t operator()(const base::Sha3& k) const;
 };
+
+} // namespace std
+
+
+namespace base
+{
+
+class Keccak256
+{
+public:
+    static constexpr std::size_t KECCAK256_SIZE = 32;
+    //----------------------------------
+    Keccak256(const Keccak256&) = default;
+    Keccak256(Keccak256&&) = default;
+    Keccak256(const Bytes& data);
+    Keccak256(Bytes&& data);
+    Keccak256(const FixedBytes<KECCAK256_SIZE>& data);
+    Keccak256(FixedBytes<KECCAK256_SIZE>&& data);
+    Keccak256& operator=(const Keccak256&) = default;
+    Keccak256& operator=(Keccak256&&) = default;
+    ~Keccak256() = default;
+    //----------------------------------
+    std::string toHex() const;
+    const base::FixedBytes<KECCAK256_SIZE>& getBytes() const noexcept;
+    //----------------------------------
+    static Keccak256 fromHex(const std::string_view& hex_view);
+    //----------------------------------
+    bool operator==(const Keccak256& another) const;
+    bool operator!=(const Keccak256& another) const;
+    //----------------------------------
+    static Keccak256 compute(const base::Bytes& data);
+    //----------------------------------
+    void serialize(SerializationOArchive& oa) const;
+    static Keccak256 deserialize(SerializationIArchive& ia);
+    //----------------------------------
+private:
+    base::FixedBytes<KECCAK256_SIZE> _bytes;
+};
+
+std::ostream& operator<<(std::ostream& os, const Keccak256& sha);
+
+} // namespace base
+
+
+namespace std
+{
+
+template<>
+struct hash<base::Keccak256>
+{
+    std::size_t operator()(const base::Keccak256& k) const;
+};
+
 } // namespace std
 
 

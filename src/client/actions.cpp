@@ -1,5 +1,6 @@
 #include "actions.hpp"
 #include "config.hpp"
+#include "subprogram_router.hpp"
 
 #include "core/transaction.hpp"
 
@@ -14,7 +15,6 @@
 #include "base/hash.hpp"
 #include "base/log.hpp"
 #include "base/property_tree.hpp"
-#include "base/subprogram_router.hpp"
 #include "base/time.hpp"
 
 #include <cstring>

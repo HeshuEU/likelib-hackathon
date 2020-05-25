@@ -7,7 +7,6 @@
 #include "base/serialization.hpp"
 #include "base/time.hpp"
 
-
 namespace lk
 {
 

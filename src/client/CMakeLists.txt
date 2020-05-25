@@ -1,4 +1,5 @@
 set(CLIENT_HEADERS
+        subprogram_router.hpp
         actions.hpp
         config.hpp
         utility.hpp
@@ -6,6 +7,7 @@ set(CLIENT_HEADERS
         )
 
 set(CLIENT_SOURCES
+        subprogram_router.cpp
         actions.cpp
         main.cpp
         utility.cpp
