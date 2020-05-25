@@ -366,7 +366,9 @@ void Host::networkThreadWorkerFunction() noexcept
 
 void Host::run()
 {
+    LOG_INFO << "Listening for incoming connections on " << _listen_ip;
     accept();
+
     scheduleHeartBeat();
     _network_thread = std::thread(&Host::networkThreadWorkerFunction, this);
 
