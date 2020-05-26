@@ -157,7 +157,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     const lk::Address& getAddress() const noexcept;
     //=========================
     msg::NodeIdentityInfo getInfo() const;
-    bool isClosed() const;
+    bool isSessionClosed() const;
     //=========================
     void requestLookup(const lk::Address& address, uint8_t alpha);
     void requestBlock(const base::Sha256& block_hash);
@@ -255,8 +255,7 @@ class PeerPoolBase
 {
   public:
     virtual bool tryAddPeer(std::shared_ptr<Peer> peer) = 0;
-    virtual void removePeer(std::shared_ptr<Peer> peer) = 0;
-    virtual void removePeer(Peer* peer) = 0;
+    virtual bool tryRemovePeer(const Peer* peer) = 0;
 
     virtual void forEachPeer(std::function<void(const Peer&)> f) const = 0;
     virtual void forEachPeer(std::function<void(Peer&)> f) = 0;

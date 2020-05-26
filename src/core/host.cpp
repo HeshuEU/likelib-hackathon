@@ -27,18 +27,15 @@ bool BasicPeerPool::tryAddPeer(std::shared_ptr<Peer> peer)
 }
 
 
-void BasicPeerPool::removePeer(std::shared_ptr<Peer> peer)
-{
-    std::unique_lock lk(_pool_mutex);
-    removePeer(peer.get());
-}
-
-
-void BasicPeerPool::removePeer(Peer* peer)
+bool BasicPeerPool::tryRemovePeer(const Peer* peer)
 {
     std::unique_lock lk(_pool_mutex);
     if (auto it = _pool.find(peer); it != _pool.end()) {
         _pool.erase(it);
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
@@ -169,13 +166,7 @@ bool KademliaPeerPool::tryAddPeer(std::shared_ptr<Peer> peer)
 }
 
 
-void KademliaPeerPool::removePeer(std::shared_ptr<Peer> peer)
-{
-    removePeer(peer.get());
-}
-
-
-void KademliaPeerPool::removePeer(Peer* peer)
+bool KademliaPeerPool::tryRemovePeer(const Peer* peer)
 {
     std::unique_lock lk{ _buckets_mutex };
     for (auto& bucket : _buckets) {
@@ -183,8 +174,11 @@ void KademliaPeerPool::removePeer(Peer* peer)
               std::find_if(bucket.cbegin(), bucket.cend(), [peer](const auto& cand) { return peer == cand.get(); });
             it != bucket.cend()) {
             bucket.erase(it);
+            return true;
         }
     }
+
+    return false;
 }
 
 
@@ -201,9 +195,10 @@ void KademliaPeerPool::removePeer(std::size_t bucket_index, std::size_t peer_ind
 
 void KademliaPeerPool::removeSilent()
 {
+    // TODO: rework this
     std::unique_lock lk(_buckets_mutex);
     for (auto& bucket : _buckets) {
-        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [](const auto& peer) { return peer->isClosed(); }),
+        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [](const auto& peer) { return peer->isSessionClosed(); }),
                      bucket.end());
     }
 }

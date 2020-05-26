@@ -196,9 +196,7 @@ void Peer::startSession()
 
     _requests.setCloseCallback([peer_holder = weak_from_this()] {
         if (auto peer = peer_holder.lock()) {
-            if (!peer->isClosed()) {
-                peer->detachFromPools();
-            }
+            peer->detachFromPools();
         }
     });
 
@@ -209,7 +207,7 @@ void Peer::startSession()
 }
 
 
-bool Peer::isClosed() const
+bool Peer::isSessionClosed() const
 {
     return !_session || _session->isClosed();
 }
@@ -241,13 +239,12 @@ bool Peer::tryAddToPool()
 
 void Peer::detachFromPools()
 {
-    if (_is_attached_to_handshaked_pool) {
-        LOG_DEBUG << "Detaching " << getEndpoint() << " from handshaked pool";
-        _handshaked_pool.removePeer(this);
+    if(_handshaked_pool.tryRemovePeer(this)) {
+        LOG_DEBUG << "Detached peer " << getEndpoint() << " from handshaked pool";
     }
-    else {
-        LOG_DEBUG << "Detaching " << getEndpoint() << " from non-handshaked pool";
-        _non_handshaked_pool.removePeer(this);
+
+    if(_non_handshaked_pool.tryRemovePeer(this)) {
+        LOG_DEBUG << "Detached peer " << getEndpoint() << " from non-handshaked pool";
     }
 }
 
@@ -467,7 +464,7 @@ void Peer::handle(lk::msg::Connect&& msg)
     _address = msg.address;
 
     if (tryAddToPool()) {
-        _non_handshaked_pool.removePeer(this);
+        _non_handshaked_pool.tryRemovePeer(this);
         _requests.send(
           msg::Accepted{ _core.getThisNodeAddress(), getPublicEndpoint().getPort(), _core.getTopBlockHash() });
 
@@ -497,7 +494,7 @@ void Peer::handle(lk::msg::Accepted&& msg)
     _requests.send(msg::Lookup{ getAddress(), base::config::NET_LOOKUP_ALPHA });
 
     if (tryAddToPool()) {
-        _non_handshaked_pool.removePeer(this);
+        _non_handshaked_pool.tryRemovePeer(this);
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
@@ -696,7 +693,6 @@ void Requests::onMessageReceive(const base::Bytes& received_bytes)
 
 void Requests::onClose()
 {
-    LOG_DEBUG << "Requests::onClose called";
     if (_close_callback) {
         _close_callback();
     }

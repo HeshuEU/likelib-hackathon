@@ -28,9 +28,7 @@ class BasicPeerPool : public PeerPoolBase
   public:
     bool tryAddPeer(std::shared_ptr<Peer> peer) override;
 
-    void removePeer(std::shared_ptr<Peer> peer) override;
-
-    void removePeer(Peer* peer) override;
+    bool tryRemovePeer(const Peer* peer) override;
     //=================================
 
     // thread-safe
@@ -40,7 +38,7 @@ class BasicPeerPool : public PeerPoolBase
     bool hasPeerWithEndpoint(const net::Endpoint& endpoint) const override;
     //=================================
   private:
-    std::map<Peer*, std::shared_ptr<Peer>> _pool;
+    std::map<const Peer*, std::shared_ptr<Peer>> _pool;
     mutable std::shared_mutex _pool_mutex;
 };
 
@@ -59,9 +57,7 @@ class KademliaPeerPool : public KademliaPeerPoolBase
      */
     bool tryAddPeer(std::shared_ptr<Peer> peer) override;
 
-    void removePeer(std::shared_ptr<Peer> peer) override;
-
-    void removePeer(Peer* peer) override;
+    bool tryRemovePeer(const Peer* peer) override;
 
     // thread-safe
     void removeSilent();
