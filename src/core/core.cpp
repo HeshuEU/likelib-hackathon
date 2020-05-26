@@ -311,9 +311,12 @@ lk::Block Core::getBlockTemplate() const
 
 lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const
 {
-    auto info = _state_manager.getAccount(address).toInfo();
-    info.address = address;
-    return info;
+    if (_state_manager.hasAccount(address)) {
+        auto info = _state_manager.getAccount(address).toInfo();
+        info.address = address;
+        return info;
+    }
+    return AccountInfo{ AccountType::CLIENT, address, {}, {}, {} };
 }
 
 
