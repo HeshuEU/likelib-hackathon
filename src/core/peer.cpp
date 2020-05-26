@@ -239,13 +239,8 @@ bool Peer::tryAddToPool()
 
 void Peer::detachFromPools()
 {
-    if(_handshaked_pool.tryRemovePeer(this)) {
-        LOG_DEBUG << "Detached peer " << getEndpoint() << " from handshaked pool";
-    }
-
-    if(_non_handshaked_pool.tryRemovePeer(this)) {
-        LOG_DEBUG << "Detached peer " << getEndpoint() << " from non-handshaked pool";
-    }
+    _handshaked_pool.tryRemovePeer(this);
+    _non_handshaked_pool.tryRemovePeer(this);
 }
 
 //===============================================
