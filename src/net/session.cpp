@@ -75,7 +75,11 @@ void Session::send(base::Bytes&& data, Connection::SendHandler on_send)
 void Session::setHandler(std::weak_ptr<Handler> handler)
 {
     _handler = std::move(handler);
-    _connection->setCloseHandler([handler_holder = _handler] { if(auto handler = handler_holder.lock()) { handler->onClose(); } });
+    _connection->setCloseHandler([handler_holder = _handler] {
+        if (auto handler = handler_holder.lock()) {
+            handler->onClose();
+        }
+    });
 }
 
 
@@ -88,7 +92,7 @@ void Session::start()
 void Session::close()
 {
     if (isActive()) {
-        if(auto handler = _handler.lock()) {
+        if (auto handler = _handler.lock()) {
             handler->onClose();
         }
         _connection->close();

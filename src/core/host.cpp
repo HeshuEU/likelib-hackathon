@@ -138,7 +138,8 @@ bool KademliaPeerPool::tryAddPeer(std::shared_ptr<Peer> peer)
     LOG_DEBUG << "BUCKETS";
     for (const auto& bucket : _buckets) {
         for (const auto& p : bucket) {
-            LOG_DEBUG << p->getPublicEndpoint() << ' ' << peer->getPublicEndpoint() << ' ' << p->getEndpoint() << ' ' << peer->getEndpoint();
+            LOG_DEBUG << p->getPublicEndpoint() << ' ' << peer->getPublicEndpoint() << ' ' << p->getEndpoint() << ' '
+                      << peer->getEndpoint();
             if (p->getPublicEndpoint() == peer->getPublicEndpoint() || p->getEndpoint() == peer->getEndpoint()) {
                 return false;
             }

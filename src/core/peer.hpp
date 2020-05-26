@@ -89,8 +89,7 @@ class Requests
   public:
     using CloseCallback = std::function<void()>;
 
-    Requests(std::weak_ptr<net::Session> session,
-             boost::asio::io_context& io_context);
+    Requests(std::weak_ptr<net::Session> session, boost::asio::io_context& io_context);
 
     void setDefaultCallback(Request::ResponseCallback cb);
 

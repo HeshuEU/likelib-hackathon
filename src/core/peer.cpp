@@ -135,8 +135,7 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _handshaked_pool{ handshaked_pool }
   , _core{ core }
   , _host{ host }
-  , _requests{ std::weak_ptr{ _session },
-               _io_context}
+  , _requests{ std::weak_ptr{ _session }, _io_context }
 {}
 
 
@@ -190,17 +189,17 @@ void Peer::startSession()
     _is_started = true;
 
     _requests.setDefaultCallback([peer_holder = weak_from_this()](base::SerializationIArchive&& ia) {
-        if(auto peer = peer_holder.lock()) {
+        if (auto peer = peer_holder.lock()) {
             peer->process(std::move(ia));
         }
     });
 
     _requests.setCloseCallback([peer_holder = weak_from_this()] {
-      if(auto peer = peer_holder.lock()) {
-          if(!peer->isClosed()) {
-              peer->detachFromPools();
-          }
-      }
+        if (auto peer = peer_holder.lock()) {
+            if (!peer->isClosed()) {
+                peer->detachFromPools();
+            }
+        }
     });
 
     _session->start();
@@ -461,7 +460,8 @@ void Peer::handle(lk::msg::Connect&& msg)
     if (msg.public_port) {
         auto public_ep = getEndpoint();
         public_ep.setPort(msg.public_port);
-        LOG_DEBUG << "setting public endpoint to " << public_ep << " while msg.public_port = " << msg.public_port << " and getEndpoint() = " << getEndpoint();
+        LOG_DEBUG << "setting public endpoint to " << public_ep << " while msg.public_port = " << msg.public_port
+                  << " and getEndpoint() = " << getEndpoint();
         setServerEndpoint(public_ep);
     }
     _address = msg.address;
@@ -644,8 +644,7 @@ void Request::runCallback(base::SerializationIArchive&& ia)
 }
 
 
-Requests::Requests(std::weak_ptr<net::Session> session,
-                   boost::asio::io_context& io_context)
+Requests::Requests(std::weak_ptr<net::Session> session, boost::asio::io_context& io_context)
   : _session{ std::move(session) }
   , _io_context{ io_context }
 {
@@ -698,7 +697,7 @@ void Requests::onMessageReceive(const base::Bytes& received_bytes)
 void Requests::onClose()
 {
     LOG_DEBUG << "Requests::onClose called";
-    if(_close_callback) {
+    if (_close_callback) {
         _close_callback();
     }
 }
