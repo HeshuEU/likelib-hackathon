@@ -125,7 +125,7 @@ const lk::Block& Core::getGenesisBlock()
         lk::Block ret{ 0, base::Sha256(base::Bytes(32)), timestamp, lk::Address::null(), {} };
         lk::Address from{ lk::Address::null() };
         lk::Address to{ "49cfqVfB1gTGw5XZSu6nZDrntLr1" };
-        lk::Balance amount{ 0xFFFFFFFF };
+        auto amount = lk::Balance{ "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" };
         std::uint64_t fee{ 0 };
 
         ret.addTransaction({ from, to, amount, fee, timestamp, base::Bytes{} });
