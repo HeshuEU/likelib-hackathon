@@ -44,7 +44,7 @@ Code quality:
     - mkdir -p ${CLANG_LOG_DIR}
 
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR} > /dev/null 2>&1
-    - cd ${BUILD_DIR} && make > /dev/null 2>&1 || (cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && exit 1)
+    - cd ${BUILD_DIR} && make > ${LOG_DIR}/make.log 2>&1 || (cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && exit 1)
     - cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && cat ${LOG_DIR}/clang-tidy-output.txt
     - test -f "${LOG_DIR}/.error-flag" && exit 1
   artifacts:
