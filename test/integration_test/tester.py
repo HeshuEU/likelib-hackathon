@@ -454,7 +454,8 @@ class Node:
     @staticmethod
     def __generate_config(settings):
         config = {"net": {"listen_addr": settings.id.listen_sync_address,
-                          "public_port": settings.id.sync_port},
+                          "public_port": settings.id.sync_port,
+                          "peers_db": "peers"},
                   "rpc": {"address": settings.id.listen_rpc_address},
                   "miner": {"threads": settings.mining_thread},
                   "nodes": [node_id.connect_sync_address for node_id in settings.nodes],
