@@ -194,7 +194,7 @@ void serializeTransaction(const lk::Transaction& from, likelib::Transaction* to)
     serializeAddress(from.getTo(), to->mutable_to());
     to->mutable_value()->set_value(from.getAmount().toString());
     to->set_fee(from.getFee());
-    to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSecondsSinceEpoch());
+    to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSeconds());
     to->set_data(base::base64Encode(from.getData()));
     to->mutable_signature()->set_signature_bytes_at_base_64(base::base64Encode(from.getSign()));
 }
@@ -221,7 +221,7 @@ void serializeBlock(const lk::Block& from, likelib::Block* to)
     to->set_nonce(from.getNonce());
     serializeHash(from.getPrevBlockHash(), to->mutable_previous_block_hash());
     serializeAddress(from.getCoinbase(), to->mutable_coinbase());
-    to->mutable_timestamp()->set_seconds_since_epoch(from.getTimestamp().getSecondsSinceEpoch());
+    to->mutable_timestamp()->set_seconds_since_epoch(from.getTimestamp().getSeconds());
     for (const auto& tx : from.getTransactions()) {
         serializeTransaction(tx, to->mutable_transactions()->Add());
     }
@@ -266,7 +266,7 @@ void serializeViewCall(const lk::ViewCall& from, likelib::ViewCall* to)
 {
     serializeAddress(from.getFrom(), to->mutable_from());
     serializeAddress(from.getContractAddress(), to->mutable_to());
-    to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSecondsSinceEpoch());
+    to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSeconds());
     to->mutable_message()->set_bytes_base_64(base::base64Encode(from.getData()));
     to->mutable_signature()->set_signature_bytes_at_base_64(base::base64Encode(from.getSign()));
 }

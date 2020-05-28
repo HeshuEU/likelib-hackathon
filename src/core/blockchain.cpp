@@ -167,6 +167,12 @@ const Block& Blockchain::getTopBlock() const
 }
 
 
+base::Sha256 Blockchain::getTopBlockHash() const
+{
+    return _top_level_block_hash;
+}
+
+
 void Blockchain::pushForwardToPersistentStorage(const base::Sha256& block_hash, const Block& block)
 {
     auto block_data = base::toBytes(block);

@@ -383,6 +383,15 @@ T fromBytes(const base::Bytes& bytes)
 }
 
 
+template<typename T, std::size_t S>
+T fromBytes(const base::FixedBytes<S>& bytes)
+{
+    SerializationIArchive ia(bytes);
+    T t = ia.deserialize<T>();
+    return t;
+}
+
+
 template<typename T>
 T nativeToBig(const T& value) noexcept
 {

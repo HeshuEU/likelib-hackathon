@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <thread>
 
@@ -56,7 +57,6 @@ constexpr const char* const OS_NAME =
   "Unix"
 #endif
   ;
-
 //------------------------
 
 // logging configuration
@@ -71,24 +71,22 @@ constexpr int EXIT_OK = 0;
 constexpr int EXIT_FAIL = 1;
 // to better see when ASSERTIONS failed during debug
 constexpr int EXIT_ASSERT_FAILED = 2;
-
 //------------------------
 
 // net
 constexpr std::size_t NET_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
 constexpr std::size_t NET_PING_FREQUENCY = 3600;           // seconds
 constexpr std::size_t NET_CONNECT_TIMEOUT = 10;            // seconds
-
+constexpr std::size_t NET_LOOKUP_ALPHA = 5;                // how many peers to return during lookup
+constexpr std::size_t NET_REQUEST_TIMEOUT = 10; // how many seconds do we wait for a request, until we call it lost
 //------------------------
 
 // blockchain
 constexpr std::size_t BC_MAX_TRANSACTIONS_IN_BLOCK = 100;
-
 //------------------------
 
 // rpc
-constexpr const uint32_t RPC_PUBLIC_API_VERSION = 1;
-
+constexpr const std::uint32_t RPC_PUBLIC_API_VERSION = 1;
 //--------------------
 
 // database
@@ -96,7 +94,6 @@ constexpr std::size_t DATABASE_WRITE_BUFFER_SIZE = 50 * 1024 * 1024;     // 50MB
 constexpr std::size_t DATABASE_DATA_BLOCK_SIZE = 10 * 1024;              // 10KB data-block size
 constexpr std::size_t DATABASE_DATA_BLOCK_CACHE_SIZE = 50 * 1024 * 1024; // 50MB data-block cache size
 constexpr bool DATABASE_COMPRESS_DATA = false;                           // no compress data
-
 //--------------------
 
 // keys paths

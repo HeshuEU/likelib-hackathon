@@ -1,21 +1,22 @@
 #pragma once
 
+#include "base/database.hpp"
+#include "base/property_tree.hpp"
 #include "core/block.hpp"
 #include "core/peer.hpp"
-
+#include "core/rating.hpp"
 #include "net/acceptor.hpp"
 #include "net/connector.hpp"
 #include "net/session.hpp"
-
-#include "base/property_tree.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include <functional>
 #include <list>
+#include <map>
 #include <memory>
-#include <set>
 #include <shared_mutex>
 #include <thread>
 
@@ -24,11 +25,32 @@ namespace lk
 
 class Core;
 
-class PeerTable : public PeerPoolBase
+
+class BasicPeerPool : public PeerPoolBase
+{
+  public:
+    bool tryAddPeer(std::shared_ptr<Peer> peer) override;
+
+    bool tryRemovePeer(const Peer* peer) override;
+    //=================================
+
+    // thread-safe
+    void forEachPeer(std::function<void(const Peer&)> f) const override;
+    void forEachPeer(std::function<void(Peer&)> f) override;
+
+    bool hasPeerWithEndpoint(const net::Endpoint& endpoint) const override;
+    //=================================
+  private:
+    std::map<const Peer*, std::shared_ptr<Peer>> _pool;
+    mutable std::shared_mutex _pool_mutex;
+};
+
+
+class KademliaPeerPool : public KademliaPeerPoolBase
 {
   public:
     //=================================
-    explicit PeerTable(lk::Address host_address);
+    explicit KademliaPeerPool(lk::Address host_address);
     //=================================
     /*
      * Trying to add peer to a table. If succeeded, then std::unique_ptr is moved; if failed --
@@ -36,34 +58,35 @@ class PeerTable : public PeerPoolBase
      * @returns true if succeeded, false otherwise
      * @threadsafe
      */
-    bool tryAddPeer(std::shared_ptr<PeerBase> peer) override;
+    bool tryAddPeer(std::shared_ptr<Peer> peer) override;
 
-    void removePeer(std::shared_ptr<PeerBase> peer) override;
-
-    void removePeer(PeerBase* peer) override;
+    bool tryRemovePeer(const Peer* peer) override;
 
     // thread-safe
     void removeSilent();
     //=================================
 
     // thread-safe
-    void forEachPeer(std::function<void(const PeerBase&)> f) const override;
-    void forEachPeer(std::function<void(PeerBase&)> f) override;
+    void forEachPeer(std::function<void(const Peer&)> f) const override;
+    void forEachPeer(std::function<void(Peer&)> f) override;
 
-    void broadcast(const base::Bytes& data) override;
+    bool hasPeerWithEndpoint(const net::Endpoint& endpoint) const override;
     //=================================
 
-    std::vector<Peer::Info> allPeersInfo() const override;
+    std::vector<msg::NodeIdentityInfo> lookup(const lk::Address& address, std::size_t alpha) override;
 
   private:
     //=================================
     const lk::Address _host_address;
     //=================================
     static constexpr std::size_t MAX_BUCKET_SIZE = 10;
-    std::array<std::vector<std::shared_ptr<PeerBase>>, lk::Address::ADDRESS_BYTES_LENGTH * 8> _buckets;
+    std::array<std::vector<std::shared_ptr<Peer>>, lk::Address::LENGTH_IN_BYTES * 8> _buckets;
     mutable std::shared_mutex _buckets_mutex;
     //=================================
-    std::size_t calcBucketIndex(const lk::Address& peer_address);
+    static std::size_t calcDifference(const base::FixedBytes<lk::Address::LENGTH_IN_BYTES>& a,
+                                      const base::FixedBytes<lk::Address::LENGTH_IN_BYTES>& b);
+
+    std::size_t calcBucketIndex(const lk::Address& peer_address) const;
 
     /*
      * Returns the least recently seen peer in a bucket.
@@ -91,20 +114,22 @@ class Host
     explicit Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core);
     ~Host();
     //=================================
-    void checkOutPeer(const net::Endpoint& address);
+    void checkOutPeer(const net::Endpoint& endpoint, const lk::Address& address = lk::Address::null());
     bool isConnectedTo(const net::Endpoint& endpoint) const;
-    PeerTable& getPool() noexcept;
-    const PeerTable& getPool() const noexcept;
+
+    RatingManager& getRatingManager() noexcept;
+    BasicPeerPool& getNonHandshakedPool() noexcept;
+    KademliaPeerPool& getHandshakedPool() noexcept;
     //=================================
-    void broadcast(const base::Bytes& data);
-    void broadcast(const lk::Block& block);
+    void broadcast(const base::Sha256& block_hash, const lk::Block& block);
     void broadcast(const lk::Transaction& tx);
     //=================================
     void run();
     void join();
     //=================================
-    std::vector<Peer::Info> allConnectedPeersInfo() const;
+    std::vector<msg::NodeIdentityInfo> allConnectedPeersInfo() const;
     unsigned short getPublicPort() const noexcept;
+    boost::asio::io_context& getIoContext() noexcept;
     //=================================
   private:
     //=================================
@@ -120,7 +145,11 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
-    PeerTable _connected_peers;
+    RatingManager _rating_manager{ _config };
+
+    BasicPeerPool _non_handshaked_peers;
+    KademliaPeerPool _handshaked_peers;
+    void bootstrap();
 
     boost::asio::steady_timer _heartbeat_timer;
     void scheduleHeartBeat();
@@ -131,7 +160,8 @@ class Host
     void onAccept(std::unique_ptr<net::Connection> connection);
 
     net::Connector _connector;
-    void onConnect(std::unique_ptr<net::Connection> connection);
+    std::set<net::Endpoint> _connector_in_process;
+    std::mutex _conntextor_set_mutex;
     //=================================
 };
 

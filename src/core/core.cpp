@@ -1,11 +1,12 @@
 #include "core.hpp"
 
+#include "base/log.hpp"
 #include "vm/error.hpp"
 #include "vm/tools.hpp"
 
-#include "base/log.hpp"
-
 #include <algorithm>
+#include <iterator>
+
 
 namespace lk
 {
@@ -83,7 +84,7 @@ base::Sha256 ViewCall::hashOfCall() const
 {
     auto from_address_str = _from.toString();
     auto to_address_str = _contract_address.toString();
-    auto timestamp_str = std::to_string(_timestamp.getSecondsSinceEpoch());
+    auto timestamp_str = std::to_string(_timestamp.getSeconds());
     auto data_str = base::base64Encode(_data);
 
     auto concatenated_data = from_address_str + to_address_str + timestamp_str + data_str;
@@ -112,7 +113,8 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
         }
     }
 
-    subscribeToBlockAddition([this](const lk::Block& block) { _host.broadcast(block); });
+    subscribeToBlockAddition(
+      [this](const base::Sha256& block_hash, const lk::Block& block) { _host.broadcast(block_hash, block); });
     subscribeToNewPendingTransaction([this](const lk::Transaction& tx) { _host.broadcast(tx); });
 }
 
@@ -251,10 +253,13 @@ bool Core::tryAddBlock(const lk::Block& b)
         LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
 
         applyBlockTransactions(b);
-        _event_block_added.notify(b);
+        auto block_hash = base::Sha256::compute(base::toBytes(b));
+        _event_block_added.notify(std::move(block_hash), b);
         return true;
     }
-    return false;
+    else {
+        return false;
+    }
 }
 
 
@@ -323,6 +328,12 @@ lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const
 const lk::Block& Core::getTopBlock() const
 {
     return _blockchain.getTopBlock();
+}
+
+
+base::Sha256 Core::getTopBlockHash() const
+{
+    return _blockchain.getTopBlockHash();
 }
 
 
@@ -857,7 +868,7 @@ evmc_tx_context EthHost::get_tx_context() const noexcept
         std::fill(std::begin(ret.tx_gas_price.bytes), std::end(ret.tx_gas_price.bytes), 0);
         ret.tx_origin = vm::toEthAddress(_associated_tx.getFrom());
         ret.block_number = _associated_block.getDepth();
-        ret.block_timestamp = _associated_block.getTimestamp().getSecondsSinceEpoch();
+        ret.block_timestamp = _associated_block.getTimestamp().getSeconds();
         ret.block_coinbase = vm::toEthAddress(_associated_block.getCoinbase());
         // ret.block_gas_limit
         std::fill(std::begin(ret.block_difficulty.bytes), std::end(ret.block_difficulty.bytes), 0);

@@ -20,7 +20,6 @@ set(BASE_HEADERS
         bytes.hpp
         hash.hpp
         program_options.hpp
-        timer.hpp
         database.hpp
         serialization.hpp
         time.hpp
@@ -35,7 +34,6 @@ set(BASE_SOURCES
         property_tree.cpp
         bytes.cpp
         hash.cpp
-        timer.cpp
         program_options.cpp
         database.cpp
         serialization.cpp

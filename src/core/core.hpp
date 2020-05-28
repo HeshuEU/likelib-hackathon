@@ -1,16 +1,14 @@
 #pragma once
 
+#include "base/crypto.hpp"
+#include "base/property_tree.hpp"
+#include "base/utility.hpp"
 #include "core/block.hpp"
 #include "core/blockchain.hpp"
 #include "core/host.hpp"
 #include "core/managers.hpp"
-#include "core/protocol.hpp"
 
 #include "vm/vm.hpp"
-
-#include "base/crypto.hpp"
-#include "base/property_tree.hpp"
-#include "base/utility.hpp"
 
 #include <shared_mutex>
 
@@ -89,6 +87,7 @@ class Core
     std::optional<base::Sha256> findBlockHash(const lk::BlockDepth& depth) const;
     std::optional<lk::Transaction> findTransaction(const base::Sha256& hash) const;
     const lk::Block& getTopBlock() const;
+    base::Sha256 getTopBlockHash() const;
     //==================
     lk::Block getBlockTemplate() const;
     //==================
@@ -102,7 +101,7 @@ class Core
     const base::KeyVault& _vault;
     const lk::Address _this_node_address;
     //==================
-    base::Observable<const lk::Block&> _event_block_added;
+    base::Observable<base::Sha256, const lk::Block&> _event_block_added;
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
     //==================
     StateManager _state_manager;

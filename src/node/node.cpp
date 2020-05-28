@@ -14,7 +14,7 @@ Node::Node(const base::PropertyTree& config)
     _miner = std::make_unique<Miner>(_config, miner_callback);
 
     _core.subscribeToNewPendingTransaction(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
-    _core.subscribeToBlockAddition(std::bind(&Node::onNewBlock, this, std::placeholders::_1));
+    _core.subscribeToBlockAddition(std::bind(&Node::onNewBlock, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 
@@ -26,10 +26,10 @@ void Node::run()
         _rpc->run();
     }
     catch (const std::exception& e) {
-        LOG_WARNING << "Cannot start RPC server: " << e.what();
+        LOG_WARNING << "Cannot startSession RPC server: " << e.what();
     }
     catch (...) {
-        LOG_WARNING << "Cannot start RPC server: unknown error";
+        LOG_WARNING << "Cannot startSession RPC server: unknown error";
     }
 }
 
@@ -60,7 +60,7 @@ void Node::onNewTransactionReceived(const lk::Transaction&)
 }
 
 
-void Node::onNewBlock(const lk::Block&)
+void Node::onNewBlock(const base::Sha256& block_hash, const lk::Block&)
 {
     lk::Block block = _core.getBlockTemplate();
     if (!block.getTransactions().isEmpty()) {

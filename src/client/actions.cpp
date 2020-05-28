@@ -1208,7 +1208,7 @@ int ActionGetTransaction::execute()
     }
     auto tx = client->getTransaction(_transaction_hash);
 
-    if (tx.getTimestamp().getSecondsSinceEpoch() == 0 && tx.getFrom().isNull()) {
+    if (tx.getTimestamp().getSeconds() == 0 && tx.getFrom().isNull()) {
         std::cout << "Cannot find given transaction" << std::endl;
         return base::config::EXIT_OK;
     }
@@ -1362,7 +1362,7 @@ int ActionGetBlock::execute()
     }
 
     auto block = block_option.value();
-    if (block.getTimestamp().getSecondsSinceEpoch() == 0 && block.getDepth() == lk::BlockDepth(-1)) {
+    if (block.getTimestamp().getSeconds() == 0 && block.getDepth() == lk::BlockDepth(-1)) {
         std::cout << "Cannot find given block" << std::endl;
         return base::config::EXIT_OK;
     }

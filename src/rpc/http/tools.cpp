@@ -383,7 +383,7 @@ web::json::value serializeTransaction(const lk::Transaction& input)
     result["to"] = serializeAddress(input.getTo());
     result["amount"] = serializeBalance(input.getAmount());
     result["fee"] = serializeFee(input.getFee());
-    result["timestamp"] = web::json::value::number(input.getTimestamp().getSecondsSinceEpoch());
+    result["timestamp"] = web::json::value::number(input.getTimestamp().getSeconds());
     result["data"] = serializeBytes(input.getData());
     result["sign"] = serializeSign(input.getSign());
     return result;
@@ -490,7 +490,7 @@ web::json::value serializeBlock(const lk::Block& block)
     result["nonce"] = web::json::value::number(block.getNonce());
     result["coinbase"] = serializeAddress(block.getCoinbase());
     result["previous_block_hash"] = serializeHash(block.getPrevBlockHash());
-    result["timestamp"] = web::json::value::number(block.getTimestamp().getSecondsSinceEpoch());
+    result["timestamp"] = web::json::value::number(block.getTimestamp().getSeconds());
 
     std::vector<web::json::value> txs_values;
     for (auto& tx : block.getTransactions()) {
@@ -678,7 +678,7 @@ web::json::value serializeViewCall(const lk::ViewCall& call)
     web::json::value result;
     result["from"] = serializeAddress(call.getFrom());
     result["to"] = serializeAddress(call.getContractAddress());
-    result["timestamp"] = web::json::value::number(call.getTimestamp().getSecondsSinceEpoch());
+    result["timestamp"] = web::json::value::number(call.getTimestamp().getSeconds());
     result["message"] = serializeBytes(call.getData());
     result["sign"] = serializeSign(call.getSign());
     return result;

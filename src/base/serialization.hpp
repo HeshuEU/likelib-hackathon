@@ -66,6 +66,9 @@ template<typename T>
 T fromBytes(const base::Bytes& bytes);
 
 
+template<typename T, std::size_t S>
+T fromBytes(const base::FixedBytes<S>& bytes);
+
 template<typename T>
 T nativeToBig(const T& value) noexcept;
 

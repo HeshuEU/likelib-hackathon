@@ -9,7 +9,7 @@ namespace net
 {
 
 
-class Session
+class Session : public std::enable_shared_from_this<Session>
 {
   public:
     //==================
@@ -31,7 +31,7 @@ class Session
     bool isActive() const;
     bool isClosed() const;
     //==================
-    void setHandler(std::shared_ptr<Handler> handler);
+    void setHandler(std::weak_ptr<Handler> handler);
     //==================
     void send(const base::Bytes& data);
     void send(base::Bytes&& data);
@@ -48,7 +48,7 @@ class Session
   private:
     //==================
     std::shared_ptr<Connection> _connection;
-    std::shared_ptr<Handler> _handler;
+    std::weak_ptr<Handler> _handler;
     //==================
     base::Time _last_seen;
     //==================

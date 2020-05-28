@@ -180,7 +180,8 @@ class Env:
     @staticmethod
     def __generate_config(node_config: NodeConfig) -> str:
         config = {"net": {"listen_addr": node_config.id.listen_sync_address,
-                          "public_port": node_config.id.sync_port},
+                          "public_port": node_config.id.sync_port,
+                          "peers_db": "peers"},
                   "rpc": {},
                   "miner": {"threads": node_config.mining_thread},
                   "nodes": [node_id.connect_sync_address for node_id in node_config.nodes],

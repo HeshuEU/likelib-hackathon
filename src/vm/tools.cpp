@@ -193,7 +193,7 @@ base::Bytes encode(uint8_t value)
 
 lk::Address toNativeAddress(const evmc::address& addr)
 {
-    base::Bytes raw_address(addr.bytes, lk::Address::ADDRESS_BYTES_LENGTH);
+    base::Bytes raw_address(addr.bytes, lk::Address::LENGTH_IN_BYTES);
     lk::Address address(raw_address);
     return address;
 }
