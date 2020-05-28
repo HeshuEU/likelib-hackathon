@@ -825,7 +825,7 @@ int ActionGetBlock::execute()
     rpc::RpcClient client(_host_address);
     auto block = client.get_block(_block_hash);
 
-    if (block.getTimestamp().getSecondsSinceEpoch() == 0 && block.getDepth() == lk::BlockDepth(-1)) {
+    if (block.getTimestamp().getSeconds() == 0 && block.getDepth() == lk::BlockDepth(-1)) {
         std::cout << "Cannot find given block" << std::endl;
         return base::config::EXIT_OK;
     }

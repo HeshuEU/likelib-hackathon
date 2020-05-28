@@ -90,7 +90,7 @@ std::tuple<rpc::OperationStatus, lk::Address, std::uint64_t> GeneralServerServic
 {
     LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
               << "], amount[" << amount << "], gas" << gas << "], code[" << hex_contract_code << "], timestamp["
-              << timestamp.getSecondsSinceEpoch() << "], initial_message[" << hex_init << "]";
+              << timestamp.getSeconds() << "], initial_message[" << hex_init << "]";
 
     auto contract_code = base::fromHex<base::Bytes>(hex_contract_code);
     auto init = base::fromHex<base::Bytes>(hex_init);
@@ -158,7 +158,7 @@ std::tuple<rpc::OperationStatus, std::string, std::uint64_t> GeneralServerServic
 {
     LOG_TRACE << "Received RPC request {transaction_to_contract} with from_address[" << from_address.toString()
               << "], to_address[" << to_address.toString() << "], amount[" << amount << "], gas" << gas
-              << "], timestamp[" << timestamp.getSecondsSinceEpoch() << "], message[" << hex_message << "]";
+              << "], timestamp[" << timestamp.getSeconds() << "], message[" << hex_message << "]";
 
 
     auto message = base::fromHex<base::Bytes>(hex_message);

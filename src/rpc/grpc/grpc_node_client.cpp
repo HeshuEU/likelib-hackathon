@@ -156,7 +156,7 @@ std::tuple<OperationStatus, lk::Address, std::uint64_t> GrpcNodeClient::transact
     request.mutable_fee()->set_value(static_cast<google::protobuf::uint64>(gas));
     request.set_init(init);
     request.set_contract_code(contract_code);
-    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpoch());
+    request.mutable_creation_time()->set_since_epoch(transaction_time.getSeconds());
     request.mutable_signature()->set_raw(signature.toBase64());
 
     // call remote host
@@ -193,7 +193,7 @@ std::tuple<OperationStatus, std::string, std::uint64_t> GrpcNodeClient::transact
     request.mutable_to()->set_address(to_address.toString());
     request.mutable_fee()->set_value(static_cast<google::protobuf::uint64>(fee));
     request.set_data(data);
-    request.mutable_creation_time()->set_since_epoch(transaction_time.getSecondsSinceEpoch());
+    request.mutable_creation_time()->set_since_epoch(transaction_time.getSeconds());
     request.set_signature(signature.toBase64());
 
     // call remote host

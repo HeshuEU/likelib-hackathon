@@ -97,7 +97,7 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
         response->set_nonce(block.getNonce());
         response->set_previous_block_hash(block.getPrevBlockHash().toHex());
         response->mutable_coinbase()->set_address(block.getCoinbase().toString());
-        response->mutable_timestamp()->set_since_epoch(block.getTimestamp().getSecondsSinceEpoch());
+        response->mutable_timestamp()->set_since_epoch(block.getTimestamp().getSeconds());
 
         for (const auto& tx : block.getTransactions()) {
             likelib::Transaction tv;
@@ -105,7 +105,7 @@ grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
             tv.mutable_to()->set_address(tx.getTo().toString());
             tv.mutable_value()->set_value(tx.getAmount().toString());
             tv.mutable_fee()->set_value(tx.getFee());
-            tv.mutable_creation_time()->set_since_epoch(tx.getTimestamp().getSecondsSinceEpoch());
+            tv.mutable_creation_time()->set_since_epoch(tx.getTimestamp().getSeconds());
             tv.set_data(base::base64Encode(tx.getData()));
             tv.set_signature(tx.getSign().toBase64());
             response->mutable_transactions()->Add(std::move(tv));
