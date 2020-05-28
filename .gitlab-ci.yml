@@ -1,4 +1,4 @@
-image: heshuby/prepare_build:04fd462e2185424a0e23754622ff794f
+image: heshuby/prepare_build:cfaca9619b1e4cfcb0519e0d35d6eec4
 stages:
   - build
   - unit-tests
