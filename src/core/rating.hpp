@@ -26,11 +26,11 @@ class Rating
     explicit operator bool() const noexcept; // if false, then the peer is too bad
     bool isGood() const noexcept;
 
-    Rating& nonExpectedMessage() noexcept;
-    Rating& invalidMessage() noexcept;
-    Rating& badBlock() noexcept;
-    Rating& differentGenesis() noexcept;
-    Rating& connectionRefused() noexcept;
+    Rating& nonExpectedMessage();
+    Rating& invalidMessage();
+    Rating& badBlock();
+    Rating& differentGenesis();
+    Rating& connectionRefused();
 
   private:
     static constexpr Value INITIAL_PEER_RATING = 20;

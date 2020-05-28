@@ -84,37 +84,42 @@ Rating::operator bool() const noexcept
 }
 
 
-Rating& Rating::nonExpectedMessage() noexcept
+Rating& Rating::nonExpectedMessage()
 {
     _data.value -= 20;
+    dbUpdate();
     return *this;
 }
 
 
-Rating& Rating::invalidMessage() noexcept
+Rating& Rating::invalidMessage()
 {
     _data.value -= 30;
+    dbUpdate();
     return *this;
 }
 
 
-Rating& Rating::badBlock() noexcept
+Rating& Rating::badBlock()
 {
     _data.value -= 10;
+    dbUpdate();
     return *this;
 }
 
 
-Rating& Rating::differentGenesis() noexcept
+Rating& Rating::differentGenesis()
 {
     _data.value -= 2 * INITIAL_PEER_RATING;
+    dbUpdate();
     return *this;
 }
 
 
-Rating& Rating::connectionRefused() noexcept
+Rating& Rating::connectionRefused()
 {
     _data.value = -INITIAL_PEER_RATING - 10;
+    dbUpdate();
     return *this;
 }
 

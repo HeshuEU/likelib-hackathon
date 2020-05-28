@@ -352,7 +352,7 @@ void Peer::process(base::SerializationIArchive&& ia)
 {
     auto msg_type = ia.deserialize<msg::Type>();
     LOG_DEBUG << "msg_type = " << static_cast<int>(msg_type);
-    LOG_DEBUG << "Processing " << enumToString(msg_type);
+    LOG_DEBUG << "PEER " << getEndpoint() << " (public " << getPublicEndpoint() << ") :: Processing " << enumToString(msg_type);
     switch (msg_type) {
         case msg::Connect::TYPE_ID: {
             handle(ia.deserialize<msg::Connect>());

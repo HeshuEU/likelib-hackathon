@@ -320,7 +320,10 @@ void Host::checkOutPeer(const net::Endpoint& endpoint, const lk::Address& addres
         }
     }
 
-    LOG_DEBUG << "Connecting to node " << endpoint;
+    if(!_rating_manager.get(endpoint)) {
+        return;
+    }
+    LOG_DEBUG << "Connecting to node " << endpoint << " that has good rating = " << _rating_manager.get(endpoint).getValue();
     _connector.connect(
       endpoint,
       base::config::NET_CONNECT_TIMEOUT,
