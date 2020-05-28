@@ -215,7 +215,7 @@ class EthAdapter::EthHost : public evmc::Host
         std::fill(std::begin(ret.tx_gas_price.bytes), std::end(ret.tx_gas_price.bytes), 0);
         ret.tx_origin = vm::toEthAddress(_associated_tx->getFrom());
         ret.block_number = _associated_block->getDepth();
-        ret.block_timestamp = _associated_block->getTimestamp().getSecondsSinceEpoch();
+        ret.block_timestamp = _associated_block->getTimestamp().getSeconds();
         ret.block_coinbase = vm::toEthAddress(_associated_block->getCoinbase());
         // ret.block_gas_limit
         std::fill(std::begin(ret.block_difficulty.bytes), std::end(ret.block_difficulty.bytes), 0);

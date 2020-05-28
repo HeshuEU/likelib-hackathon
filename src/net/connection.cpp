@@ -49,7 +49,6 @@ void Connection::close()
     ASSERT_SOFT(!_is_closed);
     _is_closed = true;
     if (_socket.is_open()) {
-        LOG_INFO << "Shutting down connection to " << _connect_endpoint->toString();
         boost::system::error_code ec;
         _socket.shutdown(ba::ip::tcp::socket::shutdown_both, ec);
         if (ec) {

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "base/database.hpp"
 #include "base/property_tree.hpp"
 #include "core/block.hpp"
 #include "core/peer.hpp"
+#include "core/rating.hpp"
 #include "net/acceptor.hpp"
 #include "net/connector.hpp"
 #include "net/session.hpp"
@@ -11,6 +13,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -113,6 +116,8 @@ class Host
     //=================================
     void checkOutPeer(const net::Endpoint& endpoint, const lk::Address& address = lk::Address::null());
     bool isConnectedTo(const net::Endpoint& endpoint) const;
+
+    RatingManager& getRatingManager() noexcept;
     BasicPeerPool& getNonHandshakedPool() noexcept;
     KademliaPeerPool& getHandshakedPool() noexcept;
     //=================================
@@ -140,6 +145,8 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
+    RatingManager _rating_manager{_config};
+
     BasicPeerPool _non_handshaked_peers;
     KademliaPeerPool _handshaked_peers;
     void bootstrap();
@@ -153,6 +160,8 @@ class Host
     void onAccept(std::unique_ptr<net::Connection> connection);
 
     net::Connector _connector;
+    std::set<net::Endpoint> _connector_in_process;
+    std::mutex _conntextor_set_mutex;
     //=================================
 };
 

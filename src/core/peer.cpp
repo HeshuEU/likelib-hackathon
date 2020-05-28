@@ -78,17 +78,23 @@ void Peer::requestBlock(const base::Sha256& block_hash)
 }
 
 
-std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Context context)
+std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Rating rating, Context context)
 {
     std::shared_ptr<Peer> peer{ new Peer(std::move(session),
                                          false,
                                          context.host.getIoContext(),
+                                         std::move(rating),
                                          static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
                                          static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
                                          context.core,
                                          context.host) };
 
     auto ret = peer->shared_from_this();
+
+    if(!rating) {
+        peer->endSession(msg::CannotAccept{});
+        return {};
+    }
 
     if (!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
         RAISE_ERROR(base::Error, "cannot add peer");
@@ -99,17 +105,23 @@ std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Cont
 }
 
 
-std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Context context)
+std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Rating rating, Context context)
 {
     std::shared_ptr<Peer> peer{ new Peer(std::move(session),
                                          true,
                                          context.host.getIoContext(),
+                                         std::move(rating),
                                          static_cast<lk::PeerPoolBase&>(context.host.getNonHandshakedPool()),
                                          static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
                                          context.core,
                                          context.host) };
 
     auto ret = peer->shared_from_this();
+
+    if(!rating) {
+        peer->endSession(msg::CannotAccept{});
+        return {};
+    }
 
     if (!context.host.getNonHandshakedPool().tryAddPeer(ret)) {
         RAISE_ERROR(base::Error, "cannot add peer");
@@ -123,6 +135,7 @@ std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Con
 Peer::Peer(std::shared_ptr<net::Session> session,
            bool was_connected_to,
            boost::asio::io_context& io_context,
+           Rating rating,
            lk::PeerPoolBase& non_handshaked_pool,
            lk::KademliaPeerPoolBase& handshaked_pool,
            lk::Core& core,
@@ -131,6 +144,7 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _was_connected_to{ was_connected_to }
   , _io_context{ io_context }
   , _address{ lk::Address::null() }
+  , _rating{ std::move(rating) }
   , _non_handshaked_pool{ non_handshaked_pool }
   , _handshaked_pool{ handshaked_pool }
   , _core{ core }
@@ -244,51 +258,6 @@ void Peer::detachFromPools()
 }
 
 //===============================================
-
-Rating::Rating(std::int_fast32_t initial_value)
-  : _value{ initial_value }
-{}
-
-
-std::int_fast32_t Rating::getValue() const noexcept
-{
-    return _value;
-}
-
-
-Rating::operator bool() const noexcept
-{
-    return _value > 0;
-}
-
-
-Rating& Rating::nonExpectedMessage() noexcept
-{
-    _value -= 20;
-    return *this;
-}
-
-
-Rating& Rating::invalidMessage() noexcept
-{
-    _value -= 30;
-    return *this;
-}
-
-
-Rating& Rating::badBlock() noexcept
-{
-    _value -= 10;
-    return *this;
-}
-
-
-Rating& Rating::differentGenesis() noexcept
-{
-    _value -= 2 * base::config::NET_INITIAL_PEER_RATING;
-    return *this;
-}
-
 
 std::vector<msg::NodeIdentityInfo> PeerPoolBase::allPeersInfo() const
 {
@@ -467,6 +436,7 @@ void Peer::handle(lk::msg::Connect&& msg)
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
+        LOG_DEBUG << "Handling CONNECT: sending CANNOT_ACCEPT, because can't add " << getEndpoint() << " (public " << getPublicEndpoint() << ") to pool";
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -475,8 +445,11 @@ void Peer::handle(lk::msg::Connect&& msg)
 
 void Peer::handle(lk::msg::CannotAccept&& msg)
 {
+    _rating.connectionRefused();
     for (const auto& peer : msg.peers_info) {
-        _host.checkOutPeer(peer.endpoint, peer.address);
+        if(auto rating = _host.getRatingManager().get(peer.endpoint)) {
+            _host.checkOutPeer(peer.endpoint, peer.address);
+        }
     }
 }
 
@@ -493,6 +466,7 @@ void Peer::handle(lk::msg::Accepted&& msg)
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
+        LOG_DEBUG << "Handling of ACCEPTED: cannot add " << getEndpoint() << " (public " << getPublicEndpoint() << ") to handshaked pool";
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -528,7 +502,10 @@ void Peer::handle(lk::msg::LookupResponse&& msg)
     }
 
     for (const auto& pi : msg.peers_info) {
-        _host.checkOutPeer(pi.endpoint, pi.address);
+        if(auto rating = _host.getRatingManager().get(pi.endpoint)) {
+            LOG_DEBUG << "Checking out peer " << pi.endpoint << " (address = " << pi.address << ')';
+            _host.checkOutPeer(pi.endpoint, pi.address);
+        }
     }
 }
 
@@ -664,7 +641,6 @@ void Requests::setCloseCallback(Requests::CloseCallback cb)
 
 void Requests::onMessageReceive(const base::Bytes& received_bytes)
 {
-    LOG_TRACE << "message received";
     base::SerializationIArchive ia(received_bytes);
     auto msg_id = ia.deserialize<Request::MessageId>();
 
@@ -688,6 +664,9 @@ void Requests::onMessageReceive(const base::Bytes& received_bytes)
 
 void Requests::onClose()
 {
+    if(auto l = _session.lock()) {
+        LOG_DEBUG << "Processing onClose callback for " << l->getEndpoint();
+    }
     if (_close_callback) {
         _close_callback();
     }

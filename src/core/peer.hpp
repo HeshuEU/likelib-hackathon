@@ -6,6 +6,7 @@
 #include "core/address.hpp"
 #include "core/block.hpp"
 #include "core/messages.hpp"
+#include "core/rating.hpp"
 #include "net/error.hpp"
 #include "net/session.hpp"
 
@@ -21,26 +22,6 @@ class Core;
 class Host;
 class PeerPoolBase;
 class KademliaPeerPoolBase;
-//=======================
-
-class Rating
-{
-  public:
-    // TODO: remember peer rating during several node runs
-
-    explicit Rating(std::int_fast32_t initial_value = base::config::NET_INITIAL_PEER_RATING);
-
-    std::int_fast32_t getValue() const noexcept;
-    explicit operator bool() const noexcept; // if false, then the peer is too bad
-
-    Rating& nonExpectedMessage() noexcept;
-    Rating& invalidMessage() noexcept;
-    Rating& badBlock() noexcept;
-    Rating& differentGenesis() noexcept;
-
-  private:
-    std::int_fast32_t _value;
-};
 
 //===========================================================
 
@@ -144,8 +125,8 @@ class Peer : public std::enable_shared_from_this<Peer>
     };
 
     //=========================
-    static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, Context context);
-    static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, Context context);
+    static std::shared_ptr<Peer> accepted(std::shared_ptr<net::Session> session, Rating rating, Context context);
+    static std::shared_ptr<Peer> connected(std::shared_ptr<net::Session> session, Rating rating, Context context);
 
     ~Peer();
     //=========================
@@ -179,10 +160,11 @@ class Peer : public std::enable_shared_from_this<Peer>
     Peer(std::shared_ptr<net::Session> session,
          bool was_connected_to,
          boost::asio::io_context& io_context,
-         lk::PeerPoolBase& non_handshaked_pool,
-         lk::KademliaPeerPoolBase& handshaked_pool,
-         lk::Core& core,
-         lk::Host& host);
+         Rating rating,
+         PeerPoolBase& non_handshaked_pool,
+         KademliaPeerPoolBase& handshaked_pool,
+         Core& core,
+         Host& host);
     //=========================
     /*
      * Tries to add peer to a peer pool, to which it is attached.
@@ -227,7 +209,6 @@ class Peer : public std::enable_shared_from_this<Peer>
     Synchronizer _synchronizer{ *this };
     //================
     lk::PeerPoolBase& _non_handshaked_pool;
-    bool _is_attached_to_handshaked_pool{ false };
     lk::KademliaPeerPoolBase& _handshaked_pool;
     lk::Core& _core;
     lk::Host& _host;
