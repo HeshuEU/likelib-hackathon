@@ -25,7 +25,7 @@ class Time
     //====================
     ~Time() = default;
     //====================
-    std::uint_least32_t getSecondsSinceEpoch() const;
+    std::uint_least32_t getSeconds() const;
     std::chrono::time_point<std::chrono::system_clock> toTimePoint() const;
     //====================
     bool operator==(const Time& other) const;
@@ -34,6 +34,8 @@ class Time
     bool operator>(const Time& other) const;
     bool operator<=(const Time& other) const;
     bool operator>=(const Time& other) const;
+    //====================
+    Time operator-(const Time& other) const;
     //====================
     static Time now();
     //=====================
@@ -48,5 +50,21 @@ class Time
 };
 
 std::ostream& operator<<(std::ostream& os, const Time& time);
+
+class Timer
+{
+  public:
+    //=================
+    Timer() = default;
+    ~Timer() = default;
+    //=================
+    void start();
+
+    unsigned long long elapsedMillis() const;
+    double elapsedSeconds() const;
+    //=================
+  private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> _start_time;
+};
 
 } // namespace base

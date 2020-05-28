@@ -3,7 +3,7 @@
 namespace base
 {
 
-std::uint_least32_t Time::getSecondsSinceEpoch() const
+std::uint_least32_t Time::getSeconds() const
 {
     return _seconds_since_epoch;
 }
@@ -52,6 +52,15 @@ bool Time::operator>=(const Time& other) const
 }
 
 
+Time Time::operator-(const Time& other) const
+{
+    if(_seconds_since_epoch < other._seconds_since_epoch) {
+        RAISE_ERROR(base::LogicError, "cannot represent negative time duration");
+    }
+    return Time{_seconds_since_epoch - other._seconds_since_epoch};
+}
+
+
 Time Time::now()
 {
     Time ret{ std::chrono::system_clock::now() };
@@ -85,7 +94,27 @@ Time Time::deserialize(SerializationIArchive& ia)
 
 std::ostream& operator<<(std::ostream& os, const Time& time)
 {
-    return os << time.getSecondsSinceEpoch();
+    return os << time.getSeconds();
 }
+
+
+void Timer::start()
+{
+    _start_time = std::chrono::high_resolution_clock::now();
+}
+
+
+unsigned long long Timer::elapsedMillis() const
+{
+    auto now = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(now - _start_time).count();
+}
+
+
+double Timer::elapsedSeconds() const
+{
+    return elapsedMillis() / 1000.0;
+}
+
 
 } // namespace base
