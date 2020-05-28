@@ -7,7 +7,8 @@ By default it is config.json file of the following format:
 {
     "net": {
         "listen_addr": "0.0.0.0:20203",
-        "public_port": 20203
+        "public_port": 20203,
+        "peers_db": "likelib/peers"
     },
     "rpc": {
         "grpc_address": "0.0.0.0:50051",
@@ -33,6 +34,7 @@ Notes on parameters:
 * `net.public_port` - when node is connected to a remote machine over Internet, its 
 public IP gets known, but port - doesn't. We only know the client-socket IP address.
 Such things as port-forwarding with NAT, may change the port we need to connect to;
+* `net.peers_db` - folder, in which peers database will be stored;
 * `rpc.grpc_address` - address on which RPC (GRPC) is listening on. Enabled when the field is present;
 * `rpc.http_address` - address on which RPC (HTTP) is listening on. Enabled when the field is present;
 * `miner.threads` - optional parameter, sets the number of threads that miner is using;
