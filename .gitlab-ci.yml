@@ -74,8 +74,7 @@ Integration tests:
   script:
     - INSTALL_DIR="/opt"
     - SOURCE_DIR="${PWD}"
-    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || bash "${SOURCE_DIR}/doc/prepare_build.sh
-    - SOURCE_DIR=${PWD}
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || bash "${SOURCE_DIR}/doc/prepare_build.sh"
     - TEST_DIR="intergation_test_run"
     - mkdir ${TEST_DIR}
     - cd ${TEST_DIR}

@@ -7,9 +7,9 @@ web::json::value serializeAccountType(lk::AccountType type)
 {
     switch (type) {
         case lk::AccountType::CONTRACT:
-            return web::json::value::string("contract");
+            return web::json::value::string("Contract");
         case lk::AccountType::CLIENT:
-            return web::json::value::string("client");
+            return web::json::value::string("Client");
         default:
             RAISE_ERROR(base::InvalidArgument, "Invalid type");
     }
@@ -18,10 +18,10 @@ web::json::value serializeAccountType(lk::AccountType type)
 
 std::optional<lk::AccountType> deserializeAccountType(const std::string& type)
 {
-    if (type == "client") {
+    if (type == "Client") {
         return lk::AccountType::CLIENT;
     }
-    else if (type == "contract") {
+    else if (type == "Contract") {
         return lk::AccountType::CONTRACT;
     }
     else {
@@ -569,7 +569,7 @@ std::optional<lk::Block> deserializeBlock(const web::json::value& input)
         lk::TransactionsSet txs;
         if (input.has_array_field("transactions")) {
             for (const auto& res_tx : input.at("transactions").as_array()) {
-                if (res_tx.is_string()) {
+                if (res_tx.is_object()) {
                     auto tx_opt = deserializeTransaction(res_tx);
                     if (tx_opt) {
                         txs.add(*tx_opt);

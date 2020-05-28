@@ -238,7 +238,6 @@ class ActionPushContract : public ActionBase
     std::filesystem::path _keys_dir;
     lk::Balance _amount;
     std::uint64_t _fee;
-    base::PropertyTree _contract_abi;
     base::Bytes _message;
     bool _is_http_mode{ false };
     //====================================

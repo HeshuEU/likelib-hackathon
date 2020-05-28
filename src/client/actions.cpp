@@ -48,6 +48,70 @@ bool checkOptionEmptyAndWriteMessage(const base::ProgramOptionsParser& parser, c
     return false;
 }
 
+
+void writeTransactionStatus(const lk::TransactionStatus& status)
+{
+    std::string type_message;
+    switch (status.getType()) {
+        case lk::TransactionStatus::ActionType::Transfer:
+            type_message = "transfer";
+            break;
+        case lk::TransactionStatus::ActionType::ContractCall:
+            type_message = "contract_call";
+            break;
+        case lk::TransactionStatus::ActionType::ContractCreation:
+            type_message = "contract_creation";
+            break;
+        case lk::TransactionStatus::ActionType::None:
+            type_message = "can_not_be_classified";
+            break;
+    }
+
+    std::string status_message;
+    switch (status.getStatus()) {
+        case lk::TransactionStatus::StatusCode::Success:
+            status_message = "success";
+            break;
+        case lk::TransactionStatus::StatusCode::Pending:
+            status_message = "pending";
+            break;
+        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
+            status_message = "bad_query_form";
+            break;
+        case lk::TransactionStatus::StatusCode::BadQueryForm:
+            status_message = "not_enough_balance";
+            break;
+        case lk::TransactionStatus::StatusCode::BadSign:
+            status_message = "bad_sign";
+            break;
+        case lk::TransactionStatus::StatusCode::Revert:
+            status_message = "revert";
+            break;
+        case lk::TransactionStatus::StatusCode::Failed:
+            status_message = "failed";
+            break;
+    }
+
+    std::cout << "\tType: " << type_message << '\n'
+              << "\tStatus: " << status_message << '\n'
+              << "\tFee left: " << status.getFeeLeft() << '\n';
+
+    if (status.getStatus() == lk::TransactionStatus::StatusCode::Success &&
+        status.getType() == lk::TransactionStatus::ActionType::ContractCreation) {
+        std::cout << "\tMessage: "
+                  << "new contract address " << lk::Address{ status.getMessage() } << std::endl;
+    }
+    else if (status.getStatus() == lk::TransactionStatus::StatusCode::Success &&
+             status.getType() == lk::TransactionStatus::ActionType::ContractCall) {
+        std::cout << "\tMessage: " << base::toHex(base::base64Decode(status.getMessage())) << std::endl;
+    }
+    else {
+        std::cout << "\tMessage: " << status.getMessage() << std::endl;
+    }
+
+    std::cout.flush();
+}
+
 } // namespace
 
 //====================================
@@ -77,7 +141,7 @@ int ActionBase::run()
     }
     catch (const base::ParsingError& er) {
         std::cerr << "Invalid arguments";
-        if (std::strlen(er.what())) {
+        if (static_cast<bool>(std::strlen(er.what()))) {
             std::cerr << ": " << er.what();
         }
         std::cerr << "\n" << _router.helpMessage();
@@ -692,6 +756,7 @@ int ActionDecode::execute()
 
 ActionTransfer::ActionTransfer(base::SubprogramRouter& router)
   : ActionBase{ router }
+  , _fee{ 0 }
 {}
 
 
@@ -749,22 +814,22 @@ int ActionTransfer::loadOptions(const base::ProgramOptionsParser& parser)
 int ActionTransfer::execute()
 {
     auto private_key_path = base::config::makePrivateKeyPath(_keys_dir);
-    auto priv = base::Secp256PrivateKey::load(private_key_path);
-    auto from_address = lk::Address(priv.toPublicKey());
+    auto private_key = base::Secp256PrivateKey::load(private_key_path);
+    auto from_address = lk::Address(private_key.toPublicKey());
 
     lk::TransactionBuilder txb;
-    txb.setFrom(std::move(from_address));
-    txb.setTo(std::move(_to_address));
+    txb.setFrom(from_address);
+    txb.setTo(_to_address);
     txb.setAmount(_amount);
     txb.setTimestamp(base::Time::now());
     txb.setFee(_fee);
     txb.setData({});
     auto tx = std::move(txb).build();
 
-    tx.sign(priv);
+    tx.sign(private_key);
 
     auto tx_hash = tx.hashOfTransaction();
-    std::cout << "Created transaction with hash[hex]: " << tx_hash << std::endl;
+    std::cout << "Transaction with hash[hex]: " << tx_hash << std::endl;
 
     LOG_INFO << "Transfer from " << from_address << " to " << _to_address << " with amount " << _amount
              << " to rpc server " << _host_address;
@@ -777,48 +842,22 @@ int ActionTransfer::execute()
     }
     auto result = client->pushTransaction(tx);
 
-    int exit_code = base::config::EXIT_FAIL;
-    std::string status_message;
+    writeTransactionStatus(result);
+
     switch (result.getStatus()) {
-        case lk::TransactionStatus::StatusCode::Success:
-            status_message = "success";
-            exit_code = base::config::EXIT_FAIL;
-            break;
         case lk::TransactionStatus::StatusCode::Pending:
-            status_message = "pending";
-            exit_code = base::config::EXIT_OK;
-            break;
-        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
-            status_message = "not enough balance";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::BadQueryForm:
-            status_message = "bad query form";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::BadSign:
-            status_message = "bad sign";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::Revert:
-            status_message = "revert";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::Failed:
-            status_message = "failed";
-            exit_code = base::config::EXIT_FAIL;
-            break;
+        case lk::TransactionStatus::StatusCode::Success:
+            return base::config::EXIT_OK;
+        default:
+            return base::config::EXIT_FAIL;
     }
-
-    std::cout << "Transfer status: " << status_message << std::endl;
-
-    return exit_code;
 }
 
 //====================================
 
 ActionPushContract::ActionPushContract(base::SubprogramRouter& router)
   : ActionBase{ router }
+  , _fee{ 0 }
 {}
 
 
@@ -892,22 +931,22 @@ int ActionPushContract::loadOptions(const base::ProgramOptionsParser& parser)
 int ActionPushContract::execute()
 {
     auto private_key_path = base::config::makePrivateKeyPath(_keys_dir);
-    auto priv = base::Secp256PrivateKey::load(private_key_path);
-    auto from_address = lk::Address(priv.toPublicKey());
+    auto private_key = base::Secp256PrivateKey::load(private_key_path);
+    auto from_address = lk::Address(private_key.toPublicKey());
 
     lk::TransactionBuilder txb;
     txb.setAmount(_amount);
-    txb.setFrom(std::move(from_address));
+    txb.setFrom(from_address);
     txb.setTo(lk::Address::null());
     txb.setTimestamp(base::Time::now());
     txb.setFee(_fee);
     txb.setData(_message);
 
     auto tx = std::move(txb).build();
-    tx.sign(priv);
+    tx.sign(private_key);
 
     auto tx_hash = tx.hashOfTransaction();
-    std::cout << "Created transaction with hash[hex]: " << tx_hash << std::endl;
+    std::cout << "Transaction with hash[hex]: " << tx_hash << std::endl;
 
     LOG_INFO << "Trying to connect to rpc server by: " << _host_address;
     std::unique_ptr<rpc::BaseRpc> client;
@@ -920,48 +959,22 @@ int ActionPushContract::execute()
 
     auto result = client->pushTransaction(tx);
 
-    int exit_code = base::config::EXIT_FAIL;
-    std::string status_message;
+    writeTransactionStatus(result);
+
     switch (result.getStatus()) {
-        case lk::TransactionStatus::StatusCode::Success:
-            status_message = "success";
-            exit_code = base::config::EXIT_FAIL;
-            break;
         case lk::TransactionStatus::StatusCode::Pending:
-            status_message = "pending";
-            exit_code = base::config::EXIT_OK;
-            break;
-        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
-            status_message = "not enough balance";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::BadQueryForm:
-            status_message = "bad query form";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::BadSign:
-            status_message = "bad sign";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::Revert:
-            status_message = "revert";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::Failed:
-            status_message = "failed";
-            exit_code = base::config::EXIT_FAIL;
-            break;
+        case lk::TransactionStatus::StatusCode::Success:
+            return base::config::EXIT_OK;
+        default:
+            return base::config::EXIT_FAIL;
     }
-
-    std::cout << "Contract push status: " << status_message << std::endl;
-
-    return exit_code;
 }
 
 //====================================
 
 ActionContractCall::ActionContractCall(base::SubprogramRouter& router)
   : ActionBase{ router }
+  , _fee{ 0 }
 {}
 
 
@@ -1030,8 +1043,8 @@ int ActionContractCall::execute()
 
     lk::TransactionBuilder txb;
     txb.setAmount(_amount);
-    txb.setFrom(std::move(from_address));
-    txb.setTo(std::move(_to_address));
+    txb.setFrom(from_address);
+    txb.setTo(_to_address);
     txb.setTimestamp(base::Time::now());
     txb.setFee(_fee);
     txb.setData(base::fromHex<base::Bytes>(_message));
@@ -1040,7 +1053,7 @@ int ActionContractCall::execute()
     tx.sign(priv);
 
     auto tx_hash = tx.hashOfTransaction();
-    std::cout << "Created transaction with hash[hex]: " << tx_hash << std::endl;
+    std::cout << "Transaction with hash[hex]: " << tx_hash << std::endl;
 
     LOG_INFO << "Try to connect to rpc server by: " << _host_address;
     std::unique_ptr<rpc::BaseRpc> client;
@@ -1053,42 +1066,15 @@ int ActionContractCall::execute()
 
     auto result = client->pushTransaction(tx);
 
-    int exit_code = base::config::EXIT_FAIL;
-    std::string status_message;
+    writeTransactionStatus(result);
+
     switch (result.getStatus()) {
-        case lk::TransactionStatus::StatusCode::Success:
-            status_message = "success";
-            exit_code = base::config::EXIT_FAIL;
-            break;
         case lk::TransactionStatus::StatusCode::Pending:
-            status_message = "pending";
-            exit_code = base::config::EXIT_OK;
-            break;
-        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
-            status_message = "not enough balance";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::BadQueryForm:
-            status_message = "bad query form";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::BadSign:
-            status_message = "bad sign";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::Revert:
-            status_message = "revert";
-            exit_code = base::config::EXIT_FAIL;
-            break;
-        case lk::TransactionStatus::StatusCode::Failed:
-            status_message = "failed";
-            exit_code = base::config::EXIT_FAIL;
-            break;
+        case lk::TransactionStatus::StatusCode::Success:
+            return base::config::EXIT_OK;
+        default:
+            return base::config::EXIT_FAIL;
     }
-
-    std::cout << "Contract status: " << status_message << std::endl;
-
-    return exit_code;
 }
 
 //====================================
@@ -1244,7 +1230,7 @@ int ActionGetTransaction::execute()
               << "\tFee: " << tx.getFee() << '\n'
               << "\tTimestamp: " << tx.getTimestamp() << '\n'
               << "\tData: " << (tx.getData().isEmpty() ? "<empty>" : base::toHex(tx.getData())) << '\n'
-              << "\tSignature: " << (tx.checkSign() ? "verified" : "bad signature") << std::endl;
+              << "\tSignature: " << (tx.checkSign() ? "verified" : "bad_signature") << std::endl;
 
     std::cout.flush();
 
@@ -1301,67 +1287,10 @@ int ActionGetTransactionStatus::execute()
     else {
         client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
     }
-    auto result = client->getTransactionResult(_transaction_hash);
+    auto result = client->getTransactionStatus(_transaction_hash);
+    std::cout << "Transaction with hash[hex]: " << _transaction_hash << std::endl;
 
-    std::string type_message;
-    switch (result.getType()) {
-        case lk::TransactionStatus::ActionType::Transfer:
-            type_message = "transfer";
-            break;
-        case lk::TransactionStatus::ActionType::ContractCall:
-            type_message = "contract call";
-            break;
-        case lk::TransactionStatus::ActionType::ContractCreation:
-            type_message = "contract creation";
-            break;
-        case lk::TransactionStatus::ActionType::None:
-            type_message = "Can not be classified";
-            break;
-    }
-
-    std::string status_message;
-    switch (result.getStatus()) {
-        case lk::TransactionStatus::StatusCode::Success:
-            status_message = "success";
-            break;
-        case lk::TransactionStatus::StatusCode::Pending:
-            status_message = "pending";
-            break;
-        case lk::TransactionStatus::StatusCode::NotEnoughBalance:
-            status_message = "not enough balance";
-            break;
-        case lk::TransactionStatus::StatusCode::BadQueryForm:
-            status_message = "bad query form";
-            break;
-        case lk::TransactionStatus::StatusCode::BadSign:
-            status_message = "bad sign";
-            break;
-        case lk::TransactionStatus::StatusCode::Revert:
-            status_message = "revert";
-            break;
-        case lk::TransactionStatus::StatusCode::Failed:
-            status_message = "failed";
-            break;
-    }
-
-    std::cout << "\tType: " << type_message << '\n'
-              << "\tStatus: " << status_message << '\n'
-              << "\tFee left: " << result.getFeeLeft() << '\n';
-
-    if (result.getStatus() == lk::TransactionStatus::StatusCode::Success &&
-        result.getType() == lk::TransactionStatus::ActionType::ContractCreation) {
-        std::cout << "\tMessage: "
-                  << "new contract address " << lk::Address{ result.getMessage() } << std::endl;
-    }
-    else if (result.getStatus() == lk::TransactionStatus::StatusCode::Success &&
-             result.getType() == lk::TransactionStatus::ActionType::ContractCall) {
-        std::cout << "\tMessage: " << base::toHex(base::base64Decode(result.getMessage())) << std::endl;
-    }
-    else {
-        std::cout << "\tMessage: " << result.getMessage() << std::endl;
-    }
-
-    std::cout.flush();
+    writeTransactionStatus(result);
 
     return base::config::EXIT_OK;
 }
@@ -1445,6 +1374,7 @@ int ActionGetBlock::execute()
               << "\tDepth: " << block.getDepth() << '\n'
               << "\tTimestamp: " << block.getTimestamp() << '\n'
               << "\tCoinbase: " << block.getCoinbase() << '\n'
+              << "\tNonce: " << block.getNonce() << '\n'
               << "\tPrevious block hash: " << block.getPrevBlockHash().toHex() << '\n'
               << "\tNumber of transactions: " << block.getTransactions().size() << std::endl;
 

@@ -69,9 +69,9 @@ lk::TransactionStatus GeneralServerService::pushTransaction(const lk::Transactio
 }
 
 
-lk::TransactionStatus GeneralServerService::getTransactionResult(const base::Sha256& transaction_hash)
+lk::TransactionStatus GeneralServerService::getTransactionStatus(const base::Sha256& transaction_hash)
 {
-    LOG_TRACE << "Received RPC request {getTransactionResult}";
+    LOG_TRACE << "Received RPC request {getTransactionStatus}";
     if (auto transaction_output_opt = _core.getTransactionOutput(transaction_hash); transaction_output_opt) {
         return *transaction_output_opt;
     }

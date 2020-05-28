@@ -229,12 +229,12 @@ void ActionGetTransaction::run(web::json::value& result)
 }
 
 
-class ActionGetTransactionResult : public ActionJsonProcessBase
+class ActionGetTransactionStatus : public ActionJsonProcessBase
 {
   public:
     //====================================
-    explicit ActionGetTransactionResult(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionGetTransactionResult() = default;
+    explicit ActionGetTransactionStatus(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
+    virtual ~ActionGetTransactionStatus() = default;
     //====================================
     const std::string& getName() const override;
     bool loadArguments() override;
@@ -245,19 +245,19 @@ class ActionGetTransactionResult : public ActionJsonProcessBase
 };
 
 
-ActionGetTransactionResult::ActionGetTransactionResult(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
+ActionGetTransactionStatus::ActionGetTransactionStatus(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
   : ActionJsonProcessBase(input, service)
 {}
 
 
-const std::string& ActionGetTransactionResult::getName() const
+const std::string& ActionGetTransactionStatus::getName() const
 {
-    static const std::string name = "get_transaction_result";
+    static const std::string name = "get_transaction_status";
     return name;
 }
 
 
-bool ActionGetTransactionResult::loadArguments()
+bool ActionGetTransactionStatus::loadArguments()
 {
     if (_input.has_field("hash")) {
         _hash = deserializeHash(_input.at("hash").as_string());
@@ -267,9 +267,9 @@ bool ActionGetTransactionResult::loadArguments()
 }
 
 
-void ActionGetTransactionResult::run(web::json::value& result)
+void ActionGetTransactionStatus::run(web::json::value& result)
 {
-    auto tx_result = _service->getTransactionResult(_hash.value());
+    auto tx_result = _service->getTransactionStatus(_hash.value());
     result = serializeTransactionStatus(tx_result);
 }
 
@@ -424,7 +424,7 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
     _json_processors.insert({ "get_account", run_json_process<ActionGetAccount> });
     _json_processors.insert({ "get_block", run_json_process<ActionGetBlock> });
     _json_processors.insert({ "get_transaction", run_json_process<ActionGetTransaction> });
-    _json_processors.insert({ "get_transaction_result", run_json_process<ActionGetTransactionResult> });
+    _json_processors.insert({ "get_transaction_status", run_json_process<ActionGetTransactionStatus> });
     _json_processors.insert({ "push_transaction", run_json_process<ActionPushTransaction> });
     _json_processors.insert({ "call_contract_view", run_json_process<ActionGetStorageValue> });
 }

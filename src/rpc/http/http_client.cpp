@@ -243,14 +243,14 @@ lk::TransactionStatus NodeClient::pushTransaction(const lk::Transaction& transac
 }
 
 
-lk::TransactionStatus NodeClient::getTransactionResult(const base::Sha256& transaction_hash)
+lk::TransactionStatus NodeClient::getTransactionStatus(const base::Sha256& transaction_hash)
 {
     web::json::value request_body;
     request_body[U("hash")] = serializeHash(transaction_hash);
 
     std::optional<lk::TransactionStatus> opt_tx_status;
 
-    _client.request(createPostRequest("/get_transaction_result", request_body))
+    _client.request(createPostRequest("/get_transaction_status", request_body))
       .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {

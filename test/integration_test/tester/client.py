@@ -1,3 +1,4 @@
+import enum
 from abc import ABCMeta
 
 from .base import LogicException
@@ -15,11 +16,13 @@ class Keys:
         self.address = address
 
 
-class AccountInfo:
-    CLIENT_TYPE = "Client"
-    CONTRACT_TYPE = "Contract"
+class AccountType(enum.Enum):
+    CLIENT = "Client"
+    CONTRACT = "Contract"
 
-    def __init__(self, account_type: str, address: str, balance: int, nonce: int, tx_hashes: list):
+
+class AccountInfo:
+    def __init__(self, account_type: AccountType, address: str, balance: int, nonce: int, tx_hashes: list):
         self.account_type = account_type
         self.address = address
         self.balance = balance
@@ -27,62 +30,55 @@ class AccountInfo:
         self.tx_hashes = tx_hashes
 
 
-class TransferResult:
-    def __init__(self, tx_hash: str, result: bool, fail_message: str):
-        self.tx_hash = tx_hash
-        self.result = result
-        self.fail_message = fail_message
+class TransactionStatusCode(enum.Enum):
+    SUCCESS = "success"
+    PENDING = "pending"
+    BAD_QUERY_FORM = "bad_query_form"
+    BAD_SIGN = "bad_sign"
+    NOT_ENOUGH_BALANCE = "not_enough_balance"
+    REVERT = "revert"
+    FAILED = "failed"
+
+
+class TransactionType(enum.Enum):
+    TRANSFER = "transfer"
+    CONTRACT_CREATION = "contract_creation"
+    CONTRACT_CALL = "contract_call"
+    NOT_CLASSIFIED = "can_not_be_classified"
 
 
 class TransactionStatus:
-    pass
+    def __init__(self, action_type: TransactionType, status_code: TransactionStatusCode, tx_hash: str, fee: int,
+                 data: str):
+        self.action_type = action_type
+        self.status_code = status_code
+        self.tx_hash = tx_hash
+        self.fee = fee
+        self.data = data
 
 
 class Transaction:
-    TRANSFER_TYPE = "transfer"
-    CONTRACT_CREATION_TYPE = "contract_creation"
-    CONTRACT_CALL_TYPE = "contract_call"
-
-    def __init__(self, tx_type: str, tx_hash: str, from_address: str, to_address: str, value: int, fee: int,
+    def __init__(self, tx_type: TransactionType, from_address: str, to_address: str, value: int, fee: int,
                  timestamp: int, data: str, verified: bool):
         self.tx_type = tx_type
-        self.tx_hash = tx_hash
         self.from_address = from_address
         self.to_address = to_address
         self.value = value
         self.fee = fee
         self.timestamp = timestamp
-        if data == "<empty>":
-            self.data = ""
-        else:
-            self.data = data
+        self.data = data
         self.verified = verified
 
 
 class Block:
-    def __init__(self, block_hash: str, depth: int, nonce: int, timestamp: int, coinbase: str, previous_block_hash: str,
+    def __init__(self, depth: int, nonce: int, timestamp: int, coinbase: str, previous_block_hash: str,
                  transactions: list):
-        self.block_hash = block_hash
         self.nonce = nonce
         self.depth = depth
         self.timestamp = timestamp
         self.coinbase = coinbase
         self.previous_block_hash = previous_block_hash
         self.transactions = transactions
-
-
-class DeployedContract:
-    def __init__(self, tx_hash: str, address: str, gas_left: int):
-        self.tx_hash = tx_hash
-        self.address = address
-        self.gas_left = gas_left
-
-
-class ContractResult:
-    def __init__(self, tx_hash: str, fee_left: int, message: str):
-        self.tx_hash = tx_hash
-        self.fee_left = fee_left
-        self.message = message
 
 
 class BaseClient(metaclass=ABCMeta):
@@ -105,7 +101,7 @@ class BaseClient(metaclass=ABCMeta):
         raise LogicException("method is not implemented")
 
     def transfer(self, *, to_address: str, amount: int, from_address: Keys, fee: int, wait: int,
-                 timeout: int) -> TransferResult:
+                 timeout: int) -> TransactionStatus:
         raise LogicException("method is not implemented")
 
     def get_transaction_status(self, *, tx_hash: str, wait: int, timeout: int) -> TransactionStatus:
@@ -127,11 +123,11 @@ class BaseClient(metaclass=ABCMeta):
         raise LogicException("method is not implemented")
 
     def push_contract(self, *, from_address: Keys, code: str, fee: int, amount: int, init_message: str, timeout: int,
-                      wait: int) -> DeployedContract:
+                      wait: int) -> TransactionStatus:
         raise LogicException("method is not implemented")
 
     def message_call(self, *, from_address: Keys, to_address: str, fee: int, amount: int, message: str, timeout: int,
-                     wait: int) -> ContractResult:
+                     wait: int) -> TransactionStatus:
         raise LogicException("method is not implemented")
 
     def call_view(self, *, from_address: Keys, to_address: str, message: str, timeout: int, wait: int) -> str:

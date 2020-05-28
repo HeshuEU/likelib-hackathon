@@ -13,8 +13,8 @@ import copy
 import web3
 
 from .base import Logger, LogicException, TimeOutException, InvalidArgumentsException, BadResultException
-from .client import NodeInfo, Keys, AccountInfo, TransferResult, Transaction, Block, DeployedContract, ContractResult, \
-    TransactionStatus, BaseClient
+from .client import BaseClient, NodeInfo, Keys, AccountType, AccountInfo, TransactionStatusCode, TransactionType, \
+    TransactionStatus, Transaction, Block
 
 
 def _base64_to_hex(input_str: str) -> str:
@@ -51,17 +51,55 @@ class _GetAccountInfoParser:
         address = result["address"]
         balance = int(result["balance"])
         nonce = result["nonce"]
-        account_type = AccountInfo.CLIENT_TYPE if result['type'] == 'client' else AccountInfo.CONTRACT_TYPE
+        account_type = AccountType(result['type'])
         txs_hashes = list()
         for item in result['transaction_hashes']:
             txs_hashes.append(_base64_to_hex(item))
         return AccountInfo(account_type, address, balance, nonce, txs_hashes)
 
 
-class _TransferParser:
+class _TransactionStatusParser:
     @staticmethod
-    def parse(result: dict, tx_hash: str) -> TransferResult:
-        return TransferResult(tx_hash, result['status_code'] == 0, result['message'])
+    def parse(result: dict, tx_hash: str) -> TransactionStatus:
+
+        action_type_data = result["action_type"]
+        if action_type_data == 0:
+            action_type = TransactionType.NOT_CLASSIFIED
+        elif action_type_data == 1:
+            action_type = TransactionType.TRANSFER
+        elif action_type_data == 2:
+            action_type = TransactionType.CONTRACT_CALL
+        elif action_type_data == 3:
+            action_type = TransactionType.CONTRACT_CREATION
+        else:
+            raise InvalidArgumentsException("Invalid command output")
+
+        status_code_data = result["status_code"]
+        if status_code_data == 0:
+            status_code = TransactionStatusCode.SUCCESS
+        elif status_code_data == 1:
+            status_code = TransactionStatusCode.PENDING
+        elif status_code_data == 2:
+            status_code = TransactionStatusCode.BAD_QUERY_FORM
+        elif status_code_data == 3:
+            status_code = TransactionStatusCode.BAD_SIGN
+        elif status_code_data == 4:
+            status_code = TransactionStatusCode.NOT_ENOUGH_BALANCE
+        elif status_code_data == 5:
+            status_code = TransactionStatusCode.REVERT
+        elif status_code_data == 6:
+            status_code = TransactionStatusCode.FAILED
+        else:
+            raise InvalidArgumentsException("Invalid command output")
+
+        fee_left = int(result["fee_left"])
+
+        if action_type == TransactionType.CONTRACT_CREATION:
+            message = result["message"]
+        else:
+            message = base64.b64decode(result["message"]).hex()
+
+        return TransactionStatus(action_type, status_code, tx_hash, fee_left, message)
 
 
 class _GetTransactionParser:
@@ -74,24 +112,23 @@ class _GetTransactionParser:
         fee = int(result["fee"])
         timestamp = result["timestamp"]
         tx_data = _base64_to_hex(result["data"])
-
-        coincurve.verify_signature()
-        coincurve.PrivateKey
-
+        signature_status = False  # TODO create verification
         if to_address == _generate_null_address():
-            tx = Transaction(Transaction.CONTRACT_CREATION_TYPE, from_address, to_address, amount, fee, timestamp,
-                             tx_data, )
+            tx = Transaction(TransactionType.CONTRACT_CREATION, from_address, to_address, amount, fee, timestamp,
+                             tx_data, signature_status)
         elif tx_data == "":
-            tx = Transaction(Transaction.TRANSFER_TYPE, )
+            tx = Transaction(TransactionType.TRANSFER, from_address, to_address, amount, fee, timestamp, tx_data,
+                             signature_status)
         else:
-            tx = Transaction(Transaction.CONTRACT_CALL_TYPE, )
+            tx = Transaction(TransactionType.CONTRACT_CALL, from_address, to_address, amount, fee, timestamp, tx_data,
+                             signature_status)
 
         return tx
 
 
 class _GetBlockParser:
     @staticmethod
-    def parse(result: dict, block_hash: str) -> Block:
+    def parse(result: dict) -> Block:
         depth = result["depth"]
         nonce = result["nonce"]
         coinbase = result["coinbase"]
@@ -100,20 +137,7 @@ class _GetBlockParser:
         txs = list()
         for item in result['transactions']:
             txs.append(_GetTransactionParser.parse(item))
-        return Block(block_hash, depth, nonce, timestamp, coinbase, previous_block_hash, txs)
-
-
-class _DeployedContract:
-    @staticmethod
-    def parse(result: dict, tx_hash: str) -> DeployedContract:
-        if result['action_type'] == 3 and result['status_code'] == 0:
-            return DeployedContract(tx_hash, result["message"], int(result["gas_left"]))
-
-
-class _ContractCallParser:
-    @staticmethod
-    def parse(result: dict, tx_hash: str) -> ContractResult:
-        return ContractResult(tx_hash, int(result["gas_left"]), base64.b64decode(result['message']).hex())
+        return Block(depth, nonce, timestamp, coinbase, previous_block_hash, txs)
 
 
 class _CallViewParser:
@@ -123,11 +147,11 @@ class _CallViewParser:
 
 
 ZERO_WAIT = 0
-MINIMUM_TX_WAIT = 3
-MINIMAL_CALL_TIMEOUT = 7
-MINIMAL_STANDALONE_TIMEOUT = 5
-MINIMAL_TRANSACTION_TIMEOUT = 10
-MINIMAL_CONTRACT_TIMEOUT = 15
+MINIMUM_TX_WAIT = 4
+MINIMAL_CALL_TIMEOUT = 20
+MINIMAL_STANDALONE_TIMEOUT = 10
+MINIMAL_TRANSACTION_TIMEOUT = 20
+MINIMAL_CONTRACT_TIMEOUT = 20
 
 
 class Client(BaseClient):
@@ -143,7 +167,7 @@ class Client(BaseClient):
         self.logger = logger
 
     @staticmethod
-    def __load_key(key_folder: str):
+    def __load_key(key_folder: str) -> coincurve.PrivateKey:
         path = os.path.abspath(key_folder)
         if not os.path.exists(path):
             InvalidArgumentsException(f"path not found {path}")
@@ -157,7 +181,7 @@ class Client(BaseClient):
         return coincurve.PrivateKey.from_hex(private_bytes.decode())
 
     @staticmethod
-    def __save_key(key_folder: str, pk: coincurve.PrivateKey):
+    def __save_key(key_folder: str, pk: coincurve.PrivateKey) -> str:
         path = os.path.abspath(key_folder)
         if not os.path.exists(path):
             os.makedirs(path)
@@ -187,13 +211,13 @@ class Client(BaseClient):
         return m.digest()
 
     @staticmethod
-    def __key_to_address(key: coincurve.PrivateKey):
+    def __key_to_address(key: coincurve.PrivateKey) -> str:
         pub_bytes = key.public_key.format(False)
         s = hashlib.new('sha256', pub_bytes).digest()
         r = hashlib.new('ripemd160', s).digest()
         return base58.b58encode(r).decode()
 
-    def __run_client_command(self, *, route: str, input_json: dict, timeout: int, wait: int):
+    def __run_client_command(self, *, route: str, input_json: dict, timeout: int, wait: int) -> dict:
         command = self.connection_address + route
         try:
             response = requests.post(command, json=input_json, timeout=timeout)
@@ -225,15 +249,19 @@ class Client(BaseClient):
     def __get_node_info(self, *, timeout, wait) -> dict:
         return self.__run_client_command(route="/get_node_info", input_json={}, timeout=timeout, wait=wait)
 
-    def __get_account_info(self, *, address: str, timeout: int, wait: int):
+    def __get_account_info(self, *, address: str, timeout: int, wait: int) -> dict:
         return self.__run_client_command(route="/get_account", input_json={"address": address}, timeout=timeout,
                                          wait=wait)
 
-    def __get_transaction(self, *, tx_hash: str, timeout: int, wait: int):
+    def __get_transaction(self, *, tx_hash: str, timeout: int, wait: int) -> dict:
         return self.__run_client_command(route="/get_transaction", input_json={"hash": tx_hash}, timeout=timeout,
                                          wait=wait)
 
-    def __get_block(self, *, block_hash=None, block_number=None, timeout: int, wait: int):
+    def __get_transaction_status(self, *, tx_hash: str, timeout: int, wait: int) -> dict:
+        return self.__run_client_command(route="/get_transaction_status", input_json={"hash": tx_hash}, timeout=timeout,
+                                         wait=wait)
+
+    def __get_block(self, *, block_hash=None, block_number=None, timeout: int, wait: int) -> dict:
         if block_hash is not None:
             input_json = {"hash": base64.b64encode(bytes.fromhex(block_hash))}
         elif block_number is not None:
@@ -243,7 +271,7 @@ class Client(BaseClient):
         return self.__run_client_command(route="/get_block", input_json=input_json, timeout=timeout, wait=wait)
 
     def __push_transaction(self, *, from_address: str, to_address: str, amount: int, fee: int, timestamp: int,
-                           message: str, sign: str, timeout: int, wait: int):
+                           message: str, sign: str, timeout: int, wait: int) -> dict:
         tx_json = {'from': from_address,
                    'to': to_address,
                    'amount': str(amount),
@@ -255,7 +283,7 @@ class Client(BaseClient):
                                          wait=wait)
 
     def __call_contract_view(self, *, from_address: str, to_address: str, timestamp: int, message: str, sign: str,
-                             timeout: int, wait: int):
+                             timeout: int, wait: int) -> dict:
         tx_json = {'from': from_address,
                    'to': to_address,
                    'timestamp': timestamp,
@@ -292,7 +320,7 @@ class Client(BaseClient):
         return _GetAccountInfoParser.parse(result)
 
     def transfer(self, *, to_address: str, amount: int, from_address: Keys, fee: int, wait=MINIMUM_TX_WAIT,
-                 timeout=MINIMAL_TRANSACTION_TIMEOUT) -> TransferResult:
+                 timeout=MINIMAL_TRANSACTION_TIMEOUT) -> TransactionStatus:
         from_address_private_key = Client.__load_key(from_address.keys_path)
         from_address = Client.__key_to_address(from_address_private_key)
         timestamp = self.__get_timestamp()
@@ -300,10 +328,13 @@ class Client(BaseClient):
         sign = base64.b64encode(from_address_private_key.sign_recoverable(tx_hash)).decode()
         result = self.__push_transaction(from_address=from_address, to_address=to_address, amount=amount, fee=fee,
                                          timestamp=timestamp, message="", sign=sign, timeout=timeout, wait=wait)
-        return _TransferParser.parse(result, tx_hash.hex())
+        return _TransactionStatusParser.parse(result, tx_hash.hex())
 
-    def get_transaction_status(self, *, tx_hash: str, wait: int, timeout: int) -> TransactionStatus:
-        raise LogicException("method is not implemented")
+    def get_transaction_status(self, *, tx_hash: str, wait=ZERO_WAIT,
+                               timeout=MINIMAL_CALL_TIMEOUT) -> TransactionStatus:
+        result = self.__get_transaction_status(tx_hash=base64.b64encode(bytes.fromhex(tx_hash)).decode(),
+                                               timeout=timeout, wait=wait)
+        return _TransactionStatusParser.parse(result, tx_hash)
 
     def get_transaction(self, *, tx_hash: str, wait=ZERO_WAIT, timeout=MINIMAL_CALL_TIMEOUT) -> Transaction:
         result = self.__get_transaction(tx_hash=base64.b64encode(bytes.fromhex(tx_hash)).decode(), wait=wait,
@@ -429,9 +460,21 @@ class Client(BaseClient):
 
     @staticmethod
     def __parse_call(call_string):
+        ADDRESS_FN = 'Address('
         bracket_index = call_string.find('(')
         method_name = call_string[0: bracket_index]
-        argument_data = f"[{call_string[bracket_index + 1: len(call_string) - 1]}]"
+        call_string = call_string[bracket_index + 1: len(call_string) - 1]
+        while call_string.find(ADDRESS_FN) != -1:
+            fn_start = call_string.find(ADDRESS_FN)
+            fn_end = fn_start + len(ADDRESS_FN)
+            end = call_string.find(')', fn_end)
+            left_part = call_string[0: fn_start]
+            right_part = call_string[end+1:]
+            input_data = call_string[fn_end: end]
+            converted_data = base58.b58decode(input_data)
+            converted_address = f'"{(bytes(32-len(converted_data)) + converted_data).hex()}"'
+            call_string = left_part + converted_address + right_part
+        argument_data = f"[{call_string}]"
         arguments = json.loads(argument_data)
         return {"method": method_name, "args": arguments}
 
@@ -479,7 +522,7 @@ class Client(BaseClient):
         return Client.__prepare_for_serialize(decoded_data)
 
     def push_contract(self, *, from_address: Keys, code: str, fee: int, amount: int, init_message: str,
-                      timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> DeployedContract:
+                      timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> TransactionStatus:
 
         from_address_private_key = Client.__load_key(from_address.keys_path)
         from_address = Client.__key_to_address(from_address_private_key)
@@ -492,10 +535,10 @@ class Client(BaseClient):
         result = self.__push_transaction(from_address=from_address, to_address=to_address, amount=amount, fee=fee,
                                          timestamp=timestamp, message=base64.b64encode(message_bytes).decode(),
                                          sign=sign, timeout=timeout, wait=wait)
-        return _DeployedContract.parse(result, tx_hash.hex())
+        return _TransactionStatusParser.parse(result, tx_hash.hex())
 
     def message_call(self, *, from_address: Keys, to_address: str, fee: int, amount: int, message: str,
-                     timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> ContractResult:
+                     timeout=MINIMAL_CONTRACT_TIMEOUT, wait=MINIMUM_TX_WAIT) -> TransactionStatus:
         from_address_private_key = Client.__load_key(from_address.keys_path)
         from_address = Client.__key_to_address(from_address_private_key)
         timestamp = self.__get_timestamp()
@@ -504,7 +547,7 @@ class Client(BaseClient):
         sign = base64.b64encode(from_address_private_key.sign_recoverable(tx_hash)).decode()
         result = self.__push_transaction(from_address=from_address, to_address=to_address, amount=amount, fee=fee,
                                          timestamp=timestamp, message=data, sign=sign, timeout=timeout, wait=wait)
-        return _ContractCallParser.parse(result, tx_hash.hex())
+        return _TransactionStatusParser.parse(result, tx_hash.hex())
 
     def call_view(self, *, from_address: Keys, to_address: str, message: str, timeout=MINIMAL_CALL_TIMEOUT,
                   wait=ZERO_WAIT) -> str:

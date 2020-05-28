@@ -194,7 +194,7 @@ lk::TransactionStatus NodeClient::pushTransaction(const lk::Transaction& transac
 }
 
 
-lk::TransactionStatus NodeClient::getTransactionResult(const base::Sha256& transaction_hash)
+lk::TransactionStatus NodeClient::getTransactionStatus(const base::Sha256& transaction_hash)
 {
     // convert data for request
     likelib::Hash request;

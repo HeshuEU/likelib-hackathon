@@ -163,7 +163,7 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
     try {
         base::Sha256 transaction_hash = deserializeHash(request);
 
-        auto result = _service->getTransactionResult(transaction_hash);
+        auto result = _service->getTransactionStatus(transaction_hash);
 
         serializeTransactionStatus(result, response);
     }

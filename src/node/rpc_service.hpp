@@ -27,7 +27,7 @@ class GeneralServerService : public rpc::BaseRpc
 
     lk::TransactionStatus pushTransaction(const lk::Transaction& transaction) override;
 
-    lk::TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) override;
+    lk::TransactionStatus getTransactionStatus(const base::Sha256& transaction_hash) override;
 
     base::Bytes callContractView(const lk::ViewCall& call) override;
 

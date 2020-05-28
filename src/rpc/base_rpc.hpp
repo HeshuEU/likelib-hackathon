@@ -34,7 +34,7 @@ class BaseRpc
 
     virtual lk::TransactionStatus pushTransaction(const lk::Transaction& transaction) = 0;
 
-    virtual lk::TransactionStatus getTransactionResult(const base::Sha256& transaction_hash) = 0;
+    virtual lk::TransactionStatus getTransactionStatus(const base::Sha256& transaction_hash) = 0;
 
     virtual base::Bytes callContractView(const lk::ViewCall& call) = 0;
 };
