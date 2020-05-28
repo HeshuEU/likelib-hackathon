@@ -1,184 +1,206 @@
 #include "grpc_adapter.hpp"
 
+#include "rpc/grpc/tools.hpp"
 
-namespace
+#include "base/config.hpp"
+#include "base/error.hpp"
+#include "base/log.hpp"
+
+
+namespace rpc::grpc
 {
 
-void convert(const rpc::OperationStatus& source, likelib::OperationStatus* target)
+void Adapter::init(std::shared_ptr<BaseRpc> service)
 {
-    target->set_message(source.getMessage());
-    switch (source.getStatus()) {
-        case rpc::OperationStatus::StatusCode::Success:
-            target->set_status(likelib::OperationStatus_StatusCode_Success);
-            break;
-        case rpc::OperationStatus::StatusCode::Rejected:
-            target->set_status(likelib::OperationStatus_StatusCode_Rejected);
-            break;
-        case rpc::OperationStatus::StatusCode::Failed:
-            target->set_status(likelib::OperationStatus_StatusCode_Failed);
-            break;
-        default:
-            RAISE_ERROR(base::LogicError, "Unexpected status code");
-    }
-}
-
-} // namespace
-
-
-namespace rpc
-{
-
-void GrpcAdapter::init(std::shared_ptr<BaseRpc> service)
-{
-    _service = service;
+    _service = std::move(service);
 }
 
 
-grpc::Status GrpcAdapter::test(grpc::ServerContext* context,
-                               const likelib::TestRequest* request,
-                               likelib::TestResponse* response)
+::grpc::Status Adapter::get_account(::grpc::ServerContext* context,
+                                    const ::likelib::Address* request,
+                                    ::likelib::AccountInfo* response)
 {
-    LOG_DEBUG << "received RPC call at test method from: " << context->peer();
+    LOG_DEBUG << "received RPC get_account method call from " << context->peer();
     try {
-        auto status = _service->test(request->interface_version());
-        convert(status, response->mutable_status());
+        auto address = deserializeAddress(request);
+
+        auto accountInfo = _service->getAccountInfo(address);
+
+        serializeAccountInfo(accountInfo, response);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
-
-    return ::grpc::Status::OK;
-}
-
-
-grpc::Status GrpcAdapter::balance(grpc::ServerContext* context,
-                                  const likelib::Address* request,
-                                  likelib::CurrencyAmount* response)
-{
-    LOG_DEBUG << "received RPC balance method call from: " << context->peer();
-    try {
-        lk::Address query_address{ request->address() };
-        response->set_value(_service->balance(query_address));
-    }
-    catch (const base::Error& e) {
-        LOG_ERROR << e.what();
+    catch (const std::exception& e) {
+        LOG_ERROR << "unexpected error: " << e.what();
         return ::grpc::Status::CANCELLED;
     }
     return ::grpc::Status::OK;
 }
 
 
-grpc::Status GrpcAdapter::info(grpc::ServerContext* context,
-                               const likelib::InfoRequest*,
-                               likelib::InfoResponse* response)
+::grpc::Status Adapter::get_node_info(::grpc::ServerContext* context,
+                                      [[maybe_unused]] const ::likelib::None* request,
+                                      ::likelib::NodeInfo* response)
 {
-    LOG_DEBUG << "received RPC info method call from: " << context->peer();
+    LOG_DEBUG << "received RPC get_node_info method call from " << context->peer();
     try {
-        response->set_top_block_hash(base::base64Encode(_service->info().top_block_hash.getBytes()));
+        auto info = _service->getNodeInfo();
+
+        serializeInfo(info, response);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR << "unexpected error: " << e.what();
         return ::grpc::Status::CANCELLED;
     }
     return ::grpc::Status::OK;
 }
 
 
-grpc::Status GrpcAdapter::get_block(grpc::ServerContext* context,
-                                    const likelib::GetBlockRequest* request,
-                                    likelib::GetBlockResponse* response)
+::grpc::Status Adapter::get_block_by_hash(::grpc::ServerContext* context,
+                                          const ::likelib::Hash* request,
+                                          ::likelib::Block* response)
+{
+    LOG_DEBUG << "received RPC get_block_by_hash method call from " << context->peer();
+    try {
+        base::Sha256 block_hash = deserializeHash(request);
+
+        auto block = _service->getBlock(block_hash);
+
+        serializeBlock(block, response);
+    }
+    catch (const base::Error& e) {
+        LOG_ERROR << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR << "unexpected error: " << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    return ::grpc::Status::OK;
+}
+
+
+::grpc::Status Adapter::get_block_by_number(::grpc::ServerContext* context,
+                                            const ::likelib::Number* request,
+                                            ::likelib::Block* response)
 {
     LOG_DEBUG << "received RPC get_block method call from " << context->peer();
     try {
-        base::Sha256 block_hash{ base::fromHex<base::Bytes>(request->block_hash()) };
-        auto block = _service->get_block(block_hash);
-        response->set_depth(block.getDepth());
-        response->set_nonce(block.getNonce());
-        response->set_previous_block_hash(block.getPrevBlockHash().toHex());
-        response->mutable_coinbase()->set_address(block.getCoinbase().toString());
-        response->mutable_timestamp()->set_since_epoch(block.getTimestamp().getSeconds());
+        auto block = _service->getBlock(request->number());
 
-        for (const auto& tx : block.getTransactions()) {
-            likelib::Transaction tv;
-            tv.mutable_from()->set_address(tx.getFrom().toString());
-            tv.mutable_to()->set_address(tx.getTo().toString());
-            tv.mutable_value()->set_value(tx.getAmount().toString());
-            tv.mutable_fee()->set_value(tx.getFee());
-            tv.mutable_creation_time()->set_since_epoch(tx.getTimestamp().getSeconds());
-            tv.set_data(base::base64Encode(tx.getData()));
-            tv.set_signature(tx.getSign().toBase64());
-            response->mutable_transactions()->Add(std::move(tv));
-        }
+        serializeBlock(block, response);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR << "unexpected error: " << e.what();
         return ::grpc::Status::CANCELLED;
     }
     return ::grpc::Status::OK;
 }
 
 
-::grpc::Status GrpcAdapter::create_contract(::grpc::ServerContext* context,
-                                            const ::likelib::TransactionCreateContractRequest* request,
-                                            ::likelib::TransactionCreateContractResponse* response)
+::grpc::Status Adapter::get_transaction(::grpc::ServerContext* context,
+                                        const ::likelib::Hash* request,
+                                        ::likelib::Transaction* response)
 {
-    LOG_DEBUG << "received RPC call at transaction_for_create_contract method from: " << context->peer();
+    LOG_DEBUG << "received RPC get_transaction method call from " << context->peer();
     try {
-        auto amount = lk::Balance{ request->value().value() };
-        auto from_address = lk::Address{ request->from().address() };
-        auto gas = std::uint64_t{ request->fee().value() };
-        auto creation_time = base::Time(request->creation_time().since_epoch());
-        auto contract_code = request->contract_code();
-        auto init = request->init();
-        auto sign = lk::Sign::fromBase64(request->signature().raw());
+        base::Sha256 transaction_hash{ base::base64Decode(request->bytes_base_64()) };
 
-        auto [status, contract_address, least_gas] =
-          _service->transaction_create_contract(amount, from_address, creation_time, gas, contract_code, init, sign);
+        auto tx = _service->getTransaction(transaction_hash);
 
-        convert(status, response->mutable_status());
-        response->mutable_contract_address()->set_address(contract_address.toString());
-        response->mutable_fee_left()->set_value(least_gas);
+        serializeTransaction(tx, response);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
-
+    catch (const std::exception& e) {
+        LOG_ERROR << "unexpected error: " << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
     return ::grpc::Status::OK;
 }
 
 
-grpc::Status GrpcAdapter::message_call(grpc::ServerContext* context,
-                                       const likelib::TransactionMessageCallRequest* request,
-                                       likelib::TransactionMessageCallResponse* response)
+::grpc::Status Adapter::push_transaction(::grpc::ServerContext* context,
+                                         const ::likelib::Transaction* request,
+                                         ::likelib::TransactionStatus* response)
 {
-    LOG_DEBUG << "received RPC call at transaction_to_contract method from: " << context->peer();
+    LOG_DEBUG << "received RPC push_transaction method call from " << context->peer();
     try {
-        auto amount = lk::Balance{ request->value().value() };
-        auto from_address = lk::Address{ request->from().address() };
-        auto to_address = lk::Address{ request->to().address() };
-        auto gas = std::uint64_t{ request->fee().value() };
-        auto creation_time = base::Time(request->creation_time().since_epoch());
-        auto data = request->data();
-        auto sign = lk::Sign::fromBase64(request->signature());
+        auto tx = deserializeTransaction(request);
 
-        auto status = OperationStatus::createSuccess();
-        std::string contract_response;
-        std::uint64_t least_gas;
-        std::tie(status, contract_response, least_gas) =
-          _service->transaction_message_call(amount, from_address, to_address, creation_time, gas, data, sign);
+        auto result = _service->pushTransaction(tx);
 
-        convert(status, response->mutable_status());
-        response->set_contract_response(contract_response);
-        response->mutable_fee_left()->set_value(least_gas);
+        serializeTransactionStatus(result, response);
     }
     catch (const base::Error& e) {
         LOG_ERROR << e.what();
         return ::grpc::Status::CANCELLED;
     }
-
+    catch (const std::exception& e) {
+        LOG_ERROR << "unexpected error: " << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
     return ::grpc::Status::OK;
 }
 
-} // namespace rpc
+
+::grpc::Status Adapter::get_transaction_result(::grpc::ServerContext* context,
+                                               const ::likelib::Hash* request,
+                                               ::likelib::TransactionStatus* response)
+{
+    LOG_DEBUG << "received RPC get_transaction_result method call from " << context->peer();
+    try {
+        base::Sha256 transaction_hash = deserializeHash(request);
+
+        auto result = _service->getTransactionStatus(transaction_hash);
+
+        serializeTransactionStatus(result, response);
+    }
+    catch (const base::Error& e) {
+        LOG_ERROR << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR << "unexpected error: " << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    return ::grpc::Status::OK;
+}
+
+
+::grpc::Status Adapter::call_contract_view(::grpc::ServerContext* context,
+                                           const ::likelib::ViewCall* request,
+                                           ::likelib::Data* response)
+{
+    LOG_DEBUG << "received RPC call_contract_view method call from " << context->peer();
+    try {
+        auto call = deserializeViewCall(request);
+
+        auto result = _service->callContractView(call);
+
+        response->set_bytes_base_64(base::base64Encode(result));
+    }
+    catch (const base::Error& e) {
+        LOG_ERROR << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR << "unexpected error: " << e.what();
+        return ::grpc::Status::CANCELLED;
+    }
+    return ::grpc::Status::OK;
+}
+
+} // namespace rpc::grpc

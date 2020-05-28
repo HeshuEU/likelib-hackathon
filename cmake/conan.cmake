@@ -416,6 +416,7 @@ function(conan_cmake_setup_conanfile)
     endif()
 endfunction()
 
+
 function(conan_cmake_generate_conanfile)
     # Generate, writing in disk a conanfile.txt with the requires, options, and imports
     # specified as arguments

@@ -5,12 +5,12 @@ project(likelib VERSION 0.1)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if ( CMAKE_COMPILER_IS_GNUCC )
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
-endif()
-if ( MSVC )
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /W4")
-endif()
+if (CMAKE_COMPILER_IS_GNUCC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
+endif ()
+if (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+endif ()
 
 find_package(Backtrace)
 include_directories(SYSTEM ${Backtrace_INCLUDE_DIRS})
@@ -48,6 +48,13 @@ find_package(leveldb CONFIG REQUIRED)
 
 # adding GrpcLib and ProtoC to project. For details see cmake/FindGrpcCppLib.cmake
 find_package(GrpcCppLib REQUIRED)
+
+#==========================
+
+# add cpprestsdk
+set(cpprestsdk_DIR /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/cmake/)
+
+find_package(cpprestsdk REQUIRED) # todo using conan
 
 #==========================
 

@@ -8,6 +8,7 @@
 
 namespace base
 {
+
 class Error : public std::exception
 {
   public:

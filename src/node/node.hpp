@@ -1,11 +1,14 @@
 #pragma once
 
-#include "base/crypto.hpp"
-#include "base/property_tree.hpp"
-#include "core/core.hpp"
 #include "node/miner.hpp"
 #include "node/rpc_service.hpp"
+
+#include "core/core.hpp"
+
 #include "rpc/rpc.hpp"
+
+#include "base/crypto.hpp"
+#include "base/property_tree.hpp"
 
 class Node
 {
@@ -20,7 +23,7 @@ class Node
     base::KeyVault _key_vault;
     //---------------------------
     lk::Core _core;
-    std::unique_ptr<rpc::RpcServer> _rpc;
+    std::unique_ptr<rpc::BaseRpcServer> _rpc;
     //---------------------------
     std::unique_ptr<Miner> _miner;
     //---------------------------

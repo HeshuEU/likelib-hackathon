@@ -10,119 +10,62 @@ option objc_class_prefix = "LKL";
 package likelib;
 
 service NodePublicInterface {
-    rpc test (TestRequest) returns (TestResponse) {
+
+    rpc get_account (Address) returns (AccountInfo) {
     }
 
-    rpc balance (Address) returns (CurrencyAmount) {
+    rpc get_node_info (None) returns (NodeInfo) {
     }
 
-    rpc info (InfoRequest) returns (InfoResponse) {
+    rpc get_block_by_hash (Hash) returns (Block) {
     }
 
-    rpc get_block (GetBlockRequest) returns (GetBlockResponse) {
+    rpc get_block_by_number (Number) returns (Block) {
     }
 
-    rpc message_call (TransactionMessageCallRequest) returns (TransactionMessageCallResponse) {
+    rpc get_transaction (Hash) returns (Transaction) {
     }
 
-    rpc create_contract (TransactionCreateContractRequest) returns (TransactionCreateContractResponse) {
+    rpc push_transaction (Transaction) returns (TransactionStatus) {
     }
+
+    rpc get_transaction_result (Hash) returns (TransactionStatus) {
+    }
+
+    rpc call_contract_view (ViewCall) returns (Data) {
+    }
+
 }
 
 //=====================================
 
-message TestRequest {
-    uint32 interface_version = 1;
+message NodeInfo {
+    Hash top_block_hash = 1;
+    uint64 top_block_number = 2;
+    uint32 interface_version = 3;
 }
 
-message TestResponse {
-    OperationStatus status = 1;
-}
 
-//=====================================
-
-message InfoRequest {
-}
-
-message InfoResponse {
-    string top_block_hash = 1;
-}
-
-//=====================================
-
-message GetBlockRequest {
-    string block_hash = 1;
-}
-
-message GetBlockResponse {
+message Block {
     Address coinbase = 1;
     Time timestamp = 2;
     uint64 depth = 3;
     uint64 nonce = 4;
-    string previous_block_hash = 5;
-    repeated Transaction transactions = 6;
+    Hash previous_block_hash = 5;
+    repeated Transaction transactions = 7;
 }
 
-//=====================================
 
-message TransactionMessageCallRequest {
-    Address from = 1;
-    Address to = 2;
-    CurrencyAmount value = 3;
-    CurrencyFee fee = 4;
-    Time creation_time = 5;
-    string data = 6;
-    string signature = 7;
-}
-
-message TransactionMessageCallResponse {
-    OperationStatus status = 1;
-    CurrencyFee fee_left = 2;
-    string contract_response = 3;
-}
-
-//=====================================
-
-message TransactionCreateContractRequest {
-    Address from = 1;
-    CurrencyAmount value = 2;
-    CurrencyFee fee = 3;
-    Time creation_time = 4;
-    string contract_code = 5;
-    string init = 6;
-    Signature signature = 7;
-}
-
-message TransactionCreateContractResponse {
-    OperationStatus status = 1;
-    CurrencyFee fee_left = 2;
-    Address contract_address = 3;
-}
-
-//=====================================
-
-message Contract {
-    string bytecode = 1;
-}
-
-message Time {
-    uint64 since_epoch = 1;
-}
-
-message CurrencyAmount {
-    string value = 1;
-}
-
-message CurrencyFee {
-    uint64 value = 1;
-}
-
-message Address {
-    string address = 1;
-}
-
-message Signature {
-    string raw = 1;
+message AccountInfo {
+    enum Type {
+        CLIENT = 0;
+        CONTRACT = 1;
+    }
+    Type type = 1;
+    Address address = 2;
+    CurrencyAmount balance = 3;
+    uint64 nonce = 4;
+    repeated Hash hashes = 5;
 }
 
 
@@ -130,19 +73,79 @@ message Transaction {
     Address from = 1;
     Address to = 2;
     CurrencyAmount value = 3;
-    CurrencyFee fee = 4;
+    uint64 fee = 4;
     Time creation_time = 5;
     string data = 6;
-    string signature = 7;
+    Signature signature = 8;
 }
 
 
-message OperationStatus {
+message TransactionStatus {
     enum StatusCode {
         Success = 0;
-        Rejected = 1;
-        Failed = 2;
+        Pending = 1;
+        BadQueryForm = 2;
+        BadSign = 3;
+        NotEnoughBalance = 4;
+        Revert = 5;
+        Failed = 6;
     }
+    enum ActionType {
+        None = 0;
+        Transfer = 1;
+        ContractCall = 2;
+        ContractCreation = 3;
+    };
     StatusCode status = 1;
-    string message = 2;
+    ActionType type = 2;
+    string message = 3;
+    uint64 fee_left = 4;
+}
+
+
+message ViewCall {
+    Address from = 1;
+    Address to = 2;
+    Data message = 3;
+    Time creation_time = 4;
+    Signature signature = 5;
+}
+
+
+message Signature {
+    string signature_bytes_at_base_64 = 1;
+}
+
+
+message Time {
+    uint32 seconds_since_epoch = 1;
+}
+
+
+message CurrencyAmount {
+    string value = 1;
+}
+
+
+message Address {
+    string address_at_base_58 = 1;
+}
+
+
+message Hash {
+    string bytes_base_64 = 1;
+}
+
+
+message Number {
+    uint64 number = 1;
+}
+
+
+message Data {
+    string bytes_base_64 = 1;
+}
+
+
+message None {
 }

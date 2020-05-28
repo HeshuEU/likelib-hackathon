@@ -1,6 +1,5 @@
 #include "database.hpp"
 
-
 namespace base
 {
 template<typename B1, typename B2>

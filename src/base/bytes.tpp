@@ -11,7 +11,6 @@
 
 #include <algorithm>
 
-
 namespace
 {
 
@@ -32,6 +31,7 @@ std::size_t hexToInt(char hex)
 }
 
 } // namespace
+
 
 namespace base
 {
@@ -288,6 +288,7 @@ std::string base64Encode(const T& bytes)
 
 
 static constexpr char pszBase58[59] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
 
 template<typename T>
 std::string base58Encode(const T& bytes)

@@ -12,11 +12,12 @@ class Address
   public:
     //=============================
     static constexpr std::size_t LENGTH_IN_BYTES = 20;
+    static constexpr std::size_t SIGNATURE_LENGTH = 65;
     //=============================
     explicit Address(const std::string_view& base58_address);
     explicit Address(const base::Bytes& raw);
     explicit Address(const base::FixedBytes<LENGTH_IN_BYTES>& raw);
-    explicit Address(const base::RsaPublicKey& pub);
+    explicit Address(const base::FixedBytes<SIGNATURE_LENGTH>& sign);
     Address(const Address& another) = default;
     Address(Address&& another) = default;
     Address& operator=(const Address& another) = default;

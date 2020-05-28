@@ -10,25 +10,31 @@
 #ifdef CONFIG_IS_DEBUG
 
 #define ASSERT(condition)                                                                                              \
-    if (!(condition)) {                                                                                                \
-        LOG_WARNING << "Assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace();                  \
-        std::exit(base::config::EXIT_ASSERT_FAILED);                                                                   \
-    }
+    do {                                                                                                               \
+        if (!(condition)) {                                                                                            \
+            LOG_WARNING << "Assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace();              \
+            std::exit(base::config::EXIT_ASSERT_FAILED);                                                               \
+        }                                                                                                              \
+    } while (false)
 
 #define ASSERT_SOFT(condition)                                                                                         \
-    if (!(condition)) {                                                                                                \
-        LOG_WARNING << "Soft assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace();             \
-    }
+    do {                                                                                                               \
+        if (!(condition)) {                                                                                            \
+            LOG_WARNING << "Soft assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace();         \
+        }                                                                                                              \
+    } while (false)
 
 #else
+
 #define ASSERT(condition)                                                                                              \
     do {                                                                                                               \
         if (!(condition)) {                                                                                            \
             LOG_DEBUG << "Assertion failed: " << #condition << '\n' << boost::stacktrace::stacktrace();                \
         }                                                                                                              \
-    } while (0)
+    } while (false)
 
 #define ASSERT_SOFT(condition)                                                                                         \
     do {                                                                                                               \
-    } while (0)
+    } while (false);
+
 #endif

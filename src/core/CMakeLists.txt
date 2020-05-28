@@ -3,7 +3,6 @@ set(CORE_HEADERS
         block.hpp
         blockchain.hpp
         core.hpp
-        eth_adapter.hpp
         host.hpp
         managers.hpp
         peer.hpp
@@ -18,7 +17,6 @@ set(CORE_SOURCES
         block.cpp
         blockchain.cpp
         core.cpp
-        eth_adapter.cpp
         host.cpp
         managers.cpp
         messages.cpp

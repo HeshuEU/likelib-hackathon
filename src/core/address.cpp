@@ -4,9 +4,9 @@ namespace lk
 {
 
 
-Address::Address(const base::RsaPublicKey& pub)
+Address::Address(const base::FixedBytes<SIGNATURE_LENGTH>& sign)
 {
-    auto sha256 = base::Sha256::compute(pub.toBytes());
+    auto sha256 = base::Sha256::compute(sign.toBytes());
     auto ripemd = base::Ripemd160::compute(sha256.getBytes());
     _address = ripemd.getBytes();
 }

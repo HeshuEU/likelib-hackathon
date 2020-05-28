@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types.hpp"
+#include "base/types.hpp"
 
 #include <array>
 #include <cstddef>
@@ -18,54 +18,50 @@ class FixedBytes;
 class Bytes
 {
   public:
-    //==============
-    Bytes();
+    //------------------------
+    Bytes() = default;
     explicit Bytes(std::size_t size);
     explicit Bytes(const std::vector<Byte>& bytes);
     explicit Bytes(const std::string& s);
     Bytes(const Byte* bytes, std::size_t length);
     Bytes(std::initializer_list<Byte> l);
-
     template<std::size_t S>
     explicit Bytes(const FixedBytes<S>& bytes);
-
     Bytes(const Bytes&) = default;
     Bytes(Bytes&&) = default;
     Bytes& operator=(const Bytes&) = default;
     Bytes& operator=(Bytes&&) = default;
     ~Bytes() = default;
-    //==============
-
+    //------------------------
     template<typename I>
     Bytes(I begin, I end);
-    //==============
+    //------------------------
     Byte& operator[](std::size_t index);
     const Byte& operator[](std::size_t index) const;
-    //==============
+    //------------------------
     [[nodiscard]] Bytes takePart(std::size_t begin_index, std::size_t one_past_end_index) const;
-    //==============
+    //------------------------
     Bytes& append(Byte byte);
     Bytes& append(const Byte* byte, std::size_t length);
-
     Bytes& append(const Bytes& bytes);
-    //==============
+    //------------------------
     std::size_t size() const noexcept;
-    //==============
+    //------------------------
     void clear();
     void resize(std::size_t new_size);
     void reserve(std::size_t reserve_size);
     std::size_t capacity() const;
     void shrinkToFit();
     bool isEmpty() const noexcept;
-    //==============
+    //------------------------
     const Byte* getData() const;
     Byte* getData();
-    //==============
+    //------------------------
     [[nodiscard]] std::vector<Byte>& toVector() noexcept;
     [[nodiscard]] const std::vector<Byte>& toVector() const noexcept;
-    //==============
+    //------------------------
     [[nodiscard]] std::string toString() const;
-    //==============
+    //------------------------
     bool operator==(const Bytes& another) const;
     bool operator!=(const Bytes& another) const;
 

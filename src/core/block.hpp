@@ -1,11 +1,12 @@
 #pragma once
 
+#include "core/transaction.hpp"
+#include "core/transactions_set.hpp"
+#include "core/types.hpp"
+
 #include "base/bytes.hpp"
 #include "base/hash.hpp"
 #include "base/serialization.hpp"
-#include "transaction.hpp"
-#include "transactions_set.hpp"
-#include "types.hpp"
 
 #include <iosfwd>
 
@@ -56,6 +57,8 @@ class Block
     TransactionsSet _txs;
     //=================
 };
+
+const Block& invalidBlock();
 
 std::ostream& operator<<(std::ostream& os, const Block& block);
 

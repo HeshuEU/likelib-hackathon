@@ -6,40 +6,35 @@
 namespace
 {
 
-lk::Transaction trans1{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans1{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         12398,
                         0,
                         base::Time(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
-lk::Transaction trans2{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans2{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         5825285,
                         0,
                         base::Time::now(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
-lk::Transaction trans3{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans3{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         12245398,
                         0,
                         base::Time(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
-lk::Transaction trans4{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans4{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         168524347,
                         0,
                         base::Time(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
-lk::Transaction trans5{ lk::Address(base::generateKeys().first),
-                        lk::Address(base::generateKeys().first),
+lk::Transaction trans5{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                        lk::Address(base::Secp256PrivateKey().toPublicKey()),
                         1434457,
                         0,
                         base::Time::now(),
-                        lk::Transaction::Type::MESSAGE_CALL,
                         base::Bytes{} };
 
 lk::TransactionsSet getTestSet()
@@ -53,7 +48,7 @@ lk::TransactionsSet getTestSet()
     return set;
 }
 
-lk::Address miner_address(base::generateKeys().first);
+lk::Address miner_address(base::Secp256PrivateKey().toPublicKey());
 } // namespace
 
 
@@ -73,20 +68,10 @@ BOOST_AUTO_TEST_CASE(block_constructor1)
     BOOST_CHECK(block_tx_set.find(trans4));
     BOOST_CHECK(block_tx_set.find(trans5));
 
-    BOOST_CHECK(!block_tx_set.find(lk::Transaction(trans2.getFrom(),
-                                                   trans2.getTo(),
-                                                   146987,
-                                                   0,
-                                                   trans2.getTimestamp(),
-                                                   lk::Transaction::Type::MESSAGE_CALL,
-                                                   base::Bytes{})));
-    BOOST_CHECK(!block_tx_set.find(lk::Transaction(trans4.getFrom(),
-                                                   trans4.getTo(),
-                                                   trans4.getAmount(),
-                                                   0,
-                                                   base::Time::now(),
-                                                   lk::Transaction::Type::MESSAGE_CALL,
-                                                   base::Bytes{})));
+    BOOST_CHECK(!block_tx_set.find(
+      lk::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp(), base::Bytes{})));
+    BOOST_CHECK(!block_tx_set.find(
+      lk::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now(), base::Bytes{})));
 }
 
 
@@ -106,20 +91,10 @@ BOOST_AUTO_TEST_CASE(block_constructor2)
     BOOST_CHECK(block_tx_set.find(trans4));
     BOOST_CHECK(block_tx_set.find(trans5));
 
-    BOOST_CHECK(!block_tx_set.find(lk::Transaction(trans2.getFrom(),
-                                                   trans2.getTo(),
-                                                   146987,
-                                                   0,
-                                                   trans2.getTimestamp(),
-                                                   lk::Transaction::Type::MESSAGE_CALL,
-                                                   base::Bytes{})));
-    BOOST_CHECK(!block_tx_set.find(lk::Transaction(trans4.getFrom(),
-                                                   trans4.getTo(),
-                                                   trans4.getAmount(),
-                                                   0,
-                                                   base::Time::now(),
-                                                   lk::Transaction::Type::MESSAGE_CALL,
-                                                   base::Bytes{})));
+    BOOST_CHECK(!block_tx_set.find(
+      lk::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp(), base::Bytes{})));
+    BOOST_CHECK(!block_tx_set.find(
+      lk::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now(), base::Bytes{})));
 }
 
 
@@ -143,20 +118,10 @@ BOOST_AUTO_TEST_CASE(block_operator_equal)
     BOOST_CHECK(block_tx_set.find(trans4));
     BOOST_CHECK(block_tx_set.find(trans5));
 
-    BOOST_CHECK(!block_tx_set.find(lk::Transaction(trans2.getFrom(),
-                                                   trans2.getTo(),
-                                                   146987,
-                                                   0,
-                                                   trans2.getTimestamp(),
-                                                   lk::Transaction::Type::MESSAGE_CALL,
-                                                   base::Bytes{})));
-    BOOST_CHECK(!block_tx_set.find(lk::Transaction(trans4.getFrom(),
-                                                   trans4.getTo(),
-                                                   trans4.getAmount(),
-                                                   0,
-                                                   base::Time::now(),
-                                                   lk::Transaction::Type::MESSAGE_CALL,
-                                                   base::Bytes{})));
+    BOOST_CHECK(!block_tx_set.find(
+      lk::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp(), base::Bytes{})));
+    BOOST_CHECK(!block_tx_set.find(
+      lk::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now(), base::Bytes{})));
 }
 
 
@@ -180,20 +145,10 @@ BOOST_AUTO_TEST_CASE(block_operator_move)
     BOOST_CHECK(block_tx_set.find(trans4));
     BOOST_CHECK(block_tx_set.find(trans5));
 
-    BOOST_CHECK(!block_tx_set.find(lk::Transaction(trans2.getFrom(),
-                                                   trans2.getTo(),
-                                                   146987,
-                                                   0,
-                                                   trans2.getTimestamp(),
-                                                   lk::Transaction::Type::MESSAGE_CALL,
-                                                   base::Bytes{})));
-    BOOST_CHECK(!block_tx_set.find(lk::Transaction(trans4.getFrom(),
-                                                   trans4.getTo(),
-                                                   trans4.getAmount(),
-                                                   0,
-                                                   base::Time::now(),
-                                                   lk::Transaction::Type::MESSAGE_CALL,
-                                                   base::Bytes{})));
+    BOOST_CHECK(!block_tx_set.find(
+      lk::Transaction(trans2.getFrom(), trans2.getTo(), 146987, 0, trans2.getTimestamp(), base::Bytes{})));
+    BOOST_CHECK(!block_tx_set.find(
+      lk::Transaction(trans4.getFrom(), trans4.getTo(), trans4.getAmount(), 0, base::Time::now(), base::Bytes{})));
 }
 
 
@@ -206,12 +161,11 @@ BOOST_AUTO_TEST_CASE(block_sets)
                     getTestSet());
     auto tx_set = getTestSet();
 
-    lk::Transaction new_trans{ lk::Address(base::generateKeys().first),
-                               lk::Address(base::generateKeys().first),
+    lk::Transaction new_trans{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                               lk::Address(base::Secp256PrivateKey().toPublicKey()),
                                67805678,
                                0,
                                base::Time(),
-                               lk::Transaction::Type::MESSAGE_CALL,
                                base::Bytes{} };
     tx_set.remove(trans3);
     tx_set.remove(trans5);
@@ -243,19 +197,17 @@ BOOST_AUTO_TEST_CASE(block_add_transaction)
                     base::Time(),
                     miner_address,
                     getTestSet());
-    lk::Transaction new_trans1{ lk::Address(base::generateKeys().first),
-                                lk::Address(base::generateKeys().first),
+    lk::Transaction new_trans1{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                                lk::Address(base::Secp256PrivateKey().toPublicKey()),
                                 67805678,
                                 0,
                                 base::Time(),
-                                lk::Transaction::Type::MESSAGE_CALL,
                                 base::Bytes{} };
-    lk::Transaction new_trans2{ lk::Address(base::generateKeys().first),
-                                lk::Address(base::generateKeys().first),
+    lk::Transaction new_trans2{ lk::Address(base::Secp256PrivateKey().toPublicKey()),
+                                lk::Address(base::Secp256PrivateKey().toPublicKey()),
                                 2078911,
                                 0,
                                 base::Time(),
-                                lk::Transaction::Type::MESSAGE_CALL,
                                 base::Bytes{} };
 
     block.addTransaction(new_trans1);

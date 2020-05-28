@@ -4,7 +4,7 @@
 
 #include <boost/property_tree/json_parser.hpp>
 
-#include <fstream>
+#include <sstream>
 
 namespace base
 {
@@ -13,9 +13,11 @@ PropertyTree::PropertyTree()
   : _ptree{}
 {}
 
+
 PropertyTree::PropertyTree(const boost::property_tree::ptree& ptree)
   : _ptree{ ptree }
 {}
+
 
 PropertyTree readConfig(const std::filesystem::path& config_file)
 {
@@ -28,6 +30,7 @@ PropertyTree readConfig(const std::filesystem::path& config_file)
     return ret;
 }
 
+
 PropertyTree parseJson(const std::string& json_string)
 {
     std::istringstream input{ json_string };
@@ -35,6 +38,7 @@ PropertyTree parseJson(const std::string& json_string)
     CLARIFY_ERROR(ParsingError, boost::property_tree::read_json(input, ret), "parsing error");
     return ret;
 }
+
 
 void save(const PropertyTree& tree, const std::filesystem::path& path_to_save)
 {
@@ -44,9 +48,30 @@ void save(const PropertyTree& tree, const std::filesystem::path& path_to_save)
     file.close();
 }
 
+
 bool PropertyTree::hasKey(const std::string& path) const
 {
     return static_cast<bool>(_ptree.get_child_optional(path));
+}
+
+
+bool PropertyTree::empty() const
+{
+    return _ptree.empty();
+}
+
+
+PropertyTree PropertyTree::getSubTree(const std::string& path) const
+{
+    return PropertyTree(_ptree.get_child(path));
+}
+
+
+std::string PropertyTree::toString() const
+{
+    std::ostringstream output;
+    boost::property_tree::write_json(output, _ptree);
+    return output.str();
 }
 
 } // namespace base

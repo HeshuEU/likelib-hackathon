@@ -23,6 +23,7 @@ constexpr bool IS_DEBUG =
 #else
 #define CONFIG_IS_DEBUG
 #endif
+
 //------------------------
 
 // macro CONFIG_OS_FAMILY_NAME definition
@@ -57,7 +58,6 @@ constexpr const char* const OS_NAME =
 #endif
   ;
 //------------------------
-
 
 // logging configuration
 constexpr const char* LOG_FILE_FORMAT = "%m-%d-%Y_%H-%M-%S_%N.log";
@@ -97,7 +97,6 @@ constexpr bool DATABASE_COMPRESS_DATA = false;                           // no c
 //--------------------
 
 // keys paths
-std::filesystem::path makePublicKeyPath(const std::filesystem::path& path);
 std::filesystem::path makePrivateKeyPath(const std::filesystem::path& path);
 
 } // namespace base::config

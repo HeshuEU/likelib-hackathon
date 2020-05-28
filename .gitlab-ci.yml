@@ -1,3 +1,4 @@
+image: heshuby/prepare_build:cfaca9619b1e4cfcb0519e0d35d6eec4
 stages:
   - build
   - unit-tests
@@ -7,14 +8,14 @@ stages:
 
 Build:
   stage: build
-  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
     - INSTALL_DIR="/opt"
     - SOURCE_DIR="${PWD}"
     - BUILD_DIR="${SOURCE_DIR}/build"
-    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || "${SOURCE_DIR}/doc/prepare_build.sh"
+    - cd "${SOURCE_DIR}/doc"
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || bash "${SOURCE_DIR}/doc/prepare_build.sh"
     - mkdir -p ${BUILD_DIR}
     - cmake -DCMAKE_BUILD_TYPE=Release -S ${SOURCE_DIR} -B ${BUILD_DIR}
     - cd ${BUILD_DIR} && make -j$(nproc)
@@ -26,7 +27,6 @@ Build:
 
 Code quality:
   stage: analyzers
-  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
@@ -36,13 +36,15 @@ Code quality:
     - LOG_DIR="/tmp/logs"
     - BUILD_DIR="${SOURCE_DIR}/build"
 
-    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || "${SOURCE_DIR}/doc/prepare_build.sh"
+    - cd "${SOURCE_DIR}/doc"
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || bash "${SOURCE_DIR}/doc/prepare_build.sh"
     - mkdir -p ${LOG_DIR}
     - mkdir -p ${BUILD_DIR}
     - mkdir -p ${CLANG_LOG_DIR}
+    - chmod +x ${SOURCE_DIR}/cmake/clang-tidy.py
 
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_CLANG_TIDY="${SOURCE_DIR}/cmake/clang-tidy.py;-header-filter=.*;" -S ${SOURCE_DIR} -B ${BUILD_DIR} > /dev/null 2>&1
-    - cd ${BUILD_DIR} && make > /dev/null 2>&1 || (cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && exit 1)
+    - cd ${BUILD_DIR} && make > ${LOG_DIR}/make.log 2>&1 || (cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && exit 1)
     - cp ${LOG_DIR}/* ${CLANG_LOG_DIR} && cat ${LOG_DIR}/clang-tidy-output.txt
     - test -f "${LOG_DIR}/.error-flag" && exit 1
   artifacts:
@@ -54,31 +56,31 @@ Code quality:
 
 Unit tests:
   stage: unit-tests
-  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
     - INSTALL_DIR="/opt"
     - SOURCE_DIR="${PWD}"
-    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || "${SOURCE_DIR}/doc/prepare_build.sh"
-    - cd build/bin/
+    - cd "${SOURCE_DIR}/doc"
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || bash "${SOURCE_DIR}/doc/prepare_build.sh"
+    - cd "${SOURCE_DIR}/build/bin/"
     - ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info
 
 
 Integration tests:
   timeout: 45m
   stage: integration-tests
-  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
     - INSTALL_DIR="/opt"
-    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ./doc/prepare_build.sh
-    - SOURCE_DIR=${PWD}
-    - TEST_DIR="intergation_test_run"
+    - SOURCE_DIR="${PWD}"
+    - cd "${SOURCE_DIR}/doc"
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || bash "${SOURCE_DIR}/doc/prepare_build.sh"
+    - TEST_DIR="${SOURCE_DIR}/intergation_test_run"
     - mkdir ${TEST_DIR}
     - cd ${TEST_DIR}
-    - python3 ${SOURCE_DIR}/test/integration_test/run_test.py -b "${SOURCE_DIR}/build/bin"
+    - python3 ${SOURCE_DIR}/test/integration_test/__main__.py -b "${SOURCE_DIR}/build/bin"
   artifacts:
     when: always
     paths:
@@ -88,11 +90,11 @@ Integration tests:
 
 Valgrind test:
   stage: analyzers
-  image: heshuby/prepare_build:2020-03-12
   tags:
     - docker
   script:
-    - cd ./doc
-    - md5sum --check ${INSTALL_DIR}/prepare_build.md5 || ./prepare_build.sh
-    - cd ../build/bin
+    - SOURCE_DIR="${PWD}"
+    - cd "${SOURCE_DIR}/doc"
+    - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || bash "${SOURCE_DIR}/doc/prepare_build.sh"
+    - cd "${SOURCE_DIR}/build/bin"
     - valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all ./run_tests --log_level=test_suite --detect_memory_leaks=1 --build_info

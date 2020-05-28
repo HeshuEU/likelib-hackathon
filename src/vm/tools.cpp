@@ -1,8 +1,10 @@
 #include "tools.hpp"
-#include "error.hpp"
+
+#include "vm/error.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+#include <boost/foreach.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <boost/process.hpp>
@@ -16,9 +18,9 @@ namespace bp = ::boost::process;
 namespace vm
 {
 
-
 namespace detail
 {
+
 template<typename N>
 base::Bytes encode(N value)
 {
@@ -206,6 +208,24 @@ evmc::address toEthAddress(const lk::Address& address)
     return ret;
 }
 
+
+base::Keccak256 methodHash(const boost::property_tree::ptree& method_abi)
+{
+    //    auto ser = base::PropertyTree(method_abi).toString();
+    std::string method =
+      method_abi.get<std::string>("type") == "function" ? method_abi.get<std::string>("name") + '(' : "constructor(";
+
+    BOOST_FOREACH (const auto& argument, method_abi.get_child("inputs")) {
+        method += argument.second.get<std::string>("type") + ',';
+    }
+    if (method[method.size() - 1] == ',') {
+        method.erase(method.size() - 1, 1);
+    }
+    method += ')';
+    return base::Keccak256::compute(base::Bytes(method));
+}
+
+
 namespace
 {
 
@@ -265,8 +285,10 @@ std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_cod
     return std::nullopt;
 }
 
+
 namespace
 {
+
 constexpr const char* PATH_VARIABLE_NAME = "PATH";
 constexpr const char* PATH_DELIMITER_NAME = ":";
 constexpr const char* PYTHON_EXEC = "python3.7";
@@ -288,6 +310,7 @@ std::optional<std::string> findPython()
 }
 
 } // namespace
+
 
 std::string callPython(std::vector<std::string>& args)
 {
@@ -317,6 +340,5 @@ std::string callPython(std::vector<std::string>& args)
     }
     return s.str();
 }
-
 
 } // namespace vm
