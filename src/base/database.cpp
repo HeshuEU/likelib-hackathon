@@ -55,58 +55,6 @@ void Database::open(Directory const& path)
 }
 
 
-std::optional<Bytes> Database::get(const Bytes& key) const
-{
-    checkStatus();
-
-    std::string value;
-    auto const status = _database->Get(_read_options, key.toString(), &value);
-    if (!status.ok()) {
-        return std::nullopt;
-    }
-    return Bytes(value);
-}
-
-
-bool Database::exists(const Bytes& key) const
-{
-    checkStatus();
-
-    std::string value;
-    auto const status = _database->Get(_read_options, key.toString(), &value);
-    if (status.IsNotFound()) {
-        return false;
-    }
-    if (!status.ok()) {
-        RAISE_ERROR(base::DatabaseError, status.ToString());
-    }
-
-    return true;
-}
-
-
-void Database::put(const Bytes& key, const Bytes& value)
-{
-    checkStatus();
-
-    auto const status = _database->Put(_write_options, key.toString(), value.toString());
-    if (!status.ok()) {
-        RAISE_ERROR(base::DatabaseError, status.ToString());
-    }
-}
-
-
-void Database::remove(const Bytes& key)
-{
-    checkStatus();
-
-    auto const status = _database->Delete(_write_options, key.toString());
-    if (!status.ok()) {
-        RAISE_ERROR(base::DatabaseError, status.ToString());
-    }
-}
-
-
 void Database::checkStatus() const
 {
     if (!_inited) {

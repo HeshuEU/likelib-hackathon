@@ -25,13 +25,17 @@ class Database
     //======================
     void open(Directory const& path);
     //======================
-    [[nodiscard]] std::optional<Bytes> get(const Bytes& key) const;
-    bool exists(const Bytes& key) const;
-    void put(const Bytes& key, const Bytes& value);
+    template<typename B> // expects base::Bytes or base::FixedBytes<>
+    [[nodiscard]] std::optional<Bytes> get(const B& key) const;
 
-    template<std::size_t S>
-    void put(const Bytes& key, const FixedBytes<S>& value);
-    void remove(const Bytes& key);
+    template<typename B>
+    bool exists(const B& key) const;
+
+    template<typename B1, typename B2>
+    void put(const B1& key, const B2& value);
+
+    template<typename B>
+    void remove(const B& key);
     //======================
   private:
     //======================
