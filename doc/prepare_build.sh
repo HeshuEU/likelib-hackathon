@@ -22,6 +22,7 @@ ${SUDO_PREF} apt-get install -y git wget unzip tar curl valgrind \
                                 clang-tidy python3.7 python3-pip \
                                 solc autoconf libtool || exit 1
 pip3 install web3 || exit 1
+pip3 install coincurve || exit 1
 
 #cmake --version || (${SUDO_PREF} apt-get install -y build-essential gcc g++ make cmake || exit 1)
 if ! command -v cmake; then
