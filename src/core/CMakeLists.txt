@@ -7,6 +7,7 @@ set(CORE_HEADERS
         host.hpp
         managers.hpp
         peer.hpp
+        rating.hpp
         transaction.hpp
         types.hpp
         transactions_set.hpp
@@ -20,8 +21,9 @@ set(CORE_SOURCES
         eth_adapter.cpp
         host.cpp
         managers.cpp
-        peer.cpp
         messages.cpp
+        peer.cpp
+        rating.cpp
         transaction.cpp
         transactions_set.cpp
         )
