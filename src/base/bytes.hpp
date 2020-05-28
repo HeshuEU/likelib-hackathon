@@ -15,7 +15,6 @@ namespace base
 template<std::size_t S>
 class FixedBytes;
 
-
 class Bytes
 {
   public:
