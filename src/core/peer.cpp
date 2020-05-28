@@ -9,7 +9,7 @@ namespace lk
 
 
 #ifdef CONFIG_IS_DEBUG
-#define PEER_LOG LOG_DEBUG << "Peer " << this << " endpoint: " << this->getEndpoint() << " (public " << getPublicEndpoint() << ") :: "
+#define PEER_LOG LOG_DEBUG << "Peer " << this << " | "
 #else
 #define PEER_LOG LOG_DEBUG
 #endif
@@ -122,6 +122,7 @@ std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Rat
                                          static_cast<lk::KademliaPeerPoolBase&>(context.host.getHandshakedPool()),
                                          context.core,
                                          context.host) };
+    peer->setServerEndpoint(peer->getEndpoint());
 
     auto ret = peer->shared_from_this();
 
@@ -157,7 +158,9 @@ Peer::Peer(std::shared_ptr<net::Session> session,
   , _core{ core }
   , _host{ host }
   , _requests{ std::weak_ptr{ _session }, _io_context }
-{}
+{
+    PEER_LOG << "Peer has endpoint " << _session->getEndpoint();
+}
 
 
 Peer::~Peer()
@@ -180,6 +183,7 @@ net::Endpoint Peer::getPublicEndpoint() const
 
 void Peer::setServerEndpoint(net::Endpoint endpoint)
 {
+    PEER_LOG << "setting public endpoint to " << endpoint;
     _endpoint_for_incoming_connections = std::move(endpoint);
 }
 
@@ -435,8 +439,6 @@ void Peer::handle(lk::msg::Connect&& msg)
     if (msg.public_port) {
         auto public_ep = getEndpoint();
         public_ep.setPort(msg.public_port);
-        PEER_LOG << "setting public endpoint to " << public_ep << " while msg.public_port = " << msg.public_port
-                  << " and getEndpoint() = " << getEndpoint();
         setServerEndpoint(public_ep);
     }
     _address = msg.address;
@@ -470,7 +472,6 @@ void Peer::handle(lk::msg::CannotAccept&& msg)
 
 void Peer::handle(lk::msg::Accepted&& msg)
 {
-    setServerEndpoint(getEndpoint());
     _address = msg.address;
 
     _requests.send(msg::Lookup{ getAddress(), base::config::NET_LOOKUP_ALPHA });
