@@ -8,6 +8,12 @@ namespace lk
 {
 
 
+#ifdef CONFIG_IS_DEBUG
+#define PEER_LOG LOG_DEBUG << "Peer " << this << " endpoint: " << this->getEndpoint() << " (public " << getPublicEndpoint() << ") :: "
+#else
+#define PEER_LOG LOG_DEBUG
+#endif
+
 /**
  * Connection protocol description:
  *  1) Connection to a given endpoint.
@@ -74,6 +80,7 @@ void Peer::requestLookup(const lk::Address& address, const std::uint8_t alpha)
 
 void Peer::requestBlock(const base::Sha256& block_hash)
 {
+    PEER_LOG << "requesting block " << block_hash;
     _requests.send(msg::GetBlock{ block_hash });
 }
 
@@ -155,7 +162,7 @@ Peer::Peer(std::shared_ptr<net::Session> session,
 
 Peer::~Peer()
 {
-    LOG_DEBUG << "Peer for " << getEndpoint() << " (public " << getPublicEndpoint() << ") is destroyed";
+    PEER_LOG << " is destroyed";
 }
 
 
@@ -289,8 +296,8 @@ void Peer::Synchronizer::handleReceivedTopBlockHash(const base::Sha256& peers_to
             return;
         }
         else {
-            base::SerializationOArchive oa;
-            _peer._requests.send(msg::GetBlock{ peers_top_block });
+            LOG_DEBUG << "Peer" << &_peer << " requesting " << peers_top_block << " block";
+            requestBlock(peers_top_block);
             _peer.setState(lk::Peer::State::REQUESTED_BLOCKS);
         }
     }
@@ -313,7 +320,15 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
             return true;
         }
         else if (_peer._core.findBlock(next)) {
-            // apply everything
+            LOG_DEBUG << "Peer " << &_peer << " applying all " << _sync_blocks.size() << " sync blocks";
+            for(auto it = _sync_blocks.crbegin(); it != _sync_blocks.crend(); ++it) {
+                if(!_peer._core.tryAddBlock(*it)) {
+                    LOG_DEBUG << "Applying error";
+                    break;
+                }
+            }
+            _sync_blocks.clear();
+            _sync_blocks.shrink_to_fit();
         }
         else {
             requestBlock(block.getPrevBlockHash());
@@ -351,9 +366,7 @@ void Peer::Synchronizer::requestBlock(base::Sha256 block_hash)
 void Peer::process(base::SerializationIArchive&& ia)
 {
     auto msg_type = ia.deserialize<msg::Type>();
-    LOG_DEBUG << "msg_type = " << static_cast<int>(msg_type);
-    LOG_DEBUG << "PEER " << getEndpoint() << " (public " << getPublicEndpoint() << ") :: Processing "
-              << enumToString(msg_type);
+    PEER_LOG << "processing " << enumToString(msg_type);
     switch (msg_type) {
         case msg::Connect::TYPE_ID: {
             handle(ia.deserialize<msg::Connect>());
@@ -412,7 +425,7 @@ void Peer::process(base::SerializationIArchive&& ia)
             _rating.invalidMessage();
         }
     }
-    LOG_DEBUG << "Processed " << enumToString(msg_type);
+    PEER_LOG << "Processed " << enumToString(msg_type);
 }
 
 //===============================================
@@ -422,7 +435,7 @@ void Peer::handle(lk::msg::Connect&& msg)
     if (msg.public_port) {
         auto public_ep = getEndpoint();
         public_ep.setPort(msg.public_port);
-        LOG_DEBUG << "setting public endpoint to " << public_ep << " while msg.public_port = " << msg.public_port
+        PEER_LOG << "setting public endpoint to " << public_ep << " while msg.public_port = " << msg.public_port
                   << " and getEndpoint() = " << getEndpoint();
         setServerEndpoint(public_ep);
     }
@@ -437,8 +450,7 @@ void Peer::handle(lk::msg::Connect&& msg)
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
-        LOG_DEBUG << "Handling CONNECT: sending CANNOT_ACCEPT, because can't add " << getEndpoint() << " (public "
-                  << getPublicEndpoint() << ") to pool";
+        PEER_LOG << "Handling CONNECT: sending CANNOT_ACCEPT, because can't add to pool";
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -468,8 +480,7 @@ void Peer::handle(lk::msg::Accepted&& msg)
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
-        LOG_DEBUG << "Handling of ACCEPTED: cannot add " << getEndpoint() << " (public " << getPublicEndpoint()
-                  << ") to handshaked pool";
+        PEER_LOG << "handling of ACCEPTED: cannot add to handshaked pool";
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -521,7 +532,7 @@ void Peer::handle(lk::msg::Transaction&& msg)
 
 void Peer::handle(lk::msg::GetBlock&& msg)
 {
-    LOG_DEBUG << "Received GET_BLOCK on " << msg.block_hash;
+    PEER_LOG << "Received GET_BLOCK on " << msg.block_hash;
     if (auto block = _core.findBlock(msg.block_hash)) {
         _requests.send(msg::Block{ msg.block_hash, *block });
     }
@@ -533,15 +544,14 @@ void Peer::handle(lk::msg::GetBlock&& msg)
 
 void Peer::handle(lk::msg::Block&& msg)
 {
+    PEER_LOG << "hanlinding received " << msg.block_hash << " block";
     if (msg.block_hash != base::Sha256::compute(base::toBytes(msg.block))) {
+        PEER_LOG << "invalid message";
         _rating.invalidMessage();
         return;
     }
 
-    if (!_synchronizer.handleReceivedBlock(msg.block_hash, msg.block)) {
-        // strange block received, decrease rating
-        _rating.badBlock();
-    }
+    _synchronizer.handleReceivedBlock(msg.block_hash, msg.block);
 }
 
 
