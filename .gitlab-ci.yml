@@ -35,7 +35,6 @@ Code quality:
     - CLANG_LOG_DIR="${SOURCE_DIR}/clang-tidy-log"
     - LOG_DIR="/tmp/logs"
     - BUILD_DIR="${SOURCE_DIR}/build"
-    - ls -l ${SOURCE_DIR}/cmake
 
     - cd "${SOURCE_DIR}/doc"
     - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || bash "${SOURCE_DIR}/doc/prepare_build.sh"
