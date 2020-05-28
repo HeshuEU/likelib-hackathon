@@ -91,7 +91,7 @@ std::shared_ptr<Peer> Peer::accepted(std::shared_ptr<net::Session> session, Rati
 
     auto ret = peer->shared_from_this();
 
-    if(!rating) {
+    if (!rating) {
         peer->endSession(msg::CannotAccept{});
         return {};
     }
@@ -118,7 +118,7 @@ std::shared_ptr<Peer> Peer::connected(std::shared_ptr<net::Session> session, Rat
 
     auto ret = peer->shared_from_this();
 
-    if(!rating) {
+    if (!rating) {
         peer->endSession(msg::CannotAccept{});
         return {};
     }
@@ -352,7 +352,8 @@ void Peer::process(base::SerializationIArchive&& ia)
 {
     auto msg_type = ia.deserialize<msg::Type>();
     LOG_DEBUG << "msg_type = " << static_cast<int>(msg_type);
-    LOG_DEBUG << "PEER " << getEndpoint() << " (public " << getPublicEndpoint() << ") :: Processing " << enumToString(msg_type);
+    LOG_DEBUG << "PEER " << getEndpoint() << " (public " << getPublicEndpoint() << ") :: Processing "
+              << enumToString(msg_type);
     switch (msg_type) {
         case msg::Connect::TYPE_ID: {
             handle(ia.deserialize<msg::Connect>());
@@ -436,7 +437,8 @@ void Peer::handle(lk::msg::Connect&& msg)
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
-        LOG_DEBUG << "Handling CONNECT: sending CANNOT_ACCEPT, because can't add " << getEndpoint() << " (public " << getPublicEndpoint() << ") to pool";
+        LOG_DEBUG << "Handling CONNECT: sending CANNOT_ACCEPT, because can't add " << getEndpoint() << " (public "
+                  << getPublicEndpoint() << ") to pool";
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -447,7 +449,7 @@ void Peer::handle(lk::msg::CannotAccept&& msg)
 {
     _rating.connectionRefused();
     for (const auto& peer : msg.peers_info) {
-        if(auto rating = _host.getRatingManager().get(peer.endpoint)) {
+        if (auto rating = _host.getRatingManager().get(peer.endpoint)) {
             _host.checkOutPeer(peer.endpoint, peer.address);
         }
     }
@@ -466,7 +468,8 @@ void Peer::handle(lk::msg::Accepted&& msg)
         _synchronizer.handleReceivedTopBlockHash(msg.top_block_hash);
     }
     else {
-        LOG_DEBUG << "Handling of ACCEPTED: cannot add " << getEndpoint() << " (public " << getPublicEndpoint() << ") to handshaked pool";
+        LOG_DEBUG << "Handling of ACCEPTED: cannot add " << getEndpoint() << " (public " << getPublicEndpoint()
+                  << ") to handshaked pool";
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -502,7 +505,7 @@ void Peer::handle(lk::msg::LookupResponse&& msg)
     }
 
     for (const auto& pi : msg.peers_info) {
-        if(auto rating = _host.getRatingManager().get(pi.endpoint)) {
+        if (auto rating = _host.getRatingManager().get(pi.endpoint)) {
             LOG_DEBUG << "Checking out peer " << pi.endpoint << " (address = " << pi.address << ')';
             _host.checkOutPeer(pi.endpoint, pi.address);
         }
@@ -664,7 +667,7 @@ void Requests::onMessageReceive(const base::Bytes& received_bytes)
 
 void Requests::onClose()
 {
-    if(auto l = _session.lock()) {
+    if (auto l = _session.lock()) {
         LOG_DEBUG << "Processing onClose callback for " << l->getEndpoint();
     }
     if (_close_callback) {

@@ -145,7 +145,7 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
-    RatingManager _rating_manager{_config};
+    RatingManager _rating_manager{ _config };
 
     BasicPeerPool _non_handshaked_peers;
     KademliaPeerPool _handshaked_peers;

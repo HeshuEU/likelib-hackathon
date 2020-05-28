@@ -148,8 +148,7 @@ bool KademliaPeerPool::tryAddPeer(std::shared_ptr<Peer> peer)
     }
     else {
         std::size_t index = getLeastRecentlySeenPeerIndex(bucket_index);
-        auto quiet_for = base::Time::now().getSeconds() -
-                         _buckets[bucket_index][index]->getLastSeen().getSeconds();
+        auto quiet_for = base::Time::now().getSeconds() - _buckets[bucket_index][index]->getLastSeen().getSeconds();
         if (quiet_for > base::config::NET_PING_FREQUENCY + base::config::NET_CONNECT_TIMEOUT) {
             removePeer(bucket_index, index);
             _buckets[bucket_index].push_back(std::move(peer));
@@ -194,8 +193,9 @@ void KademliaPeerPool::removeSilent()
     // TODO: rework this
     std::unique_lock lk(_buckets_mutex);
     for (auto& bucket : _buckets) {
-        bucket.erase(std::remove_if(bucket.begin(), bucket.end(), [](const auto& peer) { return peer->isSessionClosed(); }),
-                     bucket.end());
+        bucket.erase(
+          std::remove_if(bucket.begin(), bucket.end(), [](const auto& peer) { return peer->isSessionClosed(); }),
+          bucket.end());
     }
 }
 
@@ -320,28 +320,30 @@ void Host::checkOutPeer(const net::Endpoint& endpoint, const lk::Address& addres
         }
     }
 
-    if(!_rating_manager.get(endpoint)) {
+    if (!_rating_manager.get(endpoint)) {
         return;
     }
-    LOG_DEBUG << "Connecting to node " << endpoint << " that has good rating = " << _rating_manager.get(endpoint).getValue();
+    LOG_DEBUG << "Connecting to node " << endpoint
+              << " that has good rating = " << _rating_manager.get(endpoint).getValue();
     _connector.connect(
       endpoint,
       base::config::NET_CONNECT_TIMEOUT,
       [this, endpoint](std::unique_ptr<net::Connection> connection) {
           ASSERT(connection);
-        std::lock_guard lk(_conntextor_set_mutex);
-        auto it = _connector_in_process.find(endpoint);
-        if(it != _connector_in_process.end()) {
-            _connector_in_process.erase(it);
-        }
+          std::lock_guard lk(_conntextor_set_mutex);
+          auto it = _connector_in_process.find(endpoint);
+          if (it != _connector_in_process.end()) {
+              _connector_in_process.erase(it);
+          }
           auto session = std::make_shared<net::Session>(std::move(connection));
-          lk::Peer::connected(std::move(session), _rating_manager.get(session->getEndpoint()), Peer::Context{ _core, *this });
+          lk::Peer::connected(
+            std::move(session), _rating_manager.get(session->getEndpoint()), Peer::Context{ _core, *this });
       },
       [this, endpoint](const net::Connector::ConnectError&) {
           // TODO: error handling
           std::lock_guard lk(_conntextor_set_mutex);
           auto it = _connector_in_process.find(endpoint);
-          if(it != _connector_in_process.end()) {
+          if (it != _connector_in_process.end()) {
               _connector_in_process.erase(it);
           }
       });

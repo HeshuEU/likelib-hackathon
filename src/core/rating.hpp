@@ -58,6 +58,7 @@ class RatingManager
     RatingManager(const base::PropertyTree& config);
 
     Rating get(const net::Endpoint& ep);
+
   private:
     base::Database _db;
 };

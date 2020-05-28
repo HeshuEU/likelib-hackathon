@@ -12,7 +12,7 @@ RatingManager::RatingManager(const base::PropertyTree& config)
 
 Rating RatingManager::get(const net::Endpoint& ep)
 {
-    return Rating{ep, _db};
+    return Rating{ ep, _db };
 }
 
 
@@ -27,14 +27,15 @@ Rating::Data Rating::Data::deserialize(base::SerializationIArchive& ia)
 {
     auto value = ia.deserialize<Value>();
     auto ts = ia.deserialize<base::Time>();
-    return {value, ts};
+    return { value, ts };
 }
 
 
 Rating::Rating(const net::Endpoint& ep, base::Database& db)
-  : _serialized_ep{base::toBytes(ep)}, _db{db}
+  : _serialized_ep{ base::toBytes(ep) }
+  , _db{ db }
 {
-    if(auto ret = _db.get(_serialized_ep)) {
+    if (auto ret = _db.get(_serialized_ep)) {
         _data = base::fromBytes<Data>(*ret);
     }
     else {
@@ -47,7 +48,7 @@ Rating::Rating(const net::Endpoint& ep, base::Database& db)
 
 Rating::Value Rating::getValue()
 {
-    if(isGood()) {
+    if (isGood()) {
         return _data.value;
     }
     else {
@@ -55,8 +56,9 @@ Rating::Value Rating::getValue()
         static constexpr unsigned SECONDS_IN_HOUR = 3600;
         Value hours_passed = (current_time - _data.ts).getSeconds() / SECONDS_IN_HOUR;
         static constexpr Rating::Value RATING_VALUE_REPAIRED_EACH_HOUR = 1;
-        Value new_value = std::min(int(INITIAL_PEER_RATING), _data.value + hours_passed * RATING_VALUE_REPAIRED_EACH_HOUR);
-        if(_data.value != new_value) {
+        Value new_value =
+          std::min(int(INITIAL_PEER_RATING), _data.value + hours_passed * RATING_VALUE_REPAIRED_EACH_HOUR);
+        if (_data.value != new_value) {
             _data.value = new_value;
             _data.ts = current_time;
             dbUpdate();

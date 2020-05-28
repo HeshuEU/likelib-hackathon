@@ -54,10 +54,10 @@ bool Time::operator>=(const Time& other) const
 
 Time Time::operator-(const Time& other) const
 {
-    if(_seconds_since_epoch < other._seconds_since_epoch) {
+    if (_seconds_since_epoch < other._seconds_since_epoch) {
         RAISE_ERROR(base::LogicError, "cannot represent negative time duration");
     }
-    return Time{_seconds_since_epoch - other._seconds_since_epoch};
+    return Time{ _seconds_since_epoch - other._seconds_since_epoch };
 }
 
 
