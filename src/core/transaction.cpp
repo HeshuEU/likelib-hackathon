@@ -115,7 +115,7 @@ base::Sha256 Transaction::hashOfTransaction() const
     auto to_address_str = base::base58Encode(_to.getBytes());
     auto amount_str = _amount.toString();
     auto fee_str = std::to_string(_fee);
-    auto timestamp_str = std::to_string(_timestamp.getSecondsSinceEpoch());
+    auto timestamp_str = std::to_string(_timestamp.getSeconds());
     auto data_str = base::base64Encode(_data);
 
     auto concatenated_data = from_address_str + to_address_str + amount_str + fee_str + timestamp_str + data_str;

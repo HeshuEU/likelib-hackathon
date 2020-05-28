@@ -1362,7 +1362,7 @@ int ActionGetBlock::execute()
     }
 
     auto block = block_option.value();
-    if (block.getTimestamp().getSecondsSinceEpoch() == 0 && block.getDepth() == lk::BlockDepth(-1)) {
+    if (block.getTimestamp().getSeconds() == 0 && block.getDepth() == lk::BlockDepth(-1)) {
         std::cout << "Cannot find given block" << std::endl;
         return base::config::EXIT_OK;
     }
