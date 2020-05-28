@@ -54,7 +54,7 @@ RpcSever::RpcSever(const base::PropertyTree& config, std::shared_ptr<BaseRpc> in
         _mode = _mode | HTTP;
     }
     if (!_mode) {
-        RAISE_ERROR(base::InvalidArgument, "Not any rpc server was selected");
+        RAISE_ERROR(base::InvalidArgument, "RPC server was not chosen");
     }
 }
 
