@@ -1,10 +1,11 @@
 #include "crypto.hpp"
-#include "assert.hpp"
-#include "directory.hpp"
-#include "error.hpp"
-#include "hash.hpp"
-#include "log.hpp"
-#include "property_tree.hpp"
+
+#include "base/assert.hpp"
+#include "base/directory.hpp"
+#include "base/error.hpp"
+#include "base/hash.hpp"
+#include "base/log.hpp"
+#include "base/property_tree.hpp"
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>

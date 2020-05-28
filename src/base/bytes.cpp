@@ -1,6 +1,7 @@
 #include "bytes.hpp"
-#include "assert.hpp"
-#include "error.hpp"
+
+#include "base/assert.hpp"
+#include "base/error.hpp"
 
 #include <openssl/pem.h>
 

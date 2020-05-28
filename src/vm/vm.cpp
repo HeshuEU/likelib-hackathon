@@ -1,5 +1,6 @@
 #include "vm.hpp"
-#include "error.hpp"
+
+#include "vm/error.hpp"
 
 #include "base/log.hpp"
 

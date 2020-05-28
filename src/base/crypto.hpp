@@ -1,9 +1,10 @@
 #pragma once
 
 #include "bytes.hpp"
-#include "hash.hpp"
-#include "property_tree.hpp"
-#include "serialization.hpp"
+
+#include "base/hash.hpp"
+#include "base/property_tree.hpp"
+#include "base/serialization.hpp"
 
 #include <openssl/pem.h>
 

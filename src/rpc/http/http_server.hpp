@@ -1,6 +1,6 @@
 #pragma once
 
-#include "http_adapter.hpp"
+#include "rpc/http/http_adapter.hpp"
 
 #include "rpc/rpc.hpp"
 

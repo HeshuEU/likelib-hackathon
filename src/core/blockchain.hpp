@@ -1,8 +1,8 @@
 #pragma once
 
-#include "block.hpp"
-#include "transaction.hpp"
-#include "transactions_set.hpp"
+#include "core/block.hpp"
+#include "core/transaction.hpp"
+#include "core/transactions_set.hpp"
 
 #include "base/database.hpp"
 #include "base/property_tree.hpp"

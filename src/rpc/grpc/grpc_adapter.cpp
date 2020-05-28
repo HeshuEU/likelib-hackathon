@@ -1,5 +1,6 @@
 #include "grpc_adapter.hpp"
-#include "tools.hpp"
+
+#include "rpc/grpc/tools.hpp"
 
 #include "base/config.hpp"
 #include "base/error.hpp"

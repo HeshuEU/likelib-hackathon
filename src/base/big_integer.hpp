@@ -1,6 +1,6 @@
 #pragma once
 
-#include "serialization.hpp"
+#include "base/serialization.hpp"
 
 #include <boost/multiprecision/cpp_int.hpp>
 

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "bytes.hpp"
-#include "directory.hpp"
+
+#include "base/directory.hpp"
 
 #include <leveldb/cache.h>
 #include <leveldb/db.h>

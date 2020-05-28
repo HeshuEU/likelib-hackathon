@@ -1,6 +1,7 @@
 #include "actions.hpp"
-#include "config.hpp"
-#include "subprogram_router.hpp"
+
+#include "client/config.hpp"
+#include "client/subprogram_router.hpp"
 
 #include "core/transaction.hpp"
 

@@ -1,5 +1,6 @@
 #include "property_tree.hpp"
-#include "error.hpp"
+
+#include "base/error.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 

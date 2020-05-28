@@ -1,7 +1,7 @@
 #pragma once
 
-#include "address.hpp"
-#include "types.hpp"
+#include "core/address.hpp"
+#include "core/types.hpp"
 
 #include "base/crypto.hpp"
 #include "base/serialization.hpp"

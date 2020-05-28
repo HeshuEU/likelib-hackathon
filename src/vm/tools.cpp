@@ -1,5 +1,6 @@
 #include "tools.hpp"
-#include "error.hpp"
+
+#include "vm/error.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/binary_oarchive.hpp>

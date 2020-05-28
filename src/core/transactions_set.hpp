@@ -1,6 +1,6 @@
 #pragma once
 
-#include "transaction.hpp"
+#include "core/transaction.hpp"
 
 #include "base/serialization.hpp"
 

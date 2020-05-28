@@ -1,5 +1,6 @@
 #include "grpc_client.hpp"
-#include "tools.hpp"
+
+#include "rpc/grpc/tools.hpp"
 
 #include "rpc/error.hpp"
 

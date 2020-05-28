@@ -1,7 +1,7 @@
 #pragma once
 
-#include "block.hpp"
-#include "transaction.hpp"
+#include "core/block.hpp"
+#include "core/transaction.hpp"
 
 #include <map>
 #include <shared_mutex>

@@ -1,11 +1,10 @@
 #pragma once
 
-#include "public_rpc.grpc.pb.h"
+#include <public_rpc.grpc.pb.h>
 
 #include "rpc/base_rpc.hpp"
 
 #include <grpcpp/grpcpp.h>
-
 
 namespace rpc::grpc
 {

@@ -1,6 +1,5 @@
-#include "hard_config.hpp"
-#include "soft_config.hpp"
-
+#include "node/hard_config.hpp"
+#include "node/soft_config.hpp"
 #include "node/node.hpp"
 
 #include "base/assert.hpp"

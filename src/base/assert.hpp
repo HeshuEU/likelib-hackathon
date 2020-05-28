@@ -1,7 +1,7 @@
 #pragma once
 
-#include "config.hpp"
-#include "log.hpp"
+#include "base/config.hpp"
+#include "base/log.hpp"
 
 #include <boost/stacktrace.hpp>
 

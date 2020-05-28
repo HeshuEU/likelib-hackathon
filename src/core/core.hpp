@@ -1,10 +1,10 @@
 #pragma once
 
-#include "block.hpp"
-#include "blockchain.hpp"
-#include "host.hpp"
-#include "managers.hpp"
-#include "protocol.hpp"
+#include "core/block.hpp"
+#include "core/blockchain.hpp"
+#include "core/host.hpp"
+#include "core/managers.hpp"
+#include "core/protocol.hpp"
 
 #include "vm/vm.hpp"
 

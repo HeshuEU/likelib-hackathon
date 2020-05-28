@@ -1,6 +1,6 @@
 #pragma once
 
-#include "grpc_adapter.hpp"
+#include "rpc/grpc/grpc_adapter.hpp"
 
 #include "rpc/rpc.hpp"
 

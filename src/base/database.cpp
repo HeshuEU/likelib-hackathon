@@ -1,6 +1,7 @@
 #include "database.hpp"
-#include "config.hpp"
-#include "error.hpp"
+
+#include "base/config.hpp"
+#include "base/error.hpp"
 
 #include <leveldb/cache.h>
 

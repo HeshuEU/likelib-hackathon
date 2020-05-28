@@ -15,7 +15,6 @@
 #include <shared_mutex>
 #include <thread>
 
-
 namespace impl
 {
 class MinerWorker;
