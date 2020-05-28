@@ -125,6 +125,13 @@ bool operator!=(const lk::Block& a, const lk::Block& b)
 }
 
 
+const Block& invalidBlock()
+{
+    static const Block invalid_block{ BlockDepth(-1), base::Sha256::null(), base::Time(0), Address::null(), {} };
+    return invalid_block;
+}
+
+
 std::ostream& operator<<(std::ostream& os, const Block& block)
 {
     return os << base::Sha256::compute(base::toBytes(block));

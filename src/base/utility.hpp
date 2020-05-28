@@ -48,6 +48,7 @@ class Observable
     std::size_t _next_id = 0;
 };
 
+
 #define TYPE_NAME(t) boost::typeindex::type_id<t>().pretty_name()
 
 } // namespace base

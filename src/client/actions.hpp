@@ -1,13 +1,10 @@
 #pragma once
 
-#include "base/config.hpp"
-#include "base/log.hpp"
-#include "base/subprogram_router.hpp"
+#include "client/subprogram_router.hpp"
+
 #include "core/address.hpp"
 #include "core/types.hpp"
-#include "rpc/rpc.hpp"
 
-#include <iostream>
 #include <string_view>
 
 
@@ -30,11 +27,11 @@ class ActionBase
 };
 
 
-class ActionTransfer : public ActionBase
+class ActionTestConnection : public ActionBase
 {
   public:
     //====================================
-    explicit ActionTransfer(base::SubprogramRouter& router);
+    explicit ActionTestConnection(base::SubprogramRouter& router);
     //====================================
     const std::string_view& getName() const override;
     void setupOptionsParser(base::ProgramOptionsParser& parser) override;
@@ -44,9 +41,61 @@ class ActionTransfer : public ActionBase
   private:
     //====================================
     std::string _host_address;
-    lk::Address _to_address{ lk::Address::null() };
-    lk::Balance _amount;
-    std::uint64_t _fee;
+    bool _is_http_mode{ false };
+    //====================================
+};
+
+
+class ActionNodeInfo : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionNodeInfo(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::string _host_address;
+    bool _is_http_mode{ false };
+    //====================================
+};
+
+
+class ActionGenerateKeys : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionGenerateKeys(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::filesystem::path _keys_dir;
+    //====================================
+};
+
+
+class ActionKeysInfo : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionKeysInfo(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
     std::filesystem::path _keys_dir;
     //====================================
 };
@@ -67,15 +116,16 @@ class ActionGetBalance : public ActionBase
     //====================================
     std::string _host_address;
     lk::Address _account_address{ lk::Address::null() };
+    bool _is_http_mode{ false };
     //====================================
 };
 
 
-class ActionTestConnection : public ActionBase
+class ActionGetAccountInfo : public ActionBase
 {
   public:
     //====================================
-    explicit ActionTestConnection(base::SubprogramRouter& router);
+    explicit ActionGetAccountInfo(base::SubprogramRouter& router);
     //====================================
     const std::string_view& getName() const override;
     void setupOptionsParser(base::ProgramOptionsParser& parser) override;
@@ -86,52 +136,7 @@ class ActionTestConnection : public ActionBase
     //====================================
     std::string _host_address;
     lk::Address _account_address{ lk::Address::null() };
-    //====================================
-};
-
-
-class ActionCreateContract : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionCreateContract(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    std::filesystem::path _keys_dir;
-    lk::Balance _amount;
-    std::uint64_t _fee;
-    std::string _compiled_contract;
-    std::string _message;
-    //====================================
-};
-
-
-class ActionMessageCall : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionMessageCall(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    lk::Address _to_address{ lk::Address::null() };
-    lk::Balance _amount;
-    std::uint64_t _fee;
-    std::filesystem::path _keys_dir;
-    std::string _message;
+    bool _is_http_mode{ false };
     //====================================
 };
 
@@ -193,47 +198,11 @@ class ActionDecode : public ActionBase
 };
 
 
-class ActionGenerateKeys : public ActionBase
+class ActionTransfer : public ActionBase
 {
   public:
     //====================================
-    explicit ActionGenerateKeys(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::filesystem::path _keys_dir;
-    //====================================
-};
-
-
-class ActionKeysInfo : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionKeysInfo(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::filesystem::path _keys_dir;
-    //====================================
-};
-
-
-class ActionInfo : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionInfo(base::SubprogramRouter& router);
+    explicit ActionTransfer(base::SubprogramRouter& router);
     //====================================
     const std::string_view& getName() const override;
     void setupOptionsParser(base::ProgramOptionsParser& parser) override;
@@ -243,6 +212,120 @@ class ActionInfo : public ActionBase
   private:
     //====================================
     std::string _host_address;
+    lk::Address _to_address{ lk::Address::null() };
+    lk::Balance _amount;
+    std::uint64_t _fee;
+    std::filesystem::path _keys_dir;
+    bool _is_http_mode{ false };
+    //====================================
+};
+
+
+class ActionPushContract : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionPushContract(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::string _host_address;
+    std::filesystem::path _keys_dir;
+    lk::Balance _amount;
+    std::uint64_t _fee;
+    base::Bytes _message;
+    bool _is_http_mode{ false };
+    //====================================
+};
+
+
+class ActionContractCall : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionContractCall(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::string _host_address;
+    lk::Address _to_address{ lk::Address::null() };
+    lk::Balance _amount;
+    std::uint64_t _fee;
+    std::filesystem::path _keys_dir;
+    std::string _message;
+    bool _is_http_mode{ false };
+    //====================================
+};
+
+
+class ActionCallContractView : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionCallContractView(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::string _host_address;
+    lk::Address _to_address{ lk::Address::null() };
+    std::filesystem::path _keys_dir;
+    std::string _message;
+    bool _is_http_mode{ false };
+    //====================================
+};
+
+
+class ActionGetTransaction : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionGetTransaction(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::string _host_address;
+    base::Sha256 _transaction_hash{ base::Sha256::null() };
+    bool _is_http_mode{ false };
+    //====================================
+};
+
+
+class ActionGetTransactionStatus : public ActionBase
+{
+  public:
+    //====================================
+    explicit ActionGetTransactionStatus(base::SubprogramRouter& router);
+    //====================================
+    const std::string_view& getName() const override;
+    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
+    int loadOptions(const base::ProgramOptionsParser& parser) override;
+    int execute() override;
+    //====================================
+  private:
+    //====================================
+    std::string _host_address;
+    base::Sha256 _transaction_hash{ base::Sha256::null() };
+    bool _is_http_mode{ false };
     //====================================
 };
 
@@ -262,5 +345,7 @@ class ActionGetBlock : public ActionBase
     //====================================
     std::string _host_address;
     base::Sha256 _block_hash{ base::Sha256::null() };
+    std::uint64_t _block_number;
+    bool _is_http_mode{ false };
     //====================================
 };

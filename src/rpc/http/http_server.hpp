@@ -1,31 +1,32 @@
 #pragma once
 
-#include "grpc_adapter.hpp"
+#include "rpc/http/http_adapter.hpp"
 
-namespace rpc
+#include "rpc/rpc.hpp"
+
+namespace rpc::http
 {
 
 /// Template server was implemented logic to start listening messages by gRPC
-class GrpcNodeServer
+class NodeServer final : public BaseRpcServer
 {
   public:
     /// Constructor that initialize instance of LogicService
     /// \param server_address listening ip:port
-    explicit GrpcNodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service);
+    NodeServer(const std::string& server_address, std::shared_ptr<BaseRpc> service);
 
     /// plain destructor that call GrpcNodeServer::stop()
-    ~GrpcNodeServer();
+    ~NodeServer() override;
 
     /// Register LogicService and start listening port defined in constructor
-    void run();
+    void run() override;
 
     /// stop listening port defined in constructor and started by GrpcNodeServer::run()
-    void stop();
+    void stop() override;
 
   private:
-    GrpcAdapter _service;
-    const std::string _server_address;
-    std::unique_ptr<grpc::Server> _server;
+    web::http::experimental::listener::http_listener _listener;
+    Adapter _service;
 };
 
 } // namespace rpc

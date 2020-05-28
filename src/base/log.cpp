@@ -19,7 +19,6 @@
 namespace
 {
 
-
 std::string dateAsString()
 {
     std::time_t raw_time;
@@ -81,6 +80,7 @@ void disableLogger()
 
 } // namespace
 
+
 namespace base
 {
 
@@ -106,6 +106,11 @@ void initLog(size_t mode)
 void dumpDebuggingInfo()
 {
     LOG_DEBUG << boost::stacktrace::stacktrace();
+}
+
+void flushLog()
+{
+    boost::log::core::get()->flush();
 }
 
 } // namespace base

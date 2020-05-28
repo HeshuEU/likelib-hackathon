@@ -1,8 +1,9 @@
 #include "protocol.hpp"
 
+#include "core/core.hpp"
+
 #include "base/log.hpp"
 #include "base/serialization.hpp"
-#include "core/core.hpp"
 
 /*
  * Some functions, that are implemented and later used inside templates are shown as not used.
@@ -28,12 +29,16 @@ base::Bytes prepareMessage(Args&&... args)
 }
 
 
-class Dummy {};
+class Dummy
+{};
 
 template<typename C, typename F, typename... O>
-bool runHandleImpl([[maybe_unused]] lk::MessageType mt, base::SerializationIArchive& ia, const C& ctx, lk::Protocol& protocol)
+bool runHandleImpl([[maybe_unused]] lk::MessageType mt,
+                   base::SerializationIArchive& ia,
+                   const C& ctx,
+                   lk::Protocol& protocol)
 {
-    if constexpr(std::is_same<F, Dummy>::value) {
+    if constexpr (std::is_same<F, Dummy>::value) {
         return false;
     }
     else {
@@ -52,7 +57,7 @@ bool runHandleImpl([[maybe_unused]] lk::MessageType mt, base::SerializationIArch
 template<typename C, typename... Args>
 bool runHandle(lk::MessageType mt, base::SerializationIArchive& ia, const C& ctx, lk::Protocol& protocol)
 {
-    if(runHandleImpl<C, Args..., Dummy>(mt, ia, ctx, protocol)) {
+    if (runHandleImpl<C, Args..., Dummy>(mt, ia, ctx, protocol)) {
         protocol.getState().last_processed = mt;
         return true;
     }
@@ -68,7 +73,7 @@ class MessageProcessor
   public:
     //===============
     explicit MessageProcessor(const C& context)
-        : _ctx{context}
+      : _ctx{ context }
     {}
 
     /*
@@ -83,7 +88,7 @@ class MessageProcessor
         auto type = ia.deserialize<lk::MessageType>();
 
         const auto& waiting_for = protocol.getState().message_we_are_waiting_for;
-        if(waiting_for != MessageType::NOT_AVAILABLE && waiting_for != type) {
+        if (waiting_for != MessageType::NOT_AVAILABLE && waiting_for != type) {
             // not the message we expected
             // TODO: decrease rating
             return;
@@ -91,17 +96,17 @@ class MessageProcessor
 
         if (runHandle<lk::Protocol::Context,
                       AcceptedMessage,
-          AcceptedResponseMessage,
-          PingMessage,
-          PongMessage,
-          TransactionMessage,
-          GetBlockMessage,
-          BlockMessage,
-          BlockNotFoundMessage,
-          GetInfoMessage,
-          InfoMessage,
-          NewNodeMessage,
-          CloseMessage>(type, ia, _ctx, protocol)) {
+                      AcceptedResponseMessage,
+                      PingMessage,
+                      PongMessage,
+                      TransactionMessage,
+                      GetBlockMessage,
+                      BlockMessage,
+                      BlockNotFoundMessage,
+                      GetInfoMessage,
+                      InfoMessage,
+                      NewNodeMessage,
+                      CloseMessage>(type, ia, _ctx, protocol)) {
             LOG_DEBUG << "Processed " << enumToString(type) << " message";
         }
         else {
@@ -117,9 +122,7 @@ class MessageProcessor
 std::vector<lk::PeerBase::Info> allPeersInfoExcept(lk::Host& host, const lk::Address& address)
 {
     auto ret = host.allConnectedPeersInfo();
-    ret.erase(std::find_if(ret.begin(), ret.end(), [address](const auto& cand) {
-        return cand.address == address;
-    }));
+    ret.erase(std::find_if(ret.begin(), ret.end(), [address](const auto& cand) { return cand.address == address; }));
     return ret;
 }
 
@@ -134,7 +137,8 @@ constexpr lk::MessageType CannotAcceptMessage::getHandledMessageType()
 }
 
 
-void CannotAcceptMessage::serialize(base::SerializationOArchive& oa, CannotAcceptMessage::RefusionReason why_not_accepted)
+void CannotAcceptMessage::serialize(base::SerializationOArchive& oa,
+                                    CannotAcceptMessage::RefusionReason why_not_accepted)
 {
     oa.serialize(getHandledMessageType());
     oa.serialize(why_not_accepted);
@@ -153,14 +157,16 @@ void CannotAcceptMessage::handle(const lk::Protocol::Context& ctx, lk::Protocol&
 {
     ctx.pool->removePeer(ctx.peer);
 
-    for(const auto& peer : _peers_info) {
+    for (const auto& peer : _peers_info) {
         ctx.host->checkOutPeer(peer.endpoint);
     }
 }
 
 
-CannotAcceptMessage::CannotAcceptMessage(CannotAcceptMessage::RefusionReason why_not_accepted, std::vector<lk::PeerBase::Info> peers_info)
-  : _why_not_accepted{why_not_accepted}, _peers_info{std::move(peers_info)}
+CannotAcceptMessage::CannotAcceptMessage(CannotAcceptMessage::RefusionReason why_not_accepted,
+                                         std::vector<lk::PeerBase::Info> peers_info)
+  : _why_not_accepted{ why_not_accepted }
+  , _peers_info{ std::move(peers_info) }
 {}
 
 //============================================
@@ -172,10 +178,10 @@ constexpr lk::MessageType AcceptedMessage::getHandledMessageType()
 
 
 void AcceptedMessage::serialize(base::SerializationOArchive& oa,
-                                 const lk::Block& block,
-                                 const lk::Address& address,
-                                 std::uint16_t public_port,
-                                 const std::vector<lk::Peer::Info>& known_peers)
+                                const lk::Block& block,
+                                const lk::Address& address,
+                                std::uint16_t public_port,
+                                const std::vector<lk::Peer::Info>& known_peers)
 {
     oa.serialize(getHandledMessageType());
     oa.serialize(block);
@@ -245,9 +251,9 @@ void AcceptedMessage::handle(const lk::Protocol::Context& ctx, lk::Protocol&)
 
 
 AcceptedMessage::AcceptedMessage(lk::Block&& top_block,
-                                   lk::Address address,
-                                   std::uint16_t public_port,
-                                   std::vector<lk::Peer::Info>&& known_peers)
+                                 lk::Address address,
+                                 std::uint16_t public_port,
+                                 std::vector<lk::Peer::Info>&& known_peers)
   : _theirs_top_block{ std::move(top_block) }
   , _address{ std::move(address) }
   , _public_port{ public_port }
@@ -263,10 +269,10 @@ constexpr lk::MessageType AcceptedResponseMessage::getHandledMessageType()
 
 
 void AcceptedResponseMessage::serialize(base::SerializationOArchive& oa,
-                                const lk::Block& block,
-                                const lk::Address& address,
-                                std::uint16_t public_port,
-                                const std::vector<lk::Peer::Info>& known_peers)
+                                        const lk::Block& block,
+                                        const lk::Address& address,
+                                        std::uint16_t public_port,
+                                        const std::vector<lk::Peer::Info>& known_peers)
 {
     oa.serialize(getHandledMessageType());
     oa.serialize(block);
@@ -331,9 +337,9 @@ void AcceptedResponseMessage::handle(const lk::Protocol::Context& ctx, lk::Proto
 
 
 AcceptedResponseMessage::AcceptedResponseMessage(lk::Block&& top_block,
-                                 lk::Address address,
-                                 std::uint16_t public_port,
-                                 std::vector<lk::Peer::Info>&& known_peers)
+                                                 lk::Address address,
+                                                 std::uint16_t public_port,
+                                                 std::vector<lk::Peer::Info>&& known_peers)
   : _theirs_top_block{ std::move(top_block) }
   , _address{ std::move(address) }
   , _public_port{ public_port }
@@ -484,7 +490,7 @@ void BlockMessage::handle(const lk::Protocol::Context& ctx, lk::Protocol&)
     if (peer.getState() == lk::Peer::State::SYNCHRONISED) {
         // we're synchronised already
 
-        if(ctx.core->tryAddBlock(_block)) {
+        if (ctx.core->tryAddBlock(_block)) {
             // block added, all is OK
         }
         else {
@@ -565,7 +571,8 @@ GetInfoMessage GetInfoMessage::deserialize(base::SerializationIArchive&)
 void GetInfoMessage::handle(const lk::Protocol::Context& ctx, lk::Protocol&)
 {
     auto& host = *ctx.host;
-    ctx.peer->send(prepareMessage<InfoMessage>(ctx.core->getTopBlock(), allPeersInfoExcept(host, ctx.peer->getAddress())));
+    ctx.peer->send(
+      prepareMessage<InfoMessage>(ctx.core->getTopBlock(), allPeersInfoExcept(host, ctx.peer->getAddress())));
 }
 
 //============================================
@@ -661,13 +668,10 @@ CloseMessage CloseMessage::deserialize(base::SerializationIArchive&)
 }
 
 
-void CloseMessage::handle(const lk::Protocol::Context&, lk::Protocol&)
-{
-}
+void CloseMessage::handle(const lk::Protocol::Context&, lk::Protocol&) {}
 
 
-CloseMessage::CloseMessage()
-{}
+CloseMessage::CloseMessage() {}
 
 //============================================
 
@@ -708,16 +712,15 @@ void Protocol::startOnAcceptedPeer()
 {
     // TODO: _ctx.pool->schedule(_peer.close); schedule disconnection on timeout
     // now does nothing, since we wait for connected peer to send us something (HANDSHAKE message)
-    if(_ctx.peer->tryAddToPool()) {
+    if (_ctx.peer->tryAddToPool()) {
         _ctx.peer->send(prepareMessage<AcceptedMessage>(_ctx.core->getTopBlock(),
-                                                         _ctx.core->getThisNodeAddress(),
-                                                         _ctx.peer->getPublicEndpoint().getPort(),
-                                                         allPeersInfoExcept(*_ctx.host, _ctx.peer->getAddress())));
+                                                        _ctx.core->getThisNodeAddress(),
+                                                        _ctx.peer->getPublicEndpoint().getPort(),
+                                                        allPeersInfoExcept(*_ctx.host, _ctx.peer->getAddress())));
     }
-    else
-    {
+    else {
         _ctx.peer->send(prepareMessage<CannotAcceptMessage>(CannotAcceptMessage::RefusionReason::BUCKET_IS_FULL,
-          _ctx.host->allConnectedPeersInfo()));
+                                                            _ctx.host->allConnectedPeersInfo()));
         // and close peer properly
     }
 }
@@ -736,7 +739,7 @@ void Protocol::startOnConnectedPeer()
 
 void Protocol::onReceive(const base::Bytes& bytes)
 {
-    MessageProcessor processor{_ctx};
+    MessageProcessor processor{ _ctx };
     processor.process(bytes, *this);
 }
 

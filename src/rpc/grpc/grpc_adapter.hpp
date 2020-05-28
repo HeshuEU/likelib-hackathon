@@ -4,27 +4,23 @@
 
 #include "rpc/base_rpc.hpp"
 
-#include "base/config.hpp"
-#include "base/error.hpp"
-#include "base/log.hpp"
-
 #include <grpcpp/grpcpp.h>
 
 #include <memory>
 
-namespace rpc
+namespace rpc::grpc
 {
 
 /// Class implement receive gRPC messages and call similar method from LogicService instance and send answers or error
 /// messages
-class GrpcAdapter final : public likelib::NodePublicInterface::Service
+class Adapter final : public likelib::NodePublicInterface::Service
 {
   public:
     /// default constructor
-    explicit GrpcAdapter() = default;
+    explicit Adapter() = default;
 
     /// default destructor
-    ~GrpcAdapter() override = default;
+    ~Adapter() override = default;
 
     /// method that call init in LogicService instance was created by that
     void init(std::shared_ptr<BaseRpc> service);
@@ -32,29 +28,40 @@ class GrpcAdapter final : public likelib::NodePublicInterface::Service
   private:
     std::shared_ptr<BaseRpc> _service;
 
-    grpc::Status test(grpc::ServerContext* context,
-                      const likelib::TestRequest* request,
-                      likelib::TestResponse* response) override;
+    ::grpc::Status get_account(::grpc::ServerContext* context,
+                               const ::likelib::Address* request,
+                               ::likelib::AccountInfo* response) override;
 
-    grpc::Status balance(grpc::ServerContext* context,
-                         const likelib::Address* request,
-                         likelib::CurrencyAmount* response) override;
+    ::grpc::Status get_node_info(::grpc::ServerContext* context,
+                                 [[maybe_unused]] const ::likelib::None* request,
+                                 ::likelib::NodeInfo* response) override;
 
-    grpc::Status info(grpc::ServerContext* context,
-                      const likelib::InfoRequest* request,
-                      likelib::InfoResponse* response) override;
+    ::grpc::Status get_block_by_hash(::grpc::ServerContext* context,
+                                     const ::likelib::Hash* request,
+                                     ::likelib::Block* response) override;
 
-    grpc::Status get_block(grpc::ServerContext* context,
-                           const likelib::GetBlockRequest* request,
-                           likelib::GetBlockResponse* response) override;
+    ::grpc::Status get_block_by_number(::grpc::ServerContext* context,
+                                       const ::likelib::Number* request,
+                                       ::likelib::Block* response) override;
 
-    grpc::Status message_call(grpc::ServerContext* context,
-                              const likelib::TransactionMessageCallRequest* request,
-                              likelib::TransactionMessageCallResponse* response) override;
+    ::grpc::Status get_transaction(::grpc::ServerContext* context,
+                                   const ::likelib::Hash* request,
+                                   ::likelib::Transaction* response) override;
 
-    grpc::Status create_contract(grpc::ServerContext* context,
-                                 const likelib::TransactionCreateContractRequest* request,
-                                 likelib::TransactionCreateContractResponse* response) override;
+    ::grpc::Status push_transaction(::grpc::ServerContext* context,
+                                    const ::likelib::Transaction* request,
+                                    ::likelib::TransactionStatus* response) override;
+
+
+    ::grpc::Status get_transaction_result(::grpc::ServerContext* context,
+                                          const ::likelib::Hash* request,
+                                          ::likelib::TransactionStatus* response) override;
+
+
+    ::grpc::Status call_contract_view(::grpc::ServerContext* context,
+                                      const ::likelib::ViewCall* request,
+                                      ::likelib::Data* response) override;
 };
 
-} // namespace rpc
+
+} // namespace rpc::grpc

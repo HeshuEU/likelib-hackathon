@@ -11,7 +11,8 @@ namespace net
 {
 
 Connector::ConnectError::ConnectError(Status status, boost::system::error_code ec)
-    : _status{status}, _ec{ec}
+  : _status{ status }
+  , _ec{ ec }
 {}
 
 
@@ -37,7 +38,9 @@ namespace
 
 struct ConnectEventStatus
 {
-    ConnectEventStatus(std::size_t timeout_seconds, ba::io_context& context, std::function<void(Connector::ConnectError)> on_fail)
+    ConnectEventStatus(std::size_t timeout_seconds,
+                       ba::io_context& context,
+                       std::function<void(Connector::ConnectError)> on_fail)
       : on_fail{ std::move(on_fail) }
       , deadline{ context }
     {
@@ -63,7 +66,7 @@ void Connector::connect(const Endpoint& address,
 
     event_status->deadline.async_wait([event_status](const boost::system::error_code&) {
         if (!event_status->is_already_connected) {
-            event_status->on_fail(ConnectError{Connector::ConnectError::Status::TIMEOUT});
+            event_status->on_fail(ConnectError{ Connector::ConnectError::Status::TIMEOUT });
         }
     });
 
@@ -88,7 +91,7 @@ void Connector::connect(const Endpoint& address,
                                           break;
                                       }
                                   }
-                                  event_status->on_fail(ConnectError{ConnectError::Status::NETWORK_FAILURE, ec});
+                                  event_status->on_fail(ConnectError{ ConnectError::Status::NETWORK_FAILURE, ec });
                               }
                               else {
                                   auto connection =

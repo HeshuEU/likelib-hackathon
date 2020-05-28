@@ -5,7 +5,6 @@
 namespace base
 {
 
-
 class Timer
 {
   public:

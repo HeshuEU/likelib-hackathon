@@ -1,12 +1,12 @@
 #pragma once
 
+#include "core/block.hpp"
+#include "core/transaction.hpp"
+#include "core/transactions_set.hpp"
+
 #include "base/database.hpp"
 #include "base/property_tree.hpp"
 #include "base/utility.hpp"
-
-#include "block.hpp"
-#include "transaction.hpp"
-#include "transactions_set.hpp"
 
 #include <shared_mutex>
 #include <unordered_map>
@@ -32,8 +32,6 @@ class Blockchain
     std::optional<lk::Transaction> findTransaction(const base::Sha256& tx_hash) const;
     //===================
     const lk::Block& getTopBlock() const;
-    //===================
-
     //===================
   private:
     //===================

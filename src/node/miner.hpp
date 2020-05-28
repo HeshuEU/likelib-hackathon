@@ -1,9 +1,10 @@
 #pragma once
 
-#include "base/bytes.hpp"
-#include "base/property_tree.hpp"
 #include "core/block.hpp"
 #include "core/types.hpp"
+
+#include "base/bytes.hpp"
+#include "base/property_tree.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -13,7 +14,6 @@
 #include <optional>
 #include <shared_mutex>
 #include <thread>
-
 
 namespace impl
 {

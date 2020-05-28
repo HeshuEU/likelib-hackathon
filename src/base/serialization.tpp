@@ -9,7 +9,6 @@
 
 #include <functional>
 
-
 namespace impl
 {
 
@@ -20,8 +19,11 @@ struct TrickFalse : std::false_type
 
 struct Base
 {};
+
+
 struct Derived : Base
 {};
+
 
 template<typename T>
 struct IntHolder

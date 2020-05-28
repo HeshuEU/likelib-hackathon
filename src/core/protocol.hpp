@@ -1,10 +1,12 @@
 #pragma once
 
-#include "base/utility.hpp"
 #include "core/block.hpp"
 #include "core/peer.hpp"
 #include "core/transaction.hpp"
+
 #include "net/session.hpp"
+
+#include "base/utility.hpp"
 
 namespace lk
 {
@@ -47,8 +49,8 @@ class Protocol : public ProtocolBase
 
     struct State
     {
-        MessageType message_we_are_waiting_for{MessageType::NOT_AVAILABLE};
-        MessageType last_processed{MessageType::NOT_AVAILABLE};
+        MessageType message_we_are_waiting_for{ MessageType::NOT_AVAILABLE };
+        MessageType last_processed{ MessageType::NOT_AVAILABLE };
     };
 
     /*
@@ -88,10 +90,7 @@ class Protocol : public ProtocolBase
 class CannotAcceptMessage
 {
   public:
-    DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(RefusionReason, std::uint8_t,
-                                              (NOT_AVAILABLE)
-                                                (BUCKET_IS_FULL)
-                                                (BAD_RATING))
+    DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(RefusionReason, std::uint8_t, (NOT_AVAILABLE)(BUCKET_IS_FULL)(BAD_RATING))
 
     static constexpr MessageType getHandledMessageType();
     static void serialize(base::SerializationOArchive& oa, RefusionReason why_not_accepted);

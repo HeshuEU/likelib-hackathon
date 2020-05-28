@@ -1,8 +1,8 @@
 #include "database.hpp"
 
-
 namespace base
 {
+
 template<std::size_t S>
 void Database::put(const Bytes& key, const FixedBytes<S>& value)
 {
@@ -13,4 +13,5 @@ void Database::put(const Bytes& key, const FixedBytes<S>& value)
         RAISE_ERROR(base::DatabaseError, status.ToString());
     }
 }
+
 } // namespace base

@@ -23,8 +23,8 @@ bool TransactionsSet::find(const lk::Transaction& tx) const
 
 std::optional<Transaction> TransactionsSet::find(const base::Sha256& hash) const
 {
-    auto it = std::find_if(
-      _txs.begin(), _txs.end(), [&hash](const auto& tx) { return base::Sha256::compute(base::toBytes(tx)) == hash; });
+    auto it =
+      std::find_if(_txs.begin(), _txs.end(), [&hash](const auto& tx) { return tx.hashOfTransaction() == hash; });
 
     if (it == _txs.end()) {
         return std::nullopt;
@@ -122,28 +122,12 @@ TransactionsSet TransactionsSet::deserialize(base::SerializationIArchive& ia)
 }
 
 
-std::map<Address, Balance> calcBalance(const TransactionsSet& txs)
+std::map<Address, Balance> calcCost(const TransactionsSet& txs)
 {
     std::map<Address, Balance> result;
     for (const auto& tx : txs) {
-
-        auto from_address_in_result = result.find(tx.getFrom());
-        auto from_amount_modifier = lk::Balance() - tx.getAmount();    //TODO: rewrite this
-        if (from_address_in_result == result.end()) {
-            result.insert({ tx.getFrom(), from_amount_modifier });
-        }
-        else {
-            from_address_in_result->second = from_address_in_result->second + from_amount_modifier;
-        }
-
-        auto to_address_in_result = result.find(tx.getTo());
-        auto to_amount_modifier = tx.getAmount();
-        if (to_address_in_result == result.end()) {
-            result.insert({ tx.getTo(), to_amount_modifier });
-        }
-        else {
-            to_address_in_result->second = to_address_in_result->second + to_amount_modifier;
-        }
+        auto tx_cost = tx.getAmount() + tx.getFee();
+        result.insert({ tx.getFrom(), tx_cost });
     }
     return result;
 }

@@ -1,9 +1,11 @@
 #pragma once
 
-#include "base/time.hpp"
 #include "core/address.hpp"
 #include "core/block.hpp"
+
 #include "net/session.hpp"
+
+#include "base/time.hpp"
 
 #include <forward_list>
 #include <memory>
@@ -133,7 +135,7 @@ class Peer : public PeerBase, public std::enable_shared_from_this<Peer>
     //================
     std::forward_list<lk::Block> _sync_blocks;
     //================
-    bool _is_attached_to_pool{false};
+    bool _is_attached_to_pool{ false };
     lk::PeerPoolBase& _pool;
     lk::Core& _core;
     std::shared_ptr<lk::ProtocolBase> _protocol;

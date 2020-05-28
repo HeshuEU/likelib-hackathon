@@ -19,11 +19,17 @@ class PropertyTree
 
     bool hasKey(const std::string& path) const;
 
+    bool empty() const;
+
     template<typename R>
     R get(const std::string& path) const;
 
+    PropertyTree getSubTree(const std::string& path) const;
+
     template<typename R>
     std::vector<R> getVector(const std::string& path) const;
+
+    std::string toString() const;
 
   private:
     boost::property_tree::ptree _ptree;

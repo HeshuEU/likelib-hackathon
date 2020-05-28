@@ -1,11 +1,13 @@
 #pragma once
 
-#include "base/property_tree.hpp"
 #include "core/block.hpp"
 #include "core/peer.hpp"
+
 #include "net/acceptor.hpp"
 #include "net/connector.hpp"
 #include "net/session.hpp"
+
+#include "base/property_tree.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -52,6 +54,7 @@ class PeerTable : public PeerPoolBase
     //=================================
 
     std::vector<Peer::Info> allPeersInfo() const override;
+
   private:
     //=================================
     const lk::Address _host_address;

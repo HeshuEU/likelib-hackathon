@@ -19,6 +19,7 @@ R PropertyTree::get(const std::string& path) const
     }
 }
 
+
 template<typename R>
 std::vector<R> PropertyTree::getVector(const std::string& path) const
 {

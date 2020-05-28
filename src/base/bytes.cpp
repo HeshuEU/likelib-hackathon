@@ -7,17 +7,13 @@
 
 #include <boost/container_hash/hash.hpp>
 
-#include <iterator>
-
 namespace base
 {
-
-Bytes::Bytes() {}
-
 
 Bytes::Bytes(std::size_t size)
   : _raw(size)
 {}
+
 
 Bytes::Bytes(const std::vector<Byte>& bytes)
   : _raw(bytes)
