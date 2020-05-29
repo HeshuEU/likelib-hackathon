@@ -21,6 +21,8 @@ try:
         f.write('\n'.join(output))
 except Exception as e:
     with open(os.path.join(PATH_TO_LOGS, LOG_NAME), "at", encoding='utf8') as f:
-        f.write(str(e))
+        # Print output with correct \n
+        f.write(str(e.output.decode("utf-8")))
     open(os.path.join(PATH_TO_LOGS, ".error-flag"), "w").close()
-    exit(1)
+    # Set error flag, and continue check other files with exit(0)
+    exit(0)
