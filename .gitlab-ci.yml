@@ -39,6 +39,7 @@ Code quality:
     - cd "${SOURCE_DIR}/doc"
     - md5sum --check "${INSTALL_DIR}/prepare_build.md5" || bash "${SOURCE_DIR}/doc/prepare_build.sh"
     - mkdir -p ${LOG_DIR}
+    - rm -rf ${BUILD_DIR}
     - mkdir -p ${BUILD_DIR}
     - mkdir -p ${CLANG_LOG_DIR}
     - chmod +x ${SOURCE_DIR}/cmake/clang-tidy.py
