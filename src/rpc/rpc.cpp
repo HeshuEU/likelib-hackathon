@@ -11,12 +11,12 @@ namespace rpc
 namespace detail
 {
 
-class RpcSever : public BaseRpcServer
+class RpcServer : public BaseRpcServer
 {
   public:
-    RpcSever(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface);
+    RpcServer(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface);
 
-    ~RpcSever() override;
+    ~RpcServer() override;
 
     void run() override;
 
@@ -36,12 +36,12 @@ class RpcSever : public BaseRpcServer
 };
 
 
-RpcSever::~RpcSever()
+RpcServer::~RpcServer()
 {
     stop();
 }
 
-RpcSever::RpcSever(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface)
+RpcServer::RpcServer(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface)
 {
     if (config.hasKey("rpc.grpc_address")) {
         _grpc_listening_address = config.get<std::string>("rpc.grpc_address");
@@ -58,7 +58,7 @@ RpcSever::RpcSever(const base::PropertyTree& config, std::shared_ptr<BaseRpc> in
     }
 }
 
-void RpcSever::run()
+void RpcServer::run()
 {
     if (_mode & HTTP) {
         _http_server->run();
@@ -70,7 +70,7 @@ void RpcSever::run()
     }
 }
 
-void RpcSever::stop()
+void RpcServer::stop()
 {
     if (_mode & HTTP) {
         _http_server->stop();
@@ -100,7 +100,7 @@ std::unique_ptr<BaseRpc> createRpcClient(ClientMode mode, const std::string& con
 
 std::unique_ptr<BaseRpcServer> create_rpc_server(const base::PropertyTree& config, std::shared_ptr<BaseRpc> interface)
 {
-    return std::make_unique<detail::RpcSever>(config, interface);
+    return std::make_unique<detail::RpcServer>(config, interface);
 }
 
 }
