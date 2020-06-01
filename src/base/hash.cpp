@@ -16,7 +16,7 @@ namespace base
 Sha256::Sha256(const Bytes& data)
   : _bytes(data)
 {
-    if (_bytes.size() != SHA256_SIZE) {
+    if (_bytes.size() != LENGTH) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size");
     }
 }
@@ -25,29 +25,29 @@ Sha256::Sha256(const Bytes& data)
 Sha256::Sha256(Bytes&& data)
   : _bytes(data)
 {
-    if (_bytes.size() != SHA256_SIZE) {
+    if (_bytes.size() != LENGTH) {
         RAISE_ERROR(InvalidArgument, "Not valid bytes size");
     }
 }
 
 
-Sha256::Sha256(const FixedBytes<Sha256::SHA256_SIZE>& data)
+Sha256::Sha256(const FixedBytes<Sha256::LENGTH>& data)
   : _bytes(data)
 {}
 
 
-Sha256::Sha256(FixedBytes<Sha256::SHA256_SIZE>&& data)
+Sha256::Sha256(FixedBytes<Sha256::LENGTH>&& data)
   : _bytes(data)
 {}
 
 
 std::string Sha256::toHex() const
 {
-    return base::toHex<FixedBytes<SHA256_SIZE>>(_bytes);
+    return base::toHex<FixedBytes<LENGTH>>(_bytes);
 }
 
 
-const base::FixedBytes<Sha256::SHA256_SIZE>& Sha256::getBytes() const noexcept
+const base::FixedBytes<Sha256::LENGTH>& Sha256::getBytes() const noexcept
 {
     return _bytes;
 }
@@ -55,7 +55,7 @@ const base::FixedBytes<Sha256::SHA256_SIZE>& Sha256::getBytes() const noexcept
 
 Sha256 Sha256::null()
 {
-    return Sha256(base::Bytes(SHA256_SIZE));
+    return Sha256(base::Bytes(LENGTH));
 }
 
 
@@ -85,7 +85,7 @@ bool Sha256::operator<(const Sha256& another) const
 
 Sha256 Sha256::compute(const base::Bytes& data)
 {
-    base::FixedBytes<SHA256_SIZE> ret;
+    base::FixedBytes<LENGTH> ret;
     SHA256(data.getData(), data.size(), ret.getData());
     return Sha256(ret);
 }
@@ -99,13 +99,13 @@ void Sha256::serialize(SerializationOArchive& oa) const
 
 Sha256 Sha256::deserialize(SerializationIArchive& ia)
 {
-    return Sha256(ia.deserialize<FixedBytes<SHA256_SIZE>>());
+    return Sha256(ia.deserialize<FixedBytes<LENGTH>>());
 }
 
 
 std::ostream& operator<<(std::ostream& os, const Sha256& sha)
 {
-    return os << toHex<FixedBytes<Sha256::SHA256_SIZE>>(sha.getBytes());
+    return os << toHex<FixedBytes<Sha256::LENGTH>>(sha.getBytes());
 }
 
 } // namespace base
@@ -113,7 +113,7 @@ std::ostream& operator<<(std::ostream& os, const Sha256& sha)
 
 std::size_t std::hash<base::Sha256>::operator()(const base::Sha256& k) const
 {
-    return std::hash<base::FixedBytes<base::Sha256::SHA256_SIZE>>{}(k.getBytes());
+    return std::hash<base::FixedBytes<base::Sha256::LENGTH>>{}(k.getBytes());
 }
 
 

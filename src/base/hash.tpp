@@ -10,7 +10,7 @@ namespace base
 template<std::size_t S>
 Sha256 Sha256::compute(const FixedBytes<S>& data)
 {
-    base::FixedBytes<SHA256_SIZE> ret;
+    base::FixedBytes<LENGTH> ret;
     SHA256(data.getData(), S, ret.getData());
     return Sha256(ret);
 }

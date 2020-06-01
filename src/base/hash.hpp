@@ -11,20 +11,20 @@ namespace base
 class Sha256
 {
   public:
-    static constexpr std::size_t SHA256_SIZE = 32;
+    static constexpr std::size_t LENGTH = 32; // bytes
     //----------------------------------
     Sha256(const Sha256&) = default;
     explicit Sha256(Sha256&&) = default;
     explicit Sha256(const Bytes& data);
     Sha256(Bytes&& data);
-    Sha256(const FixedBytes<SHA256_SIZE>& data);
-    Sha256(FixedBytes<SHA256_SIZE>&& data);
+    Sha256(const FixedBytes<LENGTH>& data);
+    Sha256(FixedBytes<LENGTH>&& data);
     Sha256& operator=(const Sha256&) = default;
     Sha256& operator=(Sha256&&) = default;
     ~Sha256() = default;
     //----------------------------------
     std::string toHex() const;
-    const base::FixedBytes<SHA256_SIZE>& getBytes() const noexcept;
+    const base::FixedBytes<LENGTH>& getBytes() const noexcept;
     //----------------------------------
     static Sha256 null();
     static Sha256 fromHex(const std::string& hex_view);
@@ -42,7 +42,7 @@ class Sha256
     static Sha256 deserialize(SerializationIArchive& ia);
     //----------------------------------
   private:
-    base::FixedBytes<SHA256_SIZE> _bytes;
+    base::FixedBytes<LENGTH> _bytes;
 };
 
 std::ostream& operator<<(std::ostream& os, const Sha256& sha);
