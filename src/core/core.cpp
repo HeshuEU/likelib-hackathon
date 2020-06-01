@@ -5,8 +5,6 @@
 #include "vm/tools.hpp"
 
 #include <algorithm>
-#include <iterator>
-
 
 namespace lk
 {
@@ -283,6 +281,9 @@ std::optional<lk::Transaction> Core::findTransaction(const base::Sha256& hash) c
 
 bool Core::checkBlock(const lk::Block& block) const
 {
+    if(block.getTransactions().size() == 0 || block.getTransactions().size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
+        return false;
+    }
     if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(block)))) {
         return false;
     }
@@ -309,8 +310,18 @@ lk::Block Core::getBlockTemplate() const
     const auto& top_block = _blockchain.getTopBlock();
     lk::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
-    std::shared_lock lk(_pending_transactions_mutex);
-    return lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions };
+
+    TransactionsSet pending;
+    {
+        std::shared_lock lk(_pending_transactions_mutex);
+        pending = _pending_transactions;
+    }
+
+    if(pending.size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
+        pending.selectBestByFee(base::config::BC_MAX_TRANSACTIONS_IN_BLOCK);
+    }
+
+    return lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), std::move(pending) };
 }
 
 
