@@ -1,6 +1,7 @@
 #include "tools.hpp"
 
 #include "vm/error.hpp"
+#include "vm/encode_decode.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -261,10 +262,11 @@ std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_
     auto exec_script = std::filesystem::current_path() / std::filesystem::path{ "encoder.py" };
     if (std::filesystem::exists(exec_script)) {
         auto formatted_call = replaceAddressConstructor(call);
-        std::vector<std::string> args{ exec_script, "--contract_path", path_to_code_folder, "--call", formatted_call };
-        std::istringstream iss(callPython(args));
-        std::string tmp;
-        iss >> tmp;
+        //std::vector<std::string> args{ exec_script, "--contract_path", path_to_code_folder, "--call", formatted_call };
+        auto tmp = vm::encodeMessage(path_to_code_folder, formatted_call);
+        // std::istringstream iss(callPython(args));
+        // std::string tmp;
+        // iss >> tmp;
         return base::fromHex<base::Bytes>(tmp);
     }
     return std::nullopt;
@@ -280,7 +282,7 @@ std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_cod
         std::vector<std::string> args{
             exec_script, "--contract_path", path_to_code_folder, "--method", method, "--data", output
         };
-        return callPython(args);
+        return vm::decodeMessage(path_to_code_folder, method, output);
     }
     return std::nullopt;
 }
@@ -339,6 +341,42 @@ std::string callPython(std::vector<std::string>& args)
         RAISE_ERROR(base::SystemCallFailed, s.str());
     }
     return s.str();
+}
+
+
+std::string encodeMessage(const std::string& contract_path, const std::string& data)
+{
+    auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
+    if(status == -1){
+        RAISE_ERROR(base::RuntimeError, "Decode python error");
+    }
+    Py_Initialize();
+    auto module = PyImport_ImportModule("encode_decode");
+    if(module == nullptr){
+        Py_Finalize();
+        RAISE_ERROR(base::RuntimeError, "Decode python error");
+    }
+    auto result = ::encodeMessage(contract_path.c_str(), data.c_str());
+    Py_Finalize();
+    return result;
+}
+
+
+std::string decodeMessage(const std::string& contract_path, const std::string& method, const std::string& data)
+{
+    auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
+    if(status == -1){
+        RAISE_ERROR(base::RuntimeError, "Decode python error");
+    }
+    Py_Initialize();
+    auto module = PyImport_ImportModule("encode_decode");
+    if(module == nullptr){
+        Py_Finalize();
+        RAISE_ERROR(base::RuntimeError, "Decode python error");
+    }
+    auto result = ::decodeMessage(contract_path.c_str(), method.c_str(), data.c_str());
+    Py_Finalize();
+    return result;
 }
 
 } // namespace vm

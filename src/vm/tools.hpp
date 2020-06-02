@@ -60,4 +60,8 @@ std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_cod
 
 std::string callPython(std::vector<std::string>& args);
 
+std::string encodeMessage(const std::string& contract_path, const std::string& data);
+
+std::string decodeMessage(const std::string& contract_path, const std::string& method, const std::string& data);
+
 } // namespace vm
