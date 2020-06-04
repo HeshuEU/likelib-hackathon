@@ -1,4 +1,4 @@
-from tester import test_case, Node, NodePoll
+from tester import test_case, Node, NodePool
 import concurrent.futures
 
 
@@ -39,7 +39,7 @@ def main(env, logger):
     transaction_timeout = 20
     transaction_wait = 10
 
-    with NodePoll() as pool:
+    with NodePool() as pool:
         pool.append(Node(env, Node.Settings(Node.Id(start_sync_port, start_rpc_port)), logger))
         pool.last.start_node(waiting_time)
         pool.last.run_check_test()
@@ -96,7 +96,7 @@ def main(env, logger):
     transaction_timeout = 7
     transaction_wait = 4
 
-    with NodePoll() as pool:
+    with NodePool() as pool:
         pool.append(Node(env, Node.Settings(Node.Id(start_sync_port, start_rpc_port)), logger))
         pool.last.start_node(waiting_time)
         pool.last.run_check_test()
@@ -171,7 +171,7 @@ def main(env, logger):
     init_amount = 1000
     address_per_nodes = 3
 
-    with NodePoll() as pool:
+    with NodePool() as pool:
         pool.append(Node(env, Node.Settings(Node.Id(start_sync_port, start_rpc_port)), logger))
         pool.last.start_node(node_startup_time)
         pool.last.run_check_test()

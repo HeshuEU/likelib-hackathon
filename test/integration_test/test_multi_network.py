@@ -1,4 +1,4 @@
-from tester import test_case, Node, NodePoll
+from tester import test_case, Node, NodePool
 import concurrent.futures
 
 
@@ -21,7 +21,7 @@ def main(env, logger):
     waiting_time = 3
     count_nodes = 4
 
-    with NodePoll() as pool:
+    with NodePool() as pool:
         pool.append(Node(env, Node.Settings(Node.Id(start_sync_port, start_rpc_port)), logger))
         pool.last.start_node(waiting_time)
         pool.last.run_check_test()
@@ -48,7 +48,7 @@ def main(env, logger):
     waiting_time = 5
     count_nodes = 4
 
-    with NodePoll() as pool:
+    with NodePool() as pool:
         pool.append(Node(env, Node.Settings(Node.Id(start_sync_port, start_rpc_port)), logger))
         pool.last.start_node(waiting_time)
         pool.last.run_check_test()
@@ -90,7 +90,7 @@ def main(env, logger):
     for i in range(count_threads * count_nodes_per_thread + 1):
         node_ids.append(Node.Id(start_sync_port + i, start_rpc_port + i))
 
-    with NodePoll() as pool:
+    with NodePool() as pool:
 
         # start first node
         first_node = Node(env, Node.Settings(node_ids[0]), logger)
