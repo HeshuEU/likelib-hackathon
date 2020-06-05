@@ -37,7 +37,7 @@ def main(env: Env) -> int:
 
     return 0
 
-@test_case("connect_to_myself")
+@test_case("connecting_to_yourself")
 def main(env: Env) -> int:
     amount = 100
     node = Id(20101, grpc_port=50101)
