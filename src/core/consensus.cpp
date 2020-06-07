@@ -34,11 +34,9 @@ const base::FixedBytes<Complexity::LENGTH>& Complexity::getComparer() const
 }
 
 
-Consensus::Consensus(const Block& genesis)
+Consensus::Consensus()
     : _complexity{~base::Uint256{0}}
-{
-    _last_blocks.push(&genesis);
-}
+{}
 
 
 const Complexity& Consensus::getComplexity() const

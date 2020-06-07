@@ -27,7 +27,7 @@ class Complexity
 class Consensus
 {
   public:
-    explicit Consensus(const Block& genesis);
+    explicit Consensus();
 
     bool checkBlock(const Block& block) const;
 
