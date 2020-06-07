@@ -56,7 +56,6 @@ class Adapter final : public likelib::NodePublicInterface::Service
     ::grpc::Status get_transaction_result(::grpc::ServerContext* context,
                                           const ::likelib::Hash* request,
                                           ::likelib::TransactionStatus* response) override;
-
 };
 
 

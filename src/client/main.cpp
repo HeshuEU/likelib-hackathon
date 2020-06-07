@@ -1,7 +1,7 @@
 #include "actions.hpp"
 #include "config.hpp"
-#include "utility.hpp"
 #include "subprogram_router.hpp"
+#include "utility.hpp"
 
 #include "base/error.hpp"
 #include "base/log.hpp"

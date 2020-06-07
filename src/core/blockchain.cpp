@@ -150,12 +150,13 @@ std::optional<base::Sha256> Blockchain::findBlockHashByDepth(lk::BlockDepth dept
 }
 
 
-std::vector< std::optional< std::reference_wrapper<const Block> > > Blockchain::getByDepth(const std::vector<BlockDepth>& depths) const
+std::vector<std::optional<std::reference_wrapper<const Block>>> Blockchain::getByDepth(
+  const std::vector<BlockDepth>& depths) const
 {
-    std::vector< std::optional< std::reference_wrapper<const Block> > > ret;
+    std::vector<std::optional<std::reference_wrapper<const Block>>> ret;
     std::shared_lock lk(_blocks_mutex);
-    for(const auto& d : depths) {
-        if(auto block_hash = findBlockHashByDepth(d)) {
+    for (const auto& d : depths) {
+        if (auto block_hash = findBlockHashByDepth(d)) {
             auto block = findBlock(*block_hash);
             ASSERT(block);
             ret.push_back(block);
@@ -169,14 +170,15 @@ std::vector< std::optional< std::reference_wrapper<const Block> > > Blockchain::
 }
 
 
-std::vector< std::optional< std::reference_wrapper<const Block> > > Blockchain::getByDepthFromTop(const std::vector<BlockDepth>& depths) const
+std::vector<std::optional<std::reference_wrapper<const Block>>> Blockchain::getByDepthFromTop(
+  const std::vector<BlockDepth>& depths) const
 {
-    std::vector< std::optional< std::reference_wrapper<const Block> > > ret;
+    std::vector<std::optional<std::reference_wrapper<const Block>>> ret;
     const auto top_block_depth = getTopBlock().getDepth();
 
     std::shared_lock lk(_blocks_mutex);
-    for(const auto& d : depths) {
-        if(d > top_block_depth) {
+    for (const auto& d : depths) {
+        if (d > top_block_depth) {
             ret.push_back(std::nullopt);
         }
         else {
@@ -225,16 +227,16 @@ base::Sha256 Blockchain::getTopBlockHash() const
 }
 
 
-std::optional< std::reference_wrapper<const lk::Block> > Blockchain::getNthFromTop(BlockDepth depth_from_top) const
+std::optional<std::reference_wrapper<const lk::Block>> Blockchain::getNthFromTop(BlockDepth depth_from_top) const
 {
-    std::shared_lock lk{_blocks_mutex};
+    std::shared_lock lk{ _blocks_mutex };
     auto top_block_depth = getTopBlock().getDepth();
-    if(depth_from_top > top_block_depth) {
+    if (depth_from_top > top_block_depth) {
         return std::nullopt;
     }
     BlockDepth d = top_block_depth - depth_from_top;
-    if(auto hash = findBlockHashByDepth(d)) {
-        if(auto block = findBlock(*hash)) {
+    if (auto hash = findBlockHashByDepth(d)) {
+        if (auto block = findBlock(*hash)) {
             return *block;
         }
         else {

@@ -32,14 +32,16 @@ class Blockchain
     std::optional<lk::Block> findBlock(const base::Sha256& block_hash) const;
     std::optional<lk::Transaction> findTransaction(const base::Sha256& tx_hash) const;
 
-    std::vector< std::optional< std::reference_wrapper<const Block> > > getByDepth(const std::vector<BlockDepth>& depths) const;
-    std::vector< std::optional< std::reference_wrapper<const Block> > > getByDepthFromTop(const std::vector<BlockDepth>& depths) const;
+    std::vector<std::optional<std::reference_wrapper<const Block>>> getByDepth(
+      const std::vector<BlockDepth>& depths) const;
+    std::vector<std::optional<std::reference_wrapper<const Block>>> getByDepthFromTop(
+      const std::vector<BlockDepth>& depths) const;
     //===================
     const lk::Block& getTopBlock() const;
     base::Sha256 getTopBlockHash() const;
 
     // *getNthFromTop(0) == getTopBlock()
-    std::optional< std::reference_wrapper<const lk::Block> > getNthFromTop(BlockDepth depth_from_top) const;
+    std::optional<std::reference_wrapper<const lk::Block>> getNthFromTop(BlockDepth depth_from_top) const;
     //===================
   private:
     //===================

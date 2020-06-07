@@ -142,10 +142,8 @@ class EthHost : public evmc::Host
 
     evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override;
 
-    size_t copy_code(const evmc::address& addr,
-                     size_t code_offset,
-                     uint8_t* buffer_data,
-                     size_t buffer_size) const noexcept override;
+    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
+      noexcept override;
 
     void selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept override;
 

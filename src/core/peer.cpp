@@ -325,8 +325,8 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         }
         else if (_peer._core.findBlock(next)) {
             LOG_DEBUG << "Peer " << &_peer << " applying all " << _sync_blocks.size() << " sync blocks";
-            for(auto it = _sync_blocks.crbegin(); it != _sync_blocks.crend(); ++it) {
-                if(!_peer._core.tryAddBlock(*it)) {
+            for (auto it = _sync_blocks.crbegin(); it != _sync_blocks.crend(); ++it) {
+                if (!_peer._core.tryAddBlock(*it)) {
                     LOG_DEBUG << "Applying error";
                     break;
                 }

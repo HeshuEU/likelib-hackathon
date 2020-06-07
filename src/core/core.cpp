@@ -199,7 +199,8 @@ std::optional<lk::Transaction> Core::findTransaction(const base::Sha256& hash) c
 
 bool Core::checkBlock(const lk::Block& block) const
 {
-    if(block.getTransactions().size() == 0 || block.getTransactions().size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
+    if (block.getTransactions().size() == 0 ||
+        block.getTransactions().size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
         return false;
     }
     if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(block)))) {
@@ -235,7 +236,7 @@ lk::Block Core::getBlockTemplate() const
         pending = _pending_transactions;
     }
 
-    if(pending.size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
+    if (pending.size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
         pending.selectBestByFee(base::config::BC_MAX_TRANSACTIONS_IN_BLOCK);
     }
 
@@ -692,10 +693,8 @@ evmc::bytes32 EthHost::get_code_hash(const evmc::address& addr) const noexcept
 }
 
 
-size_t EthHost::copy_code(const evmc::address& addr,
-                          size_t code_offset,
-                          uint8_t* buffer_data,
-                          size_t buffer_size) const noexcept
+size_t EthHost::copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
+  noexcept
 {
     LOG_DEBUG << "Core::copy_code";
     try {

@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE(secp256_sign_verify)
     auto hash = base::Sha256::compute(base::Bytes("111"));
     auto signature = private_key.sign(hash.getBytes().toBytes());
     auto public_key = private_key.toPublicKey();
-    BOOST_CHECK_EQUAL(private_key.decodeSignatureToPublicKey(signature, hash.getBytes().toBytes()).toBytes(), public_key.toBytes());
+    BOOST_CHECK_EQUAL(private_key.decodeSignatureToPublicKey(signature, hash.getBytes().toBytes()).toBytes(),
+                      public_key.toBytes());
 }
 
 
@@ -97,11 +98,15 @@ BOOST_AUTO_TEST_CASE(secp256_save_load)
     auto public_key1 = private_key1.toPublicKey();
     auto public_key2 = private_key2.toPublicKey();
 
-    BOOST_CHECK_EQUAL(private_key1.decodeSignatureToPublicKey(signature1, hash.getBytes().toBytes()).toBytes(), public_key1.toBytes());
-    BOOST_CHECK_EQUAL(private_key2.decodeSignatureToPublicKey(signature2, hash.getBytes().toBytes()).toBytes(), public_key2.toBytes());
+    BOOST_CHECK_EQUAL(private_key1.decodeSignatureToPublicKey(signature1, hash.getBytes().toBytes()).toBytes(),
+                      public_key1.toBytes());
+    BOOST_CHECK_EQUAL(private_key2.decodeSignatureToPublicKey(signature2, hash.getBytes().toBytes()).toBytes(),
+                      public_key2.toBytes());
 
-    BOOST_CHECK_EQUAL(private_key1.decodeSignatureToPublicKey(signature2, hash.getBytes().toBytes()).toBytes(), public_key2.toBytes());
-    BOOST_CHECK_EQUAL(private_key2.decodeSignatureToPublicKey(signature1, hash.getBytes().toBytes()).toBytes(), public_key1.toBytes());
+    BOOST_CHECK_EQUAL(private_key1.decodeSignatureToPublicKey(signature2, hash.getBytes().toBytes()).toBytes(),
+                      public_key2.toBytes());
+    BOOST_CHECK_EQUAL(private_key2.decodeSignatureToPublicKey(signature1, hash.getBytes().toBytes()).toBytes(),
+                      public_key1.toBytes());
 
     std::filesystem::remove(private_key_path);
 }
@@ -124,11 +129,15 @@ BOOST_AUTO_TEST_CASE(secp256_serialization)
     auto public_key1 = private_key1.toPublicKey();
     auto public_key2 = private_key2.toPublicKey();
 
-    BOOST_CHECK_EQUAL(private_key1.decodeSignatureToPublicKey(signature1, hash.getBytes().toBytes()).toBytes(), public_key1.toBytes());
-    BOOST_CHECK_EQUAL(private_key2.decodeSignatureToPublicKey(signature2, hash.getBytes().toBytes()).toBytes(), public_key2.toBytes());
+    BOOST_CHECK_EQUAL(private_key1.decodeSignatureToPublicKey(signature1, hash.getBytes().toBytes()).toBytes(),
+                      public_key1.toBytes());
+    BOOST_CHECK_EQUAL(private_key2.decodeSignatureToPublicKey(signature2, hash.getBytes().toBytes()).toBytes(),
+                      public_key2.toBytes());
 
-    BOOST_CHECK_EQUAL(private_key1.decodeSignatureToPublicKey(signature2, hash.getBytes().toBytes()).toBytes(), public_key2.toBytes());
-    BOOST_CHECK_EQUAL(private_key2.decodeSignatureToPublicKey(signature1, hash.getBytes().toBytes()).toBytes(), public_key1.toBytes());
+    BOOST_CHECK_EQUAL(private_key1.decodeSignatureToPublicKey(signature2, hash.getBytes().toBytes()).toBytes(),
+                      public_key2.toBytes());
+    BOOST_CHECK_EQUAL(private_key2.decodeSignatureToPublicKey(signature1, hash.getBytes().toBytes()).toBytes(),
+                      public_key1.toBytes());
 
     std::filesystem::remove(private_key_path);
 }
