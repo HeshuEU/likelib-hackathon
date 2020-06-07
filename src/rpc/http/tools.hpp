@@ -63,8 +63,4 @@ web::json::value serializeTransactionStatus(const lk::TransactionStatus& status)
 
 std::optional<lk::TransactionStatus> deserializeTransactionStatus(const web::json::value& input);
 
-web::json::value serializeViewCall(const lk::ViewCall& call);
-
-std::optional<lk::ViewCall> deserializeViewCall(const web::json::value& input);
-
 }

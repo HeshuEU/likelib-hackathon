@@ -179,28 +179,6 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
     return ::grpc::Status::OK;
 }
 
-
-::grpc::Status Adapter::call_contract_view(::grpc::ServerContext* context,
-                                           const ::likelib::ViewCall* request,
-                                           ::likelib::Data* response)
-{
-    LOG_DEBUG << "received RPC call_contract_view method call from " << context->peer();
-    try {
-        auto call = deserializeViewCall(request);
-
-        auto result = _service->callContractView(call);
-
-        response->set_bytes_base_64(base::base64Encode(result));
-    }
-    catch (const base::Error& e) {
-        LOG_ERROR << e.what();
-        return ::grpc::Status::CANCELLED;
-    }
-    catch (const std::exception& e) {
-        LOG_ERROR << "unexpected error: " << e.what();
-        return ::grpc::Status::CANCELLED;
-    }
-    return ::grpc::Status::OK;
 }
 
 } // namespace rpc::grpc

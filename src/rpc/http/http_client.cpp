@@ -279,39 +279,4 @@ lk::TransactionStatus NodeClient::getTransactionStatus(const base::Sha256& trans
     }
 }
 
-
-base::Bytes NodeClient::callContractView(const lk::ViewCall& call)
-{
-    auto request_body = serializeViewCall(call);
-
-    std::optional<base::Bytes> opt_bytes;
-
-    _client.request(createPostRequest("/call_contract_view", request_body))
-      .then([&](const web::http::http_response& response) {
-          response.extract_json()
-            .then([&](web::json::value request_body) {
-                if (request_body.at("status").as_string() == "ok") {
-                    opt_bytes = deserializeBytes(request_body.at("result").as_string());
-                }
-                else {
-                    if (request_body.has_field("result")) {
-                        LOG_ERROR << "bad request result:" << request_body.at("result").serialize();
-                    }
-                    else {
-                        LOG_ERROR << "bad request result";
-                    }
-                    RAISE_ERROR(RpcError, "bad result status");
-                }
-            })
-            .wait();
-      })
-      .wait();
-    if (opt_bytes) {
-        return opt_bytes.value();
-    }
-    else {
-        RAISE_ERROR(base::InvalidArgument, "deserialization error");
-    }
-}
-
 } // namespace rpc

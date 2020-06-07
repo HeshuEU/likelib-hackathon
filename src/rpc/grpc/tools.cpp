@@ -261,25 +261,4 @@ lk::TransactionStatus deserializeTransactionStatus(const likelib::TransactionSta
     return lk::TransactionStatus{ status_code, action_type, status->fee_left(), status->message() };
 }
 
-
-void serializeViewCall(const lk::ViewCall& from, likelib::ViewCall* to)
-{
-    serializeAddress(from.getFrom(), to->mutable_from());
-    serializeAddress(from.getContractAddress(), to->mutable_to());
-    to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSeconds());
-    to->mutable_message()->set_bytes_base_64(base::base64Encode(from.getData()));
-    to->mutable_signature()->set_signature_bytes_at_base_64(base::base64Encode(from.getSign()));
-}
-
-
-lk::ViewCall deserializeViewCall(const likelib::ViewCall* const call)
-{
-    auto from_address = deserializeAddress(&call->from());
-    auto to_address = deserializeAddress(&call->to());
-    auto timestamp = base::Time(call->creation_time().seconds_since_epoch());
-    auto message = base::base64Decode(call->message().bytes_base_64());
-    auto sign = lk::Sign(base::base64Decode(call->signature().signature_bytes_at_base_64()));
-    return lk::ViewCall{ from_address, to_address, timestamp, message, sign };
-}
-
 }

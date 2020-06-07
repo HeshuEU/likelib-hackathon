@@ -29,8 +29,6 @@ class GeneralServerService : public rpc::BaseRpc
 
     lk::TransactionStatus getTransactionStatus(const base::Sha256& transaction_hash) override;
 
-    base::Bytes callContractView(const lk::ViewCall& call) override;
-
   private:
     lk::Core& _core;
 };

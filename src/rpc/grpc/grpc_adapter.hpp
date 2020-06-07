@@ -57,10 +57,6 @@ class Adapter final : public likelib::NodePublicInterface::Service
                                           const ::likelib::Hash* request,
                                           ::likelib::TransactionStatus* response) override;
 
-
-    ::grpc::Status call_contract_view(::grpc::ServerContext* context,
-                                      const ::likelib::ViewCall* request,
-                                      ::likelib::Data* response) override;
 };
 
 

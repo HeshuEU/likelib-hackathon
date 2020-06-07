@@ -317,48 +317,6 @@ void ActionPushTransaction::run(web::json::value& result)
 }
 
 
-class ActionGetStorageValue : public ActionJsonProcessBase
-{
-  public:
-    //====================================
-    explicit ActionGetStorageValue(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service);
-    virtual ~ActionGetStorageValue() = default;
-    //====================================
-    const std::string& getName() const override;
-    bool loadArguments() override;
-    void run(web::json::value& result) override;
-
-  private:
-    std::optional<lk::ViewCall> _call;
-};
-
-
-ActionGetStorageValue::ActionGetStorageValue(web::json::value& input, std::shared_ptr<rpc::BaseRpc>& service)
-  : ActionJsonProcessBase(input, service)
-{}
-
-
-const std::string& ActionGetStorageValue::getName() const
-{
-    static const std::string name = "call_contract_view";
-    return name;
-}
-
-
-bool ActionGetStorageValue::loadArguments()
-{
-    _call = deserializeViewCall(_input);
-    return _call.has_value();
-}
-
-
-void ActionGetStorageValue::run(web::json::value& result)
-{
-    auto call_result = _service->callContractView(_call.value());
-    result = serializeBytes(call_result);
-}
-
-
 template<typename T>
 web::json::value run_empty(std::shared_ptr<rpc::BaseRpc>& service)
 {
@@ -427,7 +385,6 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
     _json_processors.insert({ "get_transaction", run_json_process<ActionGetTransaction> });
     _json_processors.insert({ "get_transaction_status", run_json_process<ActionGetTransactionStatus> });
     _json_processors.insert({ "push_transaction", run_json_process<ActionPushTransaction> });
-    _json_processors.insert({ "call_contract_view", run_json_process<ActionGetStorageValue> });
 }
 
 

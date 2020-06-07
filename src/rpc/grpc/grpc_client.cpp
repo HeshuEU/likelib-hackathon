@@ -225,36 +225,4 @@ lk::TransactionStatus NodeClient::getTransactionStatus(const base::Sha256& trans
     }
 }
 
-
-base::Bytes NodeClient::callContractView(const lk::ViewCall& call)
-{
-    // convert data for request
-    likelib::ViewCall request;
-    try {
-        serializeViewCall(call, &request);
-    }
-    catch (const base::Error& er) {
-        RAISE_ERROR(RpcError, std::string("serialization error: ") + er.what());
-    }
-
-    // call remote host
-    likelib::Data reply;
-    ::grpc::ClientContext context;
-    auto status = _stub->call_contract_view(&context, request, &reply);
-
-    // return value if ok
-    if (status.ok()) {
-        try {
-            return deserializeData(&reply);
-        }
-        catch (const base::Error& er) {
-            RAISE_ERROR(RpcError, std::string("deserialization error: ") + er.what());
-        }
-    }
-    else {
-        RAISE_ERROR(RpcError, status.error_message());
-    }
-}
-
-
 } // namespace rpc::grpc

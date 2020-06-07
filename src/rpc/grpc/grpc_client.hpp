@@ -31,8 +31,6 @@ class NodeClient final : public BaseRpc
 
     lk::TransactionStatus getTransactionStatus(const base::Sha256& transaction_hash) override;
 
-    base::Bytes callContractView(const lk::ViewCall& call) override;
-
   private:
     std::unique_ptr<likelib::NodePublicInterface::Stub> _stub;
 };

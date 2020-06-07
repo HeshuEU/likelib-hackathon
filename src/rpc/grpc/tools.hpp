@@ -51,8 +51,4 @@ void serializeTransactionStatus(const lk::TransactionStatus& from, likelib::Tran
 
 lk::TransactionStatus deserializeTransactionStatus(const likelib::TransactionStatus* const status);
 
-void serializeViewCall(const lk::ViewCall& from, likelib::ViewCall* to);
-
-lk::ViewCall deserializeViewCall(const likelib::ViewCall* const call);
-
 }

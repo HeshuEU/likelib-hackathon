@@ -80,10 +80,4 @@ lk::TransactionStatus GeneralServerService::getTransactionStatus(const base::Sha
 }
 
 
-base::Bytes GeneralServerService::callContractView(const lk::ViewCall& call)
-{
-    LOG_TRACE << "Received RPC request {callContractView}";
-    return _core.callViewMethod(call);
-}
-
 } // namespace node

@@ -9,88 +9,6 @@
 namespace lk
 {
 
-ViewCall::ViewCall(lk::Address from,
-                   lk::Address contract_address,
-                   base::Time timestamp,
-                   base::Bytes data,
-                   lk::Sign sign)
-  : _from{ std::move(from) }
-  , _contract_address{ std::move(contract_address) }
-  , _data{ std::move(data) }
-  , _timestamp{ std::move(timestamp) }
-  , _sign{ std::move(sign) }
-{}
-
-
-const lk::Address& ViewCall::getFrom() const noexcept
-{
-    return _from;
-}
-
-
-const lk::Address& ViewCall::getContractAddress() const noexcept
-{
-    return _contract_address;
-}
-
-
-const base::Time& ViewCall::getTimestamp() const noexcept
-{
-    return _timestamp;
-}
-
-
-const base::Bytes& ViewCall::getData() const noexcept
-{
-    return _data;
-}
-
-
-void ViewCall::sign(const base::Secp256PrivateKey& key)
-{
-    auto hash = hashOfCall();
-    _sign = key.sign(hash.getBytes().toBytes());
-}
-
-
-bool ViewCall::checkSign() const
-{
-    if (_sign.toBytes().isEmpty()) {
-        return false;
-    }
-    else {
-        auto valid_hash = hashOfCall();
-        try {
-            auto pub = base::Secp256PrivateKey::decodeSignatureToPublicKey(_sign, valid_hash.getBytes().toBytes());
-            auto derived_addr = lk::Address(pub);
-            return _from == derived_addr;
-        }
-        catch (const base::CryptoError& ex) {
-            return false;
-        }
-    }
-}
-
-
-const lk::Sign& ViewCall::getSign() const noexcept
-{
-    return _sign;
-}
-
-
-base::Sha256 ViewCall::hashOfCall() const
-{
-    auto from_address_str = _from.toString();
-    auto to_address_str = _contract_address.toString();
-    auto timestamp_str = std::to_string(_timestamp.getSeconds());
-    auto data_str = base::base64Encode(_data);
-
-    auto concatenated_data = from_address_str + to_address_str + timestamp_str + data_str;
-
-    return base::Sha256::compute(base::Bytes(concatenated_data));
-}
-
-
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
   : _config{ config }
   , _vault{ key_vault }
@@ -351,36 +269,6 @@ base::Sha256 Core::getTopBlockHash() const
 const lk::Address& Core::getThisNodeAddress() const noexcept
 {
     return _this_node_address;
-}
-
-
-base::Bytes Core::callViewMethod(const lk::ViewCall& call)
-{
-    if (!call.checkSign()) {
-        RAISE_ERROR(base::InvalidArgument, "Signature check failed");
-    }
-
-    if (_state_manager.hasAccount(call.getContractAddress()) &&
-        _state_manager.getAccount(call.getContractAddress()).getType() == lk::AccountType::CONTRACT) {
-        auto contract_account = _state_manager.getAccount(call.getContractAddress());
-        const auto& tx = invalidTransaction();
-        const auto& block = invalidBlock();
-
-        auto eval_result = callContractAtViewModeVm(_state_manager,
-                                                    block,
-                                                    tx,
-                                                    call.getFrom(),
-                                                    call.getContractAddress(),
-                                                    contract_account.getRuntimeCode(),
-                                                    call.getData());
-
-        if (eval_result.status_code == EVMC_SUCCESS) {
-            auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
-            return output_data;
-        }
-        RAISE_ERROR(base::InvalidArgument, "Failed at vm call");
-    }
-    RAISE_ERROR(base::InvalidArgument, std::string("no contract by address: ") + call.getContractAddress().toString());
 }
 
 

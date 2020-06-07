@@ -31,8 +31,6 @@ class NodeClient final : public BaseRpc
 
     lk::TransactionStatus getTransactionStatus(const base::Sha256& transaction_hash) override;
 
-    base::Bytes callContractView(const lk::ViewCall& call) override;
-
   private:
     web::http::client::http_client _client;
 };

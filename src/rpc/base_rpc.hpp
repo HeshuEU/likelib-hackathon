@@ -36,7 +36,6 @@ class BaseRpc
 
     virtual lk::TransactionStatus getTransactionStatus(const base::Sha256& transaction_hash) = 0;
 
-    virtual base::Bytes callContractView(const lk::ViewCall& call) = 0;
 };
 
 } // namespace rpc
