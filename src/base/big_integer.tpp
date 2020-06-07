@@ -58,6 +58,13 @@ BigInteger<T> BigInteger<T>::operator%(const BigInteger<T>& other) const
 
 
 template<typename T>
+BigInteger<T> BigInteger<T>::operator~() const
+{
+    return ~_number;
+}
+
+
+template<typename T>
 BigInteger<T>& BigInteger<T>::operator+=(const BigInteger<T>& other)
 {
     _number += other._number;
