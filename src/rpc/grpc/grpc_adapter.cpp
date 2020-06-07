@@ -179,6 +179,4 @@ void Adapter::init(std::shared_ptr<BaseRpc> service)
     return ::grpc::Status::OK;
 }
 
-}
-
 } // namespace rpc::grpc

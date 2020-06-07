@@ -268,28 +268,6 @@ class ActionContractCall : public ActionBase
 };
 
 
-class ActionCallContractView : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionCallContractView(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    lk::Address _to_address{ lk::Address::null() };
-    std::filesystem::path _keys_dir;
-    std::string _message;
-    bool _is_http_mode{ false };
-    //====================================
-};
-
-
 class ActionGetTransaction : public ActionBase
 {
   public:
