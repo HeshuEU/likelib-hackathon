@@ -1,9 +1,10 @@
 #include "blockchain.hpp"
 
-#include "core/host.hpp"
-
 #include "base/assert.hpp"
 #include "base/log.hpp"
+
+#include "core/consensus.hpp"
+#include "core/host.hpp"
 
 #include <optional>
 
@@ -105,11 +106,16 @@ bool Blockchain::tryAddBlock(const Block& block)
         else if (_blocks.size() != block.getDepth()) {
             return false;
         }
+        else if (!checkConsensus(block)) {
+            return false;
+        }
         else {
             inserted_block = _blocks.insert({ hash, block }).first;
             _blocks_by_depth.insert({ block.getDepth(), hash });
             pushForwardToPersistentStorage(hash, block);
             _top_level_block_hash = hash;
+
+            _consensus.applyBlock(block);
         }
     }
 
@@ -144,6 +150,52 @@ std::optional<base::Sha256> Blockchain::findBlockHashByDepth(lk::BlockDepth dept
 }
 
 
+std::vector< std::optional< std::reference_wrapper<const Block> > > Blockchain::getByDepth(const std::vector<BlockDepth>& depths) const
+{
+    std::vector< std::optional< std::reference_wrapper<const Block> > > ret;
+    std::shared_lock lk(_blocks_mutex);
+    for(const auto& d : depths) {
+        if(auto block_hash = findBlockHashByDepth(d)) {
+            auto block = findBlock(*block_hash);
+            ASSERT(block);
+            ret.push_back(block);
+        }
+        else {
+            ret.push_back(std::nullopt);
+        }
+    }
+
+    return ret;
+}
+
+
+std::vector< std::optional< std::reference_wrapper<const Block> > > Blockchain::getByDepthFromTop(const std::vector<BlockDepth>& depths) const
+{
+    std::vector< std::optional< std::reference_wrapper<const Block> > > ret;
+    const auto top_block_depth = getTopBlock().getDepth();
+
+    std::shared_lock lk(_blocks_mutex);
+    for(const auto& d : depths) {
+        if(d > top_block_depth) {
+            ret.push_back(std::nullopt);
+        }
+        else {
+            const auto adjusted = top_block_depth - d;
+            if (auto block_hash = findBlockHashByDepth(adjusted)) {
+                auto block = findBlock(*block_hash);
+                ASSERT(block);
+                ret.push_back(block);
+            }
+            else {
+                ret.push_back(std::nullopt);
+            }
+        }
+    }
+
+    return ret;
+}
+
+
 std::optional<lk::Transaction> Blockchain::findTransaction(const base::Sha256& tx_hash) const
 {
     std::shared_lock lk(_blocks_mutex);
@@ -170,6 +222,34 @@ const Block& Blockchain::getTopBlock() const
 base::Sha256 Blockchain::getTopBlockHash() const
 {
     return _top_level_block_hash;
+}
+
+
+std::optional< std::reference_wrapper<const lk::Block> > Blockchain::getNthFromTop(BlockDepth depth_from_top) const
+{
+    std::shared_lock lk{_blocks_mutex};
+    auto top_block_depth = getTopBlock().getDepth();
+    if(depth_from_top > top_block_depth) {
+        return std::nullopt;
+    }
+    BlockDepth d = top_block_depth - depth_from_top;
+    if(auto hash = findBlockHashByDepth(d)) {
+        if(auto block = findBlock(*hash)) {
+            return *block;
+        }
+        else {
+            return std::nullopt;
+        }
+    }
+    else {
+        return std::nullopt;
+    }
+}
+
+
+bool Blockchain::checkConsensus(const lk::Block& block) const
+{
+    return _consensus.checkBlock(block);
 }
 
 

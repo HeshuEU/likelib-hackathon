@@ -2,6 +2,7 @@ set(CORE_HEADERS
         address.hpp
         block.hpp
         blockchain.hpp
+        consensus.hpp
         core.hpp
         host.hpp
         managers.hpp
@@ -16,6 +17,7 @@ set(CORE_SOURCES
         address.cpp
         block.cpp
         blockchain.cpp
+        consensus.cpp
         core.cpp
         host.cpp
         managers.cpp
