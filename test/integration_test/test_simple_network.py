@@ -1,6 +1,7 @@
 from tester import test_case, Env, NodeConfig, Id, TEST_CHECK, TEST_CHECK_EQUAL,\
                    ClientType, get_distributor_address_path, TransactionStatusCode
 from time import sleep
+import concurrent.futures
 
 @test_case("two_nodes")
 def main(env: Env) -> int:
@@ -110,5 +111,65 @@ def main(env: Env) -> int:
 
     for i in range(0,n):
       TEST_CHECK_EQUAL(clients[i].get_balance(address=test_address.address, timeout=2, wait=1), n*amount)
+
+    return 0
+
+
+def init_nodes(env, initializing_node_ids, first_node_id):
+  nodes = list()
+  for node_id in initializing_node_ids:
+    env.start_node(NodeConfig(node_id, nodes=[first_node_id, ]))
+    nodes.append(env.get_client(ClientType.LEGACY_GRPC, node_id))
+  return nodes
+
+
+@test_case("multi_network_parallel_connection_stress_test")
+def main(env: Env) -> int:
+    start_sync_port = 20230
+    start_rpc_port = 50080
+    waiting_time = 20
+    count_threads = 5
+    count_nodes_per_thread = 5
+
+    amount = 1000
+    transaction_wait = 20
+    transaction_timeout = 40
+
+    node_ids = list()
+    pool = list()
+
+    for i in range(count_threads * count_nodes_per_thread + 1):
+      node_ids.append(Id(start_sync_port + i, grpc_port = start_rpc_port + i))
+
+    # start first node
+    env.start_node(NodeConfig(node_ids[0]))
+    first_node = env.get_client(ClientType.LEGACY_GRPC, node_ids[0])
+    pool.append(first_node)
+    TEST_CHECK(first_node.connection_test())
+
+    # parallel initialize nodes
+    with concurrent.futures.ThreadPoolExecutor(count_threads) as executor:
+      threads = []
+      for i in range(count_threads):
+        threads.append(executor.submit(init_nodes, env,
+                 node_ids[(count_nodes_per_thread * i) + 1: (count_nodes_per_thread * (
+                 i + 1)) + 1], node_ids[0]))
+
+    # test for node initialization
+    for node in pool:
+      TEST_CHECK(node.connection_test())
+    addresses = [first_node.generate_keys(keys_path=f"keys{i}") for i in range(1, len(pool))]
+    distributor_address = first_node.load_address(keys_path=get_distributor_address_path())
+
+    for to_address, node in zip(addresses, pool):
+      for other_node in pool:
+        TEST_CHECK_EQUAL(other_node.get_balance(address=to_address.address, timeout=2, wait=1), 0)
+
+      transaction = node.transfer(to_address=to_address.address, amount=amount,
+                                      from_address=distributor_address, fee=0,
+                                      wait=transaction_wait, timeout=transaction_timeout)
+
+      for other_node in pool:
+        TEST_CHECK_EQUAL(other_node.get_balance(address=to_address.address, timeout=2, wait=1), amount)
 
     return 0
