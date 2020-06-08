@@ -96,13 +96,6 @@ class Core
                                 const lk::Transaction& tx,
                                 const base::Bytes& code,
                                 const base::Bytes& message_data);
-    evmc::result callContractAtViewModeVm(StateManager& state_manager,
-                                          const lk::Block& associated_block,
-                                          const lk::Transaction& associated_tx,
-                                          const lk::Address& sender_address,
-                                          const lk::Address& contract_address,
-                                          const base::Bytes& code,
-                                          const base::Bytes& message_data);
     evmc::result callVm(StateManager& state_manager,
                         const lk::Block& associated_block,
                         const lk::Transaction& associated_tx,

@@ -85,6 +85,7 @@ constexpr std::size_t NET_REQUEST_TIMEOUT = 10; // how many seconds do we wait f
 constexpr std::size_t BC_MAX_TRANSACTIONS_IN_BLOCK = 100;
 constexpr std::size_t BC_TARGET_BLOCKS_PER_MINUTE = 12;     // block every 60 / 12 == 5 seconds
 constexpr std::size_t BC_DIFFICULTY_RECALCULATION_RATE = 6; // how many blocks must be added to recalculate difficulty
+constexpr std::size_t BC_EMISSION_VALUE = 1000;
 //------------------------
 
 // rpc

@@ -275,7 +275,7 @@ const lk::Address& Core::getThisNodeAddress() const noexcept
 
 void Core::applyBlockTransactions(const lk::Block& block)
 {
-    static const lk::Balance EMISSION_VALUE{ 1000 };
+    static constexpr lk::Balance EMISSION_VALUE{ base::config::BC_EMISSION_VALUE };
     _state_manager.getAccount(block.getCoinbase()).addBalance(EMISSION_VALUE);
 
     for (const auto& tx : block.getTransactions()) {
@@ -501,29 +501,6 @@ evmc::result Core::callContractVm(StateManager& state_manager,
     message.input_data = message_data.getData();
     message.input_size = message_data.size();
     return callVm(state_manager, associated_block, tx, message, code);
-}
-
-
-evmc::result Core::callContractAtViewModeVm(StateManager& state_manager,
-                                            const lk::Block& associated_block,
-                                            const lk::Transaction& associated_tx,
-                                            const lk::Address& sender_address,
-                                            const lk::Address& contract_address,
-                                            const base::Bytes& code,
-                                            const base::Bytes& message_data)
-{
-    evmc_message message{};
-    message.kind = evmc_call_kind::EVMC_CALL;
-    message.flags = evmc_flags::EVMC_STATIC;
-    message.depth = 0;
-    constexpr std::uint64_t VIEW_FREE_MAX_VALUE = 200000;
-    message.gas = VIEW_FREE_MAX_VALUE;
-    message.sender = vm::toEthAddress(sender_address);
-    message.destination = vm::toEthAddress(contract_address);
-    message.value = vm::toEvmcUint256(0);
-    message.input_data = message_data.getData();
-    message.input_size = message_data.size();
-    return callVm(state_manager, associated_block, associated_tx, message, code);
 }
 
 
