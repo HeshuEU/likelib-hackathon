@@ -96,7 +96,7 @@ def main(env: Env) -> int:
     for i in range(0,n):
       node_ids.append(Id(20100 + i, grpc_port = 50100 + i))
     for i in range(0,n):
-      env.start_node(NodeConfig(node_ids[i])), nodes=node_ids))
+      env.start_node(NodeConfig(node_ids[i], nodes=node_ids))
       clients.append(env.get_client(ClientType.LEGACY_GRPC, node_ids[i]))
       TEST_CHECK(clients[i].connection_test())
 
