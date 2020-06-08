@@ -13,6 +13,7 @@ set(TEST_SOURCES
         base/timer.cpp
         core/address.cpp
         core/block.cpp
+        core/consensus.cpp
         core/transaction.cpp
         core/transactions_set.cpp
         net/endpoint.cpp

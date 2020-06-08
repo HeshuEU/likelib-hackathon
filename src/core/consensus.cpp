@@ -70,11 +70,24 @@ void Consensus::applyBlock(const Block& block)
     const Block& p = *_last_blocks.front();
 
     auto elapsed = (block.getTimestamp() - p.getTimestamp()).getSeconds();
-    static const int TARGET =
+    ASSERT(elapsed);
+    if constexpr (!base::config::IS_DEBUG) {
+        if (elapsed == 0) {
+            elapsed = 1;
+        }
+    }
+
+    static constexpr int TARGET =
       base::config::BC_DIFFICULTY_RECALCULATION_RATE * 60 / base::config::BC_TARGET_BLOCKS_PER_MINUTE;
 
-    _complexity = Complexity{ _complexity.getDensed() * TARGET / elapsed };
+    if (TARGET >= 4 * elapsed) {
+        _complexity = Complexity{ _complexity.getDensed() / 4 };
+    }
+    else if (4 * TARGET <= elapsed) { // TARGET
+        _complexity = Complexity{ _complexity.getDensed() * 4 };
+    }
+    else {
+        _complexity = Complexity{ _complexity.getDensed() * elapsed / TARGET };
+    }
 }
-
-
 }
