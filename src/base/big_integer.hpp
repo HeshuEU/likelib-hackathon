@@ -14,43 +14,43 @@ template<typename T>
 class BigInteger
 {
   public:
-    BigInteger() = default;
+    constexpr BigInteger() = default;
 
     template<typename N>
-    BigInteger(const N& big_int);
+    constexpr BigInteger(const N& big_int);
 
-    BigInteger(const BigInteger&) = default;
-    BigInteger& operator=(const BigInteger&) = default;
-    BigInteger(BigInteger&&) = default;
-    BigInteger& operator=(BigInteger&&) = default;
+    constexpr BigInteger(const BigInteger&) = default;
+    constexpr BigInteger& operator=(const BigInteger&) = default;
+    constexpr BigInteger(BigInteger&&) = default;
+    constexpr BigInteger& operator=(BigInteger&&) = default;
     ~BigInteger() = default;
     //----------------------------------
-    BigInteger<T> operator+(const BigInteger<T>& other) const;
-    BigInteger<T> operator-(const BigInteger<T>& other) const;
-    BigInteger<T> operator*(const BigInteger<T>& other) const;
-    BigInteger<T> operator/(const BigInteger<T>& other) const;
-    BigInteger<T> operator%(const BigInteger<T>& other) const;
-    BigInteger<T>& operator+=(const BigInteger<T>& other);
-    BigInteger<T>& operator-=(const BigInteger<T>& other);
-    BigInteger<T>& operator*=(const BigInteger<T>& other);
-    BigInteger<T>& operator/=(const BigInteger<T>& other);
+    constexpr BigInteger<T> operator+(const BigInteger<T>& other) const;
+    constexpr BigInteger<T> operator-(const BigInteger<T>& other) const;
+    constexpr BigInteger<T> operator*(const BigInteger<T>& other) const;
+    constexpr BigInteger<T> operator/(const BigInteger<T>& other) const;
+    constexpr BigInteger<T> operator%(const BigInteger<T>& other) const;
+    constexpr BigInteger<T>& operator+=(const BigInteger<T>& other);
+    constexpr BigInteger<T>& operator-=(const BigInteger<T>& other);
+    constexpr BigInteger<T>& operator*=(const BigInteger<T>& other);
+    constexpr BigInteger<T>& operator/=(const BigInteger<T>& other);
     //----------------------------------
-    BigInteger<T> operator~() const;
+    constexpr BigInteger<T> operator~() const;
     //----------------------------------
-    bool operator!=(const BigInteger<T>& other) const;
-    bool operator==(const BigInteger<T>& other) const;
-    bool operator>(const BigInteger<T>& other) const;
-    bool operator<(const BigInteger<T>& other) const;
-    bool operator>=(const BigInteger<T>& other) const;
-    bool operator<=(const BigInteger<T>& other) const;
+    constexpr bool operator!=(const BigInteger<T>& other) const;
+    constexpr bool operator==(const BigInteger<T>& other) const;
+    constexpr bool operator>(const BigInteger<T>& other) const;
+    constexpr bool operator<(const BigInteger<T>& other) const;
+    constexpr bool operator>=(const BigInteger<T>& other) const;
+    constexpr bool operator<=(const BigInteger<T>& other) const;
     //----------------------------------
-    BigInteger<T>& operator++();
-    BigInteger<T> operator++(int);
-    BigInteger<T>& operator--();
-    BigInteger<T> operator--(int);
+    constexpr BigInteger<T>& operator++();
+    constexpr BigInteger<T> operator++(int);
+    constexpr BigInteger<T>& operator--();
+    constexpr BigInteger<T> operator--(int);
     //----------------------------------
     std::string toString() const noexcept;
-    boost::multiprecision::number<T> toMultiNumber() const noexcept;
+    boost::multiprecision::number<T> toMultiprecisionNumber() const noexcept;
     //----------------------------------
     void serialize(base::SerializationOArchive& oa) const;
     static BigInteger<T> deserialize(base::SerializationIArchive& ia);

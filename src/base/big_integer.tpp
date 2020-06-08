@@ -7,13 +7,13 @@ namespace base
 
 template<typename T>
 template<typename N>
-BigInteger<T>::BigInteger(const N& big_int)
+constexpr BigInteger<T>::BigInteger(const N& big_int)
   : _number(big_int)
 {}
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::operator+(const BigInteger<T>& other) const
+constexpr BigInteger<T> BigInteger<T>::operator+(const BigInteger<T>& other) const
 {
     BigInteger<T> res;
     res._number = _number + other._number;
@@ -22,7 +22,7 @@ BigInteger<T> BigInteger<T>::operator+(const BigInteger<T>& other) const
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::operator-(const BigInteger<T>& other) const
+constexpr BigInteger<T> BigInteger<T>::operator-(const BigInteger<T>& other) const
 {
     BigInteger<T> res;
     res._number = _number - other._number;
@@ -31,7 +31,7 @@ BigInteger<T> BigInteger<T>::operator-(const BigInteger<T>& other) const
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::operator*(const BigInteger<T>& other) const
+constexpr BigInteger<T> BigInteger<T>::operator*(const BigInteger<T>& other) const
 {
     BigInteger<T> res;
     res._number = _number * other._number;
@@ -40,7 +40,7 @@ BigInteger<T> BigInteger<T>::operator*(const BigInteger<T>& other) const
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::operator/(const BigInteger<T>& other) const
+constexpr BigInteger<T> BigInteger<T>::operator/(const BigInteger<T>& other) const
 {
     BigInteger<T> res;
     res._number = _number / other._number;
@@ -49,7 +49,7 @@ BigInteger<T> BigInteger<T>::operator/(const BigInteger<T>& other) const
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::operator%(const BigInteger<T>& other) const
+constexpr BigInteger<T> BigInteger<T>::operator%(const BigInteger<T>& other) const
 {
     BigInteger<T> res;
     res._number = _number % other._number;
@@ -58,14 +58,14 @@ BigInteger<T> BigInteger<T>::operator%(const BigInteger<T>& other) const
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::operator~() const
+constexpr BigInteger<T> BigInteger<T>::operator~() const
 {
     return ~_number;
 }
 
 
 template<typename T>
-BigInteger<T>& BigInteger<T>::operator+=(const BigInteger<T>& other)
+constexpr BigInteger<T>& BigInteger<T>::operator+=(const BigInteger<T>& other)
 {
     _number += other._number;
     return *this;
@@ -73,7 +73,7 @@ BigInteger<T>& BigInteger<T>::operator+=(const BigInteger<T>& other)
 
 
 template<typename T>
-BigInteger<T>& BigInteger<T>::operator-=(const BigInteger<T>& other)
+constexpr BigInteger<T>& BigInteger<T>::operator-=(const BigInteger<T>& other)
 {
     _number -= other._number;
     return *this;
@@ -81,7 +81,7 @@ BigInteger<T>& BigInteger<T>::operator-=(const BigInteger<T>& other)
 
 
 template<typename T>
-BigInteger<T>& BigInteger<T>::operator*=(const BigInteger<T>& other)
+constexpr BigInteger<T>& BigInteger<T>::operator*=(const BigInteger<T>& other)
 {
     _number *= other._number;
     return *this;
@@ -89,7 +89,7 @@ BigInteger<T>& BigInteger<T>::operator*=(const BigInteger<T>& other)
 
 
 template<typename T>
-BigInteger<T>& BigInteger<T>::operator/=(const BigInteger<T>& other)
+constexpr BigInteger<T>& BigInteger<T>::operator/=(const BigInteger<T>& other)
 {
     _number /= other._number;
     return *this;
@@ -97,49 +97,49 @@ BigInteger<T>& BigInteger<T>::operator/=(const BigInteger<T>& other)
 
 
 template<typename T>
-bool BigInteger<T>::operator!=(const BigInteger<T>& other) const
+constexpr bool BigInteger<T>::operator!=(const BigInteger<T>& other) const
 {
     return _number != other._number;
 }
 
 
 template<typename T>
-bool BigInteger<T>::operator==(const BigInteger<T>& other) const
+constexpr bool BigInteger<T>::operator==(const BigInteger<T>& other) const
 {
     return _number == other._number;
 }
 
 
 template<typename T>
-bool BigInteger<T>::operator>(const BigInteger<T>& other) const
+constexpr bool BigInteger<T>::operator>(const BigInteger<T>& other) const
 {
     return _number > other._number;
 }
 
 
 template<typename T>
-bool BigInteger<T>::operator<(const BigInteger<T>& other) const
+constexpr bool BigInteger<T>::operator<(const BigInteger<T>& other) const
 {
     return _number < other._number;
 }
 
 
 template<typename T>
-bool BigInteger<T>::operator>=(const BigInteger<T>& other) const
+constexpr bool BigInteger<T>::operator>=(const BigInteger<T>& other) const
 {
     return _number >= other._number;
 }
 
 
 template<typename T>
-bool BigInteger<T>::operator<=(const BigInteger<T>& other) const
+constexpr bool BigInteger<T>::operator<=(const BigInteger<T>& other) const
 {
     return _number <= other._number;
 }
 
 
 template<typename T>
-BigInteger<T>& BigInteger<T>::operator++()
+constexpr BigInteger<T>& BigInteger<T>::operator++()
 {
     ++_number;
     return *this;
@@ -147,7 +147,7 @@ BigInteger<T>& BigInteger<T>::operator++()
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::operator++(int)
+constexpr BigInteger<T> BigInteger<T>::operator++(int)
 {
     base::BigInteger<T> ret(*this);
     _number++;
@@ -156,7 +156,7 @@ BigInteger<T> BigInteger<T>::operator++(int)
 
 
 template<typename T>
-BigInteger<T>& BigInteger<T>::operator--()
+constexpr BigInteger<T>& BigInteger<T>::operator--()
 {
     --_number;
     return *this;
@@ -164,7 +164,7 @@ BigInteger<T>& BigInteger<T>::operator--()
 
 
 template<typename T>
-BigInteger<T> BigInteger<T>::operator--(int)
+constexpr BigInteger<T> BigInteger<T>::operator--(int)
 {
     base::BigInteger<T> ret(*this);
     _number--;
@@ -180,7 +180,7 @@ std::string BigInteger<T>::toString() const noexcept
 
 
 template<typename T>
-boost::multiprecision::number<T> BigInteger<T>::toMultiNumber() const noexcept
+boost::multiprecision::number<T> BigInteger<T>::toMultiprecisionNumber() const noexcept
 {
     return _number;
 }
