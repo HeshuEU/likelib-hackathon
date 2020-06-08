@@ -11,7 +11,6 @@ import test_auction_contract
 import test_simple_network
 # import test_real_network
 # import test_contract_functions
-# import test_multi_network
 # import test_multi_transfer
 # import test_auction_contract
 
