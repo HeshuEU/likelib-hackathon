@@ -27,8 +27,6 @@ class Node
     //---------------------------
     std::unique_ptr<Miner> _miner;
     //---------------------------
-    static base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> getMiningComplexity();
-    //---------------------------
     void onBlockMine(lk::Block&& block);
     void onNewTransactionReceived(const lk::Transaction& tx);
     void onNewBlock(const base::Sha256& block_hash, const lk::Block& block);

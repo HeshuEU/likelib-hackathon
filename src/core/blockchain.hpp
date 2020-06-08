@@ -37,6 +37,7 @@ class Blockchain
     std::vector<std::optional<std::reference_wrapper<const Block>>> getByDepthFromTop(
       const std::vector<BlockDepth>& depths) const;
     //===================
+    std::pair<const lk::Block&, lk::Complexity> getTopBlockAndComplexity() const;
     const lk::Block& getTopBlock() const;
     base::Sha256 getTopBlockHash() const;
 

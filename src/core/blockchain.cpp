@@ -212,6 +212,13 @@ std::optional<lk::Transaction> Blockchain::findTransaction(const base::Sha256& t
 }
 
 
+std::pair<const lk::Block&, lk::Complexity> Blockchain::getTopBlockAndComplexity() const
+{
+    std::shared_lock lk(_blocks_mutex);
+    return {getTopBlock(), _consensus.getComplexity()};
+}
+
+
 const Block& Blockchain::getTopBlock() const
 {
     std::shared_lock lk(_blocks_mutex);

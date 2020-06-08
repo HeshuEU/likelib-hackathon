@@ -13,15 +13,18 @@ class Complexity
 {
     static constexpr std::size_t LENGTH = base::Sha256::LENGTH; // bytes
   public:
-    Complexity(base::Uint256 densed);
-    const base::FixedBytes<LENGTH>& getComparer() const;
-    const base::Uint256& getDensed() const noexcept;
+    using Comparer = base::FixedBytes<LENGTH>;
+    using Densed = base::Uint256;
+
+    explicit Complexity(Densed densed);
+    const Comparer& getComparer() const noexcept;
+    const Densed& getDensed() const noexcept;
 
   private:
-    base::Uint256 _densed;
-    base::FixedBytes<LENGTH> _comparer;
+    Densed _densed;
+    Comparer _comparer;
 
-    static base::FixedBytes<LENGTH> calcComparer(const base::Uint256& densed);
+    static Comparer calcComparer(const Densed& densed);
 };
 
 

@@ -224,9 +224,12 @@ bool Core::checkBlock(const lk::Block& block) const
 }
 
 
-lk::Block Core::getBlockTemplate() const
+std::pair<lk::Block, lk::Complexity> Core::getMiningData() const
 {
-    const auto& top_block = _blockchain.getTopBlock();
+    const auto& p = _blockchain.getTopBlockAndComplexity();
+    const auto& top_block = p.first;
+    auto& complexity = p.second;
+
     lk::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
 
@@ -240,7 +243,7 @@ lk::Block Core::getBlockTemplate() const
         pending.selectBestByFee(base::config::BC_MAX_TRANSACTIONS_IN_BLOCK);
     }
 
-    return lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), std::move(pending) };
+    return {lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), std::move(pending) }, std::move(complexity) };
 }
 
 

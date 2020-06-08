@@ -40,19 +40,11 @@ void Node::onBlockMine(lk::Block&& block)
 }
 
 
-base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> Node::getMiningComplexity()
-{
-    base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> complexity;
-    complexity[2] = 0xbf;
-    return complexity;
-}
-
-
 void Node::onNewTransactionReceived(const lk::Transaction&)
 {
-    lk::Block block = _core.getBlockTemplate();
+    auto[block, complexity] = _core.getMiningData();
     if (!block.getTransactions().isEmpty()) {
-        _miner->findNonce(_core.getBlockTemplate(), getMiningComplexity());
+        _miner->findNonce(block, complexity);
     }
     else {
         _miner->dropJob();
@@ -62,9 +54,9 @@ void Node::onNewTransactionReceived(const lk::Transaction&)
 
 void Node::onNewBlock(const base::Sha256& block_hash, const lk::Block&)
 {
-    lk::Block block = _core.getBlockTemplate();
+    auto[block, complexity] = _core.getMiningData();
     if (!block.getTransactions().isEmpty()) {
-        _miner->findNonce(_core.getBlockTemplate(), getMiningComplexity());
+        _miner->findNonce(block, complexity);
     }
     else {
         _miner->dropJob();

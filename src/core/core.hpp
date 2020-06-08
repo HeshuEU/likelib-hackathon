@@ -54,7 +54,7 @@ class Core
     const lk::Block& getTopBlock() const;
     base::Sha256 getTopBlockHash() const;
     //==================
-    lk::Block getBlockTemplate() const;
+    std::pair<lk::Block, lk::Complexity> getMiningData() const;
     //==================
     const lk::Address& getThisNodeAddress() const noexcept;
     //==================

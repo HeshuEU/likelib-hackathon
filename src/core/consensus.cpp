@@ -5,30 +5,30 @@
 namespace lk
 {
 
-base::FixedBytes<Complexity::LENGTH> Complexity::calcComparer(const base::Uint256& densed)
+Complexity::Comparer Complexity::calcComparer(const Complexity::Densed& densed)
 {
-    base::FixedBytes<LENGTH> ret;
+    Complexity::Comparer ret;
     std::size_t index = LENGTH;
     for (auto d = densed; d > 0; d /= 256) {
-        ret[--index] = (d % 256).toMultiNumber().convert_to<base::Byte>();
+        ret[--index] = (d % 256).toMultiprecisionNumber().convert_to<base::Byte>();
     }
     return ret;
 }
 
 
-Complexity::Complexity(base::Uint256 densed)
+Complexity::Complexity(Complexity::Densed densed)
   : _densed{ std::move(densed) }
   , _comparer{ calcComparer(_densed) }
 {}
 
 
-const base::Uint256& Complexity::getDensed() const noexcept
+const Complexity::Densed& Complexity::getDensed() const noexcept
 {
     return _densed;
 }
 
 
-const base::FixedBytes<Complexity::LENGTH>& Complexity::getComparer() const
+const Complexity::Comparer& Complexity::getComparer() const noexcept
 {
     return _comparer;
 }
