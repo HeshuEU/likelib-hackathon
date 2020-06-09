@@ -70,11 +70,11 @@ int main(int argc, char** argv)
 
         auto config_file_path = parser.getValue<std::string>("config");
         if (!std::filesystem::exists(config_file_path)) {
-            LOG_ERROR << "[config file is not exists] input file path: " << config_file_path;
+            LOG_ERROR << "Config file does not exist by path \"" << config_file_path << '"';
             return base::config::EXIT_FAIL;
         }
         else {
-            LOG_INFO << "Found config file by path: " << config_file_path;
+            LOG_INFO << "Found config file by path \"" << config_file_path << '"';
         }
 
         // handlers initialization
