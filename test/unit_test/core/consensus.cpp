@@ -29,5 +29,5 @@ BOOST_AUTO_TEST_CASE(consensus_check1)
         b[i] = 0xFF;
     }
 
-    BOOST_CHECK(b < c.getComplexity().getComparer());
+    BOOST_CHECK(base::config::BC_DIFFICULTY_RECALCULATION_RATE > 1 || b == c.getComplexity().getComparer());
 }

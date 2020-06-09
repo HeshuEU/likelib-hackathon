@@ -10,7 +10,7 @@ Complexity::Comparer Complexity::calcComparer(const Complexity::Densed& densed)
     Complexity::Comparer ret;
     std::size_t index = LENGTH;
     for (auto d = densed; d > 0; d /= 256) {
-        ret[--index] = (d % 256).toMultiprecisionNumber().convert_to<base::Byte>();
+        ret[--index] = (d % 256).convert_to<base::Byte>();
     }
     return ret;
 }
@@ -20,6 +20,16 @@ Complexity::Complexity(Complexity::Densed densed)
   : _densed{ std::move(densed) }
   , _comparer{ calcComparer(_densed) }
 {}
+
+
+const Complexity& Complexity::minimal()
+{
+    static const auto ret = [] {
+        base::Uint256 v = (base::Uint256{ 1 } << 252) + (base::Uint256{ 1 } << 251);
+        return Complexity{ v };
+    }();
+    return ret;
+}
 
 
 const Complexity::Densed& Complexity::getDensed() const noexcept
@@ -53,7 +63,7 @@ bool Consensus::checkBlock(const Block& block) const
 
 void Consensus::applyBlock(const Block& block)
 {
-    _last_blocks.push(&block);
+    _last_blocks.push(block);
     if (_last_blocks.size() < base::config::BC_DIFFICULTY_RECALCULATION_RATE) {
         // means we do not have enough block to recalculate anything
         return;
@@ -67,7 +77,7 @@ void Consensus::applyBlock(const Block& block)
         return;
     }
 
-    const Block& p = *_last_blocks.front();
+    const Block& p = _last_blocks.front();
 
     auto elapsed = (block.getTimestamp() - p.getTimestamp()).getSeconds();
     ASSERT(elapsed);

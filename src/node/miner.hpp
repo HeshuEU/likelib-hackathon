@@ -78,8 +78,7 @@ class Miner
 
     ~Miner();
     //===================
-    void findNonce(const lk::Block& block_without_nonce,
-                   const lk::Complexity& complexity);
+    void findNonce(const lk::Block& block_without_nonce, const lk::Complexity& complexity);
     void dropJob();
     //===================
   private:

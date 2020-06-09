@@ -13,6 +13,8 @@ class Complexity
 {
     static constexpr std::size_t LENGTH = base::Sha256::LENGTH; // bytes
   public:
+    static const Complexity& minimal();
+
     using Comparer = base::FixedBytes<LENGTH>;
     using Densed = base::Uint256;
 
@@ -40,7 +42,7 @@ class Consensus
     const Complexity& getComplexity() const;
 
   private:
-    std::queue<const Block*> _last_blocks;
+    std::queue<Block> _last_blocks;
     Complexity _complexity;
 };
 

@@ -37,8 +37,8 @@ class Blockchain
     std::vector<std::optional<std::reference_wrapper<const Block>>> getByDepthFromTop(
       const std::vector<BlockDepth>& depths) const;
     //===================
-    std::pair<const lk::Block&, lk::Complexity> getTopBlockAndComplexity() const;
-    const lk::Block& getTopBlock() const;
+    std::pair<lk::Block, lk::Complexity> getTopBlockAndComplexity() const;
+    lk::Block getTopBlock() const;
     base::Sha256 getTopBlockHash() const;
 
     // *getNthFromTop(0) == getTopBlock()
@@ -59,7 +59,7 @@ class Blockchain
     Consensus _consensus;
     bool checkConsensus(const Block& block) const;
     //===================
-    base::Observable<const Block&> _block_added;
+    base::Observable<Block> _block_added;
     //===================
     void pushForwardToPersistentStorage(const base::Sha256& block_hash, const lk::Block& block);
     std::optional<base::Sha256> getLastBlockHashAtPersistentStorage() const;

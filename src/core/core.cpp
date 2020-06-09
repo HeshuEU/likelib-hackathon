@@ -160,6 +160,8 @@ void Core::addTransactionOutput(const base::Sha256& tx, const TransactionStatus&
 
 bool Core::tryAddBlock(const lk::Block& b)
 {
+    std::unique_lock lk{ _blockchain_mutex };
+
     if (checkBlock(b) && _blockchain.tryAddBlock(b)) {
         {
             std::shared_lock lk(_pending_transactions_mutex);
@@ -169,6 +171,7 @@ bool Core::tryAddBlock(const lk::Block& b)
         LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
 
         applyBlockTransactions(b);
+        lk.unlock();
         auto block_hash = base::Sha256::compute(base::toBytes(b));
         _event_block_added.notify(std::move(block_hash), b);
         return true;
@@ -199,6 +202,11 @@ std::optional<lk::Transaction> Core::findTransaction(const base::Sha256& hash) c
 
 bool Core::checkBlock(const lk::Block& block) const
 {
+    const auto& top_block = _blockchain.getTopBlock();
+
+    if (top_block.getTimestamp() >= block.getTimestamp()) {
+        return false;
+    }
     if (block.getTransactions().size() == 0 ||
         block.getTransactions().size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
         return false;
@@ -206,6 +214,7 @@ bool Core::checkBlock(const lk::Block& block) const
     if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(block)))) {
         return false;
     }
+
     auto block_balance = lk::calcCost(block.getTransactions());
     for (const auto& tx : block.getTransactions()) {
         if (_state_manager.hasAccount(tx.getFrom())) {
@@ -226,6 +235,8 @@ bool Core::checkBlock(const lk::Block& block) const
 
 std::pair<lk::Block, lk::Complexity> Core::getMiningData() const
 {
+    std::unique_lock lk{ _blockchain_mutex };
+
     const auto& p = _blockchain.getTopBlockAndComplexity();
     const auto& top_block = p.first;
     auto& complexity = p.second;
@@ -243,7 +254,8 @@ std::pair<lk::Block, lk::Complexity> Core::getMiningData() const
         pending.selectBestByFee(base::config::BC_MAX_TRANSACTIONS_IN_BLOCK);
     }
 
-    return {lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), std::move(pending) }, std::move(complexity) };
+    return { lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), std::move(pending) },
+             std::move(complexity) };
 }
 
 
@@ -258,7 +270,7 @@ lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const
 }
 
 
-const lk::Block& Core::getTopBlock() const
+lk::Block Core::getTopBlock() const
 {
     return _blockchain.getTopBlock();
 }
@@ -290,7 +302,7 @@ void Core::applyBlockTransactions(const lk::Block& block)
 void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx)
 {
     auto transaction_hash = tx.hashOfTransaction();
-    LOG_DEBUG << "Performing transactions with hash[hex] " << transaction_hash;
+    LOG_DEBUG << "Performing transactions with hash " << transaction_hash;
     _state_manager.getAccount(tx.getFrom()).addTransactionHash(transaction_hash);
 
     auto tx_manager{ _state_manager.createCopy() };

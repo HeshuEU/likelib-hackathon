@@ -42,7 +42,7 @@ void Node::onBlockMine(lk::Block&& block)
 
 void Node::onNewTransactionReceived(const lk::Transaction&)
 {
-    auto[block, complexity] = _core.getMiningData();
+    auto [block, complexity] = _core.getMiningData();
     if (!block.getTransactions().isEmpty()) {
         _miner->findNonce(block, complexity);
     }
@@ -54,7 +54,7 @@ void Node::onNewTransactionReceived(const lk::Transaction&)
 
 void Node::onNewBlock(const base::Sha256& block_hash, const lk::Block&)
 {
-    auto[block, complexity] = _core.getMiningData();
+    auto [block, complexity] = _core.getMiningData();
     if (!block.getTransactions().isEmpty()) {
         _miner->findNonce(block, complexity);
     }

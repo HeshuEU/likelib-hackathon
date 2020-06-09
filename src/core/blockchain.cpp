@@ -97,6 +97,7 @@ bool Blockchain::tryAddBlock(const Block& block)
     decltype(_blocks)::iterator inserted_block;
     {
         std::lock_guard lk(_blocks_mutex);
+
         if (!_blocks.empty() && _blocks.find(hash) != _blocks.end()) {
             return false;
         }
@@ -110,12 +111,12 @@ bool Blockchain::tryAddBlock(const Block& block)
             return false;
         }
         else {
+            _consensus.applyBlock(block);
+
             inserted_block = _blocks.insert({ hash, block }).first;
             _blocks_by_depth.insert({ block.getDepth(), hash });
             pushForwardToPersistentStorage(hash, block);
             _top_level_block_hash = hash;
-
-            _consensus.applyBlock(block);
         }
     }
 
@@ -212,14 +213,14 @@ std::optional<lk::Transaction> Blockchain::findTransaction(const base::Sha256& t
 }
 
 
-std::pair<const lk::Block&, lk::Complexity> Blockchain::getTopBlockAndComplexity() const
+std::pair<lk::Block, lk::Complexity> Blockchain::getTopBlockAndComplexity() const
 {
     std::shared_lock lk(_blocks_mutex);
-    return {getTopBlock(), _consensus.getComplexity()};
+    return { getTopBlock(), _consensus.getComplexity() };
 }
 
 
-const Block& Blockchain::getTopBlock() const
+Block Blockchain::getTopBlock() const
 {
     std::shared_lock lk(_blocks_mutex);
     auto it = _blocks.find(_top_level_block_hash);

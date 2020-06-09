@@ -24,7 +24,7 @@ lk::AccountInfo GeneralServerService::getAccountInfo(const lk::Address& address)
 rpc::Info GeneralServerService::getNodeInfo()
 {
     LOG_TRACE << "Received RPC request {getNodeInfo}";
-    auto& top_block = _core.getTopBlock();
+    const auto& top_block = _core.getTopBlock();
     auto hash = base::Sha256::compute(base::toBytes(top_block));
     return { hash, top_block.getDepth(), base::config::RPC_PUBLIC_API_VERSION };
 }

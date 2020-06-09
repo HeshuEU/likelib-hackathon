@@ -51,7 +51,7 @@ class Core
     std::optional<lk::Block> findBlock(const base::Sha256& hash) const;
     std::optional<base::Sha256> findBlockHash(const lk::BlockDepth& depth) const;
     std::optional<lk::Transaction> findTransaction(const base::Sha256& hash) const;
-    const lk::Block& getTopBlock() const;
+    lk::Block getTopBlock() const;
     base::Sha256 getTopBlockHash() const;
     //==================
     std::pair<lk::Block, lk::Complexity> getMiningData() const;
@@ -68,7 +68,10 @@ class Core
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
     //==================
     StateManager _state_manager;
+
+    mutable std::shared_mutex _blockchain_mutex;
     lk::Blockchain _blockchain;
+
     lk::Host _host;
     //==================
     evmc::VM _vm;
