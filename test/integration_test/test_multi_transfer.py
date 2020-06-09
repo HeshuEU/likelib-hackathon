@@ -1,4 +1,3 @@
-#from tester import test_case, Node, NodePool
 from tester import test_case, Env, NodeConfig, Id, TEST_CHECK, TEST_CHECK_EQUAL,\
                    ClientType, get_distributor_address_path, TransactionStatusCode
 from time import sleep
@@ -74,9 +73,8 @@ def main(env: Env) -> int:
 
     return 0
 
-# next
 @test_case("multi_transfer_connected_one_by_one")
-def main(env, logger):
+def main(env: Env) -> int:
     count_nodes = 10
     start_sync_port = 20310
     start_rpc_port = 50160
@@ -84,55 +82,71 @@ def main(env, logger):
     transaction_timeout = 7
     transaction_wait = 4
 
-    with NodePool() as pool:
-        pool.append(Node(env, Node.Settings(Node.Id(start_sync_port, start_rpc_port)), logger))
-        pool.last.start_node(waiting_time)
-        pool.last.run_check_test()
+    pool = []
+    node_ids = []
 
-        # initializing connections with nodes
-        for i in range(1, count_nodes):
-            curent_sync_port = start_sync_port + i
-            curent_rpc_port = start_rpc_port + i
+    id = Id(start_sync_port, grpc_port = start_rpc_port)
+    env.start_node(NodeConfig(id))
+    node_ids.append(id)
+    pool.append(env.get_client(ClientType.LEGACY_GRPC, id))
+    TEST_CHECK(pool[0].connection_test())
 
-            pool.append(
-                Node(env, Node.Settings(Node.Id(curent_sync_port, curent_rpc_port), nodes=[pool.last.settings.id, ]),
-                     logger))
 
-            pool.last.start_node(waiting_time)
-            for node in pool:
-                node.run_check_test()
+    # initializing connections with nodes
+    for i in range(1, count_nodes):
+      current_sync_port = start_sync_port + i
+      current_rpc_port = start_rpc_port + i
+      last_id = id
+      id = Id(current_sync_port, grpc_port = current_rpc_port)
+      env.start_node(NodeConfig(id, nodes = [last_id, ]))
+      node_ids.append(id)
+      pool.append(env.get_client(ClientType.LEGACY_GRPC, id))
 
-        addresses = [pool.last.create_new_address(keys_path=f"keys{i}") for i in range(1, len(pool))]
-        init_amount = 1000
-        distributor_address = pool.last.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
+      for node in pool:
+        TEST_CHECK(node.connection_test())
 
-        # init addresses with amount
-        for to_address in addresses:
-            pool.last.run_check_balance(address=to_address, balance=0)
-            pool.last.run_check_transfer(to_address=to_address, amount=init_amount,
-                                         from_address=distributor_address, fee=0, timeout=transaction_timeout,
-                                         wait=transaction_wait)
-            for node in pool:
-                node.run_check_balance(address=to_address, balance=init_amount)
+    addresses = [pool[-1].generate_keys(keys_path=f"keys{i}") for i in range(1, len(pool))]
+    init_amount = 1000
 
-        for i in range(1, len(addresses) - 1):
-            from_address = addresses[i]
-            to_address = addresses[i + 1]
-            amount = i * 100
-            pool.last.run_check_transfer(to_address=to_address, amount=amount, from_address=from_address,
-                                         fee=0, timeout=transaction_timeout,
-                                         wait=transaction_wait)
-            for node in pool:
-                node.run_check_balance(address=to_address, balance=amount + init_amount)
+    distributor_address = pool[-1].load_address(keys_path=get_distributor_address_path())
 
-        first_address = addresses[0]
-        first_address_balance = init_amount
-        for node in pool:
-            node.run_check_balance(address=first_address, balance=first_address_balance)
+    # init addresses with amount
+    for to_address in addresses:
+      TEST_CHECK_EQUAL(pool[-1].get_balance(address=to_address.address, timeout=2, wait=1), 0)
+      transaction = pool[-1].transfer(to_address=to_address.address, amount=init_amount,
+           from_address=distributor_address, fee=0, wait=transaction_wait, timeout=transaction_timeout)
+      TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
+      stat = pool[-1].get_transaction_status(tx_hash=transaction.tx_hash)
+      TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+
+      for node in pool:
+        TEST_CHECK_EQUAL(node.get_balance(address=to_address.address, timeout=2, wait=1),
+                         init_amount)
+
+    for i in range(1, len(addresses) - 1):
+      from_address = addresses[i]
+      to_address = addresses[i + 1]
+      amount = i * 100
+
+      transaction = pool[-1].transfer(to_address=to_address.address, amount=amount,
+           from_address=from_address, fee=0, wait=transaction_wait, timeout=transaction_timeout)
+      TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
+      stat = pool[-1].get_transaction_status(tx_hash=transaction.tx_hash)
+      TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+
+      for node in pool:
+        TEST_CHECK_EQUAL(node.get_balance(address=to_address.address, timeout=2, wait=1),
+                         amount + init_amount)
+
+    first_address = addresses[0]
+    first_address_balance = init_amount
+    for node in pool:
+      TEST_CHECK_EQUAL(node.get_balance(address=first_address.address, timeout=2, wait=1),
+                         first_address_balance)
 
     return 0
 
-
+# next
 def node_transfers(node, addresses, transaction_wait):
     shift = len(addresses) - 1
     pos = 0
