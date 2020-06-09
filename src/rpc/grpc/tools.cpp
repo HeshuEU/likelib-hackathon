@@ -127,7 +127,7 @@ void serializeAccountInfo(const lk::AccountInfo& from, likelib::AccountInfo* to)
 {
     to->set_type(serializeAccountType(from.type));
     serializeAddress(from.address, to->mutable_address());
-    to->mutable_balance()->set_value(from.balance.toString());
+    to->mutable_balance()->set_value(from.balance.str());
     to->set_nonce(from.nonce);
     for (const auto& tx_hash : from.transactions_hashes) {
         serializeHash(tx_hash, to->mutable_hashes()->Add());
@@ -145,7 +145,7 @@ lk::AccountInfo deserializeAccountInfo(const likelib::AccountInfo* const info)
     }
     lk::AccountType type = deserializeAccountType(info->type());
     lk::Address address = deserializeAddress(&(info->address()));
-    return { type, address, balance, nonce, std::move(hashes) };
+    return { type, address, lk::Balance{ balance }, nonce, std::move(hashes) };
 }
 
 
@@ -192,7 +192,7 @@ void serializeTransaction(const lk::Transaction& from, likelib::Transaction* to)
 {
     serializeAddress(from.getFrom(), to->mutable_from());
     serializeAddress(from.getTo(), to->mutable_to());
-    to->mutable_value()->set_value(from.getAmount().toString());
+    to->mutable_value()->set_value(from.getAmount().str());
     to->set_fee(from.getFee());
     to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSeconds());
     to->set_data(base::base64Encode(from.getData()));
@@ -206,7 +206,7 @@ lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx)
     txb.setFrom(deserializeAddress(&tx->from()));
     lk::Address to_address = deserializeAddress(&tx->to());
     txb.setTo(to_address);
-    txb.setAmount(tx->value().value());
+    txb.setAmount(lk::Balance{ tx->value().value() });
     txb.setFee(tx->fee());
     txb.setTimestamp(base::Time(tx->creation_time().seconds_since_epoch()));
     txb.setData(base::base64Decode(tx->data()));

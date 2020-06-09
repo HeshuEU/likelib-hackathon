@@ -87,7 +87,7 @@ std::optional<lk::TransactionStatus::ActionType> deserializeTransactionStatusAct
 
 web::json::value serializeBalance(const lk::Balance& balance)
 {
-    return web::json::value::string(balance.toString());
+    return web::json::value::string(balance.str());
 }
 
 
