@@ -54,7 +54,7 @@ void AccountState::addBalance(lk::Balance delta)
 void AccountState::subBalance(lk::Balance delta)
 {
     if (_balance < delta) {
-        throw base::LogicError("trying to take more LK from account than it has");
+        RAISE_ERROR(base::LogicError, "trying to take more LK from account than it has");
     }
     _balance -= delta;
 }
