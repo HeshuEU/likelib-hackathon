@@ -312,7 +312,23 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
 {
     ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
 
-    if (_requested_block && *_requested_block == hash) {
+    if (!_requested_block) {
+        _peer._rating.nonExpectedMessage();
+        if (!_peer._rating.differentGenesis()) {
+            // need to disconnect this peer since in has different genesis block, this is fatal
+            _peer.endSession(msg::Close{});
+        }
+        return true;
+    }
+    else if (*_requested_block != hash) {
+        _peer._rating.invalidMessage();
+        if (!_peer._rating.differentGenesis()) {
+            // need to disconnect this peer since in has different genesis block, this is fatal
+            _peer.endSession(msg::Close{});
+        }
+        return true;
+    }
+    else {
         _requested_block.reset();
         _sync_blocks.push_back(block);
         const auto& next = block.getPrevBlockHash();
@@ -326,7 +342,7 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         else if (_peer._core.findBlock(next)) {
             LOG_DEBUG << "Peer " << &_peer << " applying all " << _sync_blocks.size() << " sync blocks";
             for (auto it = _sync_blocks.crbegin(); it != _sync_blocks.crend(); ++it) {
-                if (!_peer._core.tryAddBlock(*it)) {
+                if (_peer._core.tryAddBlock(*it) != Blockchain::AdditionResult ::ADDED) {
                     LOG_DEBUG << "Applying error";
                     break;
                 }
@@ -339,10 +355,18 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         }
         return true;
     }
-    else if (_peer._core.tryAddBlock(block)) {
+}
+
+
+bool Peer::Synchronizer::handleReceivedNewBlock(const base::Sha256& hash, const Block& block)
+{
+    ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
+
+    if (_peer._core.tryAddBlock(block) == Blockchain::AdditionResult::ADDED) { // if this is a new block
         return true;
     }
     else {
+
         return false;
     }
 }
@@ -414,6 +438,10 @@ void Peer::process(base::SerializationIArchive&& ia)
         }
         case msg::BlockNotFound::TYPE_ID: {
             handle(ia.deserialize<msg::BlockNotFound>());
+            break;
+        }
+        case msg::NewBlock::TYPE_ID: {
+            handle(ia.deserialize<msg::NewBlock>());
             break;
         }
         case msg::Close::TYPE_ID: {
@@ -545,7 +573,7 @@ void Peer::handle(lk::msg::GetBlock&& msg)
 
 void Peer::handle(lk::msg::Block&& msg)
 {
-    PEER_LOG << "hanlinding received " << msg.block_hash << " block";
+    PEER_LOG << "handling received " << msg.block_hash << " block";
     if (msg.block_hash != base::Sha256::compute(base::toBytes(msg.block))) {
         PEER_LOG << "invalid message";
         _rating.invalidMessage();
@@ -559,6 +587,19 @@ void Peer::handle(lk::msg::Block&& msg)
 void Peer::handle(lk::msg::BlockNotFound&& msg)
 {
     LOG_DEBUG << "Block not found " << msg.block_hash;
+}
+
+
+void Peer::handle(lk::msg::NewBlock&& msg)
+{
+    PEER_LOG << "handling received " << msg.block_hash << " block";
+    if (msg.block_hash != base::Sha256::compute(base::toBytes(msg.block))) { // TODO: use checksum
+        PEER_LOG << "invalid message";
+        _rating.invalidMessage();
+        return;
+    }
+
+    _synchronizer.handleReceivedNewBlock(msg.block_hash, msg.block);
 }
 
 
@@ -636,7 +677,7 @@ Requests::Requests(std::weak_ptr<net::Session> session, boost::asio::io_context&
         s->setHandler(_session_handler);
     }
     else {
-        RAISE_ERROR(net::ClosedSession);
+        RAISE_ERROR(net::ClosedSession, "Session is already closed");
     }
 }
 

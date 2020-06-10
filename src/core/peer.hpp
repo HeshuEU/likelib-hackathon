@@ -196,6 +196,7 @@ class Peer : public std::enable_shared_from_this<Peer>
 
         void handleReceivedTopBlockHash(const base::Sha256& peers_top_block);
         bool handleReceivedBlock(const base::Sha256& hash, const Block& block);
+        bool handleReceivedNewBlock(const base::Sha256& hash, const Block& block);
         bool isSynchronised() const;
 
       private:
@@ -227,6 +228,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     void handle(msg::GetBlock&& msg);
     void handle(msg::Block&& msg);
     void handle(msg::BlockNotFound&& msg);
+    void handle(msg::NewBlock&& msg);
     void handle(msg::Close&& msg);
     //=========================
 };
