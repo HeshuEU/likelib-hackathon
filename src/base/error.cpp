@@ -1,16 +1,17 @@
 #include "error.hpp"
 
-#include <ostream>
-
 namespace base
 {
 
-Error::Error(const std::string& message)
-  : _message{ message }
+Error::Error(const char* file_name, std::size_t line_number, const char* function_signature, std::string message)
+  : _file_name{ file_name }
+  , _line_number{ line_number }
+  , _function_signature{ function_signature }
+  , _message{ std::move(message) }
 {}
 
 
-const std::string& Error::toStdString() const noexcept
+const std::string& Error::getMessage() const noexcept
 {
     return _message;
 }
@@ -19,12 +20,6 @@ const std::string& Error::toStdString() const noexcept
 const char* Error::what() const noexcept
 {
     return _message.c_str();
-}
-
-
-std::ostream& operator<<(std::ostream& os, const Error& error)
-{
-    return os << error.what();
 }
 
 } // namespace base
