@@ -90,11 +90,11 @@ void Consensus::applyBlock(const Block& block)
     static constexpr int TARGET =
       base::config::BC_DIFFICULTY_RECALCULATION_RATE * 60 / base::config::BC_TARGET_BLOCKS_PER_MINUTE;
 
-    if (TARGET >= 4 * elapsed) {
-        _complexity = Complexity{ _complexity.getDensed() / 4 };
+    if (TARGET >= base::config::BC_MAXIMAL_CHANGE_MULTIPLIER * elapsed) {
+        _complexity = Complexity{ _complexity.getDensed() / base::config::BC_MAXIMAL_CHANGE_MULTIPLIER };
     }
-    else if (4 * TARGET <= elapsed) { // TARGET
-        _complexity = Complexity{ _complexity.getDensed() * 4 };
+    else if (base::config::BC_MAXIMAL_CHANGE_MULTIPLIER * TARGET <= elapsed) { // TARGET
+        _complexity = Complexity{ _complexity.getDensed() * base::config::BC_MAXIMAL_CHANGE_MULTIPLIER };
     }
     else {
         _complexity = Complexity{ _complexity.getDensed() * elapsed / TARGET };
