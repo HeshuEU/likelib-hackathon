@@ -1,7 +1,7 @@
 #include "tools.hpp"
 
-#include "vm/error.hpp"
 #include "vm/encode_decode.hpp"
+#include "vm/error.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -12,9 +12,57 @@
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <filesystem>
 #include <regex>
 
 namespace bp = ::boost::process;
+
+namespace
+{
+std::string readAllFile(const std::filesystem::path& path)
+{
+    if (!std::filesystem::exists(path)) {
+        RAISE_ERROR(base::InvalidArgument, "the file with this path does not exist");
+    }
+    std::ifstream file(path, std::ifstream::binary);
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    std::string buffer(size, ' ');
+    file.seekg(0);
+    file.read(&buffer[0], size);
+    return buffer;
+}
+
+
+std::pair<base::Bytes, std::string> loadContractData(const std::filesystem::path& path)
+{
+    auto compiled_file_path = path / std::filesystem::path("compiled_code.bin");
+    if (!std::filesystem::exists(compiled_file_path)) {
+        RAISE_ERROR(base::InvalidArgument, "Contract file not exists");
+    }
+    std::ifstream compiled_file(compiled_file_path, std::ios::binary);
+    base::Bytes bytecode(std::vector<base::Byte>(std::istreambuf_iterator<char>(compiled_file), {}));
+
+    auto contract_metadata = path / std::filesystem::path("metadata.json");
+    if (!std::filesystem::exists(contract_metadata)) {
+        RAISE_ERROR(base::InvalidArgument, "Contract metadata file not exists");
+    }
+    auto metadata = readAllFile(contract_metadata);
+    return { bytecode, metadata };
+}
+
+
+std::pair<std::string, std::string> parseCall(const std::string& call_string)
+{
+    auto first_bracket_pos = call_string.find("(");
+    if (first_bracket_pos == std::string::npos || call_string[call_string.size() - 1] != ')') {
+        RAISE_ERROR(base::InvalidArgument, "Wrong string for encode");
+    }
+    auto method = call_string.substr(0, first_bracket_pos);
+    auto arguments = "[" + call_string.substr(first_bracket_pos + 1, call_string.size() - first_bracket_pos - 2) + "]";
+    return { method, arguments };
+}
+}
 
 namespace vm
 {
@@ -259,17 +307,9 @@ std::string replaceAddressConstructor(const std::string& call)
 
 std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call)
 {
-    auto exec_script = std::filesystem::current_path() / std::filesystem::path{ "encoder.py" };
-    if (std::filesystem::exists(exec_script)) {
-        auto formatted_call = replaceAddressConstructor(call);
-        //std::vector<std::string> args{ exec_script, "--contract_path", path_to_code_folder, "--call", formatted_call };
-        auto tmp = vm::encodeMessage(path_to_code_folder, formatted_call);
-        // std::istringstream iss(callPython(args));
-        // std::string tmp;
-        // iss >> tmp;
-        return base::fromHex<base::Bytes>(tmp);
-    }
-    return std::nullopt;
+    auto formatted_call = replaceAddressConstructor(call);
+    auto tmp = vm::encodeMessage(path_to_code_folder, formatted_call);
+    return base::fromHex<base::Bytes>(tmp);
 }
 
 
@@ -277,14 +317,7 @@ std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_cod
                                         const std::string& method,
                                         const std::string& output)
 {
-    auto exec_script = std::filesystem::current_path() / std::filesystem::path{ "decoder.py" };
-    if (std::filesystem::exists(exec_script)) {
-        std::vector<std::string> args{
-            exec_script, "--contract_path", path_to_code_folder, "--method", method, "--data", output
-        };
-        return vm::decodeMessage(path_to_code_folder, method, output);
-    }
-    return std::nullopt;
+    return vm::decodeMessage(path_to_code_folder, method, output);
 }
 
 
@@ -347,30 +380,35 @@ std::string callPython(std::vector<std::string>& args)
 std::string encodeMessage(const std::string& contract_path, const std::string& data)
 {
     auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
-    if(status == -1){
+    if (status == -1) {
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
     Py_Initialize();
     auto module = PyImport_ImportModule("encode_decode");
-    if(module == nullptr){
+    auto [bytecode, metadata] = loadContractData(contract_path);
+    auto [method, arguments] = parseCall(data);
+    if (module == nullptr) {
         Py_Finalize();
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
-    auto result = ::encodeMessage(contract_path.c_str(), data.c_str());
+    auto result =
+      method == "constructor" ?
+        ::encodeMessageConstructor(arguments.c_str(), bytecode.toString().c_str(), metadata.c_str()) :
+        ::encodeMessageFunction(method.c_str(), arguments.c_str(), bytecode.toString().c_str(), metadata.c_str());
     Py_Finalize();
-    return result;
+    return result.substr(2, result.size() - 2);
 }
 
 
 std::string decodeMessage(const std::string& contract_path, const std::string& method, const std::string& data)
 {
     auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
-    if(status == -1){
+    if (status == -1) {
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
     Py_Initialize();
     auto module = PyImport_ImportModule("encode_decode");
-    if(module == nullptr){
+    if (module == nullptr) {
         Py_Finalize();
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }

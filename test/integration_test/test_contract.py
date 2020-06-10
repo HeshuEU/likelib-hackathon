@@ -56,6 +56,7 @@ contract SimpleStorage {
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
 
     message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    print(message_call_status.status_code)
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data

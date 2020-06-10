@@ -3,7 +3,7 @@
 #ifndef __PYX_HAVE__encode_decode
 #define __PYX_HAVE__encode_decode
 
-#include <Python.h>
+#include <python3.7/Python.h>
 #include <string>
 
 #ifndef __PYX_HAVE_API__encode_decode
@@ -20,7 +20,8 @@
   #define DL_IMPORT(_T) _T
 #endif
 
-__PYX_EXTERN_C std::string encodeMessage(char const *, char const *);
+__PYX_EXTERN_C std::string encodeMessageFunction(char const *, char const *, char const *, char const *);
+__PYX_EXTERN_C std::string encodeMessageConstructor(char const *, char const *, char const *);
 __PYX_EXTERN_C std::string decodeMessage(char const *, char const *, char const *);
 
 #endif /* !__PYX_HAVE_API__encode_decode */
