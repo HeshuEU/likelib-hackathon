@@ -171,6 +171,21 @@ BlockNotFound BlockNotFound::deserialize(base::SerializationIArchive& ia)
 }
 
 
+void NewBlock::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(block_hash);
+    oa.serialize(block);
+}
+
+
+NewBlock NewBlock::deserialize(base::SerializationIArchive& ia)
+{
+    auto block_hash = ia.deserialize<base::Sha256>();
+    auto block = ia.deserialize<lk::Block>();
+    return NewBlock{ std::move(block_hash), std::move(block) };
+}
+
+
 void Close::serialize(base::SerializationOArchive&) const {}
 
 
