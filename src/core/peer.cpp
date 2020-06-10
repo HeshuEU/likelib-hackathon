@@ -719,8 +719,10 @@ void Requests::onMessageReceive(const base::Bytes& received_bytes)
 
 void Requests::onClose()
 {
-    if (auto l = _session.lock()) {
-        LOG_DEBUG << "Processing onClose callback for " << l->getEndpoint();
+    if constexpr(base::config::IS_DEBUG) {
+        if (auto l = _session.lock()) {
+            LOG_DEBUG << "Processing onClose callback for " << l->getEndpoint();
+        }
     }
     if (_close_callback) {
         _close_callback();
