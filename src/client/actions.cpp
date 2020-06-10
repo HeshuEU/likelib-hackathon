@@ -576,17 +576,16 @@ int ActionCompile::loadOptions(const base::ProgramOptionsParser& parser)
 
 int ActionCompile::execute()
 {
-
     std::optional<vm::Contracts> contracts;
     try {
         contracts = vm::compile(_code_file_path);
     }
     catch (const base::ParsingError& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
     catch (const base::SystemCallFailed& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
 
@@ -612,8 +611,8 @@ int ActionCompile::execute()
             base::save(contract.metadata, current_folder / std::filesystem::path{ config::METADATA_JSON_FILE });
         }
         catch (const base::Error& er) {
-            std::cerr << er;
-            LOG_ERROR << er;
+            std::cerr << er.what();
+            LOG_ERROR << er.what();
             return base::config::EXIT_FAIL;
         }
         catch (...) {
@@ -676,11 +675,11 @@ int ActionEncode::execute()
         }
     }
     catch (const base::ParsingError& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
     catch (const base::SystemCallFailed& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
 
@@ -742,11 +741,11 @@ int ActionDecode::execute()
         }
     }
     catch (const base::ParsingError& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
     catch (const base::SystemCallFailed& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
 
