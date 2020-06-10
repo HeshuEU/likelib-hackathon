@@ -4,7 +4,6 @@
 #include "base/log.hpp"
 
 #include "core/consensus.hpp"
-#include "core/host.hpp"
 
 #include <optional>
 
@@ -45,9 +44,10 @@ const base::Bytes LAST_BLOCK_HASH_KEY{ toBytes(DataType::SYSTEM, base::Bytes("la
 namespace lk
 {
 
-Blockchain::Blockchain(const base::PropertyTree& config)
+Blockchain::Blockchain(lk::Block genesis_block, const base::PropertyTree& config)
   : _config{ config }
-  , _top_level_block_hash(base::Bytes(32))
+  , _top_level_block_hash(
+      base::Bytes(32)) // temporary null, because it requires initialization. Set to real value in addGenesisBlock
 {
     auto database_path = config.get<std::string>("database.path");
     if (config.get<bool>("database.clean")) {
@@ -58,6 +58,8 @@ Blockchain::Blockchain(const base::PropertyTree& config)
         _database = base::createDefaultDatabaseInstance(base::Directory(database_path));
         LOG_INFO << "Loaded database by path: " << database_path;
     }
+
+    addGenesisBlock(genesis_block);
 }
 
 
@@ -90,7 +92,7 @@ void Blockchain::addGenesisBlock(const Block& block)
 }
 
 
-bool Blockchain::tryAddBlock(const Block& block)
+Blockchain::AdditionResult Blockchain::tryAddBlock(const Block& block)
 {
     auto hash = base::Sha256::compute(base::toBytes(block));
 
@@ -99,31 +101,45 @@ bool Blockchain::tryAddBlock(const Block& block)
         std::lock_guard lk(_blocks_mutex);
 
         if (!_blocks.empty() && _blocks.find(hash) != _blocks.end()) {
-            return false;
+            return AdditionResult::ALREADY_IN_BLOCKCHAIN;
         }
         else if (!_blocks.empty() && _top_level_block_hash != block.getPrevBlockHash()) {
-            return false;
+            return AdditionResult::INVALID_PARENT_HASH;
         }
         else if (_blocks.size() != block.getDepth()) {
-            return false;
+            return AdditionResult::INVALID_DEPTH;
         }
         else if (!checkConsensus(block)) {
-            return false;
+            return AdditionResult::CONSENSUS_ERROR;
         }
-        else {
-            _consensus.applyBlock(block);
+        else if (_top_level_block_hash != hash) {
+            return AdditionResult::INVALID_PARENT_HASH;
+        }
+        else if(block.getTransactions().size() == 0 ||
+                        block.getTransactions().size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
+                return AdditionResult::INVALID_TRANSACTIONS_NUMBER;
+        }
+        else if(_getTopBlock().getTimestamp() >= block.getTimestamp()) {
+            return AdditionResult::OLD_TIMESTAMP;
+        }
+        else if (constexpr unsigned SECONDS_IN_DAY = 24 * 60 * 60; block.getTimestamp().getSeconds() > base::Time::now().getSeconds() + SECONDS_IN_DAY) {
+            return AdditionResult::FUTURE_TIMESTAMP;
+        }
 
-            inserted_block = _blocks.insert({ hash, block }).first;
-            _blocks_by_depth.insert({ block.getDepth(), hash });
-            pushForwardToPersistentStorage(hash, block);
-            _top_level_block_hash = hash;
-        }
+        // if here, this means that the block is ok
+        LOG_DEBUG << "Complexity right now is: " << _consensus.getComplexity().getDensed();
+        _consensus.applyBlock(block);
+
+        inserted_block = _blocks.insert({ hash, block }).first;
+        _blocks_by_depth.insert({ block.getDepth(), hash });
+        pushForwardToPersistentStorage(hash, block);
+        _top_level_block_hash = hash;
     }
 
-    LOG_DEBUG << "Adding block. Block hash = " << hash;
+    LOG_DEBUG << "Block " << hash << " has been added to blockchain";
     _block_added.notify(inserted_block->second);
 
-    return true;
+    return AdditionResult::ADDED;
 }
 
 
@@ -223,6 +239,13 @@ std::pair<lk::Block, lk::Complexity> Blockchain::getTopBlockAndComplexity() cons
 Block Blockchain::getTopBlock() const
 {
     std::shared_lock lk(_blocks_mutex);
+    return _getTopBlock();
+}
+
+
+const Block& Blockchain::_getTopBlock() const
+{
+    ASSERT(!_blocks_mutex.try_lock()); // ensures that this function is used only in thread-safe environment
     auto it = _blocks.find(_top_level_block_hash);
     ASSERT(it != _blocks.end());
     return it->second;

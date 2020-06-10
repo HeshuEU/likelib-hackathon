@@ -13,12 +13,10 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
   : _config{ config }
   , _vault{ key_vault }
   , _this_node_address{ _vault.getKey().toPublicKey() }
-  , _blockchain{ _config }
+  , _blockchain{ getGenesisBlock(), _config }
   , _host{ _config, 0xFFFF, *this }
   , _vm{ std::move(vm::load()) }
 {
-    [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
-    ASSERT(result);
     _state_manager.updateFromGenesis(getGenesisBlock());
 
     _blockchain.load();
@@ -158,27 +156,32 @@ void Core::addTransactionOutput(const base::Sha256& tx, const TransactionStatus&
 }
 
 
-bool Core::tryAddBlock(const lk::Block& b)
+Blockchain::AdditionResult Core::tryAddBlock(const lk::Block& b)
 {
     std::unique_lock lk{ _blockchain_mutex };
 
-    if (checkBlock(b) && _blockchain.tryAddBlock(b)) {
-        {
-            std::shared_lock lk(_pending_transactions_mutex);
-            _pending_transactions.remove(b.getTransactions());
-        }
-
-        LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
-
-        applyBlockTransactions(b);
-        lk.unlock();
-        auto block_hash = base::Sha256::compute(base::toBytes(b));
-        _event_block_added.notify(std::move(block_hash), b);
-        return true;
+    if(!checkBlockTransactions(b)) { // TODO: place after blockchain checks that are inside tryAddBlock
+        return Blockchain::AdditionResult::INVALID_TRANSACTIONS;
     }
-    else {
-        return false;
+
+    if (auto r = _blockchain.tryAddBlock(b); r != Blockchain::AdditionResult::ADDED) {
+        return r;
     }
+
+
+    {
+        std::shared_lock lk(_pending_transactions_mutex);
+        _pending_transactions.remove(b.getTransactions());
+    }
+
+    LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
+
+    applyBlockTransactions(b);
+    lk.unlock();
+    auto block_hash = base::Sha256::compute(base::toBytes(b));
+    _event_block_added.notify(std::move(block_hash), b);
+
+    return Blockchain::AdditionResult::ADDED;
 }
 
 
@@ -200,17 +203,15 @@ std::optional<lk::Transaction> Core::findTransaction(const base::Sha256& hash) c
 }
 
 
-bool Core::checkBlock(const lk::Block& block) const
+/*
+ * Not-thread safe: it is only a helper-function for tryAddBlock.
+ * So, it is not meant to be called by anyone else: without locks,
+ * the sense of this function is lost: it checks the block using the
+ * chain or state information, but later usage of it becomes useless:
+ * until addition the state and chain might have been changed.
+ */
+bool Core::checkBlockTransactions(const lk::Block& block) const
 {
-    const auto& top_block = _blockchain.getTopBlock();
-
-    if (top_block.getTimestamp() >= block.getTimestamp()) {
-        return false;
-    }
-    if (block.getTransactions().size() == 0 ||
-        block.getTransactions().size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
-        return false;
-    }
     if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(block)))) {
         return false;
     }
@@ -305,7 +306,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
     LOG_DEBUG << "Performing transactions with hash " << transaction_hash;
     _state_manager.getAccount(tx.getFrom()).addTransactionHash(transaction_hash);
 
-    auto tx_manager{ _state_manager.createCopy() };
+    auto tx_manager{ _state_manager.createCopy() }; // TODO: temporary of course, fix it using tree of states
 
     if (tx.getTo() == lk::Address::null()) {
         try {

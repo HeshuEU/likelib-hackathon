@@ -47,7 +47,8 @@ class Core
     std::optional<TransactionStatus> getTransactionOutput(const base::Sha256& tx_hash);
     void addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status);
     //==================
-    bool tryAddBlock(const lk::Block& b);
+    Blockchain::AdditionResult tryAddBlock(const lk::Block& b);
+    //==================
     std::optional<lk::Block> findBlock(const base::Sha256& hash) const;
     std::optional<base::Sha256> findBlockHash(const lk::BlockDepth& depth) const;
     std::optional<lk::Transaction> findTransaction(const base::Sha256& hash) const;
@@ -85,7 +86,8 @@ class Core
     static const lk::Block& getGenesisBlock();
     void applyBlockTransactions(const lk::Block& block);
     //==================
-    bool checkBlock(const lk::Block& block) const;
+    // Only called from tryAddBlock -- just a helper function, not thread safe
+    bool checkBlockTransactions(const lk::Block& block) const;
     //==================
     void tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx);
     //==================
