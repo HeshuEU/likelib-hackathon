@@ -115,14 +115,15 @@ Blockchain::AdditionResult Blockchain::tryAddBlock(const Block& block)
         else if (_top_level_block_hash != hash) {
             return AdditionResult::INVALID_PARENT_HASH;
         }
-        else if(block.getTransactions().size() == 0 ||
-                        block.getTransactions().size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
-                return AdditionResult::INVALID_TRANSACTIONS_NUMBER;
+        else if (block.getTransactions().size() == 0 ||
+                 block.getTransactions().size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
+            return AdditionResult::INVALID_TRANSACTIONS_NUMBER;
         }
-        else if(_getTopBlock().getTimestamp() >= block.getTimestamp()) {
+        else if (_getTopBlock().getTimestamp() >= block.getTimestamp()) {
             return AdditionResult::OLD_TIMESTAMP;
         }
-        else if (constexpr unsigned SECONDS_IN_DAY = 24 * 60 * 60; block.getTimestamp().getSeconds() > base::Time::now().getSeconds() + SECONDS_IN_DAY) {
+        else if (constexpr unsigned SECONDS_IN_DAY = 24 * 60 * 60;
+                 block.getTimestamp().getSeconds() > base::Time::now().getSeconds() + SECONDS_IN_DAY) {
             return AdditionResult::FUTURE_TIMESTAMP;
         }
 

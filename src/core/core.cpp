@@ -160,7 +160,7 @@ Blockchain::AdditionResult Core::tryAddBlock(const lk::Block& b)
 {
     std::unique_lock lk{ _blockchain_mutex };
 
-    if(!checkBlockTransactions(b)) { // TODO: place after blockchain checks that are inside tryAddBlock
+    if (!checkBlockTransactions(b)) { // TODO: place after blockchain checks that are inside tryAddBlock
         return Blockchain::AdditionResult::INVALID_TRANSACTIONS;
     }
 

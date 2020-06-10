@@ -316,6 +316,7 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         _peer._rating.nonExpectedMessage();
         if (!_peer._rating.differentGenesis()) {
             // need to disconnect this peer since in has different genesis block, this is fatal
+            // TODO: add more convenient way to close session in case of low rating
             _peer.endSession(msg::Close{});
         }
         return true;
@@ -366,8 +367,12 @@ bool Peer::Synchronizer::handleReceivedNewBlock(const base::Sha256& hash, const 
         return true;
     }
     else {
+        if (_requested_block) {
+        }
+        else {
+        }
 
-        return false;
+        return true;
     }
 }
 
@@ -719,7 +724,7 @@ void Requests::onMessageReceive(const base::Bytes& received_bytes)
 
 void Requests::onClose()
 {
-    if constexpr(base::config::IS_DEBUG) {
+    if constexpr (base::config::IS_DEBUG) {
         if (auto l = _session.lock()) {
             LOG_DEBUG << "Processing onClose callback for " << l->getEndpoint();
         }
