@@ -385,18 +385,20 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
     }
     Py_Initialize();
     auto module = PyImport_ImportModule("encode_decode");
-    auto [bytecode, metadata] = loadContractData(contract_path);
-    auto [method, arguments] = parseCall(data);
     if (module == nullptr) {
         Py_Finalize();
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
-    auto result =
+
+    auto [bytecode, metadata] = loadContractData(contract_path);
+    auto [method, arguments] = parseCall(data);
+    auto encode_result =
       method == "constructor" ?
         ::encodeMessageConstructor(arguments.c_str(), bytecode.toString().c_str(), metadata.c_str()) :
         ::encodeMessageFunction(method.c_str(), arguments.c_str(), bytecode.toString().c_str(), metadata.c_str());
+
     Py_Finalize();
-    return result.substr(2, result.size() - 2);
+    return encode_result.substr(2, encode_result.size() - 2);
 }
 
 
@@ -412,9 +414,11 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
         Py_Finalize();
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
-    auto result = ::decodeMessage(contract_path.c_str(), method.c_str(), data.c_str());
+
+    auto [bytecode, metadata] = loadContractData(contract_path);
+    auto decode_result = ::decodeMessage(metadata.c_str(), method.c_str(), data.c_str());
     Py_Finalize();
-    return result;
+    return decode_result;
 }
 
 } // namespace vm
