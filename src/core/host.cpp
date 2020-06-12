@@ -98,6 +98,7 @@ std::size_t KademliaPeerPool::calcDifference(const base::FixedBytes<lk::Address:
         }
 
         ASSERT(false); // must be unreachable
+        return 0;
     }
 }
 
@@ -430,6 +431,12 @@ void Host::dropZombiePeers()
 void Host::broadcast(const base::Sha256& block_hash, const lk::Block& block)
 {
     _handshaked_peers.forEachPeer([block_hash, block](Peer& peer) { peer.sendBlock(block_hash, block); });
+}
+
+
+void Host::broadcastNewBlock(const base::Sha256& block_hash, const lk::Block& block)
+{
+    _handshaked_peers.forEachPeer([block_hash, block](Peer& peer) { peer.sendNewBlock(block_hash, block); });
 }
 
 

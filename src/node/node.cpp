@@ -36,7 +36,11 @@ void Node::run()
 
 void Node::onBlockMine(lk::Block&& block)
 {
-    _core.tryAddBlock(block);
+    LOG_DEBUG << "Block " << base::Sha256::compute(base::toBytes(block)) << " mined";
+    [[maybe_unused]] auto r = _core.tryAddMinedBlock(block);
+    if(r != lk::Blockchain::AdditionResult::ADDED) {
+        LOG_DEBUG << "Block " << base::Sha256::compute(base::toBytes(block)) << " addition resulted in error code " << static_cast<int>(r);
+    }
 }
 
 
@@ -52,7 +56,7 @@ void Node::onNewTransactionReceived(const lk::Transaction&)
 }
 
 
-void Node::onNewBlock(const base::Sha256& block_hash, const lk::Block&)
+void Node::onNewBlock(const base::Sha256&, const lk::Block&)
 {
     auto [block, complexity] = _core.getMiningData();
     if (!block.getTransactions().isEmpty()) {

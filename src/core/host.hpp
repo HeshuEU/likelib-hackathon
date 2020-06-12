@@ -25,7 +25,6 @@ namespace lk
 
 class Core;
 
-
 class BasicPeerPool : public PeerPoolBase
 {
   public:
@@ -122,6 +121,7 @@ class Host
     KademliaPeerPool& getHandshakedPool() noexcept;
     //=================================
     void broadcast(const base::Sha256& block_hash, const lk::Block& block);
+    void broadcastNewBlock(const base::Sha256& block_hash, const lk::Block& block);
     void broadcast(const lk::Transaction& tx);
     //=================================
     void run();
