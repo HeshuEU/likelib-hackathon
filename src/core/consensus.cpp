@@ -73,7 +73,7 @@ void Consensus::applyBlock(const Block& block)
         _last_blocks.pop();
     }
 
-    if (block.getDepth() % base::config::BC_DIFFICULTY_RECALCULATION_RATE != 0) {
+    if (block.getDepth() != 0 && (block.getDepth() - 1) % base::config::BC_DIFFICULTY_RECALCULATION_RATE != 0) {
         return;
     }
 
@@ -90,14 +90,20 @@ void Consensus::applyBlock(const Block& block)
     static constexpr int TARGET =
       base::config::BC_DIFFICULTY_RECALCULATION_RATE * 60 / base::config::BC_TARGET_BLOCKS_PER_MINUTE;
 
-    if (TARGET >= base::config::BC_MAXIMAL_CHANGE_MULTIPLIER * elapsed) {
-        _complexity = Complexity{ _complexity.getDensed() / base::config::BC_MAXIMAL_CHANGE_MULTIPLIER };
-    }
-    else if (base::config::BC_MAXIMAL_CHANGE_MULTIPLIER * TARGET <= elapsed) { // TARGET
-        _complexity = Complexity{ _complexity.getDensed() * base::config::BC_MAXIMAL_CHANGE_MULTIPLIER };
+
+    double r = double(elapsed) / TARGET;
+    if(r < 1) {
+        r = std::max(r, 1. / base::config::BC_DIFFICULTY_RECALCULATION_RATE);
+        base::Uint256 m = std::clamp(static_cast<std::size_t>(std::round(1 / r)), std::size_t{1}, base::config::BC_DIFFICULTY_RECALCULATION_RATE);
+        _complexity = Complexity{ _complexity.getDensed() / m };
     }
     else {
-        _complexity = Complexity{ _complexity.getDensed() * elapsed / TARGET };
+        r = std::min(r, static_cast<double>(base::config::BC_DIFFICULTY_RECALCULATION_RATE));
+        base::Uint256 m = std::min(~base::Uint256{} / _complexity.getDensed(), base::Uint256{base::config::BC_DIFFICULTY_RECALCULATION_RATE});
+        std::size_t limit = m.convert_to<double>();
+        base::Uint256 mult = std::clamp(static_cast<std::size_t>(std::round(r)), std::size_t{}, limit);
+        _complexity = Complexity{ _complexity.getDensed() * mult };
     }
 }
+
 }
