@@ -7,20 +7,31 @@
 namespace lk
 {
 
-Block::Block(lk::BlockDepth depth,
-             base::Sha256 prev_block_hash,
-             base::Time timestamp,
-             lk::Address coinbase,
-             TransactionsSet txs)
+ImmutableBlock::ImmutableBlock(lk::BlockDepth depth,
+                               NonceInt nonce,
+                               base::Sha256 prev_block_hash,
+                               base::Time timestamp,
+                               lk::Address coinbase,
+                               TransactionsSet txs)
   : _depth{ depth }
+  , _nonce{ nonce }
   , _prev_block_hash{ std::move(prev_block_hash) }
   , _timestamp{ std::move(timestamp) }
   , _coinbase{ std::move(coinbase) }
   , _txs(std::move(txs))
+  , _this_block_hash{ computeThisBlockHash() }
 {}
 
 
-void Block::serialize(base::SerializationOArchive& oa) const
+base::Sha256 ImmutableBlock::computeThisBlockHash()
+{
+    base::SerializationOArchive oa;
+    oa.serialize(*this);
+    return base::Sha256::compute(std::move(oa).getBytes());
+}
+
+
+void ImmutableBlock::serialize(base::SerializationOArchive& oa) const
 {
     oa.serialize(_depth);
     oa.serialize(_nonce);
@@ -31,7 +42,7 @@ void Block::serialize(base::SerializationOArchive& oa) const
 }
 
 
-Block Block::deserialize(base::SerializationIArchive& ia)
+ImmutableBlock ImmutableBlock::deserialize(base::SerializationIArchive& ia)
 {
     auto depth = ia.deserialize<BlockDepth>();
     auto nonce = ia.deserialize<NonceInt>();
@@ -39,79 +50,186 @@ Block Block::deserialize(base::SerializationIArchive& ia)
     auto timestamp = ia.deserialize<base::Time>();
     auto coinbase = ia.deserialize<lk::Address>();
     auto txs = ia.deserialize<TransactionsSet>();
-    Block ret{ depth, std::move(prev_block_hash), std::move(timestamp), std::move(coinbase), std::move(txs) };
-    ret.setNonce(nonce);
+
+    ImmutableBlock ret{ depth,         nonce, std::move(prev_block_hash), std::move(timestamp), std::move(coinbase),
+                        std::move(txs) };
     return ret;
 }
 
 
-lk::BlockDepth Block::getDepth() const noexcept
+lk::BlockDepth ImmutableBlock::getDepth() const noexcept
 {
     return _depth;
 }
 
 
-const base::Sha256& Block::getPrevBlockHash() const
+const base::Sha256& ImmutableBlock::getPrevBlockHash() const noexcept
 {
     return _prev_block_hash;
 }
 
 
-const TransactionsSet& Block::getTransactions() const
+const TransactionsSet& ImmutableBlock::getTransactions() const noexcept
 {
     return _txs;
 }
 
 
-NonceInt Block::getNonce() const noexcept
+NonceInt ImmutableBlock::getNonce() const noexcept
 {
     return _nonce;
 }
 
 
-void Block::setDepth(BlockDepth depth) noexcept
-{
-    _depth = depth;
-}
-
-
-void Block::setNonce(NonceInt nonce) noexcept
-{
-    _nonce = nonce;
-}
-
-
-const base::Time& Block::getTimestamp() const noexcept
+const base::Time& ImmutableBlock::getTimestamp() const noexcept
 {
     return _timestamp;
 }
 
 
-const lk::Address& Block::getCoinbase() const noexcept
+const lk::Address& ImmutableBlock::getCoinbase() const noexcept
 {
     return _coinbase;
 }
 
 
-void Block::setPrevBlockHash(const base::Sha256& prev_block_hash)
+const base::Sha256& ImmutableBlock::getHash() const noexcept
+{
+    return _this_block_hash;
+}
+
+//=================================================
+
+MutableBlock::MutableBlock(lk::BlockDepth depth,
+                           NonceInt nonce,
+                           base::Sha256 prev_block_hash,
+                           base::Time timestamp,
+                           lk::Address coinbase,
+                           TransactionsSet txs)
+  : _depth{ depth }
+  , _nonce{ nonce }
+  , _prev_block_hash{ std::move(prev_block_hash) }
+  , _timestamp{ std::move(timestamp) }
+  , _coinbase{ std::move(coinbase) }
+  , _txs(std::move(txs))
+{}
+
+
+void MutableBlock::serialize(base::SerializationOArchive& oa) const
+{
+    oa.serialize(_depth);
+    oa.serialize(_nonce);
+    oa.serialize(_prev_block_hash);
+    oa.serialize(_timestamp);
+    oa.serialize(_coinbase);
+    oa.serialize(_txs);
+}
+
+
+MutableBlock MutableBlock::deserialize(base::SerializationIArchive& ia)
+{
+    auto depth = ia.deserialize<BlockDepth>();
+    auto nonce = ia.deserialize<NonceInt>();
+    auto prev_block_hash = ia.deserialize<base::Sha256>();
+    auto timestamp = ia.deserialize<base::Time>();
+    auto coinbase = ia.deserialize<lk::Address>();
+    auto txs = ia.deserialize<TransactionsSet>();
+
+    MutableBlock ret{ depth,         nonce, std::move(prev_block_hash), std::move(timestamp), std::move(coinbase),
+                      std::move(txs) };
+    return ret;
+}
+
+
+lk::BlockDepth MutableBlock::getDepth() const noexcept
+{
+    return _depth;
+}
+
+
+const base::Sha256& MutableBlock::getPrevBlockHash() const noexcept
+{
+    return _prev_block_hash;
+}
+
+
+const TransactionsSet& MutableBlock::getTransactions() const noexcept
+{
+    return _txs;
+}
+
+
+NonceInt MutableBlock::getNonce() const noexcept
+{
+    return _nonce;
+}
+
+
+const base::Time& MutableBlock::getTimestamp() const noexcept
+{
+    return _timestamp;
+}
+
+
+const lk::Address& MutableBlock::getCoinbase() const noexcept
+{
+    return _coinbase;
+}
+
+
+void MutableBlock::setDepth(BlockDepth depth) noexcept
+{
+    _depth = depth;
+}
+
+
+void MutableBlock::setNonce(NonceInt nonce) noexcept
+{
+    _nonce = nonce;
+}
+
+
+void MutableBlock::setPrevBlockHash(const base::Sha256& prev_block_hash)
 {
     _prev_block_hash = prev_block_hash;
 }
 
 
-void Block::setTransactions(TransactionsSet txs)
+void MutableBlock::setTimestamp(base::Time timestamp)
+{
+    _timestamp = std::move(timestamp);
+}
+
+
+void MutableBlock::setTransactions(TransactionsSet txs)
 {
     _txs = std::move(txs);
 }
 
 
-void Block::addTransaction(const Transaction& tx)
+void MutableBlock::addTransaction(const Transaction& tx)
 {
     _txs.add(tx);
 }
 
+//=================================================
 
-bool operator==(const lk::Block& a, const lk::Block& b)
+bool operator==(const ImmutableBlock& a, const ImmutableBlock& b)
+{
+    return a.getDepth() == b.getDepth() && a.getNonce() == b.getNonce() &&
+           a.getPrevBlockHash() == b.getPrevBlockHash() && a.getTimestamp() == b.getTimestamp() &&
+           a.getCoinbase() == b.getCoinbase() && a.getTransactions() == b.getTransactions();
+    // or simply check hashes on equality?
+}
+
+
+bool operator!=(const ImmutableBlock& a, const ImmutableBlock& b)
+{
+    return !(a == b);
+}
+
+
+bool operator==(const MutableBlock& a, const MutableBlock& b)
 {
     return a.getDepth() == b.getDepth() && a.getNonce() == b.getNonce() &&
            a.getPrevBlockHash() == b.getPrevBlockHash() && a.getTimestamp() == b.getTimestamp() &&
@@ -119,22 +237,101 @@ bool operator==(const lk::Block& a, const lk::Block& b)
 }
 
 
-bool operator!=(const lk::Block& a, const lk::Block& b)
+bool operator!=(const MutableBlock& a, const MutableBlock& b)
 {
     return !(a == b);
 }
 
+//=================================================
 
-const Block& invalidBlock()
+void BlockBuilder::setDepth(BlockDepth depth)
 {
-    static const Block invalid_block{ BlockDepth(-1), base::Sha256::null(), base::Time(0), Address::null(), {} };
-    return invalid_block;
+    _depth = depth;
 }
 
 
-std::ostream& operator<<(std::ostream& os, const Block& block)
+void BlockBuilder::setNonce(NonceInt nonce)
 {
-    return os << base::Sha256::compute(base::toBytes(block));
+    _nonce = nonce;
+}
+
+
+void BlockBuilder::setPrevBlockHash(base::Sha256 hash)
+{
+    _prev_block_hash = std::move(hash);
+}
+
+
+void BlockBuilder::setTimestamp(base::Time timestamp)
+{
+    _timestamp = std::move(timestamp);
+}
+
+
+void BlockBuilder::setCoinbase(Address address)
+{
+    _coinbase = std::move(address);
+}
+
+
+void BlockBuilder::setTransactionsSet(TransactionsSet txs)
+{
+    _txs = std::move(txs);
+}
+
+
+ImmutableBlock BlockBuilder::buildImmutable() const&
+{
+    raiseIfNotEverythingIsSet();
+    return ImmutableBlock{ *_depth, *_nonce, *_prev_block_hash, *_timestamp, *_coinbase, *_txs };
+}
+
+
+MutableBlock BlockBuilder::buildMutable() const&
+{
+    raiseIfNotEverythingIsSet();
+    return MutableBlock{ *_depth, *_nonce, *_prev_block_hash, *_timestamp, *_coinbase, *_txs };
+}
+
+
+ImmutableBlock BlockBuilder::buildImmutable() &&
+{
+    raiseIfNotEverythingIsSet();
+    auto ret = ImmutableBlock{
+        *_depth, *_nonce, *std::move(_prev_block_hash), *std::move(_timestamp), *std::move(_coinbase), *std::move(_txs)
+    };
+    null();
+    return ret;
+}
+
+
+MutableBlock BlockBuilder::buildMutable() &&
+{
+    raiseIfNotEverythingIsSet();
+    auto ret = MutableBlock{
+        *_depth, *_nonce, *std::move(_prev_block_hash), *std::move(_timestamp), *std::move(_coinbase), *std::move(_txs)
+    };
+    null();
+    return ret;
+}
+
+
+void BlockBuilder::raiseIfNotEverythingIsSet() const
+{
+    if (!(_depth && _nonce && _prev_block_hash && _timestamp && _coinbase && _txs)) {
+        RAISE_ERROR(base::UseOfUninitializedValue, "cannot build block if not all fields are set up");
+    }
+}
+
+
+void BlockBuilder::null()
+{
+    _depth = std::nullopt;
+    _nonce = std::nullopt;
+    _prev_block_hash = std::nullopt;
+    _timestamp = std::nullopt;
+    _coinbase = std::nullopt;
+    _txs = std::nullopt;
 }
 
 } // namespace lk

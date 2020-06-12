@@ -72,6 +72,11 @@ class ValueNotFound : public RuntimeError
     using RuntimeError::RuntimeError;
 };
 
+class UseOfUninitializedValue : public RuntimeError
+{
+    using RuntimeError::RuntimeError;
+};
+
 #define RAISE_ERROR(error_type, ...) throw error_type(__FILE__, __LINE__, BOOST_CURRENT_FUNCTION, __VA_ARGS__)
 
 } // namespace base
