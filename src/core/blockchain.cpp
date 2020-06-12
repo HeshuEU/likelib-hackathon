@@ -112,7 +112,7 @@ Blockchain::AdditionResult Blockchain::tryAddBlock(const Block& block)
         else if (!checkConsensus(block)) {
             return AdditionResult::CONSENSUS_ERROR;
         }
-        else if (_top_level_block_hash != hash) {
+        else if (_top_level_block_hash != block.getPrevBlockHash()) {
             return AdditionResult::INVALID_PARENT_HASH;
         }
         else if (block.getTransactions().size() == 0 ||
