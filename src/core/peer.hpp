@@ -144,6 +144,7 @@ class Peer : public std::enable_shared_from_this<Peer>
     void requestBlock(const base::Sha256& block_hash);
 
     void sendBlock(const base::Sha256& block_hash, const lk::Block& block);
+    void sendNewBlock(const base::Sha256& block_hash, const lk::Block& block);
     void sendTransaction(const lk::Transaction& tx);
     //=========================
     /**
@@ -180,10 +181,10 @@ class Peer : public std::enable_shared_from_this<Peer>
     //=========================
     boost::asio::io_context& _io_context;
     //=========================
+    lk::Address _address;
     Rating _rating;
     State _state{ State::JUST_ESTABLISHED };
     std::optional<net::Endpoint> _endpoint_for_incoming_connections;
-    lk::Address _address;
 
     void setServerEndpoint(net::Endpoint endpoint);
     void setState(State state);

@@ -48,6 +48,12 @@ void Peer::sendBlock(const base::Sha256& block_hash, const lk::Block& block)
 }
 
 
+void Peer::sendNewBlock(const base::Sha256& block_hash, const lk::Block& block)
+{
+    _requests.send(msg::NewBlock{ block_hash, block });
+}
+
+
 void Peer::sendTransaction(const lk::Transaction& tx)
 {
     _requests.send(msg::Transaction{ tx });
@@ -313,8 +319,7 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
     ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
 
     if (!_requested_block) {
-        _peer._rating.nonExpectedMessage();
-        if (!_peer._rating.differentGenesis()) {
+        if (!_peer._rating.nonExpectedMessage()) {
             // need to disconnect this peer since in has different genesis block, this is fatal
             // TODO: add more convenient way to close session in case of low rating
             _peer.endSession(msg::Close{});
@@ -322,8 +327,7 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         return true;
     }
     else if (*_requested_block != hash) {
-        _peer._rating.invalidMessage();
-        if (!_peer._rating.differentGenesis()) {
+        if (!_peer._rating.invalidMessage()) {
             // need to disconnect this peer since in has different genesis block, this is fatal
             _peer.endSession(msg::Close{});
         }
@@ -368,11 +372,17 @@ bool Peer::Synchronizer::handleReceivedNewBlock(const base::Sha256& hash, const 
     }
     else {
         if (_requested_block) {
+            _sync_blocks.insert(_sync_blocks.cbegin(), block); // TODO: check if it is valid continuation for .begin()
+            return true;
         }
         else {
+            if(_peer._core.tryAddBlock(block) == Blockchain::AdditionResult::ADDED) {
+                return true;
+            }
+            else {
+                return false;
+            }
         }
-
-        return true;
     }
 }
 
