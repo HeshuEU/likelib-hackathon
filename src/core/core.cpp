@@ -27,9 +27,11 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
         }
     }
 
-    subscribeToBlockAddition(
-      [this](const base::Sha256& block_hash, const lk::Block& block) { _host.broadcast(block_hash, block); });
     subscribeToNewPendingTransaction([this](const lk::Transaction& tx) { _host.broadcast(tx); });
+
+    subscribeToBlockMining([this](const base::Sha256& block_hash, const Block& block) {
+        _host.broadcastNewBlock(block_hash, block);
+    });
 }
 
 
@@ -39,12 +41,13 @@ const lk::Block& Core::getGenesisBlock()
         auto timestamp = base::Time(1583789617);
 
         lk::Block ret{ 0, base::Sha256(base::Bytes(32)), timestamp, lk::Address::null(), {} };
+
         lk::Address from{ lk::Address::null() };
         lk::Address to{ "49cfqVfB1gTGw5XZSu6nZDrntLr1" };
         auto amount = lk::Balance{ "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" };
         std::uint64_t fee{ 0 };
-
         ret.addTransaction({ from, to, amount, fee, timestamp, base::Bytes{} });
+
         return ret;
     }();
     return genesis;
@@ -158,7 +161,39 @@ void Core::addTransactionOutput(const base::Sha256& tx, const TransactionStatus&
 
 Blockchain::AdditionResult Core::tryAddBlock(const lk::Block& b)
 {
-    std::unique_lock lk{ _blockchain_mutex };
+    {
+        std::lock_guard lk{ _blockchain_mutex };
+        if(auto r = _tryAddBlock(b); r != Blockchain::AdditionResult::ADDED) {
+            return r;
+        }
+    }
+
+    auto block_hash = base::Sha256::compute(base::toBytes(b));
+    _event_block_added.notify(std::move(block_hash), b);
+
+    return Blockchain::AdditionResult::ADDED;
+}
+
+
+Blockchain::AdditionResult Core::tryAddMinedBlock(const lk::Block& b)
+{
+    {
+        std::lock_guard lk{ _blockchain_mutex };
+        if(auto r = _tryAddBlock(b); r != Blockchain::AdditionResult::ADDED) {
+            return r;
+        }
+    }
+
+    auto block_hash = base::Sha256::compute(base::toBytes(b));
+    _event_block_mined.notify(std::move(block_hash), b);
+
+    return Blockchain::AdditionResult::ADDED;
+}
+
+
+Blockchain::AdditionResult Core::_tryAddBlock(const lk::Block& b)
+{
+    ASSERT(!_blockchain_mutex.try_lock());
 
     if (!checkBlockTransactions(b)) { // TODO: place after blockchain checks that are inside tryAddBlock
         return Blockchain::AdditionResult::INVALID_TRANSACTIONS;
@@ -168,7 +203,6 @@ Blockchain::AdditionResult Core::tryAddBlock(const lk::Block& b)
         return r;
     }
 
-
     {
         std::shared_lock lk(_pending_transactions_mutex);
         _pending_transactions.remove(b.getTransactions());
@@ -177,10 +211,6 @@ Blockchain::AdditionResult Core::tryAddBlock(const lk::Block& b)
     LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
 
     applyBlockTransactions(b);
-    lk.unlock();
-    auto block_hash = base::Sha256::compute(base::toBytes(b));
-    _event_block_added.notify(std::move(block_hash), b);
-
     return Blockchain::AdditionResult::ADDED;
 }
 
@@ -534,6 +564,12 @@ evmc::result Core::callVm(StateManager& state_manager,
 void Core::subscribeToBlockAddition(decltype(Core::_event_block_added)::CallbackType callback)
 {
     _event_block_added.subscribe(std::move(callback));
+}
+
+
+void Core::subscribeToBlockMining(decltype(_event_block_mined)::CallbackType callback)
+{
+    _event_block_mined.subscribe(std::move(callback));
 }
 
 

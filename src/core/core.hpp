@@ -48,6 +48,7 @@ class Core
     void addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status);
     //==================
     Blockchain::AdditionResult tryAddBlock(const lk::Block& b);
+    Blockchain::AdditionResult tryAddMinedBlock(const lk::Block& b);
     //==================
     std::optional<lk::Block> findBlock(const base::Sha256& hash) const;
     std::optional<base::Sha256> findBlockHash(const lk::BlockDepth& depth) const;
@@ -66,12 +67,15 @@ class Core
     const lk::Address _this_node_address;
     //==================
     base::Observable<base::Sha256, const lk::Block&> _event_block_added;
+    base::Observable<base::Sha256, const lk::Block&> _event_block_mined;
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
     //==================
     StateManager _state_manager;
 
     mutable std::shared_mutex _blockchain_mutex;
     lk::Blockchain _blockchain;
+
+    Blockchain::AdditionResult _tryAddBlock(const lk::Block& b);
 
     lk::Host _host;
     //==================
@@ -111,6 +115,9 @@ class Core
     //==================
     // notifies if new blocks are added: genesis and blocks, that are stored in DB, are not handled by this
     void subscribeToBlockAddition(decltype(_event_block_added)::CallbackType callback);
+
+    // notifies if a block was mined by this node and it was added to blockchain
+    void subscribeToBlockMining(decltype(_event_block_mined)::CallbackType callback);
 
     // notifies if some transaction was added to set of pending
     void subscribeToNewPendingTransaction(decltype(_event_new_pending_transaction)::CallbackType callback);
