@@ -25,6 +25,7 @@ class Error : public std::exception
     std::size_t _line_number;
     const char* _function_signature;
     std::string _message;
+    std::string _full_message;
 };
 
 class InvalidArgument : public Error

@@ -8,7 +8,11 @@ Error::Error(const char* file_name, std::size_t line_number, const char* functio
   , _line_number{ line_number }
   , _function_signature{ function_signature }
   , _message{ std::move(message) }
-{}
+{
+    //    _full_message = std::string(_file_name) + ":" + std::to_string(_line_number)
+    //                    + " " + _function_signature + " " + _message;
+    _full_message = _message;
+}
 
 
 const std::string& Error::getMessage() const noexcept
@@ -19,7 +23,7 @@ const std::string& Error::getMessage() const noexcept
 
 const char* Error::what() const noexcept
 {
-    return _message.c_str();
+    return _full_message.c_str();
 }
 
 } // namespace base
