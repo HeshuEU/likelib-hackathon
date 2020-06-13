@@ -8,6 +8,9 @@
 #include "base/hash.hpp"
 #include "base/serialization.hpp"
 
+#include <optional>
+#include <variant>
+
 namespace lk
 {
 
@@ -15,11 +18,11 @@ class ImmutableBlock
 {
   public:
     //=================
-    ImmutableBlock(lk::BlockDepth depth,
+    ImmutableBlock(BlockDepth depth,
                    NonceInt nonce,
                    base::Sha256 prev_block_hash,
                    base::Time timestamp,
-                   lk::Address coinbase,
+                   Address coinbase,
                    TransactionsSet txs);
 
     ImmutableBlock(const ImmutableBlock&) = default;
@@ -38,7 +41,7 @@ class ImmutableBlock
     const TransactionsSet& getTransactions() const noexcept;
     NonceInt getNonce() const noexcept;
     const base::Time& getTimestamp() const noexcept;
-    const lk::Address& getCoinbase() const noexcept;
+    const Address& getCoinbase() const noexcept;
     //=================
     const base::Sha256& getHash() const noexcept;
     //=================
@@ -61,11 +64,11 @@ class ImmutableBlock
 class MutableBlock
 {
   public:
-    MutableBlock(lk::BlockDepth depth,
+    MutableBlock(BlockDepth depth,
                  NonceInt nonce,
                  base::Sha256 prev_block_hash,
                  base::Time timestamp,
-                 lk::Address coinbase,
+                 Address coinbase,
                  TransactionsSet txs);
 
     MutableBlock(const MutableBlock&) = default;
@@ -84,7 +87,7 @@ class MutableBlock
     const base::Sha256& getPrevBlockHash() const noexcept;
     const TransactionsSet& getTransactions() const noexcept;
     const base::Time& getTimestamp() const noexcept;
-    const lk::Address& getCoinbase() const noexcept;
+    const Address& getCoinbase() const noexcept;
     //=================
     void setDepth(BlockDepth depth) noexcept;
     void setNonce(NonceInt nonce) noexcept;
@@ -111,12 +114,12 @@ bool operator==(const MutableBlock& a, const MutableBlock& b);
 bool operator!=(const MutableBlock& a, const MutableBlock& b);
 
 
-template<typename B>
 class BlockFieldsView
 {
   public:
     //=================
-    BlockFieldsView(const B& block);
+    BlockFieldsView(const ImmutableBlock& block);
+    BlockFieldsView(const MutableBlock& block);
     //=================
     BlockDepth getDepth() const noexcept;
     const base::Sha256& getPrevBlockHash() const noexcept;
@@ -126,13 +129,18 @@ class BlockFieldsView
     const lk::Address& getCoinbase() const noexcept;
     //=================
   private:
-    const B& _block;
+    const ImmutableBlock* _b1;
+    const MutableBlock* _b2;
 };
 
 
 class BlockBuilder
 {
   public:
+    BlockBuilder() = default;
+    explicit BlockBuilder(const ImmutableBlock& block);
+    explicit BlockBuilder(const MutableBlock& b);
+
     void setDepth(BlockDepth depth);
     void setNonce(NonceInt nonce);
     void setPrevBlockHash(base::Sha256 hash);
@@ -153,6 +161,9 @@ class BlockBuilder
     std::optional<base::Time> _timestamp;
     std::optional<Address> _coinbase;
     std::optional<TransactionsSet> _txs;
+
+    template<typename T>
+    void initFromBlock(const T& b);
 
     void raiseIfNotEverythingIsSet() const;
     void null();

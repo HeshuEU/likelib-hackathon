@@ -47,16 +47,16 @@ class Core
     std::optional<TransactionStatus> getTransactionOutput(const base::Sha256& tx_hash);
     void addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status);
     //==================
-    Blockchain::AdditionResult tryAddBlock(const lk::Block& b);
-    Blockchain::AdditionResult tryAddMinedBlock(const lk::Block& b);
+    Blockchain::AdditionResult tryAddBlock(const ImmutableBlock& b);
+    Blockchain::AdditionResult tryAddMinedBlock(const ImmutableBlock& b);
     //==================
-    std::optional<lk::Block> findBlock(const base::Sha256& hash) const;
+    std::optional<ImmutableBlock> findBlock(const base::Sha256& hash) const;
     std::optional<base::Sha256> findBlockHash(const lk::BlockDepth& depth) const;
     std::optional<lk::Transaction> findTransaction(const base::Sha256& hash) const;
-    lk::Block getTopBlock() const;
+    ImmutableBlock getTopBlock() const;
     base::Sha256 getTopBlockHash() const;
     //==================
-    std::pair<lk::Block, lk::Complexity> getMiningData() const;
+    std::pair<MutableBlock, lk::Complexity> getMiningData() const;
     //==================
     const lk::Address& getThisNodeAddress() const noexcept;
     //==================
@@ -66,16 +66,16 @@ class Core
     const base::KeyVault& _vault;
     const lk::Address _this_node_address;
     //==================
-    base::Observable<base::Sha256, const lk::Block&> _event_block_added;
-    base::Observable<base::Sha256, const lk::Block&> _event_block_mined;
+    base::Observable<const ImmutableBlock&> _event_block_added;
+    base::Observable<const ImmutableBlock&> _event_block_mined;
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
     //==================
     StateManager _state_manager;
 
     mutable std::shared_mutex _blockchain_mutex;
-    lk::Blockchain _blockchain;
+    PersistentBlockchain _blockchain;
 
-    Blockchain::AdditionResult _tryAddBlock(const lk::Block& b);
+    Blockchain::AdditionResult _tryAddBlock(const ImmutableBlock& b);
 
     lk::Host _host;
     //==================
@@ -87,26 +87,26 @@ class Core
     std::unordered_map<base::Sha256, TransactionStatus> _tx_outputs;
     mutable std::shared_mutex _tx_outputs_mutex;
     //==================
-    static const lk::Block& getGenesisBlock();
-    void applyBlockTransactions(const lk::Block& block);
+    static const ImmutableBlock& getGenesisBlock();
+    void applyBlockTransactions(const ImmutableBlock& block);
     //==================
     // Only called from tryAddBlock -- just a helper function, not thread safe
-    bool checkBlockTransactions(const lk::Block& block) const;
+    bool checkBlockTransactions(const ImmutableBlock& block) const;
     //==================
-    void tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx);
+    void tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock& block_where_tx);
     //==================
     evmc::result callInitContractVm(StateManager& state_manager,
-                                    const lk::Block& associated_block,
+                                    const ImmutableBlock& associated_block,
                                     const lk::Transaction& tx,
                                     const lk::Address& contract_address,
                                     const base::Bytes& code);
     evmc::result callContractVm(StateManager& state_manager,
-                                const lk::Block& associated_block,
+                                const ImmutableBlock& associated_block,
                                 const lk::Transaction& tx,
                                 const base::Bytes& code,
                                 const base::Bytes& message_data);
     evmc::result callVm(StateManager& state_manager,
-                        const lk::Block& associated_block,
+                        const ImmutableBlock& associated_block,
                         const lk::Transaction& associated_tx,
                         const evmc_message& message,
                         const base::Bytes& code);
@@ -130,7 +130,7 @@ class EthHost : public evmc::Host
   public:
     EthHost(lk::Core& core,
             lk::StateManager& state_manager,
-            const lk::Block& associated_block,
+            const ImmutableBlock& associated_block,
             const lk::Transaction& associated_tx);
 
     bool account_exists(const evmc::address& addr) const noexcept override;
@@ -161,10 +161,10 @@ class EthHost : public evmc::Host
     void emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept;
 
   private:
-    lk::Core& _core;
-    lk::StateManager& _state_manager;
-    const lk::Block& _associated_block;
-    const lk::Transaction& _associated_tx;
+    Core& _core;
+    StateManager& _state_manager;
+    const ImmutableBlock& _associated_block;
+    const Transaction& _associated_tx;
 };
 
 } // namespace core

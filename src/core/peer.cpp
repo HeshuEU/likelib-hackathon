@@ -42,19 +42,19 @@ namespace lk
 
 //===============================================
 
-void Peer::sendBlock(const base::Sha256& block_hash, const lk::Block& block)
+void Peer::sendBlock(const ImmutableBlock& block)
 {
-    _requests.send(msg::Block{ block_hash, block });
+    _requests.send(msg::Block{ block.getHash(), block });
 }
 
 
-void Peer::sendNewBlock(const base::Sha256& block_hash, const lk::Block& block)
+void Peer::sendNewBlock(const ImmutableBlock& block)
 {
-    _requests.send(msg::NewBlock{ block_hash, block });
+    _requests.send(msg::NewBlock{ block.getHash(), block });
 }
 
 
-void Peer::sendTransaction(const lk::Transaction& tx)
+void Peer::sendTransaction(const Transaction& tx)
 {
     _requests.send(msg::Transaction{ tx });
 }
@@ -314,9 +314,9 @@ void Peer::Synchronizer::handleReceivedTopBlockHash(const base::Sha256& peers_to
 }
 
 
-bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Block& block)
+bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const ImmutableBlock& block)
 {
-    ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
+    ASSERT(hash == block.getHash()); // not only assert, but check if the message is valid
 
     if (!_requested_block) {
         if (!_peer._rating.nonExpectedMessage()) {
@@ -363,20 +363,20 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
 }
 
 
-bool Peer::Synchronizer::handleReceivedNewBlock(const base::Sha256& hash, const Block& block)
+bool Peer::Synchronizer::handleReceivedNewBlock(const base::Sha256& hash, const ImmutableBlock& block)
 {
-    ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
+    ASSERT(hash == block.getHash());
 
     if (_peer._core.tryAddBlock(block) == Blockchain::AdditionResult::ADDED) { // if this is a new block
         return true;
     }
     else {
         if (_requested_block) {
-            _sync_blocks.insert(_sync_blocks.cbegin(), block); // TODO: check if it is valid continuation for .begin()
+            _sync_blocks.push_front(block); // TODO: check if it is valid continuation for .begin()
             return true;
         }
         else {
-            if(_peer._core.tryAddBlock(block) == Blockchain::AdditionResult::ADDED) {
+            if (_peer._core.tryAddBlock(block) == Blockchain::AdditionResult::ADDED) {
                 return true;
             }
             else {

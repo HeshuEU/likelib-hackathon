@@ -483,7 +483,7 @@ std::optional<lk::Transaction> deserializeTransaction(const web::json::value& in
 }
 
 
-web::json::value serializeBlock(const lk::Block& block)
+web::json::value serializeBlock(const lk::ImmutableBlock& block)
 {
     web::json::value result;
     result["depth"] = web::json::value::number(block.getDepth());
@@ -501,7 +501,7 @@ web::json::value serializeBlock(const lk::Block& block)
 }
 
 
-std::optional<lk::Block> deserializeBlock(const web::json::value& input)
+std::optional<lk::ImmutableBlock> deserializeBlock(const web::json::value& input)
 {
     try {
         std::optional<std::uint64_t> depth;
@@ -590,9 +590,14 @@ std::optional<lk::Block> deserializeBlock(const web::json::value& input)
             return std::nullopt;
         }
 
-        lk::Block block{ depth.value(), previous_block_hash.value(), timestamp.value(), coinbase.value(), txs };
-        block.setNonce(nonce.value());
-        return block;
+        lk::BlockBuilder b;
+        b.setDepth(depth.value());
+        b.setNonce(nonce.value());
+        b.setPrevBlockHash(previous_block_hash.value());
+        b.setTimestamp(timestamp.value());
+        b.setCoinbase(coinbase.value());
+        b.setTransactionsSet(std::move(txs));
+        return std::move(b).buildImmutable();
     }
     catch (const std::exception& e) {
         LOG_ERROR << "Failed to deserialize Block";

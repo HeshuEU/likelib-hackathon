@@ -19,7 +19,7 @@ namespace impl
 {
 class MinerWorker;
 
-using MinerHandlerType = std::function<void(lk::Block&&)>;
+using MinerHandlerType = std::function<void(lk::ImmutableBlock&&)>;
 
 enum class Task
 {
@@ -33,7 +33,7 @@ enum class Task
 struct CommonData
 {
     impl::Task task;
-    std::optional<lk::Block> block_to_mine;
+    std::optional<lk::MutableBlock> block_to_mine;
     std::optional<lk::Complexity> complexity;
 };
 
@@ -78,7 +78,7 @@ class Miner
 
     ~Miner();
     //===================
-    void findNonce(const lk::Block& block_without_nonce, const lk::Complexity& complexity);
+    void findNonce(const lk::MutableBlock& block_without_nonce, const lk::Complexity& complexity);
     void dropJob();
     //===================
   private:

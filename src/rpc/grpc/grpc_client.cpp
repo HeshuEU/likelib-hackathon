@@ -71,7 +71,7 @@ Info NodeClient::getNodeInfo()
 }
 
 
-lk::Block NodeClient::getBlock(const base::Sha256& block_hash)
+lk::ImmutableBlock NodeClient::getBlock(const base::Sha256& block_hash)
 {
     // convert data for request
     likelib::Hash request;
@@ -102,7 +102,7 @@ lk::Block NodeClient::getBlock(const base::Sha256& block_hash)
 }
 
 
-lk::Block NodeClient::getBlock(uint64_t block_number)
+lk::ImmutableBlock NodeClient::getBlock(uint64_t block_number)
 {
     // convert data for request
     likelib::Number request;

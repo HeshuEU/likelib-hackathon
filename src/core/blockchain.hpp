@@ -3,7 +3,6 @@
 #include "base/database.hpp"
 #include "base/property_tree.hpp"
 #include "base/utility.hpp"
-
 #include "core/block.hpp"
 #include "core/consensus.hpp"
 #include "core/transaction.hpp"
@@ -15,18 +14,12 @@
 namespace lk
 {
 
-class Blockchain
+
+class IBlockchain
 {
   public:
     //===================
-    Blockchain(lk::Block genesis_block, const base::PropertyTree& config);
-    Blockchain(const Blockchain&) = delete;
-    Blockchain(Blockchain&&) = delete;
-    ~Blockchain() = default;
-    //===================
-    void load();
-    //===================
-    void addGenesisBlock(const Block& block);
+    virtual ~IBlockchain() = default;
     //===================
     enum class AdditionResult
     {
@@ -41,52 +34,90 @@ class Blockchain
         CONSENSUS_ERROR,
     };
 
-    AdditionResult tryAddBlock(const Block& block);
+    virtual AdditionResult tryAddBlock(const ImmutableBlock& block) = 0;
     //===================
-    std::optional<base::Sha256> findBlockHashByDepth(BlockDepth depth) const;
-    std::optional<Block> findBlock(const base::Sha256& block_hash) const;
-    std::optional<Transaction> findTransaction(const base::Sha256& tx_hash) const;
-
-    std::vector<std::optional<std::reference_wrapper<const Block>>> getByDepth(
-      const std::vector<BlockDepth>& depths) const;
-    std::vector<std::optional<std::reference_wrapper<const Block>>> getByDepthFromTop(
-      const std::vector<BlockDepth>& depths) const;
+    virtual std::optional<ImmutableBlock> findBlock(const base::Sha256& block_hash) const = 0;
+    virtual std::optional<base::Sha256> findBlockHashByDepth(BlockDepth depth) const = 0;
     //===================
-    std::pair<Block, Complexity> getTopBlockAndComplexity() const;
-    Block getTopBlock() const;
-    base::Sha256 getTopBlockHash() const;
+    virtual ImmutableBlock getGenesisBlock() const = 0;
+    virtual ImmutableBlock getTopBlock() const = 0;
+    virtual base::Sha256 getTopBlockHash() const = 0;
+    virtual std::pair<ImmutableBlock, Complexity> getTopBlockAndComplexity() const = 0;
+    //===================
+    virtual std::optional<Transaction> findTransaction(const base::Sha256& tx_hash) const = 0;
+    //===================
+};
 
-    // *getNthFromTop(0) == getTopBlock()
-    std::optional<std::reference_wrapper<const Block>> getNthFromTop(BlockDepth depth_from_top) const;
+
+class Blockchain : public IBlockchain
+{
+  public:
+    //===================
+    Blockchain(ImmutableBlock genesis_block, const base::PropertyTree& config);
+    Blockchain(const Blockchain&) = delete;
+    Blockchain(Blockchain&&) = delete;
+    ~Blockchain() override = default;
+    //===================
+    AdditionResult tryAddBlock(const ImmutableBlock& block) override;
+    //===================
+    std::optional<base::Sha256> findBlockHashByDepth(BlockDepth depth) const override;
+    std::optional<ImmutableBlock> findBlock(const base::Sha256& block_hash) const override;
+    std::optional<Transaction> findTransaction(const base::Sha256& tx_hash) const override;
+    //===================
+    ImmutableBlock getGenesisBlock() const override;
+    std::pair<ImmutableBlock, Complexity> getTopBlockAndComplexity() const override;
+    ImmutableBlock getTopBlock() const override;
+    base::Sha256 getTopBlockHash() const override;
     //===================
   private:
     //===================
     const base::PropertyTree& _config;
     //===================
-    std::unordered_map<base::Sha256, const Block> _blocks;
+    std::unordered_map<base::Sha256, const ImmutableBlock> _blocks;
     std::map<lk::BlockDepth, base::Sha256> _blocks_by_depth;
+    base::Sha256 _genesis_block_hash;
     base::Sha256 _top_level_block_hash;
     mutable std::shared_mutex _blocks_mutex;
+
+    void addGenesisBlock(ImmutableBlock block);
 
     /*
      * Thread-unsafe: prefix _ means that its purpose it the same as getTopBlock,
      * but it is an unsafe version. Used in getTopBlock(), only with lock.
      */
-    const Block& _getTopBlock() const;
+    const ImmutableBlock& _getTopBlock() const;
     //===================
+    Consensus _consensus;
+    bool checkConsensus(const ImmutableBlock& block) const;
+    //===================
+    base::Observable<ImmutableBlock> _block_added;
+    //===================
+};
+
+
+class PersistentBlockchain : public Blockchain
+{
+  public:
+    //===================
+    PersistentBlockchain(ImmutableBlock genesis_block, const base::PropertyTree& config);
+    PersistentBlockchain(const Blockchain&) = delete;
+    PersistentBlockchain(Blockchain&&) = delete;
+    ~PersistentBlockchain() override = default;
+    //===================
+    void load();
+    //===================
+    AdditionResult tryAddBlock(const ImmutableBlock& block) override;
+    //===================
+  private:
     base::Database _database;
     mutable std::shared_mutex _database_rw_mutex;
     //===================
-    Consensus _consensus;
-    bool checkConsensus(const Block& block) const;
-    //===================
-    base::Observable<Block> _block_added;
-    //===================
-    void pushForwardToPersistentStorage(const base::Sha256& block_hash, const lk::Block& block);
+    void pushForwardToPersistentStorage(const ImmutableBlock& block);
     std::optional<base::Sha256> getLastBlockHashAtPersistentStorage() const;
-    std::optional<lk::Block> findBlockAtPersistentStorage(const base::Sha256& block_hash) const;
+    std::optional<ImmutableBlock> findBlockAtPersistentStorage(const base::Sha256& block_hash) const;
     std::vector<base::Sha256> createAllBlockHashesListAtPersistentStorage() const;
     //===================
 };
+
 
 } // namespace lk

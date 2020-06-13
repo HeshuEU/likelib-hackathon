@@ -1274,12 +1274,12 @@ int ActionGetBlock::execute()
         client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
     }
 
-    std::optional<lk::Block> block_option;
+    std::optional<lk::ImmutableBlock> block_option;
     if (_block_hash == base::Sha256::null()) {
-        block_option = client->getBlock(_block_number);
+        block_option.emplace(client->getBlock(_block_number));
     }
     else {
-        block_option = client->getBlock(_block_hash);
+        block_option.emplace(client->getBlock(_block_hash));
     }
 
     auto block = block_option.value();

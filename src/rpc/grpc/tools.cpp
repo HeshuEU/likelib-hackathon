@@ -215,7 +215,7 @@ lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx)
 }
 
 
-void serializeBlock(const lk::Block& from, likelib::Block* to)
+void serializeBlock(const lk::ImmutableBlock& from, likelib::Block* to)
 {
     to->set_depth(from.getDepth());
     to->set_nonce(from.getNonce());
@@ -228,7 +228,7 @@ void serializeBlock(const lk::Block& from, likelib::Block* to)
 }
 
 
-lk::Block deserializeBlock(const likelib::Block* const block_to_deserialization)
+lk::ImmutableBlock deserializeBlock(const likelib::Block* const block_to_deserialization)
 {
     lk::BlockDepth depth{ block_to_deserialization->depth() };
     base::Sha256 prev_block_hash = deserializeHash(&(block_to_deserialization->previous_block_hash()));
@@ -239,9 +239,15 @@ lk::Block deserializeBlock(const likelib::Block* const block_to_deserialization)
     for (const auto& txv : block_to_deserialization->transactions()) {
         txset.add(deserializeTransaction(&txv));
     }
-    lk::Block blk{ depth, prev_block_hash, timestamp, coinbase, std::move(txset) };
-    blk.setNonce(nonce);
-    return blk;
+
+    lk::BlockBuilder b;
+    b.setDepth(depth);
+    b.setNonce(nonce);
+    b.setPrevBlockHash(std::move(prev_block_hash));
+    b.setTimestamp(std::move(timestamp));
+    b.setCoinbase(std::move(coinbase));
+    b.setTransactionsSet(std::move(txset));
+    return std::move(b).buildImmutable();
 }
 
 

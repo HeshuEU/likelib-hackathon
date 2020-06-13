@@ -263,7 +263,7 @@ bool StateManager::tryTransferMoney(const lk::Address& from, const lk::Address& 
 }
 
 
-void StateManager::updateFromGenesis(const lk::Block& block)
+void StateManager::updateFromGenesis(const ImmutableBlock& block)
 {
     std::unique_lock lk(_rw_mutex);
     for (const auto& tx : block.getTransactions()) {

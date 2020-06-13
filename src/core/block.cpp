@@ -244,6 +244,79 @@ bool operator!=(const MutableBlock& a, const MutableBlock& b)
 
 //=================================================
 
+BlockFieldsView::BlockFieldsView(const ImmutableBlock& block)
+  : _b1{ &block }
+  , _b2{ nullptr }
+{}
+
+
+BlockFieldsView::BlockFieldsView(const MutableBlock& block)
+  : _b1{ nullptr }
+  , _b2{ &block }
+{}
+
+
+BlockDepth BlockFieldsView::getDepth() const noexcept
+{
+    return (_b1 ? _b1->getDepth() : _b2->getDepth());
+}
+
+
+const base::Sha256& BlockFieldsView::getPrevBlockHash() const noexcept
+{
+    return (_b1 ? _b1->getPrevBlockHash() : _b2->getPrevBlockHash());
+}
+
+
+const TransactionsSet& BlockFieldsView::getTransactions() const noexcept
+{
+    return (_b1 ? _b1->getTransactions() : _b2->getTransactions());
+}
+
+
+NonceInt BlockFieldsView::getNonce() const noexcept
+{
+    return (_b1 ? _b1->getNonce() : _b2->getNonce());
+}
+
+
+const base::Time& BlockFieldsView::getTimestamp() const noexcept
+{
+    return (_b1 ? _b1->getTimestamp() : _b2->getTimestamp());
+}
+
+
+const lk::Address& BlockFieldsView::getCoinbase() const noexcept
+{
+    return (_b1 ? _b1->getCoinbase() : _b2->getCoinbase());
+}
+
+//=================================================
+
+BlockBuilder::BlockBuilder(const ImmutableBlock& block)
+{
+    initFromBlock(block);
+}
+
+
+BlockBuilder::BlockBuilder(const MutableBlock& block)
+{
+    initFromBlock(block);
+}
+
+
+template<typename T>
+void BlockBuilder::initFromBlock(const T& b)
+{
+    setDepth(b.getDepth());
+    setNonce(b.getNonce());
+    setPrevBlockHash(b.getPrevBlockHash());
+    setTimestamp(b.getTimestamp());
+    setCoinbase(b.getCoinbase());
+    setTransactionsSet(b.getTransactions());
+}
+
+
 void BlockBuilder::setDepth(BlockDepth depth)
 {
     _depth = depth;
@@ -320,6 +393,7 @@ void BlockBuilder::raiseIfNotEverythingIsSet() const
 {
     if (!(_depth && _nonce && _prev_block_hash && _timestamp && _coinbase && _txs)) {
         RAISE_ERROR(base::UseOfUninitializedValue, "cannot build block if not all fields are set up");
+        // FIX DB LOADING AND SAVING (IT MIGHT BE GENESIS BLOCK PROBLEM)
     }
 }
 

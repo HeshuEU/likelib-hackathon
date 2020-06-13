@@ -151,7 +151,7 @@ struct Block
     static constexpr Type TYPE_ID = Type::BLOCK;
 
     base::Sha256 block_hash;
-    lk::Block block;
+    ImmutableBlock block;
 
     void serialize(base::SerializationOArchive& oa) const;
     static Block deserialize(base::SerializationIArchive& ia);
@@ -174,7 +174,7 @@ struct NewBlock
     static constexpr Type TYPE_ID = Type::NEW_BLOCK;
 
     base::Sha256 block_hash;
-    lk::Block block;
+    ImmutableBlock block;
 
     void serialize(base::SerializationOArchive& oa) const;
     static NewBlock deserialize(base::SerializationIArchive& ia);

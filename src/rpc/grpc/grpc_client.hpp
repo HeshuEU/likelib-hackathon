@@ -21,9 +21,9 @@ class NodeClient final : public BaseRpc
 
     Info getNodeInfo() override;
 
-    lk::Block getBlock(const base::Sha256& block_hash) override;
+    lk::ImmutableBlock getBlock(const base::Sha256& block_hash) override;
 
-    lk::Block getBlock(uint64_t block_number) override;
+    lk::ImmutableBlock getBlock(uint64_t block_number) override;
 
     lk::Transaction getTransaction(const base::Sha256& transaction_hash) override;
 

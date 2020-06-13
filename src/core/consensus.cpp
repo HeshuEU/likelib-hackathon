@@ -55,15 +55,15 @@ const Complexity& Consensus::getComplexity() const
 }
 
 
-bool Consensus::checkBlock(const Block& block) const
+bool Consensus::checkBlock(const ImmutableBlock& block) const
 {
-    return base::Sha256::compute(base::toBytes(block)).getBytes() <= _complexity.getComparer();
+    return block.getHash().getBytes() <= _complexity.getComparer();
 }
 
 
-void Consensus::applyBlock(const Block& block)
+void Consensus::applyBlock(ImmutableBlock block)
 {
-    _last_blocks.push(block);
+    _last_blocks.push(std::move(block)); // TODO: change it, of course
     if (_last_blocks.size() < base::config::BC_DIFFICULTY_RECALCULATION_RATE) {
         // means we do not have enough block to recalculate anything
         return;
@@ -77,7 +77,7 @@ void Consensus::applyBlock(const Block& block)
         return;
     }
 
-    const Block& p = _last_blocks.front();
+    const ImmutableBlock& p = _last_blocks.front();
 
     auto elapsed = (block.getTimestamp() - p.getTimestamp()).getSeconds();
     ASSERT(elapsed);
@@ -92,14 +92,17 @@ void Consensus::applyBlock(const Block& block)
 
 
     double r = double(elapsed) / TARGET;
-    if(r < 1) {
+    if (r < 1) {
         r = std::max(r, 1. / base::config::BC_DIFFICULTY_RECALCULATION_RATE);
-        base::Uint256 m = std::clamp(static_cast<std::size_t>(std::round(1 / r)), std::size_t{1}, base::config::BC_DIFFICULTY_RECALCULATION_RATE);
+        base::Uint256 m = std::clamp(static_cast<std::size_t>(std::round(1 / r)),
+                                     std::size_t{ 1 },
+                                     base::config::BC_DIFFICULTY_RECALCULATION_RATE);
         _complexity = Complexity{ _complexity.getDensed() / m };
     }
     else {
         r = std::min(r, static_cast<double>(base::config::BC_DIFFICULTY_RECALCULATION_RATE));
-        base::Uint256 m = std::min(~base::Uint256{} / _complexity.getDensed(), base::Uint256{base::config::BC_DIFFICULTY_RECALCULATION_RATE});
+        base::Uint256 m = std::min(~base::Uint256{} / _complexity.getDensed(),
+                                   base::Uint256{ base::config::BC_DIFFICULTY_RECALCULATION_RATE });
         std::size_t limit = m.convert_to<double>();
         base::Uint256 mult = std::clamp(static_cast<std::size_t>(std::round(r)), std::size_t{}, limit);
         _complexity = Complexity{ _complexity.getDensed() * mult };

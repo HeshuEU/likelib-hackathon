@@ -44,57 +44,35 @@ const base::Bytes LAST_BLOCK_HASH_KEY{ toBytes(DataType::SYSTEM, base::Bytes("la
 namespace lk
 {
 
-Blockchain::Blockchain(lk::Block genesis_block, const base::PropertyTree& config)
+Blockchain::Blockchain(ImmutableBlock genesis_block, const base::PropertyTree& config)
   : _config{ config }
-  , _top_level_block_hash(
-      base::Bytes(32)) // temporary null, because it requires initialization. Set to real value in addGenesisBlock
+  , _top_level_block_hash{ base::Sha256::null() } // temporary null, because it requires initialization. Set to real value in addGenesisBlock
+  , _genesis_block_hash{ base::Sha256::null() }
 {
-    auto database_path = config.get<std::string>("database.path");
-    if (config.get<bool>("database.clean")) {
-        _database = base::createClearDatabaseInstance(base::Directory(database_path));
-        LOG_INFO << "Created clear database instance.";
-    }
-    else {
-        _database = base::createDefaultDatabaseInstance(base::Directory(database_path));
-        LOG_INFO << "Loaded database by path: " << database_path;
-    }
-
     addGenesisBlock(genesis_block);
 }
 
 
-void Blockchain::load()
+void Blockchain::addGenesisBlock(ImmutableBlock block)
 {
-    for (const auto& block_hash : createAllBlockHashesListAtPersistentStorage()) {
-        LOG_DEBUG << "Loading block " << block_hash << " from database";
-        auto current_block = findBlockAtPersistentStorage(block_hash);
-        ASSERT(current_block);
-        tryAddBlock(current_block.value());
-    }
-}
-
-
-void Blockchain::addGenesisBlock(const Block& block)
-{
-    auto hash = base::Sha256::compute(base::toBytes(block));
+    const auto hash = block.getHash();
 
     std::lock_guard lk(_blocks_mutex);
     if (!_blocks.empty()) {
         RAISE_ERROR(base::LogicError, "cannot add genesis to non-empty chain");
     }
 
-    auto inserted_block = _blocks.insert({ hash, block }).first;
-    pushForwardToPersistentStorage(hash, block);
-    _top_level_block_hash = hash;
+    auto inserted_block = _blocks.insert({ hash, std::move(block) }).first;
+    _top_level_block_hash = _genesis_block_hash = hash;
 
     LOG_DEBUG << "Adding genesis block. Block hash = " << hash;
     _block_added.notify(inserted_block->second);
 }
 
 
-Blockchain::AdditionResult Blockchain::tryAddBlock(const Block& block)
+Blockchain::AdditionResult Blockchain::tryAddBlock(const ImmutableBlock& block)
 {
-    auto hash = base::Sha256::compute(base::toBytes(block));
+    const auto hash = block.getHash();
 
     decltype(_blocks)::iterator inserted_block;
     {
@@ -133,7 +111,6 @@ Blockchain::AdditionResult Blockchain::tryAddBlock(const Block& block)
 
         inserted_block = _blocks.insert({ hash, block }).first;
         _blocks_by_depth.insert({ block.getDepth(), hash });
-        pushForwardToPersistentStorage(hash, block);
         _top_level_block_hash = hash;
     }
 
@@ -144,7 +121,7 @@ Blockchain::AdditionResult Blockchain::tryAddBlock(const Block& block)
 }
 
 
-std::optional<Block> Blockchain::findBlock(const base::Sha256& block_hash) const
+std::optional<ImmutableBlock> Blockchain::findBlock(const base::Sha256& block_hash) const
 {
     std::shared_lock lk(_blocks_mutex);
     if (auto it = _blocks.find(block_hash); it != _blocks.end()) {
@@ -168,54 +145,6 @@ std::optional<base::Sha256> Blockchain::findBlockHashByDepth(lk::BlockDepth dept
 }
 
 
-std::vector<std::optional<std::reference_wrapper<const Block>>> Blockchain::getByDepth(
-  const std::vector<BlockDepth>& depths) const
-{
-    std::vector<std::optional<std::reference_wrapper<const Block>>> ret;
-    std::shared_lock lk(_blocks_mutex);
-    for (const auto& d : depths) {
-        if (auto block_hash = findBlockHashByDepth(d)) {
-            auto block = findBlock(*block_hash);
-            ASSERT(block);
-            ret.push_back(block);
-        }
-        else {
-            ret.push_back(std::nullopt);
-        }
-    }
-
-    return ret;
-}
-
-
-std::vector<std::optional<std::reference_wrapper<const Block>>> Blockchain::getByDepthFromTop(
-  const std::vector<BlockDepth>& depths) const
-{
-    std::vector<std::optional<std::reference_wrapper<const Block>>> ret;
-    const auto top_block_depth = getTopBlock().getDepth();
-
-    std::shared_lock lk(_blocks_mutex);
-    for (const auto& d : depths) {
-        if (d > top_block_depth) {
-            ret.push_back(std::nullopt);
-        }
-        else {
-            const auto adjusted = top_block_depth - d;
-            if (auto block_hash = findBlockHashByDepth(adjusted)) {
-                auto block = findBlock(*block_hash);
-                ASSERT(block);
-                ret.push_back(block);
-            }
-            else {
-                ret.push_back(std::nullopt);
-            }
-        }
-    }
-
-    return ret;
-}
-
-
 std::optional<lk::Transaction> Blockchain::findTransaction(const base::Sha256& tx_hash) const
 {
     std::shared_lock lk(_blocks_mutex);
@@ -230,21 +159,29 @@ std::optional<lk::Transaction> Blockchain::findTransaction(const base::Sha256& t
 }
 
 
-std::pair<lk::Block, lk::Complexity> Blockchain::getTopBlockAndComplexity() const
+ImmutableBlock Blockchain::getGenesisBlock() const
+{
+    auto block = findBlock(_genesis_block_hash);
+    ASSERT(block);
+    return *block;
+}
+
+
+std::pair<ImmutableBlock, lk::Complexity> Blockchain::getTopBlockAndComplexity() const
 {
     std::shared_lock lk(_blocks_mutex);
     return { getTopBlock(), _consensus.getComplexity() };
 }
 
 
-Block Blockchain::getTopBlock() const
+ImmutableBlock Blockchain::getTopBlock() const
 {
     std::shared_lock lk(_blocks_mutex);
     return _getTopBlock();
 }
 
 
-const Block& Blockchain::_getTopBlock() const
+const ImmutableBlock& Blockchain::_getTopBlock() const
 {
     ASSERT(!_blocks_mutex.try_lock()); // ensures that this function is used only in thread-safe environment
     auto it = _blocks.find(_top_level_block_hash);
@@ -259,51 +196,68 @@ base::Sha256 Blockchain::getTopBlockHash() const
 }
 
 
-std::optional<std::reference_wrapper<const lk::Block>> Blockchain::getNthFromTop(BlockDepth depth_from_top) const
-{
-    std::shared_lock lk{ _blocks_mutex };
-    auto top_block_depth = getTopBlock().getDepth();
-    if (depth_from_top > top_block_depth) {
-        return std::nullopt;
-    }
-    BlockDepth d = top_block_depth - depth_from_top;
-    if (auto hash = findBlockHashByDepth(d)) {
-        if (auto block = findBlock(*hash)) {
-            return *block;
-        }
-        else {
-            return std::nullopt;
-        }
-    }
-    else {
-        return std::nullopt;
-    }
-}
-
-
-bool Blockchain::checkConsensus(const lk::Block& block) const
+bool Blockchain::checkConsensus(const ImmutableBlock& block) const
 {
     return _consensus.checkBlock(block);
 }
 
 
-void Blockchain::pushForwardToPersistentStorage(const base::Sha256& block_hash, const Block& block)
+PersistentBlockchain::PersistentBlockchain(ImmutableBlock genesis_block, const base::PropertyTree& config)
+  : Blockchain{ std::move(genesis_block), config }
 {
-    auto block_data = base::toBytes(block);
-    {
-        std::lock_guard lk(_database_rw_mutex);
-        if (_database.exists(toBytes(DataType::BLOCK, block_hash.getBytes()))) {
-            return;
-        }
-        _database.put(toBytes(DataType::BLOCK, block_hash.getBytes()), block_data);
-        _database.put(toBytes(DataType::PREVIOUS_BLOCK_HASH, block_hash.getBytes()),
-                      block.getPrevBlockHash().getBytes());
-        _database.put(LAST_BLOCK_HASH_KEY, block_hash.getBytes());
+    auto database_path = config.get<std::string>("database.path");
+    if (config.get<bool>("database.clean")) {
+        _database = base::createClearDatabaseInstance(base::Directory(database_path));
+        LOG_INFO << "Created clear database instance.";
+    }
+    else {
+        _database = base::createDefaultDatabaseInstance(base::Directory(database_path));
+        LOG_INFO << "Loaded database by path: " << database_path;
     }
 }
 
 
-std::optional<base::Sha256> Blockchain::getLastBlockHashAtPersistentStorage() const
+void PersistentBlockchain::load()
+{
+    for (const auto& block_hash : createAllBlockHashesListAtPersistentStorage()) {
+        LOG_DEBUG << "Loading block " << block_hash << " from database";
+        auto current_block = findBlockAtPersistentStorage(block_hash);
+        ASSERT(current_block);
+        tryAddBlock(current_block.value());
+    }
+}
+
+
+IBlockchain::AdditionResult PersistentBlockchain::tryAddBlock(const ImmutableBlock& block)
+{
+    auto r = Blockchain::tryAddBlock(block);
+    if (r == IBlockchain::AdditionResult::ADDED) {
+        pushForwardToPersistentStorage(block);
+    }
+    else {
+        LOG_DEBUG << block.getHash() << " is not added with reason " << static_cast<int>(r);
+    }
+    return r;
+}
+
+
+void PersistentBlockchain::pushForwardToPersistentStorage(const ImmutableBlock& block)
+{
+    const auto raw_block_hash = block.getHash().getBytes();
+    auto serialized_block = base::toBytes(block);
+    {
+        std::lock_guard lk(_database_rw_mutex);
+        if (_database.exists(toBytes(DataType::BLOCK, raw_block_hash))) {
+            return;
+        }
+        _database.put(toBytes(DataType::BLOCK, raw_block_hash), serialized_block);
+        _database.put(toBytes(DataType::PREVIOUS_BLOCK_HASH, raw_block_hash), block.getPrevBlockHash().getBytes());
+        _database.put(LAST_BLOCK_HASH_KEY, raw_block_hash);
+    }
+}
+
+
+std::optional<base::Sha256> PersistentBlockchain::getLastBlockHashAtPersistentStorage() const
 {
     if (_database.exists(LAST_BLOCK_HASH_KEY)) {
         auto hash_data = _database.get(LAST_BLOCK_HASH_KEY);
@@ -315,7 +269,7 @@ std::optional<base::Sha256> Blockchain::getLastBlockHashAtPersistentStorage() co
 }
 
 
-std::optional<Block> Blockchain::findBlockAtPersistentStorage(const base::Sha256& block_hash) const
+std::optional<ImmutableBlock> PersistentBlockchain::findBlockAtPersistentStorage(const base::Sha256& block_hash) const
 {
     std::shared_lock lk(_database_rw_mutex);
     auto block_data = _database.get(toBytes(DataType::BLOCK, block_hash.getBytes()));
@@ -323,19 +277,20 @@ std::optional<Block> Blockchain::findBlockAtPersistentStorage(const base::Sha256
         return std::nullopt;
     }
     base::SerializationIArchive ia(block_data.value());
-    return lk::Block::deserialize(ia);
+    return ia.deserialize<ImmutableBlock>();
 }
 
 
-std::vector<base::Sha256> Blockchain::createAllBlockHashesListAtPersistentStorage() const
+std::vector<base::Sha256> PersistentBlockchain::createAllBlockHashesListAtPersistentStorage() const
 {
     std::vector<base::Sha256> all_blocks_hashes{};
     auto last_block_hash = getLastBlockHashAtPersistentStorage();
     if (last_block_hash) {
         base::Sha256 current_block_hash = last_block_hash.value();
+        const base::Sha256 genesis_hash = getGenesisBlock().getHash();
 
         std::shared_lock lk(_database_rw_mutex);
-        while (current_block_hash != base::Bytes(32)) {
+        while (current_block_hash != genesis_hash) {
             all_blocks_hashes.push_back(current_block_hash);
             auto previous_block_hash_data =
               _database.get(toBytes(DataType::PREVIOUS_BLOCK_HASH, current_block_hash.getBytes()));

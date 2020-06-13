@@ -11,6 +11,7 @@
 #include "net/session.hpp"
 
 #include <atomic>
+#include <deque>
 #include <forward_list>
 #include <memory>
 
@@ -143,8 +144,8 @@ class Peer : public std::enable_shared_from_this<Peer>
     void requestLookup(const lk::Address& address, uint8_t alpha);
     void requestBlock(const base::Sha256& block_hash);
 
-    void sendBlock(const base::Sha256& block_hash, const lk::Block& block);
-    void sendNewBlock(const base::Sha256& block_hash, const lk::Block& block);
+    void sendBlock(const ImmutableBlock& block);
+    void sendNewBlock(const ImmutableBlock& block);
     void sendTransaction(const lk::Transaction& tx);
     //=========================
     /**
@@ -196,14 +197,14 @@ class Peer : public std::enable_shared_from_this<Peer>
         explicit Synchronizer(Peer& peer);
 
         void handleReceivedTopBlockHash(const base::Sha256& peers_top_block);
-        bool handleReceivedBlock(const base::Sha256& hash, const Block& block);
-        bool handleReceivedNewBlock(const base::Sha256& hash, const Block& block);
+        bool handleReceivedBlock(const base::Sha256& hash, const ImmutableBlock& block);
+        bool handleReceivedNewBlock(const base::Sha256& hash, const ImmutableBlock& block);
         bool isSynchronised() const;
 
       private:
         Peer& _peer;
         std::optional<base::Sha256> _requested_block;
-        std::vector<lk::Block> _sync_blocks;
+        std::deque<ImmutableBlock> _sync_blocks;
 
         void requestBlock(base::Sha256 block_hash);
     };

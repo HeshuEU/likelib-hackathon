@@ -30,7 +30,7 @@ rpc::Info GeneralServerService::getNodeInfo()
 }
 
 
-lk::Block GeneralServerService::getBlock(const base::Sha256& block_hash)
+lk::ImmutableBlock GeneralServerService::getBlock(const base::Sha256& block_hash)
 {
     LOG_TRACE << "Received RPC request {getBlock} with block_hash[" << block_hash << "]";
     if (auto block_opt = _core.findBlock(block_hash); block_opt) {
@@ -40,7 +40,7 @@ lk::Block GeneralServerService::getBlock(const base::Sha256& block_hash)
 }
 
 
-lk::Block GeneralServerService::getBlock(uint64_t block_number)
+lk::ImmutableBlock GeneralServerService::getBlock(uint64_t block_number)
 {
     LOG_TRACE << "Received RPC request {getBlock} with block_number[" << block_number << "]";
     if (auto block_hash_opt = _core.findBlockHash(block_number); block_hash_opt) {

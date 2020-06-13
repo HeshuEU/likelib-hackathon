@@ -35,14 +35,14 @@ class Consensus
   public:
     explicit Consensus();
 
-    bool checkBlock(const Block& block) const;
+    bool checkBlock(const ImmutableBlock& block) const;
 
-    void applyBlock(const Block& block);
+    void applyBlock(ImmutableBlock block);
 
     const Complexity& getComplexity() const;
 
   private:
-    std::queue<Block> _last_blocks;
+    std::queue<ImmutableBlock> _last_blocks;
     Complexity _complexity;
 };
 

@@ -26,9 +26,9 @@ class BaseRpc
 
     virtual Info getNodeInfo() = 0;
 
-    virtual lk::Block getBlock(const base::Sha256& block_hash) = 0;
+    virtual lk::ImmutableBlock getBlock(const base::Sha256& block_hash) = 0;
 
-    virtual lk::Block getBlock(uint64_t block_number) = 0;
+    virtual lk::ImmutableBlock getBlock(uint64_t block_number) = 0;
 
     virtual lk::Transaction getTransaction(const base::Sha256& transaction_hash) = 0;
 

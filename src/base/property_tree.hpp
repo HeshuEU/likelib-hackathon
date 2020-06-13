@@ -28,11 +28,9 @@ class PropertyTree
     };
 
     PropertyTree();
-
     PropertyTree(const boost::property_tree::ptree& ptree);
 
     bool hasKey(const std::string& path) const;
-
     bool empty() const;
 
     template<typename R>

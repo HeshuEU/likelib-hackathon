@@ -153,7 +153,7 @@ void Block::serialize(base::SerializationOArchive& oa) const
 Block Block::deserialize(base::SerializationIArchive& ia)
 {
     auto block_hash = ia.deserialize<base::Sha256>();
-    auto block = ia.deserialize<lk::Block>();
+    auto block = ia.deserialize<ImmutableBlock>();
     return Block{ std::move(block_hash), std::move(block) };
 }
 
@@ -181,7 +181,7 @@ void NewBlock::serialize(base::SerializationOArchive& oa) const
 NewBlock NewBlock::deserialize(base::SerializationIArchive& ia)
 {
     auto block_hash = ia.deserialize<base::Sha256>();
-    auto block = ia.deserialize<lk::Block>();
+    auto block = ia.deserialize<ImmutableBlock>();
     return NewBlock{ std::move(block_hash), std::move(block) };
 }
 
