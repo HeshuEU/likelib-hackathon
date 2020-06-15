@@ -1,5 +1,7 @@
 #include "tools.hpp"
 
+#include "base/hash.hpp"
+
 #include "vm/encode_decode.hpp"
 #include "vm/error.hpp"
 
@@ -9,6 +11,8 @@
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream_buffer.hpp>
 #include <boost/process.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
@@ -19,22 +23,15 @@ namespace bp = ::boost::process;
 
 namespace
 {
-std::string readAllFile(const std::filesystem::path& path)
+std::string treeToString(const boost::property_tree::ptree& tree)
 {
-    if (!std::filesystem::exists(path)) {
-        RAISE_ERROR(base::InvalidArgument, "the file with this path does not exist");
-    }
-    std::ifstream file(path, std::ifstream::binary);
-    file.seekg(0, std::ios::end);
-    size_t size = file.tellg();
-    std::string buffer(size, ' ');
-    file.seekg(0);
-    file.read(&buffer[0], size);
-    return buffer;
+    std::ostringstream output;
+    boost::property_tree::write_json(output, tree);
+    return output.str();
 }
 
 
-std::pair<base::Bytes, std::string> loadContractData(const std::filesystem::path& path)
+std::pair<base::Bytes, boost::property_tree::ptree> loadContractData(const std::filesystem::path& path)
 {
     auto compiled_file_path = path / std::filesystem::path("compiled_code.bin");
     if (!std::filesystem::exists(compiled_file_path)) {
@@ -47,7 +44,8 @@ std::pair<base::Bytes, std::string> loadContractData(const std::filesystem::path
     if (!std::filesystem::exists(contract_metadata)) {
         RAISE_ERROR(base::InvalidArgument, "Contract metadata file not exists");
     }
-    auto metadata = readAllFile(contract_metadata);
+    boost::property_tree::ptree metadata;
+    boost::property_tree::read_json(contract_metadata, metadata);
     return { bytecode, metadata };
 }
 
@@ -61,6 +59,29 @@ std::pair<std::string, std::string> parseCall(const std::string& call_string)
     auto method = call_string.substr(0, first_bracket_pos);
     auto arguments = "[" + call_string.substr(first_bracket_pos + 1, call_string.size() - first_bracket_pos - 2) + "]";
     return { method, arguments };
+}
+
+
+void modifyMetadataAddress(boost::property_tree::ptree& metadata)
+{
+    BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
+        BOOST_FOREACH (boost::property_tree::ptree::value_type& inputs, abi.second.get_child("inputs")) {
+            if (inputs.second.get<std::string>("type") == "address") {
+                inputs.second.put("type", "bytes32");
+                inputs.second.put("internalType", "bytes32");
+            }
+        }
+    }
+}
+
+
+void modifyMetadataOutput(boost::property_tree::ptree& metadata, const std::string& method)
+{
+    BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
+        if (abi.second.get<std::string>("type") == "function" && abi.second.get<std::string>("name") == method) {
+            abi.second.put_child("inputs", abi.second.get_child("outputs"));
+        }
+    }
 }
 }
 
@@ -379,6 +400,7 @@ std::string callPython(std::vector<std::string>& args)
 
 std::string encodeMessage(const std::string& contract_path, const std::string& data)
 {
+    constexpr int HASH_SIZE_ENCODE = 8;
     auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
     if (status == -1) {
         RAISE_ERROR(base::RuntimeError, "Decode python error");
@@ -392,13 +414,23 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
 
     auto [bytecode, metadata] = loadContractData(contract_path);
     auto [method, arguments] = parseCall(data);
-    auto encode_result =
-      method == "constructor" ?
-        ::encodeMessageConstructor(arguments.c_str(), bytecode.toString().c_str(), metadata.c_str()) :
-        ::encodeMessageFunction(method.c_str(), arguments.c_str(), bytecode.toString().c_str(), metadata.c_str());
-
+    std::string encode_result;
+    if (method == "constructor") {
+        encode_result =
+          ::encodeMessageConstructor(arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
+        encode_result.erase(0, 2);
+    }
+    else {
+        auto methon_signature_hash =
+          base::Keccak256::compute(base::Bytes(::getMethodSignature(method.c_str(), treeToString(metadata).c_str())));
+        modifyMetadataAddress(metadata);
+        encode_result = ::encodeMessageFunction(
+          method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
+        encode_result = methon_signature_hash.toHex().substr(0, HASH_SIZE_ENCODE) +
+                        encode_result.substr(HASH_SIZE_ENCODE, encode_result.size() - HASH_SIZE_ENCODE);
+    }
     Py_Finalize();
-    return encode_result.substr(2, encode_result.size() - 2);
+    return encode_result;
 }
 
 
@@ -416,7 +448,8 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
     }
 
     auto [bytecode, metadata] = loadContractData(contract_path);
-    auto decode_result = ::decodeMessage(metadata.c_str(), method.c_str(), data.c_str());
+    modifyMetadataOutput(metadata, method);
+    auto decode_result = ::decodeMessage(treeToString(metadata).c_str(), method.c_str(), data.c_str());
     Py_Finalize();
     return decode_result;
 }

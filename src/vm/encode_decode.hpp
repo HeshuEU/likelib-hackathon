@@ -20,6 +20,7 @@
   #define DL_IMPORT(_T) _T
 #endif
 
+__PYX_EXTERN_C std::string getMethodSignature(char const *, char const *);
 __PYX_EXTERN_C std::string encodeMessageFunction(char const *, char const *, char const *, char const *);
 __PYX_EXTERN_C std::string encodeMessageConstructor(char const *, char const *, char const *);
 __PYX_EXTERN_C std::string decodeMessage(char const *, char const *, char const *);
