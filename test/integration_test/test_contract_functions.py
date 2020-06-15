@@ -162,48 +162,70 @@ contract AddressSend {
 
     return 0
 
-#next
 @test_case("get_previous_block_contract")
-def main(env, logger):
-    contract_file_path = os.path.join(CONTRACTS_FOLDER, "get_previous_block_contract", "contract.sol")
-    if not os.path.exists(contract_file_path):
-        TEST_CHECK(False, message="Contracts folder was not found")
+def main(env: Env) -> int:
+    contract_text = '''
+pragma solidity >=0.4.0 <0.7.0;
 
-    node_settings = Node.Settings(Node.Id(20218, 50068), start_up_time=2)
-    with Node(env, node_settings, logger) as node:
-        node.run_check_test()
+contract GetPreviousBlock {
 
-        contracts = node.compile_contract(code=contract_file_path)
-        test_contract = contracts[0]
-        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
-        deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
-                                               fee=10000000, init_message="", timeout=5)
+    function get() public view returns (bytes32 previous_block_hash) {
+        return blockhash(block.number - 1);
+    }
 
-        current_block_hash = node.get_info()
+}
+'''
+    contract_file_path = os.path.abspath("contract.sol")
+    with open(contract_file_path, "wt", encoding='utf8') as f:
+        f.write(contract_text)
 
-        call_message = node.encode_message(code=test_contract, message="get()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract, method="get", message=message_result)
-        TEST_CHECK(res["previous_block_hash"] == current_block_hash)
+    node_id = Id(20218, grpc_port=50068)
+    env.start_node(NodeConfig(node_id))
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
+    TEST_CHECK(client.connection_test())
 
-        current_block_hash = node.get_info()
+    contracts = client.compile_file(code=contract_file_path)
+    test_contract = contracts[0]
 
-        call_message = node.encode_message(code=test_contract, message="get()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract, method="get", message=message_result)
-        TEST_CHECK(res["previous_block_hash"] == current_block_hash)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
+    deployed_contract_status = client.push_contract(from_address=distributor_address,
+                                                    code=test_contract, amount=0, fee=10000000,
+                                                    init_message="")
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
+    deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
 
-        call_message = node.encode_message(code=test_contract, message="get()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract, method="get", message=message_result)
-        TEST_CHECK(res["previous_block_hash"] != current_block_hash)
+
+    for i in range(0,1):
+      current_block_hash = client.node_info().top_block_hash
+      contract_address = deployed_contract_status.data
+      call_message = client.encode_message(code=test_contract, message="get()")
+      message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=10000000,
+                                              amount=0, message=call_message, timeout=5)
+      TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+      message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+      TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+      contract_data_message = message_call_status.data
+      res = client.decode_message(code=test_contract, method="get", message=contract_data_message)
+      TEST_CHECK(res["previous_block_hash"] == current_block_hash)
+
+    call_message = client.encode_message(code=test_contract, message="get()")
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=10000000,
+                                              amount=0, message=call_message, timeout=5)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+    contract_data_message = message_call_status.data
+    res = client.decode_message(code=test_contract, method="get", message=contract_data_message)
+    TEST_CHECK(res["previous_block_hash"] != current_block_hash)
 
     return 0
 
-
+# next
 @test_case("selfdestruct_contract")
 def main(env, logger):
     contract_file_path = os.path.join(CONTRACTS_FOLDER, "selfdestruct_contract", "contract.sol")
