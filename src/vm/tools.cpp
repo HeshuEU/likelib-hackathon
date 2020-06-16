@@ -45,7 +45,12 @@ std::pair<base::Bytes, boost::property_tree::ptree> loadContractData(const std::
         RAISE_ERROR(base::InvalidArgument, "Contract metadata file not exists");
     }
     boost::property_tree::ptree metadata;
-    boost::property_tree::read_json(contract_metadata, metadata);
+    try {
+        boost::property_tree::read_json(contract_metadata, metadata);
+    }
+    catch (const boost::property_tree::json_parser_error& e) {
+        RAISE_ERROR(base::RuntimeError, "Error during json file reading");
+    }
     return { bytecode, metadata };
 }
 
@@ -54,7 +59,7 @@ std::pair<std::string, std::string> parseCall(const std::string& call_string)
 {
     auto first_bracket_pos = call_string.find("(");
     if (first_bracket_pos == std::string::npos || call_string[call_string.size() - 1] != ')') {
-        RAISE_ERROR(base::InvalidArgument, "Wrong string for encode");
+        RAISE_ERROR(base::InvalidArgument, "Wrong message for encode");
     }
     auto method = call_string.substr(0, first_bracket_pos);
     auto arguments = "[" + call_string.substr(first_bracket_pos + 1, call_string.size() - first_bracket_pos - 2) + "]";
@@ -64,23 +69,39 @@ std::pair<std::string, std::string> parseCall(const std::string& call_string)
 
 void modifyMetadataAddress(boost::property_tree::ptree& metadata)
 {
-    BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
-        BOOST_FOREACH (boost::property_tree::ptree::value_type& inputs, abi.second.get_child("inputs")) {
-            if (inputs.second.get<std::string>("type") == "address") {
-                inputs.second.put("type", "bytes32");
-                inputs.second.put("internalType", "bytes32");
+    try {
+        BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
+            BOOST_FOREACH (boost::property_tree::ptree::value_type& inputs, abi.second.get_child("inputs")) {
+                if (inputs.second.get<std::string>("type") == "address") {
+                    inputs.second.put("type", "bytes32");
+                    inputs.second.put("internalType", "bytes32");
+                }
             }
         }
+    }
+    catch (const boost::property_tree::ptree_bad_path& e) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid Metadata format");
+    }
+    catch (const boost::property_tree::ptree_bad_data& e) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid argument for property tree");
     }
 }
 
 
 void modifyMetadataOutput(boost::property_tree::ptree& metadata, const std::string& method)
 {
-    BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
-        if (abi.second.get<std::string>("type") == "function" && abi.second.get<std::string>("name") == method) {
-            abi.second.put_child("inputs", abi.second.get_child("outputs"));
+    try {
+        BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
+            if (abi.second.get<std::string>("type") == "function" && abi.second.get<std::string>("name") == method) {
+                abi.second.put_child("inputs", abi.second.get_child("outputs"));
+            }
         }
+    }
+    catch (const boost::property_tree::ptree_bad_path& e) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid Metadata format");
+    }
+    catch (const boost::property_tree::ptree_bad_data& e) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid argument for property tree");
     }
 }
 }
@@ -412,25 +433,38 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
 
-    auto [bytecode, metadata] = loadContractData(contract_path);
-    auto [method, arguments] = parseCall(data);
     std::string encode_result;
-    if (method == "constructor") {
-        encode_result =
-          ::encodeMessageConstructor(arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
-        encode_result.erase(0, 2);
+    try {
+        auto [bytecode, metadata] = loadContractData(contract_path);
+        auto [method, arguments] = parseCall(data);
+
+        if (method == "constructor") {
+            modifyMetadataAddress(metadata);
+            encode_result = ::encodeMessageConstructor(
+              arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
+            encode_result.erase(0, 2);
+        }
+        else {
+            auto methon_signature_hash = base::Keccak256::compute(
+              base::Bytes(::getMethodSignature(method.c_str(), treeToString(metadata).c_str())));
+            modifyMetadataAddress(metadata);
+            encode_result = ::encodeMessageFunction(
+              method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
+            encode_result = methon_signature_hash.toHex().substr(0, HASH_SIZE_ENCODE) +
+                            encode_result.substr(HASH_SIZE_ENCODE, encode_result.size() - HASH_SIZE_ENCODE);
+        }
     }
-    else {
-        auto methon_signature_hash =
-          base::Keccak256::compute(base::Bytes(::getMethodSignature(method.c_str(), treeToString(metadata).c_str())));
-        modifyMetadataAddress(metadata);
-        encode_result = ::encodeMessageFunction(
-          method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
-        encode_result = methon_signature_hash.toHex().substr(0, HASH_SIZE_ENCODE) +
-                        encode_result.substr(HASH_SIZE_ENCODE, encode_result.size() - HASH_SIZE_ENCODE);
+    catch (const base::Error& e) {
+        Py_Finalize();
+        throw e;
     }
     Py_Finalize();
-    return encode_result;
+    if (encode_result.size() < HASH_SIZE_ENCODE) {
+        RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
+    }
+    else {
+        return encode_result;
+    }
 }
 
 
@@ -447,11 +481,23 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
 
-    auto [bytecode, metadata] = loadContractData(contract_path);
-    modifyMetadataOutput(metadata, method);
-    auto decode_result = ::decodeMessage(treeToString(metadata).c_str(), method.c_str(), data.c_str());
+    std::string decode_result;
+    try {
+        auto [bytecode, metadata] = loadContractData(contract_path);
+        modifyMetadataOutput(metadata, method);
+        decode_result = ::decodeMessage(treeToString(metadata).c_str(), method.c_str(), data.c_str());
+    }
+    catch (const base::Error& e) {
+        Py_Finalize();
+        throw e;
+    }
     Py_Finalize();
-    return decode_result;
+    if (decode_result.size() == 0) {
+        RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
+    }
+    else {
+        return decode_result;
+    }
 }
 
 } // namespace vm
