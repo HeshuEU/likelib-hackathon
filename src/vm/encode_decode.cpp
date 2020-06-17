@@ -1178,7 +1178,7 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 __PYX_EXTERN_C std::string getMethodSignature(char const *, char const *); /*proto*/
 __PYX_EXTERN_C std::string encodeMessageFunction(char const *, char const *, char const *, char const *); /*proto*/
 __PYX_EXTERN_C std::string encodeMessageConstructor(char const *, char const *, char const *); /*proto*/
-__PYX_EXTERN_C std::string decodeMessage(char const *, char const *, char const *); /*proto*/
+__PYX_EXTERN_C std::string decodeMessage(char const *, char const *, char const *, char const *); /*proto*/
 static std::string __pyx_convert_string_from_py_std__in_string(PyObject *); /*proto*/
 #define __Pyx_MODULE_NAME "encode_decode"
 extern int __pyx_module_is_main_encode_decode;
@@ -1189,7 +1189,6 @@ static const char __pyx_k_[] = " ";
 static const char __pyx_k__3[] = "";
 static const char __pyx_k_abi[] = "abi";
 static const char __pyx_k_eth[] = "eth";
-static const char __pyx_k_hex[] = "hex";
 static const char __pyx_k_Web3[] = "Web3";
 static const char __pyx_k_args[] = "args";
 static const char __pyx_k_copy[] = "copy";
@@ -1200,10 +1199,8 @@ static const char __pyx_k_name[] = "name";
 static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_type[] = "type";
 static const char __pyx_k_web3[] = "web3";
-static const char __pyx_k_ascii[] = "ascii";
-static const char __pyx_k_bytes[] = "bytes";
+static const char __pyx_k_dumps[] = "dumps";
 static const char __pyx_k_loads[] = "loads";
-static const char __pyx_k_encode[] = "encode";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_name_2[] = "__name__";
 static const char __pyx_k_output[] = "output";
@@ -1211,16 +1208,9 @@ static const char __pyx_k_fn_name[] = "fn_name";
 static const char __pyx_k_bytecode[] = "bytecode";
 static const char __pyx_k_contract[] = "contract";
 static const char __pyx_k_function[] = "function";
-static const char __pyx_k_str_view[] = "str_view";
 static const char __pyx_k_encodeABI[] = "encodeABI";
-static const char __pyx_k_sha3_hash[] = "sha3_hash";
-static const char __pyx_k_signature[] = "signature";
 static const char __pyx_k_constructor[] = "constructor";
-static const char __pyx_k_encode_decode[] = "encode_decode";
-static const char __pyx_k_solidityKeccak[] = "solidityKeccak";
-static const char __pyx_k_encode_decode_pyx[] = "encode_decode.pyx";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
-static const char __pyx_k_create_hash_decode[] = "create_hash_decode";
 static const char __pyx_k_data_in_transaction[] = "data_in_transaction";
 static const char __pyx_k_get_function_by_name[] = "get_function_by_name";
 static const char __pyx_k_decode_function_input[] = "decode_function_input";
@@ -1230,50 +1220,33 @@ static PyObject *__pyx_kp_u__3;
 static PyObject *__pyx_n_s_abi;
 static PyObject *__pyx_n_u_abi;
 static PyObject *__pyx_n_s_args;
-static PyObject *__pyx_n_u_ascii;
 static PyObject *__pyx_n_s_bytecode;
-static PyObject *__pyx_n_u_bytes;
 static PyObject *__pyx_n_s_cline_in_traceback;
 static PyObject *__pyx_n_s_constructor;
 static PyObject *__pyx_n_s_contract;
 static PyObject *__pyx_n_s_copy;
-static PyObject *__pyx_n_s_create_hash_decode;
 static PyObject *__pyx_n_s_data_in_transaction;
 static PyObject *__pyx_n_s_decode_function_input;
-static PyObject *__pyx_n_s_encode;
+static PyObject *__pyx_n_s_dumps;
 static PyObject *__pyx_n_s_encodeABI;
-static PyObject *__pyx_n_s_encode_decode;
-static PyObject *__pyx_kp_s_encode_decode_pyx;
 static PyObject *__pyx_n_s_eth;
 static PyObject *__pyx_n_s_find;
 static PyObject *__pyx_n_s_fn_name;
-static PyObject *__pyx_n_s_function;
 static PyObject *__pyx_n_u_function;
 static PyObject *__pyx_n_s_get_function_by_name;
-static PyObject *__pyx_n_s_hex;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_json;
 static PyObject *__pyx_n_s_loads;
 static PyObject *__pyx_n_s_main;
-static PyObject *__pyx_n_s_name;
 static PyObject *__pyx_n_u_name;
 static PyObject *__pyx_n_s_name_2;
 static PyObject *__pyx_n_u_output;
-static PyObject *__pyx_n_s_sha3_hash;
-static PyObject *__pyx_n_s_signature;
-static PyObject *__pyx_n_s_solidityKeccak;
-static PyObject *__pyx_n_s_str_view;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_u_type;
 static PyObject *__pyx_n_s_web3;
-static PyObject *__pyx_pf_13encode_decode_create_hash_decode(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_function); /* proto */
 static PyObject *__pyx_int_1;
 static PyObject *__pyx_int_2;
-static PyObject *__pyx_int_10;
 static PyObject *__pyx_slice__2;
-static PyObject *__pyx_slice__4;
-static PyObject *__pyx_tuple__5;
-static PyObject *__pyx_codeobj__6;
 /* Late includes */
 
 /* "encode_decode.pyx":9
@@ -2067,293 +2040,18 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
 /* "encode_decode.pyx":46
  * 
  * 
- * def create_hash_decode(function):             # <<<<<<<<<<<<<<
- *     name = function.abi['name']
- *     str_view = str(function)
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_13encode_decode_1create_hash_decode(PyObject *__pyx_self, PyObject *__pyx_v_function); /*proto*/
-static PyMethodDef __pyx_mdef_13encode_decode_1create_hash_decode = {"create_hash_decode", (PyCFunction)__pyx_pw_13encode_decode_1create_hash_decode, METH_O, 0};
-static PyObject *__pyx_pw_13encode_decode_1create_hash_decode(PyObject *__pyx_self, PyObject *__pyx_v_function) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("create_hash_decode (wrapper)", 0);
-  __pyx_r = __pyx_pf_13encode_decode_create_hash_decode(__pyx_self, ((PyObject *)__pyx_v_function));
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_13encode_decode_create_hash_decode(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_function) {
-  PyObject *__pyx_v_name = NULL;
-  PyObject *__pyx_v_str_view = NULL;
-  PyObject *__pyx_v_signature = NULL;
-  PyObject *__pyx_v_sha3_hash = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  Py_ssize_t __pyx_t_4;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
-  PyObject *__pyx_t_8 = NULL;
-  int __pyx_t_9;
-  __Pyx_RefNannySetupContext("create_hash_decode", 0);
-
-  /* "encode_decode.pyx":47
- * 
- * def create_hash_decode(function):
- *     name = function.abi['name']             # <<<<<<<<<<<<<<
- *     str_view = str(function)
- *     signature = str_view[str_view.find(" ") + 1: len(str_view) - 1]
- */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_function, __pyx_n_s_abi); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 47, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Dict_GetItem(__pyx_t_1, __pyx_n_u_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 47, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_v_name = __pyx_t_2;
-  __pyx_t_2 = 0;
-
-  /* "encode_decode.pyx":48
- * def create_hash_decode(function):
- *     name = function.abi['name']
- *     str_view = str(function)             # <<<<<<<<<<<<<<
- *     signature = str_view[str_view.find(" ") + 1: len(str_view) - 1]
- *     sha3_hash = web3.Web3.solidityKeccak(
- */
-  __pyx_t_2 = __Pyx_PyObject_CallOneArg(((PyObject *)(&PyUnicode_Type)), __pyx_v_function); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 48, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_v_str_view = __pyx_t_2;
-  __pyx_t_2 = 0;
-
-  /* "encode_decode.pyx":49
- *     name = function.abi['name']
- *     str_view = str(function)
- *     signature = str_view[str_view.find(" ") + 1: len(str_view) - 1]             # <<<<<<<<<<<<<<
- *     sha3_hash = web3.Web3.solidityKeccak(
- *         ['bytes'], [signature.encode('ascii')]).hex()
- */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_str_view, __pyx_n_s_find); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 49, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_1);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_1, function);
-    }
-  }
-  __pyx_t_2 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_1, __pyx_t_3, __pyx_kp_u_) : __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_kp_u_);
-  __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 49, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_AddObjC(__pyx_t_2, __pyx_int_1, 1, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 49, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_4 = PyObject_Length(__pyx_v_str_view); if (unlikely(__pyx_t_4 == ((Py_ssize_t)-1))) __PYX_ERR(0, 49, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyObject_GetSlice(__pyx_v_str_view, 0, (__pyx_t_4 - 1), &__pyx_t_1, NULL, NULL, 0, 1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 49, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_v_signature = __pyx_t_2;
-  __pyx_t_2 = 0;
-
-  /* "encode_decode.pyx":50
- *     str_view = str(function)
- *     signature = str_view[str_view.find(" ") + 1: len(str_view) - 1]
- *     sha3_hash = web3.Web3.solidityKeccak(             # <<<<<<<<<<<<<<
- *         ['bytes'], [signature.encode('ascii')]).hex()
- *     return name, signature, sha3_hash[2:10]
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_web3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_Web3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_solidityKeccak); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-
-  /* "encode_decode.pyx":51
- *     signature = str_view[str_view.find(" ") + 1: len(str_view) - 1]
- *     sha3_hash = web3.Web3.solidityKeccak(
- *         ['bytes'], [signature.encode('ascii')]).hex()             # <<<<<<<<<<<<<<
- *     return name, signature, sha3_hash[2:10]
- * 
- */
-  __pyx_t_5 = PyList_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_INCREF(__pyx_n_u_bytes);
-  __Pyx_GIVEREF(__pyx_n_u_bytes);
-  PyList_SET_ITEM(__pyx_t_5, 0, __pyx_n_u_bytes);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_signature, __pyx_n_s_encode); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 51, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_8 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
-    __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_7);
-    if (likely(__pyx_t_8)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
-      __Pyx_INCREF(__pyx_t_8);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_7, function);
-    }
-  }
-  __pyx_t_6 = (__pyx_t_8) ? __Pyx_PyObject_Call2Args(__pyx_t_7, __pyx_t_8, __pyx_n_u_ascii) : __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_n_u_ascii);
-  __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 51, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = PyList_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 51, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_7);
-  __Pyx_GIVEREF(__pyx_t_6);
-  PyList_SET_ITEM(__pyx_t_7, 0, __pyx_t_6);
-  __pyx_t_6 = 0;
-  __pyx_t_6 = NULL;
-  __pyx_t_9 = 0;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_6)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_6);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-      __pyx_t_9 = 1;
-    }
-  }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_t_5, __pyx_t_7};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 50, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_t_5, __pyx_t_7};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 50, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  } else
-  #endif
-  {
-    __pyx_t_8 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 50, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_8);
-    if (__pyx_t_6) {
-      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6); __pyx_t_6 = NULL;
-    }
-    __Pyx_GIVEREF(__pyx_t_5);
-    PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_9, __pyx_t_5);
-    __Pyx_GIVEREF(__pyx_t_7);
-    PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_9, __pyx_t_7);
-    __pyx_t_5 = 0;
-    __pyx_t_7 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_8, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 50, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_hex); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 51, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_1)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_1);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  __pyx_t_2 = (__pyx_t_1) ? __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_1) : __Pyx_PyObject_CallNoArg(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 51, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_sha3_hash = __pyx_t_2;
-  __pyx_t_2 = 0;
-
-  /* "encode_decode.pyx":52
- *     sha3_hash = web3.Web3.solidityKeccak(
- *         ['bytes'], [signature.encode('ascii')]).hex()
- *     return name, signature, sha3_hash[2:10]             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = __Pyx_PyObject_GetSlice(__pyx_v_sha3_hash, 2, 10, NULL, NULL, &__pyx_slice__4, 1, 1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 52, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 52, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_INCREF(__pyx_v_name);
-  __Pyx_GIVEREF(__pyx_v_name);
-  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_name);
-  __Pyx_INCREF(__pyx_v_signature);
-  __Pyx_GIVEREF(__pyx_v_signature);
-  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_signature);
-  __Pyx_GIVEREF(__pyx_t_2);
-  PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_t_2);
-  __pyx_t_2 = 0;
-  __pyx_r = __pyx_t_3;
-  __pyx_t_3 = 0;
-  goto __pyx_L0;
-
-  /* "encode_decode.pyx":46
- * 
- * 
- * def create_hash_decode(function):             # <<<<<<<<<<<<<<
- *     name = function.abi['name']
- *     str_view = str(function)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_AddTraceback("encode_decode.create_hash_decode", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_name);
-  __Pyx_XDECREF(__pyx_v_str_view);
-  __Pyx_XDECREF(__pyx_v_signature);
-  __Pyx_XDECREF(__pyx_v_sha3_hash);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "encode_decode.pyx":55
- * 
- * 
- * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c):             # <<<<<<<<<<<<<<
+ * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c, const char* method_hash_c):             # <<<<<<<<<<<<<<
  *     try:
  *         metadata = json.loads(<str>metadata_c)
  */
 
-std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_method_c, char const *__pyx_v_data_c) {
+std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_method_c, char const *__pyx_v_data_c, char const *__pyx_v_method_hash_c) {
   PyObject *__pyx_v_metadata = NULL;
   PyObject *__pyx_v_method = NULL;
   PyObject *__pyx_v_data = NULL;
+  PyObject *__pyx_v_method_hash = NULL;
   PyObject *__pyx_v_abi_fn = NULL;
   PyObject *__pyx_v_contract = NULL;
-  PyObject *__pyx_v_target_hash = NULL;
   PyObject *__pyx_v_null_str = NULL;
   std::string __pyx_r;
   __Pyx_RefNannyDeclarations
@@ -2369,12 +2067,13 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
   int __pyx_t_10;
   PyObject *__pyx_t_11 = NULL;
   PyObject *__pyx_t_12 = NULL;
-  std::string __pyx_t_13;
+  PyObject *__pyx_t_13 = NULL;
+  std::string __pyx_t_14;
   __Pyx_RefNannySetupContext("decodeMessage", 0);
 
-  /* "encode_decode.pyx":56
+  /* "encode_decode.pyx":47
  * 
- * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c):
+ * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c, const char* method_hash_c):
  *     try:             # <<<<<<<<<<<<<<
  *         metadata = json.loads(<str>metadata_c)
  *         method = <str>method_c
@@ -2388,19 +2087,19 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "encode_decode.pyx":57
- * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c):
+      /* "encode_decode.pyx":48
+ * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c, const char* method_hash_c):
  *     try:
  *         metadata = json.loads(<str>metadata_c)             # <<<<<<<<<<<<<<
  *         method = <str>method_c
  *         data = <str>data_c
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_json); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 57, __pyx_L3_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_json); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 48, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_loads); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 57, __pyx_L3_error)
+      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_loads); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 48, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_PyUnicode_FromString(__pyx_v_metadata_c); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 57, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_PyUnicode_FromString(__pyx_v_metadata_c); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 48, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __pyx_t_7 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
@@ -2415,20 +2114,20 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
       __pyx_t_4 = (__pyx_t_7) ? __Pyx_PyObject_Call2Args(__pyx_t_6, __pyx_t_7, __pyx_t_5) : __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5);
       __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 57, __pyx_L3_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 48, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __pyx_v_metadata = __pyx_t_4;
       __pyx_t_4 = 0;
 
-      /* "encode_decode.pyx":58
+      /* "encode_decode.pyx":49
  *     try:
  *         metadata = json.loads(<str>metadata_c)
  *         method = <str>method_c             # <<<<<<<<<<<<<<
  *         data = <str>data_c
- * 
+ *         method_hash = <str>method_hash_c
  */
-      __pyx_t_4 = __Pyx_PyUnicode_FromString(__pyx_v_method_c); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 58, __pyx_L3_error)
+      __pyx_t_4 = __Pyx_PyUnicode_FromString(__pyx_v_method_c); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 49, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_t_6 = __pyx_t_4;
       __Pyx_INCREF(__pyx_t_6);
@@ -2436,14 +2135,14 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
       __pyx_v_method = ((PyObject*)__pyx_t_6);
       __pyx_t_6 = 0;
 
-      /* "encode_decode.pyx":59
+      /* "encode_decode.pyx":50
  *         metadata = json.loads(<str>metadata_c)
  *         method = <str>method_c
  *         data = <str>data_c             # <<<<<<<<<<<<<<
+ *         method_hash = <str>method_hash_c
  * 
- *         for abi_fn in metadata['output']['abi']:
  */
-      __pyx_t_6 = __Pyx_PyUnicode_FromString(__pyx_v_data_c); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 59, __pyx_L3_error)
+      __pyx_t_6 = __Pyx_PyUnicode_FromString(__pyx_v_data_c); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 50, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
       __pyx_t_4 = __pyx_t_6;
       __Pyx_INCREF(__pyx_t_4);
@@ -2451,97 +2150,112 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
       __pyx_v_data = ((PyObject*)__pyx_t_4);
       __pyx_t_4 = 0;
 
-      /* "encode_decode.pyx":61
+      /* "encode_decode.pyx":51
+ *         method = <str>method_c
  *         data = <str>data_c
+ *         method_hash = <str>method_hash_c             # <<<<<<<<<<<<<<
+ * 
+ *         for abi_fn in metadata['output']['abi']:
+ */
+      __pyx_t_4 = __Pyx_PyUnicode_FromString(__pyx_v_method_hash_c); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 51, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_6 = __pyx_t_4;
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_v_method_hash = ((PyObject*)__pyx_t_6);
+      __pyx_t_6 = 0;
+
+      /* "encode_decode.pyx":53
+ *         method_hash = <str>method_hash_c
  * 
  *         for abi_fn in metadata['output']['abi']:             # <<<<<<<<<<<<<<
  *             if abi_fn["type"] == "function":
  *                 if abi_fn["name"] == method:
  */
-      __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_metadata, __pyx_n_u_output); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 61, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_6 = __Pyx_PyObject_Dict_GetItem(__pyx_t_4, __pyx_n_u_abi); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 61, __pyx_L3_error)
+      __pyx_t_6 = __Pyx_PyObject_Dict_GetItem(__pyx_v_metadata, __pyx_n_u_output); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 53, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (likely(PyList_CheckExact(__pyx_t_6)) || PyTuple_CheckExact(__pyx_t_6)) {
-        __pyx_t_4 = __pyx_t_6; __Pyx_INCREF(__pyx_t_4); __pyx_t_8 = 0;
+      __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_t_6, __pyx_n_u_abi); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 53, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      if (likely(PyList_CheckExact(__pyx_t_4)) || PyTuple_CheckExact(__pyx_t_4)) {
+        __pyx_t_6 = __pyx_t_4; __Pyx_INCREF(__pyx_t_6); __pyx_t_8 = 0;
         __pyx_t_9 = NULL;
       } else {
-        __pyx_t_8 = -1; __pyx_t_4 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 61, __pyx_L3_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_9 = Py_TYPE(__pyx_t_4)->tp_iternext; if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 61, __pyx_L3_error)
+        __pyx_t_8 = -1; __pyx_t_6 = PyObject_GetIter(__pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 53, __pyx_L3_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __pyx_t_9 = Py_TYPE(__pyx_t_6)->tp_iternext; if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 53, __pyx_L3_error)
       }
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       for (;;) {
         if (likely(!__pyx_t_9)) {
-          if (likely(PyList_CheckExact(__pyx_t_4))) {
-            if (__pyx_t_8 >= PyList_GET_SIZE(__pyx_t_4)) break;
+          if (likely(PyList_CheckExact(__pyx_t_6))) {
+            if (__pyx_t_8 >= PyList_GET_SIZE(__pyx_t_6)) break;
             #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-            __pyx_t_6 = PyList_GET_ITEM(__pyx_t_4, __pyx_t_8); __Pyx_INCREF(__pyx_t_6); __pyx_t_8++; if (unlikely(0 < 0)) __PYX_ERR(0, 61, __pyx_L3_error)
+            __pyx_t_4 = PyList_GET_ITEM(__pyx_t_6, __pyx_t_8); __Pyx_INCREF(__pyx_t_4); __pyx_t_8++; if (unlikely(0 < 0)) __PYX_ERR(0, 53, __pyx_L3_error)
             #else
-            __pyx_t_6 = PySequence_ITEM(__pyx_t_4, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 61, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_6);
+            __pyx_t_4 = PySequence_ITEM(__pyx_t_6, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 53, __pyx_L3_error)
+            __Pyx_GOTREF(__pyx_t_4);
             #endif
           } else {
-            if (__pyx_t_8 >= PyTuple_GET_SIZE(__pyx_t_4)) break;
+            if (__pyx_t_8 >= PyTuple_GET_SIZE(__pyx_t_6)) break;
             #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-            __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_4, __pyx_t_8); __Pyx_INCREF(__pyx_t_6); __pyx_t_8++; if (unlikely(0 < 0)) __PYX_ERR(0, 61, __pyx_L3_error)
+            __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_6, __pyx_t_8); __Pyx_INCREF(__pyx_t_4); __pyx_t_8++; if (unlikely(0 < 0)) __PYX_ERR(0, 53, __pyx_L3_error)
             #else
-            __pyx_t_6 = PySequence_ITEM(__pyx_t_4, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 61, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_6);
+            __pyx_t_4 = PySequence_ITEM(__pyx_t_6, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 53, __pyx_L3_error)
+            __Pyx_GOTREF(__pyx_t_4);
             #endif
           }
         } else {
-          __pyx_t_6 = __pyx_t_9(__pyx_t_4);
-          if (unlikely(!__pyx_t_6)) {
+          __pyx_t_4 = __pyx_t_9(__pyx_t_6);
+          if (unlikely(!__pyx_t_4)) {
             PyObject* exc_type = PyErr_Occurred();
             if (exc_type) {
               if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-              else __PYX_ERR(0, 61, __pyx_L3_error)
+              else __PYX_ERR(0, 53, __pyx_L3_error)
             }
             break;
           }
-          __Pyx_GOTREF(__pyx_t_6);
+          __Pyx_GOTREF(__pyx_t_4);
         }
-        __Pyx_XDECREF_SET(__pyx_v_abi_fn, __pyx_t_6);
-        __pyx_t_6 = 0;
+        __Pyx_XDECREF_SET(__pyx_v_abi_fn, __pyx_t_4);
+        __pyx_t_4 = 0;
 
-        /* "encode_decode.pyx":62
+        /* "encode_decode.pyx":54
  * 
  *         for abi_fn in metadata['output']['abi']:
  *             if abi_fn["type"] == "function":             # <<<<<<<<<<<<<<
  *                 if abi_fn["name"] == method:
  *                     contract = web3.Web3().eth.contract(abi=[abi_fn])
  */
-        __pyx_t_6 = __Pyx_PyObject_Dict_GetItem(__pyx_v_abi_fn, __pyx_n_u_type); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 62, __pyx_L3_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_10 = (__Pyx_PyUnicode_Equals(__pyx_t_6, __pyx_n_u_function, Py_EQ)); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 62, __pyx_L3_error)
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_abi_fn, __pyx_n_u_type); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 54, __pyx_L3_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __pyx_t_10 = (__Pyx_PyUnicode_Equals(__pyx_t_4, __pyx_n_u_function, Py_EQ)); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 54, __pyx_L3_error)
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         if (__pyx_t_10) {
 
-          /* "encode_decode.pyx":63
+          /* "encode_decode.pyx":55
  *         for abi_fn in metadata['output']['abi']:
  *             if abi_fn["type"] == "function":
  *                 if abi_fn["name"] == method:             # <<<<<<<<<<<<<<
  *                     contract = web3.Web3().eth.contract(abi=[abi_fn])
- *                     target_hash = create_hash_decode(contract.get_function_by_name(method))
+ *                     return str(json.dumps(contract.decode_function_input(method_hash + data)[1]))
  */
-          __pyx_t_6 = __Pyx_PyObject_Dict_GetItem(__pyx_v_abi_fn, __pyx_n_u_name); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 63, __pyx_L3_error)
-          __Pyx_GOTREF(__pyx_t_6);
-          __pyx_t_10 = (__Pyx_PyUnicode_Equals(__pyx_t_6, __pyx_v_method, Py_EQ)); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 63, __pyx_L3_error)
-          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+          __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_abi_fn, __pyx_n_u_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 55, __pyx_L3_error)
+          __Pyx_GOTREF(__pyx_t_4);
+          __pyx_t_10 = (__Pyx_PyUnicode_Equals(__pyx_t_4, __pyx_v_method, Py_EQ)); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 55, __pyx_L3_error)
+          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           if (__pyx_t_10) {
 
-            /* "encode_decode.pyx":64
+            /* "encode_decode.pyx":56
  *             if abi_fn["type"] == "function":
  *                 if abi_fn["name"] == method:
  *                     contract = web3.Web3().eth.contract(abi=[abi_fn])             # <<<<<<<<<<<<<<
- *                     target_hash = create_hash_decode(contract.get_function_by_name(method))
- *                     return str(contract.decode_function_input(target_hash[2] + data)[1])
+ *                     return str(json.dumps(contract.decode_function_input(method_hash + data)[1]))
+ *     except:
  */
-            __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_web3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 64, __pyx_L3_error)
+            __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_web3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 56, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
-            __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_Web3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 64, __pyx_L3_error)
+            __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_Web3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 56, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_7);
             __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
             __pyx_t_5 = NULL;
@@ -2554,130 +2268,103 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
                 __Pyx_DECREF_SET(__pyx_t_7, function);
               }
             }
-            __pyx_t_6 = (__pyx_t_5) ? __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_5) : __Pyx_PyObject_CallNoArg(__pyx_t_7);
+            __pyx_t_4 = (__pyx_t_5) ? __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_5) : __Pyx_PyObject_CallNoArg(__pyx_t_7);
             __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-            if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 64, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_6);
+            if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 56, __pyx_L3_error)
+            __Pyx_GOTREF(__pyx_t_4);
             __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-            __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_eth); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 64, __pyx_L3_error)
+            __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_eth); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 56, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_7);
-            __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-            __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_contract); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 64, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_6);
+            __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+            __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_contract); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 56, __pyx_L3_error)
+            __Pyx_GOTREF(__pyx_t_4);
             __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-            __pyx_t_7 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 64, __pyx_L3_error)
+            __pyx_t_7 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 56, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_7);
-            __pyx_t_5 = PyList_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 64, __pyx_L3_error)
+            __pyx_t_5 = PyList_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 56, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_INCREF(__pyx_v_abi_fn);
             __Pyx_GIVEREF(__pyx_v_abi_fn);
             PyList_SET_ITEM(__pyx_t_5, 0, __pyx_v_abi_fn);
-            if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_abi, __pyx_t_5) < 0) __PYX_ERR(0, 64, __pyx_L3_error)
+            if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_abi, __pyx_t_5) < 0) __PYX_ERR(0, 56, __pyx_L3_error)
             __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_empty_tuple, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 64, __pyx_L3_error)
+            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 56, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
-            __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+            __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
             __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
             __pyx_v_contract = __pyx_t_5;
             __pyx_t_5 = 0;
 
-            /* "encode_decode.pyx":65
+            /* "encode_decode.pyx":57
  *                 if abi_fn["name"] == method:
  *                     contract = web3.Web3().eth.contract(abi=[abi_fn])
- *                     target_hash = create_hash_decode(contract.get_function_by_name(method))             # <<<<<<<<<<<<<<
- *                     return str(contract.decode_function_input(target_hash[2] + data)[1])
+ *                     return str(json.dumps(contract.decode_function_input(method_hash + data)[1]))             # <<<<<<<<<<<<<<
  *     except:
+ *         null_str = ""
  */
-            __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_create_hash_decode); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 65, __pyx_L3_error)
+            __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_json); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 57, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_7);
-            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_contract, __pyx_n_s_get_function_by_name); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 65, __pyx_L3_error)
+            __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_dumps); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 57, __pyx_L3_error)
+            __Pyx_GOTREF(__pyx_t_4);
+            __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_contract, __pyx_n_s_decode_function_input); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 57, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_11);
-            __pyx_t_12 = NULL;
+            __pyx_t_12 = __Pyx_PyUnicode_ConcatSafe(__pyx_v_method_hash, __pyx_v_data); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 57, __pyx_L3_error)
+            __Pyx_GOTREF(__pyx_t_12);
+            __pyx_t_13 = NULL;
             if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_11))) {
-              __pyx_t_12 = PyMethod_GET_SELF(__pyx_t_11);
-              if (likely(__pyx_t_12)) {
+              __pyx_t_13 = PyMethod_GET_SELF(__pyx_t_11);
+              if (likely(__pyx_t_13)) {
                 PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_11);
-                __Pyx_INCREF(__pyx_t_12);
+                __Pyx_INCREF(__pyx_t_13);
                 __Pyx_INCREF(function);
                 __Pyx_DECREF_SET(__pyx_t_11, function);
               }
             }
-            __pyx_t_6 = (__pyx_t_12) ? __Pyx_PyObject_Call2Args(__pyx_t_11, __pyx_t_12, __pyx_v_method) : __Pyx_PyObject_CallOneArg(__pyx_t_11, __pyx_v_method);
-            __Pyx_XDECREF(__pyx_t_12); __pyx_t_12 = 0;
-            if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 65, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_6);
-            __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-            __pyx_t_11 = NULL;
-            if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_7))) {
-              __pyx_t_11 = PyMethod_GET_SELF(__pyx_t_7);
-              if (likely(__pyx_t_11)) {
-                PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
-                __Pyx_INCREF(__pyx_t_11);
-                __Pyx_INCREF(function);
-                __Pyx_DECREF_SET(__pyx_t_7, function);
-              }
-            }
-            __pyx_t_5 = (__pyx_t_11) ? __Pyx_PyObject_Call2Args(__pyx_t_7, __pyx_t_11, __pyx_t_6) : __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_6);
-            __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
-            __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-            if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_5);
-            __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-            __pyx_v_target_hash = __pyx_t_5;
-            __pyx_t_5 = 0;
-
-            /* "encode_decode.pyx":66
- *                     contract = web3.Web3().eth.contract(abi=[abi_fn])
- *                     target_hash = create_hash_decode(contract.get_function_by_name(method))
- *                     return str(contract.decode_function_input(target_hash[2] + data)[1])             # <<<<<<<<<<<<<<
- *     except:
- *         null_str = ""
- */
-            __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_contract, __pyx_n_s_decode_function_input); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 66, __pyx_L3_error)
+            __pyx_t_7 = (__pyx_t_13) ? __Pyx_PyObject_Call2Args(__pyx_t_11, __pyx_t_13, __pyx_t_12) : __Pyx_PyObject_CallOneArg(__pyx_t_11, __pyx_t_12);
+            __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
+            __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
+            if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 57, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_7);
-            __pyx_t_6 = __Pyx_GetItemInt(__pyx_v_target_hash, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 66, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_6);
-            __pyx_t_11 = PyNumber_Add(__pyx_t_6, __pyx_v_data); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 66, __pyx_L3_error)
+            __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+            __pyx_t_11 = __Pyx_GetItemInt(__pyx_t_7, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 57, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_11);
-            __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-            __pyx_t_6 = NULL;
-            if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
-              __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_7);
-              if (likely(__pyx_t_6)) {
-                PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
-                __Pyx_INCREF(__pyx_t_6);
+            __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+            __pyx_t_7 = NULL;
+            if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
+              __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_4);
+              if (likely(__pyx_t_7)) {
+                PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+                __Pyx_INCREF(__pyx_t_7);
                 __Pyx_INCREF(function);
-                __Pyx_DECREF_SET(__pyx_t_7, function);
+                __Pyx_DECREF_SET(__pyx_t_4, function);
               }
             }
-            __pyx_t_5 = (__pyx_t_6) ? __Pyx_PyObject_Call2Args(__pyx_t_7, __pyx_t_6, __pyx_t_11) : __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_11);
-            __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+            __pyx_t_5 = (__pyx_t_7) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_7, __pyx_t_11) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_11);
+            __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
             __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-            if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 66, __pyx_L3_error)
+            if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 57, __pyx_L3_error)
             __Pyx_GOTREF(__pyx_t_5);
-            __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-            __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_5, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 66, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_7);
-            __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-            __pyx_t_5 = __Pyx_PyObject_CallOneArg(((PyObject *)(&PyUnicode_Type)), __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 66, __pyx_L3_error)
-            __Pyx_GOTREF(__pyx_t_5);
-            __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-            __pyx_t_13 = __pyx_convert_string_from_py_std__in_string(__pyx_t_5); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 66, __pyx_L3_error)
-            __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-            __pyx_r = __pyx_t_13;
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+            __pyx_t_4 = __Pyx_PyObject_CallOneArg(((PyObject *)(&PyUnicode_Type)), __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 57, __pyx_L3_error)
+            __Pyx_GOTREF(__pyx_t_4);
+            __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+            __pyx_t_14 = __pyx_convert_string_from_py_std__in_string(__pyx_t_4); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 57, __pyx_L3_error)
+            __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+            __pyx_r = __pyx_t_14;
+            __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             goto __pyx_L7_try_return;
 
-            /* "encode_decode.pyx":63
+            /* "encode_decode.pyx":55
  *         for abi_fn in metadata['output']['abi']:
  *             if abi_fn["type"] == "function":
  *                 if abi_fn["name"] == method:             # <<<<<<<<<<<<<<
  *                     contract = web3.Web3().eth.contract(abi=[abi_fn])
- *                     target_hash = create_hash_decode(contract.get_function_by_name(method))
+ *                     return str(json.dumps(contract.decode_function_input(method_hash + data)[1]))
  */
           }
 
-          /* "encode_decode.pyx":62
+          /* "encode_decode.pyx":54
  * 
  *         for abi_fn in metadata['output']['abi']:
  *             if abi_fn["type"] == "function":             # <<<<<<<<<<<<<<
@@ -2686,19 +2373,19 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
  */
         }
 
-        /* "encode_decode.pyx":61
- *         data = <str>data_c
+        /* "encode_decode.pyx":53
+ *         method_hash = <str>method_hash_c
  * 
  *         for abi_fn in metadata['output']['abi']:             # <<<<<<<<<<<<<<
  *             if abi_fn["type"] == "function":
  *                 if abi_fn["name"] == method:
  */
       }
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-      /* "encode_decode.pyx":56
+      /* "encode_decode.pyx":47
  * 
- * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c):
+ * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c, const char* method_hash_c):
  *     try:             # <<<<<<<<<<<<<<
  *         metadata = json.loads(<str>metadata_c)
  *         method = <str>method_c
@@ -2711,27 +2398,28 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
     __pyx_L3_error:;
     __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
     __Pyx_XDECREF(__pyx_t_12); __pyx_t_12 = 0;
+    __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "encode_decode.pyx":67
- *                     target_hash = create_hash_decode(contract.get_function_by_name(method))
- *                     return str(contract.decode_function_input(target_hash[2] + data)[1])
+    /* "encode_decode.pyx":58
+ *                     contract = web3.Web3().eth.contract(abi=[abi_fn])
+ *                     return str(json.dumps(contract.decode_function_input(method_hash + data)[1]))
  *     except:             # <<<<<<<<<<<<<<
  *         null_str = ""
  *         return null_str
  */
     /*except:*/ {
       __Pyx_AddTraceback("encode_decode.decodeMessage", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_5, &__pyx_t_7) < 0) __PYX_ERR(0, 67, __pyx_L5_except_error)
+      if (__Pyx_GetException(&__pyx_t_6, &__pyx_t_4, &__pyx_t_5) < 0) __PYX_ERR(0, 58, __pyx_L5_except_error)
+      __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_GOTREF(__pyx_t_7);
 
-      /* "encode_decode.pyx":68
- *                     return str(contract.decode_function_input(target_hash[2] + data)[1])
+      /* "encode_decode.pyx":59
+ *                     return str(json.dumps(contract.decode_function_input(method_hash + data)[1]))
  *     except:
  *         null_str = ""             # <<<<<<<<<<<<<<
  *         return null_str
@@ -2739,23 +2427,23 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
       __Pyx_INCREF(__pyx_kp_u__3);
       __pyx_v_null_str = __pyx_kp_u__3;
 
-      /* "encode_decode.pyx":69
+      /* "encode_decode.pyx":60
  *     except:
  *         null_str = ""
  *         return null_str             # <<<<<<<<<<<<<<
  */
-      __pyx_t_13 = __pyx_convert_string_from_py_std__in_string(__pyx_v_null_str); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 69, __pyx_L5_except_error)
-      __pyx_r = __pyx_t_13;
+      __pyx_t_14 = __pyx_convert_string_from_py_std__in_string(__pyx_v_null_str); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 60, __pyx_L5_except_error)
+      __pyx_r = __pyx_t_14;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       goto __pyx_L6_except_return;
     }
     __pyx_L5_except_error:;
 
-    /* "encode_decode.pyx":56
+    /* "encode_decode.pyx":47
  * 
- * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c):
+ * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c, const char* method_hash_c):
  *     try:             # <<<<<<<<<<<<<<
  *         metadata = json.loads(<str>metadata_c)
  *         method = <str>method_c
@@ -2780,10 +2468,10 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
     __pyx_L8_try_end:;
   }
 
-  /* "encode_decode.pyx":55
+  /* "encode_decode.pyx":46
  * 
  * 
- * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c):             # <<<<<<<<<<<<<<
+ * cdef public string decodeMessage(const char* metadata_c, const char* method_c, const char* data_c, const char* method_hash_c):             # <<<<<<<<<<<<<<
  *     try:
  *         metadata = json.loads(<str>metadata_c)
  */
@@ -2798,15 +2486,16 @@ std::string decodeMessage(char const *__pyx_v_metadata_c, char const *__pyx_v_me
   __Pyx_XDECREF(__pyx_t_7);
   __Pyx_XDECREF(__pyx_t_11);
   __Pyx_XDECREF(__pyx_t_12);
+  __Pyx_XDECREF(__pyx_t_13);
   __Pyx_WriteUnraisable("encode_decode.decodeMessage", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
   __Pyx_pretend_to_initialize(&__pyx_r);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_metadata);
   __Pyx_XDECREF(__pyx_v_method);
   __Pyx_XDECREF(__pyx_v_data);
+  __Pyx_XDECREF(__pyx_v_method_hash);
   __Pyx_XDECREF(__pyx_v_abi_fn);
   __Pyx_XDECREF(__pyx_v_contract);
-  __Pyx_XDECREF(__pyx_v_target_hash);
   __Pyx_XDECREF(__pyx_v_null_str);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -2926,39 +2615,27 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_abi, __pyx_k_abi, sizeof(__pyx_k_abi), 0, 0, 1, 1},
   {&__pyx_n_u_abi, __pyx_k_abi, sizeof(__pyx_k_abi), 0, 1, 0, 1},
   {&__pyx_n_s_args, __pyx_k_args, sizeof(__pyx_k_args), 0, 0, 1, 1},
-  {&__pyx_n_u_ascii, __pyx_k_ascii, sizeof(__pyx_k_ascii), 0, 1, 0, 1},
   {&__pyx_n_s_bytecode, __pyx_k_bytecode, sizeof(__pyx_k_bytecode), 0, 0, 1, 1},
-  {&__pyx_n_u_bytes, __pyx_k_bytes, sizeof(__pyx_k_bytes), 0, 1, 0, 1},
   {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_constructor, __pyx_k_constructor, sizeof(__pyx_k_constructor), 0, 0, 1, 1},
   {&__pyx_n_s_contract, __pyx_k_contract, sizeof(__pyx_k_contract), 0, 0, 1, 1},
   {&__pyx_n_s_copy, __pyx_k_copy, sizeof(__pyx_k_copy), 0, 0, 1, 1},
-  {&__pyx_n_s_create_hash_decode, __pyx_k_create_hash_decode, sizeof(__pyx_k_create_hash_decode), 0, 0, 1, 1},
   {&__pyx_n_s_data_in_transaction, __pyx_k_data_in_transaction, sizeof(__pyx_k_data_in_transaction), 0, 0, 1, 1},
   {&__pyx_n_s_decode_function_input, __pyx_k_decode_function_input, sizeof(__pyx_k_decode_function_input), 0, 0, 1, 1},
-  {&__pyx_n_s_encode, __pyx_k_encode, sizeof(__pyx_k_encode), 0, 0, 1, 1},
+  {&__pyx_n_s_dumps, __pyx_k_dumps, sizeof(__pyx_k_dumps), 0, 0, 1, 1},
   {&__pyx_n_s_encodeABI, __pyx_k_encodeABI, sizeof(__pyx_k_encodeABI), 0, 0, 1, 1},
-  {&__pyx_n_s_encode_decode, __pyx_k_encode_decode, sizeof(__pyx_k_encode_decode), 0, 0, 1, 1},
-  {&__pyx_kp_s_encode_decode_pyx, __pyx_k_encode_decode_pyx, sizeof(__pyx_k_encode_decode_pyx), 0, 0, 1, 0},
   {&__pyx_n_s_eth, __pyx_k_eth, sizeof(__pyx_k_eth), 0, 0, 1, 1},
   {&__pyx_n_s_find, __pyx_k_find, sizeof(__pyx_k_find), 0, 0, 1, 1},
   {&__pyx_n_s_fn_name, __pyx_k_fn_name, sizeof(__pyx_k_fn_name), 0, 0, 1, 1},
-  {&__pyx_n_s_function, __pyx_k_function, sizeof(__pyx_k_function), 0, 0, 1, 1},
   {&__pyx_n_u_function, __pyx_k_function, sizeof(__pyx_k_function), 0, 1, 0, 1},
   {&__pyx_n_s_get_function_by_name, __pyx_k_get_function_by_name, sizeof(__pyx_k_get_function_by_name), 0, 0, 1, 1},
-  {&__pyx_n_s_hex, __pyx_k_hex, sizeof(__pyx_k_hex), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_json, __pyx_k_json, sizeof(__pyx_k_json), 0, 0, 1, 1},
   {&__pyx_n_s_loads, __pyx_k_loads, sizeof(__pyx_k_loads), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
-  {&__pyx_n_s_name, __pyx_k_name, sizeof(__pyx_k_name), 0, 0, 1, 1},
   {&__pyx_n_u_name, __pyx_k_name, sizeof(__pyx_k_name), 0, 1, 0, 1},
   {&__pyx_n_s_name_2, __pyx_k_name_2, sizeof(__pyx_k_name_2), 0, 0, 1, 1},
   {&__pyx_n_u_output, __pyx_k_output, sizeof(__pyx_k_output), 0, 1, 0, 1},
-  {&__pyx_n_s_sha3_hash, __pyx_k_sha3_hash, sizeof(__pyx_k_sha3_hash), 0, 0, 1, 1},
-  {&__pyx_n_s_signature, __pyx_k_signature, sizeof(__pyx_k_signature), 0, 0, 1, 1},
-  {&__pyx_n_s_solidityKeccak, __pyx_k_solidityKeccak, sizeof(__pyx_k_solidityKeccak), 0, 0, 1, 1},
-  {&__pyx_n_s_str_view, __pyx_k_str_view, sizeof(__pyx_k_str_view), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_n_u_type, __pyx_k_type, sizeof(__pyx_k_type), 0, 1, 0, 1},
   {&__pyx_n_s_web3, __pyx_k_web3, sizeof(__pyx_k_web3), 0, 0, 1, 1},
@@ -2982,29 +2659,6 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __pyx_slice__2 = PySlice_New(__pyx_int_2, Py_None, Py_None); if (unlikely(!__pyx_slice__2)) __PYX_ERR(0, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_slice__2);
   __Pyx_GIVEREF(__pyx_slice__2);
-
-  /* "encode_decode.pyx":52
- *     sha3_hash = web3.Web3.solidityKeccak(
- *         ['bytes'], [signature.encode('ascii')]).hex()
- *     return name, signature, sha3_hash[2:10]             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_slice__4 = PySlice_New(__pyx_int_2, __pyx_int_10, Py_None); if (unlikely(!__pyx_slice__4)) __PYX_ERR(0, 52, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_slice__4);
-  __Pyx_GIVEREF(__pyx_slice__4);
-
-  /* "encode_decode.pyx":46
- * 
- * 
- * def create_hash_decode(function):             # <<<<<<<<<<<<<<
- *     name = function.abi['name']
- *     str_view = str(function)
- */
-  __pyx_tuple__5 = PyTuple_Pack(5, __pyx_n_s_function, __pyx_n_s_name, __pyx_n_s_str_view, __pyx_n_s_signature, __pyx_n_s_sha3_hash); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 46, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__5);
-  __Pyx_GIVEREF(__pyx_tuple__5);
-  __pyx_codeobj__6 = (PyObject*)__Pyx_PyCode_New(1, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__5, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_encode_decode_pyx, __pyx_n_s_create_hash_decode, 46, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__6)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -3016,7 +2670,6 @@ static CYTHON_SMALL_CODE int __Pyx_InitGlobals(void) {
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_2 = PyInt_FromLong(2); if (unlikely(!__pyx_int_2)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_10 = PyInt_FromLong(10); if (unlikely(!__pyx_int_10)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -3317,18 +2970,6 @@ if (!__Pyx_RefNanny) {
   __pyx_t_1 = __Pyx_Import(__pyx_n_s_web3, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 7, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_web3, __pyx_t_1) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "encode_decode.pyx":46
- * 
- * 
- * def create_hash_decode(function):             # <<<<<<<<<<<<<<
- *     name = function.abi['name']
- *     str_view = str(function)
- */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_13encode_decode_1create_hash_decode, NULL, __pyx_n_s_encode_decode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 46, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_create_hash_decode, __pyx_t_1) < 0) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "encode_decode.pyx":1

@@ -421,7 +421,7 @@ std::string callPython(std::vector<std::string>& args)
 
 std::string encodeMessage(const std::string& contract_path, const std::string& data)
 {
-    constexpr int HASH_SIZE_ENCODE = 8;
+    constexpr int HASH_SIZE = 8;
     auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
     if (status == -1) {
         RAISE_ERROR(base::RuntimeError, "Decode python error");
@@ -445,13 +445,16 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
             encode_result.erase(0, 2);
         }
         else {
-            auto methon_signature_hash = base::Keccak256::compute(
+            auto methon_hash = base::Keccak256::compute(
               base::Bytes(::getMethodSignature(method.c_str(), treeToString(metadata).c_str())));
             modifyMetadataAddress(metadata);
             encode_result = ::encodeMessageFunction(
               method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
-            encode_result = methon_signature_hash.toHex().substr(0, HASH_SIZE_ENCODE) +
-                            encode_result.substr(HASH_SIZE_ENCODE, encode_result.size() - HASH_SIZE_ENCODE);
+            if (encode_result.size() < HASH_SIZE) {
+                RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
+            }
+            encode_result = methon_hash.toHex().substr(0, HASH_SIZE) +
+                            encode_result.substr(HASH_SIZE, encode_result.size() - HASH_SIZE);
         }
     }
     catch (const base::Error& e) {
@@ -459,17 +462,13 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
         throw e;
     }
     Py_Finalize();
-    if (encode_result.size() < HASH_SIZE_ENCODE) {
-        RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
-    }
-    else {
-        return encode_result;
-    }
+    return encode_result;
 }
 
 
 std::string decodeMessage(const std::string& contract_path, const std::string& method, const std::string& data)
 {
+    constexpr int HASH_SIZE = 8;
     auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
     if (status == -1) {
         RAISE_ERROR(base::RuntimeError, "Decode python error");
@@ -485,7 +484,12 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
     try {
         auto [bytecode, metadata] = loadContractData(contract_path);
         modifyMetadataOutput(metadata, method);
-        decode_result = ::decodeMessage(treeToString(metadata).c_str(), method.c_str(), data.c_str());
+        auto methon_hash =
+          base::Keccak256::compute(base::Bytes(::getMethodSignature(method.c_str(), treeToString(metadata).c_str())));
+        decode_result = ::decodeMessage(treeToString(metadata).c_str(),
+                                        method.c_str(),
+                                        data.c_str(),
+                                        methon_hash.toHex().substr(0, HASH_SIZE).c_str());
     }
     catch (const base::Error& e) {
         Py_Finalize();
