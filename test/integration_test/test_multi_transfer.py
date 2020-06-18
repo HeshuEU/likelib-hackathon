@@ -33,7 +33,6 @@ def main(env: Env) -> int:
       node_ids.append(id)
       for node in pool:
         TEST_CHECK(node.connection_test())
-    print("Init SUCCESS")
     addresses = [pool[-1].generate_keys(keys_path=f"keys{i}") for i in range(1, len(pool))]
     init_amount = 1000
 
@@ -164,15 +163,14 @@ def node_transfers(node, addresses, transaction_wait):
 
         from_address = to_address
 
-# next
 @test_case("parallel_transfer_connected_with_everything")
 def main(env: Env) -> int:
-    count_nodes = 7
+    count_nodes = 5
     start_sync_port = 20330
     start_rpc_port = 50180
     node_startup_time = 5
-    transaction_wait = 10
-    transaction_timeout = 42
+    transaction_wait = 2
+    transaction_timeout = 10
 
     init_amount = 1000
     address_per_nodes = 3
