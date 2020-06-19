@@ -38,7 +38,7 @@ def main(env: Env) -> int:
     bad_node_ids.append(Id(20203, grpc_port=50051, absolute_address="192.168.100.143"))
     env.logger.info("Get client from bad network pool:")
     for id in bad_node_ids:
-      bad_client_pool.append(env.get_client(ClientType.LEGACY_GRPC, id))
+      bad_client_pool.append(env.get_grpc_client_to_outside_node(id))
     main_id = Id(sync_port, grpc_port = grpc_port)
     env.logger.info("Start main node with connecting to bad network nodes:")
     env.start_node(NodeConfig(main_id, nodes=bad_node_ids))
