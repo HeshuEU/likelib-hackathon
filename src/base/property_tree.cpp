@@ -63,7 +63,20 @@ bool PropertyTree::empty() const
 
 PropertyTree PropertyTree::getSubTree(const std::string& path) const
 {
-    return PropertyTree(_ptree.get_child(path));
+    auto& sub = _ptree.get_child(path);
+    return PropertyTree(sub);
+}
+
+
+void PropertyTree::add(const std::string& path, PropertyTree& val)
+{
+    _ptree.put_child(path, val._ptree);
+}
+
+
+void PropertyTree::add(const std::string& path, PropertyTree&& val)
+{
+    _ptree.put_child(path, val._ptree);
 }
 
 
@@ -72,6 +85,30 @@ std::string PropertyTree::toString() const
     std::ostringstream output;
     boost::property_tree::write_json(output, _ptree);
     return output.str();
+}
+
+
+PropertyTree::iterator PropertyTree::begin()
+{
+    return _ptree.begin();
+}
+
+
+PropertyTree::iterator PropertyTree::end()
+{
+    return _ptree.end();
+}
+
+
+PropertyTree::const_iterator PropertyTree::begin() const
+{
+    return _ptree.begin();
+}
+
+
+PropertyTree::const_iterator PropertyTree::end() const
+{
+    return _ptree.end();
 }
 
 } // namespace base

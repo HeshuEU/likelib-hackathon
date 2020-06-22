@@ -1,6 +1,6 @@
 #include "node/hard_config.hpp"
-#include "node/soft_config.hpp"
 #include "node/node.hpp"
+#include "node/soft_config.hpp"
 
 #include "base/assert.hpp"
 #include "base/config.hpp"
@@ -13,6 +13,7 @@
 
 #include <boost/stacktrace.hpp>
 
+#include <chrono>
 #include <csignal>
 #include <cstdlib>
 #include <exception>
@@ -94,8 +95,10 @@ int main(int argc, char** argv)
         Node node(exe_config);
         node.run();
         //=====================
-        std::this_thread::sleep_for(std::chrono::hours(24 * 366)); // 1 year
-
+        constexpr auto timeout = std::chrono::hours(24 * 366); // 1 year
+        std::this_thread::sleep_for(timeout);
+        LOG_WARNING << "Node closed by timeout: " << std::to_string(timeout.count()) << "s";
+        std::cout << "Node closed by timeout: " << std::to_string(timeout.count()) << "s" << std::endl;
         return base::config::EXIT_OK;
     }
     catch (const std::exception& error) {

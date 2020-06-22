@@ -3,36 +3,48 @@
 #include "core/core.hpp"
 #include "core/transaction.hpp"
 
-#include "rpc/base_rpc.hpp"
+#include "web_socket/server.hpp"
+#include "web_socket/tools.hpp"
 
-namespace node
-{
+#include <atomic>
+#include <deque>
+#include <functional>
+#include <shared_mutex>
+#include <thread>
 
-class GeneralServerService : public rpc::BaseRpc
+
+class RpcService
 {
   public:
-    explicit GeneralServerService(lk::Core& core);
+    RpcService(const base::PropertyTree& config, lk::Core& core);
 
-    ~GeneralServerService() override = default;
+    ~RpcService();
 
-    lk::AccountInfo getAccountInfo(const lk::Address& address) override;
+    void run();
+    void stop();
 
-    rpc::Info getNodeInfo() override;
-
-    lk::Block getBlock(const base::Sha256& block_hash) override;
-
-    lk::Block getBlock(uint64_t block_number) override;
-
-    lk::Transaction getTransaction(const base::Sha256& transaction_hash) override;
-
-    lk::TransactionStatus pushTransaction(const lk::Transaction& transaction) override;
-
-    lk::TransactionStatus getTransactionStatus(const base::Sha256& transaction_hash) override;
-
-    base::Bytes callContractView(const lk::ViewCall& call) override;
+    void register_query(base::PropertyTree, web_socket::ResponceCall);
 
   private:
+    const base::PropertyTree& _config;
     lk::Core& _core;
-};
+    web_socket::WebSocketServer _server;
 
-} // namespace node
+    using Task = std::function<void(void)>;
+    std::condition_variable _has_task;
+    std::mutex _tasks_mutex;
+    std::deque<Task> _tasks;
+    std::thread _worker;
+
+    base::PropertyTree do_route(base::PropertyTree call);
+    [[noreturn]] void task_worker();
+
+    lk::AccountInfo getAccountInfo(const lk::Address& address);
+    web_socket::NodeInfo getNodeInfo();
+    lk::Block getBlock(const base::Sha256& block_hash);
+    lk::Block getBlock(uint64_t block_number);
+    lk::Transaction getTransaction(const base::Sha256& transaction_hash);
+    lk::TransactionStatus pushTransaction(const lk::Transaction& tx);
+    lk::TransactionStatus getTransactionStatus(const base::Sha256& transaction_hash);
+    base::Bytes callContractView(const lk::ViewCall& call);
+};

@@ -182,7 +182,7 @@ class Env:
         config = {"net": {"listen_addr": node_config.id.listen_sync_address,
                           "public_port": node_config.id.sync_port,
                           "peers_db": "peers"},
-                  "rpc": {},
+                  "web_socket": {},
                   "miner": {"threads": node_config.mining_thread},
                   "nodes": [node_id.connect_sync_address for node_id in node_config.nodes],
                   "keys_dir": ".",
@@ -190,9 +190,9 @@ class Env:
                                "clean": node_config.is_clean_up}
                   }
         if node_config.id.is_enable_grpc:
-            config["rpc"]["grpc_address"] = node_config.id.listen_grpc_address
+            config["web_socket"]["grpc_address"] = node_config.id.listen_grpc_address
         if node_config.id.is_enable_http:
-            config["rpc"]["http_address"] = node_config.id.listen_http_address
+            config["web_socket"]["http_address"] = node_config.id.listen_http_address
         return json.dumps(config)
 
     def stop_node(self, node_id: Id):
