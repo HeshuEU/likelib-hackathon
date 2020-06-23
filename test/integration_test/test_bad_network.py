@@ -135,3 +135,106 @@ def main(env: Env) -> int:
     env.logger.info("Test ended success.")
 
     return 0
+
+def node_transfers(client, addresses, transaction_wait, finish_address, amount, timeout,
+                   wait_time, transaction_update_time, max_update_request):
+    shift = len(addresses) - 1
+    pos = 0
+    from_address = addresses[pos]
+    transactions = []
+    for _ in range(len(addresses) * 5):
+      pos = (pos + shift) % len(addresses)
+      to_address = addresses[pos]
+
+      transactions.append(node.transfer(to_address=finish_address.address, amount=amount,
+         from_address=from_address, fee=0, wait=wait_time, timeout=timeout))
+      TEST_CHECK_EQUAL(transactions[-1].status_code, TransactionStatusCode.PENDING)
+      env.logger.info(f"Transaction {transactions[-1].tx_hash} is PENDING (from {from_address.address})")
+    for transaction in transactions:
+      stat = client.get_transaction_status(tx_hash=transaction.tx_hash)
+      env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_updatate_request = {max_update_request}")
+      request_count = 0
+      while stat.status_code != TransactionStatusCode.SUCCESS:
+        sleep(transaction_update_time)
+        stat = bad_client_pool.get_transaction_status(tx_hash=transaction.tx_hash)
+        request_count += 1
+        env.logger.info(f"Wait transaction {transaction.tx_hash} request_count = {request_count}")
+        if request_count >= max_update_request: return 1
+      env.logger.info(f"Transaction {transaction.tx_hash} success.")
+
+
+
+@test_case("transaction_stress_in_bad_network")
+def main(env: Env) -> int:
+    amount = randrange(1000)
+    start_balance = 5*amount
+    finish_balance = start_balance - amount
+    update_time = 0.5
+    timeout = 2
+    wait_time = 1
+    transaction_update_time=2
+    max_update_request=10
+    number_addresses_per_thread = 5
+
+    env.logger.debug(f"Random amount for test = {amount}")
+
+    bad_client_pool, bad_node_ids = run_bad_nodes(env)
+    env.logger.info("Check all nodes:")
+    for client in bad_client_pool:
+      TEST_CHECK(client.connection_test())
+    env.logger.info("All nodes started success.")
+
+    addresses = [bad_client_pool[0].generate_keys(keys_path=f"keys{i}")
+                          for i in range(1, number_addresses_per_thread * len(bad_client_pool) + 1)]
+    distributor_address = bad_client_pool[0].load_address(keys_path=get_distributor_address_path())
+    for address in addresses:
+      TEST_CHECK_EQUAL(bad_client_pool[0].get_balance(address=address.address, timeout=timeout, wait=wait_time), 0)
+    env.logger.info(f"New {number_addresses} addresses created.")
+
+    for address in addresses:
+      transaction = bad_client_pool[0].transfer(to_address=address.address, amount=start_amount,
+                              from_address=distributor_address, fee=0, wait=wait_time, timeout=timeout)
+      TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
+      stat = bad_client_pool[0].get_transaction_status(tx_hash=transaction.tx_hash)
+      env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_update_request = {max_update_request}).")
+      request_count = 0
+      while stat.status_code != TransactionStatusCode.SUCCESS:
+        sleep(transaction_update_time)
+        stat = bad_client_pool.get_transaction_status(tx_hash=transaction.tx_hash)
+        request_count += 1
+        env.logger.info(f"Wait transaction request_count = {request_count}")
+        if request_count >= max_update_request: return 1
+      env.logger.info(f"Initialize transaction to {address.address} success.")
+
+    for client in bad_client_pool:
+      for address in addresses:
+        TEST_CHECK_EQUAL(client.get_balance(address=address.address, timeout=timeout, wait=wait_time), start_balance)
+      env.logger.info(f"Node {client.name} check initialize balance success")
+    env.logger.info("Initialize transfers success, current balanse {start_balance}")
+
+    with concurrent.futures.ThreadPoolExecutor(len(bad_client_pool)) as executor:
+      threads = []
+      for i in range(len(bad_client_pool)):
+        first_address_number = i * number_addresses_per_thread
+        last_address_number = (i * number_addresses_per_thread) + number_addresses_per_thread
+        threads.append(
+             executor.submit(node_transfers, bad_client_pool[i],
+               addresses[first_address_number:last_address_number], transaction_wait,
+               addresses[-1], amount, timeout, wait_time, transaction_update_time, max_update_request))
+
+      for i in threads:
+        i.result()
+
+    env.logger.info("Check finish_balance (in this test {finish_balance})")
+    for address in addresses[:-1]:
+      TEST_CHECK_EQUAL(bad_client_pool[0].get_balance(address=address.address, timeout=timeout,
+                                       wait=wait_time), finish_balance)
+    last_address_finish_balance = start_balance + amount * len(bad_client_pool) * number_addresses_per_thread
+    env.logger.info("Check balance on last address start_balance + all transfers {last_address_finish_balance}")
+    TEST_CHECK_EQUAL(bad_client_pool[0].get_balance(address=addresses[-1].address, timeout=timeout,
+            wait=wait_time), last_address_finish_balance)
+
+
+
+    return 0
+
