@@ -13,6 +13,31 @@
 #include <thread>
 
 
+using Task = std::function<void(void)>;
+
+
+class TaskQueue
+{
+  public:
+    TaskQueue() = default;
+    ~TaskQueue() = default;
+    TaskQueue(const TaskQueue&) = delete;
+    TaskQueue(TaskQueue&&) = delete;
+    TaskQueue& operator=(const TaskQueue&) = delete;
+    TaskQueue& operator=(TaskQueue&&) = delete;
+
+    void push(Task&& task);
+    Task get();
+    void wait();
+    bool empty() const;
+
+  private:
+    mutable std::mutex _rw_mutex;
+    std::deque<Task> _tasks;
+    std::condition_variable _has_task;
+};
+
+
 class RpcService
 {
   public:
@@ -29,15 +54,11 @@ class RpcService
     const base::PropertyTree& _config;
     lk::Core& _core;
     web_socket::WebSocketServer _server;
-
-    using Task = std::function<void(void)>;
-    std::condition_variable _has_task;
-    std::mutex _tasks_mutex;
-    std::deque<Task> _tasks;
+    TaskQueue _tasks;
     std::thread _worker;
 
     base::PropertyTree do_route(base::PropertyTree call);
-    [[noreturn]] void task_worker();
+    [[noreturn]] void task_worker() noexcept;
 
     lk::AccountInfo getAccountInfo(const lk::Address& address);
     web_socket::NodeInfo getNodeInfo();

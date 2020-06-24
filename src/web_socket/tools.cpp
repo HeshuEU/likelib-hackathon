@@ -8,7 +8,7 @@
 namespace web_socket
 {
 
-boost::asio::ip::tcp::endpoint get_endpoint(const std::string& listening_address)
+boost::asio::ip::tcp::endpoint create_endpoint(const std::string& listening_address)
 {
     std::size_t i = listening_address.find(':');
     if (i == std::string_view::npos) {

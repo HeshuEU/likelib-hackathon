@@ -10,7 +10,6 @@
 #include <memory>
 #include <thread>
 
-
 namespace web_socket
 {
 

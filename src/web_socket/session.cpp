@@ -8,10 +8,10 @@
 namespace web_socket
 {
 
-WebSocketSession::WebSocketSession(boost::asio::ip::tcp::socket&& socket, RequestCall call)
+WebSocketSession::WebSocketSession(boost::asio::ip::tcp::socket&& socket, RequestCall callback)
   : _connected_endpoint{ socket.remote_endpoint() }
   , _web_socket{ std::move(socket) }
-  , _request_call{ std::move(call) }
+  , _request_call{ std::move(callback) }
 {}
 
 
@@ -24,6 +24,7 @@ WebSocketSession::~WebSocketSession()
 void WebSocketSession::disconnect()
 {
     LOG_DEBUG << "disconnecting:" << _connected_endpoint;
+
     boost::beast::error_code ec;
     _web_socket.close(boost::beast::websocket::close_code::service_restart, ec);
 
@@ -35,6 +36,7 @@ void WebSocketSession::disconnect()
 
 void WebSocketSession::run()
 {
+    boost::beast::error_code ec;
     _web_socket.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
 
     _web_socket.set_option(

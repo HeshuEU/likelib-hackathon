@@ -18,7 +18,7 @@
 
 void print_received_data(base::PropertyTree received_message)
 {
-    cli::Cli::cout() << "Received data";
+    cli::Cli::cout() << "Received data: " << received_message.toString();
     // TODO
 }
 
@@ -47,8 +47,7 @@ void client_process()
     boost::asio::io_context ios;
     web_socket::WebSocketClient web_socket_client(
       ios, &print_received_data, [&disconnected_mode_commands, &connected_mode_commands]() {
-          cli::Cli::cout() << "Disconnected from likelib node "
-                           << "\n";
+          cli::Cli::cout() << "Disconnected from likelib node\n";
           disable(connected_mode_commands);
           enable(disconnected_mode_commands);
       });
@@ -107,7 +106,7 @@ void client_process()
 
     connected_mode_commands.push_back(root_menu->Insert(
       "last_block_info",
-      [&web_socket_client]([[maybe_unused]]std::ostream& out) { call_last_block_info(web_socket_client); },
+      [&web_socket_client]([[maybe_unused]] std::ostream& out) { call_last_block_info(web_socket_client); },
       "get last block info"));
 
     connected_mode_commands.push_back(

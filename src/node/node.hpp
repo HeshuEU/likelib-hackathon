@@ -1,7 +1,7 @@
 #pragma once
 
 #include "miner.hpp"
-#include "rpc_service.hpp"
+#include "public_service.hpp"
 
 #include "core/core.hpp"
 

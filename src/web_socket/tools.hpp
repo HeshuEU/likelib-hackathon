@@ -18,7 +18,7 @@ struct NodeInfo
     uint64_t top_block_number;
 };
 
-boost::asio::ip::tcp::endpoint get_endpoint(const std::string& listening_address);
+boost::asio::ip::tcp::endpoint create_endpoint(const std::string& listening_address);
 
 const std::string& serializeAccountType(lk::AccountType type);
 

@@ -13,13 +13,13 @@ namespace web_socket
 {
 
 using ResponceCall = std::function<void(base::PropertyTree)>;
-
 using RequestCall = std::function<void(base::PropertyTree, ResponceCall)>;
+
 
 class WebSocketSession : public std::enable_shared_from_this<WebSocketSession>
 {
   public:
-    explicit WebSocketSession(boost::asio::ip::tcp::socket&& socket, RequestCall call);
+    explicit WebSocketSession(boost::asio::ip::tcp::socket&& socket, RequestCall callback);
 
     ~WebSocketSession();
 
@@ -28,7 +28,9 @@ class WebSocketSession : public std::enable_shared_from_this<WebSocketSession>
   private:
     boost::asio::ip::tcp::endpoint _connected_endpoint;
     boost::beast::websocket::stream<boost::beast::tcp_stream> _web_socket;
+
     boost::beast::flat_buffer _buffer;
+
     RequestCall _request_call;
 
     void disconnect();

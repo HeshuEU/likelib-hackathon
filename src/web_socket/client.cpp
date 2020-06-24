@@ -19,7 +19,6 @@ WebSocketClient::WebSocketClient(boost::asio::io_context& ioc,
                                  CloseCallback close_callback)
   : _resolver(boost::asio::make_strand(ioc))
   , _web_socket(boost::asio::make_strand(ioc))
-  , _ready{ false }
   , _receive_callback{ std::move(receive_callback) }
   , _close_callback{ std::move(close_callback) }
 {}
@@ -33,38 +32,46 @@ WebSocketClient::~WebSocketClient()
 
 bool WebSocketClient::connect(const std::string& host)
 {
-    auto const results = _resolver.resolve(get_endpoint(host));
+    boost::system::error_code ec;
+    auto const results = _resolver.resolve(create_endpoint(host), ec);
+    if (ec) {
+        LOG_ERROR << "resolving error: " << ec.message();
+        return false;
+    }
 
-    auto ep = boost::asio::connect(_web_socket.next_layer(), results);
-
-    auto resolved_host = host + ':' + std::to_string(ep.port());
+    auto ep = boost::asio::connect(_web_socket.next_layer(), results, ec);
+    if (ec) {
+        LOG_ERROR << "connection error: " << ec.message();
+        return false;
+    }
 
     _web_socket.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client));
     static const std::string user_agent_name{ std::string(BOOST_BEAST_VERSION_STRING) +
-                                              std::string(" websocket-client-async") };
+                                              std::string(" websocket-client") };
     _web_socket.set_option(
       boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
           req.set(boost::beast::http::field::user_agent, user_agent_name);
       }));
 
-    boost::beast::error_code ec;
+    auto resolved_host = host + ':' + std::to_string(ep.port());
     _web_socket.handshake(resolved_host, "/", ec);
-
     if (ec) {
-        LOG_ERROR << "handshake failed: " << ec;
+        LOG_ERROR << "handshake failed: " << ec.message();
         close(boost::beast::websocket::close_code::internal_error);
         return false;
     }
 
-    _ready = true;
     do_read();
+
+    _ready = true;
     _web_socket.control_callback(
       std::bind(&WebSocketClient::control_callback, this, std::placeholders::_1, std::placeholders::_2));
-    return true;
+    return _ready;
 }
 
 
-void WebSocketClient::control_callback(boost::beast::websocket::frame_type kind, boost::string_view payload)
+void WebSocketClient::control_callback(boost::beast::websocket::frame_type kind,
+                                       [[maybe_unused]] boost::string_view payload)
 {
     if (kind == boost::beast::websocket::frame_type::close) {
         disconnect();
@@ -98,11 +105,14 @@ void WebSocketClient::close(boost::beast::websocket::close_code reason)
         _web_socket.close(reason, ec);
 
         if (ec) {
-            LOG_ERROR << "closing failed: " << ec;
+            LOG_ERROR << "closing failed: " << ec.message();
             return;
         }
+
         _ready = false;
-        _close_callback();
+        if (_close_callback) {
+            _close_callback();
+        }
     }
 }
 
@@ -112,7 +122,7 @@ void WebSocketClient::on_write(boost::beast::error_code ec, std::size_t bytes_tr
     boost::ignore_unused(bytes_transferred);
 
     if (ec) {
-        LOG_ERROR << "write failed: " << ec;
+        LOG_ERROR << "write failed: " << ec.message();
         close(boost::beast::websocket::close_code::internal_error);
     }
 }
@@ -128,12 +138,12 @@ void WebSocketClient::on_read(boost::beast::error_code ec, std::size_t bytes_tra
 {
     if (ec == boost::beast::websocket::error::closed) {
         LOG_DEBUG << "Connection closed";
-        disconnect();
+        close(boost::beast::websocket::close_code::bad_payload);
         return;
     }
 
     if (ec) {
-        LOG_WARNING << "read failed: " << ec;
+        LOG_WARNING << "read failed: " << ec.message();
         return;
     }
 
@@ -142,12 +152,15 @@ void WebSocketClient::on_read(boost::beast::error_code ec, std::size_t bytes_tra
 
     do_read();
 
+    base::PropertyTree received_query;
     try {
-        _receive_callback(base::parseJson(received_data.toString()));
+        received_query = base::parseJson(received_data.toString());
     }
     catch (const base::Error& error) {
         LOG_ERROR << "client json parsing fail: " << error;
     }
+
+    _receive_callback(std::move(received_query));
 }
 
 }

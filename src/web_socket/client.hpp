@@ -12,8 +12,6 @@ namespace web_socket
 {
 
 using ReceiveMessageCallback = std::function<void(base::PropertyTree)>;
-
-
 using CloseCallback = std::function<void(void)>;
 
 
@@ -34,8 +32,9 @@ class WebSocketClient
   private:
     boost::asio::ip::tcp::resolver _resolver;
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> _web_socket;
+    bool _ready{ false };
+
     boost::beast::flat_buffer _read_buffer;
-    bool _ready;
 
     ReceiveMessageCallback _receive_callback;
     CloseCallback _close_callback;
