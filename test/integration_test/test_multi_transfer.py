@@ -2,6 +2,7 @@ from tester import test_case, Env, NodeConfig, Id, TEST_CHECK, TEST_CHECK_EQUAL,
                    ClientType, get_distributor_address_path, TransactionStatusCode
 from time import sleep
 import concurrent.futures
+from random import randrange
 
 
 @test_case("multi_transfer_connected_with_everything")
@@ -230,3 +231,61 @@ def main(env: Env) -> int:
                          init_amount)
 
     return 0
+
+@test_case("transfer_to_myself")
+def main(env: Env) -> int:
+    sync_port = 20100
+    grpc_port = 50100
+    amount = randrange(1000)
+    update_time = 0.5
+    timeout = 2
+    wait_time = 1
+    transaction_update_time=2
+    max_update_request=10
+
+    env.logger.debug(f"Random amount for test = {amount}")
+
+    id = Id(sync_port, grpc_port = grpc_port)
+    env.start_node(NodeConfig(id))
+    client = env.get_client(ClientType.LEGACY_GRPC, id)
+
+    TEST_CHECK(client.connection_test())
+    env.logger.info("Node started success.")
+
+    address = client.generate_keys(keys_path=f"keys")
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
+    TEST_CHECK_EQUAL(client.get_balance(address=address.address, timeout=timeout, wait=wait_time), 0)
+    env.logger.info("New address created.")
+
+    transaction = client.transfer(to_address=address.address, amount=amount,
+                              from_address=distributor_address, fee=0, wait=wait_time, timeout=timeout)
+    TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
+    stat = client.get_transaction_status(tx_hash=transaction.tx_hash)
+    env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_update_request = {max_update_request}).")
+    request_count = 0
+    while stat.status_code != TransactionStatusCode.SUCCESS:
+      sleep(transaction_update_time)
+      stat = client.get_transaction_status(tx_hash=transaction.tx_hash)
+      request_count += 1
+      env.logger.info(f"Wait transaction request_count = {request_count}")
+      if request_count >= max_update_request: return 1
+    TEST_CHECK_EQUAL(client.get_balance(address=address.address, timeout=timeout, wait=wait_time), amount)
+    env.logger.info("Initialaze transaction success.")
+
+    transaction = client.transfer(to_address=address.address, amount=amount,
+                              from_address=address, fee=0, wait=wait_time, timeout=timeout)
+    TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
+    stat = client.get_transaction_status(tx_hash=transaction.tx_hash)
+    env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_update_request = {max_update_request}).")
+    request_count = 0
+    while stat.status_code != TransactionStatusCode.SUCCESS:
+      sleep(transaction_update_time)
+      stat = client.get_transaction_status(tx_hash=transaction.tx_hash)
+      request_count += 1
+      env.logger.info(f"Wait transaction request_count = {request_count}")
+      if request_count >= max_update_request: return 1
+    TEST_CHECK_EQUAL(client.get_balance(address=address.address, timeout=timeout, wait=wait_time), amount)
+    env.logger.info("Transaction to myself success.")
+
+    return 0
+
