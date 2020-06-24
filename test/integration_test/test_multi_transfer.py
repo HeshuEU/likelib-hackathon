@@ -10,9 +10,11 @@ def main(env: Env) -> int:
     count_nodes = 10
     start_sync_port = 20302
     start_rpc_port = 50152
-    waiting_time = 10
-    transaction_timeout = 20
-    transaction_wait = 10
+    waiting_time = 1
+    transaction_timeout = 2
+    transaction_wait = 1
+    transaction_update_time = 1
+    max_update_request = 10
 
     pool = []
     node_ids = []
@@ -39,19 +41,31 @@ def main(env: Env) -> int:
 
     distributor_address = pool[-1].load_address(keys_path=get_distributor_address_path())
 
+    init_transactions = []
     # init addresses with amount
     for to_address in addresses:
       TEST_CHECK_EQUAL(pool[-1].get_balance(address=to_address.address, timeout=2, wait=1), 0)
       transaction = pool[-1].transfer(to_address=to_address.address, amount=init_amount,
                               from_address=distributor_address, fee=0, wait=0.2, timeout=2)
       TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-      #stat = pool[-1].get_transaction_status(tx_hash=transaction.tx_hash)
-      #TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+      init_transactions.append(transaction)
 
-    sleep(3)
+    for transaction in init_transactions:
+      env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_update_request = {max_update_request}).")
+      request_count = 0
+      transaction = pool[-1].get_transaction_status(tx_hash=transaction.tx_hash)
+      while transaction.status_code != TransactionStatusCode.SUCCESS:
+        sleep(transaction_update_time)
+        transaction = pool[-1].get_transaction_status(tx_hash=transaction.tx_hash)
+        request_count += 1
+        env.logger.info(f"Wait transaction request_count = {request_count}")
+        if request_count >= max_update_request: return 1
+      env.logger.info("Transaction success.")
+    env.logger.info("Init transactions success.")
     for node in pool:
-        TEST_CHECK_EQUAL(node.get_balance(address=to_address.address, timeout=2, wait=1),
+      TEST_CHECK_EQUAL(node.get_balance(address=to_address.address, timeout=2, wait=1),
                          init_amount)
+    env.logger.info("Init check balance success.")
     for i in range(1, len(addresses) - 1):
       from_address = addresses[i]
       to_address = addresses[i + 1]
@@ -60,15 +74,25 @@ def main(env: Env) -> int:
                                        from_address=from_address, fee=0,
                                        wait=transaction_wait, timeout=transaction_timeout)
       TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-      stat = pool[-1].get_transaction_status(tx_hash=transaction.tx_hash)
-      TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+      env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_update_request = {max_update_request}).")
+      request_count = 0
+      transaction = pool[-1].get_transaction_status(tx_hash=transaction.tx_hash)
+      while transaction.status_code != TransactionStatusCode.SUCCESS:
+        sleep(transaction_update_time)
+        transaction = pool[-1].get_transaction_status(tx_hash=transaction.tx_hash)
+        request_count += 1
+        env.logger.info(f"Wait transaction request_count = {request_count}")
+        if request_count >= max_update_request: return 1
+      env.logger.info(f"Transaction success, check balance {to_address.address}")
+
       for node in pool:
         TEST_CHECK_EQUAL(node.get_balance(address=to_address.address,
                                   timeout=2, wait=1), amount + init_amount)
-        first_address = addresses[0]
-        first_address_balance = init_amount
-        for node in pool:
-            TEST_CHECK_EQUAL(node.get_balance(address=first_address.address,
+      first_address = addresses[0]
+      first_address_balance = init_amount
+      env.logger.info(f"Check balance of first address {first_address.address}")
+      for node in pool:
+        TEST_CHECK_EQUAL(node.get_balance(address=first_address.address,
                                   timeout=2, wait=1), first_address_balance)
 
     return 0
