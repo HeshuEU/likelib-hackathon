@@ -104,6 +104,23 @@ void modifyMetadataOutput(boost::property_tree::ptree& metadata, const std::stri
         RAISE_ERROR(base::InvalidArgument, "Invalid argument for property tree");
     }
 }
+
+std::string getMethodSignature(const std::string& functions, const std::string& method_name)
+{
+    std::regex reg("<Function .+\\(.*\\)>");
+    auto words_begin = std::sregex_iterator(functions.begin(), functions.end(), reg);
+    auto words_end = std::sregex_iterator();
+    std::string result = functions;
+    for (auto i = words_begin; i != words_end; i++) {
+        std::smatch match = *i;
+        std::string matched_world = match.str();
+        if(auto pos = matched_world.find(method_name); pos != std::string::npos){
+            auto method_signature = matched_world.substr(pos, matched_world.size() - pos - 1);
+            return method_signature;
+        }
+    }
+    RAISE_ERROR(base::LogicError, "No method was found for the encoding");
+}
 }
 
 namespace vm
@@ -437,7 +454,6 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
     try {
         auto [bytecode, metadata] = loadContractData(contract_path);
         auto [method, arguments] = parseCall(data);
-
         if (method == "constructor") {
             modifyMetadataAddress(metadata);
             encode_result = ::encodeMessageConstructor(
@@ -445,8 +461,9 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
             encode_result.erase(0, 2);
         }
         else {
-            auto methon_hash = base::Keccak256::compute(
-              base::Bytes(::getMethodSignature(method.c_str(), treeToString(metadata).c_str())));
+            auto functions_signature = ::getMethodsByArguments(arguments.c_str(), treeToString(metadata).c_str());
+            auto method_signature = getMethodSignature(functions_signature, method);
+            auto methon_hash = base::Keccak256::compute(base::Bytes(method_signature));
             modifyMetadataAddress(metadata);
             encode_result = ::encodeMessageFunction(
               method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
@@ -484,8 +501,10 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
     try {
         auto [bytecode, metadata] = loadContractData(contract_path);
         modifyMetadataOutput(metadata, method);
-        auto methon_hash =
-          base::Keccak256::compute(base::Bytes(::getMethodSignature(method.c_str(), treeToString(metadata).c_str())));
+        std::string arguments = "";
+        auto functions_signature = ::getMethodsByArguments(arguments.c_str(), treeToString(metadata).c_str());
+        auto method_signature = getMethodSignature(functions_signature, method);
+        auto methon_hash = base::Keccak256::compute(base::Bytes(method_signature));
         decode_result = ::decodeMessage(treeToString(metadata).c_str(),
                                         method.c_str(),
                                         data.c_str(),
@@ -503,5 +522,4 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
         return decode_result;
     }
 }
-
 } // namespace vm
