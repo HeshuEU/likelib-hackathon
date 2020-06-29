@@ -200,7 +200,7 @@ def main(env: Env) -> int:
       request_count = 0
       while stat.status_code != TransactionStatusCode.SUCCESS:
         sleep(transaction_update_time)
-        stat = bad_client_pool.get_transaction_status(tx_hash=transaction.tx_hash)
+        stat = bad_client_pool[0].get_transaction_status(tx_hash=transaction.tx_hash)
         request_count += 1
         env.logger.info(f"Wait transaction request_count = {request_count}")
         if request_count >= max_update_request: return 1
