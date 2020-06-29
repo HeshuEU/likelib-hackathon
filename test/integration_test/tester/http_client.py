@@ -573,5 +573,5 @@ class Client(BaseClient):
             request_count += 1
             self.logger.info(f"Wait transaction {transaction.tx_hash} request_count = {request_count}")
             if request_count >= max_request: return False
-        self.logger.info("Transaction {transaction.tx_hash} success.")
+        self.logger.info(f"Transaction {transaction.tx_hash} success.")
         return True

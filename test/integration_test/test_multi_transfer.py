@@ -7,14 +7,16 @@ from random import randrange
 
 @test_case("multi_transfer_connected_with_everything")
 def main(env: Env) -> int:
+    init_amount = 1000
     count_nodes = 10
     start_sync_port = 20302
     start_rpc_port = 50152
-    waiting_time = 1
-    transaction_timeout = 2
+    waiting_time = 0.5
+    timeout = 2
     transaction_wait = 1
     transaction_update_time = 1
     max_update_request = 10
+    sync_time = 3
 
     pool = []
     node_ids = []
@@ -37,24 +39,23 @@ def main(env: Env) -> int:
       for node in pool:
         TEST_CHECK(node.connection_test())
     addresses = [pool[-1].generate_keys(keys_path=f"keys{i}") for i in range(1, len(pool))]
-    init_amount = 1000
-
     distributor_address = pool[-1].load_address(keys_path=get_distributor_address_path())
 
     init_transactions = []
     # init addresses with amount
     for to_address in addresses:
-      TEST_CHECK_EQUAL(pool[-1].get_balance(address=to_address.address, timeout=2, wait=1), 0)
+      TEST_CHECK_EQUAL(pool[-1].get_balance(address=to_address.address, timeout=timeout, wait=waiting_time), 0)
       transaction = pool[-1].transfer(to_address=to_address.address, amount=init_amount,
-                              from_address=distributor_address, fee=0, wait=0.2, timeout=2)
+                        from_address=distributor_address, fee=0, wait=transaction_wait, timeout=timeout)
       TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
       init_transactions.append(transaction)
 
     for transaction in init_transactions:
       TEST_CHECK(pool[-1].transaction_success_wait(transaction=transaction))
-    env.logger.info("Init transactions success.")
+    env.logger.info("Init transactions success. Wait synchronization")
+    sleep(sync_time)
     for node in pool:
-      TEST_CHECK_EQUAL(node.get_balance(address=to_address.address, timeout=2, wait=1),
+      TEST_CHECK_EQUAL(node.get_balance(address=to_address.address, timeout=timeout, wait=waiting_time),
                          init_amount)
     env.logger.info("Init check balance success.")
     for i in range(1, len(addresses) - 1):
@@ -63,20 +64,20 @@ def main(env: Env) -> int:
       amount = i * 100
       transaction = pool[-1].transfer(to_address=to_address.address, amount=amount,
                                        from_address=from_address, fee=0,
-                                       wait=transaction_wait, timeout=transaction_timeout)
+                                       wait=transaction_wait, timeout=timeout)
       TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
       TEST_CHECK(pool[-1].transaction_success_wait(transaction=transaction))
       env.logger.info(f"Transaction success, check balance {to_address.address}")
 
       for node in pool:
         TEST_CHECK_EQUAL(node.get_balance(address=to_address.address,
-                                  timeout=2, wait=1), amount + init_amount)
+                                  timeout=timeout, wait=waiting_time), amount + init_amount)
       first_address = addresses[0]
       first_address_balance = init_amount
       env.logger.info(f"Check balance of first address {first_address.address}")
       for node in pool:
         TEST_CHECK_EQUAL(node.get_balance(address=first_address.address,
-                                  timeout=2, wait=1), first_address_balance)
+                                  timeout=timeout, wait=waiting_time), first_address_balance)
 
     return 0
 
