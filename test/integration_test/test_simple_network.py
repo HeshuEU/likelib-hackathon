@@ -5,7 +5,9 @@ import concurrent.futures
 
 @test_case("two_nodes")
 def main(env: Env) -> int:
-    amount=100
+    amount = 100
+    wait = 1
+    timeout = 2
     node_1_id = Id(20101, grpc_port=50101, http_port=50102)
     node_2_id = Id(20102, grpc_port=50201, http_port=50202)
     env.start_node(NodeConfig(node_1_id))
@@ -20,21 +22,19 @@ def main(env: Env) -> int:
     test_address = client_1_grpc.generate_keys(keys_path="test_keys")
 
     transaction = client_1_grpc.transfer(to_address=test_address.address, amount=amount, from_address=distributor_address,
-                                         fee=0, wait=1, timeout=2)
+                                         fee=0, wait=wait, timeout=timeout)
     TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-    stat = client_1_grpc.get_transaction_status(tx_hash=transaction.tx_hash)
-    TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+    client_1_grpc.transaction_success_wait(transaction=transaction)
 
     transaction = client_2_http.transfer(to_address=test_address.address, amount=amount, from_address=distributor_address,
-                                         fee=0, wait=1, timeout=2)
+                                         fee=0, wait=wait, timeout=timeout)
     TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-    stat = client_1_grpc.get_transaction_status(tx_hash=transaction.tx_hash)
-    TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+    client_2_http.transaction_success_wait(transaction=transaction)
 
-    TEST_CHECK_EQUAL(client_1_grpc.get_balance(address=test_address.address, timeout=2, wait=1), 2*amount)
-    TEST_CHECK_EQUAL(client_1_http.get_balance(address=test_address.address, timeout=2, wait=1), 2*amount)
-    TEST_CHECK_EQUAL(client_2_grpc.get_balance(address=test_address.address, timeout=2, wait=1), 2*amount)
-    TEST_CHECK_EQUAL(client_2_http.get_balance(address=test_address.address, timeout=2, wait=1), 2*amount)
+    TEST_CHECK_EQUAL(client_1_grpc.get_balance(address=test_address.address, timeout=timeout, wait=wait), 2*amount)
+    TEST_CHECK_EQUAL(client_1_http.get_balance(address=test_address.address, timeout=timeout, wait=wait), 2*amount)
+    TEST_CHECK_EQUAL(client_2_grpc.get_balance(address=test_address.address, timeout=timeout, wait=wait), 2*amount)
+    TEST_CHECK_EQUAL(client_2_http.get_balance(address=test_address.address, timeout=timeout, wait=wait), 2*amount)
 
     return 0
 

@@ -132,3 +132,6 @@ class BaseClient(metaclass=ABCMeta):
 
     def call_view(self, *, from_address: Keys, to_address: str, message: str, timeout: int, wait: int) -> str:
         raise LogicException("method is not implemented")
+
+    def transaction_success_wait(self, *, transaction: TransactionStatus, update_time: int, max_request: int) -> bool:
+        raise LogicException("method is not implemented")
