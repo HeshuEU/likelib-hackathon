@@ -65,16 +65,7 @@ def main(env: Env) -> int:
     transaction = main_client.transfer(to_address=address.address, amount=amount,
                               from_address=distributor_address, fee=0, wait=wait_time, timeout=timeout)
     TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-    stat = main_client.get_transaction_status(tx_hash=transaction.tx_hash)
-    env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_update_request = {max_update_request}).")
-    request_count = 0
-    while stat.status_code != TransactionStatusCode.SUCCESS:
-      sleep(transaction_update_time)
-      stat = main_client.get_transaction_status(tx_hash=transaction.tx_hash)
-      request_count += 1
-      env.logger.info(f"Wait transaction request_count = {request_count}")
-      if request_count >= max_update_request: return 1
-    env.logger.info("Transaction success.")
+    TEST_CHECK(main_client.transaction_success_wait(transaction=transaction))
     TEST_CHECK_EQUAL(main_client.get_balance(address=address.address, timeout=timeout, wait=wait_time), amount)
     env.logger.info("Main client transaction checked success.")
     for client in bad_client_pool:
@@ -118,16 +109,7 @@ def main(env: Env) -> int:
     transaction = main_client.transfer(to_address=address.address, amount=amount,
                               from_address=distributor_address, fee=0, wait=wait_time, timeout=timeout)
     TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-    stat = main_client.get_transaction_status(tx_hash=transaction.tx_hash)
-    env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_update_request = {max_update_request}).")
-    request_count = 0
-    while stat.status_code != TransactionStatusCode.SUCCESS:
-      sleep(transaction_update_time)
-      stat = main_client.get_transaction_status(tx_hash=transaction.tx_hash)
-      request_count += 1
-      env.logger.info(f"Wait transaction request_count = {request_count}")
-      if request_count >= max_update_request: return 1
-    env.logger.info("Transaction success.")
+    TEST_CHECK(main_client.transaction_success_wait(transaction=transaction))
     TEST_CHECK_EQUAL(main_client.get_balance(address=address.address, timeout=timeout, wait=wait_time), amount)
     env.logger.info("Main client transaction checked success.")
     for client in bad_client_pool:
@@ -151,17 +133,7 @@ def node_transfers(client, addresses, transaction_wait, finish_address, amount, 
       TEST_CHECK_EQUAL(transactions[-1].status_code, TransactionStatusCode.PENDING)
       env.logger.info(f"Transaction {transactions[-1].tx_hash} is PENDING (from {from_address.address})")
     for transaction in transactions:
-      stat = client.get_transaction_status(tx_hash=transaction.tx_hash)
-      env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_updatate_request = {max_update_request}")
-      request_count = 0
-      while stat.status_code != TransactionStatusCode.SUCCESS:
-        sleep(transaction_update_time)
-        stat = bad_client_pool.get_transaction_status(tx_hash=transaction.tx_hash)
-        request_count += 1
-        env.logger.info(f"Wait transaction {transaction.tx_hash} request_count = {request_count}")
-        if request_count >= max_update_request: return 1
-      env.logger.info(f"Transaction {transaction.tx_hash} success.")
-
+      TEST_CHECK(client.transaction_success_wait(transaction=transaction))
 
 
 @test_case("transaction_stress_in_bad_network")
@@ -195,17 +167,7 @@ def main(env: Env) -> int:
       transaction = bad_client_pool[0].transfer(to_address=address.address, amount=start_amount,
                               from_address=distributor_address, fee=0, wait=wait_time, timeout=timeout)
       TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-      stat = bad_client_pool[0].get_transaction_status(tx_hash=transaction.tx_hash)
-      env.logger.info(f"Wait transaction (transaction_update_time = {transaction_update_time}, max_update_request = {max_update_request}).")
-      request_count = 0
-      while stat.status_code != TransactionStatusCode.SUCCESS:
-        sleep(transaction_update_time)
-        stat = bad_client_pool[0].get_transaction_status(tx_hash=transaction.tx_hash)
-        request_count += 1
-        env.logger.info(f"Wait transaction request_count = {request_count}")
-        if request_count >= max_update_request: return 1
-      env.logger.info(f"Initialize transaction to {address.address} success.")
-
+      TEST_CHECK(bad_client_pool[0].transaction_success_wait(transaction=transaction))
     for client in bad_client_pool:
       for address in addresses:
         TEST_CHECK_EQUAL(client.get_balance(address=address.address, timeout=timeout, wait=wait_time), start_balance)

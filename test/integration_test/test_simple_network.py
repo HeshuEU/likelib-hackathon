@@ -24,12 +24,12 @@ def main(env: Env) -> int:
     transaction = client_1_grpc.transfer(to_address=test_address.address, amount=amount, from_address=distributor_address,
                                          fee=0, wait=wait, timeout=timeout)
     TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-    client_1_grpc.transaction_success_wait(transaction=transaction)
+    TEST_CHECK(client_1_grpc.transaction_success_wait(transaction=transaction))
 
     transaction = client_2_http.transfer(to_address=test_address.address, amount=amount, from_address=distributor_address,
                                          fee=0, wait=wait, timeout=timeout)
     TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-    client_2_http.transaction_success_wait(transaction=transaction)
+    TEST_CHECK(client_2_http.transaction_success_wait(transaction=transaction))
 
     TEST_CHECK_EQUAL(client_1_grpc.get_balance(address=test_address.address, timeout=timeout, wait=wait), 2*amount)
     TEST_CHECK_EQUAL(client_1_http.get_balance(address=test_address.address, timeout=timeout, wait=wait), 2*amount)
