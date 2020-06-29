@@ -154,12 +154,13 @@ def main(env: Env) -> int:
 
     return 0
 
-def node_transfers(node, addresses, transaction_wait):
+def node_transfers(node, addresses, transaction_wait, env):
     shift = len(addresses) - 1
     pos = 0
     from_address = addresses[pos]
     amount = 300
     transaction_timeout = 40
+    env.logger.info(f"Node transfers start")
     for _ in range(len(addresses) * 5):
         pos = (pos + shift) % len(addresses)
         to_address = addresses[pos]
@@ -167,8 +168,7 @@ def node_transfers(node, addresses, transaction_wait):
         transaction = node.transfer(to_address=to_address.address, amount=amount,
            from_address=from_address, fee=0, wait=transaction_wait, timeout=transaction_timeout)
         TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-        stat = node.get_transaction_status(tx_hash=transaction.tx_hash)
-        TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+        TEST_CHECK(node.transaction_success_wait(transaction=transaction))
 
         from_address = to_address
 
@@ -194,6 +194,7 @@ def main(env: Env) -> int:
     pool.append(env.get_client(ClientType.LEGACY_GRPC, id))
     TEST_CHECK(pool[0].connection_test())
 
+    env.logger.info(f"First node started success")
     # initializing connections with nodes
     for i in range(1, count_nodes):
       current_sync_port = start_sync_port + i
@@ -205,6 +206,7 @@ def main(env: Env) -> int:
 
       for node in pool:
         TEST_CHECK(node.connection_test())
+    env.logger.info(f"All nodes in pool checked")
 
     addresses = [pool[-1].generate_keys(keys_path=f"keys{i}") for i in range(1, count_nodes * address_per_nodes + 1)]
     distributor_address = pool[-1].load_address(keys_path=get_distributor_address_path())
@@ -221,6 +223,7 @@ def main(env: Env) -> int:
       for node in pool:
         TEST_CHECK_EQUAL(node.get_balance(address=to_address.address, timeout=2, wait=1),
                          init_amount)
+    env.logger.info(f"Init balance checked")
 
     with concurrent.futures.ThreadPoolExecutor(len(pool)) as executor:
       threads = []
@@ -229,10 +232,11 @@ def main(env: Env) -> int:
         last_address_number = (i * address_per_nodes) + address_per_nodes
         threads.append(
                  executor.submit(node_transfers, pool[i],
-                 addresses[first_address_number:last_address_number], transaction_wait))
+                 addresses[first_address_number:last_address_number], transaction_wait, env))
       for i in threads:
         i.result()
 
+    env.logger.info(f"All thread finished")
     for address in addresses:
       for node in pool:
         TEST_CHECK_EQUAL(node.get_balance(address=address.address, timeout=2, wait=1),
