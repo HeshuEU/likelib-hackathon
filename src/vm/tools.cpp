@@ -113,8 +113,7 @@ std::string getMethodSignature(const std::string& methods, const std::string& me
     auto words_end = std::sregex_iterator();
 
     for (auto i = words_begin; i != words_end; i++) {
-        std::smatch match = *i;
-        std::string matched_world = match.str();
+        auto matched_world = i->str();
         if (auto pos = matched_world.find(method_name); pos != std::string::npos) {
             auto method_signature = matched_world.substr(pos, matched_world.size() - pos - 1);
             return method_signature;
@@ -153,6 +152,33 @@ std::vector<std::pair<std::string, std::string>> getMethodsInfo(boost::property_
         RAISE_ERROR(base::InvalidArgument, "Invalid argument for property tree");
     }
 }
+
+
+bool outputIsAddress(const std::string& method_matadata)
+{
+    if (method_matadata.find("\"type\": \"address\"") != std::string::npos) {
+        return true;
+    }
+    return false;
+}
+
+
+void changeAddressOutput(std::string& output)
+{
+    std::regex reg("0x[0-9a-fA-F]{40}");
+    auto words_begin = std::sregex_iterator(output.begin(), output.end(), reg);
+    auto words_end = std::sregex_iterator();
+
+    for (auto i = words_begin; i != words_end; i++) {
+        auto matched_world = i->str();
+
+        auto hex_address(matched_world.substr(2, matched_world.size() - 2));
+        auto raw_address = base::fromHex<base::FixedBytes<lk::Address::LENGTH_IN_BYTES>>(hex_address);
+        auto base58_address = base::base58Encode(raw_address);
+        output.replace(output.find(matched_world), matched_world.size(), base58_address);
+    }
+}
+
 }
 
 namespace vm
@@ -546,6 +572,9 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
         for (const auto& method : methods) {
             decode_result = ::decodeMessage(method.first.c_str(), method.second.c_str(), data.c_str());
             if (decode_result.size() != 0) {
+                if (outputIsAddress(method.first)) {
+                    changeAddressOutput(decode_result);
+                }
                 break;
             }
         }
