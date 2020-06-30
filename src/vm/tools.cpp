@@ -105,21 +105,53 @@ void modifyMetadataOutput(boost::property_tree::ptree& metadata, const std::stri
     }
 }
 
-std::string getMethodSignature(const std::string& functions, const std::string& method_name)
+
+std::string getMethodSignature(const std::string& methods, const std::string& method_name)
 {
-    std::regex reg("<Function .+\\(.*\\)>");
-    auto words_begin = std::sregex_iterator(functions.begin(), functions.end(), reg);
+    std::regex reg("<Function " + method_name + "\\((^ )*\\)>");
+    auto words_begin = std::sregex_iterator(methods.begin(), methods.end(), reg);
     auto words_end = std::sregex_iterator();
-    std::string result = functions;
+
     for (auto i = words_begin; i != words_end; i++) {
         std::smatch match = *i;
         std::string matched_world = match.str();
-        if(auto pos = matched_world.find(method_name); pos != std::string::npos){
+        if (auto pos = matched_world.find(method_name); pos != std::string::npos) {
             auto method_signature = matched_world.substr(pos, matched_world.size() - pos - 1);
             return method_signature;
         }
     }
-    RAISE_ERROR(base::LogicError, "No method was found for the encoding");
+    RAISE_ERROR(base::LogicError, "No method was found for the encode");
+}
+
+
+std::vector<std::pair<std::string, std::string>> getMethodsInfo(boost::property_tree::ptree& metadata,
+                                                                const std::string& method)
+{
+    constexpr std::size_t ID_METHOD_SIZE = 8;
+    std::vector<std::pair<std::string, std::string>> methods_info;
+    try {
+        BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
+            if ((abi.second.get<std::string>("type") == "function") &&
+                (abi.second.get<std::string>("name") == method)) {
+                std::string signature = method + '(';
+                BOOST_FOREACH (boost::property_tree::ptree::value_type& inputs, abi.second.get_child("inputs")) {
+                    signature += inputs.second.get<std::string>("type") + ',';
+                }
+                signature.erase(signature.size() - 1, 1);
+                signature += ')';
+                std::string method_id =
+                  base::Keccak256::compute(base::Bytes(signature)).toHex().substr(0, ID_METHOD_SIZE);
+                methods_info.emplace_back(treeToString(abi.second), method_id);
+            }
+        }
+        return methods_info;
+    }
+    catch (const boost::property_tree::ptree_bad_path& e) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid Metadata format");
+    }
+    catch (const boost::property_tree::ptree_bad_data& e) {
+        RAISE_ERROR(base::InvalidArgument, "Invalid argument for property tree");
+    }
 }
 }
 
@@ -438,7 +470,7 @@ std::string callPython(std::vector<std::string>& args)
 
 std::string encodeMessage(const std::string& contract_path, const std::string& data)
 {
-    constexpr int HASH_SIZE = 8;
+    constexpr int ID_METHOD_SIZE = 8;
     auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
     if (status == -1) {
         RAISE_ERROR(base::RuntimeError, "Decode python error");
@@ -454,24 +486,31 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
     try {
         auto [bytecode, metadata] = loadContractData(contract_path);
         auto [method, arguments] = parseCall(data);
+        modifyMetadataAddress(metadata);
+
         if (method == "constructor") {
-            modifyMetadataAddress(metadata);
             encode_result = ::encodeMessageConstructor(
               arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
+            if (encode_result.size() < ID_METHOD_SIZE) {
+                RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
+            }
             encode_result.erase(0, 2);
         }
         else {
-            auto functions_signature = ::getMethodsByArguments(arguments.c_str(), treeToString(metadata).c_str());
-            auto method_signature = getMethodSignature(functions_signature, method);
-            auto methon_hash = base::Keccak256::compute(base::Bytes(method_signature));
-            modifyMetadataAddress(metadata);
+            auto methods_signature = ::getMethodsByArguments(arguments.c_str(), treeToString(metadata).c_str());
+            if (methods_signature == "") {
+                RAISE_ERROR(base::InvalidArgument, "No methods with these arguments have been found");
+            }
+            auto method_signature = getMethodSignature(methods_signature, method);
+            auto method_hash = base::Keccak256::compute(base::Bytes(method_signature));
+
             encode_result = ::encodeMessageFunction(
               method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
-            if (encode_result.size() < HASH_SIZE) {
+            if (encode_result.size() < ID_METHOD_SIZE) {
                 RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
             }
-            encode_result = methon_hash.toHex().substr(0, HASH_SIZE) +
-                            encode_result.substr(HASH_SIZE, encode_result.size() - HASH_SIZE);
+            encode_result = method_hash.toHex().substr(0, ID_METHOD_SIZE) +
+                            encode_result.substr(ID_METHOD_SIZE, encode_result.size() - ID_METHOD_SIZE);
         }
     }
     catch (const base::Error& e) {
@@ -485,7 +524,6 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
 
 std::string decodeMessage(const std::string& contract_path, const std::string& method, const std::string& data)
 {
-    constexpr int HASH_SIZE = 8;
     auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
     if (status == -1) {
         RAISE_ERROR(base::RuntimeError, "Decode python error");
@@ -501,14 +539,16 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
     try {
         auto [bytecode, metadata] = loadContractData(contract_path);
         modifyMetadataOutput(metadata, method);
-        std::string arguments = "";
-        auto functions_signature = ::getMethodsByArguments(arguments.c_str(), treeToString(metadata).c_str());
-        auto method_signature = getMethodSignature(functions_signature, method);
-        auto methon_hash = base::Keccak256::compute(base::Bytes(method_signature));
-        decode_result = ::decodeMessage(treeToString(metadata).c_str(),
-                                        method.c_str(),
-                                        data.c_str(),
-                                        methon_hash.toHex().substr(0, HASH_SIZE).c_str());
+        auto methods = getMethodsInfo(metadata, method);
+        if (methods.empty()) {
+            RAISE_ERROR(base::InvalidArgument, "No methods with this name were found");
+        }
+        for (const auto& method : methods) {
+            decode_result = ::decodeMessage(method.first.c_str(), method.second.c_str(), data.c_str());
+            if (decode_result.size() != 0) {
+                break;
+            }
+        }
     }
     catch (const base::Error& e) {
         Py_Finalize();
@@ -516,7 +556,7 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
     }
     Py_Finalize();
     if (decode_result.size() == 0) {
-        RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
+        RAISE_ERROR(base::RuntimeError, "Error occurred during the decode");
     }
     else {
         return decode_result;

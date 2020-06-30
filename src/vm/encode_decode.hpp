@@ -23,7 +23,7 @@
 __PYX_EXTERN_C std::string getMethodsByArguments(char const *, char const *);
 __PYX_EXTERN_C std::string encodeMessageFunction(char const *, char const *, char const *, char const *);
 __PYX_EXTERN_C std::string encodeMessageConstructor(char const *, char const *, char const *);
-__PYX_EXTERN_C std::string decodeMessage(char const *, char const *, char const *, char const *);
+__PYX_EXTERN_C std::string decodeMessage(char const *, char const *, char const *);
 
 #endif /* !__PYX_HAVE_API__encode_decode */
 
