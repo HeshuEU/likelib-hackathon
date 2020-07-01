@@ -3046,7 +3046,7 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
   PyObject *__pyx_v_abi = NULL;
   PyObject *__pyx_v_contract = NULL;
   PyObject *__pyx_v_encode_result = NULL;
-  PyObject *__pyx_v_null_str = NULL;
+  PyObject *__pyx_v_empty_str = NULL;
   std::string __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -3176,7 +3176,7 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
  *         abi = metadata['output']['abi']
  *         contract = web3.Web3().eth.contract(abi=abi, bytecode=bytecode)             # <<<<<<<<<<<<<<
  *         encode_result = contract.constructor(*arguments).data_in_transaction
- *         return encode_result
+ *     except:
  */
       __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_web3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 105, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
@@ -3219,8 +3219,8 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
  *         abi = metadata['output']['abi']
  *         contract = web3.Web3().eth.contract(abi=abi, bytecode=bytecode)
  *         encode_result = contract.constructor(*arguments).data_in_transaction             # <<<<<<<<<<<<<<
- *         return encode_result
  *     except:
+ *         empty_str = ""
  */
       __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_contract, __pyx_n_s_constructor); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 106, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
@@ -3236,17 +3236,6 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
       __pyx_v_encode_result = __pyx_t_4;
       __pyx_t_4 = 0;
 
-      /* "encode_decode.pyx":107
- *         contract = web3.Web3().eth.contract(abi=abi, bytecode=bytecode)
- *         encode_result = contract.constructor(*arguments).data_in_transaction
- *         return encode_result             # <<<<<<<<<<<<<<
- *     except:
- *         null_str = ""
- */
-      __pyx_t_8 = __pyx_convert_string_from_py_std__in_string(__pyx_v_encode_result); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 107, __pyx_L3_error)
-      __pyx_r = __pyx_t_8;
-      goto __pyx_L7_try_return;
-
       /* "encode_decode.pyx":99
  * 
  * cdef public string encodeMessageConstructor(const char* arguments_c, const char* bytecode_c, const char* metadata_c):
@@ -3255,44 +3244,48 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
  *         bytecode = <str>bytecode_c
  */
     }
+    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    goto __pyx_L8_try_end;
     __pyx_L3_error:;
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "encode_decode.pyx":108
+    /* "encode_decode.pyx":107
+ *         contract = web3.Web3().eth.contract(abi=abi, bytecode=bytecode)
  *         encode_result = contract.constructor(*arguments).data_in_transaction
- *         return encode_result
  *     except:             # <<<<<<<<<<<<<<
- *         null_str = ""
- *         return null_str
+ *         empty_str = ""
+ *         return empty_str
  */
     /*except:*/ {
       __Pyx_AddTraceback("encode_decode.encodeMessageConstructor", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_5, &__pyx_t_6) < 0) __PYX_ERR(0, 108, __pyx_L5_except_error)
+      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_5, &__pyx_t_6) < 0) __PYX_ERR(0, 107, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GOTREF(__pyx_t_6);
 
-      /* "encode_decode.pyx":109
- *         return encode_result
+      /* "encode_decode.pyx":108
+ *         encode_result = contract.constructor(*arguments).data_in_transaction
  *     except:
- *         null_str = ""             # <<<<<<<<<<<<<<
- *         return null_str
- * 
+ *         empty_str = ""             # <<<<<<<<<<<<<<
+ *         return empty_str
+ *     return encode_result
  */
       __Pyx_INCREF(__pyx_kp_u__3);
-      __pyx_v_null_str = __pyx_kp_u__3;
+      __pyx_v_empty_str = __pyx_kp_u__3;
 
-      /* "encode_decode.pyx":110
+      /* "encode_decode.pyx":109
  *     except:
- *         null_str = ""
- *         return null_str             # <<<<<<<<<<<<<<
- * 
+ *         empty_str = ""
+ *         return empty_str             # <<<<<<<<<<<<<<
+ *     return encode_result
  * 
  */
-      __pyx_t_8 = __pyx_convert_string_from_py_std__in_string(__pyx_v_null_str); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 110, __pyx_L5_except_error)
+      __pyx_t_8 = __pyx_convert_string_from_py_std__in_string(__pyx_v_empty_str); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 109, __pyx_L5_except_error)
       __pyx_r = __pyx_t_8;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -3313,19 +3306,25 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
     __Pyx_XGIVEREF(__pyx_t_3);
     __Pyx_ExceptionReset(__pyx_t_1, __pyx_t_2, __pyx_t_3);
     goto __pyx_L1_error;
-    __pyx_L7_try_return:;
-    __Pyx_XGIVEREF(__pyx_t_1);
-    __Pyx_XGIVEREF(__pyx_t_2);
-    __Pyx_XGIVEREF(__pyx_t_3);
-    __Pyx_ExceptionReset(__pyx_t_1, __pyx_t_2, __pyx_t_3);
-    goto __pyx_L0;
     __pyx_L6_except_return:;
     __Pyx_XGIVEREF(__pyx_t_1);
     __Pyx_XGIVEREF(__pyx_t_2);
     __Pyx_XGIVEREF(__pyx_t_3);
     __Pyx_ExceptionReset(__pyx_t_1, __pyx_t_2, __pyx_t_3);
     goto __pyx_L0;
+    __pyx_L8_try_end:;
   }
+
+  /* "encode_decode.pyx":110
+ *         empty_str = ""
+ *         return empty_str
+ *     return encode_result             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_t_8 = __pyx_convert_string_from_py_std__in_string(__pyx_v_encode_result); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 110, __pyx_L1_error)
+  __pyx_r = __pyx_t_8;
+  goto __pyx_L0;
 
   /* "encode_decode.pyx":98
  * 
@@ -3350,7 +3349,7 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
   __Pyx_XDECREF(__pyx_v_abi);
   __Pyx_XDECREF(__pyx_v_contract);
   __Pyx_XDECREF(__pyx_v_encode_result);
-  __Pyx_XDECREF(__pyx_v_null_str);
+  __Pyx_XDECREF(__pyx_v_empty_str);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }

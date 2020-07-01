@@ -72,9 +72,10 @@ void modifyMetadataAddress(boost::property_tree::ptree& metadata)
     try {
         BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
             BOOST_FOREACH (boost::property_tree::ptree::value_type& inputs, abi.second.get_child("inputs")) {
-                if (inputs.second.get<std::string>("type") == "address") {
-                    inputs.second.put("type", "bytes32");
-                    inputs.second.put("internalType", "bytes32");
+                if (auto type = inputs.second.get<std::string>("type"); type.find("address") != std::string::npos) {
+                    type.replace(0, 7, "bytes32");
+                    inputs.second.put("type", type);
+                    inputs.second.put("internalType", type);
                 }
             }
         }
@@ -108,7 +109,7 @@ void modifyMetadataOutput(boost::property_tree::ptree& metadata, const std::stri
 
 std::string getMethodSignature(const std::string& methods, const std::string& method_name)
 {
-    std::regex reg("<Function " + method_name + "\\((^ )*\\)>");
+    std::regex reg("<Function " + method_name + "\\([^ ]*\\)>");
     auto words_begin = std::sregex_iterator(methods.begin(), methods.end(), reg);
     auto words_end = std::sregex_iterator();
 
@@ -397,7 +398,7 @@ namespace
 
 std::string replaceAddressConstructor(const std::string& call)
 {
-    std::regex reg("((\\(|,|\\s)Address\\((\\w+)\\)(\\)|,|\\s))");
+    std::regex reg("((\\(|,|\\s|\\[)Address\\((\\w+)\\)(\\)|,|\\s|\\]))");
     auto words_begin = std::sregex_iterator(call.begin(), call.end(), reg);
     auto words_end = std::sregex_iterator();
     std::string result = call;
@@ -512,9 +513,9 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
     try {
         auto [bytecode, metadata] = loadContractData(contract_path);
         auto [method, arguments] = parseCall(data);
-        modifyMetadataAddress(metadata);
-
+        
         if (method == "constructor") {
+            modifyMetadataAddress(metadata);
             encode_result = ::encodeMessageConstructor(
               arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
             if (encode_result.size() < ID_METHOD_SIZE) {
@@ -529,7 +530,7 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
             }
             auto method_signature = getMethodSignature(methods_signature, method);
             auto method_hash = base::Keccak256::compute(base::Bytes(method_signature));
-
+            modifyMetadataAddress(metadata);
             encode_result = ::encodeMessageFunction(
               method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
             if (encode_result.size() < ID_METHOD_SIZE) {
