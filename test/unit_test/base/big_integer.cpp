@@ -1,6 +1,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "base/big_integer.hpp"
+#include "base/serialization.hpp"
 
 #include <sstream>
 #include <string>
@@ -380,20 +381,20 @@ BOOST_AUTO_TEST_CASE(BigNum_all_bool_operator)
 BOOST_AUTO_TEST_CASE(BigNum_toString)
 {
     base::Uint256 num1(999999);
-    BOOST_CHECK(num1.toString() == "999999");
-    BOOST_CHECK((num1 + 11).toString() == "1000010");
+    BOOST_CHECK(num1.str() == "999999");
+    BOOST_CHECK((num1 + 11).str() == "1000010");
 
     base::Uint256 num2("1111111");
-    BOOST_CHECK(num2.toString() == "1111111");
-    BOOST_CHECK((num2 + 88).toString() == "1111199");
+    BOOST_CHECK(num2.str() == "1111111");
+    BOOST_CHECK((num2 + 88).str() == "1111199");
 
     base::Uint512 num11(999999);
-    BOOST_CHECK(num11.toString() == "999999");
-    BOOST_CHECK((num11 + 11).toString() == "1000010");
+    BOOST_CHECK(num11.str() == "999999");
+    BOOST_CHECK((num11 + 11).str() == "1000010");
 
     base::Uint512 num22("1111111");
-    BOOST_CHECK(num22.toString() == "1111111");
-    BOOST_CHECK((num22 + 88).toString() == "1111199");
+    BOOST_CHECK(num22.str() == "1111111");
+    BOOST_CHECK((num22 + 88).str() == "1111199");
 }
 
 //----------------------------------
@@ -428,4 +429,12 @@ BOOST_AUTO_TEST_CASE(BigNum_serialize)
     BOOST_CHECK(num11 == num1);
     BOOST_CHECK(num22 == num2);
     BOOST_CHECK(num33 == num3);
+}
+
+BOOST_AUTO_TEST_CASE(BigNum_constexpr)
+{
+    constexpr base::Uint256 a{ 123 };
+    constexpr base::Uint256 b{};
+    constexpr base::Uint256 c{ a + b };
+    BOOST_CHECK(c == 123);
 }

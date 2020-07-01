@@ -1,6 +1,5 @@
-set(BASE_TEMPLATE
+set(BASE_TEMPLATES
         hash.tpp
-        big_integer.tpp
         database.tpp
         property_tree.tpp
         serialization.tpp
@@ -40,5 +39,5 @@ set(BASE_SOURCES
         time.cpp
         )
 
-add_library(base ${BASE_HEADERS} ${BASE_TEMPLATE} ${BASE_SOURCES})
+add_library(base ${BASE_HEADERS} ${BASE_TEMPLATES} ${BASE_SOURCES})
 target_link_libraries(base Boost::log Boost::log_setup Boost::program_options OpenSSL::SSL dl backtrace leveldb::leveldb secp256k1_lib)

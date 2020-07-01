@@ -23,11 +23,11 @@ Endpoint::Endpoint(const std::string_view& address_with_port)
     try {
         _address = boost::asio::ip::make_address_v4(ip_address_part);
         if (!boost::spirit::qi::parse(std::cbegin(port_part), std::cend(port_part), boost::spirit::qi::int_, _port)) {
-            throw base::InvalidArgument{};
+            RAISE_ERROR(base::InvalidArgument, std::string{ address_with_port });
         }
     }
     catch (const std::exception& e) {
-        RAISE_ERROR(base::InvalidArgument, std::string{ "invalid address " } + std::string{ address_with_port });
+        RAISE_ERROR(base::InvalidArgument, std::string{ address_with_port });
     }
 }
 

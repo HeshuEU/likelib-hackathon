@@ -11,7 +11,7 @@ namespace lk::msg
 
 // clang-format off
 DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(Type, std::uint8_t,
-(DEBUG_MIN)
+  (DEBUG_MIN)
   (CONNECT)
   (CANNOT_ACCEPT)
   (ACCEPTED)
@@ -23,6 +23,7 @@ DEFINE_ENUM_CLASS_WITH_STRING_CONVERSIONS(Type, std::uint8_t,
   (GET_BLOCK)
   (BLOCK)
   (BLOCK_NOT_FOUND)
+  (NEW_BLOCK)
   (CLOSE)
   (DEBUG_MAX)
 )
@@ -150,7 +151,7 @@ struct Block
     static constexpr Type TYPE_ID = Type::BLOCK;
 
     base::Sha256 block_hash;
-    lk::Block block;
+    ImmutableBlock block;
 
     void serialize(base::SerializationOArchive& oa) const;
     static Block deserialize(base::SerializationIArchive& ia);
@@ -165,6 +166,18 @@ struct BlockNotFound
 
     void serialize(base::SerializationOArchive& oa) const;
     static BlockNotFound deserialize(base::SerializationIArchive& ia);
+};
+
+
+struct NewBlock
+{
+    static constexpr Type TYPE_ID = Type::NEW_BLOCK;
+
+    base::Sha256 block_hash;
+    ImmutableBlock block;
+
+    void serialize(base::SerializationOArchive& oa) const;
+    static NewBlock deserialize(base::SerializationIArchive& ia);
 };
 
 

@@ -20,7 +20,8 @@ class HostImplementation : public evmc::Host
         return false;
     }
 
-    evmc::bytes32 get_storage([[maybe_unused]] const evmc::address& addr, const evmc::bytes32& key) const noexcept override
+    evmc::bytes32 get_storage([[maybe_unused]] const evmc::address& addr, const evmc::bytes32& key) const
+      noexcept override
     {
         //        std::cout << "get_storage method call: address[" << vm::toBytes(addr) << "], key[" << vm::toBytes(key)
         //                  << "].\n";
@@ -66,8 +67,10 @@ class HostImplementation : public evmc::Host
         return evmc::bytes32();
     }
 
-    size_t copy_code([[maybe_unused]] const evmc::address& addr,[[maybe_unused]] size_t code_offset,[[maybe_unused]] uint8_t* /*buffer_data*/,[[maybe_unused]] size_t buffer_size) const
-      noexcept override
+    size_t copy_code([[maybe_unused]] const evmc::address& addr,
+                     [[maybe_unused]] size_t code_offset,
+                     [[maybe_unused]] uint8_t* /*buffer_data*/,
+                     [[maybe_unused]] size_t buffer_size) const noexcept override
     {
         //        std::cout << "copy_code call method call: " << vm::toBytes(addr)
         //                  << ", code_offset: " << std::to_string(code_offset)
@@ -75,7 +78,8 @@ class HostImplementation : public evmc::Host
         return 0;
     }
 
-    void selfdestruct([[maybe_unused]] const evmc::address& addr,[[maybe_unused]] const evmc::address& beneficiary) noexcept override
+    void selfdestruct([[maybe_unused]] const evmc::address& addr,
+                      [[maybe_unused]] const evmc::address& beneficiary) noexcept override
     {
         //        std::cout << "selfdestruct method call: address[" << vm::toBytes(addr) << "], beneficiary["
         //                  << vm::toBytes(beneficiary) << "].\n";

@@ -55,16 +55,12 @@ web::json::value serializeTransaction(const lk::Transaction& tx);
 
 std::optional<lk::Transaction> deserializeTransaction(const web::json::value& input);
 
-web::json::value serializeBlock(const lk::Block& block);
+web::json::value serializeBlock(const lk::ImmutableBlock& block);
 
-std::optional<lk::Block> deserializeBlock(const web::json::value& input);
+std::optional<lk::ImmutableBlock> deserializeBlock(const web::json::value& input);
 
 web::json::value serializeTransactionStatus(const lk::TransactionStatus& status);
 
 std::optional<lk::TransactionStatus> deserializeTransactionStatus(const web::json::value& input);
-
-web::json::value serializeViewCall(const lk::ViewCall& call);
-
-std::optional<lk::ViewCall> deserializeViewCall(const web::json::value& input);
 
 }

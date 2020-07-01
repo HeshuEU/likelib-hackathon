@@ -127,7 +127,7 @@ void serializeAccountInfo(const lk::AccountInfo& from, likelib::AccountInfo* to)
 {
     to->set_type(serializeAccountType(from.type));
     serializeAddress(from.address, to->mutable_address());
-    to->mutable_balance()->set_value(from.balance.toString());
+    to->mutable_balance()->set_value(from.balance.str());
     to->set_nonce(from.nonce);
     for (const auto& tx_hash : from.transactions_hashes) {
         serializeHash(tx_hash, to->mutable_hashes()->Add());
@@ -145,7 +145,7 @@ lk::AccountInfo deserializeAccountInfo(const likelib::AccountInfo* const info)
     }
     lk::AccountType type = deserializeAccountType(info->type());
     lk::Address address = deserializeAddress(&(info->address()));
-    return { type, address, balance, nonce, std::move(hashes) };
+    return { type, address, lk::Balance{ balance }, nonce, std::move(hashes) };
 }
 
 
@@ -192,7 +192,7 @@ void serializeTransaction(const lk::Transaction& from, likelib::Transaction* to)
 {
     serializeAddress(from.getFrom(), to->mutable_from());
     serializeAddress(from.getTo(), to->mutable_to());
-    to->mutable_value()->set_value(from.getAmount().toString());
+    to->mutable_value()->set_value(from.getAmount().str());
     to->set_fee(from.getFee());
     to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSeconds());
     to->set_data(base::base64Encode(from.getData()));
@@ -206,7 +206,7 @@ lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx)
     txb.setFrom(deserializeAddress(&tx->from()));
     lk::Address to_address = deserializeAddress(&tx->to());
     txb.setTo(to_address);
-    txb.setAmount(tx->value().value());
+    txb.setAmount(lk::Balance{ tx->value().value() });
     txb.setFee(tx->fee());
     txb.setTimestamp(base::Time(tx->creation_time().seconds_since_epoch()));
     txb.setData(base::base64Decode(tx->data()));
@@ -215,7 +215,7 @@ lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx)
 }
 
 
-void serializeBlock(const lk::Block& from, likelib::Block* to)
+void serializeBlock(const lk::ImmutableBlock& from, likelib::Block* to)
 {
     to->set_depth(from.getDepth());
     to->set_nonce(from.getNonce());
@@ -228,7 +228,7 @@ void serializeBlock(const lk::Block& from, likelib::Block* to)
 }
 
 
-lk::Block deserializeBlock(const likelib::Block* const block_to_deserialization)
+lk::ImmutableBlock deserializeBlock(const likelib::Block* const block_to_deserialization)
 {
     lk::BlockDepth depth{ block_to_deserialization->depth() };
     base::Sha256 prev_block_hash = deserializeHash(&(block_to_deserialization->previous_block_hash()));
@@ -239,9 +239,15 @@ lk::Block deserializeBlock(const likelib::Block* const block_to_deserialization)
     for (const auto& txv : block_to_deserialization->transactions()) {
         txset.add(deserializeTransaction(&txv));
     }
-    lk::Block blk{ depth, prev_block_hash, timestamp, coinbase, std::move(txset) };
-    blk.setNonce(nonce);
-    return blk;
+
+    lk::BlockBuilder b;
+    b.setDepth(depth);
+    b.setNonce(nonce);
+    b.setPrevBlockHash(std::move(prev_block_hash));
+    b.setTimestamp(std::move(timestamp));
+    b.setCoinbase(std::move(coinbase));
+    b.setTransactionsSet(std::move(txset));
+    return std::move(b).buildImmutable();
 }
 
 
@@ -259,27 +265,6 @@ lk::TransactionStatus deserializeTransactionStatus(const likelib::TransactionSta
     lk::TransactionStatus::StatusCode status_code = deserializeTransactionStatusCode(status->status());
     lk::TransactionStatus::ActionType action_type = deserializeTransactionActionType(status->type());
     return lk::TransactionStatus{ status_code, action_type, status->fee_left(), status->message() };
-}
-
-
-void serializeViewCall(const lk::ViewCall& from, likelib::ViewCall* to)
-{
-    serializeAddress(from.getFrom(), to->mutable_from());
-    serializeAddress(from.getContractAddress(), to->mutable_to());
-    to->mutable_creation_time()->set_seconds_since_epoch(from.getTimestamp().getSeconds());
-    to->mutable_message()->set_bytes_base_64(base::base64Encode(from.getData()));
-    to->mutable_signature()->set_signature_bytes_at_base_64(base::base64Encode(from.getSign()));
-}
-
-
-lk::ViewCall deserializeViewCall(const likelib::ViewCall* const call)
-{
-    auto from_address = deserializeAddress(&call->from());
-    auto to_address = deserializeAddress(&call->to());
-    auto timestamp = base::Time(call->creation_time().seconds_since_epoch());
-    auto message = base::base64Decode(call->message().bytes_base_64());
-    auto sign = lk::Sign(base::base64Decode(call->signature().signature_bytes_at_base_64()));
-    return lk::ViewCall{ from_address, to_address, timestamp, message, sign };
 }
 
 }

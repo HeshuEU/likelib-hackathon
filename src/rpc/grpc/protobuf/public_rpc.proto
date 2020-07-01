@@ -32,9 +32,6 @@ service NodePublicInterface {
     rpc get_transaction_result (Hash) returns (TransactionStatus) {
     }
 
-    rpc call_contract_view (ViewCall) returns (Data) {
-    }
-
 }
 
 //=====================================
@@ -100,15 +97,6 @@ message TransactionStatus {
     ActionType type = 2;
     string message = 3;
     uint64 fee_left = 4;
-}
-
-
-message ViewCall {
-    Address from = 1;
-    Address to = 2;
-    Data message = 3;
-    Time creation_time = 4;
-    Signature signature = 5;
 }
 
 

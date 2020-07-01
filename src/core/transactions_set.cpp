@@ -110,13 +110,12 @@ bool TransactionsSet::operator!=(const TransactionsSet& other) const
 
 void TransactionsSet::selectBestByFee(std::size_t n)
 {
-    if(n > size()) {
+    if (n > size()) {
         RAISE_ERROR(base::InvalidArgument, "cannot select more transactions than there are in set");
     }
 
-    std::nth_element(_txs.begin(), _txs.begin() + n, _txs.end(), [](const auto& a, const auto& b) {
-        return a.getFee() > b.getFee();
-    });
+    std::nth_element(
+      _txs.begin(), _txs.begin() + n, _txs.end(), [](const auto& a, const auto& b) { return a.getFee() > b.getFee(); });
 
     _txs.erase(_txs.begin() + n, _txs.end());
 }

@@ -128,8 +128,7 @@ Miner::~Miner()
 }
 
 
-void Miner::findNonce(const lk::Block& block_without_nonce,
-                      const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity)
+void Miner::findNonce(const lk::MutableBlock& block_without_nonce, const lk::Complexity& complexity)
 {
     _common_state.setCommonData({ impl::Task::FIND_NONCE, block_without_nonce, complexity });
 }
@@ -193,13 +192,14 @@ void MinerWorker::worker()
             case Task::FIND_NONCE: {
                 ASSERT(data.block_to_mine);
                 ASSERT(data.complexity);
-                lk::Block& b = data.block_to_mine.value();
-                const auto& complexity = data.complexity.value();
+                lk::MutableBlock& b = data.block_to_mine.value();
+                const auto complexity = data.complexity->getComparer();
+                auto attempting_nonce = mt();
                 while (last_read_version == _common_state.getVersion()) {
-                    auto attempting_nonce = mt();
-                    b.setNonce(attempting_nonce);
+                    b.setNonce(attempting_nonce++); // overflow must go by modulo 2, since unsigned
                     if (base::Sha256::compute(base::toBytes(b)).getBytes() < complexity) {
-                        _common_state.callHandlerAndDrop(std::move(data.block_to_mine).value());
+                        lk::BlockBuilder builder(b);
+                        _common_state.callHandlerAndDrop(std::move(builder).buildImmutable());
                     }
                 }
                 break;
