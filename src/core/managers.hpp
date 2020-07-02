@@ -95,7 +95,7 @@ class StateManager
     bool tryTransferMoney(const lk::Address& from, const lk::Address& to, const lk::Balance& amount);
     //================
     bool checkTransaction(const lk::Transaction& tx) const;
-    void updateFromGenesis(const lk::Block& block);
+    void updateFromGenesis(const ImmutableBlock& block);
     //================
     const AccountState& getAccount(const lk::Address& account_address) const;
     AccountState& getAccount(const lk::Address& address);

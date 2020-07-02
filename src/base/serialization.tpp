@@ -3,6 +3,7 @@
 #include "serialization.hpp"
 
 #include "base/assert.hpp"
+#include "base/big_integer.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/endian/conversion.hpp>
@@ -196,6 +197,17 @@ class global_deserialize<std::string>
 };
 
 
+template<typename T>
+class global_deserialize<base::BigInteger<T>>
+{
+  public:
+    base::BigInteger<T> deserialize(base::SerializationIArchive& ia, const base::Bytes&, std::size_t&)
+    {
+        return base::BigInteger<T>{ ia.deserialize<std::string>() };
+    }
+};
+
+
 template<typename, typename T>
 struct has_serialize
 {
@@ -314,6 +326,17 @@ class global_serialize<std::string>
     void serialize(base::SerializationOArchive& oa, const std::string& str, base::Bytes&)
     {
         oa.serialize(base::Bytes(str));
+    }
+};
+
+
+template<typename T>
+class global_serialize<base::BigInteger<T>>
+{
+  public:
+    void serialize(base::SerializationOArchive& oa, const base::BigInteger<T>& n, base::Bytes&)
+    {
+        oa.serialize(n.str());
     }
 };
 

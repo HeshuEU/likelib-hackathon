@@ -14,8 +14,7 @@ R PropertyTree::get(const std::string& path) const
         return _ptree.get<R>(std::string{ path });
     }
     catch (const std::exception& e) {
-        RAISE_ERROR(base::InvalidArgument,
-                    std::string{ "Cannot get given value from configuration. Additional info = " } + e.what());
+        RAISE_ERROR(KeyNotFound, e.what(), path);
     }
 }
 
@@ -31,8 +30,7 @@ std::vector<R> PropertyTree::getVector(const std::string& path) const
         return ret;
     }
     catch (const std::exception& e) {
-        RAISE_ERROR(base::InvalidArgument,
-                    std::string{ "Cannot get given value from configuration. Additional info = " } + e.what());
+        RAISE_ERROR(KeyNotFound, e.what(), path);
     }
 }
 

@@ -10,22 +10,22 @@ BOOST_AUTO_TEST_CASE(sha256_hash)
       base::Sha256::compute(base::Bytes{ 0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30 });
     auto hex_str1 = "5fa56e73ead625a67cb2b6c3394664491432c7d1402d738c285a8903572c4846";
     BOOST_CHECK_EQUAL(sha256_1.toHex(), hex_str1);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(sha256_1.getBytes()), hex_str1);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(sha256_1.getBytes()), hex_str1);
 
     auto sha256_2 = base::Sha256::compute(base::Bytes("likelib.2"));
     auto hex_str2 = "1242fcfab7d240b6d6538dc0fa626cb2e43fa1186febd52cf4dce0da3c55a9e5";
     BOOST_CHECK_EQUAL(sha256_2.toHex(), hex_str2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(sha256_2.getBytes()), hex_str2);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(sha256_2.getBytes()), hex_str2);
 
     auto sha256_3 = base::Sha256::compute(base::Bytes("it's third test"));
     auto hex_str3 = "2431f272555362f2d9ee255ec2ea24dffa371a03137699cf9d0b96e988346421";
     BOOST_CHECK_EQUAL(sha256_3.toHex(), hex_str3);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(sha256_3.getBytes()), hex_str3);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(sha256_3.getBytes()), hex_str3);
 
     auto sha256_4 = base::Sha256::compute(base::Bytes(""));
     auto hex_str4 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
     BOOST_CHECK_EQUAL(sha256_4.toHex(), hex_str4);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(sha256_4.getBytes()), hex_str4);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(sha256_4.getBytes()), hex_str4);
 }
 
 
@@ -36,8 +36,7 @@ BOOST_AUTO_TEST_CASE(sha256_serialization)
     auto target_hex_view = "5fa56e73ead625a67cb2b6c3394664491432c7d1402d738c285a8903572c4846";
 
     BOOST_CHECK_EQUAL(target_hash.toHex(), target_hex_view);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(target_hash.getBytes()),
-                      target_hex_view);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(target_hash.getBytes()), target_hex_view);
 
     base::SerializationOArchive out;
     out.serialize(target_hash);
@@ -48,7 +47,7 @@ BOOST_AUTO_TEST_CASE(sha256_serialization)
 
     BOOST_CHECK_EQUAL(deserialized_hash, target_hash);
     BOOST_CHECK_EQUAL(deserialized_hash.toHex(), target_hex_view);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(deserialized_hash.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(deserialized_hash.getBytes()),
                       target_hex_view);
 }
 
@@ -74,15 +73,13 @@ BOOST_AUTO_TEST_CASE(sha256_multiple_serialization)
     auto target_hex_view_1 = "5fa56e73ead625a67cb2b6c3394664491432c7d1402d738c285a8903572c4846";
 
     BOOST_CHECK_EQUAL(target_hash_1.toHex(), target_hex_view_1);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(target_hash_1.getBytes()),
-                      target_hex_view_1);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(target_hash_1.getBytes()), target_hex_view_1);
 
     auto target_hash_2 = base::Sha256::compute(base::Bytes("likelib.2"));
     auto target_hex_view_2 = "1242fcfab7d240b6d6538dc0fa626cb2e43fa1186febd52cf4dce0da3c55a9e5";
 
     BOOST_CHECK_EQUAL(target_hash_2.toHex(), target_hex_view_2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(target_hash_2.getBytes()),
-                      target_hex_view_2);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(target_hash_2.getBytes()), target_hex_view_2);
 
     base::SerializationOArchive out;
     out.serialize(target_hash_1);
@@ -95,12 +92,12 @@ BOOST_AUTO_TEST_CASE(sha256_multiple_serialization)
 
     BOOST_CHECK_EQUAL(deserialized_hash_1, target_hash_1);
     BOOST_CHECK_EQUAL(deserialized_hash_1.toHex(), target_hex_view_1);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(deserialized_hash_1.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(deserialized_hash_1.getBytes()),
                       target_hex_view_1);
 
     BOOST_CHECK_EQUAL(deserialized_hash_2, target_hash_2);
     BOOST_CHECK_EQUAL(deserialized_hash_2.toHex(), target_hex_view_2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::SHA256_SIZE>>(deserialized_hash_2.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha256::LENGTH>>(deserialized_hash_2.getBytes()),
                       target_hex_view_2);
 }
 
@@ -110,22 +107,22 @@ BOOST_AUTO_TEST_CASE(sha1_hash)
     auto sha1_1 = base::Sha1::compute(base::Bytes{ 0x4c, 0x49, 0x4b, 0x45, 0x4c, 0x49, 0x42, 0x9, 0x32, 0x2e, 0x30 });
     auto hex_str1 = "8b3b3476a984cc1c0d2bf1b3751ca366818f8b08";
     BOOST_CHECK_EQUAL(sha1_1.toHex(), hex_str1);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(sha1_1.getBytes()), hex_str1);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(sha1_1.getBytes()), hex_str1);
 
     auto sha1_2 = base::Sha1::compute(base::Bytes("likelib.2"));
     auto hex_str2 = "ee2f5885c39b865f83e5f91dd94ce466f3be371d";
     BOOST_CHECK_EQUAL(sha1_2.toHex(), hex_str2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(sha1_2.getBytes()), hex_str2);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(sha1_2.getBytes()), hex_str2);
 
     auto sha1_3 = base::Sha1::compute(base::Bytes("it's third test"));
     auto hex_str3 = "3f68e91144cc3d272df2950c0676918980a35d01";
     BOOST_CHECK_EQUAL(sha1_3.toHex(), hex_str3);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(sha1_3.getBytes()), hex_str3);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(sha1_3.getBytes()), hex_str3);
 
     auto sha1_4 = base::Sha1::compute(base::Bytes(""));
     auto hex_str4 = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
     BOOST_CHECK_EQUAL(sha1_4.toHex(), hex_str4);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(sha1_4.getBytes()), hex_str4);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(sha1_4.getBytes()), hex_str4);
 }
 
 
@@ -136,7 +133,7 @@ BOOST_AUTO_TEST_CASE(sha1_serialization)
     auto target_hex_view = "8b3b3476a984cc1c0d2bf1b3751ca366818f8b08";
 
     BOOST_CHECK_EQUAL(target_hash.toHex(), target_hex_view);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(target_hash.getBytes()), target_hex_view);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(target_hash.getBytes()), target_hex_view);
 
     base::SerializationOArchive out;
     out.serialize(target_hash);
@@ -147,8 +144,7 @@ BOOST_AUTO_TEST_CASE(sha1_serialization)
 
     BOOST_CHECK_EQUAL(deserialized_hash, target_hash);
     BOOST_CHECK_EQUAL(deserialized_hash.toHex(), target_hex_view);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(deserialized_hash.getBytes()),
-                      target_hex_view);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(deserialized_hash.getBytes()), target_hex_view);
 }
 
 
@@ -173,15 +169,13 @@ BOOST_AUTO_TEST_CASE(sha1_multiple_serialization)
     auto target_hex_view_1 = "8b3b3476a984cc1c0d2bf1b3751ca366818f8b08";
 
     BOOST_CHECK_EQUAL(target_hash_1.toHex(), target_hex_view_1);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(target_hash_1.getBytes()),
-                      target_hex_view_1);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(target_hash_1.getBytes()), target_hex_view_1);
 
     auto target_hash_2 = base::Sha1::compute(base::Bytes("likelib.2"));
     auto target_hex_view_2 = "ee2f5885c39b865f83e5f91dd94ce466f3be371d";
 
     BOOST_CHECK_EQUAL(target_hash_2.toHex(), target_hex_view_2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(target_hash_2.getBytes()),
-                      target_hex_view_2);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(target_hash_2.getBytes()), target_hex_view_2);
 
     base::SerializationOArchive out;
     out.serialize(target_hash_1);
@@ -194,12 +188,12 @@ BOOST_AUTO_TEST_CASE(sha1_multiple_serialization)
 
     BOOST_CHECK_EQUAL(deserialized_hash_1, target_hash_1);
     BOOST_CHECK_EQUAL(deserialized_hash_1.toHex(), target_hex_view_1);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(deserialized_hash_1.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(deserialized_hash_1.getBytes()),
                       target_hex_view_1);
 
     BOOST_CHECK_EQUAL(deserialized_hash_2, target_hash_2);
     BOOST_CHECK_EQUAL(deserialized_hash_2.toHex(), target_hex_view_2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::SHA1_SIZE>>(deserialized_hash_2.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Sha1::LENGTH>>(deserialized_hash_2.getBytes()),
                       target_hex_view_2);
 }
 
@@ -209,20 +203,17 @@ BOOST_AUTO_TEST_CASE(ripemd160_hash)
     auto target_hash_1 = base::Ripemd160::compute(base::Bytes("likelib.2"));
     auto hex_str2 = "cd5cbbaf134e907e8ba58a3fe462b1d48e4157ea";
     BOOST_CHECK_EQUAL(target_hash_1.toHex(), hex_str2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(target_hash_1.getBytes()),
-                      hex_str2);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(target_hash_1.getBytes()), hex_str2);
 
     auto target_hash_2 = base::Ripemd160::compute(base::Bytes("it's third test"));
     auto hex_str3 = "5db1d7ced17f628908569b7933e4c9aa69ccebf4";
     BOOST_CHECK_EQUAL(target_hash_2.toHex(), hex_str3);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(target_hash_2.getBytes()),
-                      hex_str3);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(target_hash_2.getBytes()), hex_str3);
 
     auto target_hash_3 = base::Ripemd160::compute(base::Bytes(""));
     auto hex_str4 = "9c1185a5c5e9fc54612808977ee8f548b2258d31";
     BOOST_CHECK_EQUAL(target_hash_3.toHex(), hex_str4);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(target_hash_3.getBytes()),
-                      hex_str4);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(target_hash_3.getBytes()), hex_str4);
 }
 
 
@@ -232,8 +223,7 @@ BOOST_AUTO_TEST_CASE(ripemd160_serialization)
     auto target_hex_view = "cd5cbbaf134e907e8ba58a3fe462b1d48e4157ea";
 
     BOOST_CHECK_EQUAL(target_hash.toHex(), target_hex_view);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(target_hash.getBytes()),
-                      target_hex_view);
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(target_hash.getBytes()), target_hex_view);
 
     base::SerializationOArchive out;
     out.serialize(target_hash);
@@ -244,7 +234,7 @@ BOOST_AUTO_TEST_CASE(ripemd160_serialization)
 
     BOOST_CHECK_EQUAL(deserialized_hash, target_hash);
     BOOST_CHECK_EQUAL(deserialized_hash.toHex(), target_hex_view);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(deserialized_hash.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(deserialized_hash.getBytes()),
                       target_hex_view);
 }
 
@@ -268,14 +258,14 @@ BOOST_AUTO_TEST_CASE(ripemd160_multiple_serialization)
     auto target_hex_view_1 = "9c1185a5c5e9fc54612808977ee8f548b2258d31";
 
     BOOST_CHECK_EQUAL(target_hash_1.toHex(), target_hex_view_1);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(target_hash_1.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(target_hash_1.getBytes()),
                       target_hex_view_1);
 
     auto target_hash_2 = base::Ripemd160::compute(base::Bytes("likelib.2"));
     auto target_hex_view_2 = "cd5cbbaf134e907e8ba58a3fe462b1d48e4157ea";
 
     BOOST_CHECK_EQUAL(target_hash_2.toHex(), target_hex_view_2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(target_hash_2.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(target_hash_2.getBytes()),
                       target_hex_view_2);
 
     base::SerializationOArchive out;
@@ -289,12 +279,12 @@ BOOST_AUTO_TEST_CASE(ripemd160_multiple_serialization)
 
     BOOST_CHECK_EQUAL(deserialized_hash_1, target_hash_1);
     BOOST_CHECK_EQUAL(deserialized_hash_1.toHex(), target_hex_view_1);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(deserialized_hash_1.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(deserialized_hash_1.getBytes()),
                       target_hex_view_1);
 
     BOOST_CHECK_EQUAL(deserialized_hash_2, target_hash_2);
     BOOST_CHECK_EQUAL(deserialized_hash_2.toHex(), target_hex_view_2);
-    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::RIPEMD160_SIZE>>(deserialized_hash_2.getBytes()),
+    BOOST_CHECK_EQUAL(base::toHex<base::FixedBytes<base::Ripemd160::LENGTH>>(deserialized_hash_2.getBytes()),
                       target_hex_view_2);
 }
 

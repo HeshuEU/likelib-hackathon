@@ -4,7 +4,6 @@ set(TEST_SOURCES
         base/bytes.cpp
         base/crypto.cpp
         base/database.cpp
-        base/error.cpp
         base/hash.cpp
         base/program_options.cpp
         base/property_tree.cpp
@@ -13,6 +12,7 @@ set(TEST_SOURCES
         base/timer.cpp
         core/address.cpp
         core/block.cpp
+        core/consensus.cpp
         core/transaction.cpp
         core/transactions_set.cpp
         net/endpoint.cpp
