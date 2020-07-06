@@ -5,8 +5,8 @@ from tester import run_registered_test_cases
 
 import test_communication_base
 import test_common_process
-import test_contract
-import test_auction_contract
+#import test_contract # This tests using call_view
+#import test_auction_contract # This tests using call_view
 
 import test_bad_network
 import test_simple_network
