@@ -87,7 +87,7 @@ std::optional<lk::TransactionStatus::ActionType> deserializeTransactionStatusAct
 
 web::json::value serializeBalance(const lk::Balance& balance)
 {
-    return web::json::value::string(balance.toString());
+    return web::json::value::string(balance.str());
 }
 
 
@@ -483,7 +483,7 @@ std::optional<lk::Transaction> deserializeTransaction(const web::json::value& in
 }
 
 
-web::json::value serializeBlock(const lk::Block& block)
+web::json::value serializeBlock(const lk::ImmutableBlock& block)
 {
     web::json::value result;
     result["depth"] = web::json::value::number(block.getDepth());
@@ -501,7 +501,7 @@ web::json::value serializeBlock(const lk::Block& block)
 }
 
 
-std::optional<lk::Block> deserializeBlock(const web::json::value& input)
+std::optional<lk::ImmutableBlock> deserializeBlock(const web::json::value& input)
 {
     try {
         std::optional<std::uint64_t> depth;
@@ -590,9 +590,14 @@ std::optional<lk::Block> deserializeBlock(const web::json::value& input)
             return std::nullopt;
         }
 
-        lk::Block block{ depth.value(), previous_block_hash.value(), timestamp.value(), coinbase.value(), txs };
-        block.setNonce(nonce.value());
-        return block;
+        lk::BlockBuilder b;
+        b.setDepth(depth.value());
+        b.setNonce(nonce.value());
+        b.setPrevBlockHash(previous_block_hash.value());
+        b.setTimestamp(timestamp.value());
+        b.setCoinbase(coinbase.value());
+        b.setTransactionsSet(std::move(txs));
+        return std::move(b).buildImmutable();
     }
     catch (const std::exception& e) {
         LOG_ERROR << "Failed to deserialize Block";
@@ -668,91 +673,6 @@ std::optional<lk::TransactionStatus> deserializeTransactionStatus(const web::jso
     }
     catch (const std::exception& e) {
         LOG_ERROR << "Failed to deserialize TransactionStatus";
-        return std::nullopt;
-    }
-}
-
-
-web::json::value serializeViewCall(const lk::ViewCall& call)
-{
-    web::json::value result;
-    result["from"] = serializeAddress(call.getFrom());
-    result["to"] = serializeAddress(call.getContractAddress());
-    result["timestamp"] = web::json::value::number(call.getTimestamp().getSeconds());
-    result["message"] = serializeBytes(call.getData());
-    result["sign"] = serializeSign(call.getSign());
-    return result;
-}
-
-
-std::optional<lk::ViewCall> deserializeViewCall(const web::json::value& input)
-{
-    try {
-        std::optional<lk::Address> from;
-        if (input.has_string_field("from")) {
-            from = deserializeAddress(input.at("from").as_string());
-        }
-        else {
-            LOG_ERROR << "from field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Address> to;
-        if (input.has_string_field("to")) {
-            to = deserializeAddress(input.at("to").as_string());
-        }
-        else {
-            LOG_ERROR << "to field is not exists";
-            return std::nullopt;
-        }
-        std::optional<base::Time> timestamp;
-        if (input.has_number_field("timestamp")) {
-            timestamp = base::Time(input.at("timestamp").as_number().to_uint32());
-        }
-        else {
-            LOG_ERROR << "timestamp field is not exists";
-            return std::nullopt;
-        }
-        std::optional<base::Bytes> message;
-        if (input.has_string_field("message")) {
-            message = deserializeBytes(input.at("message").as_string());
-        }
-        else {
-            LOG_ERROR << "message field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Sign> sign;
-        if (input.has_string_field("sign")) {
-            sign = deserializeSign(input.at("sign").as_string());
-        }
-        else {
-            LOG_ERROR << "sign field is not exists";
-            return std::nullopt;
-        }
-
-        if (!from) {
-            LOG_ERROR << "error at from deserialization";
-            return std::nullopt;
-        }
-        if (!to) {
-            LOG_ERROR << "error at to deserialization";
-            return std::nullopt;
-        }
-        if (!timestamp) {
-            LOG_ERROR << "error at timestamp deserialization";
-            return std::nullopt;
-        }
-        if (!message) {
-            LOG_ERROR << "error at message deserialization";
-            return std::nullopt;
-        }
-        if (!sign) {
-            LOG_ERROR << "error at sign deserialization";
-            return std::nullopt;
-        }
-        return lk::ViewCall{ from.value(), to.value(), timestamp.value(), message.value(), sign.value() };
-    }
-    catch (const std::exception& e) {
-        LOG_ERROR << "Failed to deserialize ViewCall";
         return std::nullopt;
     }
 }

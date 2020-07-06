@@ -1,5 +1,7 @@
 #pragma once
 
+#include "base/error.hpp"
+
 #include <boost/property_tree/ptree.hpp>
 
 #include <filesystem>
@@ -13,12 +15,22 @@ class PropertyTree
     friend void save(const PropertyTree& tree, const std::filesystem::path& path_to_save);
 
   public:
-    PropertyTree();
+    struct KeyNotFound : base::Error
+    {
+        KeyNotFound(const char* file_name,
+                    std::size_t line_number,
+                    const char* function_signature,
+                    std::string message,
+                    std::string path);
 
+      private:
+        std::string _path;
+    };
+
+    PropertyTree();
     PropertyTree(const boost::property_tree::ptree& ptree);
 
     bool hasKey(const std::string& path) const;
-
     bool empty() const;
 
     template<typename R>

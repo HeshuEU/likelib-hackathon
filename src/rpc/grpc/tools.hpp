@@ -43,16 +43,12 @@ void serializeTransaction(const lk::Transaction& from, likelib::Transaction* to)
 
 lk::Transaction deserializeTransaction(const ::likelib::Transaction* const tx);
 
-void serializeBlock(const lk::Block& from, likelib::Block* to);
+void serializeBlock(const lk::ImmutableBlock& from, likelib::Block* to);
 
-lk::Block deserializeBlock(const likelib::Block* const block);
+lk::ImmutableBlock deserializeBlock(const likelib::Block* const block);
 
 void serializeTransactionStatus(const lk::TransactionStatus& from, likelib::TransactionStatus* to);
 
 lk::TransactionStatus deserializeTransactionStatus(const likelib::TransactionStatus* const status);
-
-void serializeViewCall(const lk::ViewCall& from, likelib::ViewCall* to);
-
-lk::ViewCall deserializeViewCall(const likelib::ViewCall* const call);
 
 }

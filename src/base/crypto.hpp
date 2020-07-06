@@ -71,7 +71,6 @@ class Secp256PrivateKey
     using Signature = base::FixedBytes<SECP256_SIGNATURE_SIZE>;
     //---------------------------
     Secp256PrivateKey();
-    //    Secp256PrivateKey(const base::Bytes& private_key_bytes);
     Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& private_key_bytes);
     Secp256PrivateKey(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey(Secp256PrivateKey&& other) = default;

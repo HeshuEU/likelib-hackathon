@@ -1,10 +1,10 @@
 #pragma once
 
-#include "core/block.hpp"
-#include "core/types.hpp"
-
 #include "base/bytes.hpp"
 #include "base/property_tree.hpp"
+#include "core/block.hpp"
+#include "core/consensus.hpp"
+#include "core/types.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -19,7 +19,7 @@ namespace impl
 {
 class MinerWorker;
 
-using MinerHandlerType = std::function<void(lk::Block&&)>;
+using MinerHandlerType = std::function<void(lk::ImmutableBlock&&)>;
 
 enum class Task
 {
@@ -32,10 +32,9 @@ enum class Task
 
 struct CommonData
 {
-    static constexpr std::size_t COMPLEXITY_SIZE = 32;
     impl::Task task;
-    std::optional<lk::Block> block_to_mine;
-    std::optional<base::FixedBytes<COMPLEXITY_SIZE>> complexity;
+    std::optional<lk::MutableBlock> block_to_mine;
+    std::optional<lk::Complexity> complexity;
 };
 
 
@@ -79,8 +78,7 @@ class Miner
 
     ~Miner();
     //===================
-    void findNonce(const lk::Block& block_without_nonce,
-                   const base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE>& complexity);
+    void findNonce(const lk::MutableBlock& block_without_nonce, const lk::Complexity& complexity);
     void dropJob();
     //===================
   private:

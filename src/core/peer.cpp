@@ -42,13 +42,19 @@ namespace lk
 
 //===============================================
 
-void Peer::sendBlock(const base::Sha256& block_hash, const lk::Block& block)
+void Peer::sendBlock(const ImmutableBlock& block)
 {
-    _requests.send(msg::Block{ block_hash, block });
+    _requests.send(msg::Block{ block.getHash(), block });
 }
 
 
-void Peer::sendTransaction(const lk::Transaction& tx)
+void Peer::sendNewBlock(const ImmutableBlock& block)
+{
+    _requests.send(msg::NewBlock{ block.getHash(), block });
+}
+
+
+void Peer::sendTransaction(const Transaction& tx)
 {
     _requests.send(msg::Transaction{ tx });
 }
@@ -308,11 +314,26 @@ void Peer::Synchronizer::handleReceivedTopBlockHash(const base::Sha256& peers_to
 }
 
 
-bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Block& block)
+bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const ImmutableBlock& block)
 {
-    ASSERT(hash == base::Sha256::compute(base::toBytes(block)));
+    ASSERT(hash == block.getHash()); // not only assert, but check if the message is valid
 
-    if (_requested_block && *_requested_block == hash) {
+    if (!_requested_block) {
+        if (!_peer._rating.nonExpectedMessage()) {
+            // need to disconnect this peer since in has different genesis block, this is fatal
+            // TODO: add more convenient way to close session in case of low rating
+            _peer.endSession(msg::Close{});
+        }
+        return true;
+    }
+    else if (*_requested_block != hash) {
+        if (!_peer._rating.invalidMessage()) {
+            // need to disconnect this peer since in has different genesis block, this is fatal
+            _peer.endSession(msg::Close{});
+        }
+        return true;
+    }
+    else {
         _requested_block.reset();
         _sync_blocks.push_back(block);
         const auto& next = block.getPrevBlockHash();
@@ -325,8 +346,8 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         }
         else if (_peer._core.findBlock(next)) {
             LOG_DEBUG << "Peer " << &_peer << " applying all " << _sync_blocks.size() << " sync blocks";
-            for(auto it = _sync_blocks.crbegin(); it != _sync_blocks.crend(); ++it) {
-                if(!_peer._core.tryAddBlock(*it)) {
+            for (auto it = _sync_blocks.crbegin(); it != _sync_blocks.crend(); ++it) {
+                if (_peer._core.tryAddBlock(*it) != Blockchain::AdditionResult ::ADDED) {
                     LOG_DEBUG << "Applying error";
                     break;
                 }
@@ -339,11 +360,29 @@ bool Peer::Synchronizer::handleReceivedBlock(const base::Sha256& hash, const Blo
         }
         return true;
     }
-    else if (_peer._core.tryAddBlock(block)) {
+}
+
+
+bool Peer::Synchronizer::handleReceivedNewBlock(const base::Sha256& hash, const ImmutableBlock& block)
+{
+    ASSERT(hash == block.getHash());
+
+    if (_peer._core.tryAddBlock(block) == Blockchain::AdditionResult::ADDED) { // if this is a new block
         return true;
     }
     else {
-        return false;
+        if (_requested_block) {
+            _sync_blocks.push_front(block); // TODO: check if it is valid continuation for .begin()
+            return true;
+        }
+        else {
+            if (_peer._core.tryAddBlock(block) == Blockchain::AdditionResult::ADDED) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
     }
 }
 
@@ -416,6 +455,10 @@ void Peer::process(base::SerializationIArchive&& ia)
             handle(ia.deserialize<msg::BlockNotFound>());
             break;
         }
+        case msg::NewBlock::TYPE_ID: {
+            handle(ia.deserialize<msg::NewBlock>());
+            break;
+        }
         case msg::Close::TYPE_ID: {
             handle(ia.deserialize<msg::Close>());
             break;
@@ -453,6 +496,7 @@ void Peer::handle(lk::msg::Connect&& msg)
     }
     else {
         PEER_LOG << "Handling CONNECT: sending CANNOT_ACCEPT, because can't add to pool";
+        _rating.cannotAddToPool();
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -482,6 +526,7 @@ void Peer::handle(lk::msg::Accepted&& msg)
     }
     else {
         PEER_LOG << "handling of ACCEPTED: cannot add to handshaked pool";
+        _rating.cannotAddToPool();
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -545,7 +590,7 @@ void Peer::handle(lk::msg::GetBlock&& msg)
 
 void Peer::handle(lk::msg::Block&& msg)
 {
-    PEER_LOG << "hanlinding received " << msg.block_hash << " block";
+    PEER_LOG << "handling received " << msg.block_hash << " block";
     if (msg.block_hash != base::Sha256::compute(base::toBytes(msg.block))) {
         PEER_LOG << "invalid message";
         _rating.invalidMessage();
@@ -559,6 +604,19 @@ void Peer::handle(lk::msg::Block&& msg)
 void Peer::handle(lk::msg::BlockNotFound&& msg)
 {
     LOG_DEBUG << "Block not found " << msg.block_hash;
+}
+
+
+void Peer::handle(lk::msg::NewBlock&& msg)
+{
+    PEER_LOG << "handling received " << msg.block_hash << " block";
+    if (msg.block_hash != base::Sha256::compute(base::toBytes(msg.block))) { // TODO: use checksum
+        PEER_LOG << "invalid message";
+        _rating.invalidMessage();
+        return;
+    }
+
+    _synchronizer.handleReceivedNewBlock(msg.block_hash, msg.block);
 }
 
 
@@ -636,7 +694,7 @@ Requests::Requests(std::weak_ptr<net::Session> session, boost::asio::io_context&
         s->setHandler(_session_handler);
     }
     else {
-        RAISE_ERROR(net::ClosedSession);
+        RAISE_ERROR(net::ClosedSession, "Session is already closed");
     }
 }
 
@@ -678,8 +736,10 @@ void Requests::onMessageReceive(const base::Bytes& received_bytes)
 
 void Requests::onClose()
 {
-    if (auto l = _session.lock()) {
-        LOG_DEBUG << "Processing onClose callback for " << l->getEndpoint();
+    if constexpr (base::config::IS_DEBUG) {
+        if (auto l = _session.lock()) {
+            LOG_DEBUG << "Processing onClose callback for " << l->getEndpoint();
+        }
     }
     if (_close_callback) {
         _close_callback();

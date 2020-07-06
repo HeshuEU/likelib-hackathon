@@ -576,17 +576,16 @@ int ActionCompile::loadOptions(const base::ProgramOptionsParser& parser)
 
 int ActionCompile::execute()
 {
-
     std::optional<vm::Contracts> contracts;
     try {
         contracts = vm::compile(_code_file_path);
     }
     catch (const base::ParsingError& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
     catch (const base::SystemCallFailed& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
 
@@ -612,8 +611,8 @@ int ActionCompile::execute()
             base::save(contract.metadata, current_folder / std::filesystem::path{ config::METADATA_JSON_FILE });
         }
         catch (const base::Error& er) {
-            std::cerr << er;
-            LOG_ERROR << er;
+            std::cerr << er.what();
+            LOG_ERROR << er.what();
             return base::config::EXIT_FAIL;
         }
         catch (...) {
@@ -676,11 +675,11 @@ int ActionEncode::execute()
         }
     }
     catch (const base::ParsingError& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
     catch (const base::SystemCallFailed& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
 
@@ -742,11 +741,11 @@ int ActionDecode::execute()
         }
     }
     catch (const base::ParsingError& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
     catch (const base::SystemCallFailed& er) {
-        std::cerr << er;
+        std::cerr << er.what();
         return base::config::EXIT_FAIL;
     }
 
@@ -1080,84 +1079,6 @@ int ActionContractCall::execute()
 
 //====================================
 
-ActionCallContractView::ActionCallContractView(base::SubprogramRouter& router)
-  : ActionBase{ router }
-{}
-
-
-const std::string_view& ActionCallContractView::getName() const
-{
-    static const std::string_view name = "CallContractView";
-    return name;
-}
-
-
-void ActionCallContractView::setupOptionsParser(base::ProgramOptionsParser& parser)
-{
-    parser.addOption<std::string>(HOST_OPTION, "address of host");
-    parser.addOption<std::string>(TO_ADDRESS_OPTION, "address of \"to\" contract");
-    parser.addOption<std::string>(KEYS_DIRECTORY_OPTION, "path to a directory with keys");
-    parser.addOption<std::string>(MESSAGE_OPTION, "message for call smart contract");
-    parser.addFlag(IS_HTTP_CLIENT_OPTION, "is set enable http client call");
-}
-
-
-int ActionCallContractView::loadOptions(const base::ProgramOptionsParser& parser)
-{
-    if (checkOptionEmptyAndWriteMessage(parser, HOST_OPTION)) {
-        return base::config::EXIT_FAIL;
-    }
-    _host_address = parser.getValue<std::string>(HOST_OPTION);
-
-    if (checkOptionEmptyAndWriteMessage(parser, TO_ADDRESS_OPTION)) {
-        return base::config::EXIT_FAIL;
-    }
-    _to_address = lk::Address{ parser.getValue<std::string>(TO_ADDRESS_OPTION) };
-
-    if (checkOptionEmptyAndWriteMessage(parser, KEYS_DIRECTORY_OPTION)) {
-        return base::config::EXIT_FAIL;
-    }
-    _keys_dir = parser.getValue<std::string>(KEYS_DIRECTORY_OPTION);
-
-    if (checkOptionEmptyAndWriteMessage(parser, MESSAGE_OPTION)) {
-        return base::config::EXIT_FAIL;
-    }
-    _message = parser.getValue<std::string>(MESSAGE_OPTION);
-
-    _is_http_mode = parser.hasOption(IS_HTTP_CLIENT_OPTION);
-
-    return base::config::EXIT_OK;
-}
-
-
-int ActionCallContractView::execute()
-{
-    auto private_key_path = base::config::makePrivateKeyPath(_keys_dir);
-    auto private_key = base::Secp256PrivateKey::load(private_key_path);
-    auto from_address = lk::Address(private_key.toPublicKey());
-
-    LOG_INFO << "Try to connect to rpc server by: " << _host_address;
-    std::unique_ptr<rpc::BaseRpc> client;
-    if (_is_http_mode) {
-        client = rpc::createRpcClient(rpc::ClientMode::HTTP, _host_address);
-    }
-    else {
-        client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
-    }
-
-    auto data = base::fromHex<base::Bytes>(_message);
-    lk::ViewCall call{ from_address, _to_address, base::Time::now(), std::move(data) };
-    call.sign(private_key);
-
-    auto response = client->callContractView(call);
-
-    std::cout << "View of smart contract response: " << base::toHex(response) << std::endl;
-
-    return base::config::EXIT_OK;
-}
-
-//====================================
-
 ActionGetTransaction::ActionGetTransaction(base::SubprogramRouter& router)
   : ActionBase{ router }
 {}
@@ -1353,12 +1274,12 @@ int ActionGetBlock::execute()
         client = rpc::createRpcClient(rpc::ClientMode::GRPC, _host_address);
     }
 
-    std::optional<lk::Block> block_option;
+    std::optional<lk::ImmutableBlock> block_option;
     if (_block_hash == base::Sha256::null()) {
-        block_option = client->getBlock(_block_number);
+        block_option.emplace(client->getBlock(_block_number));
     }
     else {
-        block_option = client->getBlock(_block_hash);
+        block_option.emplace(client->getBlock(_block_hash));
     }
 
     auto block = block_option.value();

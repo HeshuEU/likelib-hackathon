@@ -1,7 +1,7 @@
 #include "actions.hpp"
 #include "config.hpp"
-#include "utility.hpp"
 #include "subprogram_router.hpp"
+#include "utility.hpp"
 
 #include "base/error.hpp"
 #include "base/log.hpp"
@@ -61,8 +61,6 @@ int main(int argc, char** argv)
           "transfer", "use transfer balance from one address to another address", run<ActionTransfer>);
         router.addSubprogram("push_contract", "deploy a smart contract", run<ActionPushContract>);
         router.addSubprogram("call_contract", "create message to call smart contract", run<ActionContractCall>);
-        router.addSubprogram(
-          "call_view", "create message to call view method of smart contract", run<ActionCallContractView>);
 
         router.addSubprogram("get_transaction", "get transaction information", run<ActionGetTransaction>);
         router.addSubprogram(

@@ -1,8 +1,9 @@
 #include "http_client.hpp"
 
+#include "rpc/error.hpp"
 #include "rpc/http/tools.hpp"
 
-#include "rpc/error.hpp"
+#include <optional>
 
 namespace
 {
@@ -101,19 +102,22 @@ Info NodeClient::getNodeInfo()
 }
 
 
-lk::Block NodeClient::getBlock(const base::Sha256& block_hash)
+lk::ImmutableBlock NodeClient::getBlock(const base::Sha256& block_hash)
 {
     web::json::value request_body;
     request_body["hash"] = serializeHash(block_hash);
 
-    std::optional<lk::Block> opt_block;
+    std::optional<lk::ImmutableBlock> opt_block;
 
     _client.request(createPostRequest("/get_block", request_body))
       .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
-                    opt_block = deserializeBlock(request_body.at("result"));
+                    auto r = deserializeBlock(request_body.at("result"));
+                    if (r) {
+                        opt_block.emplace(*r);
+                    }
                 }
                 else {
                     if (request_body.has_field("result")) {
@@ -137,19 +141,22 @@ lk::Block NodeClient::getBlock(const base::Sha256& block_hash)
 }
 
 
-lk::Block NodeClient::getBlock(uint64_t block_number)
+lk::ImmutableBlock NodeClient::getBlock(uint64_t block_number)
 {
     web::json::value request_body;
     request_body["number"] = web::json::value::number(block_number);
 
-    std::optional<lk::Block> opt_block;
+    std::optional<lk::ImmutableBlock> opt_block;
 
     _client.request(createPostRequest("/get_block", request_body))
       .then([&](const web::http::http_response& response) {
           response.extract_json()
             .then([&](web::json::value request_body) {
                 if (request_body.at("status").as_string() == "ok") {
-                    opt_block = deserializeBlock(request_body.at("result"));
+                    auto r = deserializeBlock(request_body.at("result"));
+                    if (r) {
+                        opt_block.emplace(*r);
+                    }
                 }
                 else {
                     if (request_body.has_field("result")) {
@@ -273,41 +280,6 @@ lk::TransactionStatus NodeClient::getTransactionStatus(const base::Sha256& trans
       .wait();
     if (opt_tx_status) {
         return opt_tx_status.value();
-    }
-    else {
-        RAISE_ERROR(base::InvalidArgument, "deserialization error");
-    }
-}
-
-
-base::Bytes NodeClient::callContractView(const lk::ViewCall& call)
-{
-    auto request_body = serializeViewCall(call);
-
-    std::optional<base::Bytes> opt_bytes;
-
-    _client.request(createPostRequest("/call_contract_view", request_body))
-      .then([&](const web::http::http_response& response) {
-          response.extract_json()
-            .then([&](web::json::value request_body) {
-                if (request_body.at("status").as_string() == "ok") {
-                    opt_bytes = deserializeBytes(request_body.at("result").as_string());
-                }
-                else {
-                    if (request_body.has_field("result")) {
-                        LOG_ERROR << "bad request result:" << request_body.at("result").serialize();
-                    }
-                    else {
-                        LOG_ERROR << "bad request result";
-                    }
-                    RAISE_ERROR(RpcError, "bad result status");
-                }
-            })
-            .wait();
-      })
-      .wait();
-    if (opt_bytes) {
-        return opt_bytes.value();
     }
     else {
         RAISE_ERROR(base::InvalidArgument, "deserialization error");
