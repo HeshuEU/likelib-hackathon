@@ -42,17 +42,20 @@ def main(env: Env) -> int:
 def main(env: Env) -> int:
     amount = 100
     node = Id(20101, grpc_port=50101)
-    client = env.get_client(ClientType.LEGACY_GRPC, node)
+    env.logger.info("Start node")
     env.start_node(NodeConfig(node, nodes=[node]))
+    client = env.get_client(ClientType.LEGACY_GRPC, node)
+    env.logger.info("Test node")
     TEST_CHECK(client.connection_test())
 
     distributor_address = client.load_address(keys_path=get_distributor_address_path())
     test_address = client.generate_keys(keys_path="test_keys")
+    env.logger.info("Start transaction")
     transaction = client.transfer(to_address=test_address.address, amount=amount, from_address=distributor_address,
                                          fee=0, wait=1, timeout=2)
     TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-    stat = client.get_transaction_status(tx_hash=transaction.tx_hash)
-    TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+    TEST_CHECK(client.transaction_success_wait(transaction=transaction))
+    env.logger.info("Check balance")
     TEST_CHECK_EQUAL(client.get_balance(address=test_address.address, timeout=2, wait=1), amount)
 
     return 0
@@ -97,19 +100,23 @@ def main(env: Env) -> int:
     for i in range(0,n):
       node_ids.append(Id(20100 + i, grpc_port = 50100 + i))
     for i in range(0,n):
+      env.logger.info(f"Start node {i}")
       env.start_node(NodeConfig(node_ids[i], nodes=node_ids))
       clients.append(env.get_client(ClientType.LEGACY_GRPC, node_ids[i]))
       TEST_CHECK(clients[i].connection_test())
 
+    env.logger.info("All nodes started")
     distributor_address = clients[0].load_address(keys_path=get_distributor_address_path())
     test_address = clients[0].generate_keys(keys_path="test_keys")
+    env.logger.info("Start transaction")
     transaction = clients[0].transfer(to_address=test_address.address, amount=amount,
                                       from_address=distributor_address, fee=0, wait=1, timeout=2)
     TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
-    stat = clients[0].get_transaction_status(tx_hash=transaction.tx_hash)
-    TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+    TEST_CHECK(clients[0].transaction_success_wait(transaction=transaction))
+    env.logger.info("Transaction success")
 
     for i in range(0,n):
+      env.logger.info(f"Check balance (node {i})")
       TEST_CHECK_EQUAL(clients[i].get_balance(address=test_address.address, timeout=2, wait=1), n*amount)
 
     return 0
