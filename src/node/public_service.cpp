@@ -6,7 +6,10 @@
 #include "base/hash.hpp"
 #include "base/log.hpp"
 
-void TaskQueue::push(Task&& task)
+namespace tasks
+{
+
+void TaskQueue::push(std::unique_ptr<Task>&& task)
 {
     {
         std::lock_guard lock(_rw_mutex);
@@ -16,10 +19,10 @@ void TaskQueue::push(Task&& task)
 }
 
 
-Task TaskQueue::get()
+std::unique_ptr<Task> TaskQueue::get()
 {
     std::lock_guard lock(_rw_mutex);
-    auto current_task = _tasks.front();
+    std::unique_ptr<Task> current_task{ _tasks.front().release() };
     _tasks.pop_front();
     return current_task;
 }
@@ -39,10 +42,336 @@ bool TaskQueue::empty() const
 }
 
 
+Task::Task(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args)
+  : _session_id{ session_id }
+  , _query_id{ query_id }
+  , _args{ std::move(args) }
+{}
+
+
+void Task::run(lk::Core& core, SendResponse send_response)
+{
+    ASSERT(send_response);
+    if (prepareArgs()) {
+        return execute(core, std::move(send_response));
+    }
+    LOG_DEBUG << "fail to prepare arguments to execution";
+    RAISE_ERROR(base::InvalidArgument, "Bad command arguments");
+}
+
+
+ViewCallTask::ViewCallTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool ViewCallTask::prepareArgs()
+{
+    _view_call = websocket::deserializeViewCall(_args);
+    if (!_view_call) {
+        LOG_DEBUG << "deserialization error";
+        return false;
+    }
+    return true;
+}
+
+
+void ViewCallTask::execute(lk::Core& core, SendResponse send_response)
+{
+    ASSERT(send_response);
+    auto result = core.callViewMethod(_view_call.value());
+    base::PropertyTree answer;
+    answer.add("result", websocket::serializeBytes(result));
+    send_response(_session_id, _query_id, std::move(answer));
+}
+
+
+FindBlockTask::FindBlockTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool FindBlockTask::prepareArgs()
+{
+    if (_args.hasKey("hash")) {
+        _block_hash = websocket::deserializeHash(_args.get<std::string>("hash"));
+        if (!_block_hash) {
+            LOG_DEBUG << "deserialization error";
+            return false;
+        }
+        return true;
+    }
+    else if (_args.hasKey("number")) {
+        _block_number = _args.get<std::uint64_t>("number");
+        return true;
+    }
+    else {
+        LOG_DEBUG << "not any options exists";
+        return false;
+    }
+}
+
+
+void FindBlockTask::execute(lk::Core& core, SendResponse send_response)
+{
+    ASSERT(send_response);
+    if (_block_hash) {
+        auto block = core.findBlock(_block_hash.value());
+        if (block) {
+            base::PropertyTree answer = websocket::serializeBlock(block.value());
+            send_response(_session_id, _query_id, std::move(answer));
+        }
+    }
+    else {
+        auto block_hash = core.findBlockHash(_block_number.value());
+        if (block_hash) {
+            auto block = core.findBlock(block_hash.value());
+            base::PropertyTree answer = websocket::serializeBlock(block.value());
+            send_response(_session_id, _query_id, std::move(answer));
+        }
+    }
+}
+
+
+FindTransactionTask::FindTransactionTask(websocket::SessionId session_id,
+                                         websocket::QueryId query_id,
+                                         base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool FindTransactionTask::prepareArgs()
+{
+    if (_args.hasKey("hash")) {
+        _tx_hash = websocket::deserializeHash(_args.get<std::string>("hash"));
+        if (!_tx_hash) {
+            LOG_DEBUG << "deserialization error";
+            return false;
+        }
+        return true;
+    }
+    LOG_DEBUG << "not any options exists";
+    return false;
+}
+
+
+void FindTransactionTask::execute(lk::Core& core, SendResponse send_response)
+{
+    ASSERT(send_response);
+    auto tx = core.findTransaction(_tx_hash.value());
+    base::PropertyTree answer = websocket::serializeTransaction(tx.value());
+    send_response(_session_id, _query_id, std::move(answer));
+}
+
+
+FindTransactionStatusTask::FindTransactionStatusTask(websocket::SessionId session_id,
+                                                     websocket::QueryId query_id,
+                                                     base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool FindTransactionStatusTask::prepareArgs()
+{
+    if (_args.hasKey("hash")) {
+        _tx_hash = websocket::deserializeHash(_args.get<std::string>("hash"));
+        if (!_tx_hash) {
+            LOG_DEBUG << "deserialization error";
+            return false;
+        }
+        return true;
+    }
+    LOG_DEBUG << "not any options exists";
+    return false;
+}
+
+
+void FindTransactionStatusTask::execute(lk::Core& core, SendResponse send_response)
+{
+    ASSERT(send_response);
+    auto tx_status = core.getTransactionOutput(_tx_hash.value());
+    if (tx_status) {
+        base::PropertyTree answer = websocket::serializeTransactionStatus(tx_status.value());
+        send_response(_session_id, _query_id, std::move(answer));
+        return;
+    }
+    LOG_DEBUG << "Cant find transaction status task";
+}
+
+NodeInfoCallTask::NodeInfoCallTask(websocket::SessionId session_id,
+                                   websocket::QueryId query_id,
+                                   base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool NodeInfoCallTask::prepareArgs()
+{
+    return true;
+}
+
+
+void NodeInfoCallTask::execute(lk::Core& core, SendResponse send_response)
+{
+    ASSERT(send_response);
+    auto last_block_hash = core.getTopBlockHash();
+    auto last_block_number = core.getTopBlock().getDepth();
+    websocket::NodeInfo info{ last_block_hash, last_block_number };
+    base::PropertyTree answer = websocket::serializeInfo(info);
+    send_response(_session_id, _query_id, std::move(answer));
+}
+
+
+AccountInfoCallTask::AccountInfoCallTask(websocket::SessionId session_id,
+                                         websocket::QueryId query_id,
+                                         base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool AccountInfoCallTask::prepareArgs()
+{
+    if (_args.hasKey("address")) {
+        _address = websocket::deserializeAddress(_args.get<std::string>("address"));
+        if (!_address) {
+            LOG_DEBUG << "deserialization error";
+            return false;
+        }
+        return true;
+    }
+    LOG_DEBUG << "not any options exists";
+    return false;
+}
+
+
+void AccountInfoCallTask::execute(lk::Core& core, SendResponse send_response)
+{
+    ASSERT(send_response);
+    auto account_info = core.getAccountInfo(_address.value());
+    base::PropertyTree answer = websocket::serializeAccountInfo(account_info);
+    send_response(_session_id, _query_id, std::move(answer));
+}
+
+
+PushTransactionSubscriptionTask::PushTransactionSubscriptionTask(websocket::SessionId session_id,
+                                                                 websocket::QueryId query_id,
+                                                                 base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool PushTransactionSubscriptionTask::prepareArgs()
+{
+    // TODO
+}
+
+
+void PushTransactionSubscriptionTask::execute(lk::Core& core, SendResponse send_response)
+{
+    // TODO
+}
+
+
+NodeInfoSubscriptionTask::NodeInfoSubscriptionTask(websocket::SessionId session_id,
+                                                   websocket::QueryId query_id,
+                                                   base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool NodeInfoSubscriptionTask::prepareArgs()
+{
+    // TODO
+}
+
+
+void NodeInfoSubscriptionTask::execute(lk::Core& core, SendResponse send_response)
+{
+    // TODO
+}
+
+
+AccountInfoSubscriptionTask::AccountInfoSubscriptionTask(websocket::SessionId session_id,
+                                                         websocket::QueryId query_id,
+                                                         base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool AccountInfoSubscriptionTask::prepareArgs()
+{
+    // TODO
+}
+
+
+void AccountInfoSubscriptionTask::execute(lk::Core& core, SendResponse send_response)
+{
+    // TODO
+}
+
+PushTransactionUnsubscriptionTask::PushTransactionUnsubscriptionTask(websocket::SessionId session_id,
+                                                                     websocket::QueryId query_id,
+                                                                     base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool PushTransactionUnsubscriptionTask::prepareArgs()
+{
+    // TODO
+}
+
+
+void PushTransactionUnsubscriptionTask::execute(lk::Core& core, SendResponse send_response)
+{
+    // TODO
+}
+
+
+NodeInfoUnsubscriptionTask::NodeInfoUnsubscriptionTask(websocket::SessionId session_id,
+                                                       websocket::QueryId query_id,
+                                                       base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool NodeInfoUnsubscriptionTask::prepareArgs()
+{
+    // TODO
+}
+
+
+void NodeInfoUnsubscriptionTask::execute(lk::Core& core, SendResponse send_response)
+{
+    // TODO
+}
+
+
+AccountInfoUnsubscriptionTask::AccountInfoUnsubscriptionTask(websocket::SessionId session_id,
+                                                             websocket::QueryId query_id,
+                                                             base::PropertyTree&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+bool AccountInfoUnsubscriptionTask::prepareArgs()
+{
+    // TODO
+}
+
+
+void AccountInfoUnsubscriptionTask::execute(lk::Core& core, SendResponse send_response)
+{
+    // TODO
+}
+
+}
+
+
 RpcService::RpcService(const base::PropertyTree& config, lk::Core& core)
   : _config{ config }
   , _core{ core }
-  , _server{ config }
+  , _acceptor{ config, std::bind(&RpcService::createSession, this, std::placeholders::_1) }
 {}
 
 
@@ -54,12 +383,7 @@ RpcService::~RpcService()
 
 void RpcService::run()
 {
-    _server.run([this](base::PropertyTree call, web_socket::ResponceCall response_callback) {
-        if (response_callback) {
-            return register_query(std::move(call), std::move(response_callback));
-        }
-        RAISE_ERROR(base::LogicError, "callback does not set");
-    });
+    _acceptor.run();
     _worker = std::thread(&RpcService::task_worker, this);
 }
 
@@ -72,110 +396,85 @@ void RpcService::stop()
 }
 
 
-void RpcService::register_query(base::PropertyTree call, web_socket::ResponceCall responce_callback)
+void RpcService::createSession(boost::asio::ip::tcp::socket&& socket)
 {
-    LOG_INFO << "register_query" << call.toString();
+    auto current_id = createId();
+    auto session = std::make_unique<websocket::WebSocketSession>(
+      std::move(socket),
+      current_id,
+      std::bind(&RpcService::on_session_request,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2,
+                std::placeholders::_3,
+                std::placeholders::_4),
+      std::bind(&RpcService::on_session_close, this, std::placeholders::_1));
+    _sessions_map.insert({ current_id, std::move(session) });
+}
 
-    _tasks.push([this, query = std::move(call), callback = std::move(responce_callback)]() {
-        try {
-            callback(do_route(query));
-        }
-        catch (const base::Error& er) {
-            LOG_ERROR << "error at task" << er;
-        }
-    });
 
+websocket::SessionId RpcService::createId()
+{
+    return ++_last_session_id;
+}
+
+
+void RpcService::on_session_request(websocket::SessionId session_id,
+                                    websocket::QueryId query_id,
+                                    websocket::Command::Id command_id,
+                                    base::PropertyTree&& args)
+{
+    std::unique_ptr<tasks::Task> task;
+    switch (command_id) {
+        case websocket::Command::CALL_VIEW_CALL:
+            task = std::make_unique<tasks::ViewCallTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::CALL_LAST_BLOCK_INFO:
+            task = std::make_unique<tasks::NodeInfoCallTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::CALL_ACCOUNT_INFO:
+            task = std::make_unique<tasks::AccountInfoCallTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::CALL_FIND_TRANSACTION_STATUS:
+            task = std::make_unique<tasks::FindTransactionStatusTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::CALL_FIND_TRANSACTION:
+            task = std::make_unique<tasks::FindTransactionTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::CALL_FIND_BLOCK:
+            task = std::make_unique<tasks::FindBlockTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::SUBSCRIBE_PUSH_TRANSACTION:
+            task = std::make_unique<tasks::PushTransactionSubscriptionTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO:
+            task = std::make_unique<tasks::NodeInfoSubscriptionTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::SUBSCRIBE_ACCOUNT_INFO:
+            task = std::make_unique<tasks::AccountInfoSubscriptionTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::UNSUBSCRIBE_PUSH_TRANSACTION:
+            task = std::make_unique<tasks::PushTransactionUnsubscriptionTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO:
+            task = std::make_unique<tasks::NodeInfoUnsubscriptionTask>(session_id, query_id, std::move(args));
+            break;
+        case websocket::Command::UNSUBSCRIBE_ACCOUNT_INFO:
+            task = std::make_unique<tasks::AccountInfoUnsubscriptionTask>(session_id, query_id, std::move(args));
+            break;
+        default:
+            // TODO fail
+            return;
+    }
+
+    _tasks.push(std::move(task));
     LOG_INFO << "task pushed";
 }
 
 
-base::PropertyTree RpcService::do_route(base::PropertyTree call)
+void RpcService::on_session_close(websocket::SessionId session_id)
 {
-    auto command_name = call.get<std::string>("name");
-    auto command_type = call.get<std::string>("type");
-    auto api_version = call.get<std::uint32_t>("api");
-    auto id = call.get<std::uint64_t>("id");
-    auto args = call.getSubTree("args");
-
-    if (command_name == "account_info") {
-        auto address = web_socket::deserializeAddress(args.get<std::string>("address"));
-        if (!address) {
-            LOG_ERROR << "deserialization error";
-        }
-        auto info = getAccountInfo(address.value());
-        return web_socket::serializeAccountInfo(info);
-    }
-
-    if (command_name == "find_block") {
-        std::optional<lk::Block> block;
-        if (args.hasKey("hash")) {
-            auto block_hash = web_socket::deserializeHash(args.get<std::string>("hash"));
-            if (!block_hash) {
-                LOG_ERROR << "deserialization error";
-            }
-            block = getBlock(block_hash.value());
-        }
-        else if (args.hasKey("number")) {
-            auto block_number = args.get<std::uint64_t>("number");
-            block = getBlock(block_number);
-        }
-        return web_socket::serializeBlock(block.value());
-    }
-
-    if (command_name == "find_transaction") {
-        auto tx_hash = web_socket::deserializeHash(args.get<std::string>("hash"));
-        if (!tx_hash) {
-            LOG_ERROR << "deserialization error";
-        }
-        auto tx = getTransaction(tx_hash.value());
-        return web_socket::serializeTransaction(tx);
-    }
-
-    if (command_name == "find_transaction_status") {
-        auto tx_hash = web_socket::deserializeHash(args.get<std::string>("hash"));
-        if (!tx_hash) {
-            LOG_ERROR << "deserialization error";
-        }
-        auto tx_status = getTransactionStatus(tx_hash.value());
-        return web_socket::serializeTransactionStatus(tx_status);
-    }
-
-    if (command_name == "last_block_info") {
-        LOG_INFO << "last_block_info" << call.toString();
-        auto info = getNodeInfo();
-        return web_socket::serializeInfo(info);
-    }
-
-    if (command_name == "find_block") {
-        auto tx_hash = web_socket::deserializeHash(args.get<std::string>("hash"));
-        if (!tx_hash) {
-            LOG_ERROR << "deserialization error";
-        }
-        auto tx = getTransaction(tx_hash.value());
-        return web_socket::serializeTransaction(tx);
-    }
-
-    if (command_name == "call_contract_view") {
-        auto view_call = web_socket::deserializeViewCall(args);
-        if (!view_call) {
-            LOG_ERROR << "deserialization error";
-        }
-        auto result = callContractView(view_call.value());
-        base::PropertyTree answer;
-        answer.add("result", web_socket::serializeBytes(result));
-        return answer;
-    }
-
-    if (command_name == "push_transaction") {
-        auto tx = web_socket::deserializeTransaction(args);
-        if (!tx) {
-            LOG_ERROR << "deserialization error";
-        }
-        auto status = pushTransaction(tx.value());
-        return web_socket::serializeTransactionStatus(status);
-    }
-
-    ASSERT_SOFT(false);
+    // TODO
 }
 
 
@@ -183,11 +482,20 @@ base::PropertyTree RpcService::do_route(base::PropertyTree call)
 {
     while (true) {
         try {
-
             LOG_INFO << "try task";
             _tasks.wait();
             auto task = _tasks.get();
-            task();
+            try {
+                task->run(_core,
+                          std::bind(&RpcService::on_send_response,
+                                    this,
+                                    std::placeholders::_1,
+                                    std::placeholders::_2,
+                                    std::placeholders::_3));
+            }
+            catch (const base::Error& er) {
+                LOG_DEBUG << er;
+            }
             LOG_INFO << "executed task";
         }
         catch (...) {
@@ -197,74 +505,11 @@ base::PropertyTree RpcService::do_route(base::PropertyTree call)
 }
 
 
-lk::AccountInfo RpcService::getAccountInfo(const lk::Address& address)
+void RpcService::on_send_response(websocket::SessionId session_id,
+                                  websocket::QueryId query_id,
+                                  base::PropertyTree&& result)
 {
-    LOG_TRACE << "Received RPC request {getAccount}" << address;
-    return _core.getAccountInfo(address);
-}
-
-
-web_socket::NodeInfo RpcService::getNodeInfo()
-{
-    LOG_TRACE << "Received RPC request {getNodeInfo}";
-    auto& top_block = _core.getTopBlock();
-    auto hash = base::Sha256::compute(base::toBytes(top_block));
-    return { hash, top_block.getDepth() };
-}
-
-
-lk::Block RpcService::getBlock(const base::Sha256& block_hash)
-{
-    LOG_TRACE << "Received RPC request {getBlock} with block_hash[" << block_hash << "]";
-    if (auto block_opt = _core.findBlock(block_hash); block_opt) {
-        return *block_opt;
-    }
-    RAISE_ERROR(base::InvalidArgument, std::string("Block was not found. hash[hex]:") + block_hash.toHex());
-}
-
-
-lk::Block RpcService::getBlock(uint64_t block_number)
-{
-    LOG_TRACE << "Received RPC request {getBlock} with block_number[" << block_number << "]";
-    if (auto block_hash_opt = _core.findBlockHash(block_number); block_hash_opt) {
-        if (auto block_opt = _core.findBlock(*block_hash_opt); block_opt) {
-            return *block_opt;
-        }
-    }
-    RAISE_ERROR(base::InvalidArgument, std::string("Block was not found. number:") + std::to_string(block_number));
-}
-
-
-lk::Transaction RpcService::getTransaction(const base::Sha256& transaction_hash)
-{
-    LOG_TRACE << "Received RPC request {getTransaction}";
-    if (auto transaction_opt = _core.findTransaction(transaction_hash); transaction_opt) {
-        return *transaction_opt;
-    }
-    RAISE_ERROR(base::InvalidArgument, std::string("Transaction was not found. hash[hex]:") + transaction_hash.toHex());
-}
-
-
-lk::TransactionStatus RpcService::pushTransaction(const lk::Transaction& tx)
-{
-    LOG_TRACE << "Received RPC request {pushTransaction} with tx[" << tx << "]";
-    return _core.addPendingTransaction(tx);
-}
-
-
-lk::TransactionStatus RpcService::getTransactionStatus(const base::Sha256& transaction_hash)
-{
-    LOG_TRACE << "Received RPC request {getTransactionStatus}";
-    if (auto transaction_output_opt = _core.getTransactionOutput(transaction_hash); transaction_output_opt) {
-        return *transaction_output_opt;
-    }
-    RAISE_ERROR(base::InvalidArgument,
-                std::string("TransactionOutput was not found. hash[hex]:") + transaction_hash.toHex());
-}
-
-
-base::Bytes RpcService::callContractView(const lk::ViewCall& call)
-{
-    LOG_TRACE << "Received RPC request {callContractView}";
-    return _core.callViewMethod(call);
+    auto sess = _sessions_map.find(session_id);
+    ASSERT(sess != _sessions_map.end());
+    sess->second->sendResult(query_id, std::move(result));
 }

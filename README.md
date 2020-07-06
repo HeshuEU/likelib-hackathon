@@ -10,7 +10,7 @@ By default it is config.json file of the following format:
         "public_port": 20203,
         "peers_db": "likelib/peers"
     },
-    "web_socket": {
+    "websocket": {
         "listen_addr": "0.0.0.0:50051"
     },
     "miner": {

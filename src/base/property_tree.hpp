@@ -32,7 +32,7 @@ class PropertyTree
     template<typename R>
     void add(const std::string& path, R val);
 
-    void add(const std::string& path, PropertyTree& val);
+    void add(const std::string& path, const PropertyTree& val);
 
     void add(const std::string& path, PropertyTree&& val);
 

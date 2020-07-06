@@ -5,7 +5,7 @@
 #include <boost/spirit/include/qi.hpp>
 
 
-namespace web_socket
+namespace websocket
 {
 
 boost::asio::ip::tcp::endpoint create_endpoint(const std::string& listening_address)
@@ -32,6 +32,84 @@ boost::asio::ip::tcp::endpoint create_endpoint(const std::string& listening_addr
     catch (const std::exception& e) {
         RAISE_ERROR(base::InvalidArgument, std::string{ "invalid address: " } + std::string{ listening_address });
     }
+}
+
+
+std::string serializeCommandName(Command::Id name)
+{
+    switch (Command::Name(static_cast<std::uint64_t>(name) & static_cast<std::uint64_t>(Command::NameMask))) {
+        case Command::Name::ACCOUNT_INFO:
+            return "account_info";
+        case Command::Name::FIND_BLOCK:
+            return "find_block";
+        case Command::Name::FIND_TRANSACTION:
+            return "find_transaction";
+        case Command::Name::FIND_TRANSACTION_STATUS:
+            return "find_transaction_status";
+        case Command::Name::PUSH_TRANSACTION:
+            return "push_transaction";
+        case Command::Name::LAST_BLOCK_INFO:
+            return "last_block_info";
+        case Command::Name::VIEW_CALL:
+            return "call_contract_view";
+    }
+    ASSERT(false);
+}
+
+
+websocket::Command::Name deserializeCommandName(const std::string& message)
+{
+    if (message == "account_info") {
+        return websocket::Command::Name::ACCOUNT_INFO;
+    }
+    if (message == "find_block") {
+        return websocket::Command::Name::FIND_BLOCK;
+    }
+    if (message == "find_transaction") {
+        return websocket::Command::Name::FIND_TRANSACTION;
+    }
+    if (message == "find_transaction_status") {
+        return websocket::Command::Name::FIND_TRANSACTION_STATUS;
+    }
+    if (message == "push_transaction") {
+        return websocket::Command::Name::PUSH_TRANSACTION;
+    }
+    if (message == "last_block_info") {
+        return websocket::Command::Name::LAST_BLOCK_INFO;
+    }
+    if (message == "call_contract_view") {
+        return websocket::Command::Name::VIEW_CALL;
+    }
+    RAISE_ERROR(base::InvalidArgument, std::string("not any type found by name") + message);
+}
+
+
+std::string serializeCommandType(websocket::Command::Id command_type)
+{
+    switch (Command::Type(static_cast<std::uint64_t>(command_type) & static_cast<std::uint64_t>(Command::TypeMask))) {
+        case Command::Type::CALL:
+            return "call";
+        case Command::Type::UNSUBSCRIBE:
+            return "unsubscribe";
+        case Command::Type::SUBSCRIBE:
+            return "subscribe";
+    }
+    ASSERT(false);
+}
+
+
+websocket::Command::Type deserializeCommandType(const std::string& message)
+{
+    if (message == "call") {
+        return websocket::Command::Type::CALL;
+    }
+    if (message == "unsubscribe") {
+        return websocket::Command::Type::UNSUBSCRIBE;
+    }
+    if (message == "subscribe") {
+        return websocket::Command::Type::SUBSCRIBE;
+    }
+    RAISE_ERROR(base::InvalidArgument, std::string("not any type found by name") + message);
 }
 
 

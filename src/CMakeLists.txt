@@ -1,6 +1,6 @@
 add_subdirectory(base)
 add_subdirectory(net)
-add_subdirectory(web_socket)
+add_subdirectory(websocket)
 add_subdirectory(vm)
 add_subdirectory(core)
 add_subdirectory(node)

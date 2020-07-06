@@ -4,8 +4,8 @@
 
 #include "core/types.hpp"
 
-#include "web_socket/client.hpp"
-#include "web_socket/tools.hpp"
+#include "websocket/client.hpp"
+#include "websocket/tools.hpp"
 
 #include "base/error.hpp"
 #include "base/program_options.hpp"
@@ -16,7 +16,7 @@
 #include <vector>
 
 
-void print_received_data(base::PropertyTree received_message)
+void print_received_data(websocket::Command::Id command_id, base::PropertyTree received_message)
 {
     cli::Cli::cout() << "Received data: " << received_message.toString();
     // TODO
@@ -45,7 +45,7 @@ void client_process()
     std::vector<cli::CmdHandler> connected_mode_commands{};
 
     boost::asio::io_context ios;
-    web_socket::WebSocketClient web_socket_client(
+    websocket::WebSocketClient web_socket_client(
       ios, &print_received_data, [&disconnected_mode_commands, &connected_mode_commands]() {
           cli::Cli::cout() << "Disconnected from likelib node\n";
           disable(connected_mode_commands);
@@ -57,15 +57,13 @@ void client_process()
     disconnected_mode_commands.push_back(root_menu->Insert(
       "connect",
       [&web_socket_client, &disconnected_mode_commands, &connected_mode_commands](std::ostream& out, std::string host) {
-          if (!web_socket_client.is_connected()) {
-              if (web_socket_client.connect(host)) {
-                  out << "Connected to node: " << host << "\n";
-                  disable(disconnected_mode_commands);
-                  enable(connected_mode_commands);
-              }
-              else {
-                  out << "can't connect to node: " << host << "\n";
-              }
+          if (web_socket_client.connect(host)) {
+              out << "Connected to node: " << host << "\n";
+              disable(disconnected_mode_commands);
+              enable(connected_mode_commands);
+          }
+          else {
+              out << "can't connect to node: " << host << "\n";
           }
       },
       "Connect client to specific likelib node",
@@ -178,8 +176,8 @@ void client_process()
                                              std::string amount_str) {
                             try {
                                 lk::Address to_address{ recipient_address_at_base58_str };
-                                auto amount = web_socket::deserializeBalance(amount_str);
-                                auto fee = web_socket::deserializeFee(fee_str);
+                                auto amount = websocket::deserializeBalance(amount_str);
+                                auto fee = websocket::deserializeFee(fee_str);
                                 std::filesystem::path keys_dir{ key_path };
                                 if (amount && fee && std::filesystem::exists(keys_dir)) {
                                     transfer(out, web_socket_client, to_address, *amount, *fee, keys_dir);
@@ -210,8 +208,8 @@ void client_process()
                                              std::string message) {
                             try {
                                 lk::Address to_address{ contract_address_at_base58 };
-                                auto amount = web_socket::deserializeBalance(amount_str);
-                                auto fee = web_socket::deserializeFee(fee_str);
+                                auto amount = websocket::deserializeBalance(amount_str);
+                                auto fee = websocket::deserializeFee(fee_str);
                                 std::filesystem::path keys_dir{ key_path };
                                 if (amount && fee && std::filesystem::exists(keys_dir) && !message.empty()) {
                                     contract_call(out, web_socket_client, to_address, *amount, *fee, keys_dir, message);
@@ -242,8 +240,8 @@ void client_process()
                            std::string path_to_compiled_folder,
                            std::string init_message) {
           try {
-              auto amount = web_socket::deserializeBalance(amount_str);
-              auto fee = web_socket::deserializeFee(fee_str);
+              auto amount = websocket::deserializeBalance(amount_str);
+              auto fee = websocket::deserializeFee(fee_str);
               std::filesystem::path keys_dir{ key_path };
               if (amount && fee && std::filesystem::exists(keys_dir)) {
                   push_contract(out, web_socket_client, *amount, *fee, keys_dir, path_to_compiled_folder, init_message);

@@ -68,7 +68,7 @@ PropertyTree PropertyTree::getSubTree(const std::string& path) const
 }
 
 
-void PropertyTree::add(const std::string& path, PropertyTree& val)
+void PropertyTree::add(const std::string& path, const PropertyTree& val)
 {
     _ptree.put_child(path, val._ptree);
 }

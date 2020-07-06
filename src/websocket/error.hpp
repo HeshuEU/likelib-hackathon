@@ -2,7 +2,7 @@
 
 #include "base/error.hpp"
 
-namespace web_socket
+namespace websocket
 {
 
 struct Error : base::Error
@@ -28,4 +28,4 @@ struct SendOnClosedConnection : Error
     using Error::Error;
 };
 
-} // namespace web_socket
+} // namespace websocket

@@ -4,8 +4,8 @@
 
 #include "core/transaction.hpp"
 
-#include "web_socket/error.hpp"
-#include "web_socket/tools.hpp"
+#include "websocket/error.hpp"
+#include "websocket/tools.hpp"
 
 #include "vm/tools.hpp"
 #include "vm/vm.hpp"
@@ -20,33 +20,6 @@
 #include <cstring>
 #include <iostream>
 #include <string>
-
-std::uint64_t last_id{ 0 };
-
-
-base::PropertyTree generate_query(const std::string& type, const std::string& command_name, base::PropertyTree& args)
-{
-    base::PropertyTree query;
-    query.add("type", type);
-    query.add("name", command_name);
-    query.add("api", base::config::RPC_PUBLIC_API_VERSION);
-    query.add("id", ++last_id);
-    query.add("args", args);
-
-    return query;
-}
-
-
-base::PropertyTree generate_call(const std::string& command_name, base::PropertyTree& args)
-{
-    return generate_query("call", command_name, args);
-}
-
-base::PropertyTree generate_subscription(const std::string& command_name, base::PropertyTree& args)
-{
-    return generate_query("subscribe", command_name, args);
-}
-
 
 void compile_solidity_code(std::ostream& output, const std::string& code_file_path)
 {
@@ -187,57 +160,51 @@ void keys_info(std::ostream& output, const std::string& path)
 }
 
 
-void call_last_block_info(web_socket::WebSocketClient& client)
+void call_last_block_info(websocket::WebSocketClient& client)
 {
     LOG_INFO << "last_block_info";
-    base::PropertyTree null;
-    auto request = generate_call("last_block_info", null);
-    client.send(request);
+    client.send(websocket::Command::CALL_LAST_BLOCK_INFO, base::PropertyTree{});
 }
 
 
-void call_account_info(web_socket::WebSocketClient& client, const lk::Address& address)
+void call_account_info(websocket::WebSocketClient& client, const lk::Address& address)
 {
     LOG_INFO << "account_info for address: " << address;
     base::PropertyTree request_args;
-    request_args.add("address", web_socket::serializeAddress(address));
-    auto request = generate_call("account_info", request_args);
-    client.send(request);
+    request_args.add("address", websocket::serializeAddress(address));
+    client.send(websocket::Command::CALL_ACCOUNT_INFO, request_args);
 }
 
 
-void call_find_transaction(web_socket::WebSocketClient& client, const base::Sha256& hash)
+void call_find_transaction(websocket::WebSocketClient& client, const base::Sha256& hash)
 {
     LOG_INFO << "find_transaction by hash: " << hash;
     base::PropertyTree request_args;
-    request_args.add("hash", web_socket::serializeHash(hash));
-    auto request = generate_call("find_transaction", request_args);
-    client.send(request);
+    request_args.add("hash", websocket::serializeHash(hash));
+    client.send(websocket::Command::CALL_FIND_TRANSACTION, request_args);
 }
 
 
-void call_find_transaction_status(web_socket::WebSocketClient& client, const base::Sha256& hash)
+void call_find_transaction_status(websocket::WebSocketClient& client, const base::Sha256& hash)
 {
     LOG_INFO << "find_transaction_status by hash: " << hash;
     base::PropertyTree request_args;
-    request_args.add("hash", web_socket::serializeHash(hash));
-    auto request = generate_call("find_transaction_status", request_args);
-    client.send(request);
+    request_args.add("hash", websocket::serializeHash(hash));
+    client.send(websocket::Command::CALL_FIND_TRANSACTION_STATUS, request_args);
 }
 
 
-void call_find_block(web_socket::WebSocketClient& client, const base::Sha256& hash)
+void call_find_block(websocket::WebSocketClient& client, const base::Sha256& hash)
 {
     LOG_INFO << "find_block by hash: " << hash;
     base::PropertyTree request_args;
-    request_args.add("hash", web_socket::serializeHash(hash));
-    auto request = generate_call("find_block", request_args);
-    client.send(request);
+    request_args.add("hash", websocket::serializeHash(hash));
+    client.send(websocket::Command::CALL_FIND_BLOCK, request_args);
 }
 
 
 void call_contract_view([[maybe_unused]] std::ostream& output,
-                        web_socket::WebSocketClient& client,
+                        websocket::WebSocketClient& client,
                         const lk::Address& to_address,
                         const std::filesystem::path& keys_dir,
                         const std::string& message)
@@ -251,14 +218,13 @@ void call_contract_view([[maybe_unused]] std::ostream& output,
     call.sign(private_key);
 
     LOG_INFO << "Contract view call from " << from_address << " to " << to_address << " message " << message;
-    auto request_args = web_socket::serializeViewCall(call);
-    auto request = generate_call("call_contract_view", request_args);
-    client.send(request);
+    auto request_args = websocket::serializeViewCall(call);
+    client.send(websocket::Command::CALL_VIEW_CALL, request_args);
 }
 
 
 void transfer(std::ostream& output,
-              web_socket::WebSocketClient& client,
+              websocket::WebSocketClient& client,
               const lk::Address& to_address,
               const lk::Balance& amount,
               const lk::Fee& fee,
@@ -284,14 +250,13 @@ void transfer(std::ostream& output,
 
     LOG_INFO << "Transfer from " << from_address << " to " << to_address << " with amount " << amount;
 
-    base::PropertyTree request_args = web_socket::serializeTransaction(tx);
-    auto request = generate_subscription("push_transaction", request_args);
-    client.send(request);
+    base::PropertyTree request_args = websocket::serializeTransaction(tx);
+    client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, request_args);
 }
 
 
 void contract_call(std::ostream& output,
-                   web_socket::WebSocketClient& client,
+                   websocket::WebSocketClient& client,
                    const lk::Address& to_address,
                    const lk::Balance& amount,
                    const lk::Fee& fee,
@@ -319,14 +284,13 @@ void contract_call(std::ostream& output,
     LOG_INFO << "Contract_call from " << from_address << ", to " << to_address << ", amount " << amount << ",fee "
              << fee << ", message " << message;
 
-    base::PropertyTree request_args = web_socket::serializeTransaction(tx);
-    auto request = generate_subscription("push_transaction", request_args);
-    client.send(request);
+    base::PropertyTree request_args = websocket::serializeTransaction(tx);
+    client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, request_args);
 }
 
 
 void push_contract(std::ostream& output,
-                   web_socket::WebSocketClient& client,
+                   websocket::WebSocketClient& client,
                    const lk::Balance& amount,
                    const lk::Fee& fee,
                    const std::filesystem::path& keys_dir,
@@ -367,26 +331,22 @@ void push_contract(std::ostream& output,
     LOG_INFO << "Push_contract from " << from_address << ", amount " << amount << ", fee " << fee << ", message "
              << message;
 
-    base::PropertyTree request_args = web_socket::serializeTransaction(tx);
-    auto request = generate_subscription("push_transaction", request_args);
-    client.send(request);
+    base::PropertyTree request_args = websocket::serializeTransaction(tx);
+    client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, request_args);
 }
 
 
-void subscribe_last_block_info(web_socket::WebSocketClient& client)
+void subscribe_last_block_info(websocket::WebSocketClient& client)
 {
     LOG_INFO << "subscription last_block_info";
-    base::PropertyTree null;
-    auto request = generate_subscription("last_block_info", null);
-    client.send(request);
+    client.send(websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO, base::PropertyTree{});
 }
 
 
-void subscribe_account_info(web_socket::WebSocketClient& client, const lk::Address& address)
+void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
 {
     LOG_INFO << "subscription account_info for address: " << address;
     base::PropertyTree request_args;
-    request_args.add("address", web_socket::serializeAddress(address));
-    auto request = generate_call("account_info", request_args);
-    client.send(request);
+    request_args.add("address", websocket::serializeAddress(address));
+    client.send(websocket::Command::SUBSCRIBE_ACCOUNT_INFO, request_args);
 }

@@ -85,7 +85,7 @@ constexpr std::size_t NET_REQUEST_TIMEOUT = 10; // how many seconds do we wait f
 constexpr std::size_t BC_MAX_TRANSACTIONS_IN_BLOCK = 100;
 //------------------------
 
-// web_socket
+// websocket
 constexpr const std::uint32_t RPC_PUBLIC_API_VERSION = 1;
 constexpr std::size_t RPC_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
 //--------------------

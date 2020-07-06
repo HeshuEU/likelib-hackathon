@@ -11,7 +11,7 @@
 #include <cstring>
 
 
-namespace web_socket
+namespace websocket
 {
 
 WebSocketClient::WebSocketClient(boost::asio::io_context& ioc,
@@ -19,8 +19,10 @@ WebSocketClient::WebSocketClient(boost::asio::io_context& ioc,
                                  CloseCallback close_callback)
   : _resolver(boost::asio::make_strand(ioc))
   , _web_socket(boost::asio::make_strand(ioc))
+  , _ready{ false }
   , _receive_callback{ std::move(receive_callback) }
   , _close_callback{ std::move(close_callback) }
+  , _last_query_id{ 0 }
 {}
 
 
@@ -32,17 +34,31 @@ WebSocketClient::~WebSocketClient()
 
 bool WebSocketClient::connect(const std::string& host)
 {
+    if (_ready) {
+        LOG_ERROR << "socket already connected to address[ip_v4]: " << _web_socket.next_layer().remote_endpoint();
+        return false;
+    }
+
+    boost::asio::ip::tcp::endpoint target_endpoint;
+    try {
+        target_endpoint = create_endpoint(host);
+    }
+    catch (const base::InvalidArgument& er) {
+        LOG_ERROR << "target host ip decoding error: " << er;
+        return _ready;
+    }
+
     boost::system::error_code ec;
-    auto const results = _resolver.resolve(create_endpoint(host), ec);
+    auto const results = _resolver.resolve(target_endpoint, ec);
     if (ec) {
         LOG_ERROR << "resolving error: " << ec.message();
-        return false;
+        return _ready;
     }
 
     auto ep = boost::asio::connect(_web_socket.next_layer(), results, ec);
     if (ec) {
         LOG_ERROR << "connection error: " << ec.message();
-        return false;
+        return _ready;
     }
 
     _web_socket.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client));
@@ -58,20 +74,20 @@ bool WebSocketClient::connect(const std::string& host)
     if (ec) {
         LOG_ERROR << "handshake failed: " << ec.message();
         close(boost::beast::websocket::close_code::internal_error);
-        return false;
+        return _ready;
     }
 
     do_read();
 
     _ready = true;
     _web_socket.control_callback(
-      std::bind(&WebSocketClient::control_callback, this, std::placeholders::_1, std::placeholders::_2));
+      std::bind(&WebSocketClient::frame_control_callback, this, std::placeholders::_1, std::placeholders::_2));
     return _ready;
 }
 
 
-void WebSocketClient::control_callback(boost::beast::websocket::frame_type kind,
-                                       [[maybe_unused]] boost::string_view payload)
+void WebSocketClient::frame_control_callback(boost::beast::websocket::frame_type kind,
+                                             [[maybe_unused]] boost::string_view payload)
 {
     if (kind == boost::beast::websocket::frame_type::close) {
         disconnect();
@@ -79,14 +95,18 @@ void WebSocketClient::control_callback(boost::beast::websocket::frame_type kind,
 }
 
 
-bool WebSocketClient::is_connected()
+void WebSocketClient::send(Command::Id command_id, const base::PropertyTree& args)
 {
-    return _ready;
-}
+    if (!_ready) {
+        RAISE_ERROR(base::LogicError, "client is not ready");
+    }
+    base::PropertyTree query;
+    query.add("type", serializeCommandType(command_id));
+    query.add("name", serializeCommandName(command_id));
+    query.add("api", base::config::RPC_PUBLIC_API_VERSION);
+    query.add("id", registerNewQuery(command_id));
+    query.add("args", args);
 
-
-void WebSocketClient::send(const base::PropertyTree& query)
-{
     _web_socket.async_write(boost::asio::buffer(query.toString()),
                             boost::beast::bind_front_handler(&WebSocketClient::on_write, this));
 }
@@ -160,7 +180,49 @@ void WebSocketClient::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         LOG_ERROR << "client json parsing fail: " << error;
     }
 
-    _receive_callback(std::move(received_query));
+    QueryId query_id{ 0 };
+    std::string type;
+    std::string status;
+    base::PropertyTree command_args;
+    try {
+        query_id = received_query.get<QueryId>("id");
+        status = received_query.get<std::string>("status");
+        type = received_query.get<std::string>("type");
+        command_args = received_query.getSubTree("result");
+    }
+    catch (const base::Error& e) {
+        LOG_ERROR << "deserialization error" << e;
+        return;
+    }
+
+    if (type != "answer") {
+        LOG_DEBUG << "wrong answer type";
+        return;
+    }
+
+    try {
+        auto command_id = _current_queries.find(query_id);
+        if (command_id == _current_queries.end()) {
+            LOG_DEBUG << "received unregistered answer id";
+            return;
+        }
+        auto current_command_id = Command::Id(command_id->second);
+        if (!static_cast<bool>(current_command_id & Command::Id(Command::Type::SUBSCRIBE))) {
+            _current_queries.erase(command_id);
+        }
+        _receive_callback(current_command_id, std::move(command_args));
+    }
+    catch (const base::Error& error) {
+        LOG_ERROR << "receive callback execution error" << error;
+    }
+}
+
+
+QueryId WebSocketClient::registerNewQuery(Command::Id command_id)
+{
+    auto current_id = ++_last_query_id;
+    _current_queries.insert({ current_id, command_id });
+    return current_id;
 }
 
 }

@@ -20,6 +20,7 @@ Api version = 1.
     {
 		“type”: “answer",
 		"id": <unsigned int equal to query id>,
+		"status": "ok"/"error",
 		“result”: <result object for command>
 	}
 
@@ -43,6 +44,7 @@ Api version = 1.
         {
             “type”: "answer",
             "id": 99,
+            "status": "ok",
             “result”: {
                 “top_block_hash”: “<block hash encoded by base64>”,
                 “top_block_number”: <block number>,
@@ -68,6 +70,7 @@ Api version = 1.
         {
             “type”: "answer",
             "id": 56,
+            "status": "ok",
             “result”: {
                 “address”: “<address encoded by base58>”,
                 “balance”: “<uint256 integer at string format>”,
@@ -98,6 +101,7 @@ Api version = 1.
         {
             “type”: "answer",
             "id": 77,
+            "status": "ok",
             “result”: {
                 “depth”: <integer>,
                 “nonce”: <integer>,
@@ -127,6 +131,7 @@ Api version = 1.
         {
             “type”: "answer",
             "id": 10,
+            "status": "ok",
             “result”: {
             	“from”: “<address encoded by base58>”,
             	“to”: “<target address or null address if transaction for contract creation encoded by base58>”,
@@ -157,6 +162,7 @@ Api version = 1.
         {
             “type”: "answer",
             "id": 21,
+            "status": "ok",
             “result”: {
             	“status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
             	“action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
@@ -188,6 +194,7 @@ Api version = 1.
         {
             "type": "answer",
             "id": 67,
+            "status": "ok",
             "result": "<encoded by base64 data from contract call in string type>"
         }
 
@@ -213,6 +220,7 @@ Api version = 1.
         {
             “type”: "answer",
             "id": 2,
+            "status": "ok",
             “result”: {
                 “top_block_hash”: “<block hash encoded by base64>”,
                 “top_block_number”: <block number>,
@@ -246,6 +254,7 @@ Api version = 1.
         {
             “type”: "answer",
             "id": 53,
+            "status": "ok",
             “result”: {
             	“status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
             	“action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
@@ -275,6 +284,7 @@ Api version = 1.
         {
             “type”: "answer",
             "id": 80,
+            "status": "ok",
             “result”: {
                 “address”: “<address encoded by base58>”,
                 “balance”: “<uint256 integer at string format>”,
@@ -286,26 +296,79 @@ Api version = 1.
 
 ##### unsubscribe commands:
 
-note: unsubscribe from subscribed command by id
+1. last_block_info
 
-query:
+    note: send answer when new block add
 
-    {
-        “type”: "unsubscribe",
-        "api": 1,
-        "id": 1,
-        “args”: {
-            “id”: “<id of subscribe command>”,
+    query:
+
+        {
+            “type”: "unsubscribe",
+            "name": "last_block_info",
+            "api": 1,
+            "id": 9,
+            “args”: {
+            }
         }
-    }
 
-answers:
+	answers:
 
-    {
-        “type”: "answer",
-        "id": 1,
-        “result”: "successful"/"error"
-    }
+        {
+            “type”: "answer",
+            "id": 9,
+            "status": "ok",
+            “result”: "successful"/"error"
+        }
+
+2. push_transaction
+
+    note: send answer when transaction state change
+
+    query:
+    
+        {
+            “type”: "unsubscribe",
+            "name": "push_transaction",
+            "api": 1,
+            "id": 290,
+            “args”: {
+                "hash": "<hash encoded by base64>"
+            }
+        }
+
+    answers:
+
+        {
+            “type”: "answer",
+            "id": 290,
+            "status": "ok",
+            “result”: "successful"/"error"
+        }
+
+3. account_info
+
+    note: send answer when account state change
+
+    query:
+
+        {
+            “type”: "unsubscribe",
+            "name": "account_info",
+            "api": 1,
+            "id": 122,
+            “args”: {
+                “address”: “<address encoded by base58>”,
+            }
+        }
+
+	answers:
+
+        {
+            “type”: "answer",
+            "id": 122,
+            "status": "ok",
+            “result”: "successful"/"error"
+        }
 
 ## Format notes:
 

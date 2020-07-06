@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.hpp"
+
 #include "core/block.hpp"
 #include "core/core.hpp"
 #include "core/managers.hpp"
@@ -9,16 +11,18 @@
 
 #include <boost/beast/core.hpp>
 
-namespace web_socket
+namespace websocket
 {
-
-struct NodeInfo
-{
-    base::Sha256 top_block_hash;
-    uint64_t top_block_number;
-};
 
 boost::asio::ip::tcp::endpoint create_endpoint(const std::string& listening_address);
+
+std::string serializeCommandName(websocket::Command::Id name);
+
+websocket::Command::Name deserializeCommandName(const std::string& message);
+
+std::string serializeCommandType(websocket::Command::Id command_type);
+
+websocket::Command::Type deserializeCommandType(const std::string& message);
 
 const std::string& serializeAccountType(lk::AccountType type);
 
