@@ -8,7 +8,6 @@ namespace lk
 template<typename T>
 void Peer::endSession(T last_message)
 {
-    LOG_DEBUG << "ending session: " << boost::stacktrace::stacktrace();
     try {
         detachFromPools();
         _requests.send(last_message, [keeper = shared_from_this()] { keeper->_session->close(); });

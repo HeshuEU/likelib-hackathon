@@ -46,7 +46,8 @@ namespace lk
 
 Blockchain::Blockchain(ImmutableBlock genesis_block, const base::PropertyTree& config)
   : _config{ config }
-  , _top_level_block_hash{ base::Sha256::null() } // temporary null, because it requires initialization. Set to real value in addGenesisBlock
+  , _top_level_block_hash{ base::Sha256::null() }
+  // temporary null, because it requires initialization. Set to real value in addGenesisBlock
   , _genesis_block_hash{ base::Sha256::null() }
 {
     addGenesisBlock(genesis_block);
