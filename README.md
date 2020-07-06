@@ -56,3 +56,102 @@ if file not exists generate new key pair and save by this path.
 * `database.clean` - if true - cleans database; otherwise does nothing.
 
 
+## Client
+
+For using client read instructions:
+
+Allowed commands:
+  client call_contract   [ --help ]    create message to call smart contract
+    --help                Print help message
+    --host arg            address of host
+    --to arg              address of "to" contract
+    --amount arg          amount count
+    --fee arg             fee count
+    --keys arg            path to a directory with keys
+    --message arg         message for call smart contract
+    --http                is set enable http client call
+
+  client compile_contract   [ --help ]    compile smart contract
+    --help                Print help message
+    --code arg            path to a Solidity code
+
+  client connection_test   [ --help ]    test RPC connection
+    --help                Print help message
+    --host arg            address of host
+    --http                is set enable http client call
+
+  client decode_message   [ --help ]    decode smart contract message
+    --help                Print help message
+    --code arg            path to folder with compiled Solidity code
+    --method arg          call code
+    --message arg         data to decode
+
+  client encode_message   [ --help ]    encode smart contract message
+    --help                Print help message
+    --code arg            path to folder with compiled Solidity code
+    --message arg         call code
+
+
+  client generate_keys   [ --help ]    generate a pair of keys
+    --help                Print help message
+    --keys arg            directory in which a key pair will be generated
+
+  client get_account_info   [ --help ]    use for get account info from remote by account address
+    --help                Print help message
+    --host arg            address of host
+    --address arg         address of target account
+    --http                is set enable http client call
+
+  client get_balance   [ --help ]    use for get balance from remote by account address
+    --help                Print help message
+    --host arg            address of host
+    --address arg         address of target account
+    --http                is set enable http client call
+
+  client get_block   [ --help ]    get block information
+    --help                Print help message
+    --host arg            address of host
+    --hash arg            block hash hex
+    --number arg          block number
+    --http                is set enable http client call
+
+  client get_transaction   [ --help ]    get transaction information
+    --help                Print help message
+    --host arg            address of host
+    --hash arg            transaction hash hex
+    --http                is set enable http client call
+
+  client get_transaction_status   [ --help ]    get transaction result information
+    --help                Print help message
+    --host arg            address of host
+    --hash arg            transaction hash hex
+    --http                is set enable http client call
+
+  client keys_info   [ --help ]    show info on keys
+    --help                Print help message
+    --keys arg            directory with a key pair
+
+  client node_info   [ --help ]    get LK info
+    --help                Print help message
+    --host arg            address of host
+    --http                is set enable http client call
+
+  client push_contract   [ --help ]    deploy a smart contract
+    --help                Print help message
+    --host arg            address of host
+    --amount arg          amount of Lk to transfer
+    --fee arg             fee count
+    --keys arg            path to a directory with keys
+    --message arg         message for initialize smart contract
+    --code arg            compiled contract code folder
+    --http                is set enable http client call
+
+  client transfer   [ --help ]    use transfer balance from one address to another address
+    --help                Print help message
+    --host arg            address of host
+    --to arg              address of recipient account
+    --amount arg          amount count
+    --keys arg            path to a directory with keys
+    --fee arg             fee count
+    --http                is set enable http client call
+
