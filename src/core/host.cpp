@@ -142,6 +142,9 @@ bool KademliaPeerPool::tryAddPeer(std::shared_ptr<Peer> peer)
     }
 
     std::size_t bucket_index = calcBucketIndex(peer->getAddress());
+    if (bucket_index == Address::LENGTH_IN_BYTES * 8) {
+        return false;
+    }
     if (_buckets[bucket_index].size() < MAX_BUCKET_SIZE) {
         // accept peer
         _buckets[bucket_index].push_back(std::move(peer));

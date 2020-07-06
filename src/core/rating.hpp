@@ -31,6 +31,7 @@ class Rating
     Rating& badBlock();
     Rating& differentGenesis();
     Rating& connectionRefused();
+    Rating& cannotAddToPool();
 
   private:
     static constexpr Value INITIAL_PEER_RATING = 20;

@@ -496,6 +496,7 @@ void Peer::handle(lk::msg::Connect&& msg)
     }
     else {
         PEER_LOG << "Handling CONNECT: sending CANNOT_ACCEPT, because can't add to pool";
+        _rating.cannotAddToPool();
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
@@ -525,6 +526,7 @@ void Peer::handle(lk::msg::Accepted&& msg)
     }
     else {
         PEER_LOG << "handling of ACCEPTED: cannot add to handshaked pool";
+        _rating.cannotAddToPool();
         endSession(
           msg::CannotAccept{ msg::CannotAccept::RefusionReason::BUCKET_IS_FULL, _host.allConnectedPeersInfo() });
     }
