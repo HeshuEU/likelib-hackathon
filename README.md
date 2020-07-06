@@ -1,5 +1,16 @@
 # LikeLib 2.0
 
+
+## Build and run node
+1. Run: `sudo doc/prepare_build.sh`. It will install cmake, g++, conan and its dependencies.
+2. To generate CMake files go to build folder and use
+`cmake -DCMAKE_BUILD_TYPE=Release /path/to/source/files` command.
+3. To build project use `make` command.
+4. Go to the bin folder and create `config.json` with the node settings in it (see example).
+5. Run `node` executable. Keys for the node will be created automatically. If you want to use
+already existing ones - put your key in `node` executable folder with the name `lkkey`.
+
+### config.json
 To run the node, a configuration file must be specified for it.
 By default it is config.json file of the following format:
 
@@ -45,10 +56,3 @@ if file not exists generate new key pair and save by this path.
 * `database.clean` - if true - cleans database; otherwise does nothing.
 
 
-## Build
-1. Run: `$ sudo .doc/prepare_build.sh`. It will install conan and its dependencies.
-2. To generate CMake files use `cmake` command. 
-3. To build project use `make` command.
-4. Go to the bin folder and create `config.json` with the node settings in it.
-5. Run `node` executable. Keys for the node will be created automatically. If you want to use 
-already existing ones - put your key in `node` executable folder with the name `lkkey`.
