@@ -157,7 +157,7 @@ std::vector<std::pair<std::string, std::string>> getMethodsInfo(boost::property_
 
 bool outputIsAddress(const std::string& method_matadata)
 {
-    if (method_matadata.find("\"type\": \"address\"") != std::string::npos) {
+    if (method_matadata.find("\"type\": \"address") != std::string::npos) {
         return true;
     }
     return false;
@@ -166,18 +166,19 @@ bool outputIsAddress(const std::string& method_matadata)
 
 void changeAddressOutput(std::string& output)
 {
-    std::regex reg("0x[0-9a-fA-F]{40}");
+    std::regex reg("0x[0-9A-Fa-f]{40}");
     auto words_begin = std::sregex_iterator(output.begin(), output.end(), reg);
     auto words_end = std::sregex_iterator();
+    auto changed_output = output;
 
     for (auto i = words_begin; i != words_end; i++) {
         auto matched_world = i->str();
-
         auto hex_address(matched_world.substr(2, matched_world.size() - 2));
         auto raw_address = base::fromHex<base::FixedBytes<lk::Address::LENGTH_IN_BYTES>>(hex_address);
         auto base58_address = base::base58Encode(raw_address);
-        output.replace(output.find(matched_world), matched_world.size(), base58_address);
+        changed_output.replace(changed_output.find(matched_world), matched_world.size(), base58_address);
     }
+    output = changed_output;
 }
 
 }
