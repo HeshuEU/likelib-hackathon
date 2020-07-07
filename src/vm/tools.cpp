@@ -23,6 +23,7 @@ namespace bp = ::boost::process;
 
 namespace
 {
+constexpr std::size_t ID_METHOD_SIZE = 8;
 std::string treeToString(const boost::property_tree::ptree& tree)
 {
     std::ostringstream output;
@@ -89,14 +90,22 @@ void modifyMetadataAddress(boost::property_tree::ptree& metadata)
 }
 
 
-void modifyMetadataOutput(boost::property_tree::ptree& metadata, const std::string& method)
+std::string getMethodId(boost::property_tree::ptree& method_metadata)
 {
     try {
-        BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
-            if (abi.second.get<std::string>("type") == "function" && abi.second.get<std::string>("name") == method) {
-                abi.second.put_child("inputs", abi.second.get_child("outputs"));
+        if (method_metadata.get<std::string>("type") == "function") {
+            auto signature = method_metadata.get<std::string>("name") + '(';
+            BOOST_FOREACH (boost::property_tree::ptree::value_type& inputs, method_metadata.get_child("inputs")) {
+                signature += inputs.second.get<std::string>("type") + ',';
             }
+            if (signature[signature.size() - 1] == ',') {
+                signature.erase(signature.size() - 1, 1);
+            }
+            signature += ')';
+            std::string method_id = base::Keccak256::compute(base::Bytes(signature)).toHex().substr(0, ID_METHOD_SIZE);
+            return method_id;
         }
+        return "";
     }
     catch (const boost::property_tree::ptree_bad_path& e) {
         RAISE_ERROR(base::InvalidArgument, "Invalid Metadata format");
@@ -124,27 +133,23 @@ std::string getMethodSignature(const std::string& methods, const std::string& me
 }
 
 
-std::vector<std::pair<std::string, std::string>> getMethodsInfo(boost::property_tree::ptree& metadata,
-                                                                const std::string& method)
+std::pair<boost::property_tree::ptree, std::string> getMethodInfo(boost::property_tree::ptree& metadata,
+                                                                  const std::string& data)
 {
-    constexpr std::size_t ID_METHOD_SIZE = 8;
-    std::vector<std::pair<std::string, std::string>> methods_info;
     try {
         BOOST_FOREACH (boost::property_tree::ptree::value_type& abi, metadata.get_child("output.abi")) {
-            if ((abi.second.get<std::string>("type") == "function") &&
-                (abi.second.get<std::string>("name") == method)) {
-                std::string signature = method + '(';
-                BOOST_FOREACH (boost::property_tree::ptree::value_type& inputs, abi.second.get_child("inputs")) {
-                    signature += inputs.second.get<std::string>("type") + ',';
+            if (abi.second.get<std::string>("type") == "function") {
+                std::string method_id = getMethodId(abi.second);
+                if (method_id == data.substr(0, ID_METHOD_SIZE)) {
+                    auto changed_metadata = abi.second;
+                    changed_metadata.put_child("inputs", abi.second.get_child("outputs"));
+                    auto new_method_id = getMethodId(changed_metadata);
+                    auto new_data = new_method_id + data.substr(ID_METHOD_SIZE, data.size());
+                    return { changed_metadata, new_data };
                 }
-                signature.erase(signature.size() - 1, 1);
-                signature += ')';
-                std::string method_id =
-                  base::Keccak256::compute(base::Bytes(signature)).toHex().substr(0, ID_METHOD_SIZE);
-                methods_info.emplace_back(treeToString(abi.second), method_id);
             }
         }
-        return methods_info;
+        RAISE_ERROR(base::InvalidArgument, "No metadata with method id data was found");
     }
     catch (const boost::property_tree::ptree_bad_path& e) {
         RAISE_ERROR(base::InvalidArgument, "Invalid Metadata format");
@@ -155,10 +160,12 @@ std::vector<std::pair<std::string, std::string>> getMethodsInfo(boost::property_
 }
 
 
-bool outputIsAddress(const std::string& method_matadata)
+bool outputIsAddress(boost::property_tree::ptree& method_matadata)
 {
-    if (method_matadata.find("\"type\": \"address") != std::string::npos) {
-        return true;
+    BOOST_FOREACH (boost::property_tree::ptree::value_type& output, method_matadata.get_child("outputs")) {
+        if (output.second.get<std::string>("type").find("address") != std::string::npos) {
+            return true;
+        }
     }
     return false;
 }
@@ -432,11 +439,9 @@ std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_
 }
 
 
-std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_code_folder,
-                                        const std::string& method,
-                                        const std::string& output)
+std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_code_folder, const std::string& output)
 {
-    return vm::decodeMessage(path_to_code_folder, method, output);
+    return vm::decodeMessage(path_to_code_folder, output);
 }
 
 
@@ -514,7 +519,7 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
     try {
         auto [bytecode, metadata] = loadContractData(contract_path);
         auto [method, arguments] = parseCall(data);
-        
+
         if (method == "constructor") {
             modifyMetadataAddress(metadata);
             encode_result = ::encodeMessageConstructor(
@@ -550,7 +555,7 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
 }
 
 
-std::string decodeMessage(const std::string& contract_path, const std::string& method, const std::string& data)
+std::string decodeMessage(const std::string& contract_path, const std::string& data)
 {
     auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
     if (status == -1) {
@@ -566,19 +571,15 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
     std::string decode_result;
     try {
         auto [bytecode, metadata] = loadContractData(contract_path);
-        modifyMetadataOutput(metadata, method);
-        auto methods = getMethodsInfo(metadata, method);
-        if (methods.empty()) {
-            RAISE_ERROR(base::InvalidArgument, "No methods with this name were found");
-        }
-        for (const auto& method : methods) {
-            decode_result = ::decodeMessage(method.first.c_str(), method.second.c_str(), data.c_str());
-            if (decode_result.size() != 0) {
-                if (outputIsAddress(method.first)) {
-                    changeAddressOutput(decode_result);
-                }
-                break;
+        auto [method_metadata, new_data] = getMethodInfo(metadata, data);
+        decode_result = ::decodeMessage(treeToString(method_metadata).c_str(), new_data.c_str());
+        if (decode_result.size() != 0) {
+            if (outputIsAddress(method_metadata)) {
+                changeAddressOutput(decode_result);
             }
+        }
+        else {
+            RAISE_ERROR(base::RuntimeError, "Error occurred during the decode");
         }
     }
     catch (const base::Error& e) {
@@ -586,11 +587,6 @@ std::string decodeMessage(const std::string& contract_path, const std::string& m
         throw e;
     }
     Py_Finalize();
-    if (decode_result.size() == 0) {
-        RAISE_ERROR(base::RuntimeError, "Error occurred during the decode");
-    }
-    else {
-        return decode_result;
-    }
+    return decode_result;
 }
 } // namespace vm

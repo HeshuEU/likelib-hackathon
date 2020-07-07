@@ -54,14 +54,12 @@ base::Keccak256 methodHash(const boost::property_tree::ptree& method_abi);
 
 std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_folder, const std::string& call);
 
-std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_code_folder,
-                                        const std::string& method,
-                                        const std::string& output);
+std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_code_folder, const std::string& output);
 
 std::string callPython(std::vector<std::string>& args);
 
 std::string encodeMessage(const std::string& contract_path, const std::string& data);
 
-std::string decodeMessage(const std::string& contract_path, const std::string& method, const std::string& data);
+std::string decodeMessage(const std::string& contract_path, const std::string& data);
 
 } // namespace vm

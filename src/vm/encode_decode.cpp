@@ -1236,7 +1236,7 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 __PYX_EXTERN_C std::string getMethodsByArguments(char const *, char const *); /*proto*/
 __PYX_EXTERN_C std::string encodeMessageFunction(char const *, char const *, char const *, char const *); /*proto*/
 __PYX_EXTERN_C std::string encodeMessageConstructor(char const *, char const *, char const *); /*proto*/
-__PYX_EXTERN_C std::string decodeMessage(char const *, char const *, char const *); /*proto*/
+__PYX_EXTERN_C std::string decodeMessage(char const *, char const *); /*proto*/
 static std::string __pyx_convert_string_from_py_std__in_string(PyObject *); /*proto*/
 #define __Pyx_MODULE_NAME "encode_decode"
 extern int __pyx_module_is_main_encode_decode;
@@ -3357,14 +3357,13 @@ std::string encodeMessageConstructor(char const *__pyx_v_arguments_c, char const
 /* "encode_decode.pyx":113
  * 
  * 
- * cdef public string decodeMessage(const char* method_metadata_c, const char* method_id_c, const char* data_c):             # <<<<<<<<<<<<<<
+ * cdef public string decodeMessage(const char* method_metadata_c, const char* data_c):             # <<<<<<<<<<<<<<
  * 
  *     try:
  */
 
-std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__pyx_v_method_id_c, char const *__pyx_v_data_c) {
+std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__pyx_v_data_c) {
   PyObject *__pyx_v_method_metadata = NULL;
-  PyObject *__pyx_v_method_id = NULL;
   PyObject *__pyx_v_data = NULL;
   PyObject *__pyx_v_contract = NULL;
   PyObject *__pyx_v_null_str = NULL;
@@ -3378,16 +3377,15 @@ std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__p
   PyObject *__pyx_t_6 = NULL;
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
-  PyObject *__pyx_t_9 = NULL;
-  std::string __pyx_t_10;
+  std::string __pyx_t_9;
   __Pyx_RefNannySetupContext("decodeMessage", 0);
 
   /* "encode_decode.pyx":115
- * cdef public string decodeMessage(const char* method_metadata_c, const char* method_id_c, const char* data_c):
+ * cdef public string decodeMessage(const char* method_metadata_c, const char* data_c):
  * 
  *     try:             # <<<<<<<<<<<<<<
  *         method_metadata = json.loads(<str>method_metadata_c)
- *         method_id = <str>method_id_c
+ *         data = <str>data_c
  */
   {
     __Pyx_PyThreadState_declare
@@ -3402,8 +3400,8 @@ std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__p
  * 
  *     try:
  *         method_metadata = json.loads(<str>method_metadata_c)             # <<<<<<<<<<<<<<
- *         method_id = <str>method_id_c
  *         data = <str>data_c
+ * 
  */
       __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_json); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 116, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
@@ -3434,147 +3432,129 @@ std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__p
       /* "encode_decode.pyx":117
  *     try:
  *         method_metadata = json.loads(<str>method_metadata_c)
- *         method_id = <str>method_id_c             # <<<<<<<<<<<<<<
- *         data = <str>data_c
- * 
- */
-      __pyx_t_4 = __Pyx_PyUnicode_FromString(__pyx_v_method_id_c); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 117, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_6 = __pyx_t_4;
-      __Pyx_INCREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_v_method_id = ((PyObject*)__pyx_t_6);
-      __pyx_t_6 = 0;
-
-      /* "encode_decode.pyx":118
- *         method_metadata = json.loads(<str>method_metadata_c)
- *         method_id = <str>method_id_c
  *         data = <str>data_c             # <<<<<<<<<<<<<<
  * 
  *         contract = web3.Web3().eth.contract(abi=[method_metadata])
  */
-      __pyx_t_6 = __Pyx_PyUnicode_FromString(__pyx_v_data_c); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 118, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_4 = __pyx_t_6;
-      __Pyx_INCREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_v_data = ((PyObject*)__pyx_t_4);
-      __pyx_t_4 = 0;
+      __pyx_t_4 = __Pyx_PyUnicode_FromString(__pyx_v_data_c); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 117, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_6 = __pyx_t_4;
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_v_data = ((PyObject*)__pyx_t_6);
+      __pyx_t_6 = 0;
 
-      /* "encode_decode.pyx":120
+      /* "encode_decode.pyx":119
  *         data = <str>data_c
  * 
  *         contract = web3.Web3().eth.contract(abi=[method_metadata])             # <<<<<<<<<<<<<<
- *         return str(json.dumps(contract.decode_function_input(method_id + data)[1]))
+ *         return str(json.dumps(contract.decode_function_input(data)[1]))
  *     except:
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_web3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 120, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_Web3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 120, __pyx_L3_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_web3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 119, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_Web3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 119, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = NULL;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_4 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
-        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_5);
-        if (likely(__pyx_t_6)) {
+        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
+        if (likely(__pyx_t_4)) {
           PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-          __Pyx_INCREF(__pyx_t_6);
+          __Pyx_INCREF(__pyx_t_4);
           __Pyx_INCREF(function);
           __Pyx_DECREF_SET(__pyx_t_5, function);
         }
       }
-      __pyx_t_4 = (__pyx_t_6) ? __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6) : __Pyx_PyObject_CallNoArg(__pyx_t_5);
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_eth); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 120, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_contract); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 120, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_6 = PyList_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 120, __pyx_L3_error)
+      __pyx_t_6 = (__pyx_t_4) ? __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4) : __Pyx_PyObject_CallNoArg(__pyx_t_5);
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 119, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_eth); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 119, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_contract); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 119, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 119, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_4 = PyList_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 119, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_4);
       __Pyx_INCREF(__pyx_v_method_metadata);
       __Pyx_GIVEREF(__pyx_v_method_metadata);
-      PyList_SET_ITEM(__pyx_t_6, 0, __pyx_v_method_metadata);
-      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_abi, __pyx_t_6) < 0) __PYX_ERR(0, 120, __pyx_L3_error)
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 120, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_6);
+      PyList_SET_ITEM(__pyx_t_4, 0, __pyx_v_method_metadata);
+      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_abi, __pyx_t_4) < 0) __PYX_ERR(0, 119, __pyx_L3_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 119, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_v_contract = __pyx_t_6;
-      __pyx_t_6 = 0;
+      __pyx_v_contract = __pyx_t_4;
+      __pyx_t_4 = 0;
 
-      /* "encode_decode.pyx":121
+      /* "encode_decode.pyx":120
  * 
  *         contract = web3.Web3().eth.contract(abi=[method_metadata])
- *         return str(json.dumps(contract.decode_function_input(method_id + data)[1]))             # <<<<<<<<<<<<<<
+ *         return str(json.dumps(contract.decode_function_input(data)[1]))             # <<<<<<<<<<<<<<
  *     except:
  *         null_str = ""
  */
-      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_json); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 121, __pyx_L3_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_json); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 120, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_dumps); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 121, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_dumps); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 120, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_contract, __pyx_n_s_decode_function_input); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 121, __pyx_L3_error)
+      __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_contract, __pyx_n_s_decode_function_input); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_7);
-      __pyx_t_8 = __Pyx_PyUnicode_ConcatSafe(__pyx_v_method_id, __pyx_v_data); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 121, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_9 = NULL;
+      __pyx_t_8 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
-        __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_7);
-        if (likely(__pyx_t_9)) {
+        __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_7);
+        if (likely(__pyx_t_8)) {
           PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
-          __Pyx_INCREF(__pyx_t_9);
+          __Pyx_INCREF(__pyx_t_8);
           __Pyx_INCREF(function);
           __Pyx_DECREF_SET(__pyx_t_7, function);
         }
       }
-      __pyx_t_5 = (__pyx_t_9) ? __Pyx_PyObject_Call2Args(__pyx_t_7, __pyx_t_9, __pyx_t_8) : __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_8);
-      __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 121, __pyx_L3_error)
+      __pyx_t_5 = (__pyx_t_8) ? __Pyx_PyObject_Call2Args(__pyx_t_7, __pyx_t_8, __pyx_v_data) : __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_v_data);
+      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 120, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_5, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 121, __pyx_L3_error)
+      __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_5, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_t_5 = NULL;
-      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
-        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
+        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_6);
         if (likely(__pyx_t_5)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
           __Pyx_INCREF(__pyx_t_5);
           __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_4, function);
+          __Pyx_DECREF_SET(__pyx_t_6, function);
         }
       }
-      __pyx_t_6 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_5, __pyx_t_7) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_7);
+      __pyx_t_4 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_6, __pyx_t_5, __pyx_t_7) : __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_7);
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 121, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(((PyObject *)(&PyUnicode_Type)), __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 121, __pyx_L3_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_10 = __pyx_convert_string_from_py_std__in_string(__pyx_t_4); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 121, __pyx_L3_error)
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(((PyObject *)(&PyUnicode_Type)), __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 120, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_r = __pyx_t_10;
+      __pyx_t_9 = __pyx_convert_string_from_py_std__in_string(__pyx_t_6); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 120, __pyx_L3_error)
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_r = __pyx_t_9;
       goto __pyx_L7_try_return;
 
       /* "encode_decode.pyx":115
- * cdef public string decodeMessage(const char* method_metadata_c, const char* method_id_c, const char* data_c):
+ * cdef public string decodeMessage(const char* method_metadata_c, const char* data_c):
  * 
  *     try:             # <<<<<<<<<<<<<<
  *         method_metadata = json.loads(<str>method_metadata_c)
- *         method_id = <str>method_id_c
+ *         data = <str>data_c
  */
     }
     __pyx_L3_error:;
@@ -3583,24 +3563,23 @@ std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__p
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-    /* "encode_decode.pyx":122
+    /* "encode_decode.pyx":121
  *         contract = web3.Web3().eth.contract(abi=[method_metadata])
- *         return str(json.dumps(contract.decode_function_input(method_id + data)[1]))
+ *         return str(json.dumps(contract.decode_function_input(data)[1]))
  *     except:             # <<<<<<<<<<<<<<
  *         null_str = ""
  *         return null_str
  */
     /*except:*/ {
       __Pyx_AddTraceback("encode_decode.decodeMessage", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_6, &__pyx_t_7) < 0) __PYX_ERR(0, 122, __pyx_L5_except_error)
-      __Pyx_GOTREF(__pyx_t_4);
+      if (__Pyx_GetException(&__pyx_t_6, &__pyx_t_4, &__pyx_t_7) < 0) __PYX_ERR(0, 121, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "encode_decode.pyx":123
- *         return str(json.dumps(contract.decode_function_input(method_id + data)[1]))
+      /* "encode_decode.pyx":122
+ *         return str(json.dumps(contract.decode_function_input(data)[1]))
  *     except:
  *         null_str = ""             # <<<<<<<<<<<<<<
  *         return null_str
@@ -3608,13 +3587,13 @@ std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__p
       __Pyx_INCREF(__pyx_kp_u__3);
       __pyx_v_null_str = __pyx_kp_u__3;
 
-      /* "encode_decode.pyx":124
+      /* "encode_decode.pyx":123
  *     except:
  *         null_str = ""
  *         return null_str             # <<<<<<<<<<<<<<
  */
-      __pyx_t_10 = __pyx_convert_string_from_py_std__in_string(__pyx_v_null_str); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 124, __pyx_L5_except_error)
-      __pyx_r = __pyx_t_10;
+      __pyx_t_9 = __pyx_convert_string_from_py_std__in_string(__pyx_v_null_str); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 123, __pyx_L5_except_error)
+      __pyx_r = __pyx_t_9;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -3623,11 +3602,11 @@ std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__p
     __pyx_L5_except_error:;
 
     /* "encode_decode.pyx":115
- * cdef public string decodeMessage(const char* method_metadata_c, const char* method_id_c, const char* data_c):
+ * cdef public string decodeMessage(const char* method_metadata_c, const char* data_c):
  * 
  *     try:             # <<<<<<<<<<<<<<
  *         method_metadata = json.loads(<str>method_metadata_c)
- *         method_id = <str>method_id_c
+ *         data = <str>data_c
  */
     __Pyx_XGIVEREF(__pyx_t_1);
     __Pyx_XGIVEREF(__pyx_t_2);
@@ -3651,7 +3630,7 @@ std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__p
   /* "encode_decode.pyx":113
  * 
  * 
- * cdef public string decodeMessage(const char* method_metadata_c, const char* method_id_c, const char* data_c):             # <<<<<<<<<<<<<<
+ * cdef public string decodeMessage(const char* method_metadata_c, const char* data_c):             # <<<<<<<<<<<<<<
  * 
  *     try:
  */
@@ -3663,12 +3642,10 @@ std::string decodeMessage(char const *__pyx_v_method_metadata_c, char const *__p
   __Pyx_XDECREF(__pyx_t_6);
   __Pyx_XDECREF(__pyx_t_7);
   __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_XDECREF(__pyx_t_9);
   __Pyx_WriteUnraisable("encode_decode.decodeMessage", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
   __Pyx_pretend_to_initialize(&__pyx_r);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_method_metadata);
-  __Pyx_XDECREF(__pyx_v_method_id);
   __Pyx_XDECREF(__pyx_v_data);
   __Pyx_XDECREF(__pyx_v_contract);
   __Pyx_XDECREF(__pyx_v_null_str);
