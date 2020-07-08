@@ -449,6 +449,9 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock
 
                 if (eval_result.status_code == evmc_status_code::EVMC_SUCCESS) {
                     auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
+                    if(!output_data.isEmpty()){
+                        output_data = tx.getData().takePart(0, 4).append(output_data);
+                    }
 
                     TransactionStatus status(TransactionStatus::StatusCode::Success,
                                              TransactionStatus::ActionType::ContractCall,
