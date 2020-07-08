@@ -161,6 +161,7 @@ def main(env: Env) -> int:
     distributor_address = bad_client_pool[0].load_address(keys_path=get_distributor_address_path())
     for address in addresses:
       TEST_CHECK_EQUAL(bad_client_pool[0].get_balance(address=address.address, timeout=timeout, wait=wait_time), 0)
+      evn.logger.info(f"Balance of ${address.address} 0")
     env.logger.info(f"New {number_addresses} addresses created.")
 
     for address in addresses:
