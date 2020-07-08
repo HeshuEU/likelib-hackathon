@@ -8,9 +8,9 @@ import test_common_process
 #import test_contract # This tests using call_view
 #import test_auction_contract # This tests using call_view
 
-import test_bad_network
+#import test_bad_network # Working only in develop network (connect to custom nodes)
 import test_simple_network
-# import test_real_network
+# import test_real_network # Old tests
 import test_contract_functions
 import test_multi_transfer
 
