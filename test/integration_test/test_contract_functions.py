@@ -60,7 +60,7 @@ contract Balance {
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data
-    res = client.decode_message(code=test_contract, method="getBalance", message=contract_data_message)
+    res = client.decode_message(code=test_contract, message=contract_data_message)
     TEST_CHECK(res['balance'] + gas_for_call == current_balance)
 
     return 0
@@ -152,7 +152,7 @@ contract AddressSend {
     message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
-    res = client.decode_message(code=test_contract, method="testAddressSend", message=message_call_status.data)
+    res = client.decode_message(code=test_contract, message=message_call_status.data)
     TEST_CHECK(res['is_success'])
 
     TEST_CHECK_EQUAL(client.get_balance(address=new_test_account.address, timeout=2, wait=1),
@@ -206,7 +206,7 @@ contract GetPreviousBlock {
       TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
       contract_data_message = message_call_status.data
-      res = client.decode_message(code=test_contract, method="get", message=contract_data_message)
+      res = client.decode_message(code=test_contract, message=contract_data_message)
       TEST_CHECK(res["previous_block_hash"] == current_block_hash)
 
     call_message = client.encode_message(code=test_contract, message="get()")
@@ -218,7 +218,7 @@ contract GetPreviousBlock {
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data
-    res = client.decode_message(code=test_contract, method="get", message=contract_data_message)
+    res = client.decode_message(code=test_contract, message=contract_data_message)
     TEST_CHECK(res["previous_block_hash"] != current_block_hash)
 
     return 0
@@ -283,7 +283,7 @@ contract PayMe {
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data
-    res = client.decode_message(code=test_contract, method="payMe", message=contract_data_message)
+    res = client.decode_message(code=test_contract, message=contract_data_message)
     TEST_CHECK(client.get_balance(address=contract_address, timeout=2, wait=1) == res["current_balance"])
 
     message_call_status = client.message_call(from_address=distributor_address,
@@ -294,7 +294,7 @@ contract PayMe {
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data
-    res = client.decode_message(code=test_contract, method="payMe", message=contract_data_message)
+    res = client.decode_message(code=test_contract, message=contract_data_message)
     TEST_CHECK(client.get_balance(address=contract_address, timeout=2, wait=1) ==
                     res["current_balance"])
     TEST_CHECK(0 == client.get_balance(address=new_account.address, timeout=2, wait=1))
@@ -401,7 +401,7 @@ interface AbstractA {
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data
-    res = client.decode_message(code=test_contract_b, method="doYourThing", message=contract_data_message)
+    res = client.decode_message(code=test_contract_b, message=contract_data_message)
     TEST_CHECK(res['result'] == (arg1 + arg2))
 
     return 0

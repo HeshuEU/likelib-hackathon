@@ -331,8 +331,8 @@ class Client(BaseClient):
         result = self.__run_standalone_command(command="encode_message", parameters=parameters, timeout=timeout)
         return _EncodeParser.parse(result)
 
-    def decode_message(self, *, code: str, method: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> dict:
-        parameters = ["--code", code, "--method", method, "--message", message]
+    def decode_message(self, *, code: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> dict:
+        parameters = ["--code", code, "--message", message]
         result = self.__run_standalone_command(command="decode_message", parameters=parameters, timeout=timeout)
         return _DecodeParser.parse(result)
 

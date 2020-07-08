@@ -119,7 +119,7 @@ class BaseClient(metaclass=ABCMeta):
     def encode_message(self, *, code: str, message: str, timeout: int) -> str:
         raise LogicException("method is not implemented")
 
-    def decode_message(self, *, code: str, method: str, message: str, timeout: int) -> dict:
+    def decode_message(self, *, code: str, message: str, timeout: int) -> dict:
         raise LogicException("method is not implemented")
 
     def push_contract(self, *, from_address: Keys, code: str, fee: int, amount: int, init_message: str, timeout: int,

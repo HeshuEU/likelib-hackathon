@@ -515,9 +515,9 @@ class Client(BaseClient):
                 decoded_data[item_key] = Client.__prepare_for_serialize(decoded_data[item_key])
         return decoded_data
 
-    def decode_message(self, *, code: str, method: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> dict:
+    def decode_message(self, *, code: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> dict:
         contract_data = Client.__load_contract_data(code)
-        decoded_data = Client.__decode_output(contract_data, method, message)
+        decoded_data = Client.__decode_output(contract_data, message)
         if not decoded_data:
             raise BadResultException("dad encoding")
         return Client.__prepare_for_serialize(decoded_data)

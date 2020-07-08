@@ -94,6 +94,7 @@ def main(env: Env) -> int:
 @test_case("all_to_all")
 def main(env: Env) -> int:
     amount=100
+    sync_time = 1
     n=3
     node_ids=[]
     clients=[]
@@ -115,9 +116,10 @@ def main(env: Env) -> int:
     TEST_CHECK(clients[0].transaction_success_wait(transaction=transaction))
     env.logger.info("Transaction success")
 
+    sleep(sync_time)
     for i in range(0,n):
       env.logger.info(f"Check balance (node {i})")
-      TEST_CHECK_EQUAL(clients[i].get_balance(address=test_address.address, timeout=2, wait=1), n*amount)
+      TEST_CHECK_EQUAL(clients[i].get_balance(address=test_address.address, timeout=2, wait=1), amount)
 
     return 0
 
