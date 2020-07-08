@@ -192,7 +192,6 @@ class ActionDecode : public ActionBase
   private:
     //====================================
     std::filesystem::path _compiled_code_folder_path;
-    std::string _method_name;
     std::string _data_to_decode;
     //====================================
 };

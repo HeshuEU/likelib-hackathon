@@ -141,16 +141,12 @@ class ClientType(enum.Enum):
 
 class Env:
     CLIENT_NAME = "client"
-    ENCODER_NAME = "encoder.py"
-    DECODER_NAME = "decoder.py"
     NODE_NAME = "node"
     LIB_EVM_NAME = "libevmone.so.0.4"
 
     def __init__(self, *, binary_path: str, run_folder: str, test_name: str):
         self.binary_path = os.path.abspath(binary_path)
         Env.__check(self.binary_path, Env.CLIENT_NAME)
-        Env.__check(self.binary_path, Env.ENCODER_NAME)
-        Env.__check(self.binary_path, Env.DECODER_NAME)
         Env.__check(self.binary_path, Env.NODE_NAME)
         Env.__check(self.binary_path, Env.LIB_EVM_NAME)
 
@@ -238,8 +234,6 @@ class Env:
             raise InvalidArgumentsException(f"client directory already exists:{client_directory}")
 
         shutil.copy(os.path.join(self.binary_path, Env.CLIENT_NAME), client_directory)
-        shutil.copy(os.path.join(self.binary_path, Env.ENCODER_NAME), client_directory)
-        shutil.copy(os.path.join(self.binary_path, Env.DECODER_NAME), client_directory)
         return os.path.join(self.binary_path, Env.CLIENT_NAME)
 
     @staticmethod

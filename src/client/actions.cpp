@@ -33,7 +33,6 @@ constexpr const char* KEYS_DIRECTORY_OPTION = "keys";
 constexpr const char* FEE_OPTION = "fee";
 constexpr const char* ADDRESS_OPTION = "address";
 constexpr const char* CODE_PATH_OPTION = "code";
-constexpr const char* METHOD_NAME_OPTION = "method";
 constexpr const char* MESSAGE_OPTION = "message";
 constexpr const char* HASH_OPTION = "hash";
 constexpr const char* NUMBER_OPTION = "number";
@@ -703,7 +702,6 @@ const std::string_view& ActionDecode::getName() const
 void ActionDecode::setupOptionsParser(base::ProgramOptionsParser& parser)
 {
     parser.addOption<std::string>(CODE_PATH_OPTION, "path to folder with compiled Solidity code");
-    parser.addOption<std::string>(METHOD_NAME_OPTION, "call code");
     parser.addOption<std::string>(MESSAGE_OPTION, "data to decode");
 }
 
@@ -714,11 +712,6 @@ int ActionDecode::loadOptions(const base::ProgramOptionsParser& parser)
         return base::config::EXIT_FAIL;
     }
     _compiled_code_folder_path = parser.getValue<std::string>(CODE_PATH_OPTION);
-
-    if (checkOptionEmptyAndWriteMessage(parser, METHOD_NAME_OPTION)) {
-        return base::config::EXIT_FAIL;
-    }
-    _method_name = parser.getValue<std::string>(METHOD_NAME_OPTION);
 
     if (checkOptionEmptyAndWriteMessage(parser, MESSAGE_OPTION)) {
         return base::config::EXIT_FAIL;
@@ -731,7 +724,7 @@ int ActionDecode::loadOptions(const base::ProgramOptionsParser& parser)
 int ActionDecode::execute()
 {
     try {
-        auto output_message = vm::decodeOutput(_compiled_code_folder_path, _method_name, _data_to_decode);
+        auto output_message = vm::decodeOutput(_compiled_code_folder_path, _data_to_decode);
         if (output_message) {
             std::cout << output_message.value() << std::endl;
         }
