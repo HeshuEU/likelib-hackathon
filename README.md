@@ -2,13 +2,14 @@
 
 
 ## Build and run node
-1. Run: `sudo doc/prepare_build.sh`. It will install cmake, g++, conan and its dependencies.
-2. To generate CMake files go to build folder and use
-`cmake -DCMAKE_BUILD_TYPE=Release /path/to/source/files` command.
-3. To build project use `make` command.
-4. Go to the bin folder and create `config.json` with the node settings in it (see example).
-5. Run `node` executable. Keys for the node will be created automatically. If you want to use
-already existing ones - put your key in `node` executable folder with the name `lkkey`.
+1. Run: `sudo doc/prepare_build.sh`. It will install cmake, g++, conan and its dependencies wait SUCCESS.
+2. To generate CMake files use
+`cmake -DCMAKE_BUILD_TYPE=Release -S <path to project root folder> -B <path to exists build folder>` command.
+3. To build project go to build folder and use `make` command.
+4. For start node need config JSON file (default config.json in executing folder). File format look below.
+5. Run `node` executable (after build you can find `node` in `bin` folder).
+Keys for the node will be created automatically. If you want to use already existing ones - put
+your key in `node` executable folder with the name `lkkey` or change `keys_dir` value in config file.
 
 ### config.json
 To run the node, a configuration file must be specified for it.
