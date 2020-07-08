@@ -64,6 +64,7 @@ void Blockchain::addGenesisBlock(ImmutableBlock block)
     }
 
     auto inserted_block = _blocks.insert({ hash, std::move(block) }).first;
+    _blocks_by_depth.insert({0, hash});
     _top_level_block_hash = _genesis_block_hash = hash;
 
     LOG_DEBUG << "Adding genesis block. Block hash = " << hash;
