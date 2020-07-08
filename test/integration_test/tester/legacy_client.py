@@ -218,6 +218,7 @@ MINIMAL_CALL_TIMEOUT = 20
 MINIMAL_STANDALONE_TIMEOUT = 10
 MINIMAL_TRANSACTION_TIMEOUT = 20
 MINIMAL_CONTRACT_TIMEOUT = 20
+MAXIMUM_TRANSACTION_UPDATE_REQUEST = 5
 
 
 class Client(BaseClient):
@@ -330,8 +331,8 @@ class Client(BaseClient):
         result = self.__run_standalone_command(command="encode_message", parameters=parameters, timeout=timeout)
         return _EncodeParser.parse(result)
 
-    def decode_message(self, *, code: str, method: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> dict:
-        parameters = ["--code", code, "--method", method, "--message", message]
+    def decode_message(self, *, code: str, message: str, timeout=MINIMAL_STANDALONE_TIMEOUT) -> dict:
+        parameters = ["--code", code, "--message", message]
         result = self.__run_standalone_command(command="decode_message", parameters=parameters, timeout=timeout)
         return _DecodeParser.parse(result)
 
@@ -354,3 +355,17 @@ class Client(BaseClient):
         parameters = ["--keys", from_address.keys_path, "--to", to_address, "--message", message]
         result = self.__run_client_command(command="call_view", parameters=parameters, timeout=timeout, wait=wait)
         return _CallViewParser.parse(result)
+
+    def transaction_success_wait(self, *, transaction: TransactionStatus, update_time=MINIMUM_TX_WAIT,
+                                 max_request=MAXIMUM_TRANSACTION_UPDATE_REQUEST) -> bool:
+        stat = self.get_transaction_status(tx_hash=transaction.tx_hash)
+        self.logger.info(f"Wait transaction {transaction.tx_hash} (transaction_update_time = {update_time}, max_update_request = {max_request})")
+        request_count = 0
+        while stat.status_code != TransactionStatusCode.SUCCESS:
+            time.sleep(update_time)
+            stat = self.get_transaction_status(tx_hash=transaction.tx_hash)
+            request_count += 1
+            self.logger.info(f"Wait transaction {transaction.tx_hash} request_count = {request_count}")
+            if request_count >= max_request: return False
+        self.logger.info(f"Transaction {transaction.tx_hash} success.")
+        return True

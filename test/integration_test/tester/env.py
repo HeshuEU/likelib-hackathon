@@ -344,6 +344,14 @@ class Env:
         else:
             raise LogicException()
 
+    def get_grpc_client_to_outside_node(self, outside_node_id: Id) -> LegacyClient:
+        connection_address = outside_node_id.connect_grpc_address
+        client_name = "Client_to_node_" + connection_address.split(":")[0] + "_grpc"
+        client_work_dir = os.path.join(self.dir, client_name)
+        client_file_path = self.__prepare_client_directory(client_work_dir)
+        return LegacyClient(name=client_name, client_file_path=client_file_path, work_dir=client_work_dir,
+                            node_address=connection_address, is_http=False, logger=self.logger)
+
 
 def get_distributor_address_path():
     return os.path.realpath(

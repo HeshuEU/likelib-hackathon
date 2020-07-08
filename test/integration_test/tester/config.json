@@ -1,0 +1,24 @@
+{
+    "net": {
+        "listen_addr": "0.0.0.0:20203",
+        "public_port": 20203,
+        "peers_db": "likelib/peers"
+    },
+    "rpc": {
+        "grpc_address": "0.0.0.0:50051"
+    },
+    "miner": {
+        "threads": 2
+    },
+    "nodes": [
+        "192.168.121.141:20203",
+        "192.168.121.142:20203",
+        "192.168.121.143:20203"
+    ],
+    "keys_dir": ".",
+    "database": {
+        "path": "likelib/database",
+        "clean": true
+    }
+}
+
