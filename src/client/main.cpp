@@ -83,13 +83,13 @@ void client_process()
                         "encode message for contract call",
                         { "path to compiled contract data files", "message for encode" }));
 
-    always_mode_commands.push_back(root_menu->Insert(
-      "decode",
-      [](std::ostream& out, std::string compiled_contract_folder_path, std::string message) {
-          decode_message(out, compiled_contract_folder_path, message);
-      },
-      "decode message which was returned by contract call",
-      { "path to compiled contract data files", "message for decode" }));
+    always_mode_commands.push_back(
+      root_menu->Insert("decode",
+                        [](std::ostream& out, std::string compiled_contract_folder_path, std::string message) {
+                            decode_message(out, compiled_contract_folder_path, message);
+                        },
+                        "decode message which was returned by contract call",
+                        { "path to compiled contract data files", "message for decode" }));
 
     always_mode_commands.push_back(
       root_menu->Insert("keys_generate",
@@ -106,6 +106,11 @@ void client_process()
       "last_block_info",
       [&web_socket_client]([[maybe_unused]] std::ostream& out) { call_last_block_info(web_socket_client); },
       "get last block info"));
+
+    connected_mode_commands.push_back(root_menu->Insert(
+      "subscribe_last_block_info",
+      [&web_socket_client]([[maybe_unused]] std::ostream& out) { subscribe_last_block_info(web_socket_client); },
+      "get last block info when apeared new block"));
 
     connected_mode_commands.push_back(
       root_menu->Insert("account_info",

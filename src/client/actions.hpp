@@ -12,9 +12,7 @@ void compile_solidity_code(std::ostream& output, const std::string& code_file_pa
 
 void encode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message);
 
-void decode_message(std::ostream& output,
-                    const std::string& compiled_contract_folder_path,
-                    const std::string& message);
+void decode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message);
 
 void generate_keys(std::ostream& output, const std::string& path);
 

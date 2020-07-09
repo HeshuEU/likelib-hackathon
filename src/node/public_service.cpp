@@ -226,121 +226,7 @@ void AccountInfoCallTask::execute(lk::Core& core, SendResponse send_response)
     send_response(_session_id, _query_id, std::move(answer));
 }
 
-
-PushTransactionSubscriptionTask::PushTransactionSubscriptionTask(websocket::SessionId session_id,
-                                                                 websocket::QueryId query_id,
-                                                                 base::PropertyTree&& args)
-  : Task{ session_id, query_id, std::move(args) }
-{}
-
-
-bool PushTransactionSubscriptionTask::prepareArgs()
-{
-    // TODO
 }
-
-
-void PushTransactionSubscriptionTask::execute(lk::Core& core, SendResponse send_response)
-{
-    // TODO
-}
-
-
-NodeInfoSubscriptionTask::NodeInfoSubscriptionTask(websocket::SessionId session_id,
-                                                   websocket::QueryId query_id,
-                                                   base::PropertyTree&& args)
-  : Task{ session_id, query_id, std::move(args) }
-{}
-
-
-bool NodeInfoSubscriptionTask::prepareArgs()
-{
-    // TODO
-}
-
-
-void NodeInfoSubscriptionTask::execute(lk::Core& core, SendResponse send_response)
-{
-    // TODO
-}
-
-
-AccountInfoSubscriptionTask::AccountInfoSubscriptionTask(websocket::SessionId session_id,
-                                                         websocket::QueryId query_id,
-                                                         base::PropertyTree&& args)
-  : Task{ session_id, query_id, std::move(args) }
-{}
-
-
-bool AccountInfoSubscriptionTask::prepareArgs()
-{
-    // TODO
-}
-
-
-void AccountInfoSubscriptionTask::execute(lk::Core& core, SendResponse send_response)
-{
-    // TODO
-}
-
-PushTransactionUnsubscriptionTask::PushTransactionUnsubscriptionTask(websocket::SessionId session_id,
-                                                                     websocket::QueryId query_id,
-                                                                     base::PropertyTree&& args)
-  : Task{ session_id, query_id, std::move(args) }
-{}
-
-
-bool PushTransactionUnsubscriptionTask::prepareArgs()
-{
-    // TODO
-}
-
-
-void PushTransactionUnsubscriptionTask::execute(lk::Core& core, SendResponse send_response)
-{
-    // TODO
-}
-
-
-NodeInfoUnsubscriptionTask::NodeInfoUnsubscriptionTask(websocket::SessionId session_id,
-                                                       websocket::QueryId query_id,
-                                                       base::PropertyTree&& args)
-  : Task{ session_id, query_id, std::move(args) }
-{}
-
-
-bool NodeInfoUnsubscriptionTask::prepareArgs()
-{
-    // TODO
-}
-
-
-void NodeInfoUnsubscriptionTask::execute(lk::Core& core, SendResponse send_response)
-{
-    // TODO
-}
-
-
-AccountInfoUnsubscriptionTask::AccountInfoUnsubscriptionTask(websocket::SessionId session_id,
-                                                             websocket::QueryId query_id,
-                                                             base::PropertyTree&& args)
-  : Task{ session_id, query_id, std::move(args) }
-{}
-
-
-bool AccountInfoUnsubscriptionTask::prepareArgs()
-{
-    // TODO
-}
-
-
-void AccountInfoUnsubscriptionTask::execute(lk::Core& core, SendResponse send_response)
-{
-    // TODO
-}
-
-}
-
 
 PublicService::PublicService(const base::PropertyTree& config, lk::Core& core)
   : _config{ config }
@@ -348,7 +234,8 @@ PublicService::PublicService(const base::PropertyTree& config, lk::Core& core)
   , _acceptor{ config, std::bind(&PublicService::createSession, this, std::placeholders::_1) }
 {
     _core.subscribeToBlockAddition(std::bind(&PublicService::on_added_new_block, this, std::placeholders::_1));
-    _core.subscribeToAnyTransactionStatusUpdate(std::bind(&PublicService::on_update_transaction_status, this, std::placeholders::_1));
+    _core.subscribeToAnyTransactionStatusUpdate(
+      std::bind(&PublicService::on_update_transaction_status, this, std::placeholders::_1));
     _core.subscribeToAnyAccountUpdate(std::bind(&PublicService::on_update_account, this, std::placeholders::_1));
 }
 
@@ -402,48 +289,40 @@ void PublicService::on_session_request(websocket::SessionId session_id,
                                        websocket::Command::Id command_id,
                                        base::PropertyTree&& args)
 {
-    std::unique_ptr<tasks::Task> task;
     switch (command_id) {
         case websocket::Command::CALL_LAST_BLOCK_INFO:
-            task = std::make_unique<tasks::NodeInfoCallTask>(session_id, query_id, std::move(args));
+            _tasks.push(std::make_unique<tasks::NodeInfoCallTask>(session_id, query_id, std::move(args)));
             break;
         case websocket::Command::CALL_ACCOUNT_INFO:
-            task = std::make_unique<tasks::AccountInfoCallTask>(session_id, query_id, std::move(args));
+            _tasks.push(std::make_unique<tasks::AccountInfoCallTask>(session_id, query_id, std::move(args)));
             break;
         case websocket::Command::CALL_FIND_TRANSACTION_STATUS:
-            task = std::make_unique<tasks::FindTransactionStatusTask>(session_id, query_id, std::move(args));
+            _tasks.push(std::make_unique<tasks::FindTransactionStatusTask>(session_id, query_id, std::move(args)));
             break;
         case websocket::Command::CALL_FIND_TRANSACTION:
-            task = std::make_unique<tasks::FindTransactionTask>(session_id, query_id, std::move(args));
+            _tasks.push(std::make_unique<tasks::FindTransactionTask>(session_id, query_id, std::move(args)));
             break;
         case websocket::Command::CALL_FIND_BLOCK:
-            task = std::make_unique<tasks::FindBlockTask>(session_id, query_id, std::move(args));
+            _tasks.push(std::make_unique<tasks::FindBlockTask>(session_id, query_id, std::move(args)));
             break;
         case websocket::Command::SUBSCRIBE_PUSH_TRANSACTION:
-            task = std::make_unique<tasks::PushTransactionSubscriptionTask>(session_id, query_id, std::move(args));
+            process_push_tx(session_id, query_id, std::move(args));
             break;
         case websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO:
-            task = std::make_unique<tasks::NodeInfoSubscriptionTask>(session_id, query_id, std::move(args));
+            process_subscribe_node_info(session_id, query_id, std::move(args));
             break;
         case websocket::Command::SUBSCRIBE_ACCOUNT_INFO:
-            task = std::make_unique<tasks::AccountInfoSubscriptionTask>(session_id, query_id, std::move(args));
+            process_subscribe_account(session_id, query_id, std::move(args));
             break;
         case websocket::Command::UNSUBSCRIBE_PUSH_TRANSACTION:
-            task = std::make_unique<tasks::PushTransactionUnsubscriptionTask>(session_id, query_id, std::move(args));
-            break;
         case websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO:
-            task = std::make_unique<tasks::NodeInfoUnsubscriptionTask>(session_id, query_id, std::move(args));
-            break;
         case websocket::Command::UNSUBSCRIBE_ACCOUNT_INFO:
-            task = std::make_unique<tasks::AccountInfoUnsubscriptionTask>(session_id, query_id, std::move(args));
+            process_unsubscribe(session_id, query_id, command_id, std::move(args));
             break;
         default:
             // TODO fail
-            return;
+            break;
     }
-
-    _tasks.push(std::move(task));
-    LOG_INFO << "task pushed";
 }
 
 
@@ -451,6 +330,75 @@ void PublicService::on_session_close(websocket::SessionId session_id)
 {
     // TODO
 }
+
+
+void PublicService::process_push_tx(websocket::SessionId session_id,
+                                    websocket::QueryId query_id,
+                                    base::PropertyTree&& args)
+{
+    auto tx = websocket::deserializeTransaction(args);
+    if (!tx) {
+        LOG_DEBUG << "deserialization error";
+        return;
+    }
+    auto tx_hash = tx->hashOfTransaction();
+    _event_transaction_status_update.subscribe([session_id, query_id, tx_hash, this](base::Sha256 updated_tx) {
+        if (updated_tx == tx_hash) {
+            auto tx_status = _core.getTransactionOutput(updated_tx);
+            ASSERT(tx_status);
+            base::PropertyTree answer = websocket::serializeTransactionStatus(tx_status.value());
+            on_send_response(session_id, query_id, std::move(answer));
+        }
+    });
+    _core.addPendingTransaction(tx.value());
+}
+
+
+void PublicService::process_subscribe_node_info(websocket::SessionId session_id,
+                                                websocket::QueryId query_id,
+                                                base::PropertyTree&& args)
+{
+    _event_block_added.subscribe([session_id, query_id, this](lk::ImmutableBlock block) {
+        websocket::NodeInfo info{ block.getHash(), block.getDepth() };
+        base::PropertyTree answer = websocket::serializeInfo(info);
+        on_send_response(session_id, query_id, std::move(answer));
+    });
+}
+
+
+void PublicService::process_subscribe_account(websocket::SessionId session_id,
+                                              websocket::QueryId query_id,
+                                              base::PropertyTree&& args)
+{
+
+    lk::Address address = lk::Address::null();
+    if (args.hasKey("address")) {
+        auto _address = websocket::deserializeAddress(args.get<std::string>("address"));
+        if (!_address) {
+            LOG_DEBUG << "deserialization error";
+            return;
+        }
+        address = _address.value();
+    }
+    else {
+        LOG_DEBUG << "deserialization error";
+        return;
+    }
+    _event_account_update.subscribe([session_id, query_id, address, this](lk::Address upadted_address) {
+        if (upadted_address == address) {
+            auto account_info = _core.getAccountInfo(upadted_address);
+            base::PropertyTree answer = websocket::serializeAccountInfo(account_info);
+            on_send_response(session_id, query_id, std::move(answer));
+        }
+    });
+}
+
+
+void PublicService::process_unsubscribe(websocket::SessionId session_id,
+                                        websocket::QueryId query_id,
+                                        websocket::Command::Id command_id,
+                                        base::PropertyTree&& args)
+{}
 
 
 [[noreturn]] void PublicService::task_worker() noexcept
@@ -490,8 +438,19 @@ void PublicService::on_send_response(websocket::SessionId session_id,
 }
 
 
-void PublicService::on_added_new_block(const lk::ImmutableBlock& block) {}
+void PublicService::on_added_new_block(const lk::ImmutableBlock& block)
+{
+    _event_block_added.notify(block);
+}
 
-void PublicService::on_update_transaction_status(base::Sha256 tx_hash) {}
 
-void PublicService::on_update_account(lk::Address accoutn_address) {}
+void PublicService::on_update_transaction_status(base::Sha256 tx_hash)
+{
+    _event_transaction_status_update.notify(tx_hash);
+}
+
+
+void PublicService::on_update_account(lk::Address account_address)
+{
+    _event_account_update.notify(account_address);
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "base/utility.hpp"
+
 #include "core/core.hpp"
 #include "core/transaction.hpp"
 
@@ -127,94 +129,6 @@ class AccountInfoCallTask final : public Task
     std::optional<lk::Address> _address;
 };
 
-
-class PushTransactionSubscriptionTask final : public Task
-{
-  public:
-    PushTransactionSubscriptionTask(websocket::SessionId session_id,
-                                    websocket::QueryId query_id,
-                                    base::PropertyTree&& args);
-
-  protected:
-    bool prepareArgs() override;
-    void execute(lk::Core& core, SendResponse send_response) override;
-
-  private:
-};
-
-
-class NodeInfoSubscriptionTask final : public Task
-{
-  public:
-    NodeInfoSubscriptionTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
-
-  protected:
-    bool prepareArgs() override;
-    void execute(lk::Core& core, SendResponse send_response) override;
-
-  private:
-};
-
-
-class AccountInfoSubscriptionTask final : public Task
-{
-  public:
-    AccountInfoSubscriptionTask(websocket::SessionId session_id,
-                                websocket::QueryId query_id,
-                                base::PropertyTree&& args);
-
-  protected:
-    bool prepareArgs() override;
-    void execute(lk::Core& core, SendResponse send_response) override;
-
-  private:
-    std::optional<lk::Address> _address;
-};
-
-
-class PushTransactionUnsubscriptionTask final : public Task
-{
-  public:
-    PushTransactionUnsubscriptionTask(websocket::SessionId session_id,
-                                      websocket::QueryId query_id,
-                                      base::PropertyTree&& args);
-
-  protected:
-    bool prepareArgs() override;
-    void execute(lk::Core& core, SendResponse send_response) override;
-
-  private:
-};
-
-
-class NodeInfoUnsubscriptionTask final : public Task
-{
-  public:
-    NodeInfoUnsubscriptionTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
-
-  protected:
-    bool prepareArgs() override;
-    void execute(lk::Core& core, SendResponse send_response) override;
-
-  private:
-};
-
-
-class AccountInfoUnsubscriptionTask final : public Task
-{
-  public:
-    AccountInfoUnsubscriptionTask(websocket::SessionId session_id,
-                                  websocket::QueryId query_id,
-                                  base::PropertyTree&& args);
-
-  protected:
-    bool prepareArgs() override;
-    void execute(lk::Core& core, SendResponse send_response) override;
-
-  private:
-    std::optional<lk::Address> _address;
-};
-
 }
 
 class PublicService
@@ -238,6 +152,10 @@ class PublicService
     tasks::TaskQueue _tasks;
     std::thread _worker;
 
+    base::Observable<base::Sha256> _event_transaction_status_update;
+    base::Observable<lk::Address> _event_account_update;
+    base::Observable<const lk::ImmutableBlock&> _event_block_added;
+
     void createSession(boost::asio::ip::tcp::socket&& socket);
     websocket::SessionId createId();
 
@@ -247,6 +165,23 @@ class PublicService
                             base::PropertyTree&& args);
     void on_session_close(websocket::SessionId session_id);
 
+    void process_subscribe_account(websocket::SessionId session_id,
+                                   websocket::QueryId query_id,
+                                   base::PropertyTree&& args);
+
+    void process_push_tx(websocket::SessionId session_id,
+                         websocket::QueryId query_id,
+                         base::PropertyTree&& args);
+
+    void process_subscribe_node_info(websocket::SessionId session_id,
+                                     websocket::QueryId query_id,
+                                     base::PropertyTree&& args);
+
+    void process_unsubscribe(websocket::SessionId session_id,
+                             websocket::QueryId query_id,
+                             websocket::Command::Id command_id,
+                             base::PropertyTree&& args);
+
     [[noreturn]] void task_worker() noexcept;
 
     void on_send_response(websocket::SessionId, websocket::QueryId, base::PropertyTree&&);
@@ -255,5 +190,5 @@ class PublicService
 
     void on_update_transaction_status(base::Sha256 tx_hash);
 
-    void on_update_account(lk::Address accoutn_address);
+    void on_update_account(lk::Address account_address);
 };

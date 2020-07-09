@@ -3,6 +3,8 @@
 #include "core/block.hpp"
 #include "core/transaction.hpp"
 
+#include "base/utility.hpp"
+
 #include <map>
 #include <shared_mutex>
 
@@ -107,6 +109,12 @@ class StateManager
     //================
     std::map<lk::Address, AccountState> _states;
     mutable std::shared_mutex _rw_mutex;
+    //================
+    base::Observable<lk::Address> _event_account_update;
+
+  public:
+    std::size_t subscribeToAnyAccountUpdate(decltype(_event_account_update)::CallbackType callback);
+    void unsubscribeToAnyAccountUpdate(std::size_t subscription_id);
 };
 
 } // namespace core

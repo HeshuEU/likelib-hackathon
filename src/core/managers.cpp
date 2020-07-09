@@ -259,6 +259,10 @@ bool StateManager::tryTransferMoney(const lk::Address& from, const lk::Address& 
 
     from_account.subBalance(amount);
     to_account.addBalance(amount);
+
+//    _event_account_update.notify(from);
+//    _event_account_update.notify(to);
+
     return true;
 }
 
@@ -270,8 +274,20 @@ void StateManager::updateFromGenesis(const ImmutableBlock& block)
         AccountState state{ AccountType::CLIENT };
         state.setBalance(tx.getAmount());
         _states.insert({ tx.getTo(), std::move(state) });
+//        _event_account_update.notify(tx.getTo());
     }
 }
 
+
+std::size_t StateManager::subscribeToAnyAccountUpdate(decltype(_event_account_update)::CallbackType callback)
+{
+    return _event_account_update.subscribe(callback);
+}
+
+
+void StateManager::unsubscribeToAnyAccountUpdate(std::size_t subscription_id)
+{
+    _event_account_update.unsubscribe(subscription_id);
+}
 
 } // namespace core

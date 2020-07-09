@@ -42,7 +42,7 @@ class Core
     //==================
     lk::AccountInfo getAccountInfo(const lk::Address& address) const;
     //==================
-    TransactionStatus addPendingTransaction(const lk::Transaction& tx);
+    void addPendingTransaction(const lk::Transaction& tx);
     //==================
     std::optional<TransactionStatus> getTransactionOutput(const base::Sha256& tx_hash);
     void addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status);
@@ -66,13 +66,14 @@ class Core
     const base::KeyVault& _vault;
     const lk::Address _this_node_address;
     //==================
-    base::Observable<const ImmutableBlock&> _event_block_added;
-    base::Observable<const ImmutableBlock&> _event_block_mined;
+    base::Observable<const lk::ImmutableBlock&> _event_block_added;
+    base::Observable<const lk::ImmutableBlock&> _event_block_mined;
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
     base::Observable<base::Sha256> _event_transaction_status_update;
     base::Observable<lk::Address> _event_account_update;
     //==================
     StateManager _state_manager;
+    std::size_t _state_managed_subscription_id;
 
     mutable std::shared_mutex _blockchain_mutex;
     PersistentBlockchain _blockchain;
@@ -97,6 +98,8 @@ class Core
     //==================
     void tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock& block_where_tx);
     //==================
+    void on_account_updated(lk::Address address);
+    //==================
     evmc::result callInitContractVm(StateManager& state_manager,
                                     const ImmutableBlock& associated_block,
                                     const lk::Transaction& tx,
@@ -116,7 +119,7 @@ class Core
   public:
     //==================
     // notifies if new blocks are added: genesis and blocks, that are stored in DB, are not handled by this
-    void subscribeToBlockAddition(decltype(_event_block_added)::CallbackType callback);
+    void subscribeToBlockAddition(decltype(_event_block_mined)::CallbackType callback);
 
     // notifies if a block was mined by this node and it was added to blockchain
     void subscribeToBlockMining(decltype(_event_block_mined)::CallbackType callback);

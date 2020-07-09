@@ -30,6 +30,8 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
     subscribeToNewPendingTransaction([this](const lk::Transaction& tx) { _host.broadcast(tx); });
 
     subscribeToBlockMining([this](const ImmutableBlock& block) { _host.broadcastNewBlock(block); });
+//    _state_managed_subscription_id =
+//      _state_manager.subscribeToAnyAccountUpdate(std::bind(&Core::on_account_updated, this, std::placeholders::_1));
 }
 
 
@@ -67,7 +69,7 @@ void Core::run()
 }
 
 
-TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
+void Core::addPendingTransaction(const lk::Transaction& tx)
 {
     auto transaction_hash = tx.hashOfTransaction();
     auto transaction_cost = tx.getAmount() + tx.getFee();
@@ -77,20 +79,17 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
         TransactionStatus status{
             TransactionStatus::StatusCode::BadSign, TransactionStatus::ActionType::None, tx.getFee(), ""
         };
-        addTransactionOutput(transaction_hash, status);
-        return status;
+        return addTransactionOutput(transaction_hash, status);
     }
 
     if (_blockchain.findTransaction(transaction_hash)) {
         auto output_opt = getTransactionOutput(transaction_hash);
-        if (output_opt) {
-            return *output_opt;
+        if (!output_opt) {
+            TransactionStatus status{
+              TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::None, tx.getFee(), ""
+            };
+            return addTransactionOutput(transaction_hash, status);
         }
-        TransactionStatus status{
-            TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::None, tx.getFee(), ""
-        };
-        addTransactionOutput(transaction_hash, status);
-        return status;
     }
 
     std::map<lk::Address, lk::Balance> current_pending_balance;
@@ -100,8 +99,7 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
             TransactionStatus status{
                 TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""
             };
-            addTransactionOutput(transaction_hash, status);
-            return status;
+            return addTransactionOutput(transaction_hash, status);
         }
 
         current_pending_balance = lk::calcCost(_pending_transactions);
@@ -114,8 +112,7 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
             TransactionStatus status{
                 TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""
             };
-            addTransactionOutput(transaction_hash, status);
-            return status;
+            return addTransactionOutput(transaction_hash, status);
         }
     }
 
@@ -123,8 +120,7 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
         TransactionStatus status{
             TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""
         };
-        addTransactionOutput(transaction_hash, status);
-        return status;
+        return addTransactionOutput(transaction_hash, status);
     }
 
     LOG_DEBUG << "Adding tx to pending:" << transaction_hash;
@@ -137,8 +133,7 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
     TransactionStatus status{
         TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""
     };
-    addTransactionOutput(transaction_hash, status);
-    return status;
+    return addTransactionOutput(transaction_hash, status);
 }
 
 
@@ -156,13 +151,16 @@ std::optional<TransactionStatus> Core::getTransactionOutput(const base::Sha256& 
 
 void Core::addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status)
 {
-    std::unique_lock lk(_tx_outputs_mutex);
-    if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
-        it->second = status;
+    {
+        std::unique_lock lk(_tx_outputs_mutex);
+        if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
+            it->second = status;
+        }
+        else {
+            _tx_outputs.insert({ tx, status });
+        }
     }
-    else {
-        _tx_outputs.insert({ tx, status });
-    }
+    _event_transaction_status_update.notify(tx);
 }
 
 
@@ -349,6 +347,8 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock
     _state_manager.getAccount(tx.getFrom()).addTransactionHash(transaction_hash);
 
     auto tx_manager{ _state_manager.createCopy() }; // TODO: temporary of course, fix it using tree of states
+//    tx_manager.unsubscribeToAnyAccountUpdate(
+//      _state_managed_subscription_id); // if tx_manager delete then notifications will not reach to receiver
 
     if (tx.getTo() == lk::Address::null()) {
         try {
@@ -449,7 +449,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock
 
                 if (eval_result.status_code == evmc_status_code::EVMC_SUCCESS) {
                     auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
-                    if(!output_data.isEmpty()){
+                    if (!output_data.isEmpty()) {
                         output_data = tx.getData().takePart(0, 4).append(output_data);
                     }
 
@@ -526,6 +526,12 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock
 }
 
 
+void Core::on_account_updated(lk::Address address)
+{
+    _event_account_update.notify(address);
+}
+
+
 evmc::result Core::callInitContractVm(StateManager& state_manager,
                                       const ImmutableBlock& associated_block,
                                       const Transaction& tx,
@@ -576,9 +582,9 @@ evmc::result Core::callVm(StateManager& state_manager,
 }
 
 
-void Core::subscribeToBlockAddition(decltype(Core::_event_block_added)::CallbackType callback)
+void Core::subscribeToBlockAddition(decltype(Core::_event_block_mined)::CallbackType callback)
 {
-    _event_block_added.subscribe(std::move(callback));
+    _event_block_mined.subscribe(std::move(callback));
 }
 
 
@@ -594,7 +600,8 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 }
 
 
-void Core::subscribeToAnyTransactionStatusUpdate(decltype(Core::_event_transaction_status_update)::CallbackType callback)
+void Core::subscribeToAnyTransactionStatusUpdate(
+  decltype(Core::_event_transaction_status_update)::CallbackType callback)
 {
     _event_transaction_status_update.subscribe(std::move(callback));
 }
@@ -749,8 +756,10 @@ evmc::bytes32 EthHost::get_code_hash(const evmc::address& addr) const noexcept
 }
 
 
-size_t EthHost::copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-  noexcept
+size_t EthHost::copy_code(const evmc::address& addr,
+                          size_t code_offset,
+                          uint8_t* buffer_data,
+                          size_t buffer_size) const noexcept
 {
     LOG_DEBUG << "Core::copy_code";
     try {
