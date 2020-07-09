@@ -4,7 +4,6 @@ openssl/1.1.1d@heshu/stable
 leveldb/1.22.0@heshu/stable
 evmone/0.4.0@heshu/stable
 secp256k1/1.0@heshu/stable
-rapidjson/1.1.0@bincrafters/stable
 
 [options]
 boost:shared=False
