@@ -15,40 +15,6 @@
 namespace lk
 {
 
-class ViewCall
-{
-  public:
-    ViewCall(lk::Address from,
-             lk::Address contract_address,
-             base::Time timestamp,
-             base::Bytes data,
-             lk::Sign sign = lk::Sign{});
-    ViewCall(const ViewCall&) = default;
-    ViewCall(ViewCall&&) = default;
-    ViewCall& operator=(const ViewCall&) = default;
-    ViewCall& operator=(ViewCall&&) = default;
-    ~ViewCall() = default;
-    //=================
-    const lk::Address& getFrom() const noexcept;
-    const lk::Address& getContractAddress() const noexcept;
-    const base::Time& getTimestamp() const noexcept;
-    const base::Bytes& getData() const noexcept;
-    //=================
-    void sign(const base::Secp256PrivateKey& key);
-    bool checkSign() const;
-    const lk::Sign& getSign() const noexcept;
-    //=================
-    base::Sha256 hashOfCall() const;
-
-  private:
-    lk::Address _from;
-    lk::Address _contract_address;
-    base::Bytes _data;
-    base::Time _timestamp;
-    Sign _sign;
-};
-
-
 class EthHost;
 
 
@@ -92,8 +58,6 @@ class Core
     lk::Block getBlockTemplate() const;
     //==================
     const lk::Address& getThisNodeAddress() const noexcept;
-    //==================
-    base::Bytes callViewMethod(const lk::ViewCall& call);
 
   private:
     //==================
@@ -133,13 +97,6 @@ class Core
                                 const lk::Transaction& tx,
                                 const base::Bytes& code,
                                 const base::Bytes& message_data);
-    evmc::result callContractAtViewModeVm(StateManager& state_manager,
-                                          const lk::Block& associated_block,
-                                          const lk::Transaction& associated_tx,
-                                          const lk::Address& sender_address,
-                                          const lk::Address& contract_address,
-                                          const base::Bytes& code,
-                                          const base::Bytes& message_data);
     evmc::result callVm(StateManager& state_manager,
                         const lk::Block& associated_block,
                         const lk::Transaction& associated_tx,

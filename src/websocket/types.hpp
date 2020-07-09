@@ -22,8 +22,8 @@ enum class Name : std::uint64_t
     PUSH_TRANSACTION = 8,
     FIND_BLOCK = 16,
     ACCOUNT_INFO = 32,
-    VIEW_CALL = 64,
-    RESERVED = 128
+    RESERVED1 = 64,
+    RESERVED2 = 128
 };
 
 enum class Type : std::uint64_t
@@ -36,14 +36,11 @@ enum class Type : std::uint64_t
 
 using Id = std::uint64_t;
 
-constexpr Id NameMask = (static_cast<std::uint64_t>(Name::RESERVED) * 2) - 1;            // 0000 0000 1111 1111
+constexpr Id NameMask = (static_cast<std::uint64_t>(Name::RESERVED2) * 2) - 1;            // 0000 0000 1111 1111
 constexpr Id TypeMask = (static_cast<std::uint64_t>(Type::RESERVED) * 2) - NameMask - 1; // 0000 1111 0000 0000
 
 constexpr Id CALL_LAST_BLOCK_INFO = websocket::Command::Id(websocket::Command::Type::CALL) |
                                     websocket::Command::Id(websocket::Command::Name::LAST_BLOCK_INFO);
-
-constexpr Id CALL_VIEW_CALL =
-  websocket::Command::Id(websocket::Command::Type::CALL) | websocket::Command::Id(websocket::Command::Name::VIEW_CALL);
 
 constexpr Id CALL_ACCOUNT_INFO = websocket::Command::Id(websocket::Command::Type::CALL) |
                                  websocket::Command::Id(websocket::Command::Name::ACCOUNT_INFO);

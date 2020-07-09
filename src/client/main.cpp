@@ -264,33 +264,6 @@ void client_process()
         "message for initializing contract at hex" }));
 
     connected_mode_commands.push_back(root_menu->Insert(
-      "call_contract_view",
-      [&web_socket_client](
-        std::ostream& out, std::string key_path, std::string contract_address_at_base58, std::string message) {
-          try {
-              lk::Address to_address{ contract_address_at_base58 };
-              std::filesystem::path keys_dir{ key_path };
-              if (std::filesystem::exists(keys_dir) && !message.empty()) {
-                  call_contract_view(out, web_socket_client, to_address, keys_dir, message);
-              }
-              else {
-                  out << "can't parse input data for call_contract_view";
-                  LOG_ERROR << "can't parse input data for call_contract_view";
-              }
-          }
-          catch (const base::Error& e) {
-              out << "can't execute transfer";
-              LOG_ERROR << "can't execute transfer:" << e;
-          }
-      },
-      "call deployed contract at static mode",
-      { "path to folder with key",
-        "address of contract at base58",
-        "fee for contract call",
-        "amount of coins for call",
-        "message for call at hex" }));
-
-    connected_mode_commands.push_back(root_menu->Insert(
       "disconnect",
       [&web_socket_client]([[maybe_unused]] std::ostream& out) { web_socket_client.disconnect(); },
       "disconnect client from likelib node"));

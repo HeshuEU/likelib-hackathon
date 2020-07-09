@@ -31,12 +31,6 @@ void call_find_transaction_status(websocket::WebSocketClient& client, const base
 
 void call_find_block(websocket::WebSocketClient& client, const base::Sha256& hash);
 
-void call_contract_view(std::ostream& output,
-                        websocket::WebSocketClient& client,
-                        const lk::Address& to_address,
-                        const std::filesystem::path& keys_dir,
-                        const std::string& message);
-
 void transfer(std::ostream& output,
               websocket::WebSocketClient& client,
               const lk::Address& to_address,

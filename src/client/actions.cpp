@@ -203,26 +203,6 @@ void call_find_block(websocket::WebSocketClient& client, const base::Sha256& has
 }
 
 
-void call_contract_view([[maybe_unused]] std::ostream& output,
-                        websocket::WebSocketClient& client,
-                        const lk::Address& to_address,
-                        const std::filesystem::path& keys_dir,
-                        const std::string& message)
-{
-    auto private_key_path = base::config::makePrivateKeyPath(keys_dir);
-    auto private_key = base::Secp256PrivateKey::load(private_key_path);
-    auto from_address = lk::Address(private_key.toPublicKey());
-
-    auto data = base::fromHex<base::Bytes>(message);
-    lk::ViewCall call{ from_address, to_address, base::Time::now(), std::move(data) };
-    call.sign(private_key);
-
-    LOG_INFO << "Contract view call from " << from_address << " to " << to_address << " message " << message;
-    auto request_args = websocket::serializeViewCall(call);
-    client.send(websocket::Command::CALL_VIEW_CALL, request_args);
-}
-
-
 void transfer(std::ostream& output,
               websocket::WebSocketClient& client,
               const lk::Address& to_address,

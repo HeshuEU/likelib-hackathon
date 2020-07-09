@@ -80,8 +80,4 @@ base::PropertyTree serializeTransactionStatus(const lk::TransactionStatus& statu
 
 std::optional<lk::TransactionStatus> deserializeTransactionStatus(const base::PropertyTree& input);
 
-base::PropertyTree serializeViewCall(const lk::ViewCall& call);
-
-std::optional<lk::ViewCall> deserializeViewCall(const base::PropertyTree& input);
-
 }

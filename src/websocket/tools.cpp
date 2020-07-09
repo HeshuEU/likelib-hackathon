@@ -50,8 +50,8 @@ std::string serializeCommandName(Command::Id name)
             return "push_transaction";
         case Command::Name::LAST_BLOCK_INFO:
             return "last_block_info";
-        case Command::Name::VIEW_CALL:
-            return "call_contract_view";
+        default:
+            RAISE_ERROR(base::InvalidArgument, "Unexpected command name");
     }
     ASSERT(false);
 }
@@ -76,9 +76,6 @@ websocket::Command::Name deserializeCommandName(const std::string& message)
     }
     if (message == "last_block_info") {
         return websocket::Command::Name::LAST_BLOCK_INFO;
-    }
-    if (message == "call_contract_view") {
-        return websocket::Command::Name::VIEW_CALL;
     }
     RAISE_ERROR(base::InvalidArgument, std::string("not any type found by name") + message);
 }
@@ -755,91 +752,6 @@ std::optional<lk::TransactionStatus> deserializeTransactionStatus(const base::Pr
     }
     catch (const std::exception& e) {
         LOG_ERROR << "Failed to deserialize TransactionStatus";
-        return std::nullopt;
-    }
-}
-
-
-base::PropertyTree serializeViewCall(const lk::ViewCall& call)
-{
-    base::PropertyTree result;
-    result.add("from", serializeAddress(call.getFrom()));
-    result.add("to", serializeAddress(call.getContractAddress()));
-    result.add("timestamp", call.getTimestamp().getSeconds());
-    result.add("message", serializeBytes(call.getData()));
-    result.add("sign", serializeSign(call.getSign()));
-    return result;
-}
-
-
-std::optional<lk::ViewCall> deserializeViewCall(const base::PropertyTree& input)
-{
-    try {
-        std::optional<lk::Address> from;
-        if (input.hasKey("from")) {
-            from = deserializeAddress(input.get<std::string>("from"));
-        }
-        else {
-            LOG_ERROR << "from field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Address> to;
-        if (input.hasKey("to")) {
-            to = deserializeAddress(input.get<std::string>("to"));
-        }
-        else {
-            LOG_ERROR << "to field is not exists";
-            return std::nullopt;
-        }
-        std::optional<base::Time> timestamp;
-        if (input.hasKey("timestamp")) {
-            timestamp = base::Time(input.get<std::uint_least32_t>("timestamp"));
-        }
-        else {
-            LOG_ERROR << "timestamp field is not exists";
-            return std::nullopt;
-        }
-        std::optional<base::Bytes> message;
-        if (input.hasKey("message")) {
-            message = deserializeBytes(input.get<std::string>("message"));
-        }
-        else {
-            LOG_ERROR << "message field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Sign> sign;
-        if (input.hasKey("sign")) {
-            sign = deserializeSign(input.get<std::string>("sign"));
-        }
-        else {
-            LOG_ERROR << "sign field is not exists";
-            return std::nullopt;
-        }
-
-        if (!from) {
-            LOG_ERROR << "error at from deserialization";
-            return std::nullopt;
-        }
-        if (!to) {
-            LOG_ERROR << "error at to deserialization";
-            return std::nullopt;
-        }
-        if (!timestamp) {
-            LOG_ERROR << "error at timestamp deserialization";
-            return std::nullopt;
-        }
-        if (!message) {
-            LOG_ERROR << "error at message deserialization";
-            return std::nullopt;
-        }
-        if (!sign) {
-            LOG_ERROR << "error at sign deserialization";
-            return std::nullopt;
-        }
-        return lk::ViewCall{ from.value(), to.value(), timestamp.value(), message.value(), sign.value() };
-    }
-    catch (const std::exception& e) {
-        LOG_ERROR << "Failed to deserialize ViewCall";
         return std::nullopt;
     }
 }

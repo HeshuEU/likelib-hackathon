@@ -60,32 +60,6 @@ void Task::run(lk::Core& core, SendResponse send_response)
 }
 
 
-ViewCallTask::ViewCallTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args)
-  : Task{ session_id, query_id, std::move(args) }
-{}
-
-
-bool ViewCallTask::prepareArgs()
-{
-    _view_call = websocket::deserializeViewCall(_args);
-    if (!_view_call) {
-        LOG_DEBUG << "deserialization error";
-        return false;
-    }
-    return true;
-}
-
-
-void ViewCallTask::execute(lk::Core& core, SendResponse send_response)
-{
-    ASSERT(send_response);
-    auto result = core.callViewMethod(_view_call.value());
-    base::PropertyTree answer;
-    answer.add("result", websocket::serializeBytes(result));
-    send_response(_session_id, _query_id, std::move(answer));
-}
-
-
 FindBlockTask::FindBlockTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
@@ -426,9 +400,6 @@ void RpcService::on_session_request(websocket::SessionId session_id,
 {
     std::unique_ptr<tasks::Task> task;
     switch (command_id) {
-        case websocket::Command::CALL_VIEW_CALL:
-            task = std::make_unique<tasks::ViewCallTask>(session_id, query_id, std::move(args));
-            break;
         case websocket::Command::CALL_LAST_BLOCK_INFO:
             task = std::make_unique<tasks::NodeInfoCallTask>(session_id, query_id, std::move(args));
             break;

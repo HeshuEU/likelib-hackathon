@@ -5,93 +5,10 @@
 #include "vm/tools.hpp"
 
 #include <algorithm>
-#include <iterator>
 
 
 namespace lk
 {
-
-ViewCall::ViewCall(lk::Address from,
-                   lk::Address contract_address,
-                   base::Time timestamp,
-                   base::Bytes data,
-                   lk::Sign sign)
-  : _from{ std::move(from) }
-  , _contract_address{ std::move(contract_address) }
-  , _data{ std::move(data) }
-  , _timestamp{ std::move(timestamp) }
-  , _sign{ std::move(sign) }
-{}
-
-
-const lk::Address& ViewCall::getFrom() const noexcept
-{
-    return _from;
-}
-
-
-const lk::Address& ViewCall::getContractAddress() const noexcept
-{
-    return _contract_address;
-}
-
-
-const base::Time& ViewCall::getTimestamp() const noexcept
-{
-    return _timestamp;
-}
-
-
-const base::Bytes& ViewCall::getData() const noexcept
-{
-    return _data;
-}
-
-
-void ViewCall::sign(const base::Secp256PrivateKey& key)
-{
-    auto hash = hashOfCall();
-    _sign = key.sign(hash.getBytes().toBytes());
-}
-
-
-bool ViewCall::checkSign() const
-{
-    if (_sign.toBytes().isEmpty()) {
-        return false;
-    }
-    else {
-        auto valid_hash = hashOfCall();
-        try {
-            auto pub = base::Secp256PrivateKey::decodeSignatureToPublicKey(_sign, valid_hash.getBytes().toBytes());
-            auto derived_addr = lk::Address(pub);
-            return _from == derived_addr;
-        }
-        catch (const base::CryptoError& ex) {
-            return false;
-        }
-    }
-}
-
-
-const lk::Sign& ViewCall::getSign() const noexcept
-{
-    return _sign;
-}
-
-
-base::Sha256 ViewCall::hashOfCall() const
-{
-    auto from_address_str = _from.toString();
-    auto to_address_str = _contract_address.toString();
-    auto timestamp_str = std::to_string(_timestamp.getSeconds());
-    auto data_str = base::base64Encode(_data);
-
-    auto concatenated_data = from_address_str + to_address_str + timestamp_str + data_str;
-
-    return base::Sha256::compute(base::Bytes(concatenated_data));
-}
-
 
 Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
   : _config{ config }
@@ -343,36 +260,6 @@ const lk::Address& Core::getThisNodeAddress() const noexcept
 }
 
 
-base::Bytes Core::callViewMethod(const lk::ViewCall& call)
-{
-    if (!call.checkSign()) {
-        RAISE_ERROR(base::InvalidArgument, "Signature check failed");
-    }
-
-    if (_state_manager.hasAccount(call.getContractAddress()) &&
-        _state_manager.getAccount(call.getContractAddress()).getType() == lk::AccountType::CONTRACT) {
-        auto contract_account = _state_manager.getAccount(call.getContractAddress());
-        const auto& tx = invalidTransaction();
-        const auto& block = invalidBlock();
-
-        auto eval_result = callContractAtViewModeVm(_state_manager,
-                                                    block,
-                                                    tx,
-                                                    call.getFrom(),
-                                                    call.getContractAddress(),
-                                                    contract_account.getRuntimeCode(),
-                                                    call.getData());
-
-        if (eval_result.status_code == EVMC_SUCCESS) {
-            auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
-            return output_data;
-        }
-        RAISE_ERROR(base::InvalidArgument, "Failed at vm call");
-    }
-    RAISE_ERROR(base::InvalidArgument, std::string("no contract by address: ") + call.getContractAddress().toString());
-}
-
-
 void Core::applyBlockTransactions(const lk::Block& block)
 {
     static const lk::Balance EMISSION_VALUE{ 1000 };
@@ -601,29 +488,6 @@ evmc::result Core::callContractVm(StateManager& state_manager,
     message.input_data = message_data.getData();
     message.input_size = message_data.size();
     return callVm(state_manager, associated_block, tx, message, code);
-}
-
-
-evmc::result Core::callContractAtViewModeVm(StateManager& state_manager,
-                                            const lk::Block& associated_block,
-                                            const lk::Transaction& associated_tx,
-                                            const lk::Address& sender_address,
-                                            const lk::Address& contract_address,
-                                            const base::Bytes& code,
-                                            const base::Bytes& message_data)
-{
-    evmc_message message{};
-    message.kind = evmc_call_kind::EVMC_CALL;
-    message.flags = evmc_flags::EVMC_STATIC;
-    message.depth = 0;
-    constexpr std::uint64_t VIEW_FREE_MAX_VALUE = 200000;
-    message.gas = VIEW_FREE_MAX_VALUE;
-    message.sender = vm::toEthAddress(sender_address);
-    message.destination = vm::toEthAddress(contract_address);
-    message.value = vm::toEvmcUint256(0);
-    message.input_data = message_data.getData();
-    message.input_size = message_data.size();
-    return callVm(state_manager, associated_block, associated_tx, message, code);
 }
 
 

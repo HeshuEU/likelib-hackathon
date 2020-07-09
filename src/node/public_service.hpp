@@ -60,20 +60,6 @@ class Task
 };
 
 
-class ViewCallTask final : public Task
-{
-  public:
-    ViewCallTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
-
-  protected:
-    bool prepareArgs() override;
-    void execute(lk::Core& core, SendResponse send_response) override;
-
-  private:
-    std::optional<lk::ViewCall> _view_call;
-};
-
-
 class FindBlockTask final : public Task
 {
   public:
