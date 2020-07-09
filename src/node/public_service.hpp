@@ -217,12 +217,12 @@ class AccountInfoUnsubscriptionTask final : public Task
 
 }
 
-class RpcService
+class PublicService
 {
   public:
-    RpcService(const base::PropertyTree& config, lk::Core& core);
+    PublicService(const base::PropertyTree& config, lk::Core& core);
 
-    ~RpcService();
+    ~PublicService();
 
     void run();
     void stop();
@@ -242,12 +242,18 @@ class RpcService
     websocket::SessionId createId();
 
     void on_session_request(websocket::SessionId session_id,
-                             websocket::QueryId query_id,
-                             websocket::Command::Id command_id,
-                             base::PropertyTree&& args);
+                            websocket::QueryId query_id,
+                            websocket::Command::Id command_id,
+                            base::PropertyTree&& args);
     void on_session_close(websocket::SessionId session_id);
 
     [[noreturn]] void task_worker() noexcept;
 
     void on_send_response(websocket::SessionId, websocket::QueryId, base::PropertyTree&&);
+
+    void on_added_new_block(base::Sha256 block_hash, const lk::Block& block);
+
+    void on_update_transaction_status(base::Sha256 tx_hash);
+
+    void on_update_account(lk::Address accoutn_address);
 };

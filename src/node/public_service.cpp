@@ -342,27 +342,32 @@ void AccountInfoUnsubscriptionTask::execute(lk::Core& core, SendResponse send_re
 }
 
 
-RpcService::RpcService(const base::PropertyTree& config, lk::Core& core)
+PublicService::PublicService(const base::PropertyTree& config, lk::Core& core)
   : _config{ config }
   , _core{ core }
-  , _acceptor{ config, std::bind(&RpcService::createSession, this, std::placeholders::_1) }
-{}
+  , _acceptor{ config, std::bind(&PublicService::createSession, this, std::placeholders::_1) }
+{
+    _core.subscribeToBlockAddition(
+      std::bind(&PublicService::on_added_new_block, this, std::placeholders::_1, std::placeholders::_2));
+    _core.subscribeToAnyTransactionStatusUpdate(std::bind(&PublicService::on_update_transaction_status, this, std::placeholders::_1));
+    _core.subscribeToAnyAccountUpdate(std::bind(&PublicService::on_update_account, this, std::placeholders::_1));
+}
 
 
-RpcService::~RpcService()
+PublicService::~PublicService()
 {
     stop();
 }
 
 
-void RpcService::run()
+void PublicService::run()
 {
     _acceptor.run();
-    _worker = std::thread(&RpcService::task_worker, this);
+    _worker = std::thread(&PublicService::task_worker, this);
 }
 
 
-void RpcService::stop()
+void PublicService::stop()
 {
     if (_worker.joinable()) {
         _worker.join();
@@ -370,33 +375,33 @@ void RpcService::stop()
 }
 
 
-void RpcService::createSession(boost::asio::ip::tcp::socket&& socket)
+void PublicService::createSession(boost::asio::ip::tcp::socket&& socket)
 {
     auto current_id = createId();
     auto session = std::make_unique<websocket::WebSocketSession>(
       std::move(socket),
       current_id,
-      std::bind(&RpcService::on_session_request,
+      std::bind(&PublicService::on_session_request,
                 this,
                 std::placeholders::_1,
                 std::placeholders::_2,
                 std::placeholders::_3,
                 std::placeholders::_4),
-      std::bind(&RpcService::on_session_close, this, std::placeholders::_1));
+      std::bind(&PublicService::on_session_close, this, std::placeholders::_1));
     _sessions_map.insert({ current_id, std::move(session) });
 }
 
 
-websocket::SessionId RpcService::createId()
+websocket::SessionId PublicService::createId()
 {
     return ++_last_session_id;
 }
 
 
-void RpcService::on_session_request(websocket::SessionId session_id,
-                                    websocket::QueryId query_id,
-                                    websocket::Command::Id command_id,
-                                    base::PropertyTree&& args)
+void PublicService::on_session_request(websocket::SessionId session_id,
+                                       websocket::QueryId query_id,
+                                       websocket::Command::Id command_id,
+                                       base::PropertyTree&& args)
 {
     std::unique_ptr<tasks::Task> task;
     switch (command_id) {
@@ -443,13 +448,13 @@ void RpcService::on_session_request(websocket::SessionId session_id,
 }
 
 
-void RpcService::on_session_close(websocket::SessionId session_id)
+void PublicService::on_session_close(websocket::SessionId session_id)
 {
     // TODO
 }
 
 
-[[noreturn]] void RpcService::task_worker() noexcept
+[[noreturn]] void PublicService::task_worker() noexcept
 {
     while (true) {
         try {
@@ -458,7 +463,7 @@ void RpcService::on_session_close(websocket::SessionId session_id)
             auto task = _tasks.get();
             try {
                 task->run(_core,
-                          std::bind(&RpcService::on_send_response,
+                          std::bind(&PublicService::on_send_response,
                                     this,
                                     std::placeholders::_1,
                                     std::placeholders::_2,
@@ -476,11 +481,18 @@ void RpcService::on_session_close(websocket::SessionId session_id)
 }
 
 
-void RpcService::on_send_response(websocket::SessionId session_id,
-                                  websocket::QueryId query_id,
-                                  base::PropertyTree&& result)
+void PublicService::on_send_response(websocket::SessionId session_id,
+                                     websocket::QueryId query_id,
+                                     base::PropertyTree&& result)
 {
     auto sess = _sessions_map.find(session_id);
     ASSERT(sess != _sessions_map.end());
     sess->second->sendResult(query_id, std::move(result));
 }
+
+
+void PublicService::on_added_new_block(base::Sha256 block_hash, const lk::Block& block) {}
+
+void PublicService::on_update_transaction_status(base::Sha256 tx_hash) {}
+
+void PublicService::on_update_account(lk::Address accoutn_address) {}

@@ -67,6 +67,8 @@ class Core
     //==================
     base::Observable<base::Sha256, const lk::Block&> _event_block_added;
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
+    base::Observable<base::Sha256> _event_transaction_status_update;
+    base::Observable<lk::Address> _event_account_update;
     //==================
     StateManager _state_manager;
     lk::Blockchain _blockchain;
@@ -110,6 +112,12 @@ class Core
 
     // notifies if some transaction was added to set of pending
     void subscribeToNewPendingTransaction(decltype(_event_new_pending_transaction)::CallbackType callback);
+
+    // notifies if any transaction status was updated
+    void subscribeToAnyTransactionStatusUpdate(decltype(_event_transaction_status_update)::CallbackType callback);
+
+    // notifies if any account was updated
+    void subscribeToAnyAccountUpdate(decltype(_event_account_update)::CallbackType callback);
     //==================
 };
 
@@ -149,7 +157,7 @@ class EthHost : public evmc::Host
 
     evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override;
 
-    void emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept;
+    void emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept override;
 
   private:
     lk::Core& _core;

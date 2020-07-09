@@ -514,6 +514,18 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 }
 
 
+void Core::subscribeToAnyTransactionStatusUpdate(decltype(Core::_event_transaction_status_update)::CallbackType callback)
+{
+    _event_transaction_status_update.subscribe(std::move(callback));
+}
+
+
+void Core::subscribeToAnyAccountUpdate(decltype(Core::_event_account_update)::CallbackType callback)
+{
+    _event_account_update.subscribe(std::move(callback));
+}
+
+
 EthHost::EthHost(lk::Core& core,
                  lk::StateManager& state_manager,
                  const lk::Block& associated_block,
@@ -762,7 +774,11 @@ evmc::bytes32 EthHost::get_block_hash(int64_t block_number) const noexcept
 }
 
 
-void EthHost::emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept
+void EthHost::emit_log([[maybe_unused]] const evmc::address&,
+                       [[maybe_unused]] const uint8_t*,
+                       [[maybe_unused]] size_t,
+                       [[maybe_unused]] const evmc::bytes32[],
+                       [[maybe_unused]] size_t) noexcept
 {
     LOG_DEBUG << "Core::emit_log";
     LOG_WARNING << "emit_log is denied. For more information, see docs";
