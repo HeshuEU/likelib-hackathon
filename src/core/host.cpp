@@ -98,6 +98,7 @@ std::size_t KademliaPeerPool::calcDifference(const base::FixedBytes<lk::Address:
         }
 
         ASSERT(false); // must be unreachable
+        return 0;
     }
 }
 
@@ -141,6 +142,9 @@ bool KademliaPeerPool::tryAddPeer(std::shared_ptr<Peer> peer)
     }
 
     std::size_t bucket_index = calcBucketIndex(peer->getAddress());
+    if (bucket_index == Address::LENGTH_IN_BYTES * 8) {
+        return false;
+    }
     if (_buckets[bucket_index].size() < MAX_BUCKET_SIZE) {
         // accept peer
         _buckets[bucket_index].push_back(std::move(peer));
@@ -427,13 +431,19 @@ void Host::dropZombiePeers()
 }
 
 
-void Host::broadcast(const base::Sha256& block_hash, const lk::Block& block)
+void Host::broadcast(const ImmutableBlock& block)
 {
-    _handshaked_peers.forEachPeer([block_hash, block](Peer& peer) { peer.sendBlock(block_hash, block); });
+    _handshaked_peers.forEachPeer([&block](Peer& peer) { peer.sendBlock(block); });
 }
 
 
-void Host::broadcast(const lk::Transaction& tx)
+void Host::broadcastNewBlock(const ImmutableBlock& block)
+{
+    _handshaked_peers.forEachPeer([&block](Peer& peer) { peer.sendNewBlock(block); });
+}
+
+
+void Host::broadcast(const Transaction& tx)
 {
     _handshaked_peers.forEachPeer([tx](Peer& peer) { peer.sendTransaction(tx); });
 }

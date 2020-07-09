@@ -251,7 +251,7 @@ class PublicService
 
     void on_send_response(websocket::SessionId, websocket::QueryId, base::PropertyTree&&);
 
-    void on_added_new_block(base::Sha256 block_hash, const lk::Block& block);
+    void on_added_new_block(const lk::ImmutableBlock& block);
 
     void on_update_transaction_status(base::Sha256 tx_hash);
 

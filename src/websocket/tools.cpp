@@ -22,10 +22,10 @@ boost::asio::ip::tcp::endpoint create_endpoint(const std::string& listening_addr
         auto address = boost::asio::ip::make_address_v4(ip_address_part);
         unsigned short port = 0;
         if (!boost::spirit::qi::parse(std::cbegin(port_part), std::cend(port_part), boost::spirit::qi::int_, port)) {
-            throw base::InvalidArgument{};
+            RAISE_ERROR(base::InvalidArgument, "can't find port number");
         }
         if (port == 0) {
-            throw base::InvalidArgument{};
+            RAISE_ERROR(base::InvalidArgument, "can't find port number");
         }
         return boost::asio::ip::tcp::endpoint(address, port);
     }
@@ -196,7 +196,7 @@ std::optional<lk::TransactionStatus::ActionType> deserializeTransactionStatusAct
 
 std::string serializeBalance(const lk::Balance& balance)
 {
-    return balance.toString();
+    return balance.str();
 }
 
 
@@ -572,7 +572,7 @@ std::optional<lk::Transaction> deserializeTransaction(const base::PropertyTree& 
 }
 
 
-base::PropertyTree serializeBlock(const lk::Block& block)
+base::PropertyTree serializeBlock(const lk::ImmutableBlock& block)
 {
     base::PropertyTree result;
     result.add("depth", block.getDepth());
@@ -590,7 +590,7 @@ base::PropertyTree serializeBlock(const lk::Block& block)
 }
 
 
-std::optional<lk::Block> deserializeBlock(const base::PropertyTree& input)
+std::optional<lk::ImmutableBlock> deserializeBlock(const base::PropertyTree& input)
 {
     try {
         std::optional<std::uint64_t> depth;
@@ -673,10 +673,14 @@ std::optional<lk::Block> deserializeBlock(const base::PropertyTree& input)
             LOG_ERROR << "transactions field is not exists";
             return std::nullopt;
         }
-
-        lk::Block block{ depth.value(), previous_block_hash.value(), timestamp.value(), coinbase.value(), txs };
-        block.setNonce(nonce.value());
-        return block;
+        lk::BlockBuilder b;
+        b.setDepth(depth.value());
+        b.setNonce(nonce.value());
+        b.setPrevBlockHash(previous_block_hash.value());
+        b.setTimestamp(timestamp.value());
+        b.setCoinbase(coinbase.value());
+        b.setTransactionsSet(std::move(txs));
+        return std::move(b).buildImmutable();
     }
     catch (const std::exception& e) {
         LOG_ERROR << "Failed to deserialize Block";

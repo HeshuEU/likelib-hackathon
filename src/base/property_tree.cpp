@@ -9,6 +9,16 @@
 namespace base
 {
 
+PropertyTree::KeyNotFound::KeyNotFound(const char* file_name,
+                                       std::size_t line_number,
+                                       const char* function_signature,
+                                       std::string message,
+                                       std::string path)
+  : base::Error(file_name, line_number, function_signature, std::move(message))
+  , _path{ std::move(path) }
+{}
+
+
 PropertyTree::PropertyTree()
   : _ptree{}
 {}
@@ -23,10 +33,20 @@ PropertyTree readConfig(const std::filesystem::path& config_file)
 {
     std::ifstream input;
     input.exceptions(std::ios::badbit | std::ios::failbit);
-    CLARIFY_ERROR(InaccessibleFile, input.open(config_file), "error opening config file");
+    try {
+        input.open(config_file);
+    }
+    catch (const std::exception& e) {
+        RAISE_ERROR(base::InaccessibleFile, e.what());
+    }
 
     boost::property_tree::ptree ret;
-    CLARIFY_ERROR(ParsingError, boost::property_tree::read_json(input, ret), "parsing error");
+    try {
+        boost::property_tree::read_json(input, ret);
+    }
+    catch (const std::exception& e) {
+        RAISE_ERROR(base::ParsingError, e.what());
+    }
     return ret;
 }
 
@@ -35,7 +55,12 @@ PropertyTree parseJson(const std::string& json_string)
 {
     std::istringstream input{ json_string };
     boost::property_tree::ptree ret;
-    CLARIFY_ERROR(ParsingError, boost::property_tree::read_json(input, ret), "parsing error");
+    try {
+        boost::property_tree::read_json(input, ret);
+    }
+    catch (const std::exception& e) {
+        RAISE_ERROR(base::ParsingError, e.what());
+    }
     return ret;
 }
 
@@ -43,7 +68,13 @@ PropertyTree parseJson(const std::string& json_string)
 void save(const PropertyTree& tree, const std::filesystem::path& path_to_save)
 {
     std::ofstream file;
-    CLARIFY_ERROR(InaccessibleFile, file.open(path_to_save), "error opening file to save");
+    file.exceptions(std::ios::badbit | std::ios::failbit);
+    try {
+        file.open(path_to_save);
+    }
+    catch (const std::exception& e) {
+        RAISE_ERROR(base::InaccessibleFile, e.what());
+    }
     boost::property_tree::write_json(file, tree._ptree);
     file.close();
 }

@@ -44,7 +44,7 @@ bool WebSocketClient::connect(const std::string& host)
         target_endpoint = create_endpoint(host);
     }
     catch (const base::InvalidArgument& er) {
-        LOG_ERROR << "target host ip decoding error: " << er;
+        LOG_ERROR << "target host ip decoding error: " << er.what();
         return _ready;
     }
 
@@ -177,7 +177,7 @@ void WebSocketClient::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         received_query = base::parseJson(received_data.toString());
     }
     catch (const base::Error& error) {
-        LOG_ERROR << "client json parsing fail: " << error;
+        LOG_ERROR << "client json parsing fail: " << error.what();
     }
 
     QueryId query_id{ 0 };
@@ -191,7 +191,7 @@ void WebSocketClient::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         command_args = received_query.getSubTree("result");
     }
     catch (const base::Error& e) {
-        LOG_ERROR << "deserialization error" << e;
+        LOG_ERROR << "deserialization error" << e.what();
         return;
     }
 
@@ -213,7 +213,7 @@ void WebSocketClient::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         _receive_callback(current_command_id, std::move(command_args));
     }
     catch (const base::Error& error) {
-        LOG_ERROR << "receive callback execution error" << error;
+        LOG_ERROR << "receive callback execution error" << error.what();
     }
 }
 

@@ -14,7 +14,6 @@ void encode_message(std::ostream& output, const std::string& compiled_contract_f
 
 void decode_message(std::ostream& output,
                     const std::string& compiled_contract_folder_path,
-                    const std::string& method,
                     const std::string& message);
 
 void generate_keys(std::ostream& output, const std::string& path);

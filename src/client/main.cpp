@@ -85,11 +85,11 @@ void client_process()
 
     always_mode_commands.push_back(root_menu->Insert(
       "decode",
-      [](std::ostream& out, std::string compiled_contract_folder_path, std::string method, std::string message) {
-          decode_message(out, compiled_contract_folder_path, method, message);
+      [](std::ostream& out, std::string compiled_contract_folder_path, std::string message) {
+          decode_message(out, compiled_contract_folder_path, message);
       },
       "decode message which was returned by contract call",
-      { "path to compiled contract data files", "method result name", "message for decode" }));
+      { "path to compiled contract data files", "message for decode" }));
 
     always_mode_commands.push_back(
       root_menu->Insert("keys_generate",
@@ -116,7 +116,7 @@ void client_process()
                             }
                             catch (const base::Error& e) {
                                 out << "can't execute account_info";
-                                LOG_ERROR << "can't execute account_info:" << e;
+                                LOG_ERROR << "can't execute account_info:" << e.what();
                             }
                         },
                         "get account info by specific address",
@@ -131,7 +131,7 @@ void client_process()
                             }
                             catch (const base::Error& e) {
                                 out << "can't execute find_transaction";
-                                LOG_ERROR << "can't execute find_transaction:" << e;
+                                LOG_ERROR << "can't execute find_transaction:" << e.what();
                             }
                         },
                         "get transaction by specific hash",
@@ -146,7 +146,7 @@ void client_process()
                             }
                             catch (const base::Error& e) {
                                 out << "can't execute find_transaction_status";
-                                LOG_ERROR << "can't execute find_transaction_status:" << e;
+                                LOG_ERROR << "can't execute find_transaction_status:" << e.what();
                             }
                         },
                         "get transaction status by specific hash",
@@ -161,7 +161,7 @@ void client_process()
                             }
                             catch (const base::Error& e) {
                                 out << "can't execute find_block";
-                                LOG_ERROR << "can't execute find_block:" << e;
+                                LOG_ERROR << "can't execute find_block:" << e.what();
                             }
                         },
                         "get block by specific hash",
@@ -189,7 +189,7 @@ void client_process()
                             }
                             catch (const base::Error& e) {
                                 out << "can't execute transfer";
-                                LOG_ERROR << "can't execute transfer:" << e;
+                                LOG_ERROR << "can't execute transfer:" << e.what();
                             }
                         },
                         "transfer coins to specific address",
@@ -221,7 +221,7 @@ void client_process()
                             }
                             catch (const base::Error& e) {
                                 out << "can't execute transfer";
-                                LOG_ERROR << "can't execute transfer:" << e;
+                                LOG_ERROR << "can't execute transfer:" << e.what();
                             }
                         },
                         "call deployed contract",
@@ -253,7 +253,7 @@ void client_process()
           }
           catch (const base::Error& e) {
               out << "can't execute transfer";
-              LOG_ERROR << "can't execute transfer:" << e;
+              LOG_ERROR << "can't execute transfer:" << e.what();
           }
       },
       "deploy compiled contract",

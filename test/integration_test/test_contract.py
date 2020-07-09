@@ -44,9 +44,9 @@ contract SimpleStorage {
                                                     fee=100000, init_message=test_contract_init_message)
 
     TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
-
+    TEST_CHECK(client.transaction_success_wait(transaction=deployed_contract_status))
     deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
-    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
+#    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
 
     call_message = client.encode_message(code=test_contract, message="get()")
     contract_address = deployed_contract_status.data
@@ -54,9 +54,10 @@ contract SimpleStorage {
                                               fee=100000, amount=0, message=call_message)
 
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    TEST_CHECK(client.transaction_success_wait(transaction=message_call_status))
 
     message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
-    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+#    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data
     res = client.decode_message(code=test_contract, method="get", message=contract_data_message)
@@ -110,9 +111,10 @@ contract SimpleStorage {
                                                     fee=100000, init_message=test_contract_init_message)
 
     TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
+    TEST_CHECK(client.transaction_success_wait(transaction=deployed_contract_status))
 
     deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
-    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
+#    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
 
     call_message = client.encode_message(code=test_contract, message="get()")
     contract_address = deployed_contract_status.data
@@ -120,9 +122,10 @@ contract SimpleStorage {
                                               fee=100000, amount=0, message=call_message)
 
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    TEST_CHECK(client.transaction_success_wait(transaction=message_call_status))
 
     message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
-    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+#    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data
     res = client.decode_message(code=test_contract, method="get", message=contract_data_message)
@@ -176,9 +179,10 @@ contract SimpleStorage {
                                                     fee=100000, init_message=test_contract_init_message)
 
     TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
+    TEST_CHECK(client.transaction_success_wait(transaction=deployed_contract_status))
 
     deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
-    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
+#    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
 
     call_message = client.encode_message(code=test_contract, message="get()")
     contract_address = deployed_contract_status.data
@@ -186,9 +190,10 @@ contract SimpleStorage {
                                               fee=100000, amount=0, message=call_message)
 
     TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    TEST_CHECK(client.transaction_success_wait(transaction=message_call_status))
 
     message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
-    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+#    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     contract_data_message = message_call_status.data
     res = client.decode_message(code=test_contract, method="get", message=contract_data_message)

@@ -347,8 +347,7 @@ PublicService::PublicService(const base::PropertyTree& config, lk::Core& core)
   , _core{ core }
   , _acceptor{ config, std::bind(&PublicService::createSession, this, std::placeholders::_1) }
 {
-    _core.subscribeToBlockAddition(
-      std::bind(&PublicService::on_added_new_block, this, std::placeholders::_1, std::placeholders::_2));
+    _core.subscribeToBlockAddition(std::bind(&PublicService::on_added_new_block, this, std::placeholders::_1));
     _core.subscribeToAnyTransactionStatusUpdate(std::bind(&PublicService::on_update_transaction_status, this, std::placeholders::_1));
     _core.subscribeToAnyAccountUpdate(std::bind(&PublicService::on_update_account, this, std::placeholders::_1));
 }
@@ -470,7 +469,7 @@ void PublicService::on_session_close(websocket::SessionId session_id)
                                     std::placeholders::_3));
             }
             catch (const base::Error& er) {
-                LOG_DEBUG << er;
+                LOG_DEBUG << er.what();
             }
             LOG_INFO << "executed task";
         }
@@ -491,7 +490,7 @@ void PublicService::on_send_response(websocket::SessionId session_id,
 }
 
 
-void PublicService::on_added_new_block(base::Sha256 block_hash, const lk::Block& block) {}
+void PublicService::on_added_new_block(const lk::ImmutableBlock& block) {}
 
 void PublicService::on_update_transaction_status(base::Sha256 tx_hash) {}
 

@@ -79,7 +79,7 @@ void WebSocketConnection::on_read(boost::beast::error_code ec, std::size_t bytes
         query_json = base::parseJson(received_bytes.toString());
     }
     catch (const base::InvalidArgument& error) {
-        LOG_DEBUG << "parse query json error: " << error;
+        LOG_DEBUG << "parse query json error: " << error.what();
         return;
     }
 

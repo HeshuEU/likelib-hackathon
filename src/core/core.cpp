@@ -6,7 +6,6 @@
 
 #include <algorithm>
 
-
 namespace lk
 {
 
@@ -14,12 +13,10 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
   : _config{ config }
   , _vault{ key_vault }
   , _this_node_address{ _vault.getKey().toPublicKey() }
-  , _blockchain{ _config }
+  , _blockchain{ getGenesisBlock(), _config }
   , _host{ _config, 0xFFFF, *this }
-  , _vm{ std::move(vm::load()) }
+  , _vm{ vm::load() }
 {
-    [[maybe_unused]] bool result = _blockchain.tryAddBlock(getGenesisBlock());
-    ASSERT(result);
     _state_manager.updateFromGenesis(getGenesisBlock());
 
     _blockchain.load();
@@ -30,25 +27,35 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
         }
     }
 
-    subscribeToBlockAddition(
-      [this](const base::Sha256& block_hash, const lk::Block& block) { _host.broadcast(block_hash, block); });
     subscribeToNewPendingTransaction([this](const lk::Transaction& tx) { _host.broadcast(tx); });
+
+    subscribeToBlockMining([this](const ImmutableBlock& block) { _host.broadcastNewBlock(block); });
 }
 
 
-const lk::Block& Core::getGenesisBlock()
+const ImmutableBlock& Core::getGenesisBlock()
 {
-    static lk::Block genesis = [] {
-        auto timestamp = base::Time(1583789617);
+    static ImmutableBlock genesis = [] {
+        const auto timestamp = base::Time(1583789617);
+        const Address initial_emission_address{ "49cfqVfB1gTGw5XZSu6nZDrntLr1" };
 
-        lk::Block ret{ 0, base::Sha256(base::Bytes(32)), timestamp, lk::Address::null(), {} };
+        TransactionsSet txset;
         lk::Address from{ lk::Address::null() };
         lk::Address to{ "49cfqVfB1gTGw5XZSu6nZDrntLr1" };
-        auto amount = lk::Balance{ "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" };
+        Balance emission_amount = Balance{ 1 } << 32;
         std::uint64_t fee{ 0 };
+        txset.add({ from, to, emission_amount, fee, timestamp, base::Bytes{} });
 
-        ret.addTransaction({ from, to, amount, fee, timestamp, base::Bytes{} });
-        return ret;
+        BlockBuilder b;
+        b.setDepth(0);
+        b.setNonce(0);
+        b.setPrevBlockHash(base::Sha256::null());
+        b.setTimestamp(timestamp);
+        b.setCoinbase(initial_emission_address);
+        b.setTransactionsSet(std::move(txset));
+
+        // total emission in genesis block: 2^32 + base::config::BC_EMISSION_VALUE
+        return std::move(b).buildImmutable();
     }();
     return genesis;
 }
@@ -159,28 +166,61 @@ void Core::addTransactionOutput(const base::Sha256& tx, const TransactionStatus&
 }
 
 
-bool Core::tryAddBlock(const lk::Block& b)
+Blockchain::AdditionResult Core::tryAddBlock(const ImmutableBlock& b)
 {
-    if (checkBlock(b) && _blockchain.tryAddBlock(b)) {
-        {
-            std::shared_lock lk(_pending_transactions_mutex);
-            _pending_transactions.remove(b.getTransactions());
+    {
+        std::lock_guard lk{ _blockchain_mutex };
+        if (auto r = _tryAddBlock(b); r != Blockchain::AdditionResult::ADDED) {
+            return r;
         }
-
-        LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
-
-        applyBlockTransactions(b);
-        auto block_hash = base::Sha256::compute(base::toBytes(b));
-        _event_block_added.notify(std::move(block_hash), b);
-        return true;
     }
-    else {
-        return false;
-    }
+
+    _event_block_added.notify(b);
+
+    return Blockchain::AdditionResult::ADDED;
 }
 
 
-std::optional<lk::Block> Core::findBlock(const base::Sha256& hash) const
+Blockchain::AdditionResult Core::tryAddMinedBlock(const ImmutableBlock& b)
+{
+    {
+        std::lock_guard lk{ _blockchain_mutex };
+        if (auto r = _tryAddBlock(b); r != Blockchain::AdditionResult::ADDED) {
+            return r;
+        }
+    }
+
+    _event_block_mined.notify(b);
+
+    return Blockchain::AdditionResult::ADDED;
+}
+
+
+Blockchain::AdditionResult Core::_tryAddBlock(const ImmutableBlock& b)
+{
+    ASSERT(!_blockchain_mutex.try_lock());
+
+    if (!checkBlockTransactions(b)) { // TODO: place after blockchain checks that are inside tryAddBlock
+        return Blockchain::AdditionResult::INVALID_TRANSACTIONS;
+    }
+
+    if (auto r = _blockchain.tryAddBlock(b); r != Blockchain::AdditionResult::ADDED) {
+        return r;
+    }
+
+    {
+        std::shared_lock lk(_pending_transactions_mutex);
+        _pending_transactions.remove(b.getTransactions());
+    }
+
+    LOG_DEBUG << "Applying transactions from block #" << b.getDepth();
+
+    applyBlockTransactions(b);
+    return Blockchain::AdditionResult::ADDED;
+}
+
+
+std::optional<ImmutableBlock> Core::findBlock(const base::Sha256& hash) const
 {
     return _blockchain.findBlock(hash);
 }
@@ -198,11 +238,19 @@ std::optional<lk::Transaction> Core::findTransaction(const base::Sha256& hash) c
 }
 
 
-bool Core::checkBlock(const lk::Block& block) const
+/*
+ * Not-thread safe: it is only a helper-function for tryAddBlock.
+ * So, it is not meant to be called by anyone else: without locks,
+ * the sense of this function is lost: it checks the block using the
+ * chain or state information, but later usage of it becomes useless:
+ * until addition the state and chain might have been changed.
+ */
+bool Core::checkBlockTransactions(const ImmutableBlock& block) const
 {
     if (_blockchain.findBlock(base::Sha256::compute(base::toBytes(block)))) {
         return false;
     }
+
     auto block_balance = lk::calcCost(block.getTransactions());
     for (const auto& tx : block.getTransactions()) {
         if (_state_manager.hasAccount(tx.getFrom())) {
@@ -221,13 +269,36 @@ bool Core::checkBlock(const lk::Block& block) const
 }
 
 
-lk::Block Core::getBlockTemplate() const
+std::pair<MutableBlock, lk::Complexity> Core::getMiningData() const
 {
-    const auto& top_block = _blockchain.getTopBlock();
+    std::unique_lock lk{ _blockchain_mutex };
+
+    const auto& p = _blockchain.getTopBlockAndComplexity();
+    const auto& top_block = p.first;
+    auto& complexity = p.second;
+
     lk::BlockDepth depth = top_block.getDepth() + 1;
     auto prev_hash = base::Sha256::compute(base::toBytes(top_block));
-    std::shared_lock lk(_pending_transactions_mutex);
-    return lk::Block{ depth, prev_hash, base::Time::now(), getThisNodeAddress(), _pending_transactions };
+
+    TransactionsSet pending;
+    {
+        std::shared_lock lk(_pending_transactions_mutex);
+        pending = _pending_transactions;
+    }
+
+    if (pending.size() > base::config::BC_MAX_TRANSACTIONS_IN_BLOCK) {
+        pending.selectBestByFee(base::config::BC_MAX_TRANSACTIONS_IN_BLOCK);
+    }
+
+    BlockBuilder b;
+    b.setDepth(depth);
+    b.setNonce(0);
+    b.setPrevBlockHash(std::move(prev_hash));
+    b.setTimestamp(base::Time::now());
+    b.setCoinbase(getThisNodeAddress());
+    b.setTransactionsSet(std::move(pending));
+
+    return { std::move(b).buildMutable(), std::move(complexity) };
 }
 
 
@@ -242,7 +313,7 @@ lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const
 }
 
 
-const lk::Block& Core::getTopBlock() const
+ImmutableBlock Core::getTopBlock() const
 {
     return _blockchain.getTopBlock();
 }
@@ -260,9 +331,9 @@ const lk::Address& Core::getThisNodeAddress() const noexcept
 }
 
 
-void Core::applyBlockTransactions(const lk::Block& block)
+void Core::applyBlockTransactions(const ImmutableBlock& block)
 {
-    static const lk::Balance EMISSION_VALUE{ 1000 };
+    static constexpr lk::Balance EMISSION_VALUE{ base::config::BC_EMISSION_VALUE };
     _state_manager.getAccount(block.getCoinbase()).addBalance(EMISSION_VALUE);
 
     for (const auto& tx : block.getTransactions()) {
@@ -271,13 +342,13 @@ void Core::applyBlockTransactions(const lk::Block& block)
 }
 
 
-void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& block_where_tx)
+void Core::tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock& block_where_tx)
 {
     auto transaction_hash = tx.hashOfTransaction();
-    LOG_DEBUG << "Performing transactions with hash[hex] " << transaction_hash;
+    LOG_DEBUG << "Performing transactions with hash " << transaction_hash;
     _state_manager.getAccount(tx.getFrom()).addTransactionHash(transaction_hash);
 
-    auto tx_manager{ _state_manager.createCopy() };
+    auto tx_manager{ _state_manager.createCopy() }; // TODO: temporary of course, fix it using tree of states
 
     if (tx.getTo() == lk::Address::null()) {
         try {
@@ -378,6 +449,9 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
 
                 if (eval_result.status_code == evmc_status_code::EVMC_SUCCESS) {
                     auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
+                    if(!output_data.isEmpty()){
+                        output_data = tx.getData().takePart(0, 4).append(output_data);
+                    }
 
                     TransactionStatus status(TransactionStatus::StatusCode::Success,
                                              TransactionStatus::ActionType::ContractCall,
@@ -453,9 +527,9 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const lk::Block& blo
 
 
 evmc::result Core::callInitContractVm(StateManager& state_manager,
-                                      const lk::Block& associated_block,
-                                      const lk::Transaction& tx,
-                                      const lk::Address& contract_address,
+                                      const ImmutableBlock& associated_block,
+                                      const Transaction& tx,
+                                      const Address& contract_address,
                                       const base::Bytes& code)
 {
     evmc_message message{};
@@ -472,8 +546,8 @@ evmc::result Core::callInitContractVm(StateManager& state_manager,
 
 
 evmc::result Core::callContractVm(StateManager& state_manager,
-                                  const lk::Block& associated_block,
-                                  const lk::Transaction& tx,
+                                  const ImmutableBlock& associated_block,
+                                  const Transaction& tx,
                                   const base::Bytes& code,
                                   const base::Bytes& message_data)
 {
@@ -492,7 +566,7 @@ evmc::result Core::callContractVm(StateManager& state_manager,
 
 
 evmc::result Core::callVm(StateManager& state_manager,
-                          const lk::Block& associated_block,
+                          const ImmutableBlock& associated_block,
                           const lk::Transaction& associated_tx,
                           const evmc_message& message,
                           const base::Bytes& code)
@@ -505,6 +579,12 @@ evmc::result Core::callVm(StateManager& state_manager,
 void Core::subscribeToBlockAddition(decltype(Core::_event_block_added)::CallbackType callback)
 {
     _event_block_added.subscribe(std::move(callback));
+}
+
+
+void Core::subscribeToBlockMining(decltype(_event_block_mined)::CallbackType callback)
+{
+    _event_block_mined.subscribe(std::move(callback));
 }
 
 
@@ -528,7 +608,7 @@ void Core::subscribeToAnyAccountUpdate(decltype(Core::_event_account_update)::Ca
 
 EthHost::EthHost(lk::Core& core,
                  lk::StateManager& state_manager,
-                 const lk::Block& associated_block,
+                 const ImmutableBlock& associated_block,
                  const lk::Transaction& associated_tx)
   : _core{ core }
   , _state_manager{ state_manager }
@@ -669,10 +749,8 @@ evmc::bytes32 EthHost::get_code_hash(const evmc::address& addr) const noexcept
 }
 
 
-size_t EthHost::copy_code(const evmc::address& addr,
-                          size_t code_offset,
-                          uint8_t* buffer_data,
-                          size_t buffer_size) const noexcept
+size_t EthHost::copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
+  noexcept
 {
     LOG_DEBUG << "Core::copy_code";
     try {

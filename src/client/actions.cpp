@@ -28,11 +28,11 @@ void compile_solidity_code(std::ostream& output, const std::string& code_file_pa
         contracts = vm::compile(code_file_path);
     }
     catch (const base::ParsingError& er) {
-        output << er;
+        output << er.what();
         return;
     }
     catch (const base::SystemCallFailed& er) {
-        output << er;
+        output << er.what();
         return;
     }
 
@@ -58,8 +58,8 @@ void compile_solidity_code(std::ostream& output, const std::string& code_file_pa
             base::save(contract.metadata, current_folder / std::filesystem::path{ config::METADATA_JSON_FILE });
         }
         catch (const base::Error& er) {
-            output << er;
-            LOG_ERROR << er;
+            output << er.what();
+            LOG_ERROR << er.what();
             return;
         }
         catch (...) {
@@ -84,11 +84,11 @@ void encode_message(std::ostream& output, const std::string& compiled_contract_f
         }
     }
     catch (const base::ParsingError& er) {
-        output << er;
+        output << er.what();
         return;
     }
     catch (const base::SystemCallFailed& er) {
-        output << er;
+        output << er.what();
         return;
     }
 }
@@ -96,11 +96,10 @@ void encode_message(std::ostream& output, const std::string& compiled_contract_f
 
 void decode_message(std::ostream& output,
                     const std::string& compiled_contract_folder_path,
-                    const std::string& method,
                     const std::string& message)
 {
     try {
-        auto output_message = vm::decodeOutput(compiled_contract_folder_path, method, message);
+        auto output_message = vm::decodeOutput(compiled_contract_folder_path, message);
         if (output_message) {
             output << output_message.value() << std::endl;
         }
@@ -110,11 +109,11 @@ void decode_message(std::ostream& output,
         }
     }
     catch (const base::ParsingError& er) {
-        output << er;
+        output << er.what();
         return;
     }
     catch (const base::SystemCallFailed& er) {
-        output << er;
+        output << er.what();
         return;
     }
 }

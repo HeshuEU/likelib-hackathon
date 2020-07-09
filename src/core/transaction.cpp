@@ -113,7 +113,7 @@ base::Sha256 Transaction::hashOfTransaction() const
     // see public_interface.md
     auto from_address_str = base::base58Encode(_from.getBytes());
     auto to_address_str = base::base58Encode(_to.getBytes());
-    auto amount_str = _amount.toString();
+    auto amount_str = _amount.str();
     auto fee_str = std::to_string(_fee);
     auto timestamp_str = std::to_string(_timestamp.getSeconds());
     auto data_str = base::base64Encode(_data);

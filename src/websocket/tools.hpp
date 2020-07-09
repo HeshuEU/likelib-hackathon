@@ -72,9 +72,9 @@ base::PropertyTree serializeTransaction(const lk::Transaction& tx);
 
 std::optional<lk::Transaction> deserializeTransaction(const base::PropertyTree& input);
 
-base::PropertyTree serializeBlock(const lk::Block& block);
+base::PropertyTree serializeBlock(const lk::ImmutableBlock& block);
 
-std::optional<lk::Block> deserializeBlock(const base::PropertyTree& input);
+std::optional<lk::ImmutableBlock> deserializeBlock(const base::PropertyTree& input);
 
 base::PropertyTree serializeTransactionStatus(const lk::TransactionStatus& status);
 

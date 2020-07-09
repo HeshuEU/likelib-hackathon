@@ -54,7 +54,7 @@ void AccountState::addBalance(lk::Balance delta)
 void AccountState::subBalance(lk::Balance delta)
 {
     if (_balance < delta) {
-        throw base::LogicError("trying to take more LK from account than it has");
+        RAISE_ERROR(base::LogicError, "trying to take more LK from account than it has");
     }
     _balance -= delta;
 }
@@ -263,7 +263,7 @@ bool StateManager::tryTransferMoney(const lk::Address& from, const lk::Address& 
 }
 
 
-void StateManager::updateFromGenesis(const lk::Block& block)
+void StateManager::updateFromGenesis(const ImmutableBlock& block)
 {
     std::unique_lock lk(_rw_mutex);
     for (const auto& tx : block.getTransactions()) {

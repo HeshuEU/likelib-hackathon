@@ -1,7 +1,5 @@
 #pragma once
 
-#include "base/serialization.hpp"
-
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include <istream>
@@ -11,83 +9,7 @@ namespace base
 {
 
 template<typename T>
-class BigInteger
-{
-  public:
-    BigInteger() = default;
-
-    template<typename N>
-    BigInteger(const N& big_int);
-
-    BigInteger(const BigInteger&) = default;
-
-    BigInteger& operator=(const BigInteger&) = default;
-
-    BigInteger(BigInteger&&) = default;
-
-    BigInteger& operator=(BigInteger&&) = default;
-
-    ~BigInteger() = default;
-
-    //----------------------------------
-
-    BigInteger<T> operator+(const BigInteger<T>& other) const;
-
-    BigInteger<T> operator-(const BigInteger<T>& other) const;
-
-    BigInteger<T> operator*(const BigInteger<T>& other) const;
-
-    BigInteger<T> operator/(const BigInteger<T>& other) const;
-
-    BigInteger<T> operator%(const BigInteger<T>& other) const;
-
-    BigInteger<T>& operator+=(const BigInteger<T>& other);
-
-    BigInteger<T>& operator-=(const BigInteger<T>& other);
-
-    BigInteger<T>& operator*=(const BigInteger<T>& other);
-
-    BigInteger<T>& operator/=(const BigInteger<T>& other);
-
-    //----------------------------------
-
-    bool operator!=(const BigInteger<T>& other) const;
-
-    bool operator==(const BigInteger<T>& other) const;
-
-    bool operator>(const BigInteger<T>& other) const;
-
-    bool operator<(const BigInteger<T>& other) const;
-
-    bool operator>=(const BigInteger<T>& other) const;
-
-    bool operator<=(const BigInteger<T>& other) const;
-
-    //----------------------------------
-
-    BigInteger<T>& operator++();
-
-    BigInteger<T> operator++(int);
-
-    BigInteger<T>& operator--();
-
-    BigInteger<T> operator--(int);
-
-    //----------------------------------
-
-    std::string toString() const noexcept;
-
-    boost::multiprecision::number<T> toMultiNumber() const noexcept;
-
-    //----------------------------------
-
-    void serialize(base::SerializationOArchive& oa) const;
-
-    static BigInteger<T> deserialize(base::SerializationIArchive& ia);
-
-  private:
-    boost::multiprecision::number<T> _number;
-};
+using BigInteger = boost::multiprecision::number<T>;
 
 template<typename T>
 std::ostream& operator<<(std::ostream& output, const BigInteger<T>& big_int);
@@ -110,5 +32,3 @@ using Uint512 = BigInteger<
                                                    void>>;
 
 } // namespace base
-
-#include "big_integer.tpp"

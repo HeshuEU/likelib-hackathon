@@ -1,6 +1,7 @@
 import os
+from tester import test_case, Env, NodeConfig, Id, TEST_CHECK, TEST_CHECK_EQUAL,\
+                   ClientType, get_distributor_address_path, TransactionStatusCode
 
-from tester import test_case, Node, TEST_CHECK
 
 CONTRACTS_FOLDER = os.path.realpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "doc", "contracts"))
@@ -10,236 +11,397 @@ if not os.path.exists(CONTRACTS_FOLDER):
     exit(1)
 
 
-@test_case("simple_storage_contract")
-def main(env, logger):
-    contract_file_path = os.path.join(CONTRACTS_FOLDER, "simple_storage_contract", "contract.sol")
-    if not os.path.exists(contract_file_path):
-        TEST_CHECK(False, message="Contracts folder was not found")
+@test_case("get_balance_contract_grpc")
+def main(env: Env) -> int:
+    contract_text = '''
+pragma solidity >=0.4.0 <0.7.0;
 
-    node_settings = Node.Settings(Node.Id(20215, 50065), start_up_time=2)
-    with Node(env, node_settings, logger) as node:
-        node.run_check_test()
+contract Balance {
 
-        contracts = node.compile_contract(code=contract_file_path)
-        test_contract = contracts[0]
-        target_value = 8888
-        test_contract_init_message = node.encode_message(code=test_contract, message=f"constructor({target_value})")
+    function getBalance() public view returns (uint256 balance){
+        return msg.sender.balance;
+    }
 
-        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
-        deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
-                                               fee=10000000, init_message=test_contract_init_message, timeout=5)
+}
+'''
+    contract_file_path = os.path.abspath("contract.sol")
+    with open(contract_file_path, "wt", encoding='utf8') as f:
+        f.write(contract_text)
 
-        call_message = node.encode_message(code=test_contract, message="get()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract, method="get", message=message_result)
-        TEST_CHECK(res['stored_data'] == target_value)
+    node_id = Id(20301, grpc_port=50301)
+    env.start_node(NodeConfig(node_id))
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
+    TEST_CHECK(client.connection_test())
 
-        target_value_2 = 5555
-        call_message_2 = node.encode_message(code=test_contract, message=f"set({target_value_2})")
-        node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                 fee=10000000, amount=0, message=call_message_2, timeout=5)
+    contracts = client.compile_file(code=contract_file_path)
+    test_contract = contracts[0]
 
-        message_result_3 = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                    fee=10000000, amount=0, message=call_message, timeout=5)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
 
-        res = node.decode_message(code=test_contract, method="get", message=message_result_3)
-        TEST_CHECK(res['stored_data'] == target_value_2)
+    deployed_contract_status = client.push_contract(from_address=distributor_address,
+                                                    code=test_contract, amount=0, fee=100000,
+                                                    init_message="")
 
-    return 0
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
 
+    deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
 
-@test_case("get_balance_contract")
-def main(env, logger):
-    contract_file_path = os.path.join(CONTRACTS_FOLDER, "get_balance_contract", "contract.sol")
-    if not os.path.exists(contract_file_path):
-        TEST_CHECK(False, message="Contracts folder was not found")
+    current_balance = client.get_balance(address=distributor_address.address)
+    gas_for_call = 10000000
 
-    node_settings = Node.Settings(Node.Id(20216, 50066), start_up_time=2)
-    with Node(env, node_settings, logger) as node:
-        node.run_check_test()
+    call_message = client.encode_message(code=test_contract, message="getBalance()")
+    contract_address = deployed_contract_status.data
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=gas_for_call,
+                                              amount=0, message=call_message)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
-        contracts = node.compile_contract(code=contract_file_path)
-        test_contract = contracts[0]
-        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
-        deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
-                                               fee=10000000, init_message="", timeout=5)
-
-        current_balance = node.get_balance(address=distributor_address)
-        gas_for_call = 10000000
-
-        call_message = node.encode_message(code=test_contract, message="getBalance()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=gas_for_call, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract, method="getBalance", message=message_result)
-        TEST_CHECK((res["balance"] + gas_for_call) == current_balance)
+    contract_data_message = message_call_status.data
+    res = client.decode_message(code=test_contract, message=contract_data_message)
+    TEST_CHECK(res['balance'] + gas_for_call == current_balance)
 
     return 0
-
 
 @test_case("address_send_contract")
-def main(env, logger):
-    contract_file_path = os.path.join(CONTRACTS_FOLDER, "address_send_contract", "contract.sol")
-    if not os.path.exists(contract_file_path):
-        TEST_CHECK(False, message="Contracts folder was not found")
+def main(env: Env) -> int:
+    contract_text = '''
+pragma solidity >=0.4.0 <0.7.0;
 
-    node_settings = Node.Settings(Node.Id(20217, 50067), start_up_time=2)
-    with Node(env, node_settings, logger) as node:
-        node.run_check_test()
+contract AddressSend {
+    uint256 coins_store;
+    address payable minter;
 
-        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
-        new_test_account = node.create_new_address(keys_path="account_1")
+    constructor() public {
+        minter = msg.sender;
+    }
 
-        initializing_amount = 100000000
-        TEST_CHECK(
-            node.transfer(to_address=new_test_account, from_address=distributor_address, amount=initializing_amount,
-                          fee=0))
+    function testAddressSend(uint256 amount) public payable returns(bool is_success) {
+        coins_store += msg.value;
+        if(coins_store >= amount){
+            bool result = minter.send(coins_store);
+            if(result){
+                coins_store = 0;
+            }
+	    return result;
+        }
+        return true;
+    }
 
-        node.run_check_balance(new_test_account, initializing_amount)
+}
+'''
+    contract_file_path = os.path.abspath("contract.sol")
+    with open(contract_file_path, "wt", encoding='utf8') as f:
+        f.write(contract_text)
 
-        contracts = node.compile_contract(code=contract_file_path)
-        test_contract = contracts[0]
+    node_id = Id(20217, grpc_port=50067)
+    env.start_node(NodeConfig(node_id))
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
+    TEST_CHECK(client.connection_test())
 
-        deployed_contract = node.push_contract(from_address=new_test_account, code=test_contract, amount=0,
-                                               fee=100000, init_message="", timeout=5)
+    contracts = client.compile_file(code=contract_file_path)
+    test_contract = contracts[0]
 
-        current_balance = node.get_balance(address=new_test_account)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
 
-        gas_for_call = 10000000
-        amount_for_call = 5000000
-        call_message = node.encode_message(code=test_contract, message=f"testAddressSend({amount_for_call})")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=gas_for_call, amount=amount_for_call, message=call_message,
-                                                  timeout=5)
-        res = node.decode_message(code=test_contract, method="testAddressSend", message=message_result)
-        TEST_CHECK(res["is_success"])
+    deployed_contract_status = client.push_contract(from_address=distributor_address,
+                                                    code=test_contract, amount=0, fee=100000,
+                                                    init_message="")
 
-        new_balance = node.get_balance(address=new_test_account)
-        TEST_CHECK(new_balance == (current_balance + amount_for_call))
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
+
+    deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
+
+    current_balance = client.get_balance(address=distributor_address.address)
+
+    new_test_account = client.generate_keys(keys_path="account_1")
+
+    initializing_amount = 100000000
+    transaction = client.transfer(to_address=new_test_account.address, amount=initializing_amount,
+                         from_address=distributor_address, fee=0)
+    TEST_CHECK_EQUAL(transaction.status_code, TransactionStatusCode.PENDING)
+    stat = client.get_transaction_status(tx_hash=transaction.tx_hash)
+    TEST_CHECK_EQUAL(stat.status_code, TransactionStatusCode.SUCCESS)
+
+    TEST_CHECK_EQUAL(client.get_balance(address=new_test_account.address), initializing_amount)
+
+    contracts = client.compile_file(code=contract_file_path)
+    test_contract = contracts[0]
+
+    deployed_contract_status = client.push_contract(from_address=new_test_account,
+                                                    code=test_contract, amount=0, fee=100000,
+                                                    init_message="", timeout=5)
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
+    deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
+
+    current_balance = client.get_balance(address=new_test_account.address)
+
+    gas_for_call = 10000000
+    amount_for_call = 5000000
+
+    call_message = client.encode_message(code=test_contract, message=f"testAddressSend({amount_for_call})")
+    contract_address = deployed_contract_status.data
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=gas_for_call,
+                                              amount=amount_for_call, message=call_message, timeout=5)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+    res = client.decode_message(code=test_contract, message=message_call_status.data)
+    TEST_CHECK(res['is_success'])
+
+    TEST_CHECK_EQUAL(client.get_balance(address=new_test_account.address, timeout=2, wait=1),
+                    current_balance + amount_for_call)
 
     return 0
-
 
 @test_case("get_previous_block_contract")
-def main(env, logger):
-    contract_file_path = os.path.join(CONTRACTS_FOLDER, "get_previous_block_contract", "contract.sol")
-    if not os.path.exists(contract_file_path):
-        TEST_CHECK(False, message="Contracts folder was not found")
+def main(env: Env) -> int:
+    contract_text = '''
+pragma solidity >=0.4.0 <0.7.0;
 
-    node_settings = Node.Settings(Node.Id(20218, 50068), start_up_time=2)
-    with Node(env, node_settings, logger) as node:
-        node.run_check_test()
+contract GetPreviousBlock {
 
-        contracts = node.compile_contract(code=contract_file_path)
-        test_contract = contracts[0]
-        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
-        deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=0,
-                                               fee=10000000, init_message="", timeout=5)
+    function get() public view returns (bytes32 previous_block_hash) {
+        return blockhash(block.number - 1);
+    }
 
-        current_block_hash = node.get_info()
+}
+'''
+    contract_file_path = os.path.abspath("contract.sol")
+    with open(contract_file_path, "wt", encoding='utf8') as f:
+        f.write(contract_text)
 
-        call_message = node.encode_message(code=test_contract, message="get()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract, method="get", message=message_result)
-        TEST_CHECK(res["previous_block_hash"] == current_block_hash)
+    node_id = Id(20218, grpc_port=50068)
+    env.start_node(NodeConfig(node_id))
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
+    TEST_CHECK(client.connection_test())
 
-        current_block_hash = node.get_info()
+    contracts = client.compile_file(code=contract_file_path)
+    test_contract = contracts[0]
 
-        call_message = node.encode_message(code=test_contract, message="get()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract, method="get", message=message_result)
-        TEST_CHECK(res["previous_block_hash"] == current_block_hash)
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
+    deployed_contract_status = client.push_contract(from_address=distributor_address,
+                                                    code=test_contract, amount=0, fee=10000000,
+                                                    init_message="")
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
+    deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
 
-        call_message = node.encode_message(code=test_contract, message="get()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract, method="get", message=message_result)
-        TEST_CHECK(res["previous_block_hash"] != current_block_hash)
+
+    for i in range(0,1):
+      current_block_hash = client.node_info().top_block_hash
+      contract_address = deployed_contract_status.data
+      call_message = client.encode_message(code=test_contract, message="get()")
+      message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=10000000,
+                                              amount=0, message=call_message, timeout=5)
+      TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+      message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+      TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+      contract_data_message = message_call_status.data
+      res = client.decode_message(code=test_contract, message=contract_data_message)
+      TEST_CHECK(res["previous_block_hash"] == current_block_hash)
+
+    call_message = client.encode_message(code=test_contract, message="get()")
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=10000000,
+                                              amount=0, message=call_message, timeout=5)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+    contract_data_message = message_call_status.data
+    res = client.decode_message(code=test_contract, message=contract_data_message)
+    TEST_CHECK(res["previous_block_hash"] != current_block_hash)
 
     return 0
-
 
 @test_case("selfdestruct_contract")
-def main(env, logger):
-    contract_file_path = os.path.join(CONTRACTS_FOLDER, "selfdestruct_contract", "contract.sol")
-    if not os.path.exists(contract_file_path):
-        TEST_CHECK(False, message="Contracts folder was not found")
+def main(env: Env) -> int:
+    contract_text = '''
+pragma solidity >=0.4.0 <0.7.0;
 
-    node_settings = Node.Settings(Node.Id(20219, 50069), start_up_time=2)
-    with Node(env, node_settings, logger) as node:
-        node.run_check_test()
+contract PayMe {
+    uint256 coins_store;
+    address payable target;
 
-        new_account = node.create_new_address(keys_path="new_account")
-        contracts = node.compile_contract(code=contract_file_path)
-        test_contract = contracts[0]
-        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
-        init_message = node.encode_message(code=test_contract, message=f"constructor(Address({new_account.address}))")
-        deployed_contract = node.push_contract(from_address=distributor_address, code=test_contract, amount=50,
-                                               fee=10000000, init_message=init_message, timeout=7)
-        amount_for_call = 100000
+    constructor(address payable addr) public payable{
+        coins_store = msg.value;
+        target = addr;
+    }
 
-        pay_message = node.encode_message(code=test_contract, message="payMe()")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=amount_for_call, message=pay_message, timeout=7)
-        res = node.decode_message(code=test_contract, method="payMe", message=message_result)
-        TEST_CHECK(res["current_balance"] == node.get_balance(address=deployed_contract))
+    function payMe() public payable returns(uint256 current_balance){
+        coins_store += msg.value;
+        return coins_store;
+    }
 
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=amount_for_call, message=pay_message, timeout=7)
-        res = node.decode_message(code=test_contract, method="payMe", message=message_result)
-        TEST_CHECK(res["current_balance"] == node.get_balance(address=deployed_contract))
+    function initDelete() public {
+        selfdestruct(target);
+    }
 
-        TEST_CHECK(0 == node.get_balance(address=new_account))
-        last_balance = node.get_balance(address=deployed_contract)
-        delete_message = node.encode_message(code=test_contract, message="initDelete()")
-        node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                 fee=10000000, amount=0, message=delete_message, timeout=7)
-        TEST_CHECK(last_balance == node.get_balance(address=new_account))
-        TEST_CHECK(0 == node.get_balance(address=deployed_contract))
+}
+'''
+    contract_file_path = os.path.abspath("contract.sol")
+    with open(contract_file_path, "wt", encoding='utf8') as f:
+        f.write(contract_text)
 
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract,
-                                                  fee=10000000, amount=1, message=pay_message, timeout=7)
-        TEST_CHECK(not message_result.message)
+    node_id = Id(20219, grpc_port=50069)
+    env.start_node(NodeConfig(node_id))
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
+    TEST_CHECK(client.connection_test())
+
+    contracts = client.compile_file(code=contract_file_path)
+    test_contract = contracts[0]
+
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
+    new_account = client.generate_keys(keys_path="new_account")
+    init_message = client.encode_message(code=test_contract, message=f"constructor(Address({new_account.address}))")
+    deployed_contract_status = client.push_contract(from_address=distributor_address,
+                                                    code=test_contract, amount=50, fee=10000000,
+                                                    init_message=init_message, timeout=7)
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.PENDING)
+    deployed_contract_status = client.get_transaction_status(tx_hash=deployed_contract_status.tx_hash)
+    TEST_CHECK_EQUAL(deployed_contract_status.status_code, TransactionStatusCode.SUCCESS)
+
+    amount_for_call = 100000
+
+    pay_message = client.encode_message(code=test_contract, message="payMe()")
+
+    contract_address = deployed_contract_status.data
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=10000000,
+                                              amount=amount_for_call, message=pay_message, timeout=7)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+    contract_data_message = message_call_status.data
+    res = client.decode_message(code=test_contract, message=contract_data_message)
+    TEST_CHECK(client.get_balance(address=contract_address, timeout=2, wait=1) == res["current_balance"])
+
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=10000000,
+                                              amount=amount_for_call, message=pay_message, timeout=7)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+    contract_data_message = message_call_status.data
+    res = client.decode_message(code=test_contract, message=contract_data_message)
+    TEST_CHECK(client.get_balance(address=contract_address, timeout=2, wait=1) ==
+                    res["current_balance"])
+    TEST_CHECK(0 == client.get_balance(address=new_account.address, timeout=2, wait=1))
+    last_balance = client.get_balance(address=contract_address)
+    delete_message = client.encode_message(code=test_contract, message="initDelete()")
+
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=10000000,
+                                              amount=0, message=delete_message, timeout=7)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+    TEST_CHECK(last_balance == client.get_balance(address=new_account.address))
+    TEST_CHECK(0 == client.get_balance(address=contract_address))
+
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=contract_address, fee=10000000,
+                                              amount=1, message=pay_message, timeout=7)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
 
     return 0
 
-
 @test_case("call_other_contract")
-def main(env, logger):
-    contract_a_file_path = os.path.join(CONTRACTS_FOLDER, "call_other_contract", "a.sol")
-    if not os.path.exists(contract_a_file_path):
-        TEST_CHECK(False, message="Contracts folder was not found")
+def main(env: Env) -> int:
+    contract_a_text = '''
+pragma solidity >=0.4.0 <0.7.0;
 
-    contract_b_file_path = os.path.join(CONTRACTS_FOLDER, "call_other_contract", "b.sol")
-    if not os.path.exists(contract_b_file_path):
-        TEST_CHECK(False, message="Contracts folder was not found")
+import "./abstract_a.sol";
 
-    node_settings = Node.Settings(Node.Id(20216, 50066), start_up_time=2)
-    with Node(env, node_settings, logger) as node:
-        node.run_check_test()
+contract A is AbstractA {
+    function sum(uint arg1, uint arg2) external override returns(uint) {
+        return arg1 + arg2;
+    }
+}
+'''
+    contract_b_text = '''
+pragma solidity >=0.4.0 <0.7.0;
 
-        contracts_a = node.compile_contract(code=contract_a_file_path)
-        test_contract_a = "A"
+import "./abstract_a.sol";
 
-        contracts_b = node.compile_contract(code=contract_b_file_path)
-        test_contract_b = "B"
+contract B {
+    function doYourThing(address addressOfA, uint arg1, uint arg2) public returns (uint result) {
+        AbstractA my_a = AbstractA(addressOfA);
+        return my_a.sum(arg1, arg2);
+    }
+}
+'''
+    contract_abstract_a_text = '''
+pragma solidity >=0.4.0 <0.7.0;
 
-        distributor_address = node.load_address(keys_path=Node.DISTRIBUTOR_ADDRESS_PATH)
-        deployed_contract_a = node.push_contract(from_address=distributor_address, code=test_contract_a, amount=0,
-                                                 fee=10000000, init_message="", timeout=5)
+interface AbstractA {
+    function sum(uint arg1, uint arg2) external returns(uint);
+}
+'''
+    contract_a_file_path = os.path.abspath("a.sol")
+    with open(contract_a_file_path, "wt", encoding='utf8') as f:
+        f.write(contract_a_text)
+    contract_b_file_path = os.path.abspath("b.sol")
+    with open(contract_b_file_path, "wt", encoding='utf8') as f:
+        f.write(contract_b_text)
+    contract_abstract_a_file_path = os.path.abspath("abstract_a.sol")
+    with open(contract_abstract_a_file_path, "wt", encoding='utf8') as f:
+        f.write(contract_abstract_a_text)
 
-        deployed_contract_b = node.push_contract(from_address=distributor_address, code=test_contract_b, amount=0,
-                                                 fee=10000000, init_message="", timeout=5)
+    node_id = Id(20216, grpc_port=50066)
+    env.start_node(NodeConfig(node_id))
+    client = env.get_client(ClientType.LEGACY_GRPC, node_id)
+    TEST_CHECK(client.connection_test())
 
-        arg1 = 5
-        arg2 = 6
-        call_message = node.encode_message(code=test_contract_b,
-                                           message=f"doYourThing(Address({deployed_contract_a.address}), {arg1}, {arg2})")
-        message_result = node.message_to_contract(from_address=distributor_address, to_address=deployed_contract_b,
-                                                  fee=10000000, amount=0, message=call_message, timeout=5)
-        res = node.decode_message(code=test_contract_b, method="doYourThing", message=message_result)
-        TEST_CHECK(res['result'] == (arg1 + arg2))
+    contracts_a = client.compile_file(code=contract_a_file_path)
+    test_contract_a = "A"
+
+    contracts_b = client.compile_file(code=contract_b_file_path)
+    test_contract_b = "B"
+
+    distributor_address = client.load_address(keys_path=get_distributor_address_path())
+    deployed_contract_a_status = client.push_contract(from_address=distributor_address,
+                                                    code=test_contract_a, amount=0, fee=10000000,
+                                                    init_message="", timeout=5)
+    TEST_CHECK_EQUAL(deployed_contract_a_status.status_code, TransactionStatusCode.PENDING)
+    deployed_contract_a_status = client.get_transaction_status(tx_hash=deployed_contract_a_status.tx_hash)
+    TEST_CHECK_EQUAL(deployed_contract_a_status.status_code, TransactionStatusCode.SUCCESS)
+
+    deployed_contract_b_status = client.push_contract(from_address=distributor_address,
+                                                    code=test_contract_b, amount=0, fee=10000000,
+                                                    init_message="", timeout=5)
+    TEST_CHECK_EQUAL(deployed_contract_b_status.status_code, TransactionStatusCode.PENDING)
+    deployed_contract_b_status = client.get_transaction_status(tx_hash=deployed_contract_b_status.tx_hash)
+    TEST_CHECK_EQUAL(deployed_contract_b_status.status_code, TransactionStatusCode.SUCCESS)
+
+    arg1 = 5
+    arg2 = 6
+    call_message = client.encode_message(code=test_contract_b,
+                      message=f"doYourThing(Address({deployed_contract_a_status.data}), {arg1}, {arg2})")
+
+    message_call_status = client.message_call(from_address=distributor_address,
+                                              to_address=deployed_contract_b_status.data, fee=10000000,
+                                              amount=0, message=call_message, timeout=5)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.PENDING)
+    message_call_status = client.get_transaction_status(tx_hash=message_call_status.tx_hash)
+    TEST_CHECK_EQUAL(message_call_status.status_code, TransactionStatusCode.SUCCESS)
+
+    contract_data_message = message_call_status.data
+    res = client.decode_message(code=test_contract_b, message=contract_data_message)
+    TEST_CHECK(res['result'] == (arg1 + arg2))
 
     return 0

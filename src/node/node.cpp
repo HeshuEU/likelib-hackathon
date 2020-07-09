@@ -11,7 +11,7 @@ Node::Node(const base::PropertyTree& config)
     _miner = std::make_unique<Miner>(_config, std::bind(&Node::onBlockMine, this, std::placeholders::_1));
 
     _core.subscribeToNewPendingTransaction(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
-    _core.subscribeToBlockAddition(std::bind(&Node::onNewBlock, this, std::placeholders::_1, std::placeholders::_2));
+    _core.subscribeToBlockAddition(std::bind(&Node::onNewBlock, this, std::placeholders::_1));
 }
 
 
@@ -31,25 +31,22 @@ void Node::run()
 }
 
 
-void Node::onBlockMine(lk::Block&& block)
+void Node::onBlockMine(lk::ImmutableBlock&& block)
 {
-    _core.tryAddBlock(block);
-}
-
-
-base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> Node::getMiningComplexity()
-{
-    base::FixedBytes<impl::CommonData::COMPLEXITY_SIZE> complexity;
-    complexity[2] = 0xbf;
-    return complexity;
+    LOG_DEBUG << "Block " << base::Sha256::compute(base::toBytes(block)) << " mined";
+    [[maybe_unused]] auto r = _core.tryAddMinedBlock(block);
+    if (r != lk::Blockchain::AdditionResult::ADDED) {
+        LOG_DEBUG << "Block " << base::Sha256::compute(base::toBytes(block)) << " addition resulted in error code "
+                  << static_cast<int>(r);
+    }
 }
 
 
 void Node::onNewTransactionReceived(const lk::Transaction&)
 {
-    lk::Block block = _core.getBlockTemplate();
+    auto [block, complexity] = _core.getMiningData();
     if (!block.getTransactions().isEmpty()) {
-        _miner->findNonce(_core.getBlockTemplate(), getMiningComplexity());
+        _miner->findNonce(block, complexity);
     }
     else {
         _miner->dropJob();
@@ -57,11 +54,11 @@ void Node::onNewTransactionReceived(const lk::Transaction&)
 }
 
 
-void Node::onNewBlock(const base::Sha256& block_hash, const lk::Block&)
+void Node::onNewBlock(const lk::ImmutableBlock&)
 {
-    lk::Block block = _core.getBlockTemplate();
+    auto [block, complexity] = _core.getMiningData();
     if (!block.getTransactions().isEmpty()) {
-        _miner->findNonce(_core.getBlockTemplate(), getMiningComplexity());
+        _miner->findNonce(block, complexity);
     }
     else {
         _miner->dropJob();

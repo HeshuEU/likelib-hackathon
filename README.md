@@ -1,5 +1,17 @@
 # LikeLib 2.0
 
+
+## Build and run node
+1. Run: `sudo doc/prepare_build.sh`. It will install cmake, g++, conan and its dependencies wait SUCCESS.
+2. To generate CMake files use
+`cmake -DCMAKE_BUILD_TYPE=Release -S <path to project root folder> -B <path to exists build folder>` command.
+3. To build project go to build folder and use `make` command.
+4. For start node need config JSON file (default config.json in executing folder). File format look below.
+5. Run `node` executable (after build you can find `node` in `bin` folder).
+Keys for the node will be created automatically. If you want to use already existing ones - put
+your key in `node` executable folder with the name `lkkey` or change `keys_dir` value in config file.
+
+### config.json
 To run the node, a configuration file must be specified for it.
 By default it is config.json file of the following format:
 
@@ -44,10 +56,102 @@ if file not exists generate new key pair and save by this path.
 * `database.clean` - if true - cleans database; otherwise does nothing.
 
 
-## Build
-1. Run: `$ sudo .doc/prepare_build.sh`. It will install conan and its dependencies.
-2. To generate CMake files use `cmake` command. 
-3. To build project use `make` command.
-4. Go to the bin folder and create `config.json` with the node settings in it.
-5. Run `node` executable. Keys for the node will be created automatically. If you want to use 
-already existing ones - put your key in `node` executable folder with the name `lkkey`.
+## Client
+
+For using client read instructions:
+
+Allowed commands:
+  client call_contract   [ --help ]    create message to call smart contract
+    --help                Print help message
+    --host arg            address of host
+    --to arg              address of "to" contract
+    --amount arg          amount count
+    --fee arg             fee count
+    --keys arg            path to a directory with keys
+    --message arg         message for call smart contract
+    --http                is set enable http client call
+
+  client compile_contract   [ --help ]    compile smart contract
+    --help                Print help message
+    --code arg            path to a Solidity code
+
+  client connection_test   [ --help ]    test RPC connection
+    --help                Print help message
+    --host arg            address of host
+    --http                is set enable http client call
+
+  client decode_message   [ --help ]    decode smart contract message
+    --help                Print help message
+    --code arg            path to folder with compiled Solidity code
+    --method arg          call code
+    --message arg         data to decode
+
+  client encode_message   [ --help ]    encode smart contract message
+    --help                Print help message
+    --code arg            path to folder with compiled Solidity code
+    --message arg         call code
+
+
+  client generate_keys   [ --help ]    generate a pair of keys
+    --help                Print help message
+    --keys arg            directory in which a key pair will be generated
+
+  client get_account_info   [ --help ]    use for get account info from remote by account address
+    --help                Print help message
+    --host arg            address of host
+    --address arg         address of target account
+    --http                is set enable http client call
+
+  client get_balance   [ --help ]    use for get balance from remote by account address
+    --help                Print help message
+    --host arg            address of host
+    --address arg         address of target account
+    --http                is set enable http client call
+
+  client get_block   [ --help ]    get block information
+    --help                Print help message
+    --host arg            address of host
+    --hash arg            block hash hex
+    --number arg          block number
+    --http                is set enable http client call
+
+  client get_transaction   [ --help ]    get transaction information
+    --help                Print help message
+    --host arg            address of host
+    --hash arg            transaction hash hex
+    --http                is set enable http client call
+
+  client get_transaction_status   [ --help ]    get transaction result information
+    --help                Print help message
+    --host arg            address of host
+    --hash arg            transaction hash hex
+    --http                is set enable http client call
+
+  client keys_info   [ --help ]    show info on keys
+    --help                Print help message
+    --keys arg            directory with a key pair
+
+  client node_info   [ --help ]    get LK info
+    --help                Print help message
+    --host arg            address of host
+    --http                is set enable http client call
+
+  client push_contract   [ --help ]    deploy a smart contract
+    --help                Print help message
+    --host arg            address of host
+    --amount arg          amount of Lk to transfer
+    --fee arg             fee count
+    --keys arg            path to a directory with keys
+    --message arg         message for initialize smart contract
+    --code arg            compiled contract code folder
+    --http                is set enable http client call
+
+  client transfer   [ --help ]    use transfer balance from one address to another address
+    --help                Print help message
+    --host arg            address of host
+    --to arg              address of recipient account
+    --amount arg          amount count
+    --keys arg            path to a directory with keys
+    --fee arg             fee count
+    --http                is set enable http client call
+

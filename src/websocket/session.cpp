@@ -70,7 +70,7 @@ void WebSocketSession::on_connection_received(base::PropertyTree&& query)
         command_args = query.getSubTree("args");
     }
     catch (const base::Error& e) {
-        LOG_ERROR << "deserialization error" << e;
+        LOG_ERROR << "deserialization error" << e.what();
         return sendErrorMessage(query_id, "deserialization error");
     }
 
@@ -93,7 +93,7 @@ void WebSocketSession::on_connection_received(base::PropertyTree&& query)
         _request_callback(_session_id, query_id, command_id, std::move(command_args));
     }
     catch (const base::Error& error) {
-        LOG_ERROR << "request callback execution error" << error;
+        LOG_ERROR << "request callback execution error" << error.what();
     }
 }
 

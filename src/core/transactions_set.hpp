@@ -13,6 +13,9 @@ namespace lk
 class TransactionsSet
 {
   public:
+    //=================
+    TransactionsSet() = default;
+    //=================
     void add(const Transaction& tx);
     [[nodiscard]] bool find(const Transaction& tx) const;
     [[nodiscard]] std::optional<Transaction> find(const base::Sha256& hash) const;
@@ -30,6 +33,8 @@ class TransactionsSet
 
     bool operator==(const TransactionsSet& other) const;
     bool operator!=(const TransactionsSet& other) const;
+    //=================
+    void selectBestByFee(std::size_t n);
     //=================
     void serialize(base::SerializationOArchive& oa) const;
     static TransactionsSet deserialize(base::SerializationIArchive& ia);

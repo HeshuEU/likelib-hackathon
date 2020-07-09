@@ -125,4 +125,12 @@ Rating& Rating::connectionRefused()
     return *this;
 }
 
+
+Rating& Rating::cannotAddToPool()
+{
+    _data.value -= 10;
+    dbUpdate();
+    return *this;
+}
+
 }
