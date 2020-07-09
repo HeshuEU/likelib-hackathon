@@ -12,7 +12,6 @@ class Node:
         self.config_file_path = config_file_path
         self.node_file_path = node_file_path
         self.logger = logger
-
         self.process = None
         self.is_running = False
         self.pid = -1

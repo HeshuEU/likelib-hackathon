@@ -3,7 +3,6 @@ import time
 import hashlib
 import base64
 import base58
-import requests
 import datetime
 import coincurve
 import subprocess
@@ -11,10 +10,88 @@ import binascii
 import json
 import copy
 import web3
+import asyncio
+import websockets
+import threading
 
 from .base import Logger, LogicException, TimeOutException, InvalidArgumentsException, BadResultException
-from .client import BaseClient, NodeInfo, Keys, AccountType, AccountInfo, TransactionStatusCode, TransactionType, \
-    TransactionStatus, Transaction, Block
+
+
+class NodeInfo:
+    def __init__(self, top_block_hash: str, top_block_number: int):
+        self.top_block_hash = top_block_hash
+        self.top_block_number = top_block_number
+
+
+class Keys:
+    def __init__(self, keys_path: str, address: str):
+        self.keys_path = keys_path
+        self.address = address
+
+
+class AccountType(enum.Enum):
+    CLIENT = "Client"
+    CONTRACT = "Contract"
+
+
+class AccountInfo:
+    def __init__(self, account_type: AccountType, address: str, balance: int, nonce: int, tx_hashes: list):
+        self.account_type = account_type
+        self.address = address
+        self.balance = balance
+        self.nonce = nonce
+        self.tx_hashes = tx_hashes
+
+
+class TransactionStatusCode(enum.Enum):
+    SUCCESS = "success"
+    PENDING = "pending"
+    BAD_QUERY_FORM = "bad_query_form"
+    BAD_SIGN = "bad_sign"
+    NOT_ENOUGH_BALANCE = "not_enough_balance"
+    REVERT = "revert"
+    FAILED = "failed"
+
+
+class TransactionType(enum.Enum):
+    TRANSFER = "transfer"
+    CONTRACT_CREATION = "contract_creation"
+    CONTRACT_CALL = "contract_call"
+    NOT_CLASSIFIED = "can_not_be_classified"
+
+
+class TransactionStatus:
+    def __init__(self, action_type: TransactionType, status_code: TransactionStatusCode, tx_hash: str, fee: int,
+                 data: str):
+        self.action_type = action_type
+        self.status_code = status_code
+        self.tx_hash = tx_hash
+        self.fee = fee
+        self.data = data
+
+
+class Transaction:
+    def __init__(self, tx_type: TransactionType, from_address: str, to_address: str, value: int, fee: int,
+                 timestamp: int, data: str, verified: bool):
+        self.tx_type = tx_type
+        self.from_address = from_address
+        self.to_address = to_address
+        self.value = value
+        self.fee = fee
+        self.timestamp = timestamp
+        self.data = data
+        self.verified = verified
+
+
+class Block:
+    def __init__(self, depth: int, nonce: int, timestamp: int, coinbase: str, previous_block_hash: str,
+                 transactions: list):
+        self.nonce = nonce
+        self.depth = depth
+        self.timestamp = timestamp
+        self.coinbase = coinbase
+        self.previous_block_hash = previous_block_hash
+        self.transactions = transactions
 
 
 def _base64_to_hex(input_str: str) -> str:
@@ -154,7 +231,26 @@ MINIMAL_TRANSACTION_TIMEOUT = 20
 MINIMAL_CONTRACT_TIMEOUT = 20
 
 
-class Client(BaseClient):
+# необходимо два потока основной и принимающий
+#
+
+
+# async def hello():
+#     uri = "ws://localhost:8765"
+#     async with websockets.connect(uri) as websocket:
+#         name = input("What's your name? ")
+#
+#         await websocket.send(name)
+#         print(f"> {name}")
+#
+#         greeting = await websocket.recv()
+#         print(f"< {greeting}")
+#
+#
+# asyncio.get_event_loop().run_until_complete(hello())
+
+
+class Client:
     KEY_FILE_NAME = "lkkey"
     CODE_FILE_NAME = "compiled_code.bin"
     METADATA_FILE_NAME = "metadata.json"
@@ -163,8 +259,9 @@ class Client(BaseClient):
     def __init__(self, *, name: str, work_dir: str, connection_address: str, logger: Logger):
         self.name = name
         self.work_dir = work_dir
-        self.connection_address = "http://" + connection_address
+        self.connection_address = "ws://" + connection_address
         self.logger = logger
+        self.websocket = websockets.connect(self.connection_address)
 
     @staticmethod
     def __load_key(key_folder: str) -> coincurve.PrivateKey:
@@ -469,10 +566,10 @@ class Client(BaseClient):
             fn_end = fn_start + len(ADDRESS_FN)
             end = call_string.find(')', fn_end)
             left_part = call_string[0: fn_start]
-            right_part = call_string[end+1:]
+            right_part = call_string[end + 1:]
             input_data = call_string[fn_end: end]
             converted_data = base58.b58decode(input_data)
-            converted_address = f'"{(bytes(32-len(converted_data)) + converted_data).hex()}"'
+            converted_address = f'"{(bytes(32 - len(converted_data)) + converted_data).hex()}"'
             call_string = left_part + converted_address + right_part
         argument_data = f"[{call_string}]"
         arguments = json.loads(argument_data)
