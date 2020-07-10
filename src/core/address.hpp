@@ -46,3 +46,14 @@ class Address
 std::ostream& operator<<(std::ostream& os, const Address& address);
 
 } // namespace lk
+
+namespace std
+{
+
+template<>
+struct hash<lk::Address>
+{
+    std::size_t operator()(const lk::Address& k) const;
+};
+
+} // namespace std

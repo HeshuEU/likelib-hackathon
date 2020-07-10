@@ -14,7 +14,7 @@
 namespace websocket
 {
 
-boost::asio::ip::tcp::endpoint create_endpoint(const std::string& listening_address);
+boost::asio::ip::tcp::endpoint createEndpoint(const std::string& listening_address);
 
 std::string serializeCommandName(websocket::Command::Id name);
 

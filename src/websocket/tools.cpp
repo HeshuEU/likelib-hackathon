@@ -8,7 +8,7 @@
 namespace websocket
 {
 
-boost::asio::ip::tcp::endpoint create_endpoint(const std::string& listening_address)
+boost::asio::ip::tcp::endpoint createEndpoint(const std::string& listening_address)
 {
     std::size_t i = listening_address.find(':');
     if (i == std::string_view::npos) {
@@ -51,7 +51,7 @@ std::string serializeCommandName(Command::Id name)
         case Command::Name::LAST_BLOCK_INFO:
             return "last_block_info";
         default:
-            RAISE_ERROR(base::InvalidArgument, "Unexpected command name");
+            RAISE_ERROR(base::LogicError, "used unexpected command name");
     }
     ASSERT(false);
 }
@@ -90,6 +90,8 @@ std::string serializeCommandType(websocket::Command::Id command_type)
             return "unsubscribe";
         case Command::Type::SUBSCRIBE:
             return "subscribe";
+        default:
+            RAISE_ERROR(base::LogicError, "used unexpected command type");
     }
     ASSERT(false);
 }

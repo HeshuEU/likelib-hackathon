@@ -53,4 +53,6 @@ void push_contract(std::ostream& output,
 
 void subscribe_last_block_info(websocket::WebSocketClient& client);
 
+void unsubscribe_last_block_info(websocket::WebSocketClient& client);
+
 void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address);

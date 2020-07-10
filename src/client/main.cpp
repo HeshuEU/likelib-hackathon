@@ -112,6 +112,11 @@ void client_process()
       [&web_socket_client]([[maybe_unused]] std::ostream& out) { subscribe_last_block_info(web_socket_client); },
       "get last block info when apeared new block"));
 
+    connected_mode_commands.push_back(root_menu->Insert(
+      "unsubscribe_last_block_info",
+      [&web_socket_client]([[maybe_unused]] std::ostream& out) { unsubscribe_last_block_info(web_socket_client); },
+      "get last block info when apeared new block"));
+
     connected_mode_commands.push_back(
       root_menu->Insert("account_info",
                         [&web_socket_client](std::ostream& out, std::string address_at_base58) {

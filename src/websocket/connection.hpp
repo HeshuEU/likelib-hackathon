@@ -8,44 +8,40 @@
 #include <functional>
 #include <memory>
 
-
 namespace websocket
 {
 
-using ConnectionCloseCallback = std::function<void(void)>;
-using ConnectionReceivedCallback = std::function<void(base::PropertyTree)>;
-
-
 class WebSocketConnection : public std::enable_shared_from_this<WebSocketConnection>
 {
+    using ConnectionCloseCallback = std::function<void(void)>;
+    using ProcessRequestCallback = std::function<void(base::PropertyTree)>;
+
   public:
     explicit WebSocketConnection(boost::asio::ip::tcp::socket&& socket,
-                                 ConnectionReceivedCallback request_callback,
-                                 ConnectionCloseCallback close_callback);
-    ~WebSocketConnection();
+                                 ProcessRequestCallback requestCallback,
+                                 ConnectionCloseCallback closeCallback);
+    ~WebSocketConnection() noexcept;
 
     void accept();
     void write(base::PropertyTree&& response);
     void close();
 
   private:
-    boost::asio::ip::tcp::endpoint _connected_endpoint;
-    boost::beast::websocket::stream<boost::beast::tcp_stream> _web_socket;
+    boost::asio::ip::tcp::endpoint _connectedEndpoint;
+    boost::beast::websocket::stream<boost::beast::tcp_stream> _websocket;
     bool _is_ready;
 
-    boost::beast::flat_buffer _read_buffer;
+    boost::beast::flat_buffer _readBuffer;
 
-    ConnectionReceivedCallback _request_callback;
-    ConnectionCloseCallback _close_callback;
+    ProcessRequestCallback _process;
+    ConnectionCloseCallback _closed;
 
-    void on_accept(boost::beast::error_code ec);
+    void onAccept(boost::beast::error_code ec);
 
-    void do_read();
-    void on_read(boost::beast::error_code ec, std::size_t bytes_transferred);
+    void doRead();
+    void onRead(boost::beast::error_code ec, std::size_t bytesTransferred);
 
-    void on_write(boost::beast::error_code ec, std::size_t bytes_transferred);
-
-    void do_close();
+    void doClose() noexcept;
 };
 
 }

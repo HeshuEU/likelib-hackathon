@@ -15,43 +15,41 @@ namespace websocket
 
 class WebSocketClient
 {
-  public:
     using ReceiveMessageCallback = std::function<void(Command::Id, base::PropertyTree)>;
     using CloseCallback = std::function<void(void)>;
 
+  public:
     explicit WebSocketClient(boost::asio::io_context& ioc,
-                             ReceiveMessageCallback receive_callback,
-                             CloseCallback close_callback = {});
-    ~WebSocketClient();
+                             ReceiveMessageCallback receiveData,
+                             CloseCallback socketClosed = {});
+    ~WebSocketClient() noexcept;
 
     bool connect(const std::string& host);
-    void disconnect();
+    void disconnect() noexcept;
 
-    void send(Command::Id command_id, const base::PropertyTree& args);
+    void send(Command::Id commandId, const base::PropertyTree& args);
 
   private:
     boost::asio::ip::tcp::resolver _resolver;
-    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> _web_socket;
+    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> _websocket;
     bool _ready;
 
-    boost::beast::flat_buffer _read_buffer;
+    boost::beast::flat_buffer _readBuffer;
 
-    ReceiveMessageCallback _receive_callback;
-    CloseCallback _close_callback;
+    ReceiveMessageCallback _receiveCallback;
+    CloseCallback _closeCallback;
 
-    QueryId _last_query_id;
-    std::unordered_map<QueryId, Command::Id> _current_queries;
+    QueryId _lastGivenQueryId;
+    std::unordered_map<QueryId, Command::Id> _currentQueries;
 
-    void frame_control_callback(boost::beast::websocket::frame_type kind, boost::string_view payload);
+    void frameControl(boost::beast::websocket::frame_type kind, boost::string_view payload) noexcept;
 
-    void close(boost::beast::websocket::close_code reason);
+    void close(boost::beast::websocket::close_code reason) noexcept;
 
-    void on_write(boost::beast::error_code ec, std::size_t bytes_transferred);
+    void doRead();
+    void onRead(boost::beast::error_code ec, std::size_t bytesTransferred);
 
-    void do_read();
-    void on_read(boost::beast::error_code ec, std::size_t bytes_transferred);
-
-    QueryId registerNewQuery(Command::Id command_id);
+    QueryId registerNewQuery(Command::Id commandId);
 };
 
 }

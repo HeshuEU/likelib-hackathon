@@ -10,14 +10,14 @@
 namespace websocket
 {
 
-WebSocketAcceptor::WebSocketAcceptor(const base::PropertyTree& config, ConnectionRegistration registration)
+WebSocketAcceptor::WebSocketAcceptor(const base::PropertyTree& config, SocketRegistration registration)
   : _config{ config }
-  , _connection_registration{ std::move(registration) }
+  , _connectionRegistration{ std::move(registration) }
   , _io_context{}
-  , _endpoint{ create_endpoint(_config.get<std::string>("websocket.listen_addr")) }
+  , _endpoint{ createEndpoint(_config.get<std::string>("websocket.listen_addr")) }
   , _acceptor{ _io_context }
 {
-    ASSERT(_connection_registration);
+    ASSERT(_connectionRegistration);
 
     boost::beast::error_code ec;
 
@@ -47,7 +47,7 @@ WebSocketAcceptor::WebSocketAcceptor(const base::PropertyTree& config, Connectio
 }
 
 
-WebSocketAcceptor::~WebSocketAcceptor()
+WebSocketAcceptor::~WebSocketAcceptor() noexcept
 {
     stop();
 }
@@ -56,15 +56,23 @@ WebSocketAcceptor::~WebSocketAcceptor()
 void WebSocketAcceptor::run()
 {
     accept();
-    _network_thread = boost::thread(boost::bind(&WebSocketAcceptor::networkThreadWorkerFunction, this));
+    _inputNetworkThread = boost::thread(boost::bind(&WebSocketAcceptor::networkThreadWorkerFunction, this));
 }
 
 
-void WebSocketAcceptor::stop()
+void WebSocketAcceptor::stop() noexcept
 {
-    if (_network_thread.joinable()) {
-        _io_context.stop();
-        _network_thread.join();
+    try {
+        if (_inputNetworkThread.joinable()) {
+            _io_context.stop();
+            _inputNetworkThread.join();
+        }
+    }
+    catch (const std::exception& ex) {
+        LOG_ERROR << "exception at websocket acceptor stopping: " << ex.what();
+    }
+    catch (...) {
+        LOG_ERROR << "undefinde exception at websocket acceptor stopping";
     }
 }
 
@@ -77,7 +85,7 @@ void WebSocketAcceptor::accept()
         }
         else {
             LOG_INFO << "Connection accepted: " << socket.remote_endpoint();
-            _connection_registration(std::move(socket));
+            _connectionRegistration(std::move(socket));
         }
         accept();
     });
@@ -90,11 +98,11 @@ void WebSocketAcceptor::networkThreadWorkerFunction() noexcept
         _io_context.run();
     }
     catch (const std::exception& e) {
-        LOG_WARNING << "Error occurred in network thread: " << e.what();
+        LOG_ERROR << "Error occurred in network thread: " << e.what();
     }
     catch (...) {
         // global catch done for safety, since thread function cannot throw.
-        LOG_WARNING << "Error occurred in network thread";
+        LOG_ERROR << "Error occurred in network thread";
     }
 }
 

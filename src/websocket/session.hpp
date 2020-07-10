@@ -11,39 +11,41 @@
 
 #include <functional>
 #include <memory>
+#include <mutex>
 
 namespace websocket
 {
 
-class WebSocketSession : public std::enable_shared_from_this<WebSocketSession>
+class WebSocketSession
 {
-  public:
-    using SessionReceivedDataCallback = std::function<void(SessionId, QueryId, Command::Id, base::PropertyTree&&)>;
+    using ProcessRequestCallback = std::function<void(SessionId, QueryId, Command::Id, base::PropertyTree&&)>;
     using SessionCloseCallback = std::function<void(SessionId)>;
 
+  public:
     explicit WebSocketSession(boost::asio::ip::tcp::socket&& socket,
                               SessionId id,
-                              SessionReceivedDataCallback received_callback,
-                              SessionCloseCallback close_callback);
+                              ProcessRequestCallback processCallback,
+                              SessionCloseCallback closeCallback);
     ~WebSocketSession() = default;
 
-    void sendResult(QueryId query_id, base::PropertyTree&& result);
-    void sendErrorMessage(QueryId query_id, const std::string& result);
+    void sendResult(QueryId queryId, base::PropertyTree&& result);
+    void sendErrorMessage(QueryId queryId, const std::string& result);
 
   private:
-    SessionId _session_id;
-    std::weak_ptr<WebSocketConnection> _connection_ptr;
-    bool _is_ready;
+    SessionId _sessionId;
+    std::weak_ptr<WebSocketConnection> _connectionPointer;
+    std::mutex _connectionMutex;
+    bool _isReady;
 
-    SessionReceivedDataCallback _request_callback;
-    SessionCloseCallback _close_callback;
+    ProcessRequestCallback _requestProcess;
+    SessionCloseCallback _closeSession;
 
-    std::set<QueryId> _registered_query_id_set;
+    std::set<QueryId> _registeredQueryIds;
 
     void send(base::PropertyTree&& result);
 
-    void on_connection_received(base::PropertyTree&& query);
-    void on_connection_close();
+    void onDataReceivedFromConnection(base::PropertyTree&& query);
+    void onConnectionClosed();
 };
 
 }

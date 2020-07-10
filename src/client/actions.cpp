@@ -322,6 +322,13 @@ void subscribe_last_block_info(websocket::WebSocketClient& client)
 }
 
 
+void unsubscribe_last_block_info(websocket::WebSocketClient& client)
+{
+    LOG_INFO << "unsubscription last_block_info";
+    client.send(websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO, base::PropertyTree{});
+}
+
+
 void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
 {
     LOG_INFO << "subscription account_info for address: " << address;

@@ -12,23 +12,23 @@ namespace websocket
 
 class WebSocketAcceptor
 {
-  public:
-    using ConnectionRegistration = std::function<void(boost::asio::ip::tcp::socket&& socket)>;
+    using SocketRegistration = std::function<void(boost::asio::ip::tcp::socket&& socket)>;
 
-    explicit WebSocketAcceptor(const base::PropertyTree& config, ConnectionRegistration registration);
-    ~WebSocketAcceptor();
+  public:
+    explicit WebSocketAcceptor(const base::PropertyTree& config, SocketRegistration registration);
+    ~WebSocketAcceptor() noexcept;
 
     void run();
-    void stop();
+    void stop() noexcept;
 
   private:
     const base::PropertyTree& _config;
-    ConnectionRegistration _connection_registration;
+    SocketRegistration _connectionRegistration;
 
     boost::asio::io_context _io_context;
     boost::asio::ip::tcp::endpoint _endpoint;
     boost::asio::ip::tcp::acceptor _acceptor;
-    boost::thread _network_thread;
+    boost::thread _inputNetworkThread;
 
     void accept();
     void networkThreadWorkerFunction() noexcept;
