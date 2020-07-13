@@ -35,19 +35,43 @@
 namespace cli
 {
 
-inline bool& Color() { static bool color; return color; }
+inline bool& Color()
+{
+    static bool color;
+    return color;
+}
 
-inline void SetColor() { Color() = true; }
-inline void SetNoColor() { Color() = false; }
+inline void SetColor()
+{
+    Color() = true;
+}
+inline void SetNoColor()
+{
+    Color() = false;
+}
 
-enum BeforePrompt { beforePrompt };
-enum AfterPrompt { afterPrompt };
-enum BeforeInput { beforeInput };
-enum AfterInput { afterInput };
+enum BeforePrompt
+{
+    beforePrompt
+};
+enum AfterPrompt
+{
+    afterPrompt
+};
+enum BeforeInput
+{
+    beforeInput
+};
+enum AfterInput
+{
+    afterInput
+};
 
 inline std::ostream& operator<<(std::ostream& os, BeforePrompt)
 {
-    if ( Color() ) { os << rang::control::forceColor << rang::fg::green << rang::style::bold; }
+    if (Color()) {
+        os << rang::control::forceColor << rang::fg::green << rang::style::bold;
+    }
     return os;
 }
 
@@ -59,7 +83,9 @@ inline std::ostream& operator<<(std::ostream& os, AfterPrompt)
 
 inline std::ostream& operator<<(std::ostream& os, BeforeInput)
 {
-    if ( Color() ) { os << rang::control::forceColor << rang::fgB::gray; }
+    if (Color()) {
+        os << rang::control::forceColor << rang::fgB::gray;
+    }
     return os;
 }
 
@@ -72,5 +98,3 @@ inline std::ostream& operator<<(std::ostream& os, AfterInput)
 } // namespace cli
 
 #endif // CLI_COLORPROFILE_H_
-
-

@@ -30,12 +30,12 @@
 #ifndef CLI_DETAIL_WINKEYBOARD_H_
 #define CLI_DETAIL_WINKEYBOARD_H_
 
+#include "boostasio.h"
+#include <atomic>
 #include <functional>
+#include <memory>
 #include <string>
 #include <thread>
-#include <memory>
-#include <atomic>
-#include "boostasio.h"
 
 #include <conio.h>
 
@@ -48,23 +48,19 @@ namespace detail
 
 class WinKeyboard : public InputDevice
 {
-public:
-    explicit WinKeyboard(detail::asio::BoostExecutor ex) :
-        InputDevice(ex)
+  public:
+    explicit WinKeyboard(asio::BoostExecutor ex)
+      : InputDevice(ex)
     {
         servant = std::make_unique<std::thread>([this]() { Read(); });
         servant->detach();
     }
-    ~WinKeyboard()
-    {
-        run = false;
-    }
+    ~WinKeyboard() { run = false; }
 
-private:
+  private:
     void Read()
     {
-        while (run)
-        {
+        while (run) {
             auto k = Get();
             Notify(k);
         }
@@ -73,8 +69,7 @@ private:
     std::pair<KeyType, char> Get()
     {
         int c = _getch();
-        switch (c)
-        {
+        switch (c) {
             case EOF:
             case 4:  // EOT ie CTRL-D
             case 26: // CTRL-Z
@@ -85,29 +80,28 @@ private:
             case 224: // symbol
             {
                 c = _getch();
-                switch (c)
-                {
-                case 72:
-                    return std::make_pair(KeyType::up, ' ');
-                    break;
-                case 80:
-                    return std::make_pair(KeyType::down, ' ');
-                    break;
-                case 75:
-                    return std::make_pair(KeyType::left, ' ');
-                    break;
-                case 77:
-                    return std::make_pair(KeyType::right, ' ');
-                    break;
-                case 71:
-                    return std::make_pair(KeyType::home, ' ');
-                    break;
-                case 79:
-                    return std::make_pair(KeyType::end, ' ');
-                    break;
-                case 83:
-                    return std::make_pair(KeyType::canc, ' ');
-                    break;
+                switch (c) {
+                    case 72:
+                        return std::make_pair(KeyType::up, ' ');
+                        break;
+                    case 80:
+                        return std::make_pair(KeyType::down, ' ');
+                        break;
+                    case 75:
+                        return std::make_pair(KeyType::left, ' ');
+                        break;
+                    case 77:
+                        return std::make_pair(KeyType::right, ' ');
+                        break;
+                    case 71:
+                        return std::make_pair(KeyType::home, ' ');
+                        break;
+                    case 79:
+                        return std::make_pair(KeyType::end, ' ');
+                        break;
+                    case 83:
+                        return std::make_pair(KeyType::canc, ' ');
+                        break;
                 }
             }
             case 8:
@@ -125,7 +119,7 @@ private:
         return std::make_pair(KeyType::ignored, ' ');
     }
 
-    std::atomic<bool> run{true};
+    std::atomic<bool> run{ true };
     std::unique_ptr<std::thread> servant;
 };
 

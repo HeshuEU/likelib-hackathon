@@ -32,20 +32,30 @@
 
 #include <boost/asio.hpp>
 
-namespace cli {
-namespace detail {
-namespace oldboost {
+namespace cli
+{
+namespace detail
+{
+namespace oldboost
+{
 
 class BoostExecutor
 {
-public:
+  public:
     using ContextType = boost::asio::io_service;
-    explicit BoostExecutor(ContextType& _ios) :
-        ios(_ios) {}
-    explicit BoostExecutor(boost::asio::ip::tcp::socket& socket) :
-        ios(socket.get_io_service()) {}
-    template <typename T> void Post(T&& t) { ios.post(std::forward<T>(t)); }
-private:
+    explicit BoostExecutor(ContextType& _ios)
+      : ios(_ios)
+    {}
+    explicit BoostExecutor(boost::asio::ip::tcp::socket& socket)
+      : ios(socket.get_io_service())
+    {}
+    template<typename T>
+    void Post(T&& t)
+    {
+        ios.post(std::forward<T>(t));
+    }
+
+  private:
     ContextType& ios;
 };
 
@@ -59,4 +69,3 @@ inline boost::asio::ip::address IpAddressFromString(const std::string& address)
 } // namespace cli
 
 #endif // CLI_DETAIL_OLDBOOSTASIO_H_
-

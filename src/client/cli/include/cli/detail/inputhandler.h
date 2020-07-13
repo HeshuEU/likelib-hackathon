@@ -30,12 +30,12 @@
 #ifndef CLI_DETAIL_INPUTHANDLER_H_
 #define CLI_DETAIL_INPUTHANDLER_H_
 
-#include <functional>
-#include <string>
-#include "terminal.h"
-#include "inputdevice.h"
 #include "../cli.h" // CliSession
 #include "commonprefix.h"
+#include "inputdevice.h"
+#include "terminal.h"
+#include <functional>
+#include <string>
 
 namespace cli
 {
@@ -44,82 +44,71 @@ namespace detail
 
 class InputHandler
 {
-public:
-    InputHandler(CliSession& _session, InputDevice& kb) :
-        session(_session),
-        terminal(session.OutStream())
+  public:
+    InputHandler(CliSession& _session, InputDevice& kb)
+      : session(_session)
+      , terminal(session.OutStream())
     {
-        kb.Register( [this](auto key){ this->Keypressed(key); } );
+        kb.Register([this](auto key) { this->Keypressed(key); });
     }
 
-private:
-
+  private:
     void Keypressed(std::pair<KeyType, char> k)
     {
-        const std::pair<Symbol,std::string> s = terminal.Keypressed(k);
+        const std::pair<Symbol, std::string> s = terminal.Keypressed(k);
         NewCommand(s);
     }
 
-    void NewCommand(const std::pair< Symbol, std::string >& s)
+    void NewCommand(const std::pair<Symbol, std::string>& s)
     {
-        switch (s.first)
-        {
-            case Symbol::nothing:
-            {
+        switch (s.first) {
+            case Symbol::nothing: {
                 break;
             }
-            case Symbol::eof:
-            {
+            case Symbol::eof: {
                 session.Exit();
                 break;
             }
-            case Symbol::command:
-            {
+            case Symbol::command: {
                 session.Feed(s.second);
                 session.Prompt();
                 break;
             }
-            case Symbol::down:
-            {
+            case Symbol::down: {
                 terminal.SetLine(session.NextCmd());
                 break;
             }
-            case Symbol::up:
-            {
+            case Symbol::up: {
                 auto line = terminal.GetLine();
                 terminal.SetLine(session.PreviousCmd(line));
                 break;
             }
-            case Symbol::tab:
-            {
+            case Symbol::tab: {
                 auto line = terminal.GetLine();
                 auto completions = session.GetCompletions(line);
 
                 if (completions.empty())
                     break;
-                if (completions.size() == 1)
-                {
-                    terminal.SetLine(completions[0]+' ');
+                if (completions.size() == 1) {
+                    terminal.SetLine(completions[0] + ' ');
                     break;
                 }
 
                 auto commonPrefix = CommonPrefix(completions);
-                if (commonPrefix.size() > line.size())
-                {
+                if (commonPrefix.size() > line.size()) {
                     terminal.SetLine(commonPrefix);
                     break;
                 }
                 session.OutStream() << '\n';
                 std::string items;
-                std::for_each( completions.begin(), completions.end(), [&items](auto& cmd){ items += '\t' + cmd; } );
+                std::for_each(completions.begin(), completions.end(), [&items](auto& cmd) { items += '\t' + cmd; });
                 session.OutStream() << items << '\n';
                 session.Prompt();
                 terminal.ResetCursor();
-                terminal.SetLine( line );
+                terminal.SetLine(line);
                 break;
             }
         }
-
     }
 
     CliSession& session;
@@ -130,4 +119,3 @@ private:
 } // namespace cli
 
 #endif // CLI_DETAIL_INPUTHANDLER_H_
-

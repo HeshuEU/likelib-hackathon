@@ -30,9 +30,9 @@
 #ifndef CLI_DETAIL_SPLIT_H_
 #define CLI_DETAIL_SPLIT_H_
 
+#include <algorithm>
 #include <string>
 #include <vector>
-#include <algorithm>
 
 namespace cli
 {
@@ -41,19 +41,20 @@ namespace detail
 
 class Text
 {
-public:
-    explicit Text(const std::string& _input) : input(_input)
-    {
-    }
+  public:
+    explicit Text(const std::string& _input)
+      : input(_input)
+    {}
     void SplitInto(std::vector<std::string>& strs)
     {
         Reset();
-        for (char c: input)
+        for (char c : input)
             Eval(c);
         RemoveEmptyEntries();
         splitResult.swap(strs); // puts the result back in strs
     }
-private:
+
+  private:
     void Reset()
     {
         state = State::space;
@@ -64,8 +65,7 @@ private:
 
     void Eval(char c)
     {
-        switch(state)
-        {
+        switch (state) {
             case State::space:
                 EvalSpace(c);
                 break;
@@ -83,24 +83,20 @@ private:
 
     void EvalSpace(char c)
     {
-        if (c == ' ' || c == '\t' || c == '\n')
-        {
+        if (c == ' ' || c == '\t' || c == '\n') {
             // do nothing
         }
-        else if (c == '"' || c == '\'')
-        {
+        else if (c == '"' || c == '\'') {
             NewSentence(c);
         }
-        else if (c == '\\')
-        {
+        else if (c == '\\') {
             // This is the case where the first character of a word is escaped.
             // Should come back into the word state after this.
             prev_state = State::word;
             state = State::escape;
             splitResult.push_back("");
         }
-        else
-        {
+        else {
             state = State::word;
             splitResult.push_back(std::string(1, c));
         }
@@ -108,21 +104,17 @@ private:
 
     void EvalWord(char c)
     {
-        if (c == ' ' || c == '\t' || c == '\n')
-        {
+        if (c == ' ' || c == '\t' || c == '\n') {
             state = State::space;
         }
-        else if (c == '"' || c == '\'')
-        {
+        else if (c == '"' || c == '\'') {
             NewSentence(c);
         }
-        else if (c == '\\')
-        {
+        else if (c == '\\') {
             prev_state = state;
             state = State::escape;
         }
-        else
-        {
+        else {
             assert(!splitResult.empty());
             splitResult.back() += c;
         }
@@ -130,24 +122,20 @@ private:
 
     void EvalSentence(char c)
     {
-        if (c == '"' || c == '\'')
-        {
+        if (c == '"' || c == '\'') {
             auto new_type = c == '"' ? SentenceType::double_quote : SentenceType::quote;
             if (new_type == sentence_type)
                 state = State::space;
-            else
-            {
+            else {
                 assert(!splitResult.empty());
                 splitResult.back() += c;
             }
         }
-        else if (c == '\\')
-        {
+        else if (c == '\\') {
             prev_state = state;
             state = State::escape;
         }
-        else
-        {
+        else {
             assert(!splitResult.empty());
             splitResult.back() += c;
         }
@@ -165,7 +153,7 @@ private:
     void NewSentence(char c)
     {
         state = State::sentence;
-        sentence_type = ( c == '"' ? SentenceType::double_quote : SentenceType::quote);
+        sentence_type = (c == '"' ? SentenceType::double_quote : SentenceType::quote);
         splitResult.push_back("");
     }
 
@@ -173,17 +161,22 @@ private:
     {
         // remove null entries from the vector:
         splitResult.erase(
-            std::remove_if(
-                splitResult.begin(),
-                splitResult.end(),
-                [](const std::string& s){ return s.empty(); }
-            ),
-            splitResult.end()
-        );
+          std::remove_if(splitResult.begin(), splitResult.end(), [](const std::string& s) { return s.empty(); }),
+          splitResult.end());
     }
 
-    enum class State { space, word, sentence, escape };
-    enum class SentenceType { quote, double_quote };
+    enum class State
+    {
+        space,
+        word,
+        sentence,
+        escape
+    };
+    enum class SentenceType
+    {
+        quote,
+        double_quote
+    };
     State state = State::space;
     State prev_state = State::space;
     SentenceType sentence_type = SentenceType::double_quote;

@@ -30,15 +30,15 @@
 #ifndef CLI_HISTORYSTORAGE_H_
 #define CLI_HISTORYSTORAGE_H_
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace cli
 {
 
 class HistoryStorage
 {
-public:
+  public:
     virtual ~HistoryStorage() = default;
     // Store a vector of commands in the history storage
     virtual void Store(const std::vector<std::string>& commands) = 0;

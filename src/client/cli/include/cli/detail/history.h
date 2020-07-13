@@ -30,10 +30,11 @@
 #ifndef CLI_DETAIL_HISTORY_H_
 #define CLI_DETAIL_HISTORY_H_
 
-#include <deque>
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <cassert>
+#include <deque>
+#include <string>
+#include <vector>
 
 namespace cli
 {
@@ -42,9 +43,10 @@ namespace detail
 
 class History
 {
-public:
-
-    explicit History(std::size_t size) : maxSize(size) {}
+  public:
+    explicit History(std::size_t size)
+      : maxSize(size)
+    {}
 
     // Insert a new item in the buffer, changing the current state to "inserting"
     // If we're browsing the history (eg with arrow keys) the new item overwrites
@@ -54,8 +56,7 @@ public:
     {
         ++commands;
         current = 0;
-        if (mode == Mode::browsing)
-        {
+        if (mode == Mode::browsing) {
             assert(!buffer.empty());
             if (buffer.size() > 1 && buffer[1] == item) // try to insert an element identical to last one
                 buffer.pop_front();
@@ -77,8 +78,7 @@ public:
     // Otherwise, the line overwrites the current item.
     std::string Previous(const std::string& line)
     {
-        if (mode == Mode::inserting)
-        {
+        if (mode == Mode::inserting) {
             Insert(line);
             mode = Mode::browsing;
             current = (buffer.size() > 1) ? 1 : 0;
@@ -87,7 +87,7 @@ public:
         {
             assert(!buffer.empty());
             buffer[current] = line;
-            if (current != buffer.size()-1)
+            if (current != buffer.size() - 1)
                 ++current;
         }
         assert(mode == Mode::browsing);
@@ -110,7 +110,7 @@ public:
     void Show(std::ostream& out) const
     {
         out << '\n';
-        for (auto& item: buffer)
+        for (auto& item : buffer)
             out << item << '\n';
         out << '\n' << std::flush;
     }
@@ -118,7 +118,7 @@ public:
     // cmds[0] is the oldest command, cmds[size-1] the newer
     void LoadCommands(const std::vector<std::string>& cmds)
     {
-        for (const auto& c: cmds)
+        for (const auto& c : cmds)
             Insert(c);
     }
 
@@ -127,19 +127,19 @@ public:
     {
         auto numCmdsToReturn = std::min(commands, buffer.size());
         auto start = buffer.begin();
-        if (mode == Mode::browsing)
-        {
-            numCmdsToReturn = std::min(commands, buffer.size()-1);
-            start = buffer.begin()+1;
+        if (mode == Mode::browsing) {
+            numCmdsToReturn = std::min(commands, buffer.size() - 1);
+            start = buffer.begin() + 1;
         }
         std::vector<std::string> result(numCmdsToReturn);
-        assert(start+numCmdsToReturn <= buffer.end());
-        std::reverse_copy(start, start+numCmdsToReturn, result.begin());
+        assert(std::distance(start, buffer.end()) >= 0);
+        assert(numCmdsToReturn <= static_cast<std::size_t>(std::distance(buffer.end(), start)));
+        assert(numCmdsToReturn <= std::numeric_limits<unsigned long>::max());
+        std::reverse_copy(start, start + static_cast<long>(numCmdsToReturn), result.begin());
         return result;
     }
 
-private:
-
+  private:
     void Insert(const std::string& item)
     {
         buffer.push_front(item);
@@ -151,7 +151,11 @@ private:
     std::deque<std::string> buffer;
     std::size_t current = 0;
     std::size_t commands = 0; // number of commands issued
-    enum class Mode { inserting, browsing };
+    enum class Mode
+    {
+        inserting,
+        browsing
+    };
     Mode mode = Mode::inserting;
 };
 

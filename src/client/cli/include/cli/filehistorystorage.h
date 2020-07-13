@@ -1,6 +1,6 @@
 /*******************************************************************************
  * CLI - A simple command line interface.
- * Copyright (C) 2019 Daniele Pallastrelli
+ * Copyright (C) 2020 Daniele Pallastrelli
  *
  * Boost Software License - Version 1.0 - August 17th, 2003
  *
@@ -27,29 +27,51 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#ifndef CLI_DETAIL_BOOSTIO_H_
-#define CLI_DETAIL_BOOSTIO_H_
+#ifndef CLI_FILEHISTORYSTORAGE_H_
+#define CLI_FILEHISTORYSTORAGE_H_
 
-#include <boost/version.hpp>
+#include "historystorage.h"
+#include <fstream>
 
-#if BOOST_VERSION < 106600
-#include "oldboostasio.h"
 namespace cli
 {
-namespace detail
-{
-namespace asio = oldboost;
-}
-}
-#else
-#include "newboostasio.h"
-namespace cli
-{
-namespace detail
-{
-namespace asio = newboost;
-}
-}
-#endif
 
-#endif // CLI_DETAIL_BOOSTIO_H_
+class FileHistoryStorage : public HistoryStorage
+{
+  public:
+    FileHistoryStorage(const std::string& _fileName, std::size_t size = 1000)
+      : maxSize(size)
+      , fileName(_fileName)
+    {}
+    void Store(const std::vector<std::string>& cmds) override
+    {
+        using dt = std::vector<std::string>::difference_type;
+        auto commands = Commands();
+        commands.insert(commands.end(), cmds.begin(), cmds.end());
+        if (commands.size() > maxSize)
+            commands.erase(commands.begin(), commands.begin() + static_cast<dt>(commands.size() - maxSize));
+        std::ofstream f(fileName, std::ios_base::out);
+        for (const auto& line : commands)
+            f << line << '\n';
+    }
+    std::vector<std::string> Commands() const override
+    {
+        std::vector<std::string> commands;
+        std::ifstream in(fileName);
+        if (in) {
+            std::string line;
+            while (std::getline(in, line))
+                commands.push_back(line);
+        }
+        return commands;
+    }
+    void Clear() override { std::ofstream f(fileName, std::ios_base::out | std::ios_base::trunc); }
+
+  private:
+    const std::size_t maxSize;
+    const std::string fileName;
+};
+
+} // namespace cli
+
+#endif // CLI_FILEHISTORYSTORAGE_H_

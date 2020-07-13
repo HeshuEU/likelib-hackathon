@@ -30,16 +30,16 @@
 #ifndef CLI_DETAIL_LINUXKEYBOARD_H_
 #define CLI_DETAIL_LINUXKEYBOARD_H_
 
-#include <thread>
-#include <memory>
-#include <atomic>
 #include "boostasio.h"
+#include <atomic>
+#include <memory>
+#include <thread>
 
 #include <stdio.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/time.h>
 
 #include "inputdevice.h"
 
@@ -51,13 +51,13 @@ namespace detail
 
 class LinuxKeyboard : public InputDevice
 {
-public:
-    explicit LinuxKeyboard(detail::asio::BoostExecutor ex) :
-        InputDevice(ex)
+  public:
+    explicit LinuxKeyboard(asio::BoostExecutor ex)
+      : InputDevice(ex)
     {
         ToManualMode();
-        servant = std::make_unique<std::thread>( [this](){ Read(); } );
-        servant -> detach();
+        servant = std::make_unique<std::thread>([this]() { Read(); });
+        servant->detach();
     }
     ~LinuxKeyboard()
     {
@@ -65,84 +65,92 @@ public:
         ToStandardMode();
     }
 
-private:
-
+  private:
     void Read()
     {
-        while ( run )
-        {
+        while (run) {
             auto k = Get();
             Notify(k);
         }
     }
 
-    std::pair<KeyType,char> Get()
+    std::pair<KeyType, char> Get()
     {
-        while ( !KbHit() ) {}
+        while (!KbHit()) {
+        }
         int ch = getchar();
-        switch( ch )
-        {
+        switch (ch) {
             case EOF:
-            case 4:  // EOT
-                return std::make_pair(KeyType::eof,' ');
+            case 4: // EOT
+                return std::make_pair(KeyType::eof, ' ');
                 break;
-            case 127: return std::make_pair(KeyType::backspace,' '); break;
-            case 10: return std::make_pair(KeyType::ret,' '); break;
+            case 127:
+                return std::make_pair(KeyType::backspace, ' ');
+                break;
+            case 10:
+                return std::make_pair(KeyType::ret, ' ');
+                break;
             case 27: // symbol
                 ch = getchar();
-                if ( ch == 91 ) // arrow keys
+                if (ch == 91) // arrow keys
                 {
                     ch = getchar();
-                    switch( ch )
-                    {
+                    switch (ch) {
                         case 51:
                             ch = getchar();
-                            if ( ch == 126 ) return std::make_pair(KeyType::canc,' ');
-                            else return std::make_pair(KeyType::ignored,' ');
+                            if (ch == 126)
+                                return std::make_pair(KeyType::canc, ' ');
+                            else
+                                return std::make_pair(KeyType::ignored, ' ');
                             break;
-                        case 65: return std::make_pair(KeyType::up,' ');
-                        case 66: return std::make_pair(KeyType::down,' ');
-                        case 68: return std::make_pair(KeyType::left,' ');
-                        case 67: return std::make_pair(KeyType::right,' ');
-                        case 70: return std::make_pair(KeyType::end,' ');
-                        case 72: return std::make_pair(KeyType::home,' ');
+                        case 65:
+                            return std::make_pair(KeyType::up, ' ');
+                        case 66:
+                            return std::make_pair(KeyType::down, ' ');
+                        case 68:
+                            return std::make_pair(KeyType::left, ' ');
+                        case 67:
+                            return std::make_pair(KeyType::right, ' ');
+                        case 70:
+                            return std::make_pair(KeyType::end, ' ');
+                        case 72:
+                            return std::make_pair(KeyType::home, ' ');
+                        default:
+                            return std::make_pair(KeyType::ignored, ' ');
                     }
                 }
                 break;
             default: // ascii
             {
                 const char c = static_cast<char>(ch);
-                return std::make_pair(KeyType::ascii,c);
+                return std::make_pair(KeyType::ascii, c);
             }
         }
-        return std::make_pair(KeyType::ignored,' ');
+        return std::make_pair(KeyType::ignored, ' ');
     }
 
     void ToManualMode()
     {
-        tcgetattr( STDIN_FILENO, &oldt );
+        tcgetattr(STDIN_FILENO, &oldt);
         newt = oldt;
-        newt.c_lflag &= ~( ICANON | ECHO );
-        tcsetattr( STDIN_FILENO, TCSANOW, &newt );
+        newt.c_lflag &= ~((tcflag_t)ICANON | (tcflag_t)ECHO);
+        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
     }
-    void ToStandardMode()
-    {
-        tcsetattr( STDIN_FILENO, TCSANOW, &oldt );
-    }
+    void ToStandardMode() { tcsetattr(STDIN_FILENO, TCSANOW, &oldt); }
 
     static int KbHit()
     {
-      struct timeval tv;
-      fd_set rdfs;
+        struct timeval tv;
+        fd_set rdfs;
 
-      tv.tv_sec = 1;
-      tv.tv_usec = 0;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
 
-      FD_ZERO(&rdfs);
-      FD_SET (STDIN_FILENO, &rdfs);
+        FD_ZERO(&rdfs);
+        FD_SET(STDIN_FILENO, &rdfs);
 
-      select(STDIN_FILENO+1, &rdfs, NULL, NULL, &tv);
-      return FD_ISSET(STDIN_FILENO, &rdfs);
+        select(STDIN_FILENO + 1, &rdfs, NULL, NULL, &tv);
+        return FD_ISSET(STDIN_FILENO, &rdfs);
     }
 
     termios oldt;
@@ -155,4 +163,3 @@ private:
 } // namespace cli
 
 #endif // CLI_DETAIL_LINUXKEYBOARD_H_
-

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * CLI - A simple command line interface.
- * Copyright (C) 2019 Daniele Pallastrelli
+ * Copyright (C) 2016-2018 Daniele Pallastrelli
  *
  * Boost Software License - Version 1.0 - August 17th, 2003
  *
@@ -27,29 +27,52 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#ifndef CLI_DETAIL_BOOSTIO_H_
-#define CLI_DETAIL_BOOSTIO_H_
+#ifndef CLI_FILESESSION_H_
+#define CLI_FILESESSION_H_
 
-#include <boost/version.hpp>
+#include "cli.h" // CliSession
+#include <iostream>
+#include <stdexcept> // std::invalid_argument
+#include <string>
 
-#if BOOST_VERSION < 106600
-#include "oldboostasio.h"
 namespace cli
 {
-namespace detail
-{
-namespace asio = oldboost;
-}
-}
-#else
-#include "newboostasio.h"
-namespace cli
-{
-namespace detail
-{
-namespace asio = newboost;
-}
-}
-#endif
 
-#endif // CLI_DETAIL_BOOSTIO_H_
+class CliFileSession : public CliSession
+{
+  public:
+    /// @throw std::invalid_argument if @c _in or @c out are invalid streams
+    CliFileSession(Cli& _cli, std::istream& _in = std::cin, std::ostream& _out = std::cout)
+      : CliSession(_cli, _out, 1)
+      , exit(false)
+      , in(_in)
+    {
+        if (!_in.good())
+            throw std::invalid_argument("istream invalid");
+        if (!_out.good())
+            throw std::invalid_argument("ostream invalid");
+        ExitAction([this](std::ostream&) { exit = true; });
+    }
+    void Start()
+    {
+        while (!exit) {
+            Prompt();
+            std::string line;
+            if (!in.good())
+                Exit();
+            std::getline(in, line);
+            if (in.eof())
+                Exit();
+            else
+                Feed(line);
+        }
+    }
+
+  private:
+    bool exit;
+    std::istream& in;
+};
+
+} // namespace
+
+#endif // CLI_FILESESSION_H_

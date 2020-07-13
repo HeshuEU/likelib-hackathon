@@ -1,6 +1,6 @@
 /*******************************************************************************
  * CLI - A simple command line interface.
- * Copyright (C) 2019 Daniele Pallastrelli
+ * Copyright (C) 2016 Daniele Pallastrelli
  *
  * Boost Software License - Version 1.0 - August 17th, 2003
  *
@@ -27,29 +27,38 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#ifndef CLI_DETAIL_BOOSTIO_H_
-#define CLI_DETAIL_BOOSTIO_H_
+#ifndef CLI_LOCALSESSION_H_
+#define CLI_LOCALSESSION_H_
 
-#include <boost/version.hpp>
+#include "cli.h" // CliSession
+#include "detail/boostasio.h"
+#include "detail/inputhandler.h"
+#include "detail/keyboard.h"
 
-#if BOOST_VERSION < 106600
-#include "oldboostasio.h"
 namespace cli
 {
-namespace detail
-{
-namespace asio = oldboost;
-}
-}
-#else
-#include "newboostasio.h"
-namespace cli
-{
-namespace detail
-{
-namespace asio = newboost;
-}
-}
-#endif
 
-#endif // CLI_DETAIL_BOOSTIO_H_
+class CliLocalTerminalSession : public CliSession
+{
+  public:
+    CliLocalTerminalSession(Cli& _cli,
+                            detail::asio::BoostExecutor::ContextType& ios,
+                            std::ostream& _out,
+                            std::size_t historySize = 100)
+      : CliSession(_cli, _out, historySize)
+      , kb(detail::asio::BoostExecutor(ios))
+      , ih(*this, kb)
+    {
+        Prompt();
+    }
+
+  private:
+    detail::Keyboard kb;
+    detail::InputHandler ih;
+};
+
+using CliLocalSession = CliLocalTerminalSession;
+
+} // namespace cli
+
+#endif // CLI_LOCALSESSION_H_

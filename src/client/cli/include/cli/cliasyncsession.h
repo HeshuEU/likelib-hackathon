@@ -30,12 +30,12 @@
 #ifndef CLI_ASYNCSESSION_H_
 #define CLI_ASYNCSESSION_H_
 
-#include <string>
-#include "detail/boostasio.h"
 #include "cli.h" // CliSession
+#include "detail/boostasio.h"
+#include <string>
 
 #if !defined(BOOST_ASIO_HAS_POSIX_STREAM_DESCRIPTOR)
-#    error Async session is not supported on this platform.
+#error Async session is not supported on this platform.
 #endif
 
 namespace cli
@@ -43,49 +43,41 @@ namespace cli
 
 class CliAsyncSession : public CliSession
 {
-public:
-    CliAsyncSession(detail::asio::BoostExecutor::ContextType& ios, Cli& cli ) :
-        CliSession(cli, std::cout, 1),
-        input(ios, ::dup( STDIN_FILENO))
+  public:
+    CliAsyncSession(detail::asio::BoostExecutor::ContextType& ios, Cli& _cli)
+      : CliSession(_cli, std::cout, 1)
+      , input(ios, ::dup(STDIN_FILENO))
     {
         Read();
     }
-    ~CliAsyncSession()
-    {
-        input.close();
-    }
+    ~CliAsyncSession() { input.close(); }
 
-private:
-
+  private:
     void Read()
     {
         Prompt();
         // Read a line of input entered by the user.
         boost::asio::async_read_until(
-            input,
-            inputBuffer,
-            '\n',
-            std::bind( &CliAsyncSession::NewLine, this,
-                       std::placeholders::_1,
-                       std::placeholders::_2 )
-        );
+          input,
+          inputBuffer,
+          '\n',
+          std::bind(&CliAsyncSession::NewLine, this, std::placeholders::_1, std::placeholders::_2));
     }
 
-    void NewLine( const boost::system::error_code& error, std::size_t length )
+    void NewLine(const boost::system::error_code& error, std::size_t length)
     {
-        if ( !error || error == boost::asio::error::not_found )
-        {
+        if (!error || error == boost::asio::error::not_found) {
             auto bufs = inputBuffer.data();
-            std::size_t size = length;
-            if ( !error ) --size; // remove \n
-            std::string s( boost::asio::buffers_begin( bufs ), boost::asio::buffers_begin( bufs ) + size );
-            inputBuffer.consume( length );
+            auto size = static_cast<long>(length);
+            if (!error)
+                --size; // remove \n
+            std::string s(boost::asio::buffers_begin(bufs), boost::asio::buffers_begin(bufs) + size);
+            inputBuffer.consume(length);
 
-            Feed( s );
+            Feed(s);
             Read();
         }
-        else
-        {
+        else {
             input.close();
         }
     }
@@ -97,4 +89,3 @@ private:
 } // namespace
 
 #endif // CLI_ASYNCSESSION_H_
-
