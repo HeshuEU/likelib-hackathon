@@ -16,12 +16,14 @@ set(CLIENT_HEADERS
         config.hpp
         utility.hpp
         utility.tpp
+        client.hpp
         )
 
 set(CLIENT_SOURCES
         actions.cpp
         main.cpp
         utility.cpp
+        client.cpp
         )
 
 add_executable(client ${CLIENT_HEADERS} ${CLIENT_SOURCES})
