@@ -109,6 +109,14 @@ void WebSocketSession::onDataReceivedFromConnection(base::PropertyTree&& query)
             LOG_ERROR << "deserialization error" << e.what();
             return send(makeErrorAnswer(queryId, "deserialization error"));
         }
+        catch (const std::exception& e) {
+            LOG_ERROR << "deserialization error" << e.what();
+            return send(makeErrorAnswer(queryId, "deserialization error"));
+        }
+        catch (...) {
+            LOG_ERROR << "unexpected deserialization error";
+            return send(makeErrorAnswer(queryId, "deserialization error"));
+        }
 
         if (query.get<std::uint32_t>("api") != base::config::RPC_PUBLIC_API_VERSION) {
             LOG_DEBUG << "api version mismatch";

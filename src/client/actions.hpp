@@ -22,6 +22,10 @@ void call_last_block_info(websocket::WebSocketClient& client);
 
 void call_account_info(websocket::WebSocketClient& client, const lk::Address& address);
 
+void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address);
+
+void unsubscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address);
+
 void call_find_transaction(websocket::WebSocketClient& client, const base::Sha256& hash);
 
 void call_find_transaction_status(websocket::WebSocketClient& client, const base::Sha256& hash);
@@ -54,5 +58,3 @@ void push_contract(std::ostream& output,
 void subscribe_last_block_info(websocket::WebSocketClient& client);
 
 void unsubscribe_last_block_info(websocket::WebSocketClient& client);
-
-void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address);

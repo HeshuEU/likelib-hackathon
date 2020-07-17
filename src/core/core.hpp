@@ -73,7 +73,6 @@ class Core
     base::Observable<lk::Address> _event_account_update;
     //==================
     StateManager _state_manager;
-    std::size_t _state_managed_subscription_id;
 
     mutable std::shared_mutex _blockchain_mutex;
     PersistentBlockchain _blockchain;
@@ -100,17 +99,17 @@ class Core
     //==================
     void on_account_updated(lk::Address address);
     //==================
-    evmc::result callInitContractVm(StateManager& state_manager,
+    evmc::result callInitContractVm(Commit& current_commit,
                                     const ImmutableBlock& associated_block,
                                     const lk::Transaction& tx,
                                     const lk::Address& contract_address,
                                     const base::Bytes& code);
-    evmc::result callContractVm(StateManager& state_manager,
+    evmc::result callContractVm(Commit& current_commit,
                                 const ImmutableBlock& associated_block,
                                 const lk::Transaction& tx,
                                 const base::Bytes& code,
                                 const base::Bytes& message_data);
-    evmc::result callVm(StateManager& state_manager,
+    evmc::result callVm(Commit& current_commit,
                         const ImmutableBlock& associated_block,
                         const lk::Transaction& associated_tx,
                         const evmc_message& message,
@@ -140,7 +139,7 @@ class EthHost : public evmc::Host
 {
   public:
     EthHost(lk::Core& core,
-            lk::StateManager& state_manager,
+            lk::Commit& current_commit,
             const ImmutableBlock& associated_block,
             const lk::Transaction& associated_tx);
 
@@ -158,8 +157,10 @@ class EthHost : public evmc::Host
 
     evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override;
 
-    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-      noexcept override;
+    size_t copy_code(const evmc::address& addr,
+                     size_t code_offset,
+                     uint8_t* buffer_data,
+                     size_t buffer_size) const noexcept override;
 
     void selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept override;
 
@@ -173,7 +174,7 @@ class EthHost : public evmc::Host
 
   private:
     Core& _core;
-    StateManager& _state_manager;
+    Commit& _current_commit;
     const ImmutableBlock& _associated_block;
     const Transaction& _associated_tx;
 };

@@ -145,6 +145,36 @@ void Client::setupCli()
                                                           "get account info by specific address",
                                                           { "address at base58" }));
 
+    _connected_mode_commands.push_back(
+      _root_menu->Insert("subscribe_account_info",
+                         [this](std::ostream& out, std::string address_at_base58) {
+                             try {
+                                 lk::Address target_address(address_at_base58);
+                                 subscribe_account_info(_web_socket_client, target_address);
+                             }
+                             catch (const base::Error& e) {
+                                 out << "can't execute account_info";
+                                 LOG_ERROR << "can't execute account_info:" << e.what();
+                             }
+                         },
+                         "subscribe on updates account info by specific address",
+                         { "address at base58" }));
+
+    _connected_mode_commands.push_back(
+      _root_menu->Insert("unsubscribe_account_info",
+                         [this](std::ostream& out, std::string address_at_base58) {
+                             try {
+                                 lk::Address target_address(address_at_base58);
+                                 unsubscribe_account_info(_web_socket_client, target_address);
+                             }
+                             catch (const base::Error& e) {
+                                 out << "can't execute account_info";
+                                 LOG_ERROR << "can't execute account_info:" << e.what();
+                             }
+                         },
+                         "unsubscribe from account info updates by specific address",
+                         { "address at base58" }));
+
     _connected_mode_commands.push_back(_root_menu->Insert("find_transaction",
                                                           [this](std::ostream& out, std::string tx_hash_at_hex) {
                                                               try {

@@ -94,9 +94,7 @@ void encode_message(std::ostream& output, const std::string& compiled_contract_f
 }
 
 
-void decode_message(std::ostream& output,
-                    const std::string& compiled_contract_folder_path,
-                    const std::string& message)
+void decode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message)
 {
     try {
         auto output_message = vm::decodeOutput(compiled_contract_folder_path, message);
@@ -172,6 +170,24 @@ void call_account_info(websocket::WebSocketClient& client, const lk::Address& ad
     base::PropertyTree request_args;
     request_args.add("address", websocket::serializeAddress(address));
     client.send(websocket::Command::CALL_ACCOUNT_INFO, request_args);
+}
+
+
+void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
+{
+    LOG_INFO << "account_info for address: " << address;
+    base::PropertyTree request_args;
+    request_args.add("address", websocket::serializeAddress(address));
+    client.send(websocket::Command::SUBSCRIBE_ACCOUNT_INFO, request_args);
+}
+
+
+void unsubscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
+{
+    LOG_INFO << "account_info for address: " << address;
+    base::PropertyTree request_args;
+    request_args.add("address", websocket::serializeAddress(address));
+    client.send(websocket::Command::UNSUBSCRIBE_ACCOUNT_INFO, request_args);
 }
 
 
@@ -328,11 +344,3 @@ void unsubscribe_last_block_info(websocket::WebSocketClient& client)
     client.send(websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO, base::PropertyTree{});
 }
 
-
-void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
-{
-    LOG_INFO << "subscription account_info for address: " << address;
-    base::PropertyTree request_args;
-    request_args.add("address", websocket::serializeAddress(address));
-    client.send(websocket::Command::SUBSCRIBE_ACCOUNT_INFO, request_args);
-}
