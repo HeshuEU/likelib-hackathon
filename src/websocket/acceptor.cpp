@@ -6,15 +6,14 @@
 
 #include <boost/asio.hpp>
 
-
 namespace websocket
 {
 
-WebSocketAcceptor::WebSocketAcceptor(const base::PropertyTree& config, SocketRegistration registration)
-  : _config{ config }
+WebSocketAcceptor::WebSocketAcceptor(rapidjson::Value config, SocketRegistration registration)
+  : _config{ std::move(config) }
   , _connectionRegistration{ std::move(registration) }
   , _io_context{}
-  , _endpoint{ createEndpoint(_config.get<std::string>("websocket.listen_addr")) }
+  , _endpoint{ createEndpoint(_config.FindMember("listen_addr")->value.GetString()) }
   , _acceptor{ _io_context }
 {
     ASSERT(_connectionRegistration);

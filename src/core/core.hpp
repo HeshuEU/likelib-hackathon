@@ -1,7 +1,6 @@
 #pragma once
 
 #include "base/crypto.hpp"
-#include "base/property_tree.hpp"
 #include "base/utility.hpp"
 #include "core/block.hpp"
 #include "core/blockchain.hpp"
@@ -23,7 +22,7 @@ class Core
 
   public:
     //==================
-    Core(const base::PropertyTree& config, const base::KeyVault& vault);
+    Core(rapidjson::Value config);
 
     /**
      *  @brief Stops network, does cleaning and flushing.
@@ -62,8 +61,8 @@ class Core
     //==================
   private:
     //==================
-    const base::PropertyTree& _config;
-    const base::KeyVault& _vault;
+    rapidjson::Value _config;
+    const base::KeyVault _vault;
     const lk::Address _this_node_address;
     //==================
     base::Observable<const lk::ImmutableBlock&> _event_block_added;

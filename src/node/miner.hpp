@@ -1,10 +1,12 @@
 #pragma once
 
-#include "base/bytes.hpp"
-#include "base/property_tree.hpp"
 #include "core/block.hpp"
 #include "core/consensus.hpp"
 #include "core/types.hpp"
+
+#include "base/bytes.hpp"
+
+#include <rapidjson/document.h>
 
 #include <atomic>
 #include <condition_variable>
@@ -74,7 +76,7 @@ class Miner
     //===================
     using HandlerType = impl::MinerHandlerType;
     //===================
-    Miner(const base::PropertyTree& config, HandlerType handler);
+    Miner(rapidjson::Value config, HandlerType handler);
 
     ~Miner();
     //===================

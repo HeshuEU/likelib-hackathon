@@ -18,6 +18,11 @@ Directory::Directory(const std::string& path)
 {}
 
 
+Directory::Directory(const char* path)
+  : std::filesystem::path{ path }
+{}
+
+
 void createIfNotExists(const Directory& directory)
 {
     std::filesystem::create_directories(directory);

@@ -439,7 +439,7 @@ void UnsubscribeTransactionStatusUpdateTask::execute(PublicService& service)
 
 }
 
-PublicService::PublicService(const base::PropertyTree& config, lk::Core& core)
+PublicService::PublicService(rapidjson::Value config, lk::Core& core)
   : _config{ config }
   , _core{ core }
   , _acceptor{ config, std::bind(&PublicService::createSession, this, std::placeholders::_1) }

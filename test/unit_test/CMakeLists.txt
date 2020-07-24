@@ -6,7 +6,7 @@ set(TEST_SOURCES
         base/database.cpp
         base/hash.cpp
         base/program_options.cpp
-        base/property_tree.cpp
+#        base/property_tree.cpp
         base/serialization.cpp
         base/time.cpp
         base/timer.cpp

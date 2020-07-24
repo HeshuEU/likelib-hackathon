@@ -7,8 +7,6 @@
 #include "core/managers.hpp"
 #include "core/transaction.hpp"
 
-#include "base/property_tree.hpp"
-
 #include <boost/beast/core.hpp>
 
 namespace websocket
@@ -24,60 +22,62 @@ std::string serializeCommandType(websocket::Command::Id command_type);
 
 websocket::Command::Type deserializeCommandType(const std::string& message);
 
-const std::string& serializeAccountType(lk::AccountType type);
+std::string serializeAccountType(lk::AccountType type);
 
-std::optional<lk::AccountType> deserializeAccountType(const std::string& type);
+lk::AccountType deserializeAccountType(const std::string& type);
 
 uint32_t serializeTransactionStatusStatusCode(lk::TransactionStatus::StatusCode status_code);
 
-std::optional<lk::TransactionStatus::StatusCode> deserializeTransactionStatusStatusCode(std::uint32_t type);
+lk::TransactionStatus::StatusCode deserializeTransactionStatusStatusCode(std::uint32_t type);
 
 uint32_t serializeTransactionStatusActionType(lk::TransactionStatus::ActionType action_type);
 
-std::optional<lk::TransactionStatus::ActionType> deserializeTransactionStatusActionType(std::uint32_t type);
+lk::TransactionStatus::ActionType deserializeTransactionStatusActionType(std::uint32_t type);
 
 std::string serializeBalance(const lk::Balance& balance);
 
-std::optional<lk::Balance> deserializeBalance(const std::string& type);
+lk::Balance deserializeBalance(const std::string& type);
 
-std::string serializeFee(std::uint64_t balance);
+std::string serializeFee(lk::Fee balance);
 
-std::optional<lk::Fee> deserializeFee(const std::string& type);
+lk::Fee deserializeFee(const std::string& type);
 
 std::string serializeHash(const base::Sha256& hash);
 
-std::optional<base::Sha256> deserializeHash(const std::string& type);
+base::Sha256 deserializeHash(const std::string& type);
 
 std::string serializeAddress(const lk::Address& address);
 
-std::optional<lk::Address> deserializeAddress(const std::string& type);
+lk::Address deserializeAddress(const std::string& type);
 
 std::string serializeBytes(const base::Bytes& data);
 
-std::optional<base::Bytes> deserializeBytes(const std::string& data);
+base::Bytes deserializeBytes(const std::string& data);
 
 std::string serializeSign(const lk::Sign& sign);
 
-std::optional<lk::Sign> deserializeSign(const std::string& data);
+lk::Sign deserializeSign(const std::string& data);
 
-base::PropertyTree serializeAccountInfo(const lk::AccountInfo& account_info);
+rapidjson::Value serializeAccountInfo(const lk::AccountInfo& account_info,
+                                      rapidjson::Document::AllocatorType& allocator);
 
-std::optional<lk::AccountInfo> deserializeAccountInfo(const base::PropertyTree& input);
+lk::AccountInfo deserializeAccountInfo(rapidjson::Value input);
 
-base::PropertyTree serializeInfo(const NodeInfo& info);
+rapidjson::Value serializeInfo(const NodeInfo& info, rapidjson::Document::AllocatorType& allocator);
 
-std::optional<NodeInfo> deserializeInfo(const base::PropertyTree& input);
+NodeInfo deserializeInfo(rapidjson::Value input);
 
-base::PropertyTree serializeTransaction(const lk::Transaction& tx);
+rapidjson::Value serializeTransaction(const lk::Transaction& tx, rapidjson::Document::AllocatorType& allocator);
 
-std::optional<lk::Transaction> deserializeTransaction(const base::PropertyTree& input);
+lk::Transaction deserializeTransaction(rapidjson::Value input);
 
-base::PropertyTree serializeBlock(const lk::ImmutableBlock& block);
+rapidjson::Value serializeBlock(const lk::ImmutableBlock& block, rapidjson::Document::AllocatorType& allocator);
 
-std::optional<lk::ImmutableBlock> deserializeBlock(const base::PropertyTree& input);
+lk::ImmutableBlock deserializeBlock(rapidjson::Value input);
 
-base::PropertyTree serializeTransactionStatus(const lk::TransactionStatus& status);
+rapidjson::Value serializeTransactionStatus(const lk::TransactionStatus& status,
+                                            rapidjson::Document::AllocatorType& allocator);
 
-std::optional<lk::TransactionStatus> deserializeTransactionStatus(const base::PropertyTree& input);
+lk::TransactionStatus deserializeTransactionStatus(rapidjson::Value input);
 
 }

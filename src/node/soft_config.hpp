@@ -1,13 +1,11 @@
 #pragma once
 
-#include "base/property_tree.hpp"
+#include <rapidjson/document.h>
 
 #include <filesystem>
 
-class SoftConfig : public base::PropertyTree
+class SoftConfig : public rapidjson::Document
 {
   public:
     SoftConfig(const std::filesystem::path& path);
-
-  private:
 };

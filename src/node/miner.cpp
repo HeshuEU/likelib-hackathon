@@ -5,14 +5,15 @@
 #include <random>
 #include <utility>
 
-
 namespace
 {
 
-std::size_t calcThreadsNum(const base::PropertyTree& config)
+std::size_t calcThreadsNum(rapidjson::Value config)
 {
-    if (config.hasKey("miner.threads")) {
-        return config.get<std::size_t>("miner.threads");
+    if (config.HasMember("threads")) {
+        auto threads_value = config.FindMember("threads");
+        if (threads_value->value.IsUint())
+            return threads_value->value.GetUint();
     }
     else {
         return std::thread::hardware_concurrency();
@@ -108,11 +109,11 @@ class MinerWorker
 } // namespace impl
 
 
-Miner::Miner(const base::PropertyTree& config, Miner::HandlerType handler)
+Miner::Miner(rapidjson::Value config, Miner::HandlerType handler)
   : _common_state{ { impl::Task::NONE, std::nullopt, std::nullopt }, std::move(handler) }
 {
     // setting up threads
-    std::size_t num_threads = calcThreadsNum(config);
+    std::size_t num_threads = calcThreadsNum(std::move(config));
 
     for (std::size_t i = 0; i < num_threads; ++i) {
         _workers.emplace_front(_common_state);

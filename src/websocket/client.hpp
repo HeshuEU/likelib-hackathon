@@ -2,20 +2,19 @@
 
 #include "types.hpp"
 
-#include <base/property_tree.hpp>
+#include <rapidjson/document.h>
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
 #include <functional>
 
-
 namespace websocket
 {
 
 class WebSocketClient
 {
-    using ReceiveMessageCallback = std::function<void(Command::Id, base::PropertyTree)>;
+    using ReceiveMessageCallback = std::function<void(Command::Id, rapidjson::Value)>;
     using CloseCallback = std::function<void(void)>;
 
   public:
@@ -27,7 +26,7 @@ class WebSocketClient
     bool connect(const std::string& host);
     void disconnect() noexcept;
 
-    void send(Command::Id commandId, const base::PropertyTree& args);
+    void send(Command::Id commandId, rapidjson::Document args);
 
   private:
     boost::asio::ip::tcp::resolver _resolver;

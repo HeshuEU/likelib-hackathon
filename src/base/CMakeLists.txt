@@ -1,9 +1,9 @@
 set(BASE_TEMPLATES
         hash.tpp
         database.tpp
-        property_tree.tpp
         serialization.tpp
-        program_options.tpp)
+        program_options.tpp
+        )
 
 set(BASE_HEADERS
         assert.hpp
@@ -15,7 +15,6 @@ set(BASE_HEADERS
         log.hpp
         types.hpp
         directory.hpp
-        property_tree.hpp
         bytes.hpp
         hash.hpp
         program_options.hpp
@@ -30,7 +29,6 @@ set(BASE_SOURCES
         error.cpp
         log.cpp
         directory.cpp
-        property_tree.cpp
         bytes.cpp
         hash.cpp
         program_options.cpp

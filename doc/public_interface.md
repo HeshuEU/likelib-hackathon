@@ -1,386 +1,578 @@
-# Websocket public interface specification
-##### Document with public websocket specification of likelib node.
+# WebSocket public interface specification
+##### Document with public websocket specification of Likelib node.
 
-Api version = 1.
+API version = 2.
 
-##### query form to node
+---
 
-    {
-		“type”: “subscribe”/"unsubscribe"/"call",
-		"name": <command>,
-		"api": 1,
-		"id": <unsigned int which unique at current session and start from 1 and every query incrimented id>,
-		“args”: {
-			<args for command>
-		}
-	}
-
-##### answer form from node
+### Common query/answer templates
+###### query form to node
 
     {
-		“type”: “answer",
-		"id": <unsigned int equal to query id>,
-		"status": "ok"/"error",
-		“result”: <result object for command>
-	}
-
-##### call commands:
-
-1. last_block_info
-
-    query:
-
-        {
-            “type”: "call",
-            "name": "last_block_info",
-            "api": 1,
-            "id": 99,
-            “args”: {
-            }
+        “type”: “subscribe”/"unsubscribe"/"call",
+        "name": <command name>,
+        "version": 2,
+        "id": <unsigned integer which unique at current WS session>,
+        “args”: {
+            <args for command>
         }
+    }
 
-	answer:
+###### good answer from node
 
-        {
-            “type”: "answer",
-            "id": 99,
-            "status": "ok",
-            “result”: {
-                “top_block_hash”: “<block hash encoded by base64>”,
-                “top_block_number”: <block number>,
-            }
+    {
+        “type”: “answer",
+        "id": <unsigned integer equal to query id>,
+        "status": "ok",
+        “result”: <result object for command>
+    }
+
+###### answer if smt goes wrong
+
+    {
+        “type”: “answer",
+        "id": <unsigned int equal to query id>,
+        "status": "error",
+        “result”: {
+            "error_message": "<error message in plane text>"
         }
+    }
 
-2. account_info
+---
 
-    query:
+### Details notes
 
-        {
-            “type”: "call",
-            "name": "account_info",
-            "api": 1,
-            "id": 56,
-            “args”: {
-                “address”: “<address encoded by base58>”,
-            }
-        }
-
-	answer:
-
-        {
-            “type”: "answer",
-            "id": 56,
-            "status": "ok",
-            “result”: {
-                “address”: “<address encoded by base58>”,
-                “balance”: “<uint256 integer at string format>”,
-                “nonce”: <integer>,
-                "type": "client"/"contract"
-                “transaction_hashes”: [<zero or more strings with hashes of transactions encoded by base64>]
-            }
-        }
-
-3. find_block
-
-    query:
-
-        {
-            “type”: "call",
-            "name": "find_block",
-            "api": 1,
-            "id": 77,
-            “args”: {
-                "hash": "<hash encoded by base64>"
-                ## or
-                “number”: <integer block number>,
-            }
-        }
-
-	answer:
-
-        {
-            “type”: "answer",
-            "id": 77,
-            "status": "ok",
-            “result”: {
-                “depth”: <integer>,
-                “nonce”: <integer>,
-                “timestamp”: <integer is seconds from epoch start>,
-                “previous_block_hash”: “<block hash encoded by base64>”,
-                “coinbase ”: “<address encoded by base58>”,
-                “transactions”: [<one or more transactions objects(see push_transaction)>]
-            }
-        }
-
-4. find_transaction
-
-    query:
-
-        {
-            “type”: "call",
-            "name": "find_transaction",
-            "api": 1,
-            "id": 10,
-            “args”: {
-                "hash": "<hash encoded by base64>"
-            }
-        }
-
-	answer:
-
-        {
-            “type”: "answer",
-            "id": 10,
-            "status": "ok",
-            “result”: {
-            	“from”: “<address encoded by base58>”,
-            	“to”: “<target address or null address if transaction for contract creation encoded by base58>”,
-            	“amount”: “<uint256 integer at string format>”,
-            	“fee”: “<uint256 integer at string format>”,
-            	“timestamp”: <integer is seconds from epoch start>,
-            	“data”: “<message ecnoded by base64 or empty string if "to" is not a contract address>”,
-            	“sign”: “<transaction hash signed by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
-            }
-        }
-
-5. find_transaction_status
-
-    query:
-
-        {
-            “type”: "call",
-            "name": "find_transaction_status",
-            "api": 1,
-            "id": 21,
-            “args”: {
-                "hash": "<hash encoded by base64>"
-            }
-        }
-
-	answer:
-
-        {
-            “type”: "answer",
-            "id": 21,
-            "status": "ok",
-            “result”: {
-            	“status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
-            	“action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
-            	“fee_left”: “<uint256 integer at string format>”,
-            	“message”: “<All will be at such format if status_code == 0. If action_type == 1 then the message is empty string. If action_type == 2 then the message is encoded by base64 data from contract call in string type. If action_type == 3 then the message is address encoded by base58 in string type.>”,
-            }
-        }
-
-6. call_contract_view
-
-    query:
-    
-        {
-            “type”: "call",
-            "name": "call_contract_view",
-            "api": 1,
-            "id": 67,
-            “args”: {
-            	“from”: “<address encoded by base58>”,
-            	“to”: “<contract address encoded by base58>”,
-            	“timestamp”: <integer is seconds from epoch start>,
-            	“message”: “<binary encoded(for call) data message ecnoded by base64>”,
-            	“sign”: “<call hash signed by private key of sender(from address) encoded by base64 (see format notes for more information)>”                                                               	
-            }
-        }
-
-	answer:
-	
-        {
-            "type": "answer",
-            "id": 67,
-            "status": "ok",
-            "result": "<encoded by base64 data from contract call in string type>"
-        }
-
-##### subscribe commands:
-
-1. last_block_info
-
-    note: send answer when new block add
-
-    query:
-
-        {
-            “type”: "subscribe",
-            "name": "last_block_info",
-            "api": 1,
-            "id": 2,
-            “args”: {
-            }
-        }
-
-	answers:
-
-        {
-            “type”: "answer",
-            "id": 2,
-            "status": "ok",
-            “result”: {
-                “top_block_hash”: “<block hash encoded by base64>”,
-                “top_block_number”: <block number>,
-            }
-        }
-
-2. push_transaction
-
-    note: send answer when transaction state change
-
-    query:
-    
-        {
-            “type”: "subscribe",
-            "name": "push_transaction",
-            "api": 1,
-            "id": 53,
-            “args”: {
-            	“from”: “<address encoded by base58>”,
-            	“to”: “<target address or null address if transaction for contract creation encoded by base58>”,
-            	“amount”: “<uint256 integer at string format>”,
-            	“fee”: “<uint256 integer at string format>”,
-            	“timestamp”: <integer is seconds from epoch start>,
-            	“data”: “<message ecnoded by base64 or empty string if "to" is not a contract address>”,
-            	“sign”: “<transaction hash signed by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
-            }
-        }
-
-    answers:
-
-        {
-            “type”: "answer",
-            "id": 53,
-            "status": "ok",
-            “result”: {
-            	“status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
-            	“action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
-            	“fee_left”: “<uint256 integer at string format>”,
-            	“message”: “<All will be at such format if status_code == 0. If action_type == 1 then the message is empty string. If action_type == 2 then the message is encoded by base64 data from contract call in string type. If action_type == 3 then the message is address encoded by base58 in string type.>”,
-            }
-        }
-
-3. account_info
-
-    note: send answer when account state change
-
-    query:
-
-        {
-            “type”: "subscribe",
-            "name": "account_info",
-            "api": 1,
-            "id": 80,
-            “args”: {
-                “address”: “<address encoded by base58>”,
-            }
-        }
-
-	answers:
-
-        {
-            “type”: "answer",
-            "id": 80,
-            "status": "ok",
-            “result”: {
-                “address”: “<address encoded by base58>”,
-                “balance”: “<uint256 integer at string format>”,
-                “nonce”: <integer>,
-                "type": "client"/"contract"
-                “transaction_hashes”: [<zero or more strings with hashes of transactions encoded by base64>]
-            }
-        }
-
-##### unsubscribe commands:
-
-1. last_block_info
-
-    note: send answer when new block add
-
-    query:
-
-        {
-            “type”: "unsubscribe",
-            "name": "last_block_info",
-            "api": 1,
-            "id": 9,
-            “args”: {
-            }
-        }
-
-	answers:
-
-        {
-            “type”: "answer",
-            "id": 9,
-            "status": "ok",
-            “result”: "successful"/"error"
-        }
-
-2. push_transaction
-
-    note: send answer when transaction state change
-
-    query:
-    
-        {
-            “type”: "unsubscribe",
-            "name": "push_transaction",
-            "api": 1,
-            "id": 290,
-            “args”: {
-                "hash": "<hash encoded by base64>"
-            }
-        }
-
-    answers:
-
-        {
-            “type”: "answer",
-            "id": 290,
-            "status": "ok",
-            “result”: "successful"/"error"
-        }
-
-3. account_info
-
-    note: send answer when account state change
-
-    query:
-
-        {
-            “type”: "unsubscribe",
-            "name": "account_info",
-            "api": 1,
-            "id": 122,
-            “args”: {
-                “address”: “<address encoded by base58>”,
-            }
-        }
-
-	answers:
-
-        {
-            “type”: "answer",
-            "id": 122,
-            "status": "ok",
-            “result”: "successful"/"error"
-        }
-
-## Format notes:
-
-- Address is Ripemd160 of sha256 of serialized public key bytes.
+- Address is Ripemd160 of SHA256 of serialized public key bytes.
 - Null address is 20 bytes of zeros.
-- for sign using secp256k1. Hash of transaction using as signing message. Singing function is sign_recoverable with sha256 hash function.
-- transaction hash is sha256 of concatenated string:
+- for sign using secp256k1. Hash of transaction using as signing message. Singing function is sign_recoverable with SHA256 function.
+- transaction hash is SHA256 of concatenated string:
 
 		“<from address encoded by base58>” + “<to address or null address if transaction for contract creation encoded by base58>” + “<amount as uint256 integer at string format>” + “<fee as uint256 integer at string format>” + “<timestamp integer is seconds from epoch start at string>” + “<binary encoded data message ecnoded by base64 or empty string>”
 
 - call hash is sha256 of concatenated string:
  
  		“<from address encoded by base58>” + “<to address encoded by base58>”  + “<timestamp integer is seconds from epoch start at string>” + “<binary encoded(for call) data message ecnoded by base64>”
-     
-   
+
+---
+
+### Commands query/answer specification
+
+##### 1. Get(once) top(last in chain) block information(hash and number)
+
+    query:
+
+        {
+            “type”: "call",
+            "name": "top_block_info",
+            "version": 2,
+            "id": 99,
+            “args”: {
+            }
+        }
+
+	answer:
+
+        {
+            “type”: "answer",
+            "id": 99,
+            "status": "ok",
+            “result”: {
+                “top_block_hash”: “<block hash encoded by base64>”,
+                “top_block_number”: <block number>,
+            }
+        }
+
+##### 2. Subscribe on top(last in chain) block information(hash and number) updating
+
+    query:
+
+        {
+            “type”: "subscribe",
+            "name": "top_block_info",
+            "version": 2,
+            "id": 2,
+            “args”: {
+            }
+        }
+
+	answers:
+
+        {
+            “type”: "answer",
+            "id": 2,
+            "status": "ok",
+            “result”: {
+                “top_block_hash”: “<block hash encoded by base64>”,
+                “top_block_number”: <block number>,
+            }
+        }
+
+##### 3. Cancel subscription on top(last in chain) block information(hash and number) updating
+
+    query:
+
+        {
+            “type”: "unsubscribe",
+            "name": "top_block_info",
+            "version": 2,
+            "id": 9,
+            “args”: {
+            }
+        }
+
+	answers:
+
+        {
+            “type”: "answer",
+            "id": 9,
+            "status": "ok",
+            “result”: {
+                "success": true,
+            }
+        }
+
+        ## if subscription is not exist 
+
+        {
+            “type”: "answer",
+            "id": 9,
+            "status": "ok",
+            “result”: {
+                "success": false,
+            }
+        }
+ // TODO SET MORE INFO(ABOUT) AT ACCOUNT STATE INFO
+##### 4. Get(once) current account state info 
+
+    query:
+
+        {
+            “type”: "call",
+            "name": "account_state",
+            "version": 2,
+            "id": 56,
+            “args”: {
+                “address”: “<address encoded by base58>”,
+            }
+        }
+
+	answer:
+	
+    if address of client account:
+
+        {
+            “type”: "answer",
+            "id": 56,
+            "status": "ok",
+            “result”: {
+                "exist": true,
+                “address”: “<address encoded by base58>”,
+                "type": "client",
+                “balance”: “<uint256 at string format>”,
+                “nonce”: <unsigned integer.>,
+                “transaction_hashes”: [<zero or more strings with hashes of transactions encoded by base64>]
+            }
+        }
+
+    if address of contract account:
+
+        {
+            “type”: "answer",
+            "id": 56,
+            "status": "ok",
+            “result”: {
+                "exist": true,
+                “address”: “<address encoded by base58>”,
+                "type": "contract",
+                “balance”: “<uint256 at string format>”,
+                “runtime_bytecode”: <contract runtime bytecode encoded by base64>,
+                “memory_state”: {
+                    "<32 bytes address encoded by base64>": "<32 bytes word value encoded by base64>"
+                    ....
+                }
+            }
+        }
+
+    if contract account is not exist or client account didn't take part in any transaction:
+
+        {
+            “type”: "answer",
+            "id": 56,
+            "status": "ok",
+            “result”: {
+                "exist": false,
+                “address”: “<address encoded by base58>”
+            }
+        }
+
+##### 5. Subscribe on account's state updates
+
+    query:
+
+        {
+            “type”: "subscribe",
+            "name": "account_state",
+            "version": 2,
+            "id": 80,
+            “args”: {
+                “address”: “<address encoded by base58>”,
+            }
+        }
+
+	answers:
+	
+    if address of client account:
+
+        {
+            “type”: "answer",
+            "id": 80,
+            "status": "ok",
+            “result”: {
+                “address”: “<address encoded by base58>”,
+                "type": "client",
+                “balance”: “<uint256 at string format>”,
+                “nonce”: <unsigned integer.>,
+                “transaction_hashes”: [<zero or more strings with hashes of transactions encoded by base64>]
+            }
+        }
+
+    if address of contract account:
+
+        {
+            “type”: "answer",
+            "id": 80,
+            "status": "ok",
+            “result”: {
+                “address”: “<address encoded by base58>”,
+                "type": "contract",
+                “balance”: “<uint256 at string format>”,
+                “runtime_bytecode”: <contract runtime bytecode encoded by base64>,
+                “memory_state”: {
+                    "<32 bytes address encoded by base64>": "<32 bytes word value encoded by base64>"
+                    ....
+                }
+            }
+        }
+
+
+##### 6. Cancel subscription on account's state updates
+
+    query:
+
+        {
+            “type”: "unsubscribe",
+            "name": "account_state",
+            "version": 2,
+            "id": 122,
+            “args”: {
+                “address”: “<address encoded by base58>”,
+            }
+        }
+
+	answers:
+
+        {
+            “type”: "answer",
+            "id": 122,
+            "status": "ok",
+            “result”: {
+                "success": true,
+            }
+        }
+
+        ## if subscription is not exist 
+
+        {
+            “type”: “answer",
+            "id": 122,
+            "status": "ok",
+            “result”: {
+                "success": false,
+            }
+        }
+
+##### 7. Push a transaction and subscribe on the transaction's status updates
+
+    query:
+
+        {
+            “type”: "subscribe",
+            "name": "push_transaction",
+            "version": 2,
+            "id": 53,
+            “args”: {
+                "hash": "<hash encoded by base64>",
+                “from”: “<address encoded by base58>”,
+                “to”: “<target address(or null address if transaction for contract creation) encoded by base58>”,
+                “amount”: “<uint256 at string format>”,
+                “fee”: “<uint256 at string format>”,
+                “timestamp”: <integer is seconds from epoch start>,
+                “data”: “<message ecnoded by base64 or empty string if "to" is not a contract address>”,
+                “sign”: “<transaction hash signed by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
+            }
+        }
+
+    answers:
+
+        {
+            “type”: "answer",
+            "id": 53,
+            "status": "ok",
+            “result”: {
+                "hash": "<hash of transaction encoded by base64>",
+                “status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
+                “action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
+                “fee_left”: “<uint256 integer at string format>”,
+                “message”: “<All will be at such format if status_code == 0. If action_type == 1 then the message is empty string. If action_type == 2 then the message is encoded by base64 data from contract call in string type. If action_type == 3 then the message is address encoded by base58 in string type.>”,
+            }
+        }
+
+##### 8. Get(once) transaction data(transaction object) if exist
+
+    query:
+
+        {
+            “type”: "call",
+            "name": "transaction",
+            "version": 2,
+            "id": 10,
+            “args”: {
+                "hash": "<hash encoded by base64>"
+            }
+        }
+
+	answer:
+
+        {
+            “type”: "answer",
+            "id": 10,
+            "status": "ok",
+            “result”: {
+               "exist": true,
+               "hash": "<hash encoded by base64>",
+               “from”: “<address encoded by base58>”,
+               “to”: “<target address(or null address if transaction for contract creation) encoded by base58>”,
+               “amount”: “<uint256 at string format>”,
+               “fee”: “<uint256 at string format>”,
+               “timestamp”: <integer is seconds from epoch start>,
+               “data”: “<message ecnoded by base64 or empty string if "to" is not a contract address>”,
+               “sign”: “<transaction hash signed by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
+            }
+        }
+
+    if transaction is not exisits:
+
+        {
+            “type”: "answer",
+            "id": 10,
+            "status": "ok",
+            “result”: {
+                "exist": false,
+                "hash": "<hash encoded by base64>"
+            }
+        }
+
+##### 9. Get(once) current transaction's status if transaction exist
+
+    query:
+
+        {
+            “type”: "call",
+            "name": "transaction_status",
+            "version": 2,
+            "id": 21,
+            “args”: {
+                "hash": "<hash of transaction encoded by base64>"
+            }
+        }
+
+	answer:
+
+        {
+            “type”: "answer",
+            "id": 21,
+            "status": "ok",
+            “result”: {
+                "exist": true,
+                "hash": "<hash of transaction encoded by base64>",
+                “status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
+                “action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
+                “fee_left”: “<uint256 integer at string format>”,
+                “message”: “<All will be at such format if status_code == 0. If action_type == 1 then the message is empty string. If action_type == 2 then the message is encoded by base64 data from contract call in string type. If action_type == 3 then the message is address encoded by base58 in string type.>”,
+            }
+        }
+
+    if transaction is not exisits:
+
+        {
+            “type”: "answer",
+            "id": 21,
+            "status": "ok",
+            “result”: {
+                "exist": false,
+                "hash": "<hash of transaction encoded by base64>"
+            }
+        }
+
+##### 10. Subscribe on transaction's status updates
+
+    query:
+
+        {
+            “type”: "subscribe",
+            "name": "transaction_status",
+            "version": 2,
+            "id": 50,
+            “args”: {
+                "hash": "<hash encoded by base64>"
+            }
+        }
+
+    answers:
+
+        {
+            “type”: "answer",
+            "id": 50,
+            "status": "ok",
+            “result”: {
+                "hash": "<hash of transaction encoded by base64>",
+                “status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
+                “action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
+                “fee_left”: “<uint256 integer at string format>”,
+                “message”: “<All will be at such format if status_code == 0. If action_type == 1 then the message is empty string. If action_type == 2 then the message is encoded by base64 data from contract call in string type. If action_type == 3 then the message is address encoded by base58 in string type.>”,
+            }
+        }
+
+##### 11. Cancel subscription on transaction's status updates 
+
+    query:
+
+        {
+            “type”: "unsubscribe",
+            "name": "transaction_status",
+            "version": 2,
+            "id": 290,
+            “args”: {
+                "hash": "<hash encoded by base64>"
+            }
+        }
+
+    answers:
+
+        {
+            “type”: "answer",
+            "id": 290,
+            "status": "ok",
+            “result”: {
+                "success": true,
+            }
+        }
+
+        ## if subscription is not exist 
+
+        {
+            “type”: "answer",
+            "id": 290,
+            "status": "ok",
+            “result”: {
+                "success": false,
+            }
+        }
+
+##### 12. Get(once) light block data if exist
+
+    query:
+
+        {
+            “type”: "call",
+            "name": "light_block",
+            "version": 2,
+            "id": 79,
+            “args”: {
+                "hash": "<hash encoded by base64>"
+                ## or
+                “depth”: <unsigned integer block number>,
+                ## if had two options using, node would use "hash" option. 
+            }
+        }
+
+	answer:
+
+        {
+            “type”: "answer",
+            "id": 79,
+            "status": "ok",
+            “result”: {
+                "exist": true,
+                "hash": "<hash encoded by base64>",
+                “depth”: <unsigned integer block number>,
+                “nonce”: <unsigned integer magic>,
+                “timestamp”: <unsigned integer is seconds from epoch start>,
+                “previous_block_hash”: “<block hash encoded by base64>”,
+                “coinbase ”: “<address encoded by base58>”,
+                “transaction_hashes”: [<one or more strings with hashes of transactions encoded by base64>]
+            }
+        }
+
+    if block is not exisits:
+
+        {
+            “type”: "answer",
+            "id": 79,
+            "status": "ok",
+            “result”: {
+                "exist": false,
+                "hash": "<hash encoded by base64>"
+                ## if exist only depth
+                “depth”: <unsigned integer block number>
+            }
+        }
+
+##### 13. Get(once) full block data if exist
+
+    query:
+
+        {
+            “type”: "call",
+            "name": "full_block",
+            "version": 2,
+            "id": 77,
+            “args”: {
+                "hash": "<hash encoded by base64>"
+                ## or
+                “depth”: <unsigned integer block number>,
+                ## if two options are exist, node will use "hash" option. 
+            }
+        }
+
+	answer:
+
+        {
+            “type”: "answer",
+            "id": 77,
+            "status": "ok",
+            “result”: {
+                "exist": true,
+                "hash": "<hash encoded by base64>",
+                “depth”: <unsigned integer block number>,
+                “nonce”: <unsigned integer magic>,
+                “timestamp”: <unsigned integer is seconds from epoch start>,
+                “previous_block_hash”: “<block hash encoded by base64>”,
+                “coinbase ”: “<address encoded by base58>”,
+                “transactions”: [<one or more transactions objects>]
+            }
+        }
+
+    if block is not exisits:
+
+        {
+            “type”: "answer",
+            "id": 77,
+            "status": "ok",
+            “result”: {
+                "exist": false,
+                "hash": "<hash encoded by base64>"
+                ## if exist only depth
+                “depth”: <unsigned integer block number>
+            }
+        }

@@ -4,9 +4,10 @@
 #include "core/types.hpp"
 
 #include "base/bytes.hpp"
-#include "base/property_tree.hpp"
 
 #include <evmc/evmc.hpp>
+
+#include <rapidjson/document.h>
 
 #include <boost/filesystem.hpp>
 
@@ -20,14 +21,14 @@ struct CompiledContract
 {
     std::string name;
     base::Bytes code;
-    base::PropertyTree metadata;
+    std::string metadata;
 
     explicit CompiledContract() = default;
-    explicit CompiledContract(std::string _name);
+    explicit CompiledContract(const std::string& _name);
     explicit CompiledContract(const CompiledContract&) = default;
     explicit CompiledContract(CompiledContract&&) = default;
     ~CompiledContract() = default;
-    CompiledContract& operator=(const CompiledContract&) = default;
+    CompiledContract& operator=(const CompiledContract&) = delete;
     CompiledContract& operator=(CompiledContract&&) = default;
 };
 

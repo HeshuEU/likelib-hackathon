@@ -5,8 +5,8 @@
 namespace lk
 {
 
-RatingManager::RatingManager(const base::PropertyTree& config)
-  : _db{ config.get<std::string>("net.peers_db") }
+RatingManager::RatingManager(const base::Directory& db_path)
+  : _db{ db_path }
 {}
 
 

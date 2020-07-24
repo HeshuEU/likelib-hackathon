@@ -67,31 +67,29 @@ std::vector<std::pair<std::string, base::Bytes>> callCompilationCommand(const bo
 
         auto info = parseInfoLine(info_line);
 
-        contracts_byte_codes.push_back({ std::get<1>(info), std::move(bytecode) });
+        contracts_byte_codes.emplace_back(std::get<1>(info), std::move(bytecode));
     }
 
     return contracts_byte_codes;
 }
 
 
-std::vector<std::pair<std::string, base::PropertyTree>> callMetadataCommand(const boost::filesystem::path& path_to_solc,
-                                                                            const std::string& path_to_solidity_file)
+std::vector<std::pair<std::string, std::string>> callMetadataCommand(const boost::filesystem::path& path_to_solc,
+                                                                     const std::string& path_to_solidity_file)
 {
     std::vector<std::string> args{ "--metadata", path_to_solidity_file };
 
     auto res = callCommand(path_to_solc, args);
 
-    std::vector<std::pair<std::string, base::PropertyTree>> contracts_metadatas;
+    std::vector<std::pair<std::string, std::string>> contracts_metadatas;
     constexpr const size_t GROUP_SIZE = 4;
     for (std::size_t i = 0; i < res.size() / GROUP_SIZE; i++) {
         auto current_contract_index = i * GROUP_SIZE;
 
-        auto info_line = res[current_contract_index + 1];
-        auto metadata = base::parseJson(res[current_contract_index + 3]);
+        auto metadata = res[current_contract_index + 3];
+        auto info = parseInfoLine(res[current_contract_index + 1]);
 
-        auto info = parseInfoLine(info_line);
-
-        contracts_metadatas.push_back({ std::get<1>(info), std::move(metadata) });
+        contracts_metadatas.emplace_back(std::get<1>(info), std::move(metadata));
     }
 
     return contracts_metadatas;
@@ -133,7 +131,7 @@ std::filesystem::path getVmPath()
 namespace vm
 {
 
-CompiledContract::CompiledContract(std::string _name)
+CompiledContract::CompiledContract(const std::string& _name)
   : name{ _name }
 {}
 

@@ -2,8 +2,6 @@
 
 #include "session.hpp"
 
-#include "base/property_tree.hpp"
-
 #include <boost/beast/core.hpp>
 #include <boost/thread.hpp>
 
@@ -15,14 +13,14 @@ class WebSocketAcceptor
     using SocketRegistration = std::function<void(boost::asio::ip::tcp::socket&& socket)>;
 
   public:
-    explicit WebSocketAcceptor(const base::PropertyTree& config, SocketRegistration registration);
+    explicit WebSocketAcceptor(rapidjson::Value config, SocketRegistration registration);
     ~WebSocketAcceptor() noexcept;
 
     void run();
     void stop() noexcept;
 
   private:
-    const base::PropertyTree& _config;
+    rapidjson::Value _config;
     SocketRegistration _connectionRegistration;
 
     boost::asio::io_context _io_context;

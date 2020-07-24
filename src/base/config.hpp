@@ -90,8 +90,8 @@ constexpr std::size_t BC_EMISSION_VALUE = 1000;
 //------------------------
 
 // websocket
-constexpr const std::uint32_t RPC_PUBLIC_API_VERSION = 1;
-constexpr std::size_t RPC_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
+constexpr std::uint32_t PUBLIC_SERVICE_API_VERSION = 1;
+constexpr std::size_t PUBLIC_SERVICE_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
 //--------------------
 
 // database

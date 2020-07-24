@@ -1,14 +1,22 @@
 #include "node.hpp"
 
 #include <functional>
+#include <string>
 
-Node::Node(const base::PropertyTree& config)
-  : _config{ config }
-  , _key_vault(_config)
-  , _core{ _config, _key_vault }
-  , _rpc{ _config, _core }
+Node::Node(rapidjson::Value config)
+  : _config{ std::move(config) }
+  , _core{ std::move(_config.FindMember("core")->value)}
+//  , _public_service{ std::move(_config.FindMember("websocket")->value), _core }
 {
-    _miner = std::make_unique<Miner>(_config, std::bind(&Node::onBlockMine, this, std::placeholders::_1));
+    if (!_config.HasMember("miner")) {
+        RAISE_ERROR(base::InvalidArgument, "config file is't contain miner node");
+    }
+    auto miner_config_node = _config.FindMember("miner");
+    if (!miner_config_node->value.IsObject()) {
+        RAISE_ERROR(base::InvalidArgument, "config file miner node is invalid");
+    }
+    _miner = std::make_unique<Miner>(std::move(miner_config_node->value),
+                                     std::bind(&Node::onBlockMine, this, std::placeholders::_1));
 
     _core.subscribeToNewPendingTransaction(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
     _core.subscribeToBlockAddition(std::bind(&Node::onNewBlock, this, std::placeholders::_1));
@@ -19,15 +27,15 @@ void Node::run()
 {
     _core.run(); // run before all others
 
-    try {
-        _rpc.run();
-    }
-    catch (const std::exception& e) {
-        LOG_WARNING << "Cannot startSession RPC server: " << e.what();
-    }
-    catch (...) {
-        LOG_WARNING << "Cannot startSession RPC server: unknown error";
-    }
+//    try {
+//        _public_service.run();
+//    }
+//    catch (const std::exception& e) {
+//        LOG_WARNING << "Cannot startSession RPC server: " << e.what();
+//    }
+//    catch (...) {
+//        LOG_WARNING << "Cannot startSession RPC server: unknown error";
+//    }
 }
 
 

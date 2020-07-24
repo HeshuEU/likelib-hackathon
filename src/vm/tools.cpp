@@ -6,20 +6,14 @@
 #include "vm/error.hpp"
 
 #include <boost/algorithm/string.hpp>
-#include <boost/archive/binary_oarchive.hpp>
 #include <boost/foreach.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
-#include <boost/process.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <filesystem>
 #include <regex>
-
-namespace bp = ::boost::process;
 
 namespace
 {
@@ -384,23 +378,6 @@ evmc::address toEthAddress(const lk::Address& address)
 }
 
 
-base::Keccak256 methodHash(const boost::property_tree::ptree& method_abi)
-{
-    //    auto ser = base::PropertyTree(method_abi).toString();
-    std::string method =
-      method_abi.get<std::string>("type") == "function" ? method_abi.get<std::string>("name") + '(' : "constructor(";
-
-    BOOST_FOREACH (const auto& argument, method_abi.get_child("inputs")) {
-        method += argument.second.get<std::string>("type") + ',';
-    }
-    if (method[method.size() - 1] == ',') {
-        method.erase(method.size() - 1, 1);
-    }
-    method += ')';
-    return base::Keccak256::compute(base::Bytes(method));
-}
-
-
 namespace
 {
 
@@ -442,62 +419,6 @@ std::optional<base::Bytes> encodeCall(const std::filesystem::path& path_to_code_
 std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_code_folder, const std::string& output)
 {
     return vm::decodeMessage(path_to_code_folder, output);
-}
-
-
-namespace
-{
-
-constexpr const char* PATH_VARIABLE_NAME = "PATH";
-constexpr const char* PATH_DELIMITER_NAME = ":";
-constexpr const char* PYTHON_EXEC = "python3.7";
-
-std::optional<std::string> findPython()
-{
-    std::string path_var = std::getenv(PATH_VARIABLE_NAME);
-    std::vector<std::string> results;
-
-    boost::algorithm::split(results, path_var, boost::is_any_of(PATH_DELIMITER_NAME));
-
-    for (const auto& item : results) {
-        auto current = std::filesystem::path(item) / std::filesystem::path(PYTHON_EXEC);
-        if (std::filesystem::exists(current)) {
-            return current;
-        }
-    }
-    return std::nullopt;
-}
-
-} // namespace
-
-
-std::string callPython(std::vector<std::string>& args)
-{
-    bp::ipstream out;
-    int exit_code = 2;
-
-    auto python_exec = findPython();
-    if (python_exec) {
-        try {
-            bp::child c(python_exec.value(), args, bp::std_out > out);
-            c.wait();
-            exit_code = c.exit_code();
-        }
-        catch (const std::exception& e) {
-            RAISE_ERROR(base::SystemCallFailed, e.what());
-        }
-    }
-    else {
-        RAISE_ERROR(base::InaccessibleFile, "can't find python executable file");
-    }
-
-    std::ostringstream s;
-    s << out.rdbuf();
-
-    if (exit_code) {
-        RAISE_ERROR(base::SystemCallFailed, s.str());
-    }
-    return s.str();
 }
 
 
@@ -589,4 +510,5 @@ std::string decodeMessage(const std::string& contract_path, const std::string& d
     Py_Finalize();
     return decode_result;
 }
+
 } // namespace vm

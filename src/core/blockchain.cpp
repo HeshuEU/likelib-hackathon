@@ -36,6 +36,7 @@ base::Bytes toBytes(DataType type, const base::FixedBytes<S>& key)
     return data;
 }
 
+
 const base::Bytes LAST_BLOCK_HASH_KEY{ toBytes(DataType::SYSTEM, base::Bytes("last_block_hash")) };
 
 } // namespace
@@ -44,11 +45,10 @@ const base::Bytes LAST_BLOCK_HASH_KEY{ toBytes(DataType::SYSTEM, base::Bytes("la
 namespace lk
 {
 
-Blockchain::Blockchain(ImmutableBlock genesis_block, const base::PropertyTree& config)
-  : _config{ config }
+Blockchain::Blockchain(ImmutableBlock genesis_block)
+  : _genesis_block_hash{ base::Sha256::null() }
   , _top_level_block_hash{ base::Sha256::null() }
-  // temporary null, because it requires initialization. Set to real value in addGenesisBlock
-  , _genesis_block_hash{ base::Sha256::null() }
+// temporary null, because it requires initialization. Set to real value in addGenesisBlock
 {
     addGenesisBlock(genesis_block);
 }
@@ -64,7 +64,7 @@ void Blockchain::addGenesisBlock(ImmutableBlock block)
     }
 
     auto inserted_block = _blocks.insert({ hash, std::move(block) }).first;
-    _blocks_by_depth.insert({0, hash});
+    _blocks_by_depth.insert({ 0, hash });
     _top_level_block_hash = _genesis_block_hash = hash;
 
     LOG_DEBUG << "Adding genesis block. Block hash = " << hash;
@@ -204,11 +204,11 @@ bool Blockchain::checkConsensus(const ImmutableBlock& block) const
 }
 
 
-PersistentBlockchain::PersistentBlockchain(ImmutableBlock genesis_block, const base::PropertyTree& config)
-  : Blockchain{ std::move(genesis_block), config }
+PersistentBlockchain::PersistentBlockchain(ImmutableBlock genesis_block, rapidjson::Value config)
+  : Blockchain{ std::move(genesis_block) }
 {
-    auto database_path = config.get<std::string>("database.path");
-    if (config.get<bool>("database.clean")) {
+    std::string database_path{ config.FindMember("path")->value.GetString() };
+    if (config.FindMember("clean")->value.GetBool()) {
         _database = base::createClearDatabaseInstance(base::Directory(database_path));
         LOG_INFO << "Created clear database instance.";
     }

@@ -4,7 +4,6 @@
 
 #include <boost/spirit/include/qi.hpp>
 
-
 namespace websocket
 {
 
@@ -35,9 +34,10 @@ boost::asio::ip::tcp::endpoint createEndpoint(const std::string& listening_addre
 }
 
 
-std::string serializeCommandName(Command::Id name)
+std::string serializeCommandName(Command::Id command)
 {
-    switch (Command::Name(static_cast<std::uint64_t>(name) & static_cast<std::uint64_t>(Command::NameMask))) {
+    LOG_TRACE << "Serializing CommandName";
+    switch (Command::Name(static_cast<std::uint64_t>(command) & static_cast<std::uint64_t>(Command::NameMask))) {
         case Command::Name::ACCOUNT_INFO:
             return "account_info";
         case Command::Name::FIND_BLOCK:
@@ -53,36 +53,37 @@ std::string serializeCommandName(Command::Id name)
         default:
             RAISE_ERROR(base::LogicError, "used unexpected command name");
     }
-    ASSERT(false);
 }
 
 
-websocket::Command::Name deserializeCommandName(const std::string& message)
+websocket::Command::Name deserializeCommandName(const std::string& command_name_str)
 {
-    if (message == "account_info") {
+    LOG_TRACE << "Deserializing CommandName";
+    if (command_name_str == "account_info") {
         return websocket::Command::Name::ACCOUNT_INFO;
     }
-    if (message == "find_block") {
+    if (command_name_str == "find_block") {
         return websocket::Command::Name::FIND_BLOCK;
     }
-    if (message == "find_transaction") {
+    if (command_name_str == "find_transaction") {
         return websocket::Command::Name::FIND_TRANSACTION;
     }
-    if (message == "find_transaction_status") {
+    if (command_name_str == "find_transaction_status") {
         return websocket::Command::Name::FIND_TRANSACTION_STATUS;
     }
-    if (message == "push_transaction") {
+    if (command_name_str == "push_transaction") {
         return websocket::Command::Name::PUSH_TRANSACTION;
     }
-    if (message == "last_block_info") {
+    if (command_name_str == "last_block_info") {
         return websocket::Command::Name::LAST_BLOCK_INFO;
     }
-    RAISE_ERROR(base::InvalidArgument, std::string("not any type found by name") + message);
+    RAISE_ERROR(base::InvalidArgument, std::string("not any command name found by ") + command_name_str);
 }
 
 
 std::string serializeCommandType(websocket::Command::Id command_type)
 {
+    LOG_TRACE << "Serializing CommandType";
     switch (Command::Type(static_cast<std::uint64_t>(command_type) & static_cast<std::uint64_t>(Command::TypeMask))) {
         case Command::Type::CALL:
             return "call";
@@ -93,64 +94,63 @@ std::string serializeCommandType(websocket::Command::Id command_type)
         default:
             RAISE_ERROR(base::LogicError, "used unexpected command type");
     }
-    ASSERT(false);
 }
 
 
-websocket::Command::Type deserializeCommandType(const std::string& message)
+websocket::Command::Type deserializeCommandType(const std::string& command_type_str)
 {
-    if (message == "call") {
+    LOG_TRACE << "Deserializing CommandType";
+    if (command_type_str == "call") {
         return websocket::Command::Type::CALL;
     }
-    if (message == "unsubscribe") {
+    if (command_type_str == "unsubscribe") {
         return websocket::Command::Type::UNSUBSCRIBE;
     }
-    if (message == "subscribe") {
+    if (command_type_str == "subscribe") {
         return websocket::Command::Type::SUBSCRIBE;
     }
-    RAISE_ERROR(base::InvalidArgument, std::string("not any type found by name") + message);
+    RAISE_ERROR(base::InvalidArgument, std::string("not any command name found by ") + command_type_str);
 }
 
 
-const std::string& serializeAccountType(lk::AccountType type)
+std::string serializeAccountType(lk::AccountType account_type)
 {
-    switch (type) {
+    LOG_TRACE << "Serializing AccountType";
+    switch (account_type) {
         case lk::AccountType::CONTRACT:
-            static const std::string contract_type("Contract");
-            return contract_type;
+            return "Contract";
         case lk::AccountType::CLIENT:
-            static const std::string client_type("Client");
-            return client_type;
+            return "Client";
         default:
-            RAISE_ERROR(base::InvalidArgument, "Invalid type");
+            RAISE_ERROR(base::LogicError, "used unexpected account type");
     }
 }
 
 
-std::optional<lk::AccountType> deserializeAccountType(const std::string& type)
+lk::AccountType deserializeAccountType(const std::string& account_type_str)
 {
-    if (type == "Client") {
+    LOG_TRACE << "Deserializing AccountType";
+    if (account_type_str == "Client") {
         return lk::AccountType::CLIENT;
     }
-    else if (type == "Contract") {
+    else if (account_type_str == "Contract") {
         return lk::AccountType::CONTRACT;
     }
-    else {
-        LOG_ERROR << "Failed to deserialize AccountType";
-        return std::nullopt;
-    }
+    RAISE_ERROR(base::InvalidArgument, std::string("Error in deserialization of AccountType: ") + account_type_str);
 }
 
 
 uint32_t serializeTransactionStatusStatusCode(lk::TransactionStatus::StatusCode status_code)
 {
+    LOG_TRACE << "Serializing TransactionStatusCode";
     return static_cast<uint32_t>(status_code);
 }
 
 
-std::optional<lk::TransactionStatus::StatusCode> deserializeTransactionStatusStatusCode(std::uint32_t type)
+lk::TransactionStatus::StatusCode deserializeTransactionStatusStatusCode(std::uint32_t status_code)
 {
-    switch (type) {
+    LOG_TRACE << "Deserializing TransactionStatusCode";
+    switch (status_code) {
         case 0:
             return lk::TransactionStatus::StatusCode::Success;
         case 1:
@@ -166,21 +166,23 @@ std::optional<lk::TransactionStatus::StatusCode> deserializeTransactionStatusSta
         case 6:
             return lk::TransactionStatus::StatusCode::Failed;
         default:
-            LOG_ERROR << "Failed to deserialize StatusCode";
-            return std::nullopt;
+            RAISE_ERROR(base::InvalidArgument,
+                        std::string("Error in deserialization of StatusCode: ") + std::to_string(status_code));
     }
 }
 
 
 uint32_t serializeTransactionStatusActionType(lk::TransactionStatus::ActionType action_type)
 {
+    LOG_TRACE << "Serializing TransactionStatusActionType";
     return static_cast<uint32_t>(action_type);
 }
 
 
-std::optional<lk::TransactionStatus::ActionType> deserializeTransactionStatusActionType(std::uint32_t type)
+lk::TransactionStatus::ActionType deserializeTransactionStatusActionType(std::uint32_t action_type)
 {
-    switch (type) {
+    LOG_TRACE << "Deserializing TransactionStatusActionType";
+    switch (action_type) {
         case 0:
             return lk::TransactionStatus::ActionType::None;
         case 1:
@@ -190,576 +192,498 @@ std::optional<lk::TransactionStatus::ActionType> deserializeTransactionStatusAct
         case 3:
             return lk::TransactionStatus::ActionType::ContractCreation;
         default:
-            LOG_ERROR << "Failed to deserialize ActionType";
-            return std::nullopt;
+            RAISE_ERROR(base::InvalidArgument,
+                        std::string("Error in deserialization of ActionType: ") + std::to_string(action_type));
     }
 }
 
 
 std::string serializeBalance(const lk::Balance& balance)
 {
+    LOG_TRACE << "Serializing Balance";
     return balance.str();
 }
 
 
-std::optional<lk::Balance> deserializeBalance(const std::string& type)
+lk::Balance deserializeBalance(const std::string& balance_str)
 {
-    try {
-        return lk::Balance{ type };
-    }
-    catch (const base::Error& e) {
-        LOG_ERROR << "Failed to deserialize Balance";
-        return std::nullopt;
-    }
+    LOG_TRACE << "Deserializing Balance";
+    return lk::Balance{ balance_str };
 }
 
 
-std::string serializeFee(std::uint64_t balance)
+std::string serializeFee(lk::Fee fee)
 {
-    return std::to_string(balance);
+    LOG_TRACE << "Serializing Fee";
+    return std::to_string(fee);
 }
 
 
-std::optional<std::uint64_t> deserializeFee(const std::string& type)
+lk::Fee deserializeFee(const std::string& fee_str)
 {
+    LOG_TRACE << "Deserializing Fee";
     char* end = nullptr;
-    auto balance = static_cast<uint64_t>(std::strtoll(type.c_str(), &end, 10));
+    auto fee = static_cast<uint64_t>(std::strtoll(fee_str.c_str(), &end, 10));
     if (end == nullptr) {
-        LOG_ERROR << "Failed to deserialize fee";
-        return std::nullopt;
+        RAISE_ERROR(base::InvalidArgument, std::string("Error in deserialization of Fee: ") + fee_str);
     }
-    return balance;
+    return fee;
 }
 
 
 std::string serializeHash(const base::Sha256& hash)
 {
+    LOG_TRACE << "Serializing Hash";
     return base::base64Encode(hash.getBytes());
 }
 
 
-std::optional<base::Sha256> deserializeHash(const std::string& hash_str)
+base::Sha256 deserializeHash(const std::string& hash_str)
 {
+    LOG_TRACE << "Deserializing Hash";
     base::Bytes decoded_bytes;
     try {
         decoded_bytes = base::base64Decode(hash_str);
     }
     catch (const base::Error& e) {
-        LOG_ERROR << "Failed to deserialize hash data";
-        return std::nullopt;
+        RAISE_ERROR(base::InvalidArgument, std::string("Error in deserialization of base64HashBytes: ") + hash_str);
     }
 
-    try {
-        return base::Sha256{ decoded_bytes };
-    }
-    catch (const base::Error& e) {
-        LOG_ERROR << "Failed to deserialize hash";
-        return std::nullopt;
-    }
+    return base::Sha256{ decoded_bytes };
 }
 
 
 std::string serializeAddress(const lk::Address& address)
 {
+    LOG_TRACE << "Serializing Address";
     return base::base58Encode(address.getBytes());
 }
 
 
-std::optional<lk::Address> deserializeAddress(const std::string& address_str)
+lk::Address deserializeAddress(const std::string& address_str)
 {
+    LOG_TRACE << "Deserializing Address";
     base::Bytes decoded_bytes;
     try {
         decoded_bytes = base::base58Decode(address_str);
     }
     catch (const base::Error& e) {
-        LOG_ERROR << "Failed to deserialize address data";
-        return std::nullopt;
+        RAISE_ERROR(base::InvalidArgument,
+                    std::string("Error in deserialization of base58AddressBytes: ") + address_str);
     }
 
-    try {
-        return lk::Address{ decoded_bytes };
-    }
-    catch (const base::Error& e) {
-        LOG_ERROR << "Failed to deserialize address";
-        return std::nullopt;
-    }
+    return lk::Address{ decoded_bytes };
 }
 
 
 std::string serializeBytes(const base::Bytes& data)
 {
+    LOG_TRACE << "Serializing Bytes";
     return base::base64Encode(data);
 }
 
 
-std::optional<base::Bytes> deserializeBytes(const std::string& data)
+base::Bytes deserializeBytes(const std::string& data_str)
 {
+    LOG_TRACE << "Deserializing Bytes";
     try {
-        return base::base64Decode(data);
+        return base::base64Decode(data_str);
     }
     catch (const base::Error& e) {
-        LOG_ERROR << "Failed to deserialize data bytes";
-        return std::nullopt;
+        RAISE_ERROR(base::InvalidArgument, std::string("Error in deserialization of base64Bytes: ") + data_str);
     }
 }
 
 
 std::string serializeSign(const lk::Sign& sign)
 {
+    LOG_TRACE << "Serializing Sign";
     return base::base64Encode(sign.toBytes());
 }
 
 
-std::optional<lk::Sign> deserializeSign(const std::string& data)
+lk::Sign deserializeSign(const std::string& sign_str)
 {
-    auto sign_data = deserializeBytes(data);
-    if (!sign_data) {
-        LOG_ERROR << "base sign format";
-        return std::nullopt;
-    }
-    return lk::Sign(sign_data.value());
-}
-
-
-base::PropertyTree serializeAccountInfo(const lk::AccountInfo& account_info)
-{
-    base::PropertyTree result;
-    result.add("address", serializeAddress(account_info.address));
-    result.add("balance", serializeBalance(account_info.balance));
-    result.add("nonce", account_info.nonce);
-    result.add("type", serializeAccountType(account_info.type));
-    base::PropertyTree txs_hashes;
-    for (const auto& tx_hash : account_info.transactions_hashes) {
-        txs_hashes.add("", serializeHash(tx_hash));
-    }
-    result.add("transaction_hashes", std::move(txs_hashes));
-    return result;
-}
-
-
-std::optional<lk::AccountInfo> deserializeAccountInfo(const base::PropertyTree& input)
-{
+    LOG_TRACE << "Deserializing Sign";
+    base::Bytes decoded_bytes;
     try {
-        std::optional<lk::AccountType> type;
-        if (input.hasKey("type")) {
-            type = deserializeAccountType(input.get<std::string>("type"));
-        }
-        else {
-            LOG_ERROR << "type field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Balance> balance;
-        if (input.hasKey("balance")) {
-            balance = deserializeBalance(input.get<std::string>("balance"));
-        }
-        else {
-            LOG_ERROR << "balance field is not exists";
-            return std::nullopt;
-        }
-        std::optional<std::uint64_t> nonce;
-        if (input.hasKey("nonce")) {
-            nonce = input.get<uint64_t>("nonce");
-        }
-        else {
-            LOG_ERROR << "nonce field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Address> address;
-        if (input.hasKey("address")) {
-            address = deserializeAddress(input.get<std::string>("address"));
-        }
-        else {
-            LOG_ERROR << "address field is not exists";
-            return std::nullopt;
-        }
-
-        std::vector<base::Sha256> transactions_hashes;
-        if (input.hasKey("transaction_hashes")) {
-            for (const auto& res_tx_hash : input.getSubTree("transaction_hashes")) {
-                auto hash_opt = deserializeHash(res_tx_hash.second.get_value<std::string>());
-                if (hash_opt) {
-                    transactions_hashes.emplace_back(*hash_opt);
-                }
-                else {
-                    LOG_ERROR << "error at hash deserialization";
-                    return std::nullopt;
-                }
-            }
-        }
-        else {
-            LOG_ERROR << "transaction_hashes field is not exists";
-            return std::nullopt;
-        }
-
-        if (!type) {
-            LOG_ERROR << "error at type deserialization";
-            return std::nullopt;
-        }
-
-        if (!address) {
-            LOG_ERROR << "error at address deserialization";
-            return std::nullopt;
-        }
-
-        if (!balance) {
-            LOG_ERROR << "error at balance deserialization";
-            return std::nullopt;
-        }
-
-        if (!nonce) {
-            LOG_ERROR << "error at nonce deserialization";
-            return std::nullopt;
-        }
-
-        return lk::AccountInfo{ type.value(), address.value(), balance.value(), nonce.value(), transactions_hashes };
+        decoded_bytes = base::base64Decode(sign_str);
     }
     catch (const base::Error& e) {
-        LOG_ERROR << "Failed to deserialize Account Info";
-        return std::nullopt;
+        RAISE_ERROR(base::InvalidArgument, std::string("Error in deserialization of base64SignBytes: ") + sign_str);
     }
+
+    return lk::Sign{ decoded_bytes };
 }
 
 
-base::PropertyTree serializeInfo(const NodeInfo& info)
+rapidjson::Value serializeAccountInfo(const lk::AccountInfo& account_info,
+                                      rapidjson::Document::AllocatorType& allocator)
 {
-    base::PropertyTree result;
-    result.add("top_block_hash", serializeHash(info.top_block_hash));
-    result.add("top_block_number", info.top_block_number);
+    LOG_TRACE << "Serializing AccountInfo";
+    auto address_value = serializeAddress(account_info.address);
+    auto balance_value = serializeBalance(account_info.balance);
+    auto type_value = serializeAccountType(account_info.type);
+    rapidjson::Value txs_hashes_value(rapidjson::kArrayType);
+    for (const auto& tx_hash : account_info.transactions_hashes) {
+        auto hash_value = serializeHash(tx_hash);
+        txs_hashes_value.PushBack(rapidjson::Value(rapidjson::StringRef(hash_value.c_str())), allocator);
+    }
+
+    rapidjson::Value result(rapidjson::kObjectType);
+    result.AddMember("address", rapidjson::Value(rapidjson::StringRef(address_value.c_str())), allocator);
+    result.AddMember("balance", rapidjson::Value(rapidjson::StringRef(balance_value.c_str())), allocator);
+    result.AddMember("nonce", rapidjson::Value(account_info.nonce), allocator);
+    result.AddMember("type", rapidjson::Value(rapidjson::StringRef(type_value.c_str())), allocator);
+    result.AddMember("transaction_hashes", txs_hashes_value.Move(), allocator);
     return result;
 }
 
 
-std::optional<NodeInfo> deserializeInfo(const base::PropertyTree& input)
+lk::AccountInfo deserializeAccountInfo(rapidjson::Value input)
 {
-    try {
-        std::optional<base::Sha256> top_block_hash;
-        if (input.hasKey("top_block_hash")) {
-            top_block_hash = deserializeHash(input.get<std::string>("top_block_hash"));
-        }
-        else {
-            LOG_ERROR << "top_block_hash field is not exists";
-            return std::nullopt;
-        }
-        std::optional<std::uint64_t> top_block_number;
-        if (input.hasKey("top_block_number")) {
-            top_block_number = input.get<std::uint64_t>("top_block_number");
-        }
-        else {
-            LOG_ERROR << "top_block_number field is not exists";
-            return std::nullopt;
-        }
-
-        if (!top_block_hash) {
-            LOG_ERROR << "error at top_block_hash deserialization";
-            return std::nullopt;
-        }
-
-        if (!top_block_number) {
-            LOG_ERROR << "error at top_block_number deserialization";
-            return std::nullopt;
-        }
-        return NodeInfo{ top_block_hash.value(), top_block_number.value() };
+    LOG_TRACE << "Deserializing AccountInfo";
+    if (!input.HasMember("type")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"type\" member");
     }
-    catch (const std::exception& e) {
-        LOG_ERROR << "Failed to deserialize Info";
-        return std::nullopt;
+    auto account_type_json_value = input.FindMember("type");
+    if (!(account_type_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"type\" member is not a string type");
     }
+    auto account_type = deserializeAccountType(account_type_json_value->value.GetString());
+
+    if (!input.HasMember("balance")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"balance\" member");
+    }
+    auto balance_json_value = input.FindMember("balance");
+    if (!(balance_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"balance\" member is not a string type");
+    }
+    auto balance = deserializeBalance(balance_json_value->value.GetString());
+
+    if (!input.HasMember("nonce")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"nonce\" member");
+    }
+    auto nonce_json_value = input.FindMember("nonce");
+    if (!(nonce_json_value->value.IsUint64())) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"nonce\" member is not a uint type");
+    }
+    auto nonce = nonce_json_value->value.GetUint64();
+
+    if (!input.HasMember("address")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"address\" member");
+    }
+    auto address_json_value = input.FindMember("address");
+    if (!(address_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"address\" member is not a string type");
+    }
+    auto address = deserializeAddress(address_json_value->value.GetString());
+
+    if (!input.HasMember("transaction_hashes")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"transaction_hashes\" member");
+    }
+    auto transaction_hashes_json_value = input.FindMember("transaction_hashes");
+    if (!(transaction_hashes_json_value->value.IsArray())) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"transaction_hashes\" member is not an array type");
+    }
+    std::vector<base::Sha256> transactions_hashes;
+    for (auto& tx_hash_value : transaction_hashes_json_value->value.GetArray()) {
+        if (!tx_hash_value.IsString()) {
+            RAISE_ERROR(base::InvalidArgument, "AccountInfo \"transaction_hash\" one member is not a string type");
+        }
+        transactions_hashes.emplace_back(deserializeHash(tx_hash_value.GetString()));
+    }
+
+    return lk::AccountInfo{
+        account_type, std::move(address), std::move(balance), nonce, std::move(transactions_hashes)
+    };
 }
 
 
-base::PropertyTree serializeTransaction(const lk::Transaction& input)
+rapidjson::Value serializeInfo(const NodeInfo& info, rapidjson::Document::AllocatorType& allocator)
 {
-    base::PropertyTree result;
-    result.add("from", serializeAddress(input.getFrom()));
-    result.add("to", serializeAddress(input.getTo()));
-    result.add("amount", serializeBalance(input.getAmount()));
-    result.add("fee", serializeFee(input.getFee()));
-    result.add("timestamp", input.getTimestamp().getSeconds());
-    result.add("data", serializeBytes(input.getData()));
-    result.add("sign", serializeSign(input.getSign()));
+    LOG_TRACE << "Serializing NodeInfo";
+    auto hash_value = serializeHash(info.top_block_hash);
+
+    rapidjson::Value result(rapidjson::kObjectType);
+    result.AddMember("top_block_number", rapidjson::Value(info.top_block_number), allocator);
+    result.AddMember("top_block_hash", rapidjson::Value(rapidjson::StringRef(hash_value.c_str())), allocator);
     return result;
 }
 
 
-std::optional<lk::Transaction> deserializeTransaction(const base::PropertyTree& input)
+NodeInfo deserializeInfo(rapidjson::Value input)
 {
-    try {
-        std::optional<lk::Balance> amount;
-        if (input.hasKey("amount")) {
-            amount = deserializeBalance(input.get<std::string>("amount"));
-        }
-        else {
-            LOG_ERROR << "amount field is not exists";
-            return std::nullopt;
-        }
-        std::optional<std::uint64_t> fee;
-        if (input.hasKey("fee")) {
-            fee = deserializeFee(input.get<std::string>("fee"));
-        }
-        else {
-            LOG_ERROR << "fee field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Address> from;
-        if (input.hasKey("from")) {
-            from = deserializeAddress(input.get<std::string>("from"));
-        }
-        else {
-            LOG_ERROR << "from field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Address> to;
-        if (input.hasKey("to")) {
-            to = deserializeAddress(input.get<std::string>("to"));
-        }
-        else {
-            LOG_ERROR << "to field is not exists";
-            return std::nullopt;
-        }
-        std::optional<base::Time> timestamp;
-        if (input.hasKey("timestamp")) {
-            timestamp = base::Time(input.get<std::uint_least32_t>("timestamp"));
-        }
-        else {
-            LOG_ERROR << "timestamp field is not exists";
-            return std::nullopt;
-        }
-        std::optional<base::Bytes> data;
-        if (input.hasKey("data")) {
-            data = deserializeBytes(input.get<std::string>("data"));
-        }
-        else {
-            LOG_ERROR << "data field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Sign> sign;
-        if (input.hasKey("sign")) {
-            sign = deserializeSign(input.get<std::string>("sign"));
-        }
-        else {
-            LOG_ERROR << "sign field is not exists";
-            return std::nullopt;
-        }
-        if (!from) {
-            LOG_ERROR << "error at from deserialization";
-            return std::nullopt;
-        }
-        if (!to) {
-            LOG_ERROR << "error at to deserialization";
-            return std::nullopt;
-        }
-        if (!fee) {
-            LOG_ERROR << "error at fee deserialization";
-            return std::nullopt;
-        }
-        if (!timestamp) {
-            LOG_ERROR << "error at timestamp deserialization";
-            return std::nullopt;
-        }
-        if (!data) {
-            LOG_ERROR << "error at data deserialization";
-            return std::nullopt;
-        }
-        if (!sign) {
-            LOG_ERROR << "error at sign deserialization";
-            return std::nullopt;
-        }
-        return lk::Transaction{ from.value(),      to.value(),   amount.value(), fee.value(),
-                                timestamp.value(), data.value(), sign.value() };
+    LOG_TRACE << "Deserializing NodeInfo";
+    if (!input.HasMember("top_block_hash")) {
+        RAISE_ERROR(base::InvalidArgument, "NodeInfo json is not contain \"top_block_hash\" member");
     }
-    catch (const std::exception& e) {
-        LOG_ERROR << "Failed to deserialize Transaction";
-        return std::nullopt;
+    auto top_block_hash_json_value = input.FindMember("top_block_hash");
+    if (!(top_block_hash_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "NodeInfo \"top_block_hash\" member is not a string type");
     }
+    auto top_block_hash = deserializeHash(top_block_hash_json_value->value.GetString());
+
+    if (!input.HasMember("top_block_number")) {
+        RAISE_ERROR(base::InvalidArgument, "NodeInfo json is not contain \"top_block_number\" member");
+    }
+    auto top_block_number_json_value = input.FindMember("top_block_number");
+    if (!(top_block_number_json_value->value.IsUint64())) {
+        RAISE_ERROR(base::InvalidArgument, "NodeInfo \"top_block_number\" member is not a uint type");
+    }
+    auto top_block_number = top_block_number_json_value->value.GetUint64();
+
+    return NodeInfo{ top_block_hash, top_block_number };
 }
 
 
-base::PropertyTree serializeBlock(const lk::ImmutableBlock& block)
+rapidjson::Value serializeTransaction(const lk::Transaction& input, rapidjson::Document::AllocatorType& allocator)
 {
-    base::PropertyTree result;
-    result.add("depth", block.getDepth());
-    result.add("nonce", block.getNonce());
-    result.add("coinbase", serializeAddress(block.getCoinbase()));
-    result.add("previous_block_hash", serializeHash(block.getPrevBlockHash()));
-    result.add("timestamp", block.getTimestamp().getSeconds());
+    LOG_TRACE << "Serializing Transaction";
+    auto from_address_value = serializeAddress(input.getFrom());
+    auto to_address_value = serializeAddress(input.getTo());
+    auto amount_value = serializeBalance(input.getAmount());
+    auto fee_value = serializeFee(input.getFee());
+    auto timestamp_value = input.getTimestamp().getSeconds();
+    auto data_value = serializeBytes(input.getData());
+    auto sign_value = serializeSign(input.getSign());
 
-    base::PropertyTree txs_values;
+    rapidjson::Value result(rapidjson::kObjectType);
+    result.AddMember("from", rapidjson::Value(rapidjson::StringRef(from_address_value.c_str())), allocator);
+    result.AddMember("to", rapidjson::Value(rapidjson::StringRef(to_address_value.c_str())), allocator);
+    result.AddMember("amount", rapidjson::Value(rapidjson::StringRef(amount_value.c_str())), allocator);
+    result.AddMember("fee", rapidjson::Value(rapidjson::StringRef(fee_value.c_str())), allocator);
+    result.AddMember("timestamp", rapidjson::Value(timestamp_value), allocator);
+    result.AddMember("sign", rapidjson::Value(rapidjson::StringRef(data_value.c_str())), allocator);
+    result.AddMember("data", rapidjson::Value(rapidjson::StringRef(sign_value.c_str())), allocator);
+    return result;
+}
+
+
+lk::Transaction deserializeTransaction(rapidjson::Value input)
+{
+    LOG_TRACE << "Deserializing Transaction";
+    if (!input.HasMember("amount")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"amount\" member");
+    }
+    auto amount_json_value = input.FindMember("amount");
+    if (!(amount_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"amount\" member is not a string type");
+    }
+    auto amount = deserializeBalance(amount_json_value->value.GetString());
+
+    if (!input.HasMember("fee")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"fee\" member");
+    }
+    auto fee_json_value = input.FindMember("fee");
+    if (!(fee_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"fee\" member is not a string type");
+    }
+    auto fee = deserializeFee(fee_json_value->value.GetString());
+
+    if (!input.HasMember("from")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"from\" member");
+    }
+    auto from_json_value = input.FindMember("from");
+    if (!(from_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"from\" member is not a string type");
+    }
+    auto from = deserializeAddress(from_json_value->value.GetString());
+
+    if (!input.HasMember("to")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"to\" member");
+    }
+    auto to_json_value = input.FindMember("to");
+    if (!(to_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"to\" member is not a string type");
+    }
+    auto to = deserializeAddress(to_json_value->value.GetString());
+
+    if (!input.HasMember("timestamp")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"timestamp\" member");
+    }
+    auto timestamp_json_value = input.FindMember("timestamp");
+    if (!(timestamp_json_value->value.IsUint64())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"timestamp\" member is not a uint type");
+    }
+    auto timestamp = base::Time(timestamp_json_value->value.GetUint64());
+
+    if (!input.HasMember("data")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"data\" member");
+    }
+    auto data_json_value = input.FindMember("data");
+    if (!(data_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"data\" member is not a string type");
+    }
+    auto data = deserializeBytes(data_json_value->value.GetString());
+
+    if (!input.HasMember("sign")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"sign\" member");
+    }
+    auto sign_json_value = input.FindMember("sign");
+    if (!(sign_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"sign\" member is not a string type");
+    }
+    auto sign = deserializeSign(sign_json_value->value.GetString());
+
+    return lk::Transaction{ std::move(from), std::move(to),   std::move(amount), fee,
+                            timestamp,       std::move(data), std::move(sign) };
+}
+
+
+rapidjson::Value serializeBlock(const lk::ImmutableBlock& block, rapidjson::Document::AllocatorType& allocator)
+{
+    LOG_TRACE << "Serializing ImmutableBlock";
+    auto coinbase_value = serializeAddress(block.getCoinbase());
+    auto previous_block_hash_value = serializeHash(block.getPrevBlockHash());
+    rapidjson::Value txs_values(rapidjson::kArrayType);
     for (auto& tx : block.getTransactions()) {
-        txs_values.add("", serializeTransaction(tx));
+        txs_values.PushBack(serializeTransaction(tx, allocator).Move(), allocator);
     }
-    result.add("transactions", std::move(txs_values));
+
+    rapidjson::Value result(rapidjson::kObjectType);
+    result.AddMember("depth", rapidjson::Value(block.getDepth()), allocator);
+    result.AddMember("nonce", rapidjson::Value(block.getNonce()), allocator);
+    result.AddMember("coinbase", rapidjson::Value(rapidjson::StringRef(coinbase_value.c_str())), allocator);
+    result.AddMember(
+      "previous_block_hash", rapidjson::Value(rapidjson::StringRef(previous_block_hash_value.c_str())), allocator);
+    result.AddMember("timestamp", rapidjson::Value(block.getTimestamp().getSeconds()), allocator);
+    result.AddMember("transactions", txs_values.Move(), allocator);
     return result;
 }
 
 
-std::optional<lk::ImmutableBlock> deserializeBlock(const base::PropertyTree& input)
+lk::ImmutableBlock deserializeBlock(rapidjson::Value input)
 {
-    try {
-        std::optional<std::uint64_t> depth;
-        if (input.hasKey("depth")) {
-            depth = input.get<std::uint64_t>("depth");
-        }
-        else {
-            LOG_ERROR << "depth field is not exists";
-            return std::nullopt;
-        }
-        std::optional<std::uint64_t> nonce;
-        if (input.hasKey("nonce")) {
-            nonce = input.get<std::uint64_t>("nonce");
-        }
-        else {
-            LOG_ERROR << "nonce field is not exists";
-            return std::nullopt;
-        }
-        std::optional<base::Time> timestamp;
-        if (input.hasKey("timestamp")) {
-            timestamp = base::Time(input.get<std::uint_least32_t>("timestamp"));
-        }
-        else {
-            LOG_ERROR << "timestamp field is not exists";
-            return std::nullopt;
-        }
-        std::optional<base::Sha256> previous_block_hash;
-        if (input.hasKey("previous_block_hash")) {
-            previous_block_hash = deserializeHash(input.get<std::string>("previous_block_hash"));
-        }
-        else {
-            LOG_ERROR << "previous_block_hash field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::Address> coinbase;
-        if (input.hasKey("coinbase")) {
-            coinbase = deserializeAddress(input.get<std::string>("coinbase"));
-        }
-        else {
-            LOG_ERROR << "coinbase field is not exists";
-            return std::nullopt;
-        }
+    LOG_TRACE << "Deserializing ImmutableBlock";
 
-        if (!depth) {
-            LOG_ERROR << "error at depth deserialization";
-            return std::nullopt;
-        }
-        if (!nonce) {
-            LOG_ERROR << "error at nonce deserialization";
-            return std::nullopt;
-        }
-        if (!timestamp) {
-            LOG_ERROR << "error at timestamp deserialization";
-            return std::nullopt;
-        }
-        if (!previous_block_hash) {
-            LOG_ERROR << "error at previous_block_hash deserialization";
-            return std::nullopt;
-        }
-        if (!coinbase) {
-            LOG_ERROR << "error at coinbase deserialization";
-            return std::nullopt;
-        }
+    if (!input.HasMember("depth")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"depth\" member");
+    }
+    auto depth_json_value = input.FindMember("depth");
+    if (!(depth_json_value->value.IsUint64())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"depth\" member is not a uint type");
+    }
+    auto depth = depth_json_value->value.GetUint64();
 
-        lk::TransactionsSet txs;
-        if (input.hasKey("transactions")) {
-            for (const auto& res_tx : input.getSubTree("transactions")) {
-                base::PropertyTree sub(res_tx.second);
-                auto tx_opt = deserializeTransaction(sub);
-                if (tx_opt) {
-                    txs.add(*tx_opt);
-                }
-                else {
-                    LOG_ERROR << "error at hash deserialization";
-                    return std::nullopt;
-                }
-            }
-        }
-        else {
-            LOG_ERROR << "transactions field is not exists";
-            return std::nullopt;
-        }
-        lk::BlockBuilder b;
-        b.setDepth(depth.value());
-        b.setNonce(nonce.value());
-        b.setPrevBlockHash(previous_block_hash.value());
-        b.setTimestamp(timestamp.value());
-        b.setCoinbase(coinbase.value());
-        b.setTransactionsSet(std::move(txs));
-        return std::move(b).buildImmutable();
+    if (!input.HasMember("nonce")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"nonce\" member");
     }
-    catch (const std::exception& e) {
-        LOG_ERROR << "Failed to deserialize Block";
-        return std::nullopt;
+    auto nonce_json_value = input.FindMember("nonce");
+    if (!(nonce_json_value->value.IsUint64())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"nonce\" member is not a uint type");
     }
+    auto nonce = nonce_json_value->value.GetUint64();
+
+    if (!input.HasMember("timestamp")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"timestamp\" member");
+    }
+    auto timestamp_json_value = input.FindMember("timestamp");
+    if (!(timestamp_json_value->value.IsUint64())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"timestamp\" member is not a uint type");
+    }
+    auto timestamp = base::Time(timestamp_json_value->value.GetUint64());
+
+    if (!input.HasMember("previous_block_hash")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"previous_block_hash\" member");
+    }
+    auto previous_block_hash_json_value = input.FindMember("previous_block_hash");
+    if (!(previous_block_hash_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"previous_block_hash\" member is not a string type");
+    }
+    auto previous_block_hash = deserializeHash(previous_block_hash_json_value->value.GetString());
+
+    if (!input.HasMember("coinbase")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"coinbase\" member");
+    }
+    auto coinbase_json_value = input.FindMember("coinbase");
+    if (!(coinbase_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"coinbase\" member is not a string type");
+    }
+    auto coinbase = deserializeAddress(coinbase_json_value->value.GetString());
+
+    if (!input.HasMember("transactions")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"transactions\" member");
+    }
+    auto transactions_json_value = input.FindMember("transactions");
+    if (!(transactions_json_value->value.IsArray())) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction \"transactions\" member is not an array type");
+    }
+    lk::TransactionsSet transactions;
+    for (auto& txs_value : transactions_json_value->value.GetArray()) {
+        transactions.add(std::move(deserializeTransaction(txs_value.GetObject())));
+    }
+
+    lk::BlockBuilder b;
+    b.setDepth(depth);
+    b.setNonce(nonce);
+    b.setPrevBlockHash(std::move(previous_block_hash));
+    b.setTimestamp(timestamp);
+    b.setCoinbase(std::move(coinbase));
+    b.setTransactionsSet(std::move(transactions));
+    return std::move(b).buildImmutable();
 }
 
 
-base::PropertyTree serializeTransactionStatus(const lk::TransactionStatus& status)
+rapidjson::Value serializeTransactionStatus(const lk::TransactionStatus& status,
+                                            rapidjson::Document::AllocatorType& allocator)
 {
-    base::PropertyTree result;
-    result.add("status_code", serializeTransactionStatusStatusCode(status.getStatus()));
-    result.add("action_type", serializeTransactionStatusActionType(status.getType()));
-    result.add("fee_left", serializeFee(status.getFeeLeft()));
-    result.add("message", status.getMessage());
+    LOG_TRACE << "Serializing TransactionStatus";
+    auto status_code_value = serializeTransactionStatusStatusCode(status.getStatus());
+    auto action_type_value = serializeTransactionStatusActionType(status.getType());
+    auto fee_left_value = serializeFee(status.getFeeLeft());
+
+    rapidjson::Value result(rapidjson::kObjectType);
+    result.AddMember("status_code", rapidjson::Value(status_code_value), allocator);
+    result.AddMember("action_type", rapidjson::Value(action_type_value), allocator);
+    result.AddMember("fee_left", rapidjson::Value(rapidjson::StringRef(fee_left_value.c_str())), allocator);
+    result.AddMember("message", rapidjson::Value(rapidjson::StringRef(status.getMessage().c_str())), allocator);
     return result;
 }
 
 
-std::optional<lk::TransactionStatus> deserializeTransactionStatus(const base::PropertyTree& input)
+lk::TransactionStatus deserializeTransactionStatus(rapidjson::Value input)
 {
-    try {
-        std::optional<lk::TransactionStatus::StatusCode> status_code;
-        if (input.hasKey("status_code")) {
-            status_code = deserializeTransactionStatusStatusCode(input.get<std::uint32_t>("status_code"));
-        }
-        else {
-            LOG_ERROR << "status_code field is not exists";
-            return std::nullopt;
-        }
-        std::optional<lk::TransactionStatus::ActionType> action_type;
-        if (input.hasKey("action_type")) {
-            action_type = deserializeTransactionStatusActionType(input.get<std::uint32_t>("action_type"));
-        }
-        else {
-            LOG_ERROR << "action_type field is not exists";
-            return std::nullopt;
-        }
-        std::optional<std::uint64_t> fee;
-        if (input.hasKey("fee_left")) {
-            fee = deserializeFee(input.get<std::string>("fee_left"));
-        }
-        else {
-            LOG_ERROR << "fee_left field is not exists";
-            return std::nullopt;
-        }
-        std::optional<std::string> message;
-        if (input.hasKey("message")) {
-            message = input.get<std::string>("message");
-        }
-        else {
-            LOG_ERROR << "message field is not exists";
-            return std::nullopt;
-        }
+    LOG_TRACE << "Deserializing TransactionStatus";
 
-        if (!status_code) {
-            LOG_ERROR << "error at status_code deserialization";
-            return std::nullopt;
-        }
-        if (!action_type) {
-            LOG_ERROR << "error at action_type deserialization";
-            return std::nullopt;
-        }
-        if (!fee) {
-            LOG_ERROR << "error at fee deserialization";
-            return std::nullopt;
-        }
-        if (!message) {
-            LOG_ERROR << "error at message deserialization";
-            return std::nullopt;
-        }
-        return lk::TransactionStatus{ status_code.value(), action_type.value(), fee.value(), message.value() };
+    if (!input.HasMember("status_code")) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain \"status_code\" member");
     }
-    catch (const std::exception& e) {
-        LOG_ERROR << "Failed to deserialize TransactionStatus";
-        return std::nullopt;
+    auto status_code_json_value = input.FindMember("status_code");
+    if (!(status_code_json_value->value.IsUint64())) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus \"status_code\" member is not a uint type");
     }
+    auto status_code = deserializeTransactionStatusStatusCode(status_code_json_value->value.GetUint64());
+
+    if (!input.HasMember("action_type")) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain \"action_type\" member");
+    }
+    auto action_type_json_value = input.FindMember("action_type");
+    if (!(action_type_json_value->value.IsUint64())) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus \"action_type\" member is not a uint type");
+    }
+    auto action_type = deserializeTransactionStatusActionType(action_type_json_value->value.GetUint64());
+
+    if (!input.HasMember("fee")) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain \"fee\" member");
+    }
+    auto fee_json_value = input.FindMember("fee");
+    if (!(fee_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus \"fee\" member is not a string type");
+    }
+    auto fee = deserializeFee(fee_json_value->value.GetString());
+
+
+    if (!input.HasMember("message")) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain \"message\" member");
+    }
+    auto message_json_value = input.FindMember("message");
+    if (!(message_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus \"message\" member is not a string type");
+    }
+    std::string message{ fee_json_value->value.GetString() };
+
+    return lk::TransactionStatus{ status_code, action_type, fee, message };
 }
 
 }

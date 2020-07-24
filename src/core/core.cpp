@@ -1,20 +1,21 @@
 #include "core.hpp"
 
-#include "base/log.hpp"
 #include "vm/error.hpp"
 #include "vm/tools.hpp"
+
+#include "base/log.hpp"
 
 #include <algorithm>
 
 namespace lk
 {
 
-Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
-  : _config{ config }
-  , _vault{ key_vault }
+Core::Core(rapidjson::Value config)
+  : _config{ std::move(config) }
+  , _vault{ _config.FindMember("keys_dir")->value.GetString() }
   , _this_node_address{ _vault.getKey().toPublicKey() }
-  , _blockchain{ getGenesisBlock(), _config }
-  , _host{ _config, 0xFFFF, *this }
+  , _blockchain{ getGenesisBlock(), std::move(_config.FindMember("database")->value) }
+  , _host{ std::move(_config.FindMember("net")->value), 0xFFFF, *this }
   , _vm{ vm::load() }
 {
     _state_manager.updateFromGenesis(getGenesisBlock());

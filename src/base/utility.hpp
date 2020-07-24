@@ -5,6 +5,8 @@
 
 #include <functional>
 #include <map>
+#include <atomic>
+#include <deque>
 #include <shared_mutex>
 
 namespace base
@@ -79,6 +81,28 @@ class OwningPool
     mutable std::shared_mutex _pool_mutex;
 };
 
+
+template<typename Type>
+class Queue
+{
+  public:
+    Queue() = default;
+    ~Queue() = default;
+    Queue(const Queue&) = delete;
+    Queue(Queue&&) = delete;
+    Queue& operator=(const Queue&) = delete;
+    Queue& operator=(Queue&&) = delete;
+
+    void push(std::unique_ptr<Type>&& task);
+    std::unique_ptr<Type> get();
+    void wait();
+    bool empty() const;
+
+  private:
+    mutable std::mutex _rw_mutex;
+    std::deque<std::unique_ptr<Type>> _tasks;
+    std::condition_variable _has_task;
+};
 
 } // namespace base
 

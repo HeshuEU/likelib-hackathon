@@ -3,7 +3,6 @@
 #include "bytes.hpp"
 
 #include "base/hash.hpp"
-#include "base/property_tree.hpp"
 #include "base/serialization.hpp"
 
 #include <openssl/pem.h>
@@ -71,7 +70,7 @@ class Secp256PrivateKey
     using Signature = base::FixedBytes<SECP256_SIGNATURE_SIZE>;
     //---------------------------
     Secp256PrivateKey();
-    Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& private_key_bytes);
+    explicit Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& private_key_bytes);
     Secp256PrivateKey(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey(Secp256PrivateKey&& other) = default;
     Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
@@ -100,7 +99,6 @@ class KeyVault
 {
   public:
     KeyVault() = delete;
-    explicit KeyVault(const base::PropertyTree& config);
     explicit KeyVault(const std::string_view& keys_folder);
     KeyVault(const KeyVault&) = delete;
     KeyVault(KeyVault&&) = default;

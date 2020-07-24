@@ -4,26 +4,30 @@
 #include "base/bytes.hpp"
 #include "base/log.hpp"
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 namespace websocket
 {
 
 WebSocketConnection::WebSocketConnection(boost::asio::ip::tcp::socket&& socket,
-                                         ProcessRequestCallback requestCallback,
-                                         ConnectionCloseCallback closeCallback)
-  : _connectedEndpoint{ socket.remote_endpoint() }
+                                         ProcessRequestCallback request_callback,
+                                         ConnectionCloseCallback close_callback)
+  : _connected_endpoint{ socket.remote_endpoint() }
   , _websocket{ std::move(socket) }
   , _is_ready{ false }
-  , _process{ std::move(requestCallback) }
-  , _closed{ std::move(closeCallback) }
+  , _process_callback{ std::move(request_callback) }
+  , _close_callback{ std::move(close_callback) }
 {
-    ASSERT(_process);
-    ASSERT(_closed);
+    LOG_TRACE << "creating websocket connection " << _connected_endpoint;
+    ASSERT(_process_callback);
+    ASSERT(_close_callback);
 }
 
 
 WebSocketConnection::~WebSocketConnection() noexcept
 {
-    LOG_DEBUG << "deleting websocket connection[ip_v4]: " << _connectedEndpoint;
+    LOG_TRACE << "deleting websocket connection " << _connected_endpoint;
     doClose();
 }
 
@@ -46,48 +50,55 @@ void WebSocketConnection::onAccept(boost::beast::error_code ec)
         LOG_DEBUG << "websocket accept error: " << ec.message();
         return;
     }
+    LOG_TRACE << "websocket connection accepted " << _connected_endpoint;
     doRead();
 }
 
 
 void WebSocketConnection::doRead()
 {
-    _websocket.async_read(_readBuffer,
+    _websocket.async_read(_read_buffer,
                           boost::beast::bind_front_handler(&WebSocketConnection::onRead, shared_from_this()));
 }
 
 
-void WebSocketConnection::onRead(boost::beast::error_code ec, std::size_t bytesTransferred)
+void WebSocketConnection::onRead(boost::beast::error_code ec, std::size_t bytes_transferred)
 {
     if (ec) {
         LOG_DEBUG << "read error by reason: " << ec.message();
         return;
     }
 
-    base::Bytes receivedBytes(bytesTransferred);
-    std::memcpy(receivedBytes.getData(), _readBuffer.data().data(), bytesTransferred);
-    _readBuffer.clear();
+    base::Bytes receivedBytes(bytes_transferred);
+    std::memcpy(receivedBytes.getData(), _read_buffer.data().data(), bytes_transferred);
+    _read_buffer.clear();
     doRead();
 
-    base::PropertyTree queryJson;
-    try {
-        queryJson = base::parseJson(receivedBytes.toString());
-    }
-    catch (const base::InvalidArgument& error) {
-        LOG_DEBUG << "parse query json error: " << error.what();
+    rapidjson::Document query_json;
+    query_json.Parse(receivedBytes.toString().c_str());
+    if (query_json.HasParseError()) {
+        LOG_DEBUG << "parse query json error at connection " << _connected_endpoint;
         return;
     }
 
-    _process(std::move(queryJson));
+    _process_callback(std::move(query_json));
 }
 
 
-void WebSocketConnection::write(base::PropertyTree&& response)
+void WebSocketConnection::write(rapidjson::Document&& response)
 {
+    std::string output;
+    {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        response.Accept(writer);
+        output = buffer.GetString();
+    }
+
     boost::beast::error_code ec;
-    _websocket.write(boost::asio::buffer(response.toString()), ec);
+    _websocket.write(boost::asio::buffer(output), ec);
     if (ec) {
-        LOG_DEBUG << "write error by reason: " << ec.message();
+        LOG_DEBUG << "write error at connection " << _connected_endpoint << " by reason: " << ec.message();
         return;
     }
 }
@@ -102,7 +113,7 @@ void WebSocketConnection::close()
 void WebSocketConnection::doClose() noexcept
 {
     try {
-        LOG_DEBUG << "Process closing connection[ip_v4]: " << _connectedEndpoint;
+        LOG_TRACE << "closing connection " << _connected_endpoint;
         boost::beast::error_code ec;
         _websocket.close(boost::beast::websocket::close_code::normal, ec);
         if (ec) {
@@ -110,16 +121,14 @@ void WebSocketConnection::doClose() noexcept
         }
     }
     catch (...) {
-        LOG_ERROR << "unexpected error at websocket closing";
+        LOG_ERROR << "unexpected error at websocket connection closing " << _connected_endpoint;
     }
 
-    if (_closed) {
-        try {
-            _closed();
-        }
-        catch (...) {
-            LOG_ERROR << "unexpected error at closing callback";
-        }
+    try {
+        _close_callback();
+    }
+    catch (...) {
+        LOG_ERROR << "unexpected error at closing callback for connection " << _connected_endpoint;
     }
 }
 

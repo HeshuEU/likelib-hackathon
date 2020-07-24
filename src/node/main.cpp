@@ -7,11 +7,11 @@
 #include "base/log.hpp"
 #include "base/program_options.hpp"
 
+#include <boost/stacktrace.hpp>
+
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
 #endif
-
-#include <boost/stacktrace.hpp>
 
 #include <chrono>
 #include <csignal>
@@ -92,13 +92,13 @@ int main(int argc, char** argv)
 
         //=====================
         SoftConfig exe_config(config_file_path);
-        Node node(exe_config);
+        Node node(exe_config.GetObject());
         node.run();
         //=====================
-        constexpr auto timeout = std::chrono::hours(24 * 366); // 1 year
-        std::this_thread::sleep_for(timeout);
-        LOG_WARNING << "Node closed by timeout: " << std::to_string(timeout.count()) << "s";
-        std::cout << "Node closed by timeout: " << std::to_string(timeout.count()) << "s" << std::endl;
+        while (true) {
+            constexpr auto timeout = std::chrono::hours(24);
+            std::this_thread::sleep_for(timeout);
+        }
         return base::config::EXIT_OK;
     }
     catch (const std::exception& error) {

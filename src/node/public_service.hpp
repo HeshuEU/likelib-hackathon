@@ -9,40 +9,17 @@
 #include "websocket/session.hpp"
 #include "websocket/tools.hpp"
 
+#include <rapidjson/document.h>
+
 #include <atomic>
-#include <deque>
 #include <functional>
-#include <shared_mutex>
 #include <thread>
 
 
 class PublicService;
 
-
 namespace tasks
 {
-
-template<typename Type>
-class Queue
-{
-  public:
-    Queue() = default;
-    ~Queue() = default;
-    Queue(const Queue&) = delete;
-    Queue(Queue&&) = delete;
-    Queue& operator=(const Queue&) = delete;
-    Queue& operator=(Queue&&) = delete;
-
-    void push(std::unique_ptr<Type>&& task);
-    std::unique_ptr<Type> get();
-    void wait();
-    bool empty() const;
-
-  private:
-    mutable std::mutex _rw_mutex;
-    std::deque<std::unique_ptr<Type>> _tasks;
-    std::condition_variable _has_task;
-};
 
 class Task
 {
@@ -226,7 +203,7 @@ class PublicService
     friend tasks::UnsubscribeTransactionStatusUpdateTask;
 
   public:
-    PublicService(const base::PropertyTree& config, lk::Core& core);
+    PublicService(rapidjson::Value config, lk::Core& core);
 
     ~PublicService();
 
@@ -272,5 +249,3 @@ class PublicService
     void on_update_transaction_status(base::Sha256 tx_hash);
     void on_update_account(lk::Address account_address);
 };
-
-#include "public_service.tpp"

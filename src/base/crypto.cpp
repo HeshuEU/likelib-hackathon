@@ -5,7 +5,6 @@
 #include "base/error.hpp"
 #include "base/hash.hpp"
 #include "base/log.hpp"
-#include "base/property_tree.hpp"
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -410,7 +409,7 @@ Secp256PrivateKey Secp256PrivateKey::load(const std::filesystem::path& path)
 Secp256PrivateKey Secp256PrivateKey::deserialize(base::SerializationIArchive& ia)
 {
     auto bytes = ia.deserialize<FixedBytes<SECP256_PRIVATE_KEY_SIZE>>();
-    return { bytes };
+    return Secp256PrivateKey{ bytes };
 }
 
 
@@ -423,13 +422,6 @@ void Secp256PrivateKey::serialize(base::SerializationOArchive& oa) const
 const base::FixedBytes<Secp256PrivateKey::SECP256_PRIVATE_KEY_SIZE>& Secp256PrivateKey::getBytes() const
 {
     return _secp_key;
-}
-
-
-KeyVault::KeyVault(const base::PropertyTree& config)
-{
-    auto keys_folder = config.get<std::string>("keys_dir");
-    _key = loadOrGenerateKey(keys_folder);
 }
 
 
