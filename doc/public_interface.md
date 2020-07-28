@@ -40,24 +40,9 @@ API version = 2.
 
 ---
 
-### Details notes
-
-- Address is Ripemd160 of SHA256 of serialized public key bytes.
-- Null address is 20 bytes of zeros.
-- for sign using secp256k1. Hash of transaction using as signing message. Singing function is sign_recoverable with SHA256 function.
-- transaction hash is SHA256 of concatenated string:
-
-		“<from address encoded by base58>” + “<to address or null address if transaction for contract creation encoded by base58>” + “<amount as uint256 integer at string format>” + “<fee as uint256 integer at string format>” + “<timestamp integer is seconds from epoch start at string>” + “<binary encoded data message ecnoded by base64 or empty string>”
-
-- call hash is sha256 of concatenated string:
- 
- 		“<from address encoded by base58>” + “<to address encoded by base58>”  + “<timestamp integer is seconds from epoch start at string>” + “<binary encoded(for call) data message ecnoded by base64>”
-
----
-
 ### Commands query/answer specification
 
-##### 1. Get(once) top(last in chain) block information(hash and number)
+##### 1. Get(once) top(last in chain) block information
 
     query:
 
@@ -82,7 +67,7 @@ API version = 2.
             }
         }
 
-##### 2. Subscribe on top(last in chain) block information(hash and number) updating
+##### 2. Subscribe on top(last in chain) block information updating
 
     query:
 
@@ -141,7 +126,7 @@ API version = 2.
                 "success": false,
             }
         }
- // TODO SET MORE INFO(ABOUT) AT ACCOUNT STATE INFO
+
 ##### 4. Get(once) current account state info 
 
     query:
@@ -327,7 +312,7 @@ API version = 2.
             }
         }
 
-##### 8. Get(once) transaction data(transaction object) if exist
+##### 8. Get(once) transaction data if exist
 
     query:
 
@@ -576,3 +561,24 @@ API version = 2.
                 “depth”: <unsigned integer block number>
             }
         }
+
+---
+
+### Details
+
+- Address is Ripemd160 of SHA256 of serialized public key bytes. Key is a secp256k1 key.
+- Null address is 20 bytes of zeros.
+- for sign using secp256k1. Hash of transaction using as signing message. Singing function is sign_recoverable with SHA256 function.
+- transaction hash is SHA256 of concatenated string:
+
+		“<from address encoded by base58>” + “<to address or null address if transaction for contract creation encoded by base58>” + “<amount as uint256 integer at string format>” + “<fee as uint256 integer at string format>” + “<timestamp integer is seconds from epoch start at string>” + “<binary encoded data message ecnoded by base64 or empty string>”
+
+- call hash is sha256 of concatenated string:
+ 
+ 		“<from address encoded by base58>” + “<to address encoded by base58>”  + “<timestamp integer is seconds from epoch start at string>” + “<binary encoded(for call) data message ecnoded by base64>”
+
+
+### this doc "TODO"
+
+- Write how to calculate block hash
+- Add more information about EVM settings

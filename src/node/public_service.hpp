@@ -1,13 +1,13 @@
 #pragma once
 
-#include "base/utility.hpp"
-
 #include "core/core.hpp"
 #include "core/transaction.hpp"
 
 #include "websocket/acceptor.hpp"
 #include "websocket/session.hpp"
 #include "websocket/tools.hpp"
+
+#include "base/utility.hpp"
 
 #include <rapidjson/document.h>
 
@@ -24,16 +24,17 @@ namespace tasks
 class Task
 {
   public:
-    Task(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    Task(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
     virtual ~Task() = default;
     void run(PublicService& service);
+    virtual const std::string& name() const noexcept = 0;
 
   protected:
     websocket::SessionId _session_id;
     websocket::QueryId _query_id;
-    base::PropertyTree _args;
+    rapidjson::Document _args;
 
-    virtual bool prepareArgs() = 0;
+    virtual void prepareArgs() = 0;
     virtual void execute(PublicService& service) = 0;
 };
 
@@ -41,11 +42,12 @@ class Task
 class FindBlockTask final : public Task
 {
   public:
-    FindBlockTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    FindBlockTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 
   private:
     std::optional<base::Sha256> _block_hash;
@@ -56,11 +58,12 @@ class FindBlockTask final : public Task
 class FindTransactionTask final : public Task
 {
   public:
-    FindTransactionTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    FindTransactionTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 
   private:
     std::optional<base::Sha256> _tx_hash;
@@ -70,11 +73,12 @@ class FindTransactionTask final : public Task
 class PushTransactionTask final : public Task
 {
   public:
-    PushTransactionTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    PushTransactionTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 
   private:
     std::optional<lk::Transaction> _tx;
@@ -85,11 +89,12 @@ class PushTransactionTask final : public Task
 class FindTransactionStatusTask final : public Task
 {
   public:
-    FindTransactionStatusTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    FindTransactionStatusTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 
   private:
     std::optional<base::Sha256> _tx_hash;
@@ -99,44 +104,48 @@ class FindTransactionStatusTask final : public Task
 class NodeInfoCallTask final : public Task
 {
   public:
-    NodeInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    NodeInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 };
 
 
 class NodeInfoSubscribeTask final : public Task
 {
   public:
-    NodeInfoSubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    NodeInfoSubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 };
 
 
 class NodeInfoUnsubscribeTask final : public Task
 {
   public:
-    NodeInfoUnsubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    NodeInfoUnsubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 };
 
 
 class AccountInfoCallTask final : public Task
 {
   public:
-    AccountInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    AccountInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 
   private:
     std::optional<lk::Address> _address;
@@ -146,11 +155,12 @@ class AccountInfoCallTask final : public Task
 class AccountInfoSubscribeTask final : public Task
 {
   public:
-    AccountInfoSubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    AccountInfoSubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 
   private:
     std::optional<lk::Address> _address;
@@ -160,11 +170,12 @@ class AccountInfoSubscribeTask final : public Task
 class AccountInfoUnsubscribeTask final : public Task
 {
   public:
-    AccountInfoUnsubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args);
+    AccountInfoUnsubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 
   private:
     std::optional<lk::Address> _address;
@@ -176,11 +187,12 @@ class UnsubscribeTransactionStatusUpdateTask final : public Task
   public:
     UnsubscribeTransactionStatusUpdateTask(websocket::SessionId session_id,
                                            websocket::QueryId query_id,
-                                           base::PropertyTree&& args);
+                                           rapidjson::Document&& args);
 
   protected:
-    bool prepareArgs() override;
+    void prepareArgs() override;
     void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
 
   private:
     std::optional<base::Sha256> _tx_hash;
@@ -210,15 +222,19 @@ class PublicService
     void run();
     void stop();
 
+    void sendCorrectResponse(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& result);
+    void sendErrorResponse(websocket::SessionId session_id,
+                           websocket::QueryId query_id,
+                           const std::string& error_message);
+
   private:
-    const base::PropertyTree& _config;
     lk::Core& _core;
     websocket::WebSocketAcceptor _acceptor;
 
     websocket::SessionId _last_given_session_id{ 0 };
     std::unordered_map<websocket::SessionId, std::unique_ptr<websocket::WebSocketSession>> _running_sessions;
 
-    tasks::Queue<tasks::Task> _input_tasks;
+    base::Queue<tasks::Task> _input_tasks;
     std::thread _worker;
 
     base::Observable<base::Sha256> _event_transaction_status_update;
@@ -238,14 +254,13 @@ class PublicService
     void on_session_request(websocket::SessionId session_id,
                             websocket::QueryId query_id,
                             websocket::Command::Id command_id,
-                            base::PropertyTree&& args);
+                            rapidjson::Document&& args);
     void on_session_close(websocket::SessionId session_id);
 
     [[noreturn]] void task_worker() noexcept;
 
-    void sendResponse(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& result);
 
     void on_added_new_block(const lk::ImmutableBlock& block);
-    void on_update_transaction_status(base::Sha256 tx_hash);
+    void on_updated_transaction_status(base::Sha256 tx_hash);
     void on_update_account(lk::Address account_address);
 };

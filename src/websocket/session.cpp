@@ -4,12 +4,14 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 namespace
 {
 
-rapidjson::Document _makeAnswer(websocket::QueryId id, bool is_success, rapidjson::Document result)
+void _makeAnswer(rapidjson::Document& answer, websocket::QueryId id, bool is_success, rapidjson::Document&& result)
 {
-    rapidjson::Document answer;
     answer.AddMember("type", rapidjson::Value("answer"), answer.GetAllocator());
     if (is_success) {
         answer.AddMember("status", rapidjson::Value("success"), answer.GetAllocator());
@@ -18,23 +20,24 @@ rapidjson::Document _makeAnswer(websocket::QueryId id, bool is_success, rapidjso
         answer.AddMember("status", rapidjson::Value("error"), answer.GetAllocator());
     }
     answer.AddMember("id", rapidjson::Value(id), answer.GetAllocator());
-    answer.AddMember("result", result, answer.GetAllocator());
-    return answer;
+    rapidjson::Value result_value(rapidjson::kObjectType);
+    result_value.CopyFrom(result, answer.GetAllocator());
+
+    answer.AddMember("result", result_value, answer.GetAllocator());
 }
 
 
-rapidjson::Document makeAnswer(websocket::QueryId id, rapidjson::Document result)
+void makeAnswer(rapidjson::Document& answer, websocket::QueryId id, rapidjson::Document&& result)
 {
-    return _makeAnswer(id, true, std::move(result));
+    _makeAnswer(answer, id, true, std::move(result));
 }
 
 
-rapidjson::Document makeErrorAnswer(websocket::QueryId id, const std::string& message)
+void makeErrorAnswer(rapidjson::Document& answer, websocket::QueryId id, const std::string& message)
 {
-    rapidjson::Document result;
-    result.AddMember("error_message", rapidjson::Value(rapidjson::StringRef(message.c_str())), result.GetAllocator());
-
-    return _makeAnswer(id, false, std::move(result));
+    rapidjson::Document result(rapidjson::kObjectType);
+    result.AddMember("error_message", rapidjson::StringRef(message.c_str()), result.GetAllocator());
+    _makeAnswer(answer, id, false, std::move(result));
 }
 
 }
@@ -61,21 +64,24 @@ WebSocketSession::WebSocketSession(boost::asio::ip::tcp::socket&& socket,
     connection->accept();
     _connection_pointer = connection;
     _is_ready = true;
+    LOG_TRACE << "created session[" << _session_id << "]";
 }
 
 
-void WebSocketSession::sendResult(QueryId queryId, rapidjson::Document result)
+void WebSocketSession::sendResult(QueryId queryId, rapidjson::Document&& result)
 {
-    auto prepared_answer = makeAnswer(queryId, std::move(result));
+    rapidjson::Document prepared_answer(rapidjson::kObjectType);
+    makeAnswer(prepared_answer, queryId, std::move(result));
     LOG_TRACE << "prepared success result at session[" << _session_id << "] by query[" << queryId << "]";
     std::lock_guard lock{ _connection_rw_mutex };
     return _send(std::move(prepared_answer));
 }
 
 
-void WebSocketSession::sendErrorMessage(QueryId queryId, const std::string& result)
+void WebSocketSession::sendErrorMessage(QueryId queryId, const std::string& error_message)
 {
-    auto prepared_answer = makeErrorAnswer(queryId, result);
+    rapidjson::Document prepared_answer(rapidjson::kObjectType);
+    makeErrorAnswer(prepared_answer, queryId, error_message);
     LOG_TRACE << "prepared error result at session[" << _session_id << "] by query[" << queryId << "]";
     std::lock_guard lock{ _connection_rw_mutex };
     return _send(std::move(prepared_answer));
@@ -161,7 +167,7 @@ void WebSocketSession::_onReceivedFromConnection(rapidjson::Document&& query)
         _registeredQueryIds.insert(query_id);
     }
 
-    rapidjson::Document command_args;
+    rapidjson::Document command_args(rapidjson::kObjectType);
     command_args.CopyFrom(args_json_value->value.Move(), command_args.GetAllocator());
 
     try {

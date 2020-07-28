@@ -1,7 +1,7 @@
 #pragma once
 
 #include "miner.hpp"
-//#include "public_service.hpp"
+#include "public_service.hpp"
 
 #include "core/core.hpp"
 
@@ -18,7 +18,7 @@ class Node
     rapidjson::Value _config;
     //---------------------------
     lk::Core _core;
-//    PublicService _public_service;
+    PublicService _public_service;
     //---------------------------
     std::unique_ptr<Miner> _miner;
     //---------------------------

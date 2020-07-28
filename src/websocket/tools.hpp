@@ -12,6 +12,47 @@
 namespace websocket
 {
 
+class MyOStreamWrapper
+{
+  public:
+    typedef char Ch;
+    MyOStreamWrapper() = default;
+
+    Ch Peek() const
+    {
+        assert(false);
+        return '\0';
+    }
+    Ch Take()
+    {
+        assert(false);
+        return '\0';
+    }
+    size_t Tell() const {}
+
+    Ch* PutBegin()
+    {
+        assert(false);
+        return 0;
+    }
+    void Put(Ch c) { os_.put(c); } // 1
+    void Flush() { os_.flush(); }  // 2
+    size_t PutEnd(Ch*)
+    {
+        assert(false);
+        return 0;
+    }
+
+    std::string toString() const { return os_.str(); };
+
+  private:
+    MyOStreamWrapper(const MyOStreamWrapper&);
+    MyOStreamWrapper& operator=(const MyOStreamWrapper&);
+
+    std::stringstream os_;
+};
+
+
 boost::asio::ip::tcp::endpoint createEndpoint(const std::string& listening_address);
 
 std::string serializeCommandName(websocket::Command::Id name);
@@ -58,25 +99,23 @@ std::string serializeSign(const lk::Sign& sign);
 
 lk::Sign deserializeSign(const std::string& data);
 
-rapidjson::Value serializeAccountInfo(const lk::AccountInfo& account_info,
-                                      rapidjson::Document::AllocatorType& allocator);
+void serializeAccountInfo(const lk::AccountInfo& account_info, rapidjson::Document& result);
 
 lk::AccountInfo deserializeAccountInfo(rapidjson::Value input);
 
-rapidjson::Value serializeInfo(const NodeInfo& info, rapidjson::Document::AllocatorType& allocator);
+void serializeInfo(const NodeInfo& info, rapidjson::Document& result);
 
 NodeInfo deserializeInfo(rapidjson::Value input);
 
-rapidjson::Value serializeTransaction(const lk::Transaction& tx, rapidjson::Document::AllocatorType& allocator);
+void serializeTransaction(const lk::Transaction& tx, rapidjson::Document& result);
 
 lk::Transaction deserializeTransaction(rapidjson::Value input);
 
-rapidjson::Value serializeBlock(const lk::ImmutableBlock& block, rapidjson::Document::AllocatorType& allocator);
+void serializeBlock(const lk::ImmutableBlock& block, rapidjson::Document& result);
 
 lk::ImmutableBlock deserializeBlock(rapidjson::Value input);
 
-rapidjson::Value serializeTransactionStatus(const lk::TransactionStatus& status,
-                                            rapidjson::Document::AllocatorType& allocator);
+void serializeTransactionStatus(const lk::TransactionStatus& status, rapidjson::Document& result);
 
 lk::TransactionStatus deserializeTransactionStatus(rapidjson::Value input);
 

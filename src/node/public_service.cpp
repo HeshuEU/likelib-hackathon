@@ -9,7 +9,7 @@
 namespace tasks
 {
 
-Task::Task(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args)
+Task::Task(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args)
   : _session_id{ session_id }
   , _query_id{ query_id }
   , _args{ std::move(args) }
@@ -18,37 +18,54 @@ Task::Task(websocket::SessionId session_id, websocket::QueryId query_id, base::P
 
 void Task::run(PublicService& service)
 {
-    if (prepareArgs()) {
-        return execute(service);
+    try {
+        prepareArgs();
     }
-    LOG_DEBUG << "fail to prepare arguments to execution";
-    RAISE_ERROR(base::InvalidArgument, "Bad command arguments");
+    catch (const base::Error& error) {
+        LOG_DEBUG << name() << "| prepare arguments for execution was failed:" << error.what();
+        service.sendErrorResponse(_session_id, _query_id, error.what());
+    }
+    catch (...) {
+        LOG_ERROR << name() << "| unexpected error during prepare arguments for execution";
+    }
+
+    try {
+        execute(service);
+    }
+    catch (const base::Error& error) {
+        LOG_DEBUG << name() << "execution was failed: ";
+        service.sendErrorResponse(_session_id, _query_id, error.what());
+    }
+    catch (...) {
+        LOG_ERROR << name() << "| unexpected error during execution";
+    }
 }
 
 
-FindBlockTask::FindBlockTask(websocket::SessionId session_id, websocket::QueryId query_id, base::PropertyTree&& args)
+FindBlockTask::FindBlockTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool FindBlockTask::prepareArgs()
+void FindBlockTask::prepareArgs()
 {
-    if (_args.hasKey("hash")) {
-        _block_hash = websocket::deserializeHash(_args.get<std::string>("hash"));
-        if (!_block_hash) {
-            LOG_DEBUG << "deserialization error";
-            return false;
+    if (_args.HasMember("hash")) {
+        auto hash_json_value = _args.FindMember("hash");
+        if (!(hash_json_value->value.IsString())) {
+            RAISE_ERROR(base::InvalidArgument, "args json \"hash\" member is not a string type");
         }
-        return true;
+        _block_hash = websocket::deserializeHash(hash_json_value->value.GetString());
+        return;
     }
-    else if (_args.hasKey("number")) {
-        _block_number = _args.get<std::uint64_t>("number");
-        return true;
+    if (_args.HasMember("number")) {
+        auto number_json_value = _args.FindMember("number");
+        if (!(number_json_value->value.IsUint64())) {
+            RAISE_ERROR(base::InvalidArgument, "args json \"number\" member is not a uint type");
+        }
+        _block_number = number_json_value->value.GetUint64();
+        return;
     }
-    else {
-        LOG_DEBUG << "not any options exists";
-        return false;
-    }
+    RAISE_ERROR(base::InvalidArgument, "args json is not contain \"hash\" or \"number\" member");
 }
 
 
@@ -57,68 +74,77 @@ void FindBlockTask::execute(PublicService& service)
     if (_block_hash) {
         auto block = service._core.findBlock(_block_hash.value());
         if (block) {
-            base::PropertyTree answer = websocket::serializeBlock(block.value());
-            service.sendResponse(_session_id, _query_id, std::move(answer));
+            rapidjson::Document answer(rapidjson::kObjectType);
+            websocket::serializeBlock(block.value(), answer);
+            service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
         }
     }
     else {
         auto block_hash = service._core.findBlockHash(_block_number.value());
         if (block_hash) {
             auto block = service._core.findBlock(block_hash.value());
-            base::PropertyTree answer = websocket::serializeBlock(block.value());
-            service.sendResponse(_session_id, _query_id, std::move(answer));
+            rapidjson::Document answer(rapidjson::kObjectType);
+            websocket::serializeBlock(block.value(), answer);
+            service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
         }
     }
 }
 
 
+const std::string& FindBlockTask::name() const noexcept
+{
+    static const std::string name("FindBlockTask");
+    return name;
+}
+
+
 FindTransactionTask::FindTransactionTask(websocket::SessionId session_id,
                                          websocket::QueryId query_id,
-                                         base::PropertyTree&& args)
+                                         rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool FindTransactionTask::prepareArgs()
+void FindTransactionTask::prepareArgs()
 {
-    if (_args.hasKey("hash")) {
-        _tx_hash = websocket::deserializeHash(_args.get<std::string>("hash"));
-        if (!_tx_hash) {
-            LOG_DEBUG << "deserialization error";
-            return false;
-        }
-        return true;
+    if (!_args.HasMember("hash")) {
+        RAISE_ERROR(base::InvalidArgument, "args json is not contain \"hash\" member");
     }
-    LOG_DEBUG << "not any options exists";
-    return false;
+    auto hash_json_value = _args.FindMember("hash");
+    if (!(hash_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "args json \"hash\" member is not a string type");
+    }
+    _tx_hash = websocket::deserializeHash(hash_json_value->value.GetString());
 }
 
 
 void FindTransactionTask::execute(PublicService& service)
 {
     auto tx = service._core.findTransaction(_tx_hash.value());
-    base::PropertyTree answer = websocket::serializeTransaction(tx.value());
-    service.sendResponse(_session_id, _query_id, std::move(answer));
+    rapidjson::Document answer(rapidjson::kObjectType);
+    websocket::serializeTransaction(tx.value(), answer);
+    service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
+}
+
+
+const std::string& FindTransactionTask::name() const noexcept
+{
+    static const std::string name("FindTransactionTask");
+    return name;
 }
 
 
 PushTransactionTask::PushTransactionTask(websocket::SessionId session_id,
                                          websocket::QueryId query_id,
-                                         base::PropertyTree&& args)
+                                         rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool PushTransactionTask::prepareArgs()
+void PushTransactionTask::prepareArgs()
 {
-    _tx = websocket::deserializeTransaction(_args);
-    if (!_tx) {
-        LOG_DEBUG << "deserialization error";
-        return false;
-    }
+    _tx = websocket::deserializeTransaction(_args.GetObject());
     _tx_hash = _tx->hashOfTransaction();
-
-    return true;
 }
 
 
@@ -131,8 +157,11 @@ void PushTransactionTask::execute(PublicService& service)
         }
     }
 
-    auto sendResponse = std::bind(
-      &PublicService::sendResponse, &service, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto sendResponse = std::bind(&PublicService::sendCorrectResponse,
+                                  &service,
+                                  std::placeholders::_1,
+                                  std::placeholders::_2,
+                                  std::placeholders::_3);
     auto sub_id = service._event_transaction_status_update.subscribe([session_id = this->_session_id,
                                                                       query_id = this->_query_id,
                                                                       sendResponse = std::move(sendResponse),
@@ -141,7 +170,8 @@ void PushTransactionTask::execute(PublicService& service)
         if (updated_tx == tx_hash) {
             auto tx_status = core.getTransactionOutput(updated_tx);
             ASSERT(tx_status);
-            base::PropertyTree answer = websocket::serializeTransactionStatus(tx_status.value());
+            rapidjson::Document answer(rapidjson::kObjectType);
+            websocket::serializeTransactionStatus(tx_status.value(), answer);
             sendResponse(session_id, query_id, std::move(answer));
         }
     });
@@ -158,25 +188,30 @@ void PushTransactionTask::execute(PublicService& service)
 }
 
 
+const std::string& PushTransactionTask::name() const noexcept
+{
+    static const std::string name("PushTransactionTask");
+    return name;
+}
+
+
 FindTransactionStatusTask::FindTransactionStatusTask(websocket::SessionId session_id,
                                                      websocket::QueryId query_id,
-                                                     base::PropertyTree&& args)
+                                                     rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool FindTransactionStatusTask::prepareArgs()
+void FindTransactionStatusTask::prepareArgs()
 {
-    if (_args.hasKey("hash")) {
-        _tx_hash = websocket::deserializeHash(_args.get<std::string>("hash"));
-        if (!_tx_hash) {
-            LOG_DEBUG << "deserialization error";
-            return false;
-        }
-        return true;
+    if (!_args.HasMember("hash")) {
+        RAISE_ERROR(base::InvalidArgument, "args json is not contain \"hash\" member");
     }
-    LOG_DEBUG << "not any options exists";
-    return false;
+    auto hash_json_value = _args.FindMember("hash");
+    if (!(hash_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "args json \"hash\" member is not a string type");
+    }
+    _tx_hash = websocket::deserializeHash(hash_json_value->value.GetString());
 }
 
 
@@ -184,23 +219,32 @@ void FindTransactionStatusTask::execute(PublicService& service)
 {
     auto tx_status = service._core.getTransactionOutput(_tx_hash.value());
     if (tx_status) {
-        base::PropertyTree answer = websocket::serializeTransactionStatus(tx_status.value());
-        service.sendResponse(_session_id, _query_id, std::move(answer));
+        rapidjson::Document answer(rapidjson::kObjectType);
+        websocket::serializeTransactionStatus(tx_status.value(), answer);
+        service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
         return;
     }
     LOG_DEBUG << "Cant find transaction status task";
 }
 
+
+const std::string& FindTransactionStatusTask::name() const noexcept
+{
+    static const std::string name("FindTransactionStatusTask");
+    return name;
+}
+
+
 NodeInfoCallTask::NodeInfoCallTask(websocket::SessionId session_id,
                                    websocket::QueryId query_id,
-                                   base::PropertyTree&& args)
+                                   rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool NodeInfoCallTask::prepareArgs()
+void NodeInfoCallTask::prepareArgs()
 {
-    return true;
+    // Do nothing
 }
 
 
@@ -209,21 +253,29 @@ void NodeInfoCallTask::execute(PublicService& service)
     auto last_block_hash = service._core.getTopBlockHash();
     auto last_block_number = service._core.getTopBlock().getDepth();
     websocket::NodeInfo info{ last_block_hash, last_block_number };
-    base::PropertyTree answer = websocket::serializeInfo(info);
-    service.sendResponse(_session_id, _query_id, std::move(answer));
+    rapidjson::Document answer(rapidjson::kObjectType);
+    websocket::serializeInfo(info, answer);
+    service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
+}
+
+
+const std::string& NodeInfoCallTask::name() const noexcept
+{
+    static const std::string name("NodeInfoCallTask");
+    return name;
 }
 
 
 NodeInfoSubscribeTask::NodeInfoSubscribeTask(websocket::SessionId session_id,
                                              websocket::QueryId query_id,
-                                             base::PropertyTree&& args)
+                                             rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool NodeInfoSubscribeTask::prepareArgs()
+void NodeInfoSubscribeTask::prepareArgs()
 {
-    return true;
+    // Do nothing
 }
 
 
@@ -234,13 +286,17 @@ void NodeInfoSubscribeTask::execute(PublicService& service)
         return;
     }
 
-    auto sendResponse = std::bind(
-      &PublicService::sendResponse, &service, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto sendResponse = std::bind(&PublicService::sendCorrectResponse,
+                                  &service,
+                                  std::placeholders::_1,
+                                  std::placeholders::_2,
+                                  std::placeholders::_3);
     auto sub_id = service._event_block_added.subscribe(
       [session_id = this->_session_id, query_id = this->_query_id, sendResponse = std::move(sendResponse)](
         lk::ImmutableBlock block) {
           websocket::NodeInfo info{ block.getHash(), block.getDepth() };
-          base::PropertyTree answer = websocket::serializeInfo(info);
+          rapidjson::Document answer(rapidjson::kObjectType);
+          websocket::serializeInfo(info, answer);
           sendResponse(session_id, query_id, std::move(answer));
       });
 
@@ -248,16 +304,23 @@ void NodeInfoSubscribeTask::execute(PublicService& service)
 }
 
 
+const std::string& NodeInfoSubscribeTask::name() const noexcept
+{
+    static const std::string name("NodeInfoSubscribeTask");
+    return name;
+}
+
+
 NodeInfoUnsubscribeTask::NodeInfoUnsubscribeTask(websocket::SessionId session_id,
                                                  websocket::QueryId query_id,
-                                                 base::PropertyTree&& args)
+                                                 rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool NodeInfoUnsubscribeTask::prepareArgs()
+void NodeInfoUnsubscribeTask::prepareArgs()
 {
-    return true;
+    // Do nothing
 }
 
 
@@ -273,55 +336,66 @@ void NodeInfoUnsubscribeTask::execute(PublicService& service)
 }
 
 
+const std::string& NodeInfoUnsubscribeTask::name() const noexcept
+{
+    static const std::string name("NodeInfoUnsubscribeTask");
+    return name;
+}
+
+
 AccountInfoCallTask::AccountInfoCallTask(websocket::SessionId session_id,
                                          websocket::QueryId query_id,
-                                         base::PropertyTree&& args)
+                                         rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool AccountInfoCallTask::prepareArgs()
+void AccountInfoCallTask::prepareArgs()
 {
-    if (_args.hasKey("address")) {
-        _address = websocket::deserializeAddress(_args.get<std::string>("address"));
-        if (!_address) {
-            LOG_DEBUG << "deserialization error";
-            return false;
-        }
-        return true;
+    if (!_args.HasMember("address")) {
+        RAISE_ERROR(base::InvalidArgument, "args json is not contain \"address\" member");
     }
-    LOG_DEBUG << "not any options exists";
-    return false;
+    auto address_json_value = _args.FindMember("hash");
+    if (!(address_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "args json \"address\" member is not a string type");
+    }
+    _address = websocket::deserializeAddress(address_json_value->value.GetString());
 }
 
 
 void AccountInfoCallTask::execute(PublicService& service)
 {
     auto account_info = service._core.getAccountInfo(_address.value());
-    base::PropertyTree answer = websocket::serializeAccountInfo(account_info);
-    service.sendResponse(_session_id, _query_id, std::move(answer));
+    rapidjson::Document answer(rapidjson::kObjectType);
+    websocket::serializeAccountInfo(account_info, answer);
+    service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
+}
+
+
+const std::string& AccountInfoCallTask::name() const noexcept
+{
+    static const std::string name("AccountInfoCallTask");
+    return name;
 }
 
 
 AccountInfoSubscribeTask::AccountInfoSubscribeTask(websocket::SessionId session_id,
                                                    websocket::QueryId query_id,
-                                                   base::PropertyTree&& args)
+                                                   rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool AccountInfoSubscribeTask::prepareArgs()
+void AccountInfoSubscribeTask::prepareArgs()
 {
-    if (_args.hasKey("address")) {
-        _address = websocket::deserializeAddress(_args.get<std::string>("address"));
-        if (!_address) {
-            LOG_DEBUG << "deserialization error";
-            return false;
-        }
-        return true;
+    if (!_args.HasMember("address")) {
+        RAISE_ERROR(base::InvalidArgument, "args json is not contain \"address\" member");
     }
-    LOG_DEBUG << "not any options exists";
-    return false;
+    auto address_json_value = _args.FindMember("address");
+    if (!(address_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "args json \"address\" member is not a string type");
+    }
+    _address = websocket::deserializeAddress(address_json_value->value.GetString());
 }
 
 
@@ -335,8 +409,11 @@ void AccountInfoSubscribeTask::execute(PublicService& service)
         }
     }
 
-    auto sendResponse = std::bind(
-      &PublicService::sendResponse, &service, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto sendResponse = std::bind(&PublicService::sendCorrectResponse,
+                                  &service,
+                                  std::placeholders::_1,
+                                  std::placeholders::_2,
+                                  std::placeholders::_3);
     auto sub_id = service._event_account_update.subscribe([session_id = this->_session_id,
                                                            query_id = this->_query_id,
                                                            sendResponse = std::move(sendResponse),
@@ -344,7 +421,8 @@ void AccountInfoSubscribeTask::execute(PublicService& service)
                                                            &core = service._core](lk::Address updated_address) {
         if (updated_address == address) {
             auto account_info = core.getAccountInfo(updated_address);
-            base::PropertyTree answer = websocket::serializeAccountInfo(account_info);
+            rapidjson::Document answer(rapidjson::kObjectType);
+            websocket::serializeAccountInfo(account_info, answer);
             sendResponse(session_id, query_id, std::move(answer));
         }
     });
@@ -360,25 +438,30 @@ void AccountInfoSubscribeTask::execute(PublicService& service)
 }
 
 
+const std::string& AccountInfoSubscribeTask::name() const noexcept
+{
+    static const std::string name("AccountInfoSubscribeTask");
+    return name;
+}
+
+
 AccountInfoUnsubscribeTask::AccountInfoUnsubscribeTask(websocket::SessionId session_id,
                                                        websocket::QueryId query_id,
-                                                       base::PropertyTree&& args)
+                                                       rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool AccountInfoUnsubscribeTask::prepareArgs()
+void AccountInfoUnsubscribeTask::prepareArgs()
 {
-    if (_args.hasKey("address")) {
-        _address = websocket::deserializeAddress(_args.get<std::string>("address"));
-        if (!_address) {
-            LOG_DEBUG << "deserialization error";
-            return false;
-        }
-        return true;
+    if (!_args.HasMember("address")) {
+        RAISE_ERROR(base::InvalidArgument, "args json is not contain \"address\" member");
     }
-    LOG_DEBUG << "not any options exists";
-    return false;
+    auto address_json_value = _args.FindMember("address");
+    if (!(address_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "args json \"address\" member is not a string type");
+    }
+    _address = websocket::deserializeAddress(address_json_value->value.GetString());
 }
 
 
@@ -399,25 +482,30 @@ void AccountInfoUnsubscribeTask::execute(PublicService& service)
 }
 
 
+const std::string& AccountInfoUnsubscribeTask::name() const noexcept
+{
+    static const std::string name("AccountInfoUnsubscribeTask");
+    return name;
+}
+
+
 UnsubscribeTransactionStatusUpdateTask::UnsubscribeTransactionStatusUpdateTask(websocket::SessionId session_id,
                                                                                websocket::QueryId query_id,
-                                                                               base::PropertyTree&& args)
+                                                                               rapidjson::Document&& args)
   : Task{ session_id, query_id, std::move(args) }
 {}
 
 
-bool UnsubscribeTransactionStatusUpdateTask::prepareArgs()
+void UnsubscribeTransactionStatusUpdateTask::prepareArgs()
 {
-    if (_args.hasKey("hash")) {
-        _tx_hash = websocket::deserializeHash(_args.get<std::string>("hash"));
-        if (!_tx_hash) {
-            LOG_DEBUG << "deserialization error";
-            return false;
-        }
-        return true;
+    if (!_args.HasMember("hash")) {
+        RAISE_ERROR(base::InvalidArgument, "args json is not contain \"hash\" member");
     }
-    LOG_DEBUG << "not any options exists";
-    return false;
+    auto hash_json_value = _args.FindMember("hash");
+    if (!(hash_json_value->value.IsString())) {
+        RAISE_ERROR(base::InvalidArgument, "args json \"hash\" member is not a string type");
+    }
+    _tx_hash = websocket::deserializeHash(hash_json_value->value.GetString());
 }
 
 
@@ -437,16 +525,23 @@ void UnsubscribeTransactionStatusUpdateTask::execute(PublicService& service)
     sess_registry_it->second.erase(target_action);
 }
 
+
+const std::string& UnsubscribeTransactionStatusUpdateTask::name() const noexcept
+{
+    static const std::string name("UnsubscribeTransactionStatusUpdateTask");
+    return name;
 }
 
+}
+
+
 PublicService::PublicService(rapidjson::Value config, lk::Core& core)
-  : _config{ config }
-  , _core{ core }
-  , _acceptor{ config, std::bind(&PublicService::createSession, this, std::placeholders::_1) }
+  : _core{ core }
+  , _acceptor{ std::move(config), std::bind(&PublicService::createSession, this, std::placeholders::_1) }
 {
     _core.subscribeToBlockAddition(std::bind(&PublicService::on_added_new_block, this, std::placeholders::_1));
     _core.subscribeToAnyTransactionStatusUpdate(
-      std::bind(&PublicService::on_update_transaction_status, this, std::placeholders::_1));
+      std::bind(&PublicService::on_updated_transaction_status, this, std::placeholders::_1));
     _core.subscribeToAnyAccountUpdate(std::bind(&PublicService::on_update_account, this, std::placeholders::_1));
 }
 
@@ -498,7 +593,7 @@ websocket::SessionId PublicService::createId()
 void PublicService::on_session_request(websocket::SessionId session_id,
                                        websocket::QueryId query_id,
                                        websocket::Command::Id command_id,
-                                       base::PropertyTree&& args)
+                                       rapidjson::Document&& args)
 {
     switch (command_id) {
         case websocket::Command::CALL_LAST_BLOCK_INFO:
@@ -568,13 +663,23 @@ void PublicService::on_session_close(websocket::SessionId session_id)
 }
 
 
-void PublicService::sendResponse(websocket::SessionId session_id,
-                                 websocket::QueryId query_id,
-                                 base::PropertyTree&& result)
+void PublicService::sendCorrectResponse(websocket::SessionId session_id,
+                                        websocket::QueryId query_id,
+                                        rapidjson::Document&& result)
 {
     auto sess = _running_sessions.find(session_id);
     ASSERT(sess != _running_sessions.end());
     sess->second->sendResult(query_id, std::move(result));
+}
+
+
+void PublicService::sendErrorResponse(websocket::SessionId session_id,
+                                      websocket::QueryId query_id,
+                                      const std::string& error_message)
+{
+    auto sess = _running_sessions.find(session_id);
+    ASSERT(sess != _running_sessions.end());
+    sess->second->sendErrorMessage(query_id, error_message);
 }
 
 
@@ -584,7 +689,7 @@ void PublicService::on_added_new_block(const lk::ImmutableBlock& block)
 }
 
 
-void PublicService::on_update_transaction_status(base::Sha256 tx_hash)
+void PublicService::on_updated_transaction_status(base::Sha256 tx_hash)
 {
     _event_transaction_status_update.notify(tx_hash);
 }

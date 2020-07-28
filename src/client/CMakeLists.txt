@@ -14,15 +14,12 @@ target_compile_definitions(cli INTERFACE BOOST_ASIO_NO_DEPRECATED=1)
 set(CLIENT_HEADERS
         actions.hpp
         config.hpp
-        utility.hpp
-        utility.tpp
         client.hpp
         )
 
 set(CLIENT_SOURCES
         actions.cpp
         main.cpp
-        utility.cpp
         client.cpp
         )
 

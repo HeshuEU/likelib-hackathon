@@ -1,6 +1,9 @@
 #include "client.hpp"
 #include "actions.hpp"
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <cli/clilocalsession.h>
 #include <cli/remotecli.h>
 
@@ -36,9 +39,14 @@ void Client::run()
 }
 
 
-void Client::printReceivedData(websocket::Command::Id command_id, base::PropertyTree received_message)
+void Client::printReceivedData(websocket::Command::Id command_id, rapidjson::Value received_message)
 {
-    cli::Cli::cout() << "Received data: " << received_message.toString();
+    rapidjson::Document d(rapidjson::kObjectType);
+    d.CopyFrom(std::move(received_message), d.GetAllocator());
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<decltype(buffer)> writer(buffer);
+    d.Accept(writer);
+    cli::Cli::cout() << "Received data: " << buffer.GetString();
     // TODO
 }
 
@@ -231,8 +239,8 @@ void Client::setupCli()
                                  auto amount = websocket::deserializeBalance(amount_str);
                                  auto fee = websocket::deserializeFee(fee_str);
                                  std::filesystem::path keys_dir{ key_path };
-                                 if (amount && fee && std::filesystem::exists(keys_dir)) {
-                                     transfer(out, _web_socket_client, to_address, *amount, *fee, keys_dir);
+                                 if (std::filesystem::exists(keys_dir)) {
+                                     transfer(out, _web_socket_client, to_address, amount, fee, keys_dir);
                                  }
                                  else {
                                      out << "can't parse input data for transfer";
@@ -250,38 +258,38 @@ void Client::setupCli()
                            "fee for transaction",
                            "amount of coins for transfer" }));
 
-    _connected_mode_commands.push_back(_root_menu->Insert(
-      "contract_call",
-      [this](std::ostream& out,
-             std::string key_path,
-             std::string contract_address_at_base58,
-             std::string fee_str,
-             std::string amount_str,
-             std::string message) {
-          try {
-              lk::Address to_address{ contract_address_at_base58 };
-              auto amount = websocket::deserializeBalance(amount_str);
-              auto fee = websocket::deserializeFee(fee_str);
-              std::filesystem::path keys_dir{ key_path };
-              if (amount && fee && std::filesystem::exists(keys_dir) && !message.empty()) {
-                  contract_call(out, _web_socket_client, to_address, *amount, *fee, keys_dir, message);
-              }
-              else {
-                  out << "can't parse input data for contract_call";
-                  LOG_ERROR << "can't parse input data for contract_call";
-              }
-          }
-          catch (const base::Error& e) {
-              out << "can't execute transfer";
-              LOG_ERROR << "can't execute transfer:" << e.what();
-          }
-      },
-      "call deployed contract",
-      { "path to folder with key",
-        "address of contract at base58",
-        "fee for contract call",
-        "amount of coins for call",
-        "message for call at hex" }));
+    _connected_mode_commands.push_back(
+      _root_menu->Insert("contract_call",
+                         [this](std::ostream& out,
+                                std::string key_path,
+                                std::string contract_address_at_base58,
+                                std::string fee_str,
+                                std::string amount_str,
+                                std::string message) {
+                             try {
+                                 lk::Address to_address{ contract_address_at_base58 };
+                                 auto amount = websocket::deserializeBalance(amount_str);
+                                 auto fee = websocket::deserializeFee(fee_str);
+                                 std::filesystem::path keys_dir{ key_path };
+                                 if (std::filesystem::exists(keys_dir) && !message.empty()) {
+                                     contract_call(out, _web_socket_client, to_address, amount, fee, keys_dir, message);
+                                 }
+                                 else {
+                                     out << "can't parse input data for contract_call";
+                                     LOG_ERROR << "can't parse input data for contract_call";
+                                 }
+                             }
+                             catch (const base::Error& e) {
+                                 out << "can't execute transfer";
+                                 LOG_ERROR << "can't execute transfer:" << e.what();
+                             }
+                         },
+                         "call deployed contract",
+                         { "path to folder with key",
+                           "address of contract at base58",
+                           "fee for contract call",
+                           "amount of coins for call",
+                           "message for call at hex" }));
 
     _connected_mode_commands.push_back(_root_menu->Insert(
       "push_contract",
@@ -295,9 +303,8 @@ void Client::setupCli()
               auto amount = websocket::deserializeBalance(amount_str);
               auto fee = websocket::deserializeFee(fee_str);
               std::filesystem::path keys_dir{ key_path };
-              if (amount && fee && std::filesystem::exists(keys_dir)) {
-                  push_contract(
-                    out, _web_socket_client, *amount, *fee, keys_dir, path_to_compiled_folder, init_message);
+              if (std::filesystem::exists(keys_dir)) {
+                  push_contract(out, _web_socket_client, amount, fee, keys_dir, path_to_compiled_folder, init_message);
               }
               else {
                   out << "can't parse input data for push_contract";

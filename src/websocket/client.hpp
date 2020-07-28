@@ -26,7 +26,7 @@ class WebSocketClient
     bool connect(const std::string& host);
     void disconnect() noexcept;
 
-    void send(Command::Id commandId, rapidjson::Document args);
+    void send(Command::Id commandId, rapidjson::Document&& args);
 
   private:
     boost::asio::ip::tcp::resolver _resolver;

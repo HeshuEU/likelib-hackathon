@@ -1,4 +1,5 @@
 #include "connection.hpp"
+#include "tools.hpp"
 
 #include "base/assert.hpp"
 #include "base/bytes.hpp"
@@ -75,7 +76,8 @@ void WebSocketConnection::onRead(boost::beast::error_code ec, std::size_t bytes_
     doRead();
 
     rapidjson::Document query_json;
-    query_json.Parse(receivedBytes.toString().c_str());
+    auto input_json_str = receivedBytes.toString();
+    query_json.Parse(input_json_str.c_str());
     if (query_json.HasParseError()) {
         LOG_DEBUG << "parse query json error at connection " << _connected_endpoint;
         return;
@@ -89,10 +91,10 @@ void WebSocketConnection::write(rapidjson::Document&& response)
 {
     std::string output;
     {
-        rapidjson::StringBuffer buffer;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        MyOStreamWrapper os;
+        rapidjson::Writer<MyOStreamWrapper> writer(os);
         response.Accept(writer);
-        output = buffer.GetString();
+        output = os.toString();
     }
 
     boost::beast::error_code ec;

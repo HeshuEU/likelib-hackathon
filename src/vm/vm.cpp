@@ -153,7 +153,12 @@ std::optional<Contracts> compile(const std::string& path_to_solidity_file)
 
         for (const auto& contract_name_metadata_pair : metadata_output) {
             if (contract_name_metadata_pair.first == contract.name) {
-                contract.metadata = contract_name_metadata_pair.second;
+                rapidjson::Document metadata;
+                metadata.Parse(contract_name_metadata_pair.second.c_str());
+                if (metadata.HasParseError()) {
+                    RAISE_ERROR(vm::VmError, "invalid metadata");
+                }
+                contract.metadata = std::move(metadata);
             }
         }
 

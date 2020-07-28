@@ -6,7 +6,7 @@
 Node::Node(rapidjson::Value config)
   : _config{ std::move(config) }
   , _core{ std::move(_config.FindMember("core")->value)}
-//  , _public_service{ std::move(_config.FindMember("websocket")->value), _core }
+  , _public_service{ std::move(_config.FindMember("websocket")->value), _core }
 {
     if (!_config.HasMember("miner")) {
         RAISE_ERROR(base::InvalidArgument, "config file is't contain miner node");
@@ -27,15 +27,15 @@ void Node::run()
 {
     _core.run(); // run before all others
 
-//    try {
-//        _public_service.run();
-//    }
-//    catch (const std::exception& e) {
-//        LOG_WARNING << "Cannot startSession RPC server: " << e.what();
-//    }
-//    catch (...) {
-//        LOG_WARNING << "Cannot startSession RPC server: unknown error";
-//    }
+    try {
+        _public_service.run();
+    }
+    catch (const std::exception& e) {
+        LOG_WARNING << "Cannot startSession public server: " << e.what();
+    }
+    catch (...) {
+        LOG_WARNING << "Cannot startSession public server: unknown error";
+    }
 }
 
 

@@ -21,7 +21,7 @@ struct CompiledContract
 {
     std::string name;
     base::Bytes code;
-    std::string metadata;
+    rapidjson::Document metadata;
 
     explicit CompiledContract() = default;
     explicit CompiledContract(const std::string& _name);

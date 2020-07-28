@@ -98,17 +98,19 @@ void WebSocketClient::frameControl(boost::beast::websocket::frame_type kind,
 }
 
 
-void WebSocketClient::send(Command::Id commandId, rapidjson::Document args)
+void WebSocketClient::send(Command::Id commandId, rapidjson::Document&& args)
 {
     auto command_type = serializeCommandType(commandId);
     auto command_name = serializeCommandName(commandId);
-    rapidjson::Document query;
 
-    query.AddMember("type", rapidjson::Value(rapidjson::StringRef(command_type.c_str())), query.GetAllocator());
-    query.AddMember("name", rapidjson::Value(rapidjson::StringRef(command_name.c_str())), query.GetAllocator());
-    query.AddMember("api", rapidjson::Value(base::config::PUBLIC_SERVICE_API_VERSION), query.GetAllocator());
+    rapidjson::Document query(rapidjson::kObjectType);
+    query.AddMember("type", rapidjson::StringRef(command_type.c_str()), query.GetAllocator());
+    query.AddMember("name", rapidjson::StringRef(command_name.c_str()), query.GetAllocator());
+    query.AddMember("version", rapidjson::Value(base::config::PUBLIC_SERVICE_API_VERSION), query.GetAllocator());
     query.AddMember("id", rapidjson::Value(registerNewQuery(commandId)), query.GetAllocator());
-    query.AddMember("args", args.GetObject(), query.GetAllocator());
+    rapidjson::Value args_value(rapidjson::kObjectType);
+    args_value = args.GetObject();
+    query.AddMember("args", args_value, query.GetAllocator());
 
     if (!_ready) {
         RAISE_ERROR(base::LogicError, "client is not ready");
@@ -116,10 +118,10 @@ void WebSocketClient::send(Command::Id commandId, rapidjson::Document args)
 
     std::string output;
     {
-        rapidjson::StringBuffer buffer;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        MyOStreamWrapper os;
+        rapidjson::Writer<MyOStreamWrapper> writer(os);
         query.Accept(writer);
-        output = buffer.GetString();
+        output = os.toString();
     }
 
     boost::beast::error_code ec;

@@ -24,8 +24,8 @@ class WebSocketSession
                               SessionCloseCallback close_callback);
     ~WebSocketSession() = default;
 
-    void sendResult(QueryId queryId, rapidjson::Document result);
-    void sendErrorMessage(QueryId queryId, const std::string& result);
+    void sendResult(QueryId queryId, rapidjson::Document&& result);
+    void sendErrorMessage(QueryId queryId, const std::string& error_message);
 
   private:
     SessionId _session_id;

@@ -317,26 +317,25 @@ lk::Sign deserializeSign(const std::string& sign_str)
 }
 
 
-rapidjson::Value serializeAccountInfo(const lk::AccountInfo& account_info,
-                                      rapidjson::Document::AllocatorType& allocator)
+void serializeAccountInfo(const lk::AccountInfo& account_info, rapidjson::Document& result)
 {
     LOG_TRACE << "Serializing AccountInfo";
+    auto& allocator = result.GetAllocator();
+
     auto address_value = serializeAddress(account_info.address);
     auto balance_value = serializeBalance(account_info.balance);
     auto type_value = serializeAccountType(account_info.type);
     rapidjson::Value txs_hashes_value(rapidjson::kArrayType);
     for (const auto& tx_hash : account_info.transactions_hashes) {
         auto hash_value = serializeHash(tx_hash);
-        txs_hashes_value.PushBack(rapidjson::Value(rapidjson::StringRef(hash_value.c_str())), allocator);
+        txs_hashes_value.PushBack(rapidjson::StringRef(hash_value.c_str()), allocator);
     }
 
-    rapidjson::Value result(rapidjson::kObjectType);
-    result.AddMember("address", rapidjson::Value(rapidjson::StringRef(address_value.c_str())), allocator);
-    result.AddMember("balance", rapidjson::Value(rapidjson::StringRef(balance_value.c_str())), allocator);
+    result.AddMember("address", rapidjson::StringRef(address_value.c_str()), allocator);
+    result.AddMember("balance", rapidjson::StringRef(balance_value.c_str()), allocator);
     result.AddMember("nonce", rapidjson::Value(account_info.nonce), allocator);
-    result.AddMember("type", rapidjson::Value(rapidjson::StringRef(type_value.c_str())), allocator);
+    result.AddMember("type", rapidjson::StringRef(type_value.c_str()), allocator);
     result.AddMember("transaction_hashes", txs_hashes_value.Move(), allocator);
-    return result;
 }
 
 
@@ -400,15 +399,20 @@ lk::AccountInfo deserializeAccountInfo(rapidjson::Value input)
 }
 
 
-rapidjson::Value serializeInfo(const NodeInfo& info, rapidjson::Document::AllocatorType& allocator)
+void serializeInfo(const NodeInfo& info, rapidjson::Document& result)
 {
     LOG_TRACE << "Serializing NodeInfo";
-    auto hash_value = serializeHash(info.top_block_hash);
+    auto& allocator = result.GetAllocator();
 
-    rapidjson::Value result(rapidjson::kObjectType);
+    auto hash_value = serializeHash(info.top_block_hash);
+    auto val = rapidjson::StringRef(hash_value.c_str());
+    auto test_1 = hash_value.size();
+    auto test_2 = val.length;
+
     result.AddMember("top_block_number", rapidjson::Value(info.top_block_number), allocator);
-    result.AddMember("top_block_hash", rapidjson::Value(rapidjson::StringRef(hash_value.c_str())), allocator);
-    return result;
+    result.AddMember("top_block_hash", val, allocator);
+
+
 }
 
 
@@ -437,9 +441,11 @@ NodeInfo deserializeInfo(rapidjson::Value input)
 }
 
 
-rapidjson::Value serializeTransaction(const lk::Transaction& input, rapidjson::Document::AllocatorType& allocator)
+void serializeTransaction(const lk::Transaction& input, rapidjson::Document& result)
 {
     LOG_TRACE << "Serializing Transaction";
+    auto& allocator = result.GetAllocator();
+
     auto from_address_value = serializeAddress(input.getFrom());
     auto to_address_value = serializeAddress(input.getTo());
     auto amount_value = serializeBalance(input.getAmount());
@@ -448,15 +454,13 @@ rapidjson::Value serializeTransaction(const lk::Transaction& input, rapidjson::D
     auto data_value = serializeBytes(input.getData());
     auto sign_value = serializeSign(input.getSign());
 
-    rapidjson::Value result(rapidjson::kObjectType);
-    result.AddMember("from", rapidjson::Value(rapidjson::StringRef(from_address_value.c_str())), allocator);
-    result.AddMember("to", rapidjson::Value(rapidjson::StringRef(to_address_value.c_str())), allocator);
-    result.AddMember("amount", rapidjson::Value(rapidjson::StringRef(amount_value.c_str())), allocator);
-    result.AddMember("fee", rapidjson::Value(rapidjson::StringRef(fee_value.c_str())), allocator);
+    result.AddMember("from", rapidjson::StringRef(from_address_value.c_str()), allocator);
+    result.AddMember("to", rapidjson::StringRef(to_address_value.c_str()), allocator);
+    result.AddMember("amount", rapidjson::StringRef(amount_value.c_str()), allocator);
+    result.AddMember("fee", rapidjson::StringRef(fee_value.c_str()), allocator);
     result.AddMember("timestamp", rapidjson::Value(timestamp_value), allocator);
-    result.AddMember("sign", rapidjson::Value(rapidjson::StringRef(data_value.c_str())), allocator);
-    result.AddMember("data", rapidjson::Value(rapidjson::StringRef(sign_value.c_str())), allocator);
-    return result;
+    result.AddMember("sign", rapidjson::StringRef(data_value.c_str()), allocator);
+    result.AddMember("data", rapidjson::StringRef(sign_value.c_str()), allocator);
 }
 
 
@@ -531,25 +535,26 @@ lk::Transaction deserializeTransaction(rapidjson::Value input)
 }
 
 
-rapidjson::Value serializeBlock(const lk::ImmutableBlock& block, rapidjson::Document::AllocatorType& allocator)
+void serializeBlock(const lk::ImmutableBlock& block, rapidjson::Document& result)
 {
     LOG_TRACE << "Serializing ImmutableBlock";
+    auto& allocator = result.GetAllocator();
+
     auto coinbase_value = serializeAddress(block.getCoinbase());
     auto previous_block_hash_value = serializeHash(block.getPrevBlockHash());
     rapidjson::Value txs_values(rapidjson::kArrayType);
     for (auto& tx : block.getTransactions()) {
-        txs_values.PushBack(serializeTransaction(tx, allocator).Move(), allocator);
+        rapidjson::Document tx_value(rapidjson::kObjectType);
+        serializeTransaction(tx, tx_value);
+        txs_values.PushBack(tx_value, allocator);
     }
 
-    rapidjson::Value result(rapidjson::kObjectType);
     result.AddMember("depth", rapidjson::Value(block.getDepth()), allocator);
     result.AddMember("nonce", rapidjson::Value(block.getNonce()), allocator);
-    result.AddMember("coinbase", rapidjson::Value(rapidjson::StringRef(coinbase_value.c_str())), allocator);
-    result.AddMember(
-      "previous_block_hash", rapidjson::Value(rapidjson::StringRef(previous_block_hash_value.c_str())), allocator);
+    result.AddMember("coinbase", rapidjson::StringRef(coinbase_value.c_str()), allocator);
+    result.AddMember("previous_block_hash", rapidjson::StringRef(previous_block_hash_value.c_str()), allocator);
     result.AddMember("timestamp", rapidjson::Value(block.getTimestamp().getSeconds()), allocator);
     result.AddMember("transactions", txs_values.Move(), allocator);
-    return result;
 }
 
 
@@ -625,20 +630,19 @@ lk::ImmutableBlock deserializeBlock(rapidjson::Value input)
 }
 
 
-rapidjson::Value serializeTransactionStatus(const lk::TransactionStatus& status,
-                                            rapidjson::Document::AllocatorType& allocator)
+void serializeTransactionStatus(const lk::TransactionStatus& status, rapidjson::Document& result)
 {
     LOG_TRACE << "Serializing TransactionStatus";
+    auto& allocator = result.GetAllocator();
+
     auto status_code_value = serializeTransactionStatusStatusCode(status.getStatus());
     auto action_type_value = serializeTransactionStatusActionType(status.getType());
     auto fee_left_value = serializeFee(status.getFeeLeft());
 
-    rapidjson::Value result(rapidjson::kObjectType);
     result.AddMember("status_code", rapidjson::Value(status_code_value), allocator);
     result.AddMember("action_type", rapidjson::Value(action_type_value), allocator);
-    result.AddMember("fee_left", rapidjson::Value(rapidjson::StringRef(fee_left_value.c_str())), allocator);
-    result.AddMember("message", rapidjson::Value(rapidjson::StringRef(status.getMessage().c_str())), allocator);
-    return result;
+    result.AddMember("fee_left", rapidjson::StringRef(fee_left_value.c_str()), allocator);
+    result.AddMember("message", rapidjson::StringRef(status.getMessage().c_str()), allocator);
 }
 
 
