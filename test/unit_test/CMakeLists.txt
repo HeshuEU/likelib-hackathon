@@ -6,6 +6,7 @@ set(TEST_SOURCES
         base/database.cpp
         base/hash.cpp
         base/rapidjson.cpp
+        base/inner_json.cpp
         base/program_options.cpp
         base/serialization.cpp
         base/time.cpp

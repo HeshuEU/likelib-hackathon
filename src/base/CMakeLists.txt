@@ -21,6 +21,7 @@ set(BASE_HEADERS
         database.hpp
         serialization.hpp
         time.hpp
+        json.hpp
         )
 
 set(BASE_SOURCES
@@ -35,6 +36,7 @@ set(BASE_SOURCES
         database.cpp
         serialization.cpp
         time.cpp
+        json.cpp
         )
 
 add_library(base ${BASE_HEADERS} ${BASE_TEMPLATES} ${BASE_SOURCES})
