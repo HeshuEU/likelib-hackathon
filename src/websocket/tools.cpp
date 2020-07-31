@@ -34,22 +34,22 @@ boost::asio::ip::tcp::endpoint createEndpoint(const std::string& listening_addre
 }
 
 
-std::string serializeCommandName(Command::Id command)
+base::json::Value serializeCommandName(Command::Id command)
 {
     LOG_TRACE << "Serializing CommandName";
     switch (Command::Name(static_cast<std::uint64_t>(command) & static_cast<std::uint64_t>(Command::NameMask))) {
         case Command::Name::ACCOUNT_INFO:
-            return "account_info";
+            return base::json::Value::string("account_info");
         case Command::Name::FIND_BLOCK:
-            return "find_block";
+            return base::json::Value::string("find_block");
         case Command::Name::FIND_TRANSACTION:
-            return "find_transaction";
+            return base::json::Value::string("find_transaction");
         case Command::Name::FIND_TRANSACTION_STATUS:
-            return "find_transaction_status";
+            return base::json::Value::string("find_transaction_status");
         case Command::Name::PUSH_TRANSACTION:
-            return "push_transaction";
+            return base::json::Value::string("push_transaction");
         case Command::Name::LAST_BLOCK_INFO:
-            return "last_block_info";
+            return base::json::Value::string("last_block_info");
         default:
             RAISE_ERROR(base::LogicError, "used unexpected command name");
     }
@@ -81,16 +81,16 @@ websocket::Command::Name deserializeCommandName(const std::string& command_name_
 }
 
 
-std::string serializeCommandType(websocket::Command::Id command_type)
+base::json::Value serializeCommandType(websocket::Command::Id command_type)
 {
     LOG_TRACE << "Serializing CommandType";
     switch (Command::Type(static_cast<std::uint64_t>(command_type) & static_cast<std::uint64_t>(Command::TypeMask))) {
         case Command::Type::CALL:
-            return "call";
+            return base::json::Value::string("call");
         case Command::Type::UNSUBSCRIBE:
-            return "unsubscribe";
+            return base::json::Value::string("unsubscribe");
         case Command::Type::SUBSCRIBE:
-            return "subscribe";
+            return base::json::Value::string("subscribe");
         default:
             RAISE_ERROR(base::LogicError, "used unexpected command type");
     }
@@ -113,14 +113,14 @@ websocket::Command::Type deserializeCommandType(const std::string& command_type_
 }
 
 
-std::string serializeAccountType(lk::AccountType account_type)
+base::json::Value serializeAccountType(lk::AccountType account_type)
 {
     LOG_TRACE << "Serializing AccountType";
     switch (account_type) {
         case lk::AccountType::CONTRACT:
-            return "Contract";
+            return base::json::Value::string("Contract");
         case lk::AccountType::CLIENT:
-            return "Client";
+            return base::json::Value::string("Client");
         default:
             RAISE_ERROR(base::LogicError, "used unexpected account type");
     }
@@ -140,10 +140,10 @@ lk::AccountType deserializeAccountType(const std::string& account_type_str)
 }
 
 
-uint32_t serializeTransactionStatusStatusCode(lk::TransactionStatus::StatusCode status_code)
+base::json::Value serializeTransactionStatusStatusCode(lk::TransactionStatus::StatusCode status_code)
 {
     LOG_TRACE << "Serializing TransactionStatusCode";
-    return static_cast<uint32_t>(status_code);
+    return base::json::Value::number(static_cast<uint32_t>(status_code));
 }
 
 
@@ -172,10 +172,10 @@ lk::TransactionStatus::StatusCode deserializeTransactionStatusStatusCode(std::ui
 }
 
 
-uint32_t serializeTransactionStatusActionType(lk::TransactionStatus::ActionType action_type)
+base::json::Value serializeTransactionStatusActionType(lk::TransactionStatus::ActionType action_type)
 {
     LOG_TRACE << "Serializing TransactionStatusActionType";
-    return static_cast<uint32_t>(action_type);
+    return base::json::Value::number(static_cast<uint32_t>(action_type));
 }
 
 
@@ -198,10 +198,10 @@ lk::TransactionStatus::ActionType deserializeTransactionStatusActionType(std::ui
 }
 
 
-std::string serializeBalance(const lk::Balance& balance)
+base::json::Value serializeBalance(const lk::Balance& balance)
 {
     LOG_TRACE << "Serializing Balance";
-    return balance.str();
+    return base::json::Value::string(balance.str());
 }
 
 
@@ -212,10 +212,10 @@ lk::Balance deserializeBalance(const std::string& balance_str)
 }
 
 
-std::string serializeFee(lk::Fee fee)
+base::json::Value serializeFee(lk::Fee fee)
 {
     LOG_TRACE << "Serializing Fee";
-    return std::to_string(fee);
+    return base::json::Value::string(std::to_string(fee));
 }
 
 
@@ -231,10 +231,10 @@ lk::Fee deserializeFee(const std::string& fee_str)
 }
 
 
-std::string serializeHash(const base::Sha256& hash)
+base::json::Value serializeHash(const base::Sha256& hash)
 {
     LOG_TRACE << "Serializing Hash";
-    return base::base64Encode(hash.getBytes());
+    return base::json::Value::string(base::base64Encode(hash.getBytes()));
 }
 
 
@@ -253,10 +253,10 @@ base::Sha256 deserializeHash(const std::string& hash_str)
 }
 
 
-std::string serializeAddress(const lk::Address& address)
+base::json::Value serializeAddress(const lk::Address& address)
 {
     LOG_TRACE << "Serializing Address";
-    return base::base58Encode(address.getBytes());
+    return base::json::Value::string(base::base58Encode(address.getBytes()));
 }
 
 
@@ -276,10 +276,10 @@ lk::Address deserializeAddress(const std::string& address_str)
 }
 
 
-std::string serializeBytes(const base::Bytes& data)
+base::json::Value serializeBytes(const base::Bytes& data)
 {
     LOG_TRACE << "Serializing Bytes";
-    return base::base64Encode(data);
+    return base::json::Value::string(base::base64Encode(data));
 }
 
 
@@ -295,10 +295,10 @@ base::Bytes deserializeBytes(const std::string& data_str)
 }
 
 
-std::string serializeSign(const lk::Sign& sign)
+base::json::Value serializeSign(const lk::Sign& sign)
 {
     LOG_TRACE << "Serializing Sign";
-    return base::base64Encode(sign.toBytes());
+    return base::json::Value::string(base::base64Encode(sign.toBytes()));
 }
 
 
@@ -317,80 +317,60 @@ lk::Sign deserializeSign(const std::string& sign_str)
 }
 
 
-void serializeAccountInfo(const lk::AccountInfo& account_info, rapidjson::Document& result)
+base::json::Value serializeAccountInfo(const lk::AccountInfo& account_info)
 {
     LOG_TRACE << "Serializing AccountInfo";
-    auto& allocator = result.GetAllocator();
+    auto result = base::json::Value::object();
+    result["address"] = serializeAddress(account_info.address);
+    result["balance"] = serializeBalance(account_info.balance);
+    result["nonce"] = base::json::Value::number(account_info.nonce);
+    result["type"] = serializeAccountType(account_info.type);
+    std::vector<base::json::Value> txs_hashes_value;
 
-    auto address_value = serializeAddress(account_info.address);
-    auto balance_value = serializeBalance(account_info.balance);
-    auto type_value = serializeAccountType(account_info.type);
-    rapidjson::Value txs_hashes_value(rapidjson::kArrayType);
     for (const auto& tx_hash : account_info.transactions_hashes) {
-        auto hash_value = serializeHash(tx_hash);
-        txs_hashes_value.PushBack(rapidjson::StringRef(hash_value.c_str()), allocator);
+        txs_hashes_value.emplace_back(std::move(serializeHash(tx_hash)));
     }
-
-    result.AddMember("address", rapidjson::StringRef(address_value.c_str()), allocator);
-    result.AddMember("balance", rapidjson::StringRef(balance_value.c_str()), allocator);
-    result.AddMember("nonce", rapidjson::Value(account_info.nonce), allocator);
-    result.AddMember("type", rapidjson::StringRef(type_value.c_str()), allocator);
-    result.AddMember("transaction_hashes", txs_hashes_value.Move(), allocator);
+    result["transaction_hashes"] = base::json::Value::array(txs_hashes_value);
+    return result;
 }
 
 
-lk::AccountInfo deserializeAccountInfo(rapidjson::Value input)
+lk::AccountInfo deserializeAccountInfo(base::json::Value input)
 {
     LOG_TRACE << "Deserializing AccountInfo";
-    if (!input.HasMember("type")) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"type\" member");
+    if (!input.has_string_field("type")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain a string \"type\" member");
     }
-    auto account_type_json_value = input.FindMember("type");
-    if (!(account_type_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"type\" member is not a string type");
-    }
-    auto account_type = deserializeAccountType(account_type_json_value->value.GetString());
+    auto account_type = deserializeAccountType(input["type"].as_string());
 
-    if (!input.HasMember("balance")) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"balance\" member");
+    if (!input.has_string_field("balance")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain a \"balance\" member");
     }
-    auto balance_json_value = input.FindMember("balance");
-    if (!(balance_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"balance\" member is not a string type");
-    }
-    auto balance = deserializeBalance(balance_json_value->value.GetString());
+    auto balance = deserializeBalance(input["balance"].as_string());
 
-    if (!input.HasMember("nonce")) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"nonce\" member");
+    if (!input.has_number_field("nonce")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain an uint \"nonce\" member");
     }
-    auto nonce_json_value = input.FindMember("nonce");
-    if (!(nonce_json_value->value.IsUint64())) {
+    auto nonce_json_value = input["nonce"].as_number();
+    if (!nonce_json_value.is_uint64()) {
         RAISE_ERROR(base::InvalidArgument, "AccountInfo \"nonce\" member is not a uint type");
     }
-    auto nonce = nonce_json_value->value.GetUint64();
+    auto nonce = nonce_json_value.to_uint64();
 
-    if (!input.HasMember("address")) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"address\" member");
+    if (!input.has_string_field("address")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain a string \"address\" member");
     }
-    auto address_json_value = input.FindMember("address");
-    if (!(address_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"address\" member is not a string type");
-    }
-    auto address = deserializeAddress(address_json_value->value.GetString());
+    auto address = deserializeAddress(input["address"].as_string());
 
-    if (!input.HasMember("transaction_hashes")) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain \"transaction_hashes\" member");
-    }
-    auto transaction_hashes_json_value = input.FindMember("transaction_hashes");
-    if (!(transaction_hashes_json_value->value.IsArray())) {
-        RAISE_ERROR(base::InvalidArgument, "AccountInfo \"transaction_hashes\" member is not an array type");
+    if (!input.has_array_field("transaction_hashes")) {
+        RAISE_ERROR(base::InvalidArgument, "AccountInfo json is not contain an array \"transaction_hashes\" member");
     }
     std::vector<base::Sha256> transactions_hashes;
-    for (auto& tx_hash_value : transaction_hashes_json_value->value.GetArray()) {
-        if (!tx_hash_value.IsString()) {
+    for (auto& tx_hash_value : input["transaction_hashes"].as_array()) {
+        if (!tx_hash_value.is_string()) {
             RAISE_ERROR(base::InvalidArgument, "AccountInfo \"transaction_hash\" one member is not a string type");
         }
-        transactions_hashes.emplace_back(deserializeHash(tx_hash_value.GetString()));
+        transactions_hashes.emplace_back(deserializeHash(tx_hash_value.as_string()));
     }
 
     return lk::AccountInfo{
@@ -399,224 +379,167 @@ lk::AccountInfo deserializeAccountInfo(rapidjson::Value input)
 }
 
 
-void serializeInfo(const NodeInfo& info, rapidjson::Document& result)
+base::json::Value serializeInfo(const NodeInfo& info)
 {
     LOG_TRACE << "Serializing NodeInfo";
-    auto& allocator = result.GetAllocator();
-
-    auto hash_value = serializeHash(info.top_block_hash);
-    auto val = rapidjson::StringRef(hash_value.c_str());
-    auto test_1 = hash_value.size();
-    auto test_2 = val.length;
-
-    result.AddMember("top_block_number", rapidjson::Value(info.top_block_number), allocator);
-    result.AddMember("top_block_hash", val, allocator);
-
-
+    auto result = base::json::Value::object();
+    result["top_block_number"] = base::json::Value::number(info.top_block_number);
+    result["top_block_hash"] = serializeHash(info.top_block_hash);
+    return result;
 }
 
 
-NodeInfo deserializeInfo(rapidjson::Value input)
+NodeInfo deserializeInfo(base::json::Value input)
 {
     LOG_TRACE << "Deserializing NodeInfo";
-    if (!input.HasMember("top_block_hash")) {
-        RAISE_ERROR(base::InvalidArgument, "NodeInfo json is not contain \"top_block_hash\" member");
+    if (!input.has_string_field("top_block_hash")) {
+        RAISE_ERROR(base::InvalidArgument, "NodeInfo json is not contain a string \"top_block_hash\" member");
     }
-    auto top_block_hash_json_value = input.FindMember("top_block_hash");
-    if (!(top_block_hash_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "NodeInfo \"top_block_hash\" member is not a string type");
-    }
-    auto top_block_hash = deserializeHash(top_block_hash_json_value->value.GetString());
+    auto top_block_hash = deserializeHash(input["top_block_hash"].as_string());
 
-    if (!input.HasMember("top_block_number")) {
-        RAISE_ERROR(base::InvalidArgument, "NodeInfo json is not contain \"top_block_number\" member");
+    if (!input.has_number_field("top_block_number")) {
+        RAISE_ERROR(base::InvalidArgument, "NodeInfo json is not contain a uint \"top_block_number\" member");
     }
-    auto top_block_number_json_value = input.FindMember("top_block_number");
-    if (!(top_block_number_json_value->value.IsUint64())) {
+    auto top_block_number_json_value = input["top_block_number"].as_number();
+    if (!top_block_number_json_value.is_uint64()) {
         RAISE_ERROR(base::InvalidArgument, "NodeInfo \"top_block_number\" member is not a uint type");
     }
-    auto top_block_number = top_block_number_json_value->value.GetUint64();
+    auto top_block_number = top_block_number_json_value.to_uint64();
 
     return NodeInfo{ top_block_hash, top_block_number };
 }
 
 
-void serializeTransaction(const lk::Transaction& input, rapidjson::Document& result)
+base::json::Value serializeTransaction(const lk::Transaction& input)
 {
     LOG_TRACE << "Serializing Transaction";
-    auto& allocator = result.GetAllocator();
+    auto result = base::json::Value::object();
 
-    auto from_address_value = serializeAddress(input.getFrom());
-    auto to_address_value = serializeAddress(input.getTo());
-    auto amount_value = serializeBalance(input.getAmount());
-    auto fee_value = serializeFee(input.getFee());
-    auto timestamp_value = input.getTimestamp().getSeconds();
-    auto data_value = serializeBytes(input.getData());
-    auto sign_value = serializeSign(input.getSign());
-
-    result.AddMember("from", rapidjson::StringRef(from_address_value.c_str()), allocator);
-    result.AddMember("to", rapidjson::StringRef(to_address_value.c_str()), allocator);
-    result.AddMember("amount", rapidjson::StringRef(amount_value.c_str()), allocator);
-    result.AddMember("fee", rapidjson::StringRef(fee_value.c_str()), allocator);
-    result.AddMember("timestamp", rapidjson::Value(timestamp_value), allocator);
-    result.AddMember("sign", rapidjson::StringRef(data_value.c_str()), allocator);
-    result.AddMember("data", rapidjson::StringRef(sign_value.c_str()), allocator);
+    result["from"] = serializeAddress(input.getFrom());
+    result["to"] = serializeAddress(input.getTo());
+    result["amount"] = serializeBalance(input.getAmount());
+    result["fee"] = serializeFee(input.getFee());
+    result["timestamp"] = base::json::Value::number(input.getTimestamp().getSeconds());
+    result["sign"] = serializeSign(input.getSign());
+    result["data"] = serializeBytes(input.getData());
+    return result;
 }
 
 
-lk::Transaction deserializeTransaction(rapidjson::Value input)
+lk::Transaction deserializeTransaction(base::json::Value input)
 {
     LOG_TRACE << "Deserializing Transaction";
-    if (!input.HasMember("amount")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"amount\" member");
+    if (!input.has_string_field("amount")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a string \"amount\" member");
     }
-    auto amount_json_value = input.FindMember("amount");
-    if (!(amount_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"amount\" member is not a string type");
-    }
-    auto amount = deserializeBalance(amount_json_value->value.GetString());
+    auto amount = deserializeBalance(input["amount"].as_string());
 
-    if (!input.HasMember("fee")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"fee\" member");
+    if (!input.has_string_field("fee")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a string \"fee\" member");
     }
-    auto fee_json_value = input.FindMember("fee");
-    if (!(fee_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"fee\" member is not a string type");
-    }
-    auto fee = deserializeFee(fee_json_value->value.GetString());
+    auto fee = deserializeFee(input["fee"].as_string());
 
-    if (!input.HasMember("from")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"from\" member");
+    if (!input.has_string_field("from")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a string \"from\" member");
     }
-    auto from_json_value = input.FindMember("from");
-    if (!(from_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"from\" member is not a string type");
-    }
-    auto from = deserializeAddress(from_json_value->value.GetString());
+    auto from = deserializeAddress(input["from"].as_string());
 
-    if (!input.HasMember("to")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"to\" member");
+    if (!input.has_string_field("to")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a string \"to\" member");
     }
-    auto to_json_value = input.FindMember("to");
-    if (!(to_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"to\" member is not a string type");
-    }
-    auto to = deserializeAddress(to_json_value->value.GetString());
+    auto to = deserializeAddress(input["to"].as_string());
 
-    if (!input.HasMember("timestamp")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"timestamp\" member");
+    if (!input.has_number_field("timestamp")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a uint \"timestamp\" member");
     }
-    auto timestamp_json_value = input.FindMember("timestamp");
-    if (!(timestamp_json_value->value.IsUint64())) {
+    auto timestamp_json_value = input["timestamp"].as_number();
+    if (!timestamp_json_value.is_uint32()) {
         RAISE_ERROR(base::InvalidArgument, "Transaction \"timestamp\" member is not a uint type");
     }
-    auto timestamp = base::Time(timestamp_json_value->value.GetUint64());
+    auto timestamp = base::Time(timestamp_json_value.to_uint32());
 
-    if (!input.HasMember("data")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"data\" member");
+    if (!input.has_string_field("data")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a string \"data\" member");
     }
-    auto data_json_value = input.FindMember("data");
-    if (!(data_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"data\" member is not a string type");
-    }
-    auto data = deserializeBytes(data_json_value->value.GetString());
+    auto data = deserializeBytes(input["data"].as_string());
 
-    if (!input.HasMember("sign")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"sign\" member");
+    if (!input.has_string_field("sign")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a string\"sign\" member");
     }
-    auto sign_json_value = input.FindMember("sign");
-    if (!(sign_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"sign\" member is not a string type");
-    }
-    auto sign = deserializeSign(sign_json_value->value.GetString());
+    auto sign = deserializeSign(input["sign"].as_string());
 
     return lk::Transaction{ std::move(from), std::move(to),   std::move(amount), fee,
                             timestamp,       std::move(data), std::move(sign) };
 }
 
 
-void serializeBlock(const lk::ImmutableBlock& block, rapidjson::Document& result)
+base::json::Value serializeBlock(const lk::ImmutableBlock& block)
 {
     LOG_TRACE << "Serializing ImmutableBlock";
-    auto& allocator = result.GetAllocator();
+    auto result = base::json::Value::object();
 
-    auto coinbase_value = serializeAddress(block.getCoinbase());
-    auto previous_block_hash_value = serializeHash(block.getPrevBlockHash());
-    rapidjson::Value txs_values(rapidjson::kArrayType);
+    std::vector<base::json::Value> txs_values;
     for (auto& tx : block.getTransactions()) {
-        rapidjson::Document tx_value(rapidjson::kObjectType);
-        serializeTransaction(tx, tx_value);
-        txs_values.PushBack(tx_value, allocator);
+        txs_values.emplace_back(std::move(serializeTransaction(tx)));
     }
 
-    result.AddMember("depth", rapidjson::Value(block.getDepth()), allocator);
-    result.AddMember("nonce", rapidjson::Value(block.getNonce()), allocator);
-    result.AddMember("coinbase", rapidjson::StringRef(coinbase_value.c_str()), allocator);
-    result.AddMember("previous_block_hash", rapidjson::StringRef(previous_block_hash_value.c_str()), allocator);
-    result.AddMember("timestamp", rapidjson::Value(block.getTimestamp().getSeconds()), allocator);
-    result.AddMember("transactions", txs_values.Move(), allocator);
+    result["depth"] = base::json::Value::number(block.getDepth());
+    result["nonce"] = base::json::Value::number(block.getNonce());
+    result["coinbase"] = serializeAddress(block.getCoinbase());
+    result["previous_block_hash"] = serializeHash(block.getPrevBlockHash());
+    result["timestamp"] = base::json::Value::number(block.getTimestamp().getSeconds());
+    result["transactions"] = base::json::Value::array(txs_values);
+    return result;
 }
 
 
-lk::ImmutableBlock deserializeBlock(rapidjson::Value input)
+lk::ImmutableBlock deserializeBlock(base::json::Value input)
 {
     LOG_TRACE << "Deserializing ImmutableBlock";
 
-    if (!input.HasMember("depth")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"depth\" member");
+    if (!input.has_number_field("depth")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a uint \"depth\" member");
     }
-    auto depth_json_value = input.FindMember("depth");
-    if (!(depth_json_value->value.IsUint64())) {
+    auto depth_json_value = input["depth"].as_number();
+    if (!depth_json_value.is_uint64()) {
         RAISE_ERROR(base::InvalidArgument, "Transaction \"depth\" member is not a uint type");
     }
-    auto depth = depth_json_value->value.GetUint64();
+    auto depth = depth_json_value.to_uint64();
 
-    if (!input.HasMember("nonce")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"nonce\" member");
+    if (!input.has_number_field("nonce")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a uint \"nonce\" member");
     }
-    auto nonce_json_value = input.FindMember("nonce");
-    if (!(nonce_json_value->value.IsUint64())) {
+    auto nonce_json_value = input["nonce"].as_number();
+    if (!nonce_json_value.is_uint64()) {
         RAISE_ERROR(base::InvalidArgument, "Transaction \"nonce\" member is not a uint type");
     }
-    auto nonce = nonce_json_value->value.GetUint64();
+    auto nonce = nonce_json_value.to_uint64();
 
-    if (!input.HasMember("timestamp")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"timestamp\" member");
+    if (!input.has_number_field("timestamp")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a uint \"timestamp\" member");
     }
-    auto timestamp_json_value = input.FindMember("timestamp");
-    if (!(timestamp_json_value->value.IsUint64())) {
+    auto timestamp_json_value = input["timestamp"].as_number();
+    if (!timestamp_json_value.is_uint64()) {
         RAISE_ERROR(base::InvalidArgument, "Transaction \"timestamp\" member is not a uint type");
     }
-    auto timestamp = base::Time(timestamp_json_value->value.GetUint64());
+    auto timestamp = base::Time(timestamp_json_value.to_uint64());
 
-    if (!input.HasMember("previous_block_hash")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"previous_block_hash\" member");
+    if (!input.has_string_field("previous_block_hash")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a string \"previous_block_hash\" member");
     }
-    auto previous_block_hash_json_value = input.FindMember("previous_block_hash");
-    if (!(previous_block_hash_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"previous_block_hash\" member is not a string type");
-    }
-    auto previous_block_hash = deserializeHash(previous_block_hash_json_value->value.GetString());
+    auto previous_block_hash = deserializeHash(input["previous_block_hash"].as_string());
 
-    if (!input.HasMember("coinbase")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"coinbase\" member");
+    if (!input.has_string_field("coinbase")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain a string \"coinbase\" member");
     }
-    auto coinbase_json_value = input.FindMember("coinbase");
-    if (!(coinbase_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"coinbase\" member is not a string type");
-    }
-    auto coinbase = deserializeAddress(coinbase_json_value->value.GetString());
+    auto coinbase = deserializeAddress(input["coinbase"].as_string());
 
-    if (!input.HasMember("transactions")) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain \"transactions\" member");
-    }
-    auto transactions_json_value = input.FindMember("transactions");
-    if (!(transactions_json_value->value.IsArray())) {
-        RAISE_ERROR(base::InvalidArgument, "Transaction \"transactions\" member is not an array type");
+    if (!input.has_array_field("transactions")) {
+        RAISE_ERROR(base::InvalidArgument, "Transaction json is not contain an array \"transactions\" member");
     }
     lk::TransactionsSet transactions;
-    for (auto& txs_value : transactions_json_value->value.GetArray()) {
-        transactions.add(std::move(deserializeTransaction(txs_value.GetObject())));
+    for (auto& txs_value : input["transactions"].as_array()) {
+        transactions.add(std::move(deserializeTransaction(txs_value)));
     }
 
     lk::BlockBuilder b;
@@ -630,62 +553,49 @@ lk::ImmutableBlock deserializeBlock(rapidjson::Value input)
 }
 
 
-void serializeTransactionStatus(const lk::TransactionStatus& status, rapidjson::Document& result)
+base::json::Value serializeTransactionStatus(const lk::TransactionStatus& status)
 {
     LOG_TRACE << "Serializing TransactionStatus";
-    auto& allocator = result.GetAllocator();
-
-    auto status_code_value = serializeTransactionStatusStatusCode(status.getStatus());
-    auto action_type_value = serializeTransactionStatusActionType(status.getType());
-    auto fee_left_value = serializeFee(status.getFeeLeft());
-
-    result.AddMember("status_code", rapidjson::Value(status_code_value), allocator);
-    result.AddMember("action_type", rapidjson::Value(action_type_value), allocator);
-    result.AddMember("fee_left", rapidjson::StringRef(fee_left_value.c_str()), allocator);
-    result.AddMember("message", rapidjson::StringRef(status.getMessage().c_str()), allocator);
+    auto result = base::json::Value::object();
+    result["status_code"] = serializeTransactionStatusStatusCode(status.getStatus());
+    result["action_type"] = serializeTransactionStatusActionType(status.getType());
+    result["fee_left"] = serializeFee(status.getFeeLeft());
+    result["message"] = base::json::Value::string(status.getMessage());
+    return result;
 }
 
 
-lk::TransactionStatus deserializeTransactionStatus(rapidjson::Value input)
+lk::TransactionStatus deserializeTransactionStatus(base::json::Value input)
 {
     LOG_TRACE << "Deserializing TransactionStatus";
 
-    if (!input.HasMember("status_code")) {
-        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain \"status_code\" member");
+    if (!input.has_number_field("status_code")) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain a uint \"status_code\" member");
     }
-    auto status_code_json_value = input.FindMember("status_code");
-    if (!(status_code_json_value->value.IsUint64())) {
+    auto status_code_json_value = input["status_code"].as_number();
+    if (!status_code_json_value.is_uint64()) {
         RAISE_ERROR(base::InvalidArgument, "TransactionStatus \"status_code\" member is not a uint type");
     }
-    auto status_code = deserializeTransactionStatusStatusCode(status_code_json_value->value.GetUint64());
+    auto status_code = deserializeTransactionStatusStatusCode(status_code_json_value.to_uint64());
 
-    if (!input.HasMember("action_type")) {
-        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain \"action_type\" member");
+    if (!input.has_number_field("action_type")) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain a uint \"action_type\" member");
     }
-    auto action_type_json_value = input.FindMember("action_type");
-    if (!(action_type_json_value->value.IsUint64())) {
+    auto action_type_json_value = input["action_type"].as_number();
+    if (!action_type_json_value.is_uint64()) {
         RAISE_ERROR(base::InvalidArgument, "TransactionStatus \"action_type\" member is not a uint type");
     }
-    auto action_type = deserializeTransactionStatusActionType(action_type_json_value->value.GetUint64());
+    auto action_type = deserializeTransactionStatusActionType(action_type_json_value.to_uint64());
 
-    if (!input.HasMember("fee")) {
-        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain \"fee\" member");
+    if (!input.has_string_field("fee")) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain a string \"fee\" member");
     }
-    auto fee_json_value = input.FindMember("fee");
-    if (!(fee_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "TransactionStatus \"fee\" member is not a string type");
-    }
-    auto fee = deserializeFee(fee_json_value->value.GetString());
+    auto fee = deserializeFee(input["fee"].as_string());
 
-
-    if (!input.HasMember("message")) {
-        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain \"message\" member");
+    if (!input.has_string_field("message")) {
+        RAISE_ERROR(base::InvalidArgument, "TransactionStatus json is not contain a string \"message\" member");
     }
-    auto message_json_value = input.FindMember("message");
-    if (!(message_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "TransactionStatus \"message\" member is not a string type");
-    }
-    std::string message{ fee_json_value->value.GetString() };
+    std::string message{ input["message"].as_string() };
 
     return lk::TransactionStatus{ status_code, action_type, fee, message };
 }

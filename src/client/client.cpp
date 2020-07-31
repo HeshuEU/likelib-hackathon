@@ -1,11 +1,10 @@
 #include "client.hpp"
 #include "actions.hpp"
 
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-
 #include <cli/clilocalsession.h>
 #include <cli/remotecli.h>
+
+#include <iostream>
 
 Client::Client()
   : _root_menu{ std::make_unique<cli::Menu>("empty") }
@@ -39,14 +38,9 @@ void Client::run()
 }
 
 
-void Client::printReceivedData(websocket::Command::Id command_id, rapidjson::Value received_message)
+void Client::printReceivedData(websocket::Command::Id command_id, base::json::Value received_message)
 {
-    rapidjson::Document d(rapidjson::kObjectType);
-    d.CopyFrom(std::move(received_message), d.GetAllocator());
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<decltype(buffer)> writer(buffer);
-    d.Accept(writer);
-    cli::Cli::cout() << "Received data: " << buffer.GetString();
+    cli::Cli::cout() << "Received data: " << received_message.serialize() << "\n";
     // TODO
 }
 

@@ -5,9 +5,6 @@
 #include "base/bytes.hpp"
 #include "base/log.hpp"
 
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-
 namespace websocket
 {
 
@@ -75,28 +72,26 @@ void WebSocketConnection::onRead(boost::beast::error_code ec, std::size_t bytes_
     _read_buffer.clear();
     doRead();
 
-    rapidjson::Document query_json;
-    auto input_json_str = receivedBytes.toString();
-    query_json.Parse(input_json_str.c_str());
-    if (query_json.HasParseError()) {
+    base::json::Value query;
+    try {
+        query = base::json::Value::parse(receivedBytes.toString());
+    }
+    catch (const std::exception& ex) {
+        LOG_DEBUG << "parse query json error at connection " << _connected_endpoint << " error: " << ex.what();
+        return;
+    }
+    catch (...) {
         LOG_DEBUG << "parse query json error at connection " << _connected_endpoint;
         return;
     }
 
-    _process_callback(std::move(query_json));
+    _process_callback(std::move(query));
 }
 
 
-void WebSocketConnection::write(rapidjson::Document&& response)
+void WebSocketConnection::write(base::json::Value response)
 {
-    std::string output;
-    {
-        MyOStreamWrapper os;
-        rapidjson::Writer<MyOStreamWrapper> writer(os);
-        response.Accept(writer);
-        output = os.toString();
-    }
-
+    auto output = response.serialize();
     boost::beast::error_code ec;
     _websocket.write(boost::asio::buffer(output), ec);
     if (ec) {

@@ -35,11 +35,6 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 #==========================
 
-# adding Rapidjson to project
-include_directories(SYSTEM ${CONAN_INCLUDE_DIRS_RAPIDJSON})
-
-#==========================
-
 # adding OpenSSL to project
 find_package(OpenSSL REQUIRED)
 

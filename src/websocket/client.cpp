@@ -4,9 +4,6 @@
 #include "base/bytes.hpp"
 #include "base/log.hpp"
 
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
@@ -98,32 +95,23 @@ void WebSocketClient::frameControl(boost::beast::websocket::frame_type kind,
 }
 
 
-void WebSocketClient::send(Command::Id commandId, rapidjson::Document&& args)
+void WebSocketClient::send(Command::Id commandId, base::json::Value&& args)
 {
     auto command_type = serializeCommandType(commandId);
     auto command_name = serializeCommandName(commandId);
 
-    rapidjson::Document query(rapidjson::kObjectType);
-    query.AddMember("type", rapidjson::StringRef(command_type.c_str()), query.GetAllocator());
-    query.AddMember("name", rapidjson::StringRef(command_name.c_str()), query.GetAllocator());
-    query.AddMember("version", rapidjson::Value(base::config::PUBLIC_SERVICE_API_VERSION), query.GetAllocator());
-    query.AddMember("id", rapidjson::Value(registerNewQuery(commandId)), query.GetAllocator());
-    rapidjson::Value args_value(rapidjson::kObjectType);
-    args_value = args.GetObject();
-    query.AddMember("args", args_value, query.GetAllocator());
+    auto query = base::json::Value::object();
+    query["type"] = serializeCommandType(commandId);
+    query["name"] = serializeCommandName(commandId);
+    query["version"] = base::json::Value::number(base::config::PUBLIC_SERVICE_API_VERSION);
+    query["id"] = base::json::Value::number(registerNewQuery(commandId));
+    query["args"] = args;
 
     if (!_ready) {
         RAISE_ERROR(base::LogicError, "client is not ready");
     }
 
-    std::string output;
-    {
-        MyOStreamWrapper os;
-        rapidjson::Writer<MyOStreamWrapper> writer(os);
-        query.Accept(writer);
-        output = os.toString();
-    }
-
+    auto output = query.serialize();
     boost::beast::error_code ec;
     _websocket.write(boost::asio::buffer(output), ec);
     if (ec) {
@@ -191,51 +179,46 @@ void WebSocketClient::onRead(boost::beast::error_code ec, std::size_t bytesTrans
 
     doRead();
 
-    rapidjson::Document receivedQuery;
-    receivedQuery.Parse(receivedData.toString().c_str());
-    if (receivedQuery.HasParseError()) {
-        LOG_DEBUG << "parse query json error.";
+    base::json::Value receivedQuery;
+    try {
+        receivedQuery = base::json::Value::parse(receivedData.toString());
+    }
+    catch (const std::exception& ex) {
+        LOG_DEBUG << "parse query json error: " << ex.what();
+        return;
+    }
+    catch (...) {
+        LOG_DEBUG << "unexpected parse query json error.";
         return;
     }
 
-    if (!receivedQuery.HasMember("id")) {
-        LOG_DEBUG << "Request json is not contain \"id\" member";
+    if (!receivedQuery.has_number_field("id")) {
+        LOG_DEBUG << "Request json is not contain an uint \"id\" member";
         return;
     }
-    auto id_json_value = receivedQuery.FindMember("id");
-    if (!(id_json_value->value.IsUint64())) {
+    auto id_json_value = receivedQuery["id"].as_number();
+    if (!id_json_value.is_uint64()) {
         RAISE_ERROR(base::InvalidArgument, "Request \"id\" member is not an uint type");
     }
-    QueryId queryId = id_json_value->value.GetUint64();
+    QueryId query_id{ id_json_value.to_uint64() };
 
-    if (!receivedQuery.HasMember("status")) {
-        LOG_DEBUG << "Request json is not contain \"status\" member";
+    if (!receivedQuery.has_string_field("status")) {
+        LOG_DEBUG << "Request json is not contain an uint \"status\" member";
         return;
     }
-    auto status_json_value = receivedQuery.FindMember("status");
-    if (!(status_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Request \"status\" member is not an string type");
-    }
-    std::string status = status_json_value->value.GetString();
+    std::string status = receivedQuery["status"].as_string();
 
-    if (!receivedQuery.HasMember("type")) {
-        LOG_DEBUG << "Request json is not contain \"type\" member";
+    if (!receivedQuery.has_string_field("type")) {
+        LOG_DEBUG << "Request json is not contain an string \"type\" member";
         return;
     }
-    auto type_json_value = receivedQuery.FindMember("type");
-    if (!(type_json_value->value.IsString())) {
-        RAISE_ERROR(base::InvalidArgument, "Request \"type\" member is not an string type");
-    }
-    std::string type = type_json_value->value.GetString();
+    std::string type = receivedQuery["type"].as_string();
 
-    if (!receivedQuery.HasMember("type")) {
-        LOG_DEBUG << "Request json is not contain \"type\" member";
+    if (!receivedQuery.has_object_field("result")) {
+        LOG_DEBUG << "Request json is not contain an object \"type\" member";
         return;
     }
-    auto result_json_value = receivedQuery.FindMember("result");
-    if (!(result_json_value->value.IsObject())) {
-        RAISE_ERROR(base::InvalidArgument, "Request \"result\" member is not an object type");
-    }
+    auto result_json_value = receivedQuery["result"];
 
     if (type != "answer") {
         LOG_DEBUG << "wrong answer type";
@@ -243,16 +226,16 @@ void WebSocketClient::onRead(boost::beast::error_code ec, std::size_t bytesTrans
     }
 
     try {
-        auto commandId = _currentQueries.find(queryId);
-        if (commandId == _currentQueries.end()) {
+        auto command_id = _currentQueries.find(query_id);
+        if (command_id == _currentQueries.end()) {
             LOG_DEBUG << "received unregistered answer id";
             return;
         }
-        auto currentCommandId = Command::Id(commandId->second);
+        auto currentCommandId = Command::Id(command_id->second);
         if (!static_cast<bool>(currentCommandId & Command::Id(Command::Type::SUBSCRIBE))) {
-            _currentQueries.erase(commandId);
+            _currentQueries.erase(command_id);
         }
-        _receiveCallback(currentCommandId, std::move(result_json_value->value.GetObject()));
+        _receiveCallback(currentCommandId, std::move(result_json_value));
     }
     catch (const base::Error& error) {
         LOG_ERROR << "receive callback execution error" << error.what();

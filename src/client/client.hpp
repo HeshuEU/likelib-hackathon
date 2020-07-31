@@ -26,7 +26,7 @@ class Client
     websocket::WebSocketClient _web_socket_client;
     boost::thread _networkThread;
 
-    void printReceivedData(websocket::Command::Id command_id, rapidjson::Value received_message);
+    void printReceivedData(websocket::Command::Id command_id, base::json::Value received_message);
     static void disableCommands(std::vector<cli::CmdHandler>& commands);
     static void enableCommands(std::vector<cli::CmdHandler>& commands);
 

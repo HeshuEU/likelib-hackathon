@@ -8,8 +8,6 @@
 #include "base/serialization.hpp"
 #include "base/time.hpp"
 
-#include <rapidjson/document.h>
-
 #include <cstdint>
 #include <type_traits>
 

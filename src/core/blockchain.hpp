@@ -6,9 +6,8 @@
 #include "core/transactions_set.hpp"
 
 #include "base/database.hpp"
+#include "base/json.hpp"
 #include "base/utility.hpp"
-
-#include <rapidjson/document.h>
 
 #include <shared_mutex>
 #include <unordered_map>
@@ -99,7 +98,7 @@ class PersistentBlockchain : public Blockchain
 {
   public:
     //===================
-    PersistentBlockchain(ImmutableBlock genesis_block, rapidjson::Value config);
+    PersistentBlockchain(ImmutableBlock genesis_block, base::json::Value config);
     PersistentBlockchain(const Blockchain&) = delete;
     PersistentBlockchain(Blockchain&&) = delete;
     ~PersistentBlockchain() override = default;

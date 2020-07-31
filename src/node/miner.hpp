@@ -5,8 +5,7 @@
 #include "core/types.hpp"
 
 #include "base/bytes.hpp"
-
-#include <rapidjson/document.h>
+#include "base/json.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -76,7 +75,7 @@ class Miner
     //===================
     using HandlerType = impl::MinerHandlerType;
     //===================
-    Miner(rapidjson::Value config, HandlerType handler);
+    Miner(base::json::Value config, HandlerType handler);
 
     ~Miner();
     //===================

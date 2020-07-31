@@ -8,16 +8,15 @@
 namespace
 {
 
-std::size_t calcThreadsNum(rapidjson::Value config)
+std::size_t calcThreadsNum(base::json::Value config)
 {
-    if (config.HasMember("threads")) {
-        auto threads_value = config.FindMember("threads");
-        if (threads_value->value.IsUint())
-            return threads_value->value.GetUint();
+    if (config.has_number_field("threads")) {
+        auto threads_value = config["threads"].as_number();
+        if (threads_value.is_uint64()) {
+            return threads_value.to_uint64();
+        }
     }
-    else {
-        return std::thread::hardware_concurrency();
-    }
+    return std::thread::hardware_concurrency();
 }
 
 } // namespace
@@ -109,7 +108,7 @@ class MinerWorker
 } // namespace impl
 
 
-Miner::Miner(rapidjson::Value config, Miner::HandlerType handler)
+Miner::Miner(base::json::Value config, Miner::HandlerType handler)
   : _common_state{ { impl::Task::NONE, std::nullopt, std::nullopt }, std::move(handler) }
 {
     // setting up threads

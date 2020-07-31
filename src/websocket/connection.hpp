@@ -1,9 +1,9 @@
 #pragma once
 
-#include <rapidjson/document.h>
-
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+
+#include "base/json.hpp"
 
 #include <functional>
 #include <memory>
@@ -14,7 +14,7 @@ namespace websocket
 class WebSocketConnection : public std::enable_shared_from_this<WebSocketConnection>
 {
     using ConnectionCloseCallback = std::function<void(void)>;
-    using ProcessRequestCallback = std::function<void(rapidjson::Document&&)>;
+    using ProcessRequestCallback = std::function<void(base::json::Value&&)>;
 
   public:
     explicit WebSocketConnection(boost::asio::ip::tcp::socket&& socket,
@@ -23,7 +23,7 @@ class WebSocketConnection : public std::enable_shared_from_this<WebSocketConnect
     ~WebSocketConnection() noexcept;
 
     void accept();
-    void write(rapidjson::Document&& response);
+    void write(base::json::Value response);
     void close();
 
   private:

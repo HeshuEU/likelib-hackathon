@@ -10,12 +10,12 @@
 class Node
 {
   public:
-    explicit Node(rapidjson::Value config);
+    explicit Node(base::json::Value config);
     void run();
 
   private:
     //---------------------------
-    rapidjson::Value _config;
+    base::json::Value _config;
     //---------------------------
     lk::Core _core;
     PublicService _public_service;

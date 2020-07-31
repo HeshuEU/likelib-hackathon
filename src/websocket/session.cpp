@@ -4,40 +4,36 @@
 #include "base/config.hpp"
 #include "base/log.hpp"
 
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-
 namespace
 {
 
-void _makeAnswer(rapidjson::Document& answer, websocket::QueryId id, bool is_success, rapidjson::Document&& result)
+base::json::Value _makeAnswer(websocket::QueryId id, bool is_success, base::json::Value&& result)
 {
-    answer.AddMember("type", rapidjson::Value("answer"), answer.GetAllocator());
+    base::json::Value answer;
+    answer["type"] = base::json::Value::string("answer");
     if (is_success) {
-        answer.AddMember("status", rapidjson::Value("success"), answer.GetAllocator());
+        answer["status"] = base::json::Value::string("success");
     }
     else {
-        answer.AddMember("status", rapidjson::Value("error"), answer.GetAllocator());
+        answer["status"] = base::json::Value::string("error");
     }
-    answer.AddMember("id", rapidjson::Value(id), answer.GetAllocator());
-    rapidjson::Value result_value(rapidjson::kObjectType);
-    result_value.CopyFrom(result, answer.GetAllocator());
-
-    answer.AddMember("result", result_value, answer.GetAllocator());
+    answer["id"] = base::json::Value::number(id);
+    answer["result"] = result;
+    return answer;
 }
 
 
-void makeAnswer(rapidjson::Document& answer, websocket::QueryId id, rapidjson::Document&& result)
+base::json::Value makeAnswer(websocket::QueryId id, base::json::Value&& result)
 {
-    _makeAnswer(answer, id, true, std::move(result));
+    return _makeAnswer(id, true, std::move(result));
 }
 
 
-void makeErrorAnswer(rapidjson::Document& answer, websocket::QueryId id, const std::string& message)
+base::json::Value makeErrorAnswer(websocket::QueryId id, const std::string& message)
 {
-    rapidjson::Document result(rapidjson::kObjectType);
-    result.AddMember("error_message", rapidjson::StringRef(message.c_str()), result.GetAllocator());
-    _makeAnswer(answer, id, false, std::move(result));
+    base::json::Value result;
+    result["error_message"] = base::json::Value::string(message);
+    return _makeAnswer(id, false, std::move(result));
 }
 
 }
@@ -68,10 +64,9 @@ WebSocketSession::WebSocketSession(boost::asio::ip::tcp::socket&& socket,
 }
 
 
-void WebSocketSession::sendResult(QueryId queryId, rapidjson::Document&& result)
+void WebSocketSession::sendResult(QueryId queryId, base::json::Value result)
 {
-    rapidjson::Document prepared_answer(rapidjson::kObjectType);
-    makeAnswer(prepared_answer, queryId, std::move(result));
+    auto prepared_answer = makeAnswer(queryId, std::move(result));
     LOG_TRACE << "prepared success result at session[" << _session_id << "] by query[" << queryId << "]";
     std::lock_guard lock{ _connection_rw_mutex };
     return _send(std::move(prepared_answer));
@@ -80,15 +75,14 @@ void WebSocketSession::sendResult(QueryId queryId, rapidjson::Document&& result)
 
 void WebSocketSession::sendErrorMessage(QueryId queryId, const std::string& error_message)
 {
-    rapidjson::Document prepared_answer(rapidjson::kObjectType);
-    makeErrorAnswer(prepared_answer, queryId, error_message);
+    auto prepared_answer = makeErrorAnswer(queryId, error_message);
     LOG_TRACE << "prepared error result at session[" << _session_id << "] by query[" << queryId << "]";
     std::lock_guard lock{ _connection_rw_mutex };
     return _send(std::move(prepared_answer));
 }
 
 
-void WebSocketSession::_send(rapidjson::Document&& result)
+void WebSocketSession::_send(base::json::Value result)
 {
     LOG_TRACE << "try to send result at session[" << _session_id << "]";
 
@@ -106,56 +100,44 @@ void WebSocketSession::_send(rapidjson::Document&& result)
 }
 
 
-void WebSocketSession::_onReceivedFromConnection(rapidjson::Document&& query)
+void WebSocketSession::_onReceivedFromConnection(base::json::Value&& query)
 {
-    if (!query.HasMember("id")) {
-        return sendErrorMessage(0, "Request json is not contain \"id\" member");
+    if (!query.has_number_field("id")) {
+        return sendErrorMessage(0, "Request json is not contain number \"id\" member");
     }
-    auto id_json_value = query.FindMember("id");
-    if (!(id_json_value->value.IsUint64())) {
+    auto id_json_value = query["id"].as_number();
+    if (!id_json_value.is_uint64()) {
         return sendErrorMessage(0, "Request \"id\" member is not an uint type");
     }
-    QueryId query_id{ id_json_value->value.GetUint64() };
+    QueryId query_id{ id_json_value.to_uint64() };
 
-    if (!query.HasMember("version")) {
-        return sendErrorMessage(query_id, "Request json is not contain \"version\" member");
+    if (!query.has_number_field("version")) {
+        return sendErrorMessage(query_id, "Request json is not contain number \"version\" member");
     }
-    auto version_json_value = query.FindMember("version");
-    if (!(version_json_value->value.IsUint64())) {
+    auto version_json_value = query["version"].as_number();
+    if (!version_json_value.is_uint64()) {
         return sendErrorMessage(query_id, "Request \"version\" member is not an uint type");
     }
-    auto version = version_json_value->value.GetUint64();
-    if (version != base::config::PUBLIC_SERVICE_API_VERSION) {
+    if (version_json_value.to_uint64() != base::config::PUBLIC_SERVICE_API_VERSION) {
         return sendErrorMessage(query_id,
                                 std::string("Request API version mismatch. Need API version = ") +
                                   std::to_string(base::config::PUBLIC_SERVICE_API_VERSION));
     }
 
-    if (!query.HasMember("type")) {
-        return sendErrorMessage(query_id, "Request json is not contain \"type\" member");
+    if (!query.has_string_field("type")) {
+        return sendErrorMessage(query_id, "Request json is not contain string \"type\" member");
     }
-    auto type_json_value = query.FindMember("type");
-    if (!(type_json_value->value.IsString())) {
-        return sendErrorMessage(query_id, "Request \"type\" member is not a string type");
-    }
-    auto command_type = deserializeCommandType(type_json_value->value.GetString());
+    auto command_type = deserializeCommandType(query["type"].as_string());
 
-    if (!query.HasMember("name")) {
-        return sendErrorMessage(query_id, "Request json is not contain \"name\" member");
+    if (!query.has_string_field("name")) {
+        return sendErrorMessage(query_id, "Request json is not contain string \"name\" member");
     }
-    auto name_json_value = query.FindMember("name");
-    if (!(name_json_value->value.IsString())) {
-        return sendErrorMessage(query_id, "Request \"name\" member is not a string type");
-    }
-    auto command_name = deserializeCommandName(name_json_value->value.GetString());
+    auto command_name = deserializeCommandName(query["name"].as_string());
 
-    if (!query.HasMember("args")) {
-        return sendErrorMessage(query_id, "Request json is not contain \"args\" member");
+    if (!query.has_object_field("args")) {
+        return sendErrorMessage(query_id, "Request json is not contain object \"args\" member");
     }
-    auto args_json_value = query.FindMember("args");
-    if (!(args_json_value->value.IsObject())) {
-        return sendErrorMessage(query_id, "Request \"args\" member is not a object type");
-    }
+    auto args_json_value = query["args"];
 
     {
         std::lock_guard lock{ _connection_rw_mutex };
@@ -167,12 +149,9 @@ void WebSocketSession::_onReceivedFromConnection(rapidjson::Document&& query)
         _registeredQueryIds.insert(query_id);
     }
 
-    rapidjson::Document command_args(rapidjson::kObjectType);
-    command_args.CopyFrom(args_json_value->value.Move(), command_args.GetAllocator());
-
     try {
         _request_process(
-          _session_id, query_id, Command::Id(command_type) | Command::Id(command_name), std::move(command_args));
+          _session_id, query_id, Command::Id(command_type) | Command::Id(command_name), std::move(args_json_value));
     }
     catch (const base::Error& error) {
         LOG_ERROR << "request callback execution error" << error.what();

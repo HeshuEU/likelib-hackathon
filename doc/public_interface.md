@@ -276,7 +276,43 @@ API version = 2.
             }
         }
 
-##### 7. Push a transaction and subscribe on the transaction's status updates
+##### 7. Push a transaction
+
+    query:
+
+        {
+            “type”: "call",
+            "name": "push_transaction",
+            "version": 2,
+            "id": 51,
+            “args”: {
+                "hash": "<hash encoded by base64>",
+                “from”: “<address encoded by base58>”,
+                “to”: “<target address(or null address if transaction for contract creation) encoded by base58>”,
+                “amount”: “<uint256 at string format>”,
+                “fee”: “<uint256 at string format>”,
+                “timestamp”: <integer is seconds from epoch start>,
+                “data”: “<message ecnoded by base64 or empty string if "to" is not a contract address>”,
+                “sign”: “<transaction hash signed by private key of sender(from address) encoded by base64 (see format notes for more information)>” 
+            }
+        }
+
+    answers:
+
+        {
+            “type”: "answer",
+            "id": 51,
+            "status": "ok",
+            “result”: {
+                "hash": "<hash of transaction encoded by base64>",
+                “status_code”: <number Success=0, Pending=1, BadQueryForm=2, BadSign=3, NotEnoughBalance=4, Revert=5, Failed=6>,
+                “action_type”: <number None=0, Transfer=1, ContractCall=2, ContractCreation=3>,
+                “fee_left”: “<uint256 integer at string format>”,
+                “message”: “<All will be at such format if status_code == 0. If action_type == 1 then the message is empty string. If action_type == 2 then the message is encoded by base64 data from contract call in string type. If action_type == 3 then the message is address encoded by base58 in string type.>”,
+            }
+        }
+
+##### 8. Push a transaction and subscribe on the transaction's status updates
 
     query:
 
@@ -312,7 +348,7 @@ API version = 2.
             }
         }
 
-##### 8. Get(once) transaction data if exist
+##### 9. Get(once) transaction data if exist
 
     query:
 
@@ -357,7 +393,7 @@ API version = 2.
             }
         }
 
-##### 9. Get(once) current transaction's status if transaction exist
+##### 10. Get(once) current transaction's status if transaction exist
 
     query:
 
@@ -399,7 +435,7 @@ API version = 2.
             }
         }
 
-##### 10. Subscribe on transaction's status updates
+##### 11. Subscribe on transaction's status updates
 
     query:
 
@@ -428,7 +464,7 @@ API version = 2.
             }
         }
 
-##### 11. Cancel subscription on transaction's status updates 
+##### 12. Cancel subscription on transaction's status updates 
 
     query:
 
@@ -464,7 +500,7 @@ API version = 2.
             }
         }
 
-##### 12. Get(once) light block data if exist
+##### 13. Get(once) light block data if exist
 
     query:
 
@@ -513,7 +549,7 @@ API version = 2.
             }
         }
 
-##### 13. Get(once) full block data if exist
+##### 14. Get(once) full block data if exist
 
     query:
 
@@ -582,3 +618,6 @@ API version = 2.
 
 - Write how to calculate block hash
 - Add more information about EVM settings
+- Add info about addresses of current connected other nodes
+- Add data about tx in memory pool(hashes of txs)
+- Add block reward in block data

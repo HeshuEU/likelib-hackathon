@@ -1,13 +1,11 @@
 set(NODE_HEADERS
         hard_config.hpp
-        soft_config.hpp
         public_service.hpp
         miner.hpp
         node.hpp
         )
 
 set(NODE_SOURCES
-        soft_config.cpp
         hard_config.cpp
         public_service.cpp
         miner.cpp

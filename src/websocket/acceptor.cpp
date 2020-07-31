@@ -9,11 +9,11 @@
 namespace websocket
 {
 
-WebSocketAcceptor::WebSocketAcceptor(rapidjson::Value config, SocketRegistration registration)
+WebSocketAcceptor::WebSocketAcceptor(base::json::Value config, SocketRegistration registration)
   : _config{ std::move(config) }
   , _connectionRegistration{ std::move(registration) }
   , _io_context{}
-  , _endpoint{ createEndpoint(_config.FindMember("listen_addr")->value.GetString()) }
+  , _endpoint{ createEndpoint(_config["listen_addr"].as_string()) }
   , _acceptor{ _io_context }
 {
     ASSERT(_connectionRegistration);

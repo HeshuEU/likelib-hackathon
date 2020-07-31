@@ -10,12 +10,12 @@
 namespace lk
 {
 
-Core::Core(rapidjson::Value config)
+Core::Core(base::json::Value config)
   : _config{ std::move(config) }
-  , _vault{ _config.FindMember("keys_dir")->value.GetString() }
+  , _vault{ _config["keys_dir"].as_string() }
   , _this_node_address{ _vault.getKey().toPublicKey() }
-  , _blockchain{ getGenesisBlock(), std::move(_config.FindMember("database")->value) }
-  , _host{ std::move(_config.FindMember("net")->value), 0xFFFF, *this }
+  , _blockchain{ getGenesisBlock(), std::move(_config["database"]) }
+  , _host{ std::move(_config["net"]), 0xFFFF, *this }
   , _vm{ vm::load() }
 {
     _state_manager.updateFromGenesis(getGenesisBlock());
@@ -43,7 +43,7 @@ const ImmutableBlock& Core::getGenesisBlock()
 
         TransactionsSet txset;
         lk::Address from{ lk::Address::null() };
-        lk::Address to{ "49cfqVfB1gTGw5XZSu6nZDrntLr1" };
+        lk::Address to = initial_emission_address;
         Balance emission_amount = Balance{ 1 } << 32;
         std::uint64_t fee{ 0 };
         txset.add({ from, to, emission_amount, fee, timestamp, base::Bytes{} });

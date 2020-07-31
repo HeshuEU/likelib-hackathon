@@ -4,10 +4,9 @@
 #include "core/types.hpp"
 
 #include "base/bytes.hpp"
+#include "base/json.hpp"
 
 #include <evmc/evmc.hpp>
-
-#include <rapidjson/document.h>
 
 #include <boost/filesystem.hpp>
 
@@ -21,7 +20,7 @@ struct CompiledContract
 {
     std::string name;
     base::Bytes code;
-    rapidjson::Document metadata;
+    base::json::Value metadata;
 
     explicit CompiledContract() = default;
     explicit CompiledContract(const std::string& _name);

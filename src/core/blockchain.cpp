@@ -204,11 +204,11 @@ bool Blockchain::checkConsensus(const ImmutableBlock& block) const
 }
 
 
-PersistentBlockchain::PersistentBlockchain(ImmutableBlock genesis_block, rapidjson::Value config)
+PersistentBlockchain::PersistentBlockchain(ImmutableBlock genesis_block, base::json::Value config)
   : Blockchain{ std::move(genesis_block) }
 {
-    std::string database_path{ config.FindMember("path")->value.GetString() };
-    if (config.FindMember("clean")->value.GetBool()) {
+    std::string database_path{ config["path"].as_string() };
+    if (config["clean"].as_bool()) {
         _database = base::createClearDatabaseInstance(base::Directory(database_path));
         LOG_INFO << "Created clear database instance.";
     }

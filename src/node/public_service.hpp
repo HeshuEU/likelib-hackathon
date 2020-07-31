@@ -9,8 +9,6 @@
 
 #include "base/utility.hpp"
 
-#include <rapidjson/document.h>
-
 #include <atomic>
 #include <functional>
 #include <thread>
@@ -24,7 +22,7 @@ namespace tasks
 class Task
 {
   public:
-    Task(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    Task(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
     virtual ~Task() = default;
     void run(PublicService& service);
     virtual const std::string& name() const noexcept = 0;
@@ -32,7 +30,7 @@ class Task
   protected:
     websocket::SessionId _session_id;
     websocket::QueryId _query_id;
-    rapidjson::Document _args;
+    base::json::Value _args;
 
     virtual void prepareArgs() = 0;
     virtual void execute(PublicService& service) = 0;
@@ -42,7 +40,7 @@ class Task
 class FindBlockTask final : public Task
 {
   public:
-    FindBlockTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    FindBlockTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -58,7 +56,7 @@ class FindBlockTask final : public Task
 class FindTransactionTask final : public Task
 {
   public:
-    FindTransactionTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    FindTransactionTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -73,7 +71,7 @@ class FindTransactionTask final : public Task
 class PushTransactionTask final : public Task
 {
   public:
-    PushTransactionTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    PushTransactionTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -89,7 +87,7 @@ class PushTransactionTask final : public Task
 class FindTransactionStatusTask final : public Task
 {
   public:
-    FindTransactionStatusTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    FindTransactionStatusTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -104,7 +102,7 @@ class FindTransactionStatusTask final : public Task
 class NodeInfoCallTask final : public Task
 {
   public:
-    NodeInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    NodeInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -116,7 +114,7 @@ class NodeInfoCallTask final : public Task
 class NodeInfoSubscribeTask final : public Task
 {
   public:
-    NodeInfoSubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    NodeInfoSubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -128,7 +126,7 @@ class NodeInfoSubscribeTask final : public Task
 class NodeInfoUnsubscribeTask final : public Task
 {
   public:
-    NodeInfoUnsubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    NodeInfoUnsubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -140,7 +138,7 @@ class NodeInfoUnsubscribeTask final : public Task
 class AccountInfoCallTask final : public Task
 {
   public:
-    AccountInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    AccountInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -155,7 +153,7 @@ class AccountInfoCallTask final : public Task
 class AccountInfoSubscribeTask final : public Task
 {
   public:
-    AccountInfoSubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    AccountInfoSubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -170,7 +168,7 @@ class AccountInfoSubscribeTask final : public Task
 class AccountInfoUnsubscribeTask final : public Task
 {
   public:
-    AccountInfoUnsubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& args);
+    AccountInfoUnsubscribeTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -187,7 +185,7 @@ class UnsubscribeTransactionStatusUpdateTask final : public Task
   public:
     UnsubscribeTransactionStatusUpdateTask(websocket::SessionId session_id,
                                            websocket::QueryId query_id,
-                                           rapidjson::Document&& args);
+                                           base::json::Value&& args);
 
   protected:
     void prepareArgs() override;
@@ -215,14 +213,14 @@ class PublicService
     friend tasks::UnsubscribeTransactionStatusUpdateTask;
 
   public:
-    PublicService(rapidjson::Value config, lk::Core& core);
+    PublicService(base::json::Value config, lk::Core& core);
 
     ~PublicService();
 
     void run();
     void stop();
 
-    void sendCorrectResponse(websocket::SessionId session_id, websocket::QueryId query_id, rapidjson::Document&& result);
+    void sendCorrectResponse(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& result);
     void sendErrorResponse(websocket::SessionId session_id,
                            websocket::QueryId query_id,
                            const std::string& error_message);
@@ -254,7 +252,7 @@ class PublicService
     void on_session_request(websocket::SessionId session_id,
                             websocket::QueryId query_id,
                             websocket::Command::Id command_id,
-                            rapidjson::Document&& args);
+                            base::json::Value&& args);
     void on_session_close(websocket::SessionId session_id);
 
     [[noreturn]] void task_worker() noexcept;

@@ -1,6 +1,5 @@
 #include "node/hard_config.hpp"
 #include "node/node.hpp"
-#include "node/soft_config.hpp"
 
 #include "base/assert.hpp"
 #include "base/config.hpp"
@@ -50,6 +49,20 @@ void atExitHandler()
     base::flushLog();
 }
 
+
+base::json::Value load_config(std::filesystem::path config_path)
+{
+    std::ifstream input;
+    input.exceptions(std::ios::badbit | std::ios::failbit);
+    try {
+        input.open(config_path);
+    }
+    catch (const std::exception& e) {
+        RAISE_ERROR(base::InaccessibleFile, e.what());
+    }
+    return base::json::Value::parse(input);
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -91,8 +104,8 @@ int main(int argc, char** argv)
         }
 
         //=====================
-        SoftConfig exe_config(config_file_path);
-        Node node(exe_config.GetObject());
+        auto exe_config = load_config(config_file_path);
+        Node node(exe_config);
         node.run();
         //=====================
         while (true) {

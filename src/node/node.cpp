@@ -3,19 +3,15 @@
 #include <functional>
 #include <string>
 
-Node::Node(rapidjson::Value config)
+Node::Node(base::json::Value config)
   : _config{ std::move(config) }
-  , _core{ std::move(_config.FindMember("core")->value)}
-  , _public_service{ std::move(_config.FindMember("websocket")->value), _core }
+  , _core{ std::move(_config["core"]) }
+  , _public_service{ std::move(_config["websocket"]), _core }
 {
-    if (!_config.HasMember("miner")) {
+    if (!_config.has_object_field("miner")) {
         RAISE_ERROR(base::InvalidArgument, "config file is't contain miner node");
     }
-    auto miner_config_node = _config.FindMember("miner");
-    if (!miner_config_node->value.IsObject()) {
-        RAISE_ERROR(base::InvalidArgument, "config file miner node is invalid");
-    }
-    _miner = std::make_unique<Miner>(std::move(miner_config_node->value),
+    _miner = std::make_unique<Miner>(std::move(_config["miner"]),
                                      std::bind(&Node::onBlockMine, this, std::placeholders::_1));
 
     _core.subscribeToNewPendingTransaction(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));

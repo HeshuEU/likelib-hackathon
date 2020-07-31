@@ -9,12 +9,11 @@
 #include "core/rating.hpp"
 
 #include "base/database.hpp"
+#include "base/json.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/steady_timer.hpp>
-
-#include <rapidjson/document.h>
 
 #include <functional>
 #include <list>
@@ -113,7 +112,7 @@ class Host
 {
   public:
     //=================================
-    explicit Host(rapidjson::Value config, std::size_t connections_limit, lk::Core& core);
+    explicit Host(base::json::Value config, std::size_t connections_limit, lk::Core& core);
     ~Host();
     //=================================
     void checkOutPeer(const net::Endpoint& endpoint, const lk::Address& address = lk::Address::null());
@@ -136,7 +135,7 @@ class Host
     //=================================
   private:
     //=================================
-    rapidjson::Value _config;
+    base::json::Value _config;
     //=================================
     const net::Endpoint _listen_ip;
     const unsigned short _server_public_port;

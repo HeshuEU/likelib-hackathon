@@ -13,14 +13,14 @@ class WebSocketAcceptor
     using SocketRegistration = std::function<void(boost::asio::ip::tcp::socket&& socket)>;
 
   public:
-    explicit WebSocketAcceptor(rapidjson::Value config, SocketRegistration registration);
+    explicit WebSocketAcceptor(base::json::Value config, SocketRegistration registration);
     ~WebSocketAcceptor() noexcept;
 
     void run();
     void stop() noexcept;
 
   private:
-    rapidjson::Value _config;
+    base::json::Value _config;
     SocketRegistration _connectionRegistration;
 
     boost::asio::io_context _io_context;

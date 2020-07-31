@@ -22,7 +22,7 @@ class Core
 
   public:
     //==================
-    Core(rapidjson::Value config);
+    Core(base::json::Value config);
 
     /**
      *  @brief Stops network, does cleaning and flushing.
@@ -61,7 +61,7 @@ class Core
     //==================
   private:
     //==================
-    rapidjson::Value _config;
+    base::json::Value _config;
     const base::KeyVault _vault;
     const lk::Address _this_node_address;
     //==================

@@ -14,7 +14,7 @@ namespace websocket
 
 class WebSocketSession
 {
-    using ProcessRequestCallback = std::function<void(SessionId, QueryId, Command::Id, rapidjson::Document&&)>;
+    using ProcessRequestCallback = std::function<void(SessionId, QueryId, Command::Id, base::json::Value&&)>;
     using SessionCloseCallback = std::function<void(SessionId)>;
 
   public:
@@ -24,7 +24,7 @@ class WebSocketSession
                               SessionCloseCallback close_callback);
     ~WebSocketSession() = default;
 
-    void sendResult(QueryId queryId, rapidjson::Document&& result);
+    void sendResult(QueryId queryId, base::json::Value result);
     void sendErrorMessage(QueryId queryId, const std::string& error_message);
 
   private:
@@ -38,9 +38,9 @@ class WebSocketSession
 
     std::set<QueryId> _registeredQueryIds;
 
-    void _send(rapidjson::Document&& result);
+    void _send(base::json::Value result);
 
-    void _onReceivedFromConnection(rapidjson::Document&& query);
+    void _onReceivedFromConnection(base::json::Value&& query);
     void _onConnectionClosed();
 };
 

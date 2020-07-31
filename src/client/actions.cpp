@@ -15,24 +15,10 @@
 #include "base/log.hpp"
 #include "base/time.hpp"
 
-#include <rapidjson/filewritestream.h>
-#include <rapidjson/writer.h>
-
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
-
-
-void saveJson(const rapidjson::Document& doc, const std::filesystem::path& path)
-{
-    std::unique_ptr<FILE, decltype(&fclose)> fp(fopen(path.c_str(), "wb"), fclose);
-    std::string buffer;
-    buffer.reserve(65536);
-    rapidjson::FileWriteStream os(fp.get(), buffer.data(), buffer.size());
-    rapidjson::Writer<decltype(os)> writer(os);
-    doc.Accept(writer);
-}
 
 
 void compile_solidity_code(std::ostream& output, const std::string& code_file_path)
@@ -66,10 +52,13 @@ void compile_solidity_code(std::ostream& output, const std::string& code_file_pa
                 std::ofstream file;
                 file.open(current_folder / std::filesystem::path{ config::CONTRACT_BINARY_FILE });
                 file << base::toHex(contract.code);
-                file.close();
             }
 
-            saveJson(contract.metadata, current_folder / std::filesystem::path{ config::METADATA_JSON_FILE });
+            {
+                std::ofstream file;
+                file.open(current_folder / std::filesystem::path{ config::METADATA_JSON_FILE });
+                contract.metadata.serialize(file);
+            }
         }
         catch (const base::Error& er) {
             output << er.what();
@@ -174,16 +163,15 @@ void keys_info(std::ostream& output, const std::string& path)
 void call_last_block_info(websocket::WebSocketClient& client)
 {
     LOG_INFO << "last_block_info";
-    client.send(websocket::Command::CALL_LAST_BLOCK_INFO, rapidjson::Document{ rapidjson::kObjectType });
+    client.send(websocket::Command::CALL_LAST_BLOCK_INFO, base::json::Value::object());
 }
 
 
 void call_account_info(websocket::WebSocketClient& client, const lk::Address& address)
 {
     LOG_INFO << "account_info for address: " << address;
-    auto address_value = websocket::serializeAddress(address);
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    request_args.AddMember("address", rapidjson::StringRef(address_value.c_str()), request_args.GetAllocator());
+    auto request_args = base::json::Value::object();
+    request_args["address"] = websocket::serializeAddress(address);
     client.send(websocket::Command::CALL_ACCOUNT_INFO, std::move(request_args));
 }
 
@@ -191,9 +179,8 @@ void call_account_info(websocket::WebSocketClient& client, const lk::Address& ad
 void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
 {
     LOG_INFO << "account_info for address: " << address;
-    auto address_value = websocket::serializeAddress(address);
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    request_args.AddMember("address", rapidjson::StringRef(address_value.c_str()), request_args.GetAllocator());
+    auto request_args = base::json::Value::object();
+    request_args["address"] = websocket::serializeAddress(address);
     client.send(websocket::Command::SUBSCRIBE_ACCOUNT_INFO, std::move(request_args));
 }
 
@@ -201,9 +188,8 @@ void subscribe_account_info(websocket::WebSocketClient& client, const lk::Addres
 void unsubscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
 {
     LOG_INFO << "account_info for address: " << address;
-    auto address_value = websocket::serializeAddress(address);
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    request_args.AddMember("address", rapidjson::StringRef(address_value.c_str()), request_args.GetAllocator());
+    auto request_args = base::json::Value::object();
+    request_args["address"] = websocket::serializeAddress(address);
     client.send(websocket::Command::UNSUBSCRIBE_ACCOUNT_INFO, std::move(request_args));
 }
 
@@ -211,9 +197,8 @@ void unsubscribe_account_info(websocket::WebSocketClient& client, const lk::Addr
 void call_find_transaction(websocket::WebSocketClient& client, const base::Sha256& hash)
 {
     LOG_INFO << "find_transaction by hash: " << hash;
-    auto hash_value = websocket::serializeHash(hash);
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    request_args.AddMember("hash", rapidjson::StringRef(hash_value.c_str()), request_args.GetAllocator());
+    auto request_args = base::json::Value::object();
+    request_args["rapidjson"] = websocket::serializeHash(hash);
     client.send(websocket::Command::CALL_FIND_TRANSACTION, std::move(request_args));
 }
 
@@ -221,9 +206,8 @@ void call_find_transaction(websocket::WebSocketClient& client, const base::Sha25
 void call_find_transaction_status(websocket::WebSocketClient& client, const base::Sha256& hash)
 {
     LOG_INFO << "find_transaction_status by hash: " << hash;
-    auto hash_value = websocket::serializeHash(hash);
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    request_args.AddMember("hash", rapidjson::StringRef(hash_value.c_str()), request_args.GetAllocator());
+    auto request_args = base::json::Value::object();
+    request_args["rapidjson"] = websocket::serializeHash(hash);
     client.send(websocket::Command::CALL_FIND_TRANSACTION_STATUS, std::move(request_args));
 }
 
@@ -231,9 +215,8 @@ void call_find_transaction_status(websocket::WebSocketClient& client, const base
 void call_find_block(websocket::WebSocketClient& client, const base::Sha256& hash)
 {
     LOG_INFO << "find_block by hash: " << hash;
-    auto hash_value = websocket::serializeHash(hash);
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    request_args.AddMember("hash", rapidjson::StringRef(hash_value.c_str()), request_args.GetAllocator());
+    auto request_args = base::json::Value::object();
+    request_args["rapidjson"] = websocket::serializeHash(hash);
     client.send(websocket::Command::CALL_FIND_BLOCK, std::move(request_args));
 }
 
@@ -265,8 +248,7 @@ void transfer(std::ostream& output,
 
     LOG_INFO << "Transfer from " << from_address << " to " << to_address << " with amount " << amount;
 
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    websocket::serializeTransaction(tx, request_args);
+    auto request_args = websocket::serializeTransaction(tx);
     client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
 }
 
@@ -300,8 +282,7 @@ void contract_call(std::ostream& output,
     LOG_INFO << "Contract_call from " << from_address << ", to " << to_address << ", amount " << amount << ",fee "
              << fee << ", message " << message;
 
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    websocket::serializeTransaction(tx, request_args);
+    auto request_args = websocket::serializeTransaction(tx);
     client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
 }
 
@@ -348,8 +329,7 @@ void push_contract(std::ostream& output,
     LOG_INFO << "Push_contract from " << from_address << ", amount " << amount << ", fee " << fee << ", message "
              << message;
 
-    rapidjson::Document request_args(rapidjson::kObjectType);
-    websocket::serializeTransaction(tx, request_args);
+    auto request_args = websocket::serializeTransaction(tx);
     client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
 }
 
@@ -357,12 +337,12 @@ void push_contract(std::ostream& output,
 void subscribe_last_block_info(websocket::WebSocketClient& client)
 {
     LOG_INFO << "subscription last_block_info";
-    client.send(websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO, rapidjson::Document(rapidjson::kObjectType));
+    client.send(websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
 }
 
 
 void unsubscribe_last_block_info(websocket::WebSocketClient& client)
 {
     LOG_INFO << "unsubscription last_block_info";
-    client.send(websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO, rapidjson::Document(rapidjson::kObjectType));
+    client.send(websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
 }
