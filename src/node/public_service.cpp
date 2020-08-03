@@ -610,7 +610,6 @@ void PublicService::on_session_close(websocket::SessionId session_id)
 {
     while (true) {
         LOG_DEBUG << "wait for a task";
-        _input_tasks.wait();
         auto task = _input_tasks.get();
         try {
             task->run(*this);

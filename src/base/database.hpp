@@ -43,10 +43,9 @@ class Database
     std::unique_ptr<leveldb::DB> _database;
     leveldb::ReadOptions _read_options;
     leveldb::WriteOptions _write_options;
-
     std::unique_ptr<leveldb::Cache> _cache;
     //=====================
-    void checkStatus() const;
+    void _checkStatus() const;
     //=====================
 };
 

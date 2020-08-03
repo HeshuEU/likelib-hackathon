@@ -55,7 +55,7 @@ void Database::open(Directory const& path)
 }
 
 
-void Database::checkStatus() const
+void Database::_checkStatus() const
 {
     if (!_inited) {
         RAISE_ERROR(base::DatabaseError, "Database is not inited yet");

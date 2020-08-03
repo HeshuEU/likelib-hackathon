@@ -156,18 +156,11 @@ void Queue<Type>::push(std::unique_ptr<Type>&& task)
 template<typename Type>
 std::unique_ptr<Type> Queue<Type>::get()
 {
-    std::lock_guard lock(_rw_mutex);
+    std::unique_lock lock(_rw_mutex);
+    _has_task.wait(lock, [this]() { return !_tasks.empty(); });
     std::unique_ptr<Type> current_task{ _tasks.front().release() };
     _tasks.pop_front();
     return current_task;
-}
-
-
-template<typename Type>
-void Queue<Type>::wait()
-{
-    std::unique_lock lock(_rw_mutex);
-    _has_task.wait(lock, [this]() { return !_tasks.empty(); });
 }
 
 

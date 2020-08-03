@@ -95,7 +95,6 @@ class Queue
 
     void push(std::unique_ptr<Type>&& task);
     std::unique_ptr<Type> get();
-    void wait();
     bool empty() const;
 
   private:
