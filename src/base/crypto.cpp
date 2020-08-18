@@ -5,7 +5,6 @@
 #include "base/error.hpp"
 #include "base/hash.hpp"
 #include "base/log.hpp"
-#include "base/property_tree.hpp"
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -56,7 +55,7 @@ void writeFile(const std::filesystem::path& path, const std::string& data)
 }
 
 
-// generates a cryptographically safe byte sequence, see issue 93
+// TODO: generates a cryptographically safe byte sequence
 base::Bytes generate_bytes(std::size_t size)
 {
     base::Bytes data(size);
@@ -300,7 +299,7 @@ Secp256PrivateKey::Secp256PrivateKey()
 }
 
 
-Secp256PrivateKey::Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& private_key_bytes)
+Secp256PrivateKey::Secp256PrivateKey(const PrivateKey& private_key_bytes)
   : _secp_key(private_key_bytes)
 {
     if (!is_valid()) {
@@ -317,7 +316,7 @@ bool Secp256PrivateKey::is_valid() const
 }
 
 
-base::FixedBytes<Secp256PrivateKey::SECP256_PUBLIC_KEY_SIZE> Secp256PrivateKey::toPublicKey() const
+Secp256PrivateKey::PublicKey Secp256PrivateKey::toPublicKey() const
 {
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
       secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY), secp256k1_context_destroy);
@@ -326,7 +325,7 @@ base::FixedBytes<Secp256PrivateKey::SECP256_PUBLIC_KEY_SIZE> Secp256PrivateKey::
         RAISE_ERROR(base::CryptoError, "secret key for create public key is invalid");
     }
 
-    base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> output;
+    PublicKey output;
     std::size_t output_size = output.size();
 
     secp256k1_ec_pubkey_serialize(context.get(), output.getData(), &output_size, &pubkey, SECP256K1_EC_UNCOMPRESSED);
@@ -362,9 +361,8 @@ Secp256PrivateKey::Signature Secp256PrivateKey::sign(const base::Bytes& bytes_to
 }
 
 
-base::FixedBytes<Secp256PrivateKey::SECP256_PUBLIC_KEY_SIZE> Secp256PrivateKey::decodeSignatureToPublicKey(
-  const Signature& signature,
-  const base::Bytes& bytes_to_check)
+Secp256PrivateKey::PublicKey Secp256PrivateKey::decodeSignatureToPublicKey(const Signature& signature,
+                                                                           const base::Bytes& bytes_to_check)
 {
     auto hash = base::Sha256::compute(bytes_to_check);
     std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> context(
@@ -383,7 +381,7 @@ base::FixedBytes<Secp256PrivateKey::SECP256_PUBLIC_KEY_SIZE> Secp256PrivateKey::
         RAISE_ERROR(base::CryptoError, "recover public key is invalid");
     }
 
-    base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> output;
+    PublicKey output;
     std::size_t output_size = output.size();
 
     secp256k1_ec_pubkey_serialize(context.get(), output.getData(), &output_size, &pubkey, SECP256K1_EC_UNCOMPRESSED);
@@ -403,14 +401,15 @@ void Secp256PrivateKey::save(const std::filesystem::path& path) const
 
 Secp256PrivateKey Secp256PrivateKey::load(const std::filesystem::path& path)
 {
-    return Secp256PrivateKey(base::fromHex<base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>>(readAllFile(path)));
+    auto bytes = base::fromHex<PrivateKey>(readAllFile(path));
+    return Secp256PrivateKey{ std::move(bytes) };
 }
 
 
 Secp256PrivateKey Secp256PrivateKey::deserialize(base::SerializationIArchive& ia)
 {
-    auto bytes = ia.deserialize<FixedBytes<SECP256_PRIVATE_KEY_SIZE>>();
-    return { bytes };
+    auto bytes = ia.deserialize<PrivateKey>();
+    return Secp256PrivateKey{ std::move(bytes) };
 }
 
 
@@ -420,23 +419,15 @@ void Secp256PrivateKey::serialize(base::SerializationOArchive& oa) const
 }
 
 
-const base::FixedBytes<Secp256PrivateKey::SECP256_PRIVATE_KEY_SIZE>& Secp256PrivateKey::getBytes() const
+const Secp256PrivateKey::PrivateKey& Secp256PrivateKey::getBytes() const
 {
     return _secp_key;
 }
 
 
-KeyVault::KeyVault(const base::PropertyTree& config)
-{
-    auto keys_folder = config.get<std::string>("keys_dir");
-    _key = loadOrGenerateKey(keys_folder);
-}
-
-
 KeyVault::KeyVault(const std::string_view& keys_folder)
-{
-    _key = loadOrGenerateKey(keys_folder);
-}
+  : _key(loadOrGenerateKey(keys_folder))
+{}
 
 
 const base::Secp256PrivateKey& KeyVault::getKey() const noexcept

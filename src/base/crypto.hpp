@@ -3,7 +3,6 @@
 #include "bytes.hpp"
 
 #include "base/hash.hpp"
-#include "base/property_tree.hpp"
 #include "base/serialization.hpp"
 
 #include <openssl/pem.h>
@@ -69,30 +68,31 @@ class Secp256PrivateKey
     static constexpr std::size_t SECP256_SIGNATURE_SIZE = 65;
     static constexpr std::size_t SECP256_PUBLIC_KEY_SIZE = 65;
     using Signature = base::FixedBytes<SECP256_SIGNATURE_SIZE>;
+    using PrivateKey = base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>;
+    using PublicKey = base::FixedBytes<SECP256_PUBLIC_KEY_SIZE>;
     //---------------------------
     Secp256PrivateKey();
-    Secp256PrivateKey(const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& private_key_bytes);
+    explicit Secp256PrivateKey(const PrivateKey& private_key_bytes);
     Secp256PrivateKey(const Secp256PrivateKey&) = delete;
     Secp256PrivateKey(Secp256PrivateKey&& other) = default;
     Secp256PrivateKey& operator=(const Secp256PrivateKey&) = delete;
-    Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = default;
+    Secp256PrivateKey& operator=(Secp256PrivateKey&& other) = delete;
     //---------------------------
     bool is_valid() const;
-    base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> toPublicKey() const;
+    PublicKey toPublicKey() const;
     //---------------------------
     Signature sign(const base::Bytes& bytes_to_sign) const;
-    static base::FixedBytes<SECP256_PUBLIC_KEY_SIZE> decodeSignatureToPublicKey(const Signature& signature,
-                                                                                const base::Bytes& bytes_to_check);
+    static PublicKey decodeSignatureToPublicKey(const Signature& signature, const base::Bytes& bytes_to_check);
     //---------------------------
     void save(const std::filesystem::path& path) const;
     static Secp256PrivateKey load(const std::filesystem::path& path);
     //---------------------------
     static Secp256PrivateKey deserialize(base::SerializationIArchive& ia);
     void serialize(base::SerializationOArchive& oa) const;
-    const base::FixedBytes<SECP256_PRIVATE_KEY_SIZE>& getBytes() const;
+    const PrivateKey& getBytes() const;
 
   private:
-    base::FixedBytes<SECP256_PRIVATE_KEY_SIZE> _secp_key;
+    const PrivateKey _secp_key;
 };
 
 
@@ -100,12 +100,11 @@ class KeyVault
 {
   public:
     KeyVault() = delete;
-    explicit KeyVault(const base::PropertyTree& config);
     explicit KeyVault(const std::string_view& keys_folder);
     KeyVault(const KeyVault&) = delete;
     KeyVault(KeyVault&&) = default;
     KeyVault& operator=(const KeyVault&) = delete;
-    KeyVault& operator=(KeyVault&&) = default;
+    KeyVault& operator=(KeyVault&&) = delete;
     //---------------------------
     ~KeyVault() = default;
     //---------------------------

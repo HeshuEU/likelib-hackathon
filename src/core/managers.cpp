@@ -5,94 +5,154 @@
 namespace lk
 {
 
-AccountState::AccountState()
-  : _type{ AccountType::CLIENT }
+AccountState::AccountState(AccountType initial_type)
+  : type{ initial_type }
+  , nonce{ 0 }
+  , code_hash{ base::Sha256::null() }
 {}
 
 
-AccountState::AccountState(AccountType type)
-  : _type{ type }
+Commit::Commit(StateManager& state_manager)
+  : _state_manager{ state_manager }
 {}
 
-
-AccountType AccountState::getType() const
+Commit::Commit(Commit&& another)
+  : _state_manager{ another._state_manager }
 {
-    return _type;
-}
-
-std::uint64_t AccountState::getNonce() const noexcept
-{
-    return _nonce;
+    _changed_states = std::move(another._changed_states);
+    _deleted_accounts = std::move(another._deleted_accounts);
 }
 
 
-void AccountState::addTransactionHash(base::Sha256 tx_hash)
+Commit& Commit::operator=(Commit&& another)
 {
-    _transactions.emplace_back(std::move(tx_hash));
-    ++_nonce;
+    std::scoped_lock lock{ _rw_mutex, another._rw_mutex };
+    _changed_states = std::move(another._changed_states);
+    _deleted_accounts = std::move(another._deleted_accounts);
+    return *this;
 }
 
 
-lk::Balance AccountState::getBalance() const noexcept
+bool Commit::createClientAccount(const lk::Address& address)
 {
-    return _balance;
+    std::unique_lock lock{ _rw_mutex };
+    return _createClientAccount(address);
 }
 
 
-void AccountState::setBalance(lk::Balance new_balance)
+lk::Address Commit::createContractAccount(const lk::Address& from_account_address, base::Sha256 associated_code_hash)
 {
-    _balance = std::move(new_balance);
-}
-
-
-void AccountState::addBalance(lk::Balance delta)
-{
-    _balance += delta;
-}
-
-
-void AccountState::subBalance(lk::Balance delta)
-{
-    if (_balance < delta) {
-        RAISE_ERROR(base::LogicError, "trying to take more LK from account than it has");
+    std::unique_lock lock{ _rw_mutex };
+    if (!_hasAccountAnywhere(from_account_address)) {
+        RAISE_ERROR(base::LogicError, "address already exists");
     }
-    _balance -= delta;
+
+
+    auto& account = _getAccountAnywhere(from_account_address);
+    base::Bytes nonce_string_data{ std::to_string(account.nonce) };
+
+    auto bytes_address = base::Ripemd160::compute(associated_code_hash.getBytes().toBytes() +
+                                                  from_account_address.getBytes().toBytes() + nonce_string_data);
+    auto account_address = lk::Address(bytes_address.getBytes());
+
+    AccountState state{ AccountType::CONTRACT };
+    state.code_hash = std::move(associated_code_hash);
+    _changed_states.insert({ account_address, std::move(state) });
+
+    return account_address;
 }
 
 
-const base::Sha256& AccountState::getCodeHash() const noexcept
+bool Commit::hasAccount(const lk::Address& address) const
 {
-    return _code_hash;
+    std::shared_lock lock{ _rw_mutex };
+    return _hasAccountAnywhere(address);
 }
 
 
-void AccountState::setCodeHash(base::Sha256 code_hash)
+bool Commit::deleteAccount(const lk::Address& address, const lk::Address& beneficiary_address)
 {
-    _code_hash = std::move(code_hash);
+    std::unique_lock lock{ _rw_mutex };
+    if (!_hasAccountAnywhere(address)) {
+        return false;
+    }
+    auto value = _getAccountAnywhere(address).balance;
+    if (!tryTransferMoney(address, beneficiary_address, value)) {
+        return false;
+    }
+
+    {
+        std::unique_lock lock{ _rw_mutex };
+        _deleted_accounts.insert(address);
+    }
+
+    return false;
 }
 
 
-void AccountState::setRuntimeCode(const base::Bytes& code)
+AccountType Commit::getAccountType(const lk::Address& account_address) const
 {
-    _runtime_code = code;
+    std::shared_lock lock{ _rw_mutex };
+    return _getAccountAnywhere(account_address).type;
 }
 
 
-const base::Bytes& AccountState::getRuntimeCode() const
+bool Commit::tryTransferMoney(const lk::Address& from, const lk::Address& to, const lk::Balance& amount)
 {
-    return _runtime_code;
+    std::unique_lock lock{ _rw_mutex };
+    if (!_hasAccountAnywhere(from)) {
+        return false;
+    }
+    _copyLocalIfNotExists(from);
+
+    if (!_hasAccountAnywhere(to)) {
+        ASSERT(_createClientAccount(to));
+    }
+    else {
+        _copyLocalIfNotExists(to);
+    }
+
+    auto& from_account = _getAccount(from);
+    if (from_account.balance < amount) {
+        return false;
+    }
+    auto& to_account = _getAccount(to);
+
+    from_account.balance -= amount;
+    to_account.balance += amount;
+    return true;
 }
 
 
-bool AccountState::checkStorageValue(const base::Sha256& key) const
+bool Commit::checkStorageValue(const lk::Address& contract_address, const base::Sha256& key) const
 {
-    return _storage.find(key) != _storage.end();
+    std::shared_lock lock{ _rw_mutex };
+    if (!_hasAccountAnywhere(contract_address)) {
+        RAISE_ERROR(base::LogicError, "account address was not found by a given key");
+    }
+
+    const auto& account = _getAccountAnywhere(contract_address);
+    if (account.type != AccountType::CONTRACT) {
+        RAISE_ERROR(base::LogicError, "account is not a contract type");
+    }
+
+    return account.storage.contains(key);
 }
 
 
-AccountState::StorageData AccountState::getStorageValue(const base::Sha256& key) const
+const StorageData& Commit::getStorageValue(const lk::Address& contract_address, const base::Sha256& key) const
 {
-    if (auto it = _storage.find(key); it == _storage.end()) {
+    std::shared_lock lock{ _rw_mutex };
+    if (!_hasAccountAnywhere(contract_address)) {
+        RAISE_ERROR(base::LogicError, "account address was not found by a given key");
+    }
+
+    const auto& account = _getAccountAnywhere(contract_address);
+    if (account.type != AccountType::CONTRACT) {
+        RAISE_ERROR(base::LogicError, "account is not a contract type");
+    }
+
+    if (auto it = account.storage.find(key); it == account.storage.end()) {
         RAISE_ERROR(base::LogicError, "value was not found by a given key");
     }
     else {
@@ -101,96 +161,70 @@ AccountState::StorageData AccountState::getStorageValue(const base::Sha256& key)
 }
 
 
-void AccountState::setStorageValue(const base::Sha256& key, base::Bytes value)
+void Commit::setStorageValue(const lk::Address& contract_address, const base::Sha256& key, base::Bytes value)
 {
-    StorageData& sd = _storage[key];
+    std::shared_lock lock{ _rw_mutex };
+    if (!_copyLocalIfNotExists(contract_address)) {
+        RAISE_ERROR(base::LogicError, "account address was not found by a given key");
+    }
+    auto& account = _getAccount(contract_address);
+    if (account.type != AccountType::CONTRACT) {
+        RAISE_ERROR(base::LogicError, "account is not a contract type");
+    }
+
+    StorageData& sd = account.storage[key];
     sd.data = std::move(value);
     sd.was_modified = true;
 }
 
 
-AccountInfo AccountState::toInfo() const
+lk::Balance Commit::getBalance(const lk::Address& account_address) const
 {
-    if (_code_hash == base::Sha256::null()) {
-        AccountInfo info{ AccountType::CLIENT, lk::Address::null(), _balance, _nonce, _transactions };
-        return info;
+    std::shared_lock lock{ _rw_mutex };
+    return _getAccountAnywhere(account_address).balance;
+}
+
+
+std::size_t Commit::getCodeSize(const lk::Address& account_address) const
+{
+    std::shared_lock lock{ _rw_mutex };
+    return _getAccountAnywhere(account_address).runtime_code.size();
+}
+
+
+const base::Sha256& Commit::getCodeHash(const lk::Address& account_address) const
+{
+    std::shared_lock lock{ _rw_mutex };
+    return _getAccountAnywhere(account_address).code_hash;
+}
+
+
+const base::Bytes& Commit::getRuntimeCode(const lk::Address& account_address) const
+{
+    std::shared_lock lock{ _rw_mutex };
+    return _getAccountAnywhere(account_address).runtime_code;
+}
+
+
+void Commit::setRuntimeCode(const lk::Address& contract_address, const base::Bytes& code)
+{
+    std::shared_lock lock{ _rw_mutex };
+    if (!_copyLocalIfNotExists(contract_address)) {
+        RAISE_ERROR(base::LogicError, "account address was not found by a given key");
     }
-    else {
-        AccountInfo info{ AccountType::CONTRACT, lk::Address::null(), _balance, _nonce, _transactions };
-        return info;
-    }
-}
-
-
-StateManager::StateManager(StateManager&& other)
-{
-    std::shared_lock lk(other._rw_mutex);
-    _states = other._states;
-}
-
-
-StateManager& StateManager::operator=(StateManager&& other) noexcept
-{
-    std::shared_lock lk(other._rw_mutex);
-    _states = other._states;
-    return *this;
-}
-
-
-void StateManager::createClientAccount(const lk::Address& address)
-{
-    if (hasAccount(address)) {
-        RAISE_ERROR(base::LogicError, "address already exists");
+    auto& account = _getAccount(contract_address);
+    if (account.type != AccountType::CONTRACT) {
+        RAISE_ERROR(base::LogicError, "account is not a contract type");
     }
 
-    std::unique_lock lk(_rw_mutex);
-    AccountState state{ AccountType::CLIENT };
-    _states.insert({ address, state });
+    account.runtime_code = code;
 }
 
 
-lk::Address StateManager::createContractAccount(const lk::Address& from_account_address,
-                                                base::Sha256 associated_code_hash)
+AccountState& Commit::_getAccount(const lk::Address& account_address)
 {
-    auto& account = getAccount(from_account_address);
-    base::Bytes nonce_string_data{ std::to_string(account.getNonce()) };
-
-    auto bytes_address = base::Ripemd160::compute(associated_code_hash.getBytes().toBytes() +
-                                                  from_account_address.getBytes().toBytes() + nonce_string_data);
-    auto account_address = lk::Address(bytes_address.getBytes());
-
-    AccountState state{ AccountType::CONTRACT };
-    state.setCodeHash(associated_code_hash);
-    _states[account_address] = std::move(state);
-    return account_address;
-}
-
-
-bool StateManager::hasAccount(const lk::Address& address) const
-{
-    std::shared_lock lk(_rw_mutex);
-    return _states.find(address) != _states.end();
-}
-
-
-bool StateManager::deleteAccount(const lk::Address& address)
-{
-    std::unique_lock lk(_rw_mutex);
-    if (auto it = _states.find(address); it != _states.end()) {
-        _states.erase(it);
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-
-const AccountState& StateManager::getAccount(const lk::Address& address) const
-{
-    std::shared_lock lk(_rw_mutex);
-    auto it = _states.find(address);
-    if (it == _states.end()) {
+    auto it = _changed_states.find(account_address);
+    if (it == _changed_states.end()) {
         RAISE_ERROR(base::InvalidArgument, "cannot getAccount for non-existent account");
     }
     else {
@@ -199,13 +233,11 @@ const AccountState& StateManager::getAccount(const lk::Address& address) const
 }
 
 
-AccountState& StateManager::getAccount(const lk::Address& address)
+const AccountState& Commit::_getAccount(const lk::Address& account_address) const
 {
-    std::shared_lock lk(_rw_mutex);
-    auto it = _states.find(address);
-    if (it == _states.end()) {
-        AccountState state(AccountType::CLIENT); // TODO: lazy creation
-        return _states[address] = state;
+    auto it = _changed_states.find(account_address);
+    if (it == _changed_states.end() || _deleted_accounts.contains(account_address)) {
+        RAISE_ERROR(base::InvalidArgument, "cannot getAccount for non-existent account");
     }
     else {
         return it->second;
@@ -213,52 +245,88 @@ AccountState& StateManager::getAccount(const lk::Address& address)
 }
 
 
-StateManager StateManager::createCopy()
+const AccountState& Commit::_getAccountAnywhere(const lk::Address& account_address) const
 {
-    StateManager copy;
-    {
-        std::shared_lock lk(_rw_mutex);
-        copy._states = _states;
+    auto it = _changed_states.find(account_address);
+    if (it == _changed_states.end() || _deleted_accounts.contains(account_address)) {
+        return _state_manager._getAccount(account_address);
     }
-    return copy;
+    else {
+        return it->second;
+    }
 }
 
 
-void StateManager::applyChanges(StateManager&& state)
+bool Commit::_hasAccountThis(const lk::Address& address) const
 {
-    std::unique_lock lk(_rw_mutex);
-    _states = std::move(state._states);
+    return _changed_states.contains(address) && !_deleted_accounts.contains(address);
+}
+
+
+bool Commit::_hasAccountRoot(const lk::Address& address) const
+{
+    return _state_manager.hasAccount(address);
+}
+
+
+bool Commit::_hasAccountAnywhere(const lk::Address& address) const
+{
+    return _hasAccountThis(address) || _hasAccountRoot(address);
+}
+
+
+bool Commit::_copyLocalIfNotExists(const lk::Address& address)
+{
+    if (!_hasAccountAnywhere(address)) {
+        return false;
+    }
+    if (!_hasAccountThis(address)) {
+        auto& account = _state_manager._getAccount(address);
+        _changed_states.insert({ address, account });
+    }
+    return true;
+}
+
+
+bool Commit::_createClientAccount(const lk::Address& address)
+{
+    if (_hasAccountAnywhere(address)) {
+        return false;
+    }
+
+    AccountState state{ AccountType::CLIENT };
+    _changed_states.insert({ address, state });
+    return true;
 }
 
 
 bool StateManager::checkTransaction(const lk::Transaction& tx) const
 {
-    {
-        std::shared_lock lk(_rw_mutex);
-        if (_states.find(tx.getFrom()) == _states.end()) {
-            return false;
-        }
+    std::shared_lock lk(_rw_mutex);
+    if (!_hasAccount(tx.getFrom())) {
+        return false;
     }
-    return getAccount(tx.getFrom()).getBalance() >= tx.getAmount() + tx.getFee();
+    return _getAccount(tx.getFrom()).balance >= tx.getAmount() + tx.getFee();
 }
 
 
-bool StateManager::tryTransferMoney(const lk::Address& from, const lk::Address& to, const lk::Balance& amount)
+bool StateManager::checkTransactionsSet(const lk::TransactionsSet& tx_set) const
 {
-    if (!hasAccount(from)) {
-        return false;
+    std::shared_lock lk(_rw_mutex);
+    auto block_balance = lk::calcCost(tx_set);
+    for (const auto& tx : tx_set) {
+        if (_hasAccount(tx.getFrom())) {
+            auto current_account_balance = _getBalance(tx.getFrom());
+            auto block_account_cost = block_balance.find(tx.getFrom());
+            ASSERT(block_account_cost != block_balance.end());
+            if (block_account_cost->second > current_account_balance) {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
     }
-    auto& from_account = getAccount(from);
-    if (from_account.getBalance() < amount) {
-        return false;
-    }
-    if (!hasAccount(to)) {
-        createClientAccount(to);
-    }
-    auto& to_account = getAccount(to);
-
-    from_account.subBalance(amount);
-    to_account.addBalance(amount);
     return true;
 }
 
@@ -268,9 +336,175 @@ void StateManager::updateFromGenesis(const ImmutableBlock& block)
     std::unique_lock lk(_rw_mutex);
     for (const auto& tx : block.getTransactions()) {
         AccountState state{ AccountType::CLIENT };
-        state.setBalance(tx.getAmount());
+        state.balance = tx.getAmount();
         _states.insert({ tx.getTo(), std::move(state) });
     }
+}
+
+
+Commit StateManager::createCommit()
+{
+    return Commit{ *this };
+}
+
+
+void StateManager::applyCommit(Commit&& commit)
+{
+    std::set<lk::Address> updated_set;
+    {
+        std::unique_lock lk(_rw_mutex);
+        for (auto& changed_account : commit._changed_states) {
+            auto it = _states.find(changed_account.first);
+            if (it == _states.end()) {
+                _states.insert(changed_account);
+            }
+            else {
+                it->second = changed_account.second;
+            }
+
+            updated_set.insert(changed_account.first);
+        }
+        for (auto& deleted_account_address : commit._deleted_accounts) {
+            _states.erase(deleted_account_address);
+            updated_set.insert(deleted_account_address);
+        }
+    }
+
+    for (auto& updated_account : updated_set) {
+        _event_account_update.notify(updated_account);
+    }
+}
+
+
+void StateManager::addTxHash(const lk::Address& address, const base::Sha256& tx_hash)
+{
+    std::shared_lock lk(_rw_mutex);
+    if (!_hasAccount(address)) {
+        ASSERT(_createClientAccount(address));
+    }
+    auto& account = _getAccount(address);
+    ASSERT(account.type == AccountType::CLIENT);
+
+    account.transactions.emplace_back(std::move(tx_hash));
+    ++(account.nonce);
+}
+
+
+void StateManager::applyBlockEmission(const lk::Address& address, const lk::Balance& value)
+{
+    std::unique_lock lk(_rw_mutex);
+    if (!_hasAccount(address)) {
+        ASSERT(_createClientAccount(address));
+    }
+    auto& account = _getAccount(address);
+    account.balance += value;
+
+    _event_account_update.notify(address);
+}
+
+
+bool StateManager::payFee(const lk::Address& from, const lk::Address& to, const lk::Balance& value)
+{
+    std::unique_lock lk(_rw_mutex);
+    if (!_hasAccount(from)) {
+        return false;
+    }
+    auto& from_account = _getAccount(from);
+    if (from_account.balance < value) {
+        return false;
+    }
+    if (!_hasAccount(to)) {
+        ASSERT(_createClientAccount(to));
+    }
+    auto& to_account = _getAccount(to);
+
+    from_account.balance -= value;
+    to_account.balance += value;
+
+    _event_account_update.notify(from);
+    _event_account_update.notify(to);
+
+    return true;
+}
+
+
+bool StateManager::hasAccount(const lk::Address& address) const
+{
+    std::shared_lock lk(_rw_mutex);
+    return _hasAccount(address);
+}
+
+
+AccountInfo StateManager::getAccountInfo(const lk::Address& account_address) const
+{
+    std::shared_lock lk(_rw_mutex);
+    if (!_hasAccount(account_address)) {
+        return AccountInfo{ AccountType::CLIENT, lk::Address::null(), {}, {}, {} };
+    }
+    const auto& account = _getAccount(account_address);
+    return AccountInfo{ account.type, account_address, account.balance, account.nonce, account.transactions };
+}
+
+
+lk::Balance StateManager::getBalance(const lk::Address& account_address) const
+{
+    std::shared_lock lk(_rw_mutex);
+    return _getBalance(account_address);
+}
+
+
+AccountState& StateManager::_getAccount(const lk::Address& account_address)
+{
+    auto it = _states.find(account_address);
+    if (it == _states.end()) {
+        RAISE_ERROR(base::InvalidArgument, "cannot getAccount for non-existent account");
+    }
+    else {
+        return it->second;
+    }
+}
+
+
+const AccountState& StateManager::_getAccount(const lk::Address& account_address) const
+{
+    auto it = _states.find(account_address);
+    if (it == _states.end()) {
+        RAISE_ERROR(base::InvalidArgument, "cannot getAccount for non-existent account");
+    }
+    else {
+        return it->second;
+    }
+}
+
+
+bool StateManager::_hasAccount(const lk::Address& address) const
+{
+    return _states.contains(address);
+}
+
+
+bool StateManager::_createClientAccount(const lk::Address& address)
+{
+    if (_hasAccount(address)) {
+        return false;
+    }
+
+    AccountState state{ AccountType::CLIENT };
+    _states.insert({ address, state });
+    return true;
+}
+
+lk::Balance StateManager::_getBalance(const lk::Address& account_address) const
+{
+    if (_hasAccount(account_address)) {
+        return _getAccount(account_address).balance;
+    }
+    return {};
+}
+
+std::size_t StateManager::subscribeToAnyAccountUpdate(decltype(_event_account_update)::CallbackType callback)
+{
+    return _event_account_update.subscribe(std::move(callback));
 }
 
 

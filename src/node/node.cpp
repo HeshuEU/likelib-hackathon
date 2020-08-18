@@ -1,17 +1,18 @@
 #include "node.hpp"
 
 #include <functional>
+#include <string>
 
-Node::Node(const base::PropertyTree& config)
-  : _config{ config }
-  , _key_vault(_config)
-  , _core{ _config, _key_vault }
+Node::Node(base::json::Value config)
+  : _config{ std::move(config) }
+  , _core{ std::move(_config["core"]) }
+  , _public_service{ std::move(_config["websocket"]), _core }
 {
-    auto service = std::make_shared<node::GeneralServerService>(_core);
-    _rpc = rpc::create_rpc_server(_config, service);
-
-    auto miner_callback = std::bind(&Node::onBlockMine, this, std::placeholders::_1);
-    _miner = std::make_unique<Miner>(_config, miner_callback);
+    if (!_config.has_object_field("miner")) {
+        RAISE_ERROR(base::InvalidArgument, "config file is't contain miner node");
+    }
+    _miner = std::make_unique<Miner>(std::move(_config["miner"]),
+                                     std::bind(&Node::onBlockMine, this, std::placeholders::_1));
 
     _core.subscribeToNewPendingTransaction(std::bind(&Node::onNewTransactionReceived, this, std::placeholders::_1));
     _core.subscribeToBlockAddition(std::bind(&Node::onNewBlock, this, std::placeholders::_1));
@@ -23,13 +24,13 @@ void Node::run()
     _core.run(); // run before all others
 
     try {
-        _rpc->run();
+        _public_service.run();
     }
     catch (const std::exception& e) {
-        LOG_WARNING << "Cannot startSession RPC server: " << e.what();
+        LOG_WARNING << "Cannot startSession public server: " << e.what();
     }
     catch (...) {
-        LOG_WARNING << "Cannot startSession RPC server: unknown error";
+        LOG_WARNING << "Cannot startSession public server: unknown error";
     }
 }
 

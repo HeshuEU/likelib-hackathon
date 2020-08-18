@@ -88,3 +88,9 @@ std::ostream& operator<<(std::ostream& os, const Address& address)
 }
 
 } // namespace lk
+
+
+std::size_t std::hash<lk::Address>::operator()(const lk::Address& k) const
+{
+    return std::hash<base::FixedBytes<lk::Address::LENGTH_IN_BYTES>>{}(k.getBytes());
+}

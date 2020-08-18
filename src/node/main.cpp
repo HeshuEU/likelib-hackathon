@@ -1,18 +1,18 @@
 #include "node/hard_config.hpp"
 #include "node/node.hpp"
-#include "node/soft_config.hpp"
 
 #include "base/assert.hpp"
 #include "base/config.hpp"
 #include "base/log.hpp"
 #include "base/program_options.hpp"
 
+#include <boost/stacktrace.hpp>
+
 #ifdef CONFIG_OS_FAMILY_UNIX
 #include <cstring>
 #endif
 
-#include <boost/stacktrace.hpp>
-
+#include <chrono>
 #include <csignal>
 #include <cstdlib>
 #include <exception>
@@ -47,6 +47,20 @@ void atExitHandler()
 {
     LOG_INFO << "Node shutdown";
     base::flushLog();
+}
+
+
+base::json::Value load_config(std::filesystem::path config_path)
+{
+    std::ifstream input;
+    input.exceptions(std::ios::badbit | std::ios::failbit);
+    try {
+        input.open(config_path);
+    }
+    catch (const std::exception& e) {
+        RAISE_ERROR(base::InaccessibleFile, e.what());
+    }
+    return base::json::Value::parse(input);
 }
 
 } // namespace
@@ -90,12 +104,14 @@ int main(int argc, char** argv)
         }
 
         //=====================
-        SoftConfig exe_config(config_file_path);
+        auto exe_config = load_config(config_file_path);
         Node node(exe_config);
         node.run();
         //=====================
-        std::this_thread::sleep_for(std::chrono::hours(24 * 366)); // 1 year
-
+        while (true) {
+            constexpr auto timeout = std::chrono::hours(24);
+            std::this_thread::sleep_for(timeout);
+        }
         return base::config::EXIT_OK;
     }
     catch (const std::exception& error) {

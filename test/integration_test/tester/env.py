@@ -1,23 +1,19 @@
 import json
 import os
 import shutil
-import enum
 
 from .base import Logger, InvalidArgumentsException, LogicException
 from .node import Node
-from .client import BaseClient
-from .legacy_client import Client as LegacyClient
-from .http_client import Client as HttpClient
+from .websocket_client import Client
 
 
 class Id:
-    def __init__(self, sync_port, *, grpc_port=None, http_port=None, listening_address="0.0.0.0",
+    def __init__(self, sync_port, *, websocket_port=None, listening_address="0.0.0.0",
                  absolute_address="127.0.0.1"):
         self.listening_address = listening_address
         self.absolute_address = absolute_address
         self.sync_port = sync_port
-        self.grpc_port = grpc_port
-        self.http_port = http_port
+        self.websocket_port = websocket_port
 
     @property
     def listen_sync_address(self) -> str:
@@ -28,40 +24,12 @@ class Id:
         return f"{self.absolute_address}:{self.sync_port}"
 
     @property
-    def is_enable_grpc(self) -> bool:
-        return self.grpc_port is not None
+    def listen_websocket_address(self) -> str:
+        return f"{self.listening_address}:{self.websocket_port}"
 
     @property
-    def listen_grpc_address(self) -> str:
-        if self.is_enable_grpc:
-            return f"{self.listening_address}:{self.grpc_port}"
-        else:
-            raise InvalidArgumentsException("grpc mode is off")
-
-    @property
-    def connect_grpc_address(self) -> str:
-        if self.is_enable_grpc:
-            return f"{self.absolute_address}:{self.grpc_port}"
-        else:
-            raise InvalidArgumentsException("grpc mode is off")
-
-    @property
-    def is_enable_http(self) -> bool:
-        return self.http_port is not None
-
-    @property
-    def listen_http_address(self) -> str:
-        if self.is_enable_http:
-            return f"{self.listening_address}:{self.http_port}"
-        else:
-            raise InvalidArgumentsException("http mode is off")
-
-    @property
-    def connect_http_address(self) -> str:
-        if self.is_enable_http:
-            return f"{self.absolute_address}:{self.http_port}"
-        else:
-            raise InvalidArgumentsException("http mode is off")
+    def connect_websocket_address(self) -> str:
+        return f"{self.absolute_address}:{self.websocket_port}"
 
 
 class NodeConfig:
@@ -133,20 +101,12 @@ class NodeConfig:
 NODE_STARTUP_TIME = 2
 
 
-class ClientType(enum.Enum):
-    LEGACY_GRPC = "legacy/grpc"
-    LEGACY_HTTP = "legacy/http"
-    PYTHON_HTTP = "python/http"
-
-
 class Env:
-    CLIENT_NAME = "client"
     NODE_NAME = "node"
     LIB_EVM_NAME = "libevmone.so.0.4"
 
     def __init__(self, *, binary_path: str, run_folder: str, test_name: str):
         self.binary_path = os.path.abspath(binary_path)
-        Env.__check(self.binary_path, Env.CLIENT_NAME)
         Env.__check(self.binary_path, Env.NODE_NAME)
         Env.__check(self.binary_path, Env.LIB_EVM_NAME)
 
@@ -178,17 +138,13 @@ class Env:
         config = {"net": {"listen_addr": node_config.id.listen_sync_address,
                           "public_port": node_config.id.sync_port,
                           "peers_db": "peers"},
-                  "rpc": {},
+                  "websocket": {"listening_addr": node_config.id.listen_websocket_address},
                   "miner": {"threads": node_config.mining_thread},
                   "nodes": [node_id.connect_sync_address for node_id in node_config.nodes],
                   "keys_dir": ".",
                   "database": {"path": node_config.database_path,
                                "clean": node_config.is_clean_up}
                   }
-        if node_config.id.is_enable_grpc:
-            config["rpc"]["grpc_address"] = node_config.id.listen_grpc_address
-        if node_config.id.is_enable_http:
-            config["rpc"]["http_address"] = node_config.id.listen_http_address
         return json.dumps(config)
 
     def stop_node(self, node_id: Id):
@@ -198,10 +154,8 @@ class Env:
             del self.__started_nodes[associated_id]
             if self.__create_node_sync_id(associated_id) in self.__id_pool:
                 del self.__id_pool[self.__create_node_sync_id(associated_id)]
-            if associated_id.is_enable_grpc and self.__create_node_grpc_id(associated_id) in self.__id_pool:
-                del self.__id_pool[self.__create_node_grpc_id(associated_id)]
-            if associated_id.is_enable_http and self.__create_node_http_id(associated_id) in self.__id_pool:
-                del self.__id_pool[self.__create_node_http_id(associated_id)]
+            if self.__create_node_ws_id(associated_id) in self.__id_pool:
+                del self.__id_pool[self.__create_node_ws_id(associated_id)]
             node.stop(shutdown_timeout=3)
 
     def close(self):
@@ -227,43 +181,25 @@ class Env:
         shutil.copy(os.path.join(self.binary_path, Env.LIB_EVM_NAME), node_directory)
         return os.path.join(self.binary_path, Env.NODE_NAME)
 
-    def __prepare_client_directory(self, client_directory: str) -> str:
-        if not os.path.exists(client_directory):
-            os.makedirs(client_directory)
-        else:
-            raise InvalidArgumentsException(f"client directory already exists:{client_directory}")
-
-        shutil.copy(os.path.join(self.binary_path, Env.CLIENT_NAME), client_directory)
-        return os.path.join(self.binary_path, Env.CLIENT_NAME)
-
     @staticmethod
     def __create_node_sync_id(node_id: Id):
         return "sync_" + str(node_id.sync_port)
 
     @staticmethod
-    def __create_node_grpc_id(node_id: Id):
-        return "grpc_" + str(node_id.sync_port)
-
-    @staticmethod
-    def __create_node_http_id(node_id: Id):
-        return "http_" + str(node_id.sync_port)
+    def __create_node_ws_id(node_id: Id):
+        return "ws_" + str(node_id.sync_port)
 
     def __find_node_id(self, node_id: Id):
         if self.__create_node_sync_id(node_id) in self.__id_pool:
             return self.__id_pool[self.__create_node_sync_id(node_id)]
-        if node_id.is_enable_grpc and self.__create_node_grpc_id(node_id) in self.__id_pool:
-            return self.__id_pool[self.__create_node_grpc_id(node_id)]
-        if node_id.is_enable_http and self.__create_node_http_id(node_id) in self.__id_pool:
-            return self.__id_pool[self.__create_node_http_id(node_id)]
+        if self.__create_node_ws_id(node_id) in self.__id_pool:
+            return self.__id_pool[self.__create_node_ws_id(node_id)]
         return None
 
     def __append_node(self, node_id: Id, node: Node):
         self.__started_nodes[node_id] = node
         self.__id_pool[self.__create_node_sync_id(node_id)] = node_id
-        if node_id.is_enable_grpc:
-            self.__id_pool[self.__create_node_grpc_id(node_id)] = node_id
-        if node_id.is_enable_http:
-            self.__id_pool[self.__create_node_http_id(node_id)] = node_id
+        self.__id_pool[self.__create_node_ws_id(node_id)] = node_id
 
     def is_node_started(self, node_id: Id) -> bool:
         return self.__find_node_id(node_id) is not None
@@ -275,12 +211,7 @@ class Env:
             if not self.is_node_started(other_id):
                 self.logger.debug(f"dependencies node was not started: {other_id}")
 
-        node_name = "Node"
-        if config.id.is_enable_grpc:
-            node_name = node_name + "_grpc_" + str(config.id.grpc_port)
-        if config.id.is_enable_http:
-            node_name = node_name + "_http_" + str(config.id.http_port)
-        node_name = node_name + "_sync_" + str(config.id.sync_port)
+        node_name = "Node_ws_" + str(config.id.websocket_port) + "_sync_" + str(config.id.sync_port)
 
         node_work_dir = os.path.join(self.dir, node_name)
         node_file_path = self.__prepare_node_directory(node_work_dir)
@@ -296,28 +227,11 @@ class Env:
         node.start(startup_time=startup_time)
         self.__append_node(config.id, node)
 
-    def __get_legacy_client(self, node_id: Id, is_http: bool) -> LegacyClient:
-        client_name = "Client"
-        if is_http:
-            if not node_id.is_enable_http:
-                raise InvalidArgumentsException("connection node doesn't support http protocol")
-            client_name = client_name + "_to_node_http_" + str(node_id.http_port)
-            connection_address = node_id.connect_http_address
-        else:
-            if not node_id.is_enable_grpc:
-                raise InvalidArgumentsException("connection node doesn't support grpc protocol")
-            client_name = client_name + "_to_node_grpc_" + str(node_id.grpc_port)
-            connection_address = node_id.connect_grpc_address
+    def create_and_connect_client(self, node_id: Id) -> Client:
+        if not self.is_node_started(node_id):
+            raise InvalidArgumentsException(f"node does not exists: {node_id}")
 
-        client_work_dir = os.path.join(self.dir, client_name)
-        client_file_path = self.__prepare_client_directory(client_work_dir)
-        return LegacyClient(name=client_name, client_file_path=client_file_path, work_dir=client_work_dir,
-                            node_address=connection_address, is_http=is_http, logger=self.logger)
-
-    def __get_http_client(self, node_id: Id) -> HttpClient:
-        if not node_id.is_enable_http:
-            raise InvalidArgumentsException("connection node doesn't support http protocol")
-        client_name = "Client_python_to_node_http_" + str(node_id.http_port)
+        client_name = "Client_to_node_ws_" + str(node_id.websocket_port)
 
         client_work_dir = os.path.join(self.dir, client_name)
         if not os.path.exists(client_work_dir):
@@ -325,32 +239,8 @@ class Env:
         else:
             raise InvalidArgumentsException(f"client directory already exists:{client_work_dir}")
 
-        return HttpClient(name=client_name, work_dir=client_work_dir, connection_address=node_id.connect_http_address,
-                          logger=self.logger)
-
-    def get_client(self, client_type: ClientType, node_id: Id) -> BaseClient:
-        if not self.is_node_started(node_id):
-            raise InvalidArgumentsException(f"node does not exists: {node_id}")
-
-        if not isinstance(client_type, ClientType):
-            raise InvalidArgumentsException("not a client type")
-
-        if client_type == ClientType.LEGACY_GRPC:
-            return self.__get_legacy_client(node_id, False)
-        elif client_type == ClientType.LEGACY_HTTP:
-            return self.__get_legacy_client(node_id, True)
-        elif client_type == ClientType.PYTHON_HTTP:
-            return self.__get_http_client(node_id)
-        else:
-            raise LogicException()
-
-    def get_grpc_client_to_outside_node(self, outside_node_id: Id) -> LegacyClient:
-        connection_address = outside_node_id.connect_grpc_address
-        client_name = "Client_to_node_" + connection_address.split(":")[0] + "_grpc"
-        client_work_dir = os.path.join(self.dir, client_name)
-        client_file_path = self.__prepare_client_directory(client_work_dir)
-        return LegacyClient(name=client_name, client_file_path=client_file_path, work_dir=client_work_dir,
-                            node_address=connection_address, is_http=False, logger=self.logger)
+        return Client(name=client_name, work_dir=client_work_dir, connection_address=node_id.connect_websocket_address,
+                      logger=self.logger)
 
 
 def get_distributor_address_path():

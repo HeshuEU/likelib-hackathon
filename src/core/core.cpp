@@ -1,20 +1,21 @@
 #include "core.hpp"
 
-#include "base/log.hpp"
 #include "vm/error.hpp"
 #include "vm/tools.hpp"
+
+#include "base/log.hpp"
 
 #include <algorithm>
 
 namespace lk
 {
 
-Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
-  : _config{ config }
-  , _vault{ key_vault }
+Core::Core(base::json::Value config)
+  : _config{ std::move(config) }
+  , _vault{ _config["keys_dir"].as_string() }
   , _this_node_address{ _vault.getKey().toPublicKey() }
-  , _blockchain{ getGenesisBlock(), _config }
-  , _host{ _config, 0xFFFF, *this }
+  , _blockchain{ getGenesisBlock(), std::move(_config["database"]) }
+  , _host{ std::move(_config["net"]), 0xFFFF, *this }
   , _vm{ vm::load() }
 {
     _state_manager.updateFromGenesis(getGenesisBlock());
@@ -30,6 +31,7 @@ Core::Core(const base::PropertyTree& config, const base::KeyVault& key_vault)
     subscribeToNewPendingTransaction([this](const lk::Transaction& tx) { _host.broadcast(tx); });
 
     subscribeToBlockMining([this](const ImmutableBlock& block) { _host.broadcastNewBlock(block); });
+    _state_manager.subscribeToAnyAccountUpdate(std::bind(&Core::on_account_updated, this, std::placeholders::_1));
 }
 
 
@@ -41,7 +43,7 @@ const ImmutableBlock& Core::getGenesisBlock()
 
         TransactionsSet txset;
         lk::Address from{ lk::Address::null() };
-        lk::Address to{ "49cfqVfB1gTGw5XZSu6nZDrntLr1" };
+        lk::Address to = initial_emission_address;
         Balance emission_amount = Balance{ 1 } << 32;
         std::uint64_t fee{ 0 };
         txset.add({ from, to, emission_amount, fee, timestamp, base::Bytes{} });
@@ -67,7 +69,7 @@ void Core::run()
 }
 
 
-TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
+void Core::addPendingTransaction(const lk::Transaction& tx)
 {
     auto transaction_hash = tx.hashOfTransaction();
     auto transaction_cost = tx.getAmount() + tx.getFee();
@@ -77,20 +79,17 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
         TransactionStatus status{
             TransactionStatus::StatusCode::BadSign, TransactionStatus::ActionType::None, tx.getFee(), ""
         };
-        addTransactionOutput(transaction_hash, status);
-        return status;
+        return addTransactionOutput(transaction_hash, status);
     }
 
     if (_blockchain.findTransaction(transaction_hash)) {
         auto output_opt = getTransactionOutput(transaction_hash);
-        if (output_opt) {
-            return *output_opt;
+        if (!output_opt) {
+            TransactionStatus status{
+                TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::None, tx.getFee(), ""
+            };
+            return addTransactionOutput(transaction_hash, status);
         }
-        TransactionStatus status{
-            TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::None, tx.getFee(), ""
-        };
-        addTransactionOutput(transaction_hash, status);
-        return status;
     }
 
     std::map<lk::Address, lk::Balance> current_pending_balance;
@@ -100,8 +99,7 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
             TransactionStatus status{
                 TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""
             };
-            addTransactionOutput(transaction_hash, status);
-            return status;
+            return addTransactionOutput(transaction_hash, status);
         }
 
         current_pending_balance = lk::calcCost(_pending_transactions);
@@ -109,13 +107,12 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
 
     const auto& pending_from_account_balance = current_pending_balance.find(tx.getFrom());
     if ((pending_from_account_balance != current_pending_balance.end()) && (_state_manager.hasAccount(tx.getFrom()))) {
-        auto current_account_balance = _state_manager.getAccount(tx.getFrom()).getBalance();
+        auto current_account_balance = _state_manager.getAccountInfo(tx.getFrom()).balance;
         if (pending_from_account_balance->second + transaction_cost < current_account_balance) {
             TransactionStatus status{
                 TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""
             };
-            addTransactionOutput(transaction_hash, status);
-            return status;
+            return addTransactionOutput(transaction_hash, status);
         }
     }
 
@@ -123,8 +120,7 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
         TransactionStatus status{
             TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""
         };
-        addTransactionOutput(transaction_hash, status);
-        return status;
+        return addTransactionOutput(transaction_hash, status);
     }
 
     LOG_DEBUG << "Adding tx to pending:" << transaction_hash;
@@ -137,8 +133,7 @@ TransactionStatus Core::addPendingTransaction(const lk::Transaction& tx)
     TransactionStatus status{
         TransactionStatus::StatusCode::Pending, TransactionStatus::ActionType::None, tx.getFee(), ""
     };
-    addTransactionOutput(transaction_hash, status);
-    return status;
+    return addTransactionOutput(transaction_hash, status);
 }
 
 
@@ -156,13 +151,16 @@ std::optional<TransactionStatus> Core::getTransactionOutput(const base::Sha256& 
 
 void Core::addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status)
 {
-    std::unique_lock lk(_tx_outputs_mutex);
-    if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
-        it->second = status;
+    {
+        std::unique_lock lk(_tx_outputs_mutex);
+        if (auto it = _tx_outputs.find(tx); it != _tx_outputs.end()) {
+            it->second = status;
+        }
+        else {
+            _tx_outputs.insert({ tx, status });
+        }
     }
-    else {
-        _tx_outputs.insert({ tx, status });
-    }
+    _event_transaction_status_update.notify(tx);
 }
 
 
@@ -251,21 +249,7 @@ bool Core::checkBlockTransactions(const ImmutableBlock& block) const
         return false;
     }
 
-    auto block_balance = lk::calcCost(block.getTransactions());
-    for (const auto& tx : block.getTransactions()) {
-        if (_state_manager.hasAccount(tx.getFrom())) {
-            auto current_account_balance = _state_manager.getAccount(tx.getFrom()).getBalance();
-            auto block_account_cost = block_balance.find(tx.getFrom());
-            ASSERT(block_account_cost != block_balance.end());
-            if (block_account_cost->second > current_account_balance) {
-                return false;
-            }
-        }
-        else {
-            return false;
-        }
-    }
-    return true;
+    return _state_manager.checkTransactionsSet(block.getTransactions());
 }
 
 
@@ -305,9 +289,7 @@ std::pair<MutableBlock, lk::Complexity> Core::getMiningData() const
 lk::AccountInfo Core::getAccountInfo(const lk::Address& address) const
 {
     if (_state_manager.hasAccount(address)) {
-        auto info = _state_manager.getAccount(address).toInfo();
-        info.address = address;
-        return info;
+        return _state_manager.getAccountInfo(address);
     }
     return AccountInfo{ AccountType::CLIENT, address, {}, {}, {} };
 }
@@ -334,8 +316,7 @@ const lk::Address& Core::getThisNodeAddress() const noexcept
 void Core::applyBlockTransactions(const ImmutableBlock& block)
 {
     static constexpr lk::Balance EMISSION_VALUE{ base::config::BC_EMISSION_VALUE };
-    _state_manager.getAccount(block.getCoinbase()).addBalance(EMISSION_VALUE);
-
+    _state_manager.applyBlockEmission(block.getCoinbase(), EMISSION_VALUE);
     for (const auto& tx : block.getTransactions()) {
         tryPerformTransaction(tx, block);
     }
@@ -346,178 +327,154 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock
 {
     auto transaction_hash = tx.hashOfTransaction();
     LOG_DEBUG << "Performing transactions with hash " << transaction_hash;
-    _state_manager.getAccount(tx.getFrom()).addTransactionHash(transaction_hash);
-
-    auto tx_manager{ _state_manager.createCopy() }; // TODO: temporary of course, fix it using tree of states
+    _state_manager.addTxHash(tx.getFrom(), transaction_hash);
+    auto commit = _state_manager.createCommit();
 
     if (tx.getTo() == lk::Address::null()) {
         try {
-            tx_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
-
             auto contract_data_hash = base::Sha256::compute(tx.getData());
-            lk::Address contract_address = tx_manager.createContractAccount(tx.getFrom(), contract_data_hash);
+            lk::Address contract_address = commit.createContractAccount(tx.getFrom(), contract_data_hash);
 
-            if (!tx_manager.tryTransferMoney(tx.getFrom(), contract_address, tx.getAmount())) {
+            if (!commit.tryTransferMoney(tx.getFrom(), contract_address, tx.getAmount())) {
                 TransactionStatus status(TransactionStatus::StatusCode::NotEnoughBalance,
                                          TransactionStatus::ActionType::ContractCreation,
                                          tx.getFee(),
                                          {});
-                addTransactionOutput(transaction_hash, status);
-                return;
+                return addTransactionOutput(transaction_hash, status);
             }
 
-            auto eval_result = callInitContractVm(tx_manager, block_where_tx, tx, contract_address, tx.getData());
+            auto eval_result = callInitContractVm(commit, block_where_tx, tx, contract_address, tx.getData());
 
             if (eval_result.status_code == evmc_status_code::EVMC_SUCCESS) {
                 auto runtime_code = vm::copy(eval_result.output_data, eval_result.output_size);
-                tx_manager.getAccount(contract_address).setRuntimeCode(runtime_code);
+                commit.setRuntimeCode(contract_address, runtime_code);
                 LOG_DEBUG << "Deployed contract to address "
                           << base::base58Encode(contract_address.getBytes().toBytes());
+
+                _state_manager.applyCommit(std::move(commit));
+                _state_manager.payFee(tx.getFrom(), block_where_tx.getCoinbase(), tx.getFee() - eval_result.gas_left);
+
                 TransactionStatus status(TransactionStatus::StatusCode::Success,
                                          TransactionStatus::ActionType::ContractCreation,
                                          eval_result.gas_left,
                                          base::base58Encode(contract_address.getBytes()));
-
-                addTransactionOutput(transaction_hash, status);
-                tx_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - eval_result.gas_left);
-                tx_manager.getAccount(tx.getFrom()).addBalance(eval_result.gas_left);
-
-                _state_manager.applyChanges(std::move(tx_manager));
-
-                return;
+                return addTransactionOutput(transaction_hash, status);
             }
             else if (eval_result.status_code == evmc_status_code::EVMC_REVERT) {
+                _state_manager.payFee(tx.getFrom(), block_where_tx.getCoinbase(), tx.getFee() - eval_result.gas_left);
+
                 TransactionStatus status(TransactionStatus::StatusCode::Revert,
                                          TransactionStatus::ActionType::ContractCreation,
                                          eval_result.gas_left,
-                                         "");
-
-                addTransactionOutput(transaction_hash, status);
-                _state_manager.getAccount(tx.getFrom()).subBalance(eval_result.gas_left);
-                _state_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - eval_result.gas_left);
-                return;
+                                         {});
+                return addTransactionOutput(transaction_hash, status);
             }
             else {
+                _state_manager.payFee(tx.getFrom(), block_where_tx.getCoinbase(), tx.getFee() - eval_result.gas_left);
+
                 TransactionStatus status(TransactionStatus::StatusCode::BadQueryForm,
                                          TransactionStatus::ActionType::ContractCreation,
                                          eval_result.gas_left,
-                                         "");
-                addTransactionOutput(transaction_hash, status);
-                _state_manager.getAccount(tx.getFrom()).subBalance(eval_result.gas_left);
-                _state_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - eval_result.gas_left);
-                return;
+                                         {});
+                return addTransactionOutput(transaction_hash, status);
             }
             ASSERT(false);
         }
         catch (const base::Error&) {
             TransactionStatus status(
-              TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::ContractCreation, tx.getFee(), "");
-            addTransactionOutput(transaction_hash, status);
-            return;
+              TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::ContractCreation, tx.getFee(), {});
+            return addTransactionOutput(transaction_hash, status);
         }
         ASSERT(false);
     }
     else {
-        lk::AccountState to_account_recovery{ _state_manager.getAccount(tx.getTo()) };
-
-        tx_manager.getAccount(tx.getFrom()).subBalance(tx.getFee());
-
-        if (tx_manager.getAccount(tx.getTo()).getType() == AccountType::CONTRACT) {
+        if (commit.hasAccount(tx.getTo()) && commit.getAccountType(tx.getTo()) == AccountType::CONTRACT) {
             try {
-
                 if (tx.getData().isEmpty()) {
                     TransactionStatus status(TransactionStatus::StatusCode::BadQueryForm,
                                              TransactionStatus::ActionType::ContractCall,
                                              tx.getFee(),
-                                             "");
-                    addTransactionOutput(transaction_hash, status);
-                    return;
+                                             {});
+                    return addTransactionOutput(transaction_hash, status);
                 }
 
-                if (tx.getAmount() > 0 && !tx_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
+                if (tx.getAmount() > 0 && !commit.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
                     TransactionStatus status(TransactionStatus::StatusCode::NotEnoughBalance,
                                              TransactionStatus::ActionType::ContractCall,
                                              tx.getFee(),
                                              {});
-                    addTransactionOutput(transaction_hash, status);
-                    return;
+                    return addTransactionOutput(transaction_hash, status);
                 }
 
-                auto code = tx_manager.getAccount(tx.getTo()).getRuntimeCode();
-                auto eval_result = callContractVm(tx_manager, block_where_tx, tx, code, tx.getData());
-
+                auto code = commit.getRuntimeCode(tx.getTo());
+                auto eval_result = callContractVm(commit, block_where_tx, tx, code, tx.getData());
 
                 if (eval_result.status_code == evmc_status_code::EVMC_SUCCESS) {
                     auto output_data = vm::copy(eval_result.output_data, eval_result.output_size);
-                    if(!output_data.isEmpty()){
+                    if (!output_data.isEmpty()) {
                         output_data = tx.getData().takePart(0, 4).append(output_data);
                     }
+
+                    _state_manager.payFee(
+                      tx.getFrom(), block_where_tx.getCoinbase(), tx.getFee() - eval_result.gas_left);
+                    _state_manager.applyCommit(std::move(commit));
 
                     TransactionStatus status(TransactionStatus::StatusCode::Success,
                                              TransactionStatus::ActionType::ContractCall,
                                              eval_result.gas_left,
                                              base::base64Encode(output_data));
-
-                    addTransactionOutput(transaction_hash, status);
-                    tx_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee() - eval_result.gas_left);
-                    tx_manager.getAccount(tx.getFrom()).addBalance(eval_result.gas_left);
-                    _state_manager.applyChanges(std::move(tx_manager));
-                    return;
+                    return addTransactionOutput(transaction_hash, status);
                 }
                 else if (eval_result.status_code == evmc_status_code::EVMC_REVERT) {
+                    _state_manager.payFee(
+                      tx.getFrom(), block_where_tx.getCoinbase(), tx.getFee() - eval_result.gas_left);
+
                     TransactionStatus status(TransactionStatus::StatusCode::Revert,
                                              TransactionStatus::ActionType::ContractCall,
                                              eval_result.gas_left,
-                                             "");
-
-                    addTransactionOutput(transaction_hash, status);
-                    _state_manager.getAccount(tx.getFrom()).subBalance(eval_result.gas_left);
-                    _state_manager.getAccount(block_where_tx.getCoinbase())
-                      .addBalance(tx.getFee() - eval_result.gas_left);
-                    return;
+                                             {});
+                    return addTransactionOutput(transaction_hash, status);
                 }
                 else {
+                    _state_manager.payFee(
+                      tx.getFrom(), block_where_tx.getCoinbase(), tx.getFee() - eval_result.gas_left);
+
                     TransactionStatus status(TransactionStatus::StatusCode::BadQueryForm,
                                              TransactionStatus::ActionType::ContractCall,
                                              eval_result.gas_left,
-                                             "");
-                    addTransactionOutput(transaction_hash, status);
-                    _state_manager.getAccount(tx.getFrom()).subBalance(eval_result.gas_left);
-                    _state_manager.getAccount(block_where_tx.getCoinbase())
-                      .addBalance(tx.getFee() - eval_result.gas_left);
-                    return;
+                                             {});
+                    return addTransactionOutput(transaction_hash, status);
                 }
             }
             catch (const base::Error&) {
                 TransactionStatus status(
-                  TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::ContractCall, tx.getFee(), "");
+                  TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::ContractCall, tx.getFee(), {});
                 addTransactionOutput(transaction_hash, status);
                 return;
             }
         }
         else {
             try {
-                if (!tx_manager.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
+                _state_manager.payFee(tx.getFrom(), block_where_tx.getCoinbase(), tx.getFee());
+                if (!commit.tryTransferMoney(tx.getFrom(), tx.getTo(), tx.getAmount())) {
                     TransactionStatus status(TransactionStatus::StatusCode::NotEnoughBalance,
                                              TransactionStatus::ActionType::Transfer,
                                              tx.getFee(),
                                              {});
-                    addTransactionOutput(transaction_hash, status);
-                    return;
+                    return addTransactionOutput(transaction_hash, status);
                 }
+                _state_manager.applyCommit(std::move(commit));
+
                 TransactionStatus status(
                   TransactionStatus::StatusCode::Success, TransactionStatus::ActionType::Transfer, 0, {});
 
-                addTransactionOutput(transaction_hash, status);
-                tx_manager.getAccount(block_where_tx.getCoinbase()).addBalance(tx.getFee());
-                _state_manager.applyChanges(std::move(tx_manager));
-                return;
+                return addTransactionOutput(transaction_hash, status);
             }
-            catch (const base::Error&) {
+            catch (const base::Error& er) {
                 TransactionStatus status(
-                  TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::Transfer, tx.getFee(), "");
-                addTransactionOutput(transaction_hash, status);
-                return;
+                  TransactionStatus::StatusCode::Failed, TransactionStatus::ActionType::Transfer, tx.getFee(), {});
+
+                return addTransactionOutput(transaction_hash, status);
             }
         }
         ASSERT(false);
@@ -526,7 +483,13 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock
 }
 
 
-evmc::result Core::callInitContractVm(StateManager& state_manager,
+void Core::on_account_updated(lk::Address address)
+{
+    _event_account_update.notify(address);
+}
+
+
+evmc::result Core::callInitContractVm(Commit& current_commit,
                                       const ImmutableBlock& associated_block,
                                       const Transaction& tx,
                                       const Address& contract_address,
@@ -541,11 +504,11 @@ evmc::result Core::callInitContractVm(StateManager& state_manager,
     message.destination = vm::toEthAddress(contract_address);
     message.value = vm::toEvmcUint256(tx.getAmount());
     message.create2_salt = evmc_bytes32();
-    return callVm(state_manager, associated_block, tx, message, code);
+    return callVm(current_commit, associated_block, tx, message, code);
 }
 
 
-evmc::result Core::callContractVm(StateManager& state_manager,
+evmc::result Core::callContractVm(Commit& current_commit,
                                   const ImmutableBlock& associated_block,
                                   const Transaction& tx,
                                   const base::Bytes& code,
@@ -561,24 +524,24 @@ evmc::result Core::callContractVm(StateManager& state_manager,
     message.value = vm::toEvmcUint256(tx.getAmount());
     message.input_data = message_data.getData();
     message.input_size = message_data.size();
-    return callVm(state_manager, associated_block, tx, message, code);
+    return callVm(current_commit, associated_block, tx, message, code);
 }
 
 
-evmc::result Core::callVm(StateManager& state_manager,
+evmc::result Core::callVm(Commit& current_commit,
                           const ImmutableBlock& associated_block,
                           const lk::Transaction& associated_tx,
                           const evmc_message& message,
                           const base::Bytes& code)
 {
-    EthHost _eth_host{ *this, state_manager, associated_block, associated_tx };
+    EthHost _eth_host{ *this, current_commit, associated_block, associated_tx };
     return _vm.execute(_eth_host, evmc_revision::EVMC_ISTANBUL, message, code.getData(), code.size());
 }
 
 
-void Core::subscribeToBlockAddition(decltype(Core::_event_block_added)::CallbackType callback)
+void Core::subscribeToBlockAddition(decltype(Core::_event_block_mined)::CallbackType callback)
 {
-    _event_block_added.subscribe(std::move(callback));
+    _event_block_mined.subscribe(std::move(callback));
 }
 
 
@@ -594,12 +557,25 @@ void Core::subscribeToNewPendingTransaction(decltype(Core::_event_new_pending_tr
 }
 
 
+void Core::subscribeToAnyTransactionStatusUpdate(
+  decltype(Core::_event_transaction_status_update)::CallbackType callback)
+{
+    _event_transaction_status_update.subscribe(std::move(callback));
+}
+
+
+void Core::subscribeToAnyAccountUpdate(decltype(Core::_event_account_update)::CallbackType callback)
+{
+    _event_account_update.subscribe(std::move(callback));
+}
+
+
 EthHost::EthHost(lk::Core& core,
-                 lk::StateManager& state_manager,
+                 lk::Commit& current_commit,
                  const ImmutableBlock& associated_block,
                  const lk::Transaction& associated_tx)
   : _core{ core }
-  , _state_manager{ state_manager }
+  , _current_commit{ current_commit }
   , _associated_block{ associated_block }
   , _associated_tx{ associated_tx }
 {}
@@ -611,7 +587,7 @@ bool EthHost::account_exists(const evmc::address& addr) const noexcept
     try {
         auto address = vm::toNativeAddress(addr);
         LOG_DEBUG << "Core::account_exists by address " << base::base58Encode(address.getBytes().toBytes());
-        return _state_manager.hasAccount(address);
+        return _current_commit.hasAccount(address);
     }
     catch (...) { // cannot pass exceptions since noexcept
         return false;
@@ -627,8 +603,8 @@ evmc::bytes32 EthHost::get_storage(const evmc::address& addr, const evmc::bytes3
         auto address = vm::toNativeAddress(addr);
         LOG_DEBUG << "Core::get_storage from address " << base::base58Encode(address.getBytes().toBytes());
         base::Bytes key(ethKey.bytes, 32);
-        if (_state_manager.hasAccount(address)) {
-            auto storage_value = _state_manager.getAccount(address).getStorageValue(base::Sha256(key)).data;
+        if (_current_commit.hasAccount(address)) {
+            auto storage_value = _current_commit.getStorageValue(address, base::Sha256(key)).data;
             return vm::toEvmcBytes32(storage_value);
         }
         return {};
@@ -651,22 +627,20 @@ evmc_storage_status EthHost::set_storage(const evmc::address& addr,
         auto key = base::Sha256(base::Bytes(ekey.bytes, 32));
         base::Bytes new_value(evalue.bytes, 32);
 
-        auto& account_state = _state_manager.getAccount(address);
-
-        if (!account_state.checkStorageValue(key)) {
+        if (!_current_commit.checkStorageValue(address, key)) {
             if (new_value == NULL_VALUE) {
                 return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
             }
             else {
-                account_state.setStorageValue(key, new_value);
+                _current_commit.setStorageValue(address, key, new_value);
                 return evmc_storage_status::EVMC_STORAGE_ADDED;
             }
         }
         else {
-            auto old_storage_data = account_state.getStorageValue(key);
+            auto old_storage_data = _current_commit.getStorageValue(address, key);
             const auto& old_value = old_storage_data.data;
 
-            account_state.setStorageValue(key, new_value);
+            _current_commit.setStorageValue(address, key, new_value);
             if (old_value == new_value) {
                 return evmc_storage_status::EVMC_STORAGE_UNCHANGED;
             }
@@ -690,8 +664,8 @@ evmc::uint256be EthHost::get_balance(const evmc::address& addr) const noexcept
     try {
         auto address = vm::toNativeAddress(addr);
         LOG_DEBUG << "Core::get_balance to address " << base::base58Encode(address.getBytes().toBytes());
-        if (_state_manager.hasAccount(address)) {
-            auto balance = _state_manager.getAccount(address).getBalance();
+        if (_current_commit.hasAccount(address)) {
+            auto balance = _current_commit.getBalance(address);
             return vm::toEvmcUint256(balance);
         }
         return {};
@@ -709,10 +683,8 @@ size_t EthHost::get_code_size(const evmc::address& addr) const noexcept
         auto address = vm::toNativeAddress(addr);
         LOG_DEBUG << "Core::get_code_size to address " << base::base58Encode(address.getBytes().toBytes());
 
-        if (_state_manager.hasAccount(address)) {
-            auto account = _state_manager.getAccount(address);
-            const auto& code = _state_manager.getAccount(address).getRuntimeCode();
-            return code.size();
+        if (_current_commit.hasAccount(address)) {
+            return _current_commit.getCodeSize(address);
         }
         return 0;
     }
@@ -728,7 +700,7 @@ evmc::bytes32 EthHost::get_code_hash(const evmc::address& addr) const noexcept
     try {
         auto address = vm::toNativeAddress(addr);
         LOG_DEBUG << "Core::get_code_hash to address " << base::base58Encode(address.getBytes().toBytes());
-        auto account_code_hash = _state_manager.getAccount(address).getCodeHash();
+        auto account_code_hash = _current_commit.getCodeHash(address);
         return vm::toEvmcBytes32(account_code_hash.getBytes());
     }
     catch (...) { // cannot pass exceptions since noexcept
@@ -737,14 +709,16 @@ evmc::bytes32 EthHost::get_code_hash(const evmc::address& addr) const noexcept
 }
 
 
-size_t EthHost::copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-  noexcept
+size_t EthHost::copy_code(const evmc::address& addr,
+                          size_t code_offset,
+                          uint8_t* buffer_data,
+                          size_t buffer_size) const noexcept
 {
     LOG_DEBUG << "Core::copy_code";
     try {
         auto address = vm::toNativeAddress(addr);
         LOG_DEBUG << "Core::copy_code to address " << base::base58Encode(address.getBytes().toBytes());
-        if (auto code = _state_manager.getAccount(address).getRuntimeCode(); code.isEmpty()) {
+        if (auto code = _current_commit.getRuntimeCode(address); code.isEmpty()) {
             return 0;
         }
         else {
@@ -765,13 +739,8 @@ void EthHost::selfdestruct(const evmc::address& eaddr, const evmc::address& eben
     try {
         auto address = vm::toNativeAddress(eaddr);
         LOG_DEBUG << "Core::selfdestruct to address " << base::base58Encode(address.getBytes().toBytes());
-        auto account = _state_manager.getAccount(address);
-
         auto beneficiary_address = vm::toNativeAddress(ebeneficiary);
-        auto beneficiary_account = _state_manager.getAccount(beneficiary_address);
-
-        _state_manager.tryTransferMoney(address, beneficiary_address, account.getBalance());
-        _state_manager.deleteAccount(address);
+        _current_commit.deleteAccount(address, beneficiary_address);
     }
     catch (...) { // cannot pass exceptions since noexcept
         return;
@@ -785,13 +754,13 @@ evmc::result EthHost::call(const evmc_message& msg) noexcept
     try {
         lk::Address to = vm::toNativeAddress(msg.destination);
         LOG_DEBUG << "Core::call to address " << base::base58Encode(to.getBytes().toBytes());
-        if (_state_manager.hasAccount(to) && _state_manager.getAccount(to).getType() == lk::AccountType::CONTRACT) {
-            const auto& code = _state_manager.getAccount(to).getRuntimeCode();
-            return _core.callVm(_state_manager, _associated_block, _associated_tx, msg, code);
+        if (_current_commit.hasAccount(to) && _current_commit.getAccountType(to) == lk::AccountType::CONTRACT) {
+            const auto& code = _current_commit.getRuntimeCode(to);
+            return _core.callVm(_current_commit, _associated_block, _associated_tx, msg, code);
         }
         else {
             lk::Address from = vm::toNativeAddress(msg.sender);
-            _state_manager.tryTransferMoney(from, to, vm::toBalance(msg.value));
+            _current_commit.tryTransferMoney(from, to, vm::toBalance(msg.value));
             evmc::result result{ evmc_status_code::EVMC_SUCCESS, msg.gas, nullptr, 0 };
             return result;
         }
@@ -840,7 +809,11 @@ evmc::bytes32 EthHost::get_block_hash(int64_t block_number) const noexcept
 }
 
 
-void EthHost::emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept
+void EthHost::emit_log([[maybe_unused]] const evmc::address&,
+                       [[maybe_unused]] const uint8_t*,
+                       [[maybe_unused]] size_t,
+                       [[maybe_unused]] const evmc::bytes32[],
+                       [[maybe_unused]] size_t) noexcept
 {
     LOG_DEBUG << "Core::emit_log";
     LOG_WARNING << "emit_log is denied. For more information, see docs";

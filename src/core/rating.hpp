@@ -1,12 +1,12 @@
 #pragma once
 
+#include "net/endpoint.hpp"
+
 #include "base/bytes.hpp"
 #include "base/config.hpp"
 #include "base/database.hpp"
-#include "base/property_tree.hpp"
 #include "base/serialization.hpp"
 #include "base/time.hpp"
-#include "net/endpoint.hpp"
 
 #include <cstdint>
 #include <type_traits>
@@ -56,7 +56,7 @@ class Rating
 class RatingManager
 {
   public:
-    RatingManager(const base::PropertyTree& config);
+    RatingManager(const base::Directory& db_path);
 
     Rating get(const net::Endpoint& ep);
 

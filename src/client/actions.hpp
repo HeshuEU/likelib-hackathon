@@ -1,328 +1,60 @@
 #pragma once
 
-#include "client/subprogram_router.hpp"
+#include "websocket/client.hpp"
+#include "websocket/tools.hpp"
 
 #include "core/address.hpp"
 #include "core/types.hpp"
 
 #include <string_view>
 
+void compile_solidity_code(std::ostream& output, const std::string& code_file_path);
 
-class ActionBase
-{
-  public:
-    //====================================
-    explicit ActionBase(base::SubprogramRouter& router);
-    virtual ~ActionBase() = default;
-    //====================================
-    virtual const std::string_view& getName() const = 0;
-    virtual void setupOptionsParser(base::ProgramOptionsParser& parser) = 0;
-    virtual int loadOptions(const base::ProgramOptionsParser& parser) = 0;
-    virtual int execute() = 0;
-    //====================================
-    int run();
-    //====================================
-  protected:
-    base::SubprogramRouter& _router;
-};
+void encode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message);
 
+void decode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message);
 
-class ActionTestConnection : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionTestConnection(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    bool _is_http_mode{ false };
-    //====================================
-};
+void generate_keys(std::ostream& output, const std::string& path);
 
+void keys_info(std::ostream& output, const std::string& path);
 
-class ActionNodeInfo : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionNodeInfo(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    bool _is_http_mode{ false };
-    //====================================
-};
+void call_last_block_info(websocket::WebSocketClient& client);
 
+void call_account_info(websocket::WebSocketClient& client, const lk::Address& address);
 
-class ActionGenerateKeys : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionGenerateKeys(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::filesystem::path _keys_dir;
-    //====================================
-};
+void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address);
 
+void unsubscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address);
 
-class ActionKeysInfo : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionKeysInfo(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::filesystem::path _keys_dir;
-    //====================================
-};
+void call_find_transaction(websocket::WebSocketClient& client, const base::Sha256& hash);
 
+void call_find_transaction_status(websocket::WebSocketClient& client, const base::Sha256& hash);
 
-class ActionGetBalance : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionGetBalance(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    lk::Address _account_address{ lk::Address::null() };
-    bool _is_http_mode{ false };
-    //====================================
-};
+void call_find_block(websocket::WebSocketClient& client, const base::Sha256& hash);
 
+void transfer(std::ostream& output,
+              websocket::WebSocketClient& client,
+              const lk::Address& to_address,
+              const lk::Balance& amount,
+              const lk::Fee& fee,
+              const std::filesystem::path& keys_dir);
 
-class ActionGetAccountInfo : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionGetAccountInfo(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    lk::Address _account_address{ lk::Address::null() };
-    bool _is_http_mode{ false };
-    //====================================
-};
+void contract_call(std::ostream& output,
+                   websocket::WebSocketClient& client,
+                   const lk::Address& to_address,
+                   const lk::Balance& amount,
+                   const lk::Fee& fee,
+                   const std::filesystem::path& keys_dir,
+                   const std::string& message);
 
+void push_contract(std::ostream& output,
+                   websocket::WebSocketClient& client,
+                   const lk::Balance& amount,
+                   const lk::Fee& fee,
+                   const std::filesystem::path& keys_dir,
+                   const std::filesystem::path& path_to_compiled_folder,
+                   const std::string& message);
 
-class ActionCompile : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionCompile(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::filesystem::path _code_file_path;
-    //====================================
-};
+void subscribe_last_block_info(websocket::WebSocketClient& client);
 
-
-class ActionEncode : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionEncode(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::filesystem::path _compiled_code_folder_path;
-    std::string _call_data;
-    //====================================
-};
-
-
-class ActionDecode : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionDecode(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::filesystem::path _compiled_code_folder_path;
-    std::string _data_to_decode;
-    //====================================
-};
-
-
-class ActionTransfer : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionTransfer(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    lk::Address _to_address{ lk::Address::null() };
-    lk::Balance _amount;
-    std::uint64_t _fee;
-    std::filesystem::path _keys_dir;
-    bool _is_http_mode{ false };
-    //====================================
-};
-
-
-class ActionPushContract : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionPushContract(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    std::filesystem::path _keys_dir;
-    lk::Balance _amount;
-    std::uint64_t _fee;
-    base::Bytes _message;
-    bool _is_http_mode{ false };
-    //====================================
-};
-
-
-class ActionContractCall : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionContractCall(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    lk::Address _to_address{ lk::Address::null() };
-    lk::Balance _amount;
-    std::uint64_t _fee;
-    std::filesystem::path _keys_dir;
-    std::string _message;
-    bool _is_http_mode{ false };
-    //====================================
-};
-
-
-class ActionGetTransaction : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionGetTransaction(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    base::Sha256 _transaction_hash{ base::Sha256::null() };
-    bool _is_http_mode{ false };
-    //====================================
-};
-
-
-class ActionGetTransactionStatus : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionGetTransactionStatus(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    base::Sha256 _transaction_hash{ base::Sha256::null() };
-    bool _is_http_mode{ false };
-    //====================================
-};
-
-
-class ActionGetBlock : public ActionBase
-{
-  public:
-    //====================================
-    explicit ActionGetBlock(base::SubprogramRouter& router);
-    //====================================
-    const std::string_view& getName() const override;
-    void setupOptionsParser(base::ProgramOptionsParser& parser) override;
-    int loadOptions(const base::ProgramOptionsParser& parser) override;
-    int execute() override;
-    //====================================
-  private:
-    //====================================
-    std::string _host_address;
-    base::Sha256 _block_hash{ base::Sha256::null() };
-    std::uint64_t _block_number;
-    bool _is_http_mode{ false };
-    //====================================
-};
+void unsubscribe_last_block_info(websocket::WebSocketClient& client);

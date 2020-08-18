@@ -1,13 +1,15 @@
 #pragma once
 
-#include "base/database.hpp"
-#include "base/property_tree.hpp"
-#include "core/block.hpp"
-#include "core/peer.hpp"
-#include "core/rating.hpp"
 #include "net/acceptor.hpp"
 #include "net/connector.hpp"
 #include "net/session.hpp"
+
+#include "core/block.hpp"
+#include "core/peer.hpp"
+#include "core/rating.hpp"
+
+#include "base/database.hpp"
+#include "base/json.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -110,7 +112,7 @@ class Host
 {
   public:
     //=================================
-    explicit Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core);
+    explicit Host(base::json::Value config, std::size_t connections_limit, lk::Core& core);
     ~Host();
     //=================================
     void checkOutPeer(const net::Endpoint& endpoint, const lk::Address& address = lk::Address::null());
@@ -133,7 +135,7 @@ class Host
     //=================================
   private:
     //=================================
-    const base::PropertyTree& _config;
+    base::json::Value _config;
     //=================================
     const net::Endpoint _listen_ip;
     const unsigned short _server_public_port;
@@ -145,7 +147,7 @@ class Host
     std::thread _network_thread;
     void networkThreadWorkerFunction() noexcept;
     //=================================
-    RatingManager _rating_manager{ _config };
+    RatingManager _rating_manager;
 
     BasicPeerPool _non_handshaked_peers;
     KademliaPeerPool _handshaked_peers;

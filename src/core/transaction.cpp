@@ -110,7 +110,7 @@ bool Transaction::operator!=(const Transaction& other) const
 
 base::Sha256 Transaction::hashOfTransaction() const
 {
-    // see http_specification.md
+    // see public_interface.md
     auto from_address_str = base::base58Encode(_from.getBytes());
     auto to_address_str = base::base58Encode(_to.getBytes());
     auto amount_str = _amount.str();

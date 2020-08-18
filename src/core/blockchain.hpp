@@ -1,12 +1,13 @@
 #pragma once
 
-#include "base/database.hpp"
-#include "base/property_tree.hpp"
-#include "base/utility.hpp"
 #include "core/block.hpp"
 #include "core/consensus.hpp"
 #include "core/transaction.hpp"
 #include "core/transactions_set.hpp"
+
+#include "base/database.hpp"
+#include "base/json.hpp"
+#include "base/utility.hpp"
 
 #include <shared_mutex>
 #include <unordered_map>
@@ -53,7 +54,7 @@ class Blockchain : public IBlockchain
 {
   public:
     //===================
-    Blockchain(ImmutableBlock genesis_block, const base::PropertyTree& config);
+    Blockchain(ImmutableBlock genesis_block);
     Blockchain(const Blockchain&) = delete;
     Blockchain(Blockchain&&) = delete;
     ~Blockchain() override = default;
@@ -70,8 +71,6 @@ class Blockchain : public IBlockchain
     base::Sha256 getTopBlockHash() const override;
     //===================
   private:
-    //===================
-    const base::PropertyTree& _config;
     //===================
     std::unordered_map<base::Sha256, const ImmutableBlock> _blocks;
     std::map<lk::BlockDepth, base::Sha256> _blocks_by_depth;
@@ -99,7 +98,7 @@ class PersistentBlockchain : public Blockchain
 {
   public:
     //===================
-    PersistentBlockchain(ImmutableBlock genesis_block, const base::PropertyTree& config);
+    PersistentBlockchain(ImmutableBlock genesis_block, base::json::Value config);
     PersistentBlockchain(const Blockchain&) = delete;
     PersistentBlockchain(Blockchain&&) = delete;
     ~PersistentBlockchain() override = default;

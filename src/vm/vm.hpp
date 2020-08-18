@@ -4,7 +4,7 @@
 #include "core/types.hpp"
 
 #include "base/bytes.hpp"
-#include "base/property_tree.hpp"
+#include "base/json.hpp"
 
 #include <evmc/evmc.hpp>
 
@@ -20,14 +20,14 @@ struct CompiledContract
 {
     std::string name;
     base::Bytes code;
-    base::PropertyTree metadata;
+    base::json::Value metadata;
 
     explicit CompiledContract() = default;
-    explicit CompiledContract(std::string _name);
+    explicit CompiledContract(const std::string& _name);
     explicit CompiledContract(const CompiledContract&) = default;
     explicit CompiledContract(CompiledContract&&) = default;
     ~CompiledContract() = default;
-    CompiledContract& operator=(const CompiledContract&) = default;
+    CompiledContract& operator=(const CompiledContract&) = delete;
     CompiledContract& operator=(CompiledContract&&) = default;
 };
 

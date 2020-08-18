@@ -5,18 +5,18 @@
 #include <random>
 #include <utility>
 
-
 namespace
 {
 
-std::size_t calcThreadsNum(const base::PropertyTree& config)
+std::size_t calcThreadsNum(base::json::Value config)
 {
-    if (config.hasKey("miner.threads")) {
-        return config.get<std::size_t>("miner.threads");
+    if (config.has_number_field("threads")) {
+        auto threads_value = config["threads"].as_number();
+        if (threads_value.is_uint64()) {
+            return threads_value.to_uint64();
+        }
     }
-    else {
-        return std::thread::hardware_concurrency();
-    }
+    return std::thread::hardware_concurrency();
 }
 
 } // namespace
@@ -108,11 +108,11 @@ class MinerWorker
 } // namespace impl
 
 
-Miner::Miner(const base::PropertyTree& config, Miner::HandlerType handler)
+Miner::Miner(base::json::Value config, Miner::HandlerType handler)
   : _common_state{ { impl::Task::NONE, std::nullopt, std::nullopt }, std::move(handler) }
 {
     // setting up threads
-    std::size_t num_threads = calcThreadsNum(config);
+    std::size_t num_threads = calcThreadsNum(std::move(config));
 
     for (std::size_t i = 0; i < num_threads; ++i) {
         _workers.emplace_front(_common_state);

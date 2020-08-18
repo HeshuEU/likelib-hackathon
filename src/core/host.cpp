@@ -253,12 +253,13 @@ bool KademliaPeerPool::hasPeerWithEndpoint(const net::Endpoint& endpoint) const
 }
 
 
-Host::Host(const base::PropertyTree& config, std::size_t connections_limit, lk::Core& core)
-  : _config{ config }
-  , _listen_ip{ _config.get<std::string>("net.listen_addr") }
-  , _server_public_port{ _config.get<unsigned short>("net.public_port") }
+Host::Host(base::json::Value config, std::size_t connections_limit, lk::Core& core)
+  : _config{ std::move(config) }
+  , _listen_ip{ _config["listen_addr"].as_string() }
+  , _server_public_port{ static_cast<unsigned short>(_config["public_port"].as_number().to_uint32()) }
   , _max_connections_number{ connections_limit }
   , _core{ core }
+  , _rating_manager{ _config["peers_db"].as_string() }
   , _handshaked_peers{ core.getThisNodeAddress() }
   , _heartbeat_timer{ _io_context }
   , _acceptor{ _io_context, _listen_ip }
@@ -409,9 +410,9 @@ void Host::run()
 
 void Host::bootstrap()
 {
-    if (_config.hasKey("nodes")) {
-        for (const auto& node : _config.getVector<std::string>("nodes")) {
-            checkOutPeer(net::Endpoint(node));
+    if (_config.has_array_field("nodes")) {
+        for (const auto& node : _config["nodes"].as_array()) {
+            checkOutPeer(net::Endpoint(node.as_string()));
         }
     }
 }

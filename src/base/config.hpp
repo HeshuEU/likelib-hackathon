@@ -89,8 +89,9 @@ constexpr std::size_t BC_MAXIMAL_CHANGE_MULTIPLIER = 1'000'000'000; // times com
 constexpr std::size_t BC_EMISSION_VALUE = 1000;
 //------------------------
 
-// rpc
-constexpr const std::uint32_t RPC_PUBLIC_API_VERSION = 1;
+// websocket
+constexpr std::uint32_t PUBLIC_SERVICE_API_VERSION = 1;
+constexpr std::size_t PUBLIC_SERVICE_MESSAGE_BUFFER_SIZE = 16 * 1024; // 16KB
 //--------------------
 
 // database

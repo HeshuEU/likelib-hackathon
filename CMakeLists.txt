@@ -19,7 +19,6 @@ include_directories(SYSTEM "/usr/lib/gcc/x86_64-linux-gnu/9/include/")
 # add conan package manager
 include(cmake/conan.cmake)
 conan_cmake_run(CONANFILE cmake/conanfile.txt BASIC_SETUP CMAKE_TARGETS BUILD missing)
-SET(CMAKE_FIND_LIBRARY_SUFFIXES .a)
 #==========================
 
 # adding cmake modules
@@ -31,7 +30,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost REQUIRED COMPONENTS system exception log log_setup program_options serialization unit_test_framework)
+find_package(Boost REQUIRED COMPONENTS system exception log log_setup program_options serialization unit_test_framework thread)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 #==========================
@@ -46,20 +45,9 @@ find_package(leveldb CONFIG REQUIRED)
 
 #==========================
 
-# adding GrpcLib and ProtoC to project. For details see cmake/FindGrpcCppLib.cmake
-find_package(GrpcCppLib REQUIRED)
-
-#==========================
-
-# add cpprestsdk
-set(cpprestsdk_DIR /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/cmake/)
-
-find_package(cpprestsdk REQUIRED) # todo using conan
-
-#==========================
-
+# adding Secp256k1 to project
 find_package(Secp256k1 REQUIRED)
-include_directories(${SECP256K1_INCLUDE_DIR})
+include_directories(SYSTEM ${SECP256K1_INCLUDE_DIR})
 
 #==========================
 

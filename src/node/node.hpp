@@ -1,29 +1,24 @@
 #pragma once
 
-#include "node/miner.hpp"
-#include "node/rpc_service.hpp"
+#include "miner.hpp"
+#include "public_service.hpp"
 
 #include "core/core.hpp"
 
-#include "rpc/rpc.hpp"
-
 #include "base/crypto.hpp"
-#include "base/property_tree.hpp"
 
 class Node
 {
   public:
-    explicit Node(const base::PropertyTree& config);
+    explicit Node(base::json::Value config);
     void run();
 
   private:
     //---------------------------
-    const base::PropertyTree& _config;
-    //---------------------------
-    base::KeyVault _key_vault;
+    base::json::Value _config;
     //---------------------------
     lk::Core _core;
-    std::unique_ptr<rpc::BaseRpcServer> _rpc;
+    PublicService _public_service;
     //---------------------------
     std::unique_ptr<Miner> _miner;
     //---------------------------

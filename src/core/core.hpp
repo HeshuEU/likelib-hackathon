@@ -1,7 +1,6 @@
 #pragma once
 
 #include "base/crypto.hpp"
-#include "base/property_tree.hpp"
 #include "base/utility.hpp"
 #include "core/block.hpp"
 #include "core/blockchain.hpp"
@@ -23,7 +22,7 @@ class Core
 
   public:
     //==================
-    Core(const base::PropertyTree& config, const base::KeyVault& vault);
+    Core(base::json::Value config);
 
     /**
      *  @brief Stops network, does cleaning and flushing.
@@ -42,7 +41,7 @@ class Core
     //==================
     lk::AccountInfo getAccountInfo(const lk::Address& address) const;
     //==================
-    TransactionStatus addPendingTransaction(const lk::Transaction& tx);
+    void addPendingTransaction(const lk::Transaction& tx);
     //==================
     std::optional<TransactionStatus> getTransactionOutput(const base::Sha256& tx_hash);
     void addTransactionOutput(const base::Sha256& tx, const TransactionStatus& status);
@@ -62,13 +61,15 @@ class Core
     //==================
   private:
     //==================
-    const base::PropertyTree& _config;
-    const base::KeyVault& _vault;
+    base::json::Value _config;
+    const base::KeyVault _vault;
     const lk::Address _this_node_address;
     //==================
-    base::Observable<const ImmutableBlock&> _event_block_added;
-    base::Observable<const ImmutableBlock&> _event_block_mined;
+    base::Observable<const lk::ImmutableBlock&> _event_block_added;
+    base::Observable<const lk::ImmutableBlock&> _event_block_mined;
     base::Observable<const lk::Transaction&> _event_new_pending_transaction;
+    base::Observable<base::Sha256> _event_transaction_status_update;
+    base::Observable<lk::Address> _event_account_update;
     //==================
     StateManager _state_manager;
 
@@ -95,17 +96,19 @@ class Core
     //==================
     void tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock& block_where_tx);
     //==================
-    evmc::result callInitContractVm(StateManager& state_manager,
+    void on_account_updated(lk::Address address);
+    //==================
+    evmc::result callInitContractVm(Commit& current_commit,
                                     const ImmutableBlock& associated_block,
                                     const lk::Transaction& tx,
                                     const lk::Address& contract_address,
                                     const base::Bytes& code);
-    evmc::result callContractVm(StateManager& state_manager,
+    evmc::result callContractVm(Commit& current_commit,
                                 const ImmutableBlock& associated_block,
                                 const lk::Transaction& tx,
                                 const base::Bytes& code,
                                 const base::Bytes& message_data);
-    evmc::result callVm(StateManager& state_manager,
+    evmc::result callVm(Commit& current_commit,
                         const ImmutableBlock& associated_block,
                         const lk::Transaction& associated_tx,
                         const evmc_message& message,
@@ -114,13 +117,19 @@ class Core
   public:
     //==================
     // notifies if new blocks are added: genesis and blocks, that are stored in DB, are not handled by this
-    void subscribeToBlockAddition(decltype(_event_block_added)::CallbackType callback);
+    void subscribeToBlockAddition(decltype(_event_block_mined)::CallbackType callback);
 
     // notifies if a block was mined by this node and it was added to blockchain
     void subscribeToBlockMining(decltype(_event_block_mined)::CallbackType callback);
 
     // notifies if some transaction was added to set of pending
     void subscribeToNewPendingTransaction(decltype(_event_new_pending_transaction)::CallbackType callback);
+
+    // notifies if any transaction status was updated
+    void subscribeToAnyTransactionStatusUpdate(decltype(_event_transaction_status_update)::CallbackType callback);
+
+    // notifies if any account was updated
+    void subscribeToAnyAccountUpdate(decltype(_event_account_update)::CallbackType callback);
     //==================
 };
 
@@ -129,7 +138,7 @@ class EthHost : public evmc::Host
 {
   public:
     EthHost(lk::Core& core,
-            lk::StateManager& state_manager,
+            lk::Commit& current_commit,
             const ImmutableBlock& associated_block,
             const lk::Transaction& associated_tx);
 
@@ -147,8 +156,10 @@ class EthHost : public evmc::Host
 
     evmc::bytes32 get_code_hash(const evmc::address& addr) const noexcept override;
 
-    size_t copy_code(const evmc::address& addr, size_t code_offset, uint8_t* buffer_data, size_t buffer_size) const
-      noexcept override;
+    size_t copy_code(const evmc::address& addr,
+                     size_t code_offset,
+                     uint8_t* buffer_data,
+                     size_t buffer_size) const noexcept override;
 
     void selfdestruct(const evmc::address& eaddr, const evmc::address& ebeneficiary) noexcept override;
 
@@ -158,11 +169,11 @@ class EthHost : public evmc::Host
 
     evmc::bytes32 get_block_hash(int64_t block_number) const noexcept override;
 
-    void emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept;
+    void emit_log(const evmc::address&, const uint8_t*, size_t, const evmc::bytes32[], size_t) noexcept override;
 
   private:
     Core& _core;
-    StateManager& _state_manager;
+    Commit& _current_commit;
     const ImmutableBlock& _associated_block;
     const Transaction& _associated_tx;
 };
