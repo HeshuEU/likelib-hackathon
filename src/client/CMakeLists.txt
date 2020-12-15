@@ -23,9 +23,14 @@ set(CLIENT_SOURCES
         client.cpp
         )
 
+find_library(READLINY_LIBRARY readline REQUIRED)
+find_path(READLINE_INCLUDE_DIR readline/readline.h)
+
 add_executable(client ${CLIENT_HEADERS} ${CLIENT_SOURCES})
 
-target_link_libraries(client base core websocket vm cli::cli)
+target_link_libraries(client base core websocket vm cli::cli ${READLINE_LIBRARY})
+target_include_directories(client SYSTEM PRIVATE ${READLINE_INCLUDE_DIR})
+target_compile_definitions(client PRIVATE -DUSE_READLINE=1)
 
 target_compile_definitions(client PRIVATE BOOST_STACKTRACE_USE_ADDR2LINE)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

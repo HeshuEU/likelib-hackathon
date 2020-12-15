@@ -19,7 +19,7 @@ find_package(PythonLibs REQUIRED)
 
 add_library(vm STATIC ${VM_HEADERS} ${VM_SOURCES})
 target_include_directories(vm PUBLIC $<BUILD_INTERFACE:${EVMC_INCLUDE_DIR}>$<INSTALL_INTERFACE:include> ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(vm loader OpenSSL::SSL Boost::serialization python3.7m)
+target_link_libraries(vm loader OpenSSL::SSL Boost::serialization python3.8)
 
 # copy evm libs
 file(GLOB EVM_LIB ${CONAN_BIN_DIRS_EVMONE}/*evmone*)

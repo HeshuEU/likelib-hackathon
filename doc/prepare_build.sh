@@ -19,7 +19,7 @@ ${SUDO_PREF} apt-get dist-upgrade -y || exit 1
 
 # Install other software
 ${SUDO_PREF} apt-get install -y git wget unzip tar curl valgrind \
-                                clang-tidy python3.7 python3-pip \
+                                clang-tidy python3.8 python3-pip \
                                 solc autoconf libtool python3-dev || exit 1
 pip3 install web3 || exit 1
 pip3 install coincurve || exit 1

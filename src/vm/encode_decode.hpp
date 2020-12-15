@@ -3,7 +3,7 @@
 #ifndef __PYX_HAVE__encode_decode
 #define __PYX_HAVE__encode_decode
 
-#include <python3.7/Python.h>
+#include <python3.8/Python.h>
 #include <string>
 
 #ifndef __PYX_HAVE_API__encode_decode
