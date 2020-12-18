@@ -6,11 +6,13 @@
 #include "core/address.hpp"
 #include "core/types.hpp"
 
+#include "client.hpp"
+
 #include <string_view>
 
-void compile_solidity_code(std::ostream& output, const std::string& code_file_path);
+void compile_solidity_code(Client& client, const std::string& code_file_path);
 
-void encode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message);
+void encode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message);
 
 void decode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message);
 

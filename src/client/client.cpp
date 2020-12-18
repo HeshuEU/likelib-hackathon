@@ -1,52 +1,145 @@
 #include "client.hpp"
 #include "actions.hpp"
 
-// #include <cli/clilocalsession.h>
-// #include <cli/remotecli.h>
-
 #include <readline/history.h>
 #include <readline/readline.h>
 
 #include <iostream>
 
-std::string getArgument(std::string& input)
+void clearSpaces(std::string& str)
 {
-    std::size_t begin{0};
-    for(; begin < input.size() && input[begin] == ' '; begin++);
-    std::size_t end = begin + 1;
-    for(; end < input.size() && input[end] != ' '; end++);
-    auto argument = input.substr(begin, end - begin);
-    for(; end < input.size() && input[end] == ' '; end++);
-    input = input.substr(end);
-    return argument;
+    std::size_t count_spaces{0};
+    while(count_spaces < str.size() && str[count_spaces] == ' '){
+        count_spaces++;
+    }
+    if(count_spaces >= str.size()){
+        str.clear();
+    } else{
+        str.erase(0, count_spaces);
+    }
+    
 }
 
-void chooseAction(std::string input)
+std::string parseActionName(std::string& input)
 {
-    auto action_name = getArgument(input);
-    if(action_name.empty()){
+    clearSpaces(input);
+    std::size_t end{0};
+    while(end < input.size() && input[end] != ' '){
+        end++;
+    }
+    auto action_name = input.substr(0, end);
+    input.erase(0, end);
+    clearSpaces(input);
+    return action_name;
+}
+
+
+std::string parseArgument(std::string& input)
+{
+    clearSpaces(input);
+    if(input.empty()){
+        return input;
+    }
+    char quote{' '};
+    bool is_text{false};
+    if((input[0] =='\'') || (input[0] == '\"')){
+        quote = input[0];
+        is_text = true;
+        input.erase(0, 1);
+    }
+    std::size_t end{0};
+
+    while((end < input.size()) && (is_text || (input[end] != ' '))){
+        if(!is_text && ((input[end] == '\'') || (input[end] == '\"'))){
+            is_text = true;
+            quote = input[end];
+            input.erase(end, 1);
+        } else if(is_text && input[end] == quote){
+            is_text = false;
+            input.erase(end, 1);
+        } else{
+            end++;
+        }
+    }
+    if(is_text){
+        return std::string{};
+    }
+    auto path = input.substr(0, end);
+    input.erase(0, end);
+    return path;
+}
+
+void Client::chooseAction(std::string& input)
+{
+    auto action_name = parseActionName(input);
+    if (action_name.empty()) {
         return;
     }
-    if(action_name == "compile"){
-        auto path = getArgument(input);
+    if (action_name == "compile") {
+        auto path = parseArgument(input);
+        if(path.empty()){
+            LOG_ERROR << "The path is entered incorrectly";
+            return;
+        }
+        if (!input.empty()) {
+            LOG_ERROR << "too many arguments for compile command";
+        }
+        compile_solidity_code(*this, path);
+    } else if(action_name == "encode"){
+        auto path = parseArgument(input);
+        auto message = parseArgument(input);
+        std::cout << path << std::endl << message << std::endl;
+        if(path.empty() || message.empty()){
+            LOG_ERROR << "The arguments is entered incorrectly";
+            return;
+        }
         if(!input.empty()){
             LOG_ERROR << "too many arguments for compile command";
         }
+        encode_message(*this, path, message);
     }
 }
 
 
-void Client::s_line(char* line)
+void Client::processLine(std::string line)
 {
-    if (line == nullptr) {
-        LOG_ERROR << "Closed";
+    clearSpaces(line);
+    if (line.empty()) {
         return;
     }
     else {
-        add_history(line);
-        instance()->_enter_strings.push_back(line);
+        add_history(line.c_str());
+        chooseAction(line);
+    }
+}
+
+Client::Client()
+  : _prompt("Likelib: ")
+{}
+
+
+void Client::run()
+{
+    _instance = this;
+    while (true) {
+        const auto line = readline(_prompt.c_str());
+
+        if (line && *line) {
+            processLine(line);
+        }
         rl_free(line);
     }
+}
+
+
+void Client::output(const std::string& str)
+{
+    _out_mutex.lock();
+    std::cin.clear();
+    deactivateReadline();
+    std::cout << str << std::endl;
+    reactivateReadline();
+    _out_mutex.unlock();
 }
 
 
@@ -55,17 +148,15 @@ Client* Client::instance()
     return _instance;
 }
 
-Client::Client()
-  : _prompt(">:")
-{}
 
-
-void Client::run()
+void Client::deactivateReadline()
 {
-    _instance = this;
-    rl_callback_handler_install(_prompt.c_str(), s_line);
-    // rl_getc_function = s_stdin_getc;
-    // reactivateReadline();
+    _saved_point = rl_point;
+    _saved_line = std::string(rl_line_buffer, rl_end);
+
+    rl_set_prompt("");
+    rl_replace_line("", 0);
+    rl_redisplay();
 }
 
 
@@ -76,6 +167,8 @@ void Client::reactivateReadline()
     rl_replace_line(_saved_line.c_str(), 0);
     rl_redisplay();
 }
+
+Client* Client::_instance = nullptr;
 
 // Client::Client()
 //   : _root_menu{ std::make_unique<cli::Menu>("empty") }

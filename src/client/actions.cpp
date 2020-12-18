@@ -21,26 +21,27 @@
 #include <string>
 
 
-void compile_solidity_code(std::ostream& output, const std::string& code_file_path)
+void compile_solidity_code(Client& client, const std::string& code_file_path)
 {
     std::optional<vm::Contracts> contracts;
     try {
         contracts = vm::compile(code_file_path);
     }
     catch (const base::ParsingError& er) {
-        output << er.what();
+        LOG_ERROR << er.what();
         return;
     }
     catch (const base::SystemCallFailed& er) {
-        output << er.what();
+        LOG_ERROR << er.what();
         return;
     }
 
     if (!contracts) {
-        output << "Compilation error\n";
+        LOG_ERROR << "Compilation error\n";
         return;
     }
 
+    std::stringstream output;
     output << "Compiled contracts:\n";
     for (const auto& contract : contracts.value()) {
         output << "\t" << contract.name << "\n";
@@ -61,37 +62,38 @@ void compile_solidity_code(std::ostream& output, const std::string& code_file_pa
             }
         }
         catch (const base::Error& er) {
-            output << er.what();
+            client.output(output.str());
             LOG_ERROR << er.what();
             return;
         }
         catch (...) {
-            output << "unexpected error at saving contract:" << contract.name;
+            client.output(output.str());
             LOG_ERROR << "unexpected error at saving contract:" << contract.name;
             return;
         }
+        client.output(output.str());
     }
 }
 
 
-void encode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message)
+void encode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message)
 {
     try {
         auto output_message = vm::encodeCall(compiled_contract_folder_path, message);
         if (output_message) {
-            output << output_message.value() << std::endl;
+            client.output(output_message.value().toString());
         }
         else {
-            output << "encoding failed.\n";
+            client.output("encoding failed.\n");
             return;
         }
     }
     catch (const base::ParsingError& er) {
-        output << er.what();
+        client.output(er.what());
         return;
     }
     catch (const base::SystemCallFailed& er) {
-        output << er.what();
+        client.output(er.what());
         return;
     }
 }
