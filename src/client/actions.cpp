@@ -20,6 +20,11 @@
 #include <iostream>
 #include <string>
 
+void help(Client& client)
+{
+    client.output("TODO: write help");
+}
+
 
 void compile_solidity_code(Client& client, const std::string& code_file_path)
 {
@@ -81,7 +86,7 @@ void encode_message(Client& client, const std::string& compiled_contract_folder_
     try {
         auto output_message = vm::encodeCall(compiled_contract_folder_path, message);
         if (output_message) {
-            client.output(output_message.value().toString());
+            client.output(base::toHex(output_message.value()));
         }
         else {
             client.output("encoding failed.\n");
@@ -99,36 +104,38 @@ void encode_message(Client& client, const std::string& compiled_contract_folder_
 }
 
 
-void decode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message)
+void decode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message)
 {
     try {
         auto output_message = vm::decodeOutput(compiled_contract_folder_path, message);
         if (output_message) {
-            output << output_message.value() << std::endl;
+            client.output(output_message.value());
         }
         else {
-            output << "decoding failed.\n";
+            client.output("decoding failed.\n");
             return;
         }
     }
     catch (const base::ParsingError& er) {
-        output << er.what();
+        client.output(er.what());
         return;
     }
     catch (const base::SystemCallFailed& er) {
-        output << er.what();
+        client.output(er.what());
         return;
     }
 }
 
 
-void generate_keys(std::ostream& output, const std::string& path)
+void generate_keys(Client& client, const std::string& path)
 {
     const auto& priv = base::Secp256PrivateKey();
 
     auto private_path = base::config::makePrivateKeyPath(path);
+    std::stringstream output;
     if (std::filesystem::exists(private_path)) {
         output << "Error: " << private_path << " already exists.\n";
+        client.output(output.str());
         LOG_ERROR << private_path << " file already exists";
         return;
     }
@@ -139,17 +146,20 @@ void generate_keys(std::ostream& output, const std::string& path)
     output << "Address: " << lk::Address(priv.toPublicKey()) << std::endl;
     output << "Hash of public key: " << base::Sha256::compute(priv.toPublicKey().toBytes()) << std::endl;
     output << "Hash of private key: " << base::Sha256::compute(priv.getBytes().toBytes()) << std::endl;
+    client.output(output.str());
     LOG_INFO << "Generated key at " << path;
 
     priv.save(private_path);
 }
 
 
-void keys_info(std::ostream& output, const std::string& path)
+void keys_info(Client& client, const std::string& path)
 {
     auto private_path = base::config::makePrivateKeyPath(path);
+    std::stringstream output;
     if (!std::filesystem::exists(private_path)) {
         output << "Error: " << private_path << " doesn't exist.\n";
+        client.output(output.str());
         LOG_ERROR << private_path << " file not exists";
         return;
     }
@@ -159,6 +169,7 @@ void keys_info(std::ostream& output, const std::string& path)
     output << "Address: " << lk::Address(priv.toPublicKey()) << std::endl;
     output << "Hash of public key: " << base::Sha256::compute(priv.toPublicKey()) << std::endl;
     output << "Hash of private key: " << base::Sha256::compute(priv.getBytes()) << std::endl;
+    client.output(output.str());
 }
 
 
@@ -223,8 +234,8 @@ void call_find_block(websocket::WebSocketClient& client, const base::Sha256& has
 }
 
 
-void transfer(std::ostream& output,
-              websocket::WebSocketClient& client,
+void transfer(Client& client,
+              websocket::WebSocketClient& web_socket,
               const lk::Address& to_address,
               const lk::Balance& amount,
               const lk::Fee& fee,
@@ -246,17 +257,17 @@ void transfer(std::ostream& output,
     tx.sign(private_key);
 
     auto tx_hash = tx.hashOfTransaction();
-    output << "Transaction with hash[hex]: " << tx_hash << std::endl;
+    client.output("Transaction with hash[hex]: " + tx_hash.toHex());
 
     LOG_INFO << "Transfer from " << from_address << " to " << to_address << " with amount " << amount;
 
     auto request_args = websocket::serializeTransaction(tx);
-    client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
+    web_socket.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
 }
 
 
-void contract_call(std::ostream& output,
-                   websocket::WebSocketClient& client,
+void contract_call(Client& client,
+                   websocket::WebSocketClient& web_socket,
                    const lk::Address& to_address,
                    const lk::Balance& amount,
                    const lk::Fee& fee,
@@ -279,18 +290,18 @@ void contract_call(std::ostream& output,
     tx.sign(private_key);
 
     auto tx_hash = tx.hashOfTransaction();
-    output << "Transaction with hash[hex]: " << tx_hash << std::endl;
+    client.output("Transaction with hash[hex]: " + tx_hash.toHex());
 
     LOG_INFO << "Contract_call from " << from_address << ", to " << to_address << ", amount " << amount << ",fee "
              << fee << ", message " << message;
 
     auto request_args = websocket::serializeTransaction(tx);
-    client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
+    web_socket.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
 }
 
 
-void push_contract(std::ostream& output,
-                   websocket::WebSocketClient& client,
+void push_contract(Client& client,
+                   websocket::WebSocketClient& web_socket,
                    const lk::Balance& amount,
                    const lk::Fee& fee,
                    const std::filesystem::path& keys_dir,
@@ -312,7 +323,7 @@ void push_contract(std::ostream& output,
     if (data.isEmpty()) {
         auto code_binary_file_path = path_to_compiled_folder / std::filesystem::path(config::CONTRACT_BINARY_FILE);
         if (!std::filesystem::exists(code_binary_file_path)) {
-            output << "Error the file with this path[" + code_binary_file_path.string() + "] does not exist";
+            client.output("Error the file with this path[" + code_binary_file_path.string() + "] does not exist");
             return;
         }
         std::ifstream file(code_binary_file_path, std::ios::binary);
@@ -326,13 +337,13 @@ void push_contract(std::ostream& output,
     tx.sign(private_key);
 
     auto tx_hash = tx.hashOfTransaction();
-    output << "Transaction with hash[hex]: " << tx_hash << std::endl;
+    client.output ("Transaction with hash[hex]: " + tx_hash.toHex());
 
     LOG_INFO << "Push_contract from " << from_address << ", amount " << amount << ", fee " << fee << ", message "
              << message;
 
     auto request_args = websocket::serializeTransaction(tx);
-    client.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
+    web_socket.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
 }
 
 

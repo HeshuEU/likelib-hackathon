@@ -8,23 +8,23 @@
 
 void clearSpaces(std::string& str)
 {
-    std::size_t count_spaces{0};
-    while(count_spaces < str.size() && str[count_spaces] == ' '){
+    std::size_t count_spaces{ 0 };
+    while (count_spaces < str.size() && (str[count_spaces] == ' ' || str[count_spaces] == '\t')) {
         count_spaces++;
     }
-    if(count_spaces >= str.size()){
+    if (count_spaces >= str.size()) {
         str.clear();
-    } else{
+    }
+    else {
         str.erase(0, count_spaces);
     }
-    
 }
 
 std::string parseActionName(std::string& input)
 {
     clearSpaces(input);
-    std::size_t end{0};
-    while(end < input.size() && input[end] != ' '){
+    std::size_t end{ 0 };
+    while (end < input.size() && input[end] != ' ') {
         end++;
     }
     auto action_name = input.substr(0, end);
@@ -37,36 +37,60 @@ std::string parseActionName(std::string& input)
 std::string parseArgument(std::string& input)
 {
     clearSpaces(input);
-    if(input.empty()){
+    if (input.empty()) {
         return input;
     }
-    char quote{' '};
-    bool is_text{false};
-    if((input[0] =='\'') || (input[0] == '\"')){
+    char quote;
+    bool is_text{ false };
+    if ((input[0] == '\'') || (input[0] == '\"')) {
         quote = input[0];
         is_text = true;
         input.erase(0, 1);
     }
-    std::size_t end{0};
+    std::size_t end{ 0 };
 
-    while((end < input.size()) && (is_text || (input[end] != ' '))){
-        if(!is_text && ((input[end] == '\'') || (input[end] == '\"'))){
+    while ((end < input.size()) && (is_text || (input[end] != ' '))) {
+        if (!is_text && ((input[end] == '\'') || (input[end] == '\"'))) {
             is_text = true;
             quote = input[end];
             input.erase(end, 1);
-        } else if(is_text && input[end] == quote){
+        }
+        else if (!is_text && (input[end] == '\\')) {
+            input.erase(end, 1);
+            if (input.size() <= end) {
+                return std::string{};
+            }
+            else {
+                end++;
+            }
+        }
+        else if (is_text && input[end] == quote) {
             is_text = false;
             input.erase(end, 1);
-        } else{
+        }
+        else {
             end++;
         }
     }
-    if(is_text){
+    if (is_text) {
         return std::string{};
     }
-    auto path = input.substr(0, end);
+    auto argument = input.substr(0, end);
     input.erase(0, end);
-    return path;
+    return argument;
+}
+
+
+std::vector<std::string> parseAllArguments(std::string& input)
+{
+    std::vector<std::string> arguments;
+    while (!input.empty()) {
+        auto argument = parseArgument(input);
+        if (!argument.empty()) {
+            arguments.push_back(argument);
+        }
+    }
+    return arguments;
 }
 
 void Client::chooseAction(std::string& input)
@@ -75,28 +99,242 @@ void Client::chooseAction(std::string& input)
     if (action_name.empty()) {
         return;
     }
-    if (action_name == "compile") {
-        auto path = parseArgument(input);
-        if(path.empty()){
-            LOG_ERROR << "The path is entered incorrectly";
+    const auto& arguments = parseAllArguments(input);
+
+    if (action_name == "help") {
+        if (arguments.size() != 0) {
+            output("Wrong number of arguments for the help command");
             return;
         }
-        if (!input.empty()) {
-            LOG_ERROR << "too many arguments for compile command";
+        help(*this);
+    }
+    else if (action_name == "connect") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the connect command");
         }
+        if (_connected) {
+            output("You are already connected to host " + _host + "\n disconnect before new reconnecting");
+            return;
+        }
+
+        auto host = arguments[0];
+        _connected = _web_socket_client.connect(host);
+        if (_connected) {
+            _host = host;
+            output("Client connected to host " + host);
+        }
+        else {
+            output("Can't connect to host " + host);
+        }
+    }
+    else if (action_name == "disconnect") {
+        if (arguments.size() != 0) {
+            output("Wrong number of arguments for the disconnect command");
+            return;
+        }
+        if (!_connected) {
+            output("You aren't connected to the node");
+            return;
+        }
+
+        _connected = false;
+        _web_socket_client.disconnect();
+    }
+    else if (action_name == "compile") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the compile command");
+            return;
+        }
+
+        const auto path = arguments[0];
         compile_solidity_code(*this, path);
-    } else if(action_name == "encode"){
-        auto path = parseArgument(input);
-        auto message = parseArgument(input);
-        std::cout << path << std::endl << message << std::endl;
-        if(path.empty() || message.empty()){
-            LOG_ERROR << "The arguments is entered incorrectly";
+    }
+    else if (action_name == "encode") {
+        if (arguments.size() != 2) {
+            output("Wrong number of arguments for the encode command");
             return;
         }
-        if(!input.empty()){
-            LOG_ERROR << "too many arguments for compile command";
-        }
+
+        const auto path = arguments[0];
+        const auto message = arguments[1];
         encode_message(*this, path, message);
+    }
+    else if (action_name == "decode") {
+        if (arguments.size() != 2) {
+            output("Wrong number of arguments for the decode command");
+            return;
+        }
+
+        const auto path = arguments[0];
+        const auto message = arguments[1];
+        decode_message(*this, path, message);
+    }
+    else if (action_name == "keys_generate") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the keys_generate command");
+            return;
+        }
+
+        const auto path = arguments[0];
+        generate_keys(*this, path);
+    }
+    else if (action_name == "keys_info") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the keys_info command");
+            return;
+        }
+
+        const auto path = arguments[0];
+        keys_info(*this, path);
+    }
+    else if (action_name == "last_block_info") {
+        if (arguments.size() != 0) {
+            output("Wrong number of arguments for the last_block_info command");
+            return;
+        }
+
+        call_last_block_info(_web_socket_client);
+    }
+    else if (action_name == "account_info") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the account_info command");
+            return;
+        }
+
+        try {
+            const lk::Address address{ arguments[0] };
+            call_account_info(_web_socket_client, address);
+        }
+        catch (const base::Error& e) {
+            output("can't execute account_info");
+            LOG_ERROR << "can't execute account_info:" << e.what();
+        }
+    }
+    else if (action_name == "subscribe_account_info") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the subscribe_account_info command");
+            return;
+        }
+
+        try {
+            const lk::Address address{ arguments[0] };
+            subscribe_account_info(_web_socket_client, address);
+        }
+        catch (const base::Error& e) {
+            output("can't execute subscribe_account_info");
+            LOG_ERROR << "can't execute subscribe_account_info:" << e.what();
+        }
+    }
+    else if (action_name == "unsubscribe_account_info") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the unsubscribe_account_info command");
+            return;
+        }
+
+        try {
+            lk::Address address{ arguments[0] };
+            unsubscribe_account_info(_web_socket_client, address);
+        }
+        catch (const base::Error& e) {
+            output("can't execute unsubscribe_account_info");
+            LOG_ERROR << "can't execute unsubscribe_account_info:" << e.what();
+        }
+    }
+    else if (action_name == "find_transaction") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the find_transaction command");
+            return;
+        }
+
+        const auto hash = base::Sha256::fromHex(arguments[0]);
+        call_find_transaction(_web_socket_client, hash);
+    }
+    else if (action_name == "find_transaction_status") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the find_transaction_status command");
+            return;
+        }
+
+        const auto hash = base::Sha256::fromHex(arguments[0]);
+        call_find_transaction_status(_web_socket_client, hash);
+    }
+    else if (action_name == "find_block") {
+        if (arguments.size() != 1) {
+            output("Wrong number of arguments for the find_block command");
+            return;
+        }
+
+        const auto hash = base::Sha256::fromHex(arguments[0]);
+        call_find_block(_web_socket_client, hash);
+    }
+    else if (action_name == "transfer") {
+        if (arguments.size() != 4) {
+            output("Wrong number of arguments for the transfer command");
+            return;
+        }
+
+        const lk::Address to_address{ arguments[0] };
+        const lk::Balance amount{ arguments[1] };
+        const lk::Fee fee{ std::stoull(arguments[2]) };
+        const std::filesystem::path& keys_dir{ arguments[3] };
+        transfer(*this, _web_socket_client, to_address, amount, fee, keys_dir);
+    }
+    else if (action_name == "contract_call") {
+        if (arguments.size() != 5) {
+            output("Wrong number of arguments for the contract_call command");
+            return;
+        }
+
+        const lk::Address to_address{ arguments[0] };
+        const lk::Balance amount{ arguments[1] };
+        const lk::Fee fee{ std::stoull(arguments[2]) };
+        const std::filesystem::path& keys_dir{ arguments[3] };
+        const auto message{ arguments[4] };
+        contract_call(*this, _web_socket_client, to_address, amount, fee, keys_dir, message);
+    }
+    else if (action_name == "push_contract") {
+        if (arguments.size() != 5) {
+            output("Wrong number of arguments for the push_contract command");
+            return;
+        }
+
+        const lk::Balance amount{ arguments[0] };
+        const lk::Fee fee{ std::stoull(arguments[1]) };
+        const std::filesystem::path& keys_dir{ arguments[2] };
+        const std::filesystem::path& path_to_compiled_folder{ arguments[3] };
+        const auto message{ arguments[4] };
+        push_contract(*this, _web_socket_client, amount, fee, keys_dir, path_to_compiled_folder, message);
+    }
+    else if (action_name == "subscribe_last_block_info") {
+        if (arguments.size() != 0) {
+            output("Wrong number of arguments for the subscribe_last_block_info command");
+            return;
+        }
+
+        try {
+            subscribe_last_block_info(_web_socket_client);
+        }
+        catch (const base::Error& e) {
+            output("can't execute subscribe_last_block_info");
+            LOG_ERROR << "can't execute subscribe_last_block_info:" << e.what();
+        }
+    }
+    else if (action_name == "unsubscribe_last_block_info") {
+        if (arguments.size() != 0) {
+            output("Wrong number of arguments for the unsubscribe_last_block_info command");
+            return;
+        }
+
+        try {
+            unsubscribe_last_block_info(_web_socket_client);
+        }
+        catch (const base::Error& e) {
+            output("can't execute unsubscribe_last_block_info");
+            LOG_ERROR << "can't execute unsubscribe_last_block_info:" << e.what();
+        }
+    }
+    else {
+        output("There is no command with the name " + action_name);
     }
 }
 
@@ -115,12 +353,15 @@ void Client::processLine(std::string line)
 
 Client::Client()
   : _prompt("Likelib: ")
+  , _io_context{}
+  , _web_socket_client{ _io_context,
+                        std::bind(&Client::printReceivedData, this, std::placeholders::_1, std::placeholders::_2),
+                        [this]() { cli::Cli::cout() << "Disconnected from likelib node\n"; } }
 {}
 
 
 void Client::run()
 {
-    _instance = this;
     while (true) {
         const auto line = readline(_prompt.c_str());
 
@@ -143,12 +384,6 @@ void Client::output(const std::string& str)
 }
 
 
-Client* Client::instance()
-{
-    return _instance;
-}
-
-
 void Client::deactivateReadline()
 {
     _saved_point = rl_point;
@@ -168,14 +403,19 @@ void Client::reactivateReadline()
     rl_redisplay();
 }
 
-Client* Client::_instance = nullptr;
+
+void Client::printReceivedData(websocket::Command::Id command_id, base::json::Value received_message)
+{
+    output("Received data: " + received_message.serialize() + "\n");
+    // TODO
+}
 
 // Client::Client()
 //   : _root_menu{ std::make_unique<cli::Menu>("empty") }
 //   , _io_context{}
 //   , _web_socket_client{ _io_context,
-//                         std::bind(&Client::printReceivedData, this, std::placeholders::_1, std::placeholders::_2),
-//                         [this]() {
+//                         std::bind(&Client::printReceivedData, this, std::placeholders::_1,
+//                         std::placeholders::_2), [this]() {
 //                             cli::Cli::cout() << "Disconnected from likelib node\n";
 //                             disableCommands(_connected_mode_commands);
 //                             enableCommands(_disconnected_mode_commands);
@@ -236,7 +476,8 @@ Client* Client::_instance = nullptr;
 //     _disconnected_mode_commands.push_back(_root_menu->Insert("connect",
 //                                                              [this](std::ostream& out, std::string host) {
 //                                                                  if (_web_socket_client.connect(host)) {
-//                                                                      out << "Connected to node: " << host << "\n";
+//                                                                      out << "Connected to node: " << host <<
+//                                                                      "\n";
 //                                                                      disableCommands(_disconnected_mode_commands);
 //                                                                      enableCommands(_connected_mode_commands);
 //                                                                  }
@@ -298,7 +539,8 @@ Client* Client::_instance = nullptr;
 //       "get last block info when apeared new block"));
 
 //     _connected_mode_commands.push_back(_root_menu->Insert("account_info",
-//                                                           [this](std::ostream& out, std::string address_at_base58) {
+//                                                           [this](std::ostream& out, std::string
+//                                                           address_at_base58) {
 //                                                               try {
 //                                                                   lk::Address target_address(address_at_base58);
 //                                                                   call_account_info(_web_socket_client,
@@ -346,8 +588,10 @@ Client* Client::_instance = nullptr;
 //     _connected_mode_commands.push_back(_root_menu->Insert("find_transaction",
 //                                                           [this](std::ostream& out, std::string tx_hash_at_hex) {
 //                                                               try {
-//                                                                   auto hash = base::Sha256::fromHex(tx_hash_at_hex);
-//                                                                   call_find_transaction(_web_socket_client, hash);
+//                                                                   auto hash =
+//                                                                   base::Sha256::fromHex(tx_hash_at_hex);
+//                                                                   call_find_transaction(_web_socket_client,
+//                                                                   hash);
 //                                                               }
 //                                                               catch (const base::Error& e) {
 //                                                                   out << "can't execute find_transaction";
@@ -374,7 +618,8 @@ Client* Client::_instance = nullptr;
 //                          { "transaction hash at hex" }));
 
 //     _connected_mode_commands.push_back(_root_menu->Insert("find_block",
-//                                                           [this](std::ostream& out, std::string block_hash_at_hex) {
+//                                                           [this](std::ostream& out, std::string
+//                                                           block_hash_at_hex) {
 //                                                               try {
 //                                                                   auto hash =
 //                                                                   base::Sha256::fromHex(block_hash_at_hex);

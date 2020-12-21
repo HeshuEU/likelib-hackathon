@@ -10,15 +10,17 @@
 
 #include <string_view>
 
+void help(Client& client);
+
 void compile_solidity_code(Client& client, const std::string& code_file_path);
 
 void encode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message);
 
-void decode_message(std::ostream& output, const std::string& compiled_contract_folder_path, const std::string& message);
+void decode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message);
 
-void generate_keys(std::ostream& output, const std::string& path);
+void generate_keys(Client& client, const std::string& path);
 
-void keys_info(std::ostream& output, const std::string& path);
+void keys_info(Client& client, const std::string& path);
 
 void call_last_block_info(websocket::WebSocketClient& client);
 
@@ -34,23 +36,23 @@ void call_find_transaction_status(websocket::WebSocketClient& client, const base
 
 void call_find_block(websocket::WebSocketClient& client, const base::Sha256& hash);
 
-void transfer(std::ostream& output,
-              websocket::WebSocketClient& client,
+void transfer(Client& client,
+              websocket::WebSocketClient& web_socket,
               const lk::Address& to_address,
               const lk::Balance& amount,
               const lk::Fee& fee,
               const std::filesystem::path& keys_dir);
 
-void contract_call(std::ostream& output,
-                   websocket::WebSocketClient& client,
+void contract_call(Client& client,
+                   websocket::WebSocketClient& web_socket,
                    const lk::Address& to_address,
                    const lk::Balance& amount,
                    const lk::Fee& fee,
                    const std::filesystem::path& keys_dir,
                    const std::string& message);
 
-void push_contract(std::ostream& output,
-                   websocket::WebSocketClient& client,
+void push_contract(Client& client,
+                   websocket::WebSocketClient& web_socket,
                    const lk::Balance& amount,
                    const lk::Fee& fee,
                    const std::filesystem::path& keys_dir,

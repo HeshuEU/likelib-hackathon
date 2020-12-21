@@ -16,17 +16,19 @@ class Client
     void run();
     void output(const std::string& str);
 
-    static Client* instance();
-
   private:
     std::string _prompt;
     bool readline_active;
     std::string _saved_line;
     std::uint32_t _saved_point;
-    std::vector<std::thread> threads;
+
     std::mutex _out_mutex;
 
-    static Client* _instance;
+    boost::asio::io_context _io_context;
+    websocket::WebSocketClient _web_socket_client;
+
+    bool _connected{false};
+    std::string _host;
 
     void processLine(std::string line);
 
@@ -34,6 +36,8 @@ class Client
     void deactivateReadline();
 
     void chooseAction(std::string& input);
+
+    void printReceivedData(websocket::Command::Id command_id, base::json::Value received_message);
     // std::vector<cli::CmdHandler> _disconnected_mode_commands{};
     // std::vector<cli::CmdHandler> _always_mode_commands{};
     // std::vector<cli::CmdHandler> _connected_mode_commands{};
