@@ -22,7 +22,50 @@
 
 void help(Client& client)
 {
-    client.output("TODO: write help");
+    std::string output = "- help\n"
+                         "      Show help message\n"
+                         "- connect <ip and port of likelib node>\n"
+                         "      Connect client to specific likelib node\n"
+                         "- disconnect\n"
+                         "      Disconnect client from likelib node\n"
+                         "- compile <path to solidity code file>\n"
+                         "      Compile solidity code to binary format\n"
+                         "- encode <path to folder with compiled contract data files> <message for encode>\n"
+                         "      Encode message for contract call\n"
+                         "- decode <path to folder with compiled contract data files> <message for decode>\n"
+                         "      Decode message which was returned by contract call\n"
+                         "- keys_generate <path to folder to save key>\n"
+                         "      Generate new key and store to specific folder\n"
+                         "- keys_info <path to folder with key\n"
+                         "      Print info about specified key\n"
+                         "- last_block_info\n"
+                         "      Get last block info\n"
+                         "- account_info <address of base58>\n"
+                         "      Get account info by specific address\n"
+                         "- subscribe_account_info <address of base58>\n"
+                         "      Subscribe on updates account info by specific address\n"
+                         "- unsubscribe_account_info <address at base58>\n"
+                         "      Unsubscribe from account info updates by specific address\n"
+                         "- subscribe_last_block_info\n"
+                         "      Get last block info when apeared new block\n"
+                         "- unsubscribe_last_block_info\n"
+                         "      Get last block info when apeared new block\n"
+                         "- find_transaction <transaction hash at hex>\n"
+                         "      Get transaction by specific hash\n"
+                         "- find_transaction_status <transaction hash at hex>\n"
+                         "      Get transaction status by specific hash\n"
+                         "- find_block <block hash at hex>\n"
+                         "      Get block by specific hash\n"
+                         "- transfer <path to folder with key> <address of recipient at base58>"
+                         " <fee for transaction> <amount of coins for transfer>\n"
+                         "      Transfer coins to specific address\n"
+                         "- contract_call <path to folder with key> <address of contract at base58> "
+                         "<fee for contract call> <amount of coins for call> <message for call at hex>\n"
+                         "      Call deployed contract\n"
+                         "- push_contract <path to folder with key> <fee for contract call> <amount of coins for call>"
+                         "<path to compiled contract data files> <message for initializing contract at hex>\n"
+                         "      Deploy compiled contract\n";
+    client.output(output);
 }
 
 
