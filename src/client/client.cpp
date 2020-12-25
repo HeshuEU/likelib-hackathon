@@ -103,241 +103,262 @@ void Client::chooseAction(std::string& input)
         return;
     }
     const auto& arguments = parseAllArguments(input);
+    try {
+        if (action_name == "help") {
+            if (arguments.size() != 0) {
+                output("Wrong number of arguments for the help command");
+                return;
+            }
+            help(*this);
+        }
+        else if (action_name == "connect") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the connect command");
+            }
+            if (_connected) {
+                output("You are already connected to host " + _host + "\n disconnect before new reconnecting");
+                return;
+            }
 
-    if (action_name == "help") {
-        if (arguments.size() != 0) {
-            output("Wrong number of arguments for the help command");
-            return;
+            auto host = arguments[0];
+            _connected = _web_socket_client.connect(host);
+            if (_connected) {
+                _host = host;
+                output("Client connected to host " + host);
+            }
+            else {
+                output("Can't connect to host " + host);
+            }
         }
-        help(*this);
-    }
-    else if (action_name == "connect") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the connect command");
-        }
-        if (_connected) {
-            output("You are already connected to host " + _host + "\n disconnect before new reconnecting");
-            return;
-        }
+        else if (action_name == "disconnect") {
+            if (arguments.size() != 0) {
+                output("Wrong number of arguments for the disconnect command");
+                return;
+            }
+            if (!_connected) {
+                output("You aren't connected to the node");
+                return;
+            }
 
-        auto host = arguments[0];
-        _connected = _web_socket_client.connect(host);
-        if (_connected) {
-            _host = host;
-            output("Client connected to host " + host);
+            _connected = false;
+            _web_socket_client.disconnect();
         }
-        else {
-            output("Can't connect to host " + host);
-        }
-    }
-    else if (action_name == "disconnect") {
-        if (arguments.size() != 0) {
-            output("Wrong number of arguments for the disconnect command");
-            return;
-        }
-        if (!_connected) {
-            output("You aren't connected to the node");
-            return;
-        }
+        else if (action_name == "compile") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the compile command");
+                return;
+            }
 
-        _connected = false;
-        _web_socket_client.disconnect();
-    }
-    else if (action_name == "compile") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the compile command");
-            return;
+            const auto path = arguments[0];
+            compile_solidity_code(*this, path);
         }
+        else if (action_name == "encode") {
+            if (arguments.size() != 2) {
+                output("Wrong number of arguments for the encode command");
+                return;
+            }
 
-        const auto path = arguments[0];
-        compile_solidity_code(*this, path);
-    }
-    else if (action_name == "encode") {
-        if (arguments.size() != 2) {
-            output("Wrong number of arguments for the encode command");
-            return;
+            const auto path = arguments[0];
+            const auto message = arguments[1];
+            encode_message(*this, path, message);
         }
+        else if (action_name == "decode") {
+            if (arguments.size() != 2) {
+                output("Wrong number of arguments for the decode command");
+                return;
+            }
 
-        const auto path = arguments[0];
-        const auto message = arguments[1];
-        encode_message(*this, path, message);
-    }
-    else if (action_name == "decode") {
-        if (arguments.size() != 2) {
-            output("Wrong number of arguments for the decode command");
-            return;
+            const auto path = arguments[0];
+            const auto message = arguments[1];
+            decode_message(*this, path, message);
         }
+        else if (action_name == "keys_generate") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the keys_generate command");
+                return;
+            }
 
-        const auto path = arguments[0];
-        const auto message = arguments[1];
-        decode_message(*this, path, message);
-    }
-    else if (action_name == "keys_generate") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the keys_generate command");
-            return;
+            const auto path = arguments[0];
+            generate_keys(*this, path);
         }
+        else if (action_name == "keys_info") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the keys_info command");
+                return;
+            }
 
-        const auto path = arguments[0];
-        generate_keys(*this, path);
-    }
-    else if (action_name == "keys_info") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the keys_info command");
-            return;
+            const auto path = arguments[0];
+            keys_info(*this, path);
         }
-
-        const auto path = arguments[0];
-        keys_info(*this, path);
-    }
-    else if (action_name == "last_block_info") {
-        if (arguments.size() != 0) {
-            output("Wrong number of arguments for the last_block_info command");
-            return;
+        else if (action_name == "last_block_info") {
+            if (arguments.size() != 0) {
+                output("Wrong number of arguments for the last_block_info command");
+                return;
+            }
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
+            call_last_block_info(_web_socket_client);
         }
-
-        call_last_block_info(_web_socket_client);
-    }
-    else if (action_name == "account_info") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the account_info command");
-            return;
-        }
-
-        try {
+        else if (action_name == "account_info") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the account_info command");
+                return;
+            }
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
             const lk::Address address{ arguments[0] };
             call_account_info(_web_socket_client, address);
         }
-        catch (const base::Error& e) {
-            output("can't execute account_info");
-            LOG_ERROR << "can't execute account_info:" << e.what();
-        }
-    }
-    else if (action_name == "subscribe_account_info") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the subscribe_account_info command");
-            return;
-        }
+        else if (action_name == "subscribe_account_info") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the subscribe_account_info command");
+                return;
+            }
 
-        try {
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
             const lk::Address address{ arguments[0] };
             subscribe_account_info(_web_socket_client, address);
         }
-        catch (const base::Error& e) {
-            output("can't execute subscribe_account_info");
-            LOG_ERROR << "can't execute subscribe_account_info:" << e.what();
-        }
-    }
-    else if (action_name == "unsubscribe_account_info") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the unsubscribe_account_info command");
-            return;
-        }
+        else if (action_name == "unsubscribe_account_info") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the unsubscribe_account_info command");
+                return;
+            }
 
-        try {
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
             lk::Address address{ arguments[0] };
             unsubscribe_account_info(_web_socket_client, address);
         }
-        catch (const base::Error& e) {
-            output("can't execute unsubscribe_account_info");
-            LOG_ERROR << "can't execute unsubscribe_account_info:" << e.what();
-        }
-    }
-    else if (action_name == "find_transaction") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the find_transaction command");
-            return;
-        }
+        else if (action_name == "find_transaction") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the find_transaction command");
+                return;
+            }
 
-        const auto hash = base::Sha256::fromHex(arguments[0]);
-        call_find_transaction(_web_socket_client, hash);
-    }
-    else if (action_name == "find_transaction_status") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the find_transaction_status command");
-            return;
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
+            const auto hash = base::Sha256::fromHex(arguments[0]);
+            call_find_transaction(_web_socket_client, hash);
         }
+        else if (action_name == "find_transaction_status") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the find_transaction_status command");
+                return;
+            }
 
-        const auto hash = base::Sha256::fromHex(arguments[0]);
-        call_find_transaction_status(_web_socket_client, hash);
-    }
-    else if (action_name == "find_block") {
-        if (arguments.size() != 1) {
-            output("Wrong number of arguments for the find_block command");
-            return;
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
+            const auto hash = base::Sha256::fromHex(arguments[0]);
+            call_find_transaction_status(_web_socket_client, hash);
         }
+        else if (action_name == "find_block") {
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the find_block command");
+                return;
+            }
 
-        const auto hash = base::Sha256::fromHex(arguments[0]);
-        call_find_block(_web_socket_client, hash);
-    }
-    else if (action_name == "transfer") {
-        if (arguments.size() != 4) {
-            output("Wrong number of arguments for the transfer command");
-            return;
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
+            const auto hash = base::Sha256::fromHex(arguments[0]);
+            call_find_block(_web_socket_client, hash);
         }
+        else if (action_name == "transfer") {
+            if (arguments.size() != 4) {
+                output("Wrong number of arguments for the transfer command");
+                return;
+            }
 
-        const lk::Address to_address{ arguments[0] };
-        const lk::Balance amount{ arguments[1] };
-        const lk::Fee fee{ std::stoull(arguments[2]) };
-        const std::filesystem::path& keys_dir{ arguments[3] };
-        transfer(*this, _web_socket_client, to_address, amount, fee, keys_dir);
-    }
-    else if (action_name == "contract_call") {
-        if (arguments.size() != 5) {
-            output("Wrong number of arguments for the contract_call command");
-            return;
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
+            const lk::Address to_address{ arguments[0] };
+            const lk::Balance amount{ arguments[1] };
+            const lk::Fee fee{ std::stoull(arguments[2]) };
+            const std::filesystem::path& keys_dir{ arguments[3] };
+            transfer(*this, _web_socket_client, to_address, amount, fee, keys_dir);
         }
+        else if (action_name == "contract_call") {
+            if (arguments.size() != 5) {
+                output("Wrong number of arguments for the contract_call command");
+                return;
+            }
 
-        const lk::Address to_address{ arguments[0] };
-        const lk::Balance amount{ arguments[1] };
-        const lk::Fee fee{ std::stoull(arguments[2]) };
-        const std::filesystem::path& keys_dir{ arguments[3] };
-        const auto message{ arguments[4] };
-        contract_call(*this, _web_socket_client, to_address, amount, fee, keys_dir, message);
-    }
-    else if (action_name == "push_contract") {
-        if (arguments.size() != 5) {
-            output("Wrong number of arguments for the push_contract command");
-            return;
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
+            const lk::Address to_address{ arguments[0] };
+            const lk::Balance amount{ arguments[1] };
+            const lk::Fee fee{ std::stoull(arguments[2]) };
+            const std::filesystem::path& keys_dir{ arguments[3] };
+            const auto message{ arguments[4] };
+            contract_call(*this, _web_socket_client, to_address, amount, fee, keys_dir, message);
         }
+        else if (action_name == "push_contract") {
+            if (arguments.size() != 5) {
+                output("Wrong number of arguments for the push_contract command");
+                return;
+            }
 
-        const lk::Balance amount{ arguments[0] };
-        const lk::Fee fee{ std::stoull(arguments[1]) };
-        const std::filesystem::path& keys_dir{ arguments[2] };
-        const std::filesystem::path& path_to_compiled_folder{ arguments[3] };
-        const auto message{ arguments[4] };
-        push_contract(*this, _web_socket_client, amount, fee, keys_dir, path_to_compiled_folder, message);
-    }
-    else if (action_name == "subscribe_last_block_info") {
-        if (arguments.size() != 0) {
-            output("Wrong number of arguments for the subscribe_last_block_info command");
-            return;
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
+            const lk::Balance amount{ arguments[0] };
+            const lk::Fee fee{ std::stoull(arguments[1]) };
+            const std::filesystem::path& keys_dir{ arguments[2] };
+            const std::filesystem::path& path_to_compiled_folder{ arguments[3] };
+            const auto message{ arguments[4] };
+            push_contract(*this, _web_socket_client, amount, fee, keys_dir, path_to_compiled_folder, message);
         }
+        else if (action_name == "subscribe_last_block_info") {
+            if (arguments.size() != 0) {
+                output("Wrong number of arguments for the subscribe_last_block_info command");
+                return;
+            }
 
-        try {
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
             subscribe_last_block_info(_web_socket_client);
         }
-        catch (const base::Error& e) {
-            output("can't execute subscribe_last_block_info");
-            LOG_ERROR << "can't execute subscribe_last_block_info:" << e.what();
-        }
-    }
-    else if (action_name == "unsubscribe_last_block_info") {
-        if (arguments.size() != 0) {
-            output("Wrong number of arguments for the unsubscribe_last_block_info command");
-            return;
-        }
+        else if (action_name == "unsubscribe_last_block_info") {
+            if (arguments.size() != 0) {
+                output("Wrong number of arguments for the unsubscribe_last_block_info command");
+                return;
+            }
 
-        try {
+            if (!_connected) {
+                output("You have to connect to likelib node");
+                return;
+            }
             unsubscribe_last_block_info(_web_socket_client);
         }
-        catch (const base::Error& e) {
-            output("can't execute unsubscribe_last_block_info");
-            LOG_ERROR << "can't execute unsubscribe_last_block_info:" << e.what();
+        else {
+            output("There is no command with the name " + action_name);
         }
     }
-    else {
-        output("There is no command with the name " + action_name);
+    catch (const base::Error& e) {
+        output(e.what());
+        LOG_ERROR << e.what();
     }
 }
 
@@ -359,8 +380,10 @@ Client::Client()
   , _io_context{}
   , _web_socket_client{ _io_context,
                         std::bind(&Client::printReceivedData, this, std::placeholders::_1, std::placeholders::_2),
-                        [this]() { output("Disconnected from likelib node\n");
-                                    _connected = false; } }
+                        [this]() {
+                            output("Disconnected from likelib node\n");
+                            _connected = false;
+                        } }
 {}
 
 
