@@ -380,7 +380,7 @@ void push_contract(Client& client,
     tx.sign(private_key);
 
     auto tx_hash = tx.hashOfTransaction();
-    client.output ("Transaction with hash[hex]: " + tx_hash.toHex());
+    client.output("Transaction with hash[hex]: " + tx_hash.toHex());
 
     LOG_INFO << "Push_contract from " << from_address << ", amount " << amount << ", fee " << fee << ", message "
              << message;

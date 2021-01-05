@@ -114,6 +114,7 @@ void Client::chooseAction(std::string& input)
         else if (action_name == "connect") {
             if (arguments.size() != 1) {
                 output("Wrong number of arguments for the connect command");
+                return;
             }
             if (_connected) {
                 output("You are already connected to host " + _host + "\n disconnect before new reconnecting");
@@ -124,6 +125,9 @@ void Client::chooseAction(std::string& input)
             _connected = _web_socket_client.connect(host);
             if (_connected) {
                 _host = host;
+                thread = std::thread{[&](){
+                    _io_context.run();
+                }};
                 output("Client connected to host " + host);
             }
             else {
@@ -142,6 +146,7 @@ void Client::chooseAction(std::string& input)
 
             _connected = false;
             _web_socket_client.disconnect();
+            //_io_context.stop();
         }
         else if (action_name == "compile") {
             if (arguments.size() != 1) {
@@ -199,6 +204,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
+            output(std::to_string(_web_socket_client.ready()));
             call_last_block_info(_web_socket_client);
         }
         else if (action_name == "account_info") {
@@ -288,10 +294,10 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            const lk::Address to_address{ arguments[0] };
-            const lk::Balance amount{ arguments[1] };
+            const std::filesystem::path& keys_dir{ arguments[0] };
+            const lk::Address to_address{ arguments[1] };
             const lk::Fee fee{ std::stoull(arguments[2]) };
-            const std::filesystem::path& keys_dir{ arguments[3] };
+            const lk::Balance amount{ arguments[3] };         
             transfer(*this, _web_socket_client, to_address, amount, fee, keys_dir);
         }
         else if (action_name == "contract_call") {
@@ -389,7 +395,6 @@ Client::Client()
 
 void Client::run()
 {
-    _io_context.run();
     while (true) {
         const auto line = readline(_prompt.c_str());
 
@@ -404,8 +409,16 @@ void Client::run()
 void Client::output(const std::string& str)
 {
     _out_mutex.lock();
-    std::cin.clear();
+    std::cout << str << std::endl;
+    _out_mutex.unlock();
+}
+
+
+void Client::remoteOutput(const std::string& str)
+{
+    _out_mutex.lock();
     deactivateReadline();
+    std::cin.clear();
     std::cout << str << std::endl;
     reactivateReadline();
     _out_mutex.unlock();
@@ -434,7 +447,6 @@ void Client::reactivateReadline()
 
 void Client::printReceivedData(websocket::Command::Id command_id, base::json::Value received_message)
 {
-    std::cout << "WE GET RESEIVED " << std::endl;
-    output("Received data: " + received_message.serialize() + "\n");
+    remoteOutput("Received data: " + received_message.serialize() + "\n");
     // TODO
 }

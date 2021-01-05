@@ -121,6 +121,12 @@ void WebSocketClient::send(Command::Id commandId, base::json::Value&& args)
 }
 
 
+bool WebSocketClient::ready()
+{
+    return _ready;
+}
+
+
 void WebSocketClient::disconnect() noexcept
 {
     close(boost::beast::websocket::close_code::normal);

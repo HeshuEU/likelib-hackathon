@@ -28,6 +28,8 @@ class WebSocketClient
 
     void send(Command::Id commandId, base::json::Value&& args);
 
+    bool ready();
+
   private:
     boost::asio::ip::tcp::resolver _resolver;
     boost::beast::websocket::stream<boost::asio::ip::tcp::socket> _websocket;

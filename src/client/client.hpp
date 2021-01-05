@@ -15,6 +15,7 @@ class Client
     explicit Client();
     void run();
     void output(const std::string& str);
+    void remoteOutput(const std::string& str);
 
   private:
     std::string _prompt;
@@ -30,6 +31,8 @@ class Client
     bool _connected{false};
     std::string _host;
 
+    std::thread thread;
+
     void processLine(std::string line);
 
     void reactivateReadline();
@@ -38,19 +41,4 @@ class Client
     void chooseAction(std::string& input);
 
     void printReceivedData(websocket::Command::Id command_id, base::json::Value received_message);
-    // std::vector<cli::CmdHandler> _disconnected_mode_commands{};
-    // std::vector<cli::CmdHandler> _always_mode_commands{};
-    // std::vector<cli::CmdHandler> _connected_mode_commands{};
-
-    // std::unique_ptr<cli::Menu> _root_menu;
-
-    // boost::asio::io_context _io_context;
-    // websocket::WebSocketClient _web_socket_client;
-    // boost::thread _networkThread;
-
-    // void printReceivedData(websocket::Command::Id command_id, base::json::Value received_message);
-    // static void disableCommands(std::vector<cli::CmdHandler>& commands);
-    // static void enableCommands(std::vector<cli::CmdHandler>& commands);
-
-    // void setupCli();
 };
