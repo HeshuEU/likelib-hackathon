@@ -251,7 +251,12 @@ TransactionStatus::TransactionStatus(StatusCode status,
   , _action(type)
   , _message{ message }
   , _fee_left{ fee_left }
-{}
+{
+    // if(_action == ActionType::ContractCall && !_message.empty()){
+    //     auto raw = base::base58Decode(_message);
+    //     _message = base::toHex(raw);
+    // }
+}
 
 
 TransactionStatus::operator bool() const noexcept

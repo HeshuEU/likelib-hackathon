@@ -146,7 +146,8 @@ void Client::chooseAction(std::string& input)
 
             _connected = false;
             _web_socket_client.disconnect();
-            //_io_context.stop();
+            _io_context.stop();
+            thread.join();
         }
         else if (action_name == "compile") {
             if (arguments.size() != 1) {
@@ -204,7 +205,6 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            output(std::to_string(_web_socket_client.ready()));
             call_last_block_info(_web_socket_client);
         }
         else if (action_name == "account_info") {
@@ -216,8 +216,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            const lk::Address address{ arguments[0] };
-            call_account_info(_web_socket_client, address);
+            call_account_info(*this, _web_socket_client, arguments[0]);
         }
         else if (action_name == "subscribe_account_info") {
             if (arguments.size() != 1) {
@@ -229,8 +228,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            const lk::Address address{ arguments[0] };
-            subscribe_account_info(_web_socket_client, address);
+            subscribe_account_info(*this, _web_socket_client, arguments[0]);
         }
         else if (action_name == "unsubscribe_account_info") {
             if (arguments.size() != 1) {
@@ -242,8 +240,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            lk::Address address{ arguments[0] };
-            unsubscribe_account_info(_web_socket_client, address);
+            unsubscribe_account_info(*this, _web_socket_client, arguments[0]);
         }
         else if (action_name == "find_transaction") {
             if (arguments.size() != 1) {
@@ -255,8 +252,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            const auto hash = base::Sha256::fromHex(arguments[0]);
-            call_find_transaction(_web_socket_client, hash);
+            call_find_transaction(*this, _web_socket_client, arguments[0]);
         }
         else if (action_name == "find_transaction_status") {
             if (arguments.size() != 1) {
@@ -268,8 +264,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            const auto hash = base::Sha256::fromHex(arguments[0]);
-            call_find_transaction_status(_web_socket_client, hash);
+            call_find_transaction_status(*this, _web_socket_client, arguments[0]);
         }
         else if (action_name == "find_block") {
             if (arguments.size() != 1) {
@@ -281,8 +276,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            const auto hash = base::Sha256::fromHex(arguments[0]);
-            call_find_block(_web_socket_client, hash);
+            call_find_block(*this, _web_socket_client, arguments[0]);
         }
         else if (action_name == "transfer") {
             if (arguments.size() != 4) {
@@ -293,12 +287,8 @@ void Client::chooseAction(std::string& input)
             if (!_connected) {
                 output("You have to connect to likelib node");
                 return;
-            }
-            const std::filesystem::path& keys_dir{ arguments[0] };
-            const lk::Address to_address{ arguments[1] };
-            const lk::Fee fee{ std::stoull(arguments[2]) };
-            const lk::Balance amount{ arguments[3] };         
-            transfer(*this, _web_socket_client, to_address, amount, fee, keys_dir);
+            }       
+            transfer(*this, _web_socket_client, arguments[1], arguments[3], arguments[2], arguments[0]);
         }
         else if (action_name == "contract_call") {
             if (arguments.size() != 5) {
@@ -310,12 +300,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            const lk::Address to_address{ arguments[0] };
-            const lk::Balance amount{ arguments[1] };
-            const lk::Fee fee{ std::stoull(arguments[2]) };
-            const std::filesystem::path& keys_dir{ arguments[3] };
-            const auto message{ arguments[4] };
-            contract_call(*this, _web_socket_client, to_address, amount, fee, keys_dir, message);
+            contract_call(*this, _web_socket_client, arguments[1], arguments[3], arguments[2], arguments[0], arguments[4]);
         }
         else if (action_name == "push_contract") {
             if (arguments.size() != 5) {
@@ -327,12 +312,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            const lk::Balance amount{ arguments[0] };
-            const lk::Fee fee{ std::stoull(arguments[1]) };
-            const std::filesystem::path& keys_dir{ arguments[2] };
-            const std::filesystem::path& path_to_compiled_folder{ arguments[3] };
-            const auto message{ arguments[4] };
-            push_contract(*this, _web_socket_client, amount, fee, keys_dir, path_to_compiled_folder, message);
+            push_contract(*this, _web_socket_client, arguments[2], arguments[1], arguments[0], arguments[3], arguments[4]);
         }
         else if (action_name == "subscribe_last_block_info") {
             if (arguments.size() != 0) {

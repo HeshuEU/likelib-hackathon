@@ -20,6 +20,74 @@
 #include <iostream>
 #include <string>
 
+std::optional<base::Bytes> takeMessage(Client& client, const std::string message)
+{
+    base::Bytes message_bytes;
+    try {
+        message_bytes = base::fromHex<base::Bytes>(message);
+    }
+    catch (const base::InvalidArgument& er) {
+        client.output("Wrong message was entered");
+        return {};
+    }
+    return message_bytes;
+}
+
+
+std::optional<lk::Address> takeAddress(Client& client, const std::string address)
+{
+    base::FixedBytes<lk::Address::LENGTH_IN_BYTES> address_bytes;
+    try {
+        address_bytes = base::FixedBytes<lk::Address::LENGTH_IN_BYTES>(base::base58Decode(address));
+    }
+    catch (const base::InvalidArgument& er) {
+        client.output("Wrong address was entered");
+        return {};
+    }
+    return lk::Address{ address_bytes };
+}
+
+
+std::optional<lk::Fee> takeFee(Client& client, const std::string fee)
+{
+    for (auto c : fee) {
+        if (!std::isdigit(c)) {
+            client.output("Wrong fee was entered");
+            return {};
+        }
+    }
+    return lk::Fee{ std::stoull(fee) };
+}
+
+
+std::optional<lk::Balance> takeAmount(Client& client, const std::string amount_str)
+{
+    lk::Balance amount;
+    try {
+        amount = lk::Balance{ amount_str };
+    }
+    catch (const boost::wrapexcept<std::runtime_error>& er) {
+        client.output("Wrong amount was entered");
+        return {};
+    }
+    return amount;
+}
+
+
+std::optional<base::Sha256> takeHash(Client& client, const std::string hash)
+{
+    base::FixedBytes<base::Sha256::LENGTH> hash_bytes;
+    try {
+        hash_bytes = base::FixedBytes<base::Sha256::LENGTH>(base::fromHex<base::Bytes>(hash));
+    }
+    catch (const base::InvalidArgument& er) {
+        client.output("Wrong hash was entered");
+        return {};
+    }
+    return base::Sha256{ hash_bytes };
+}
+
+
 void help(Client& client)
 {
     std::string output = "- help\n"
@@ -223,77 +291,124 @@ void call_last_block_info(websocket::WebSocketClient& client)
 }
 
 
-void call_account_info(websocket::WebSocketClient& client, const lk::Address& address)
+void call_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
 {
-    LOG_INFO << "account_info for address: " << address;
+    auto address = takeAddress(client, address_str);
+    if(!address){
+        return;
+    }
+
+    LOG_INFO << "account_info for address: " << address.value();
     auto request_args = base::json::Value::object();
-    request_args["address"] = websocket::serializeAddress(address);
-    client.send(websocket::Command::CALL_ACCOUNT_INFO, std::move(request_args));
+    request_args["address"] = websocket::serializeAddress(address.value());
+    web_socket.send(websocket::Command::CALL_ACCOUNT_INFO, std::move(request_args));
 }
 
 
-void subscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
+void subscribe_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
 {
-    LOG_INFO << "account_info for address: " << address;
+    auto address = takeAddress(client, address_str);
+    if(!address){
+        return;
+    }
+
+    LOG_INFO << "account_info for address: " << address.value();
     auto request_args = base::json::Value::object();
-    request_args["address"] = websocket::serializeAddress(address);
-    client.send(websocket::Command::SUBSCRIBE_ACCOUNT_INFO, std::move(request_args));
+    request_args["address"] = websocket::serializeAddress(address.value());
+    web_socket.send(websocket::Command::SUBSCRIBE_ACCOUNT_INFO, std::move(request_args));
 }
 
 
-void unsubscribe_account_info(websocket::WebSocketClient& client, const lk::Address& address)
+void unsubscribe_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
 {
-    LOG_INFO << "account_info for address: " << address;
+    auto address = takeAddress(client, address_str);
+    if(!address){
+        return;
+    }
+
+    LOG_INFO << "account_info for address: " << address.value();
     auto request_args = base::json::Value::object();
-    request_args["address"] = websocket::serializeAddress(address);
-    client.send(websocket::Command::UNSUBSCRIBE_ACCOUNT_INFO, std::move(request_args));
+    request_args["address"] = websocket::serializeAddress(address.value());
+    web_socket.send(websocket::Command::UNSUBSCRIBE_ACCOUNT_INFO, std::move(request_args));
 }
 
 
-void call_find_transaction(websocket::WebSocketClient& client, const base::Sha256& hash)
+void call_find_transaction(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
 {
-    LOG_INFO << "find_transaction by hash: " << hash;
+    auto hash = takeHash(client, hash_str);
+    if(!hash){
+        return;
+    }
+
+    LOG_INFO << "find_transaction by hash: " << hash.value();
     auto request_args = base::json::Value::object();
-    request_args["rapidjson"] = websocket::serializeHash(hash);
-    client.send(websocket::Command::CALL_FIND_TRANSACTION, std::move(request_args));
+    request_args["hash"] = websocket::serializeHash(hash.value());
+    web_socket.send(websocket::Command::CALL_FIND_TRANSACTION, std::move(request_args));
 }
 
 
-void call_find_transaction_status(websocket::WebSocketClient& client, const base::Sha256& hash)
+void call_find_transaction_status(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
 {
-    LOG_INFO << "find_transaction_status by hash: " << hash;
+    auto hash = takeHash(client, hash_str);
+    if(!hash){
+        return;
+    }
+
+    LOG_INFO << "find_transaction_status by hash: " << hash.value();
     auto request_args = base::json::Value::object();
-    request_args["rapidjson"] = websocket::serializeHash(hash);
-    client.send(websocket::Command::CALL_FIND_TRANSACTION_STATUS, std::move(request_args));
+    request_args["hash"] = websocket::serializeHash(hash.value());
+    web_socket.send(websocket::Command::CALL_FIND_TRANSACTION_STATUS, std::move(request_args));
 }
 
 
-void call_find_block(websocket::WebSocketClient& client, const base::Sha256& hash)
+void call_find_block(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
 {
-    LOG_INFO << "find_block by hash: " << hash;
+    auto hash = takeHash(client, hash_str);
+    if(!hash){
+        return;
+    }
+
+    LOG_INFO << "find_block by hash: " << hash.value();
     auto request_args = base::json::Value::object();
-    request_args["rapidjson"] = websocket::serializeHash(hash);
-    client.send(websocket::Command::CALL_FIND_BLOCK, std::move(request_args));
+    request_args["hash"] = websocket::serializeHash(hash.value());
+    web_socket.send(websocket::Command::CALL_FIND_BLOCK, std::move(request_args));
 }
 
 
 void transfer(Client& client,
               websocket::WebSocketClient& web_socket,
-              const lk::Address& to_address,
-              const lk::Balance& amount,
-              const lk::Fee& fee,
-              const std::filesystem::path& keys_dir)
+              const std::string& to_address_str,
+              const std::string& amount_str,
+              const std::string& fee_str,
+              const std::string& keys_dir_str)
 {
+    auto to_address = takeAddress(client, to_address_str);
+    if(!to_address){
+        return;
+    }
+
+    auto amount = takeAmount(client, amount_str);
+    if(!amount){
+        return;
+    }
+
+    auto fee = takeFee(client, fee_str);
+    if(!fee){
+        return;
+    }
+
+    std::filesystem::path keys_dir{ keys_dir_str };
+
     auto private_key_path = base::config::makePrivateKeyPath(keys_dir);
     auto private_key = base::Secp256PrivateKey::load(private_key_path);
     auto from_address = lk::Address(private_key.toPublicKey());
 
     lk::TransactionBuilder txb;
     txb.setFrom(from_address);
-    txb.setTo(to_address);
-    txb.setAmount(amount);
+    txb.setTo(to_address.value());
+    txb.setAmount(amount.value());
     txb.setTimestamp(base::Time::now());
-    txb.setFee(fee);
+    txb.setFee(fee.value());
     txb.setData({});
     auto tx = std::move(txb).build();
 
@@ -302,7 +417,7 @@ void transfer(Client& client,
     auto tx_hash = tx.hashOfTransaction();
     client.output("Transaction with hash[hex]: " + tx_hash.toHex());
 
-    LOG_INFO << "Transfer from " << from_address << " to " << to_address << " with amount " << amount;
+    LOG_INFO << "Transfer from " << from_address << " to " << to_address.value() << " with amount " << amount.value();
 
     auto request_args = websocket::serializeTransaction(tx);
     web_socket.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
@@ -311,23 +426,45 @@ void transfer(Client& client,
 
 void contract_call(Client& client,
                    websocket::WebSocketClient& web_socket,
-                   const lk::Address& to_address,
-                   const lk::Balance& amount,
-                   const lk::Fee& fee,
-                   const std::filesystem::path& keys_dir,
+                   const std::string& to_address_str,
+                   const std::string& amount_str,
+                   const std::string& fee_str,
+                   const std::string& keys_dir_str,
                    const std::string& message)
 {
+    auto to_address = takeAddress(client, to_address_str);
+    if(!to_address){
+        return;
+    }
+
+    auto amount = takeAmount(client, amount_str);
+    if(!amount){
+        return;
+    }
+
+    auto fee = takeFee(client, fee_str);
+    if(!fee){
+        return;
+    }
+
+    std::filesystem::path keys_dir{ keys_dir_str };
+
+    auto data = takeMessage(client, message);
+    if(!data){
+        return;
+    }
+
     auto private_key_path = base::config::makePrivateKeyPath(keys_dir);
     auto private_key = base::Secp256PrivateKey::load(private_key_path);
     auto from_address = lk::Address(private_key.toPublicKey());
 
     lk::TransactionBuilder txb;
     txb.setFrom(from_address);
-    txb.setTo(to_address);
-    txb.setAmount(amount);
+    txb.setTo(to_address.value());
+    txb.setAmount(amount.value());
     txb.setTimestamp(base::Time::now());
-    txb.setFee(fee);
-    txb.setData(base::fromHex<base::Bytes>(message));
+    txb.setFee(fee.value());
+    txb.setData(data.value());
     auto tx = std::move(txb).build();
 
     tx.sign(private_key);
@@ -335,8 +472,8 @@ void contract_call(Client& client,
     auto tx_hash = tx.hashOfTransaction();
     client.output("Transaction with hash[hex]: " + tx_hash.toHex());
 
-    LOG_INFO << "Contract_call from " << from_address << ", to " << to_address << ", amount " << amount << ",fee "
-             << fee << ", message " << message;
+    LOG_INFO << "Contract_call from " << from_address << ", to " << to_address.value() << ", amount " << amount.value() << ",fee "
+             << fee.value() << ", message " << message;
 
     auto request_args = websocket::serializeTransaction(tx);
     web_socket.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
@@ -345,12 +482,27 @@ void contract_call(Client& client,
 
 void push_contract(Client& client,
                    websocket::WebSocketClient& web_socket,
-                   const lk::Balance& amount,
-                   const lk::Fee& fee,
-                   const std::filesystem::path& keys_dir,
-                   const std::filesystem::path& path_to_compiled_folder,
+                   const std::string& amount_str,
+                   const std::string& fee_str,
+                   const std::string& keys_dir,
+                   const std::string& path_to_compiled_folder,
                    const std::string& message)
 {
+    auto amount = takeAmount(client, amount_str);
+    if(!amount){
+        return;
+    }
+
+    auto fee = takeFee(client, fee_str);
+    if(!fee){
+        return;
+    }
+
+    auto data = takeMessage(client, message);
+    if(!data){
+        return;
+    }
+
     auto private_key_path = base::config::makePrivateKeyPath(keys_dir);
     auto private_key = base::Secp256PrivateKey::load(private_key_path);
     auto from_address = lk::Address(private_key.toPublicKey());
@@ -358,12 +510,11 @@ void push_contract(Client& client,
     lk::TransactionBuilder txb;
     txb.setFrom(from_address);
     txb.setTo(lk::Address::null());
-    txb.setAmount(amount);
+    txb.setAmount(amount.value());
     txb.setTimestamp(base::Time::now());
-    txb.setFee(fee);
+    txb.setFee(fee.value());
 
-    base::Bytes data = base::fromHex<base::Bytes>(message);
-    if (data.isEmpty()) {
+    if (data.value().isEmpty()) {
         auto code_binary_file_path = path_to_compiled_folder / std::filesystem::path(config::CONTRACT_BINARY_FILE);
         if (!std::filesystem::exists(code_binary_file_path)) {
             client.output("Error the file with this path[" + code_binary_file_path.string() + "] does not exist");
@@ -373,7 +524,7 @@ void push_contract(Client& client,
         auto buf = std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
         data = base::fromHex<base::Bytes>(buf);
     }
-    txb.setData(data);
+    txb.setData(data.value());
 
     auto tx = std::move(txb).build();
 
@@ -382,7 +533,7 @@ void push_contract(Client& client,
     auto tx_hash = tx.hashOfTransaction();
     client.output("Transaction with hash[hex]: " + tx_hash.toHex());
 
-    LOG_INFO << "Push_contract from " << from_address << ", amount " << amount << ", fee " << fee << ", message "
+    LOG_INFO << "Push_contract from " << from_address << ", amount " << amount.value() << ", fee " << fee.value() << ", message "
              << message;
 
     auto request_args = websocket::serializeTransaction(tx);
@@ -390,15 +541,15 @@ void push_contract(Client& client,
 }
 
 
-void subscribe_last_block_info(websocket::WebSocketClient& client)
+void subscribe_last_block_info(websocket::WebSocketClient& web_socket)
 {
     LOG_INFO << "subscription last_block_info";
-    client.send(websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
+    web_socket.send(websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
 }
 
 
-void unsubscribe_last_block_info(websocket::WebSocketClient& client)
+void unsubscribe_last_block_info(websocket::WebSocketClient& web_socket)
 {
     LOG_INFO << "unsubscription last_block_info";
-    client.send(websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
+    web_socket.send(websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
 }

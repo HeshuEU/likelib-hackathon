@@ -234,7 +234,7 @@ lk::Fee deserializeFee(const std::string& fee_str)
 base::json::Value serializeHash(const base::Sha256& hash)
 {
     LOG_TRACE << "Serializing Hash";
-    return base::json::Value::string(base::base64Encode(hash.getBytes()));
+    return base::json::Value::string(base::toHex(hash.getBytes()));
 }
 
 
@@ -243,7 +243,7 @@ base::Sha256 deserializeHash(const std::string& hash_str)
     LOG_TRACE << "Deserializing Hash";
     base::Bytes decoded_bytes;
     try {
-        decoded_bytes = base::base64Decode(hash_str);
+        decoded_bytes = base::fromHex<base::Bytes>(hash_str);
     }
     catch (const base::Error& e) {
         RAISE_ERROR(base::InvalidArgument, std::string("Error in deserialization of base64HashBytes: ") + hash_str);
