@@ -104,7 +104,16 @@ void Client::chooseAction(std::string& input)
     }
     const auto& arguments = parseAllArguments(input);
     try {
-        if (action_name == "help") {
+        if (action_name == "exit") {
+            if (arguments.size() != 0) {
+                output("Wrong number of arguments for the exit command");
+                return;
+            }
+            _io_context.stop();
+            _web_socket_client.disconnect();
+            _exit = true;
+        }
+        else if (action_name == "help") {
             if (arguments.size() != 0) {
                 output("Wrong number of arguments for the help command");
                 return;
@@ -382,7 +391,7 @@ Client::Client()
 
 void Client::run()
 {
-    while (true) {
+    while (!_exit) {
         const auto line = readline(_prompt.c_str());
 
         if (line && *line) {

@@ -17,6 +17,36 @@
 
 namespace
 {
+
+struct PyFinalizer
+{
+    PyFinalizer(const PyFinalizer& other) = delete;
+    PyFinalizer(PyFinalizer&& other) = delete;
+
+    PyFinalizer& operator=(const PyFinalizer& other) = delete;
+    PyFinalizer& operator=(PyFinalizer&& other) = delete;
+
+    static const PyFinalizer* getInstance()
+    {
+        if (_singleton == nullptr) {
+            _singleton = new PyFinalizer();
+        }
+        return _singleton;
+    }
+
+    ~PyFinalizer()
+    {
+        Py_Finalize();
+        delete _singleton;
+    }
+
+    PyFinalizer() = default;
+    static PyFinalizer* _singleton;
+};
+
+PyFinalizer* PyFinalizer::_singleton = nullptr;
+
+
 constexpr std::size_t ID_METHOD_SIZE = 8;
 std::string treeToString(const boost::property_tree::ptree& tree)
 {
@@ -431,8 +461,9 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
     }
     Py_Initialize();
     auto module = PyImport_ImportModule("encode_decode");
+    auto py_finalizer = PyFinalizer::getInstance();
     if (module == nullptr) {
-        Py_Finalize();
+        // Py_Finalize();
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
 
@@ -468,10 +499,10 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
         }
     }
     catch (const base::Error& e) {
-        Py_Finalize();
+        // Py_Finalize();
         throw e;
     }
-    Py_Finalize();
+    // Py_Finalize();
     return encode_result;
 }
 
@@ -484,8 +515,9 @@ std::string decodeMessage(const std::string& contract_path, const std::string& d
     }
     Py_Initialize();
     auto module = PyImport_ImportModule("encode_decode");
+    auto py_finalizer = PyFinalizer::getInstance();
     if (module == nullptr) {
-        Py_Finalize();
+        // Py_Finalize();
         RAISE_ERROR(base::RuntimeError, "Decode python error");
     }
 
@@ -504,10 +536,10 @@ std::string decodeMessage(const std::string& contract_path, const std::string& d
         }
     }
     catch (const base::Error& e) {
-        Py_Finalize();
+        // Py_Finalize();
         throw e;
     }
-    Py_Finalize();
+    // Py_Finalize();
     return decode_result;
 }
 

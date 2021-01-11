@@ -25,6 +25,8 @@ class Client
 
     std::mutex _out_mutex;
 
+    bool _exit{false};
+
     boost::asio::io_context _io_context;
     websocket::WebSocketClient _web_socket_client;
 
