@@ -422,7 +422,7 @@ void Core::tryPerformTransaction(const lk::Transaction& tx, const ImmutableBlock
                     TransactionStatus status(TransactionStatus::StatusCode::Success,
                                              TransactionStatus::ActionType::ContractCall,
                                              eval_result.gas_left,
-                                             base::base64Encode(output_data));
+                                             base::toHex(output_data));
                     return addTransactionOutput(transaction_hash, status);
                 }
                 else if (eval_result.status_code == evmc_status_code::EVMC_REVERT) {

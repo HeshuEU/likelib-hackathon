@@ -126,7 +126,14 @@ void Client::chooseAction(std::string& input)
             if (_connected) {
                 _host = host;
                 thread = std::thread{[&](){
+                    if(_io_context.stopped()){
+                        _io_context.restart();
+                    }
                     _io_context.run();
+                    if(_connected && !_web_socket_client.ready()){
+                        _connected = false;
+                        _web_socket_client.disconnect();
+                    }
                 }};
                 output("Client connected to host " + host);
             }
@@ -145,8 +152,8 @@ void Client::chooseAction(std::string& input)
             }
 
             _connected = false;
-            _web_socket_client.disconnect();
             _io_context.stop();
+            _web_socket_client.disconnect();
             thread.join();
         }
         else if (action_name == "compile") {
