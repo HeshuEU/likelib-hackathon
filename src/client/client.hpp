@@ -19,7 +19,6 @@ class Client
 
   private:
     std::string _prompt;
-    bool readline_active;
     std::string _saved_line;
     std::uint32_t _saved_point;
 
@@ -33,7 +32,7 @@ class Client
     bool _connected{false};
     std::string _host;
 
-    std::thread thread;
+    std::thread _thread;
 
     void processLine(std::string line);
 

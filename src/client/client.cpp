@@ -134,7 +134,7 @@ void Client::chooseAction(std::string& input)
             _connected = _web_socket_client.connect(host);
             if (_connected) {
                 _host = host;
-                thread = std::thread{[&](){
+                _thread = std::thread{[&](){
                     if(_io_context.stopped()){
                         _io_context.restart();
                     }
@@ -163,7 +163,7 @@ void Client::chooseAction(std::string& input)
             _connected = false;
             _io_context.stop();
             _web_socket_client.disconnect();
-            thread.join();
+            _thread.join();
         }
         else if (action_name == "compile") {
             if (arguments.size() != 1) {

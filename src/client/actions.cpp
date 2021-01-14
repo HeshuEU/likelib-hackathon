@@ -92,6 +92,8 @@ void help(Client& client)
 {
     std::string output = "- help\n"
                          "      Show help message\n"
+                         "- exit\n"
+                         "      Exit fron likelib client\n"
                          "- connect <ip and port of likelib node>\n"
                          "      Connect client to specific likelib node\n"
                          "- disconnect\n"

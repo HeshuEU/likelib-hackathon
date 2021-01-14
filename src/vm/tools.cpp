@@ -18,33 +18,35 @@
 namespace
 {
 
-struct PyFinalizer
+struct PyConnector
 {
-    PyFinalizer(const PyFinalizer& other) = delete;
-    PyFinalizer(PyFinalizer&& other) = delete;
+    PyConnector(const PyConnector& other) = delete;
+    PyConnector(PyConnector&& other) = delete;
 
-    PyFinalizer& operator=(const PyFinalizer& other) = delete;
-    PyFinalizer& operator=(PyFinalizer&& other) = delete;
+    PyConnector& operator=(const PyConnector& other) = delete;
+    PyConnector& operator=(PyConnector&& other) = delete;
 
-    static const PyFinalizer* getInstance()
+    static const PyConnector& getInstance()
     {
-        if (_singleton == nullptr) {
-            _singleton = new PyFinalizer();
+        static auto instance = std::make_unique<PyConnector>();
+        return *instance;
+    }
+
+    ~PyConnector() { Py_Finalize(); }
+
+    PyConnector()
+    {
+        auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
+        if (status == -1) {
+            RAISE_ERROR(base::RuntimeError, "Decode python error");
         }
-        return _singleton;
+        Py_Initialize();
+        auto module = PyImport_ImportModule("encode_decode");
+        if (module == nullptr) {
+            RAISE_ERROR(base::RuntimeError, "Decode python error");
+        }
     }
-
-    ~PyFinalizer()
-    {
-        Py_Finalize();
-        delete _singleton;
-    }
-
-    PyFinalizer() = default;
-    static PyFinalizer* _singleton;
 };
-
-PyFinalizer* PyFinalizer::_singleton = nullptr;
 
 
 constexpr std::size_t ID_METHOD_SIZE = 8;
@@ -455,91 +457,57 @@ std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_cod
 std::string encodeMessage(const std::string& contract_path, const std::string& data)
 {
     constexpr int ID_METHOD_SIZE = 8;
-    auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
-    if (status == -1) {
-        RAISE_ERROR(base::RuntimeError, "Decode python error");
-    }
-    Py_Initialize();
-    auto module = PyImport_ImportModule("encode_decode");
-    auto py_finalizer = PyFinalizer::getInstance();
-    if (module == nullptr) {
-        // Py_Finalize();
-        RAISE_ERROR(base::RuntimeError, "Decode python error");
-    }
+    const auto& py_connector = PyConnector::getInstance();
 
     std::string encode_result;
-    try {
-        auto [bytecode, metadata] = loadContractData(contract_path);
-        auto [method, arguments] = parseCall(data);
+    auto [bytecode, metadata] = loadContractData(contract_path);
+    auto [method, arguments] = parseCall(data);
 
-        if (method == "constructor") {
-            modifyMetadataAddress(metadata);
-            encode_result = ::encodeMessageConstructor(
-              arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
-            if (encode_result.size() < ID_METHOD_SIZE) {
-                RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
-            }
-            encode_result.erase(0, 2);
+    if (method == "constructor") {
+        modifyMetadataAddress(metadata);
+        encode_result =
+          ::encodeMessageConstructor(arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
+        if (encode_result.size() < ID_METHOD_SIZE) {
+            RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
         }
-        else {
-            auto methods_signature = ::getMethodsByArguments(arguments.c_str(), treeToString(metadata).c_str());
-            if (methods_signature == "") {
-                RAISE_ERROR(base::InvalidArgument, "No methods with these arguments have been found");
-            }
-            auto method_signature = getMethodSignature(methods_signature, method);
-            auto method_hash = base::Keccak256::compute(base::Bytes(method_signature));
-            modifyMetadataAddress(metadata);
-            encode_result = ::encodeMessageFunction(
-              method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
-            if (encode_result.size() < ID_METHOD_SIZE) {
-                RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
-            }
-            encode_result = method_hash.toHex().substr(0, ID_METHOD_SIZE) +
-                            encode_result.substr(ID_METHOD_SIZE, encode_result.size() - ID_METHOD_SIZE);
+        encode_result.erase(0, 2);
+    }
+    else {
+        auto methods_signature = ::getMethodsByArguments(arguments.c_str(), treeToString(metadata).c_str());
+        if (methods_signature == "") {
+            RAISE_ERROR(base::InvalidArgument, "No methods with these arguments have been found");
         }
+        auto method_signature = getMethodSignature(methods_signature, method);
+        auto method_hash = base::Keccak256::compute(base::Bytes(method_signature));
+        modifyMetadataAddress(metadata);
+        encode_result = ::encodeMessageFunction(
+          method.c_str(), arguments.c_str(), bytecode.toString().c_str(), treeToString(metadata).c_str());
+        if (encode_result.size() < ID_METHOD_SIZE) {
+            RAISE_ERROR(base::RuntimeError, "Error occurred during the encode");
+        }
+        encode_result = method_hash.toHex().substr(0, ID_METHOD_SIZE) +
+                        encode_result.substr(ID_METHOD_SIZE, encode_result.size() - ID_METHOD_SIZE);
     }
-    catch (const base::Error& e) {
-        // Py_Finalize();
-        throw e;
-    }
-    // Py_Finalize();
     return encode_result;
 }
 
 
 std::string decodeMessage(const std::string& contract_path, const std::string& data)
 {
-    auto status = PyImport_AppendInittab("encode_decode", PyInit_encode_decode);
-    if (status == -1) {
-        RAISE_ERROR(base::RuntimeError, "Decode python error");
-    }
-    Py_Initialize();
-    auto module = PyImport_ImportModule("encode_decode");
-    auto py_finalizer = PyFinalizer::getInstance();
-    if (module == nullptr) {
-        // Py_Finalize();
-        RAISE_ERROR(base::RuntimeError, "Decode python error");
-    }
+    const auto& py_connector = PyConnector::getInstance();
 
     std::string decode_result;
-    try {
-        auto [bytecode, metadata] = loadContractData(contract_path);
-        auto [method_metadata, new_data] = getMethodInfo(metadata, data);
-        decode_result = ::decodeMessage(treeToString(method_metadata).c_str(), new_data.c_str());
-        if (decode_result.size() != 0) {
-            if (outputIsAddress(method_metadata)) {
-                changeAddressOutput(decode_result);
-            }
-        }
-        else {
-            RAISE_ERROR(base::RuntimeError, "Error occurred during the decode");
+    auto [bytecode, metadata] = loadContractData(contract_path);
+    auto [method_metadata, new_data] = getMethodInfo(metadata, data);
+    decode_result = ::decodeMessage(treeToString(method_metadata).c_str(), new_data.c_str());
+    if (decode_result.size() != 0) {
+        if (outputIsAddress(method_metadata)) {
+            changeAddressOutput(decode_result);
         }
     }
-    catch (const base::Error& e) {
-        // Py_Finalize();
-        throw e;
+    else {
+        RAISE_ERROR(base::RuntimeError, "Error occurred during the decode");
     }
-    // Py_Finalize();
     return decode_result;
 }
 
