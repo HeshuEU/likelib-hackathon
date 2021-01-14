@@ -5,8 +5,6 @@
 #include "websocket/client.hpp"
 #include "websocket/tools.hpp"
 
-#include <cli/cli.h>
-
 #include <boost/thread.hpp>
 
 class Client

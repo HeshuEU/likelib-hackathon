@@ -4,9 +4,6 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 
-#include <cli/clilocalsession.h>
-#include <cli/remotecli.h>
-
 #include <iostream>
 
 void clearSpaces(std::string& str)
