@@ -121,7 +121,7 @@ class HostImplementation : public evmc::Host
 BOOST_AUTO_TEST_CASE(vm_base)
 {
     const char* source_code = R"raw(
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 contract SimpleStorage {
     uint storedData;

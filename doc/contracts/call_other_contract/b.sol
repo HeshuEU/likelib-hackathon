@@ -1,4 +1,4 @@
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 import "./abstract_a.sol";
 

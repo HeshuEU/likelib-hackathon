@@ -7,7 +7,7 @@ from tester import test_case, Env, NodeConfig, Id, TEST_CHECK, TEST_CHECK_EQUAL,
 @test_case("push_contract_grpc_legacy")
 def main(env: Env):
     contract_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 contract SimpleStorage {
     uint storedData;
@@ -74,7 +74,7 @@ contract SimpleStorage {
 @test_case("push_contract_http_legacy")
 def main(env: Env):
     contract_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 contract SimpleStorage {
     uint storedData;
@@ -142,7 +142,7 @@ contract SimpleStorage {
 @test_case("push_contract_http_python")
 def main(env: Env):
     contract_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 contract SimpleStorage {
     uint storedData;

@@ -14,7 +14,7 @@ if not os.path.exists(CONTRACTS_FOLDER):
 @test_case("get_balance_contract_grpc")
 def main(env: Env) -> int:
     contract_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 contract Balance {
 
@@ -68,7 +68,7 @@ contract Balance {
 @test_case("address_send_contract")
 def main(env: Env) -> int:
     contract_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 contract AddressSend {
     uint256 coins_store;
@@ -163,7 +163,7 @@ contract AddressSend {
 @test_case("get_previous_block_contract")
 def main(env: Env) -> int:
     contract_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 contract GetPreviousBlock {
 
@@ -226,7 +226,7 @@ contract GetPreviousBlock {
 @test_case("selfdestruct_contract")
 def main(env: Env) -> int:
     contract_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 contract PayMe {
     uint256 coins_store;
@@ -323,7 +323,7 @@ contract PayMe {
 @test_case("call_other_contract")
 def main(env: Env) -> int:
     contract_a_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 import "./abstract_a.sol";
 
@@ -334,7 +334,7 @@ contract A is AbstractA {
 }
 '''
     contract_b_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 import "./abstract_a.sol";
 
@@ -346,7 +346,7 @@ contract B {
 }
 '''
     contract_abstract_a_text = '''
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity >=0.4.0 <0.8.5;
 
 interface AbstractA {
     function sum(uint arg1, uint arg2) external returns(uint);
