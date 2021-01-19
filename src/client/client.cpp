@@ -131,16 +131,12 @@ void Client::chooseAction(std::string& input)
             _connected = _web_socket_client.connect(host);
             if (_connected) {
                 _host = host;
-                _thread = std::thread{[&](){
-                    if(_io_context.stopped()){
+                _thread = std::thread{ [&]() {
+                    if (_io_context.stopped()) {
                         _io_context.restart();
                     }
                     _io_context.run();
-                    if(_connected && !_web_socket_client.ready()){
-                        _connected = false;
-                        _web_socket_client.disconnect();
-                    }
-                }};
+                } };
                 output("Client connected to host " + host);
             }
             else {
@@ -300,7 +296,7 @@ void Client::chooseAction(std::string& input)
             if (!_connected) {
                 output("You have to connect to likelib node");
                 return;
-            }       
+            }
             transfer(*this, _web_socket_client, arguments[1], arguments[3], arguments[2], arguments[0]);
         }
         else if (action_name == "contract_call") {
@@ -313,7 +309,8 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            contract_call(*this, _web_socket_client, arguments[1], arguments[3], arguments[2], arguments[0], arguments[4]);
+            contract_call(
+              *this, _web_socket_client, arguments[1], arguments[3], arguments[2], arguments[0], arguments[4]);
         }
         else if (action_name == "push_contract") {
             if (arguments.size() != 5) {
@@ -325,7 +322,8 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            push_contract(*this, _web_socket_client, arguments[2], arguments[1], arguments[0], arguments[3], arguments[4]);
+            push_contract(
+              *this, _web_socket_client, arguments[2], arguments[1], arguments[0], arguments[3], arguments[4]);
         }
         else if (action_name == "subscribe_last_block_info") {
             if (arguments.size() != 0) {

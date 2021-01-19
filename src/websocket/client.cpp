@@ -19,9 +19,11 @@ WebSocketClient::WebSocketClient(boost::asio::io_context& ioc,
   : _resolver(boost::asio::make_strand(ioc))
   , _websocket(boost::asio::make_strand(ioc))
   , _ready{ false }
-  , _receiveCallback{ std::move(receiveData) }
-  , _closeCallback{ std::move(socketClosed) }
-  , _lastGivenQueryId{ 0 }
+  , _timer(_websocket.get_executor(), (std::chrono::steady_clock::time_point::max)())
+  , _state(EndPointState::NO_CONNECTION)
+  , _receive_callback{ std::move(receiveData) }
+  , _close_callback{ std::move(socketClosed) }
+  , _last_given_query_id{ 0 }
 {}
 
 
@@ -82,7 +84,62 @@ bool WebSocketClient::connect(const std::string& host)
     _websocket.control_callback(
       std::bind(&WebSocketClient::frameControl, this, std::placeholders::_1, std::placeholders::_2));
 
+    active();
+    onTimer({});
+
     return _ready;
+}
+
+
+void WebSocketClient::onTimer(boost::system::error_code ec)
+{
+    if (ec && ec != boost::asio::error::operation_aborted) {
+        LOG_ERROR << "connection error: " << ec.message();
+        return;
+    }
+
+    if (_timer.expiry() <= std::chrono::steady_clock::now()) {
+        if (_websocket.is_open() && _state == EndPointState::ALIVE) {
+            _state = EndPointState::PING_SENDING;
+            _timer.expires_after(std::chrono::seconds(15));
+
+            _websocket.async_ping(
+              {},
+              boost::asio::bind_executor(_websocket.get_executor(),
+                                         std::bind(&WebSocketClient::onPing, this, std::placeholders::_1)));
+        }
+        else {
+            closeTimeout();
+            _state = EndPointState::NO_CONNECTION;
+            return;
+        }
+    }
+
+    _timer.async_wait(boost::asio::bind_executor(_websocket.get_executor(),
+                                                 std::bind(&WebSocketClient::onTimer, this, std::placeholders::_1)));
+}
+
+void WebSocketClient::active()
+{
+    _state = EndPointState::ALIVE;
+    _timer.expires_after(std::chrono::seconds(15));
+}
+
+
+void WebSocketClient::onPing(boost::system::error_code ec)
+{
+    if (ec == boost::asio::error::operation_aborted) {
+        LOG_ERROR << "connection error: " << ec.message();
+        return;
+    }
+
+    if (ec) {
+        LOG_ERROR << "ping failed: " << ec.message();
+        return;
+    }
+    if (_state == EndPointState::PING_SENDING) {
+        _state = EndPointState::PING_SEND;
+    }
 }
 
 
@@ -91,6 +148,9 @@ void WebSocketClient::frameControl(boost::beast::websocket::frame_type kind,
 {
     if (kind == boost::beast::websocket::frame_type::close) {
         disconnect();
+    }
+    else {
+        active();
     }
 }
 
@@ -123,7 +183,7 @@ void WebSocketClient::send(Command::Id commandId, base::json::Value&& args)
 
 bool WebSocketClient::ready()
 {
-    return _ready;
+    return _websocket.is_open();
 }
 
 
@@ -137,6 +197,7 @@ void WebSocketClient::close(boost::beast::websocket::close_code reason) noexcept
 {
     if (_websocket.is_open()) {
         boost::beast::error_code ec;
+
         _websocket.close(reason, ec);
 
         if (ec) {
@@ -145,9 +206,10 @@ void WebSocketClient::close(boost::beast::websocket::close_code reason) noexcept
         }
 
         _ready = false;
-        if (_closeCallback) {
+
+        if (_close_callback) {
             try {
-                _closeCallback();
+                _close_callback();
             }
             catch (const std::exception& ex) {
                 LOG_DEBUG << "exception at close callback " << ex.what();
@@ -160,9 +222,36 @@ void WebSocketClient::close(boost::beast::websocket::close_code reason) noexcept
 }
 
 
+void WebSocketClient::closeTimeout()
+{
+    boost::beast::error_code ec;
+    _websocket.next_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    _websocket.next_layer().close(ec);
+
+    if (ec) {
+        LOG_ERROR << "closing failed: " << ec.message();
+        return;
+    }
+
+    _ready = false;
+
+    if (_close_callback) {
+        try {
+            _close_callback();
+        }
+        catch (const std::exception& ex) {
+            LOG_DEBUG << "exception at close callback " << ex.what();
+        }
+        catch (...) {
+            LOG_DEBUG << "unexpected exception at close callback";
+        }
+    }
+}
+
+
 void WebSocketClient::doRead()
 {
-    _websocket.async_read(_readBuffer, boost::beast::bind_front_handler(&WebSocketClient::onRead, this));
+    _websocket.async_read(_read_buffer, boost::beast::bind_front_handler(&WebSocketClient::onRead, this));
 }
 
 
@@ -180,8 +269,8 @@ void WebSocketClient::onRead(boost::beast::error_code ec, std::size_t bytesTrans
     }
 
     base::Bytes receivedData(bytesTransferred);
-    std::memcpy(receivedData.getData(), _readBuffer.data().data(), bytesTransferred);
-    _readBuffer.clear();
+    std::memcpy(receivedData.getData(), _read_buffer.data().data(), bytesTransferred);
+    _read_buffer.clear();
 
     doRead();
 
@@ -232,16 +321,16 @@ void WebSocketClient::onRead(boost::beast::error_code ec, std::size_t bytesTrans
     }
 
     try {
-        auto command_id = _currentQueries.find(query_id);
-        if (command_id == _currentQueries.end()) {
+        auto command_id = _current_queries.find(query_id);
+        if (command_id == _current_queries.end()) {
             LOG_DEBUG << "received unregistered answer id";
             return;
         }
         auto currentCommandId = Command::Id(command_id->second);
         if (!static_cast<bool>(currentCommandId & Command::Id(Command::Type::SUBSCRIBE))) {
-            _currentQueries.erase(command_id);
+            _current_queries.erase(command_id);
         }
-        _receiveCallback(currentCommandId, std::move(result_json_value));
+        _receive_callback(currentCommandId, std::move(result_json_value));
     }
     catch (const base::Error& error) {
         LOG_ERROR << "receive callback execution error" << error.what();
@@ -251,8 +340,8 @@ void WebSocketClient::onRead(boost::beast::error_code ec, std::size_t bytesTrans
 
 QueryId WebSocketClient::registerNewQuery(Command::Id commandId)
 {
-    auto currentId = ++_lastGivenQueryId;
-    _currentQueries.insert({ currentId, commandId });
+    auto currentId = ++_last_given_query_id;
+    _current_queries.insert({ currentId, commandId });
     return currentId;
 }
 
