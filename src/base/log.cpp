@@ -16,6 +16,8 @@
 #include <ctime>
 #include <filesystem>
 
+#define BOOST_STACKTRACE_USE_ADDR2LINE
+
 namespace
 {
 
@@ -105,7 +107,7 @@ void initLog(size_t mode)
 
 void dumpDebuggingInfo()
 {
-    LOG_DEBUG << boost::stacktrace::stacktrace();
+    LOG_INFO << boost::stacktrace::stacktrace();
 }
 
 void flushLog()

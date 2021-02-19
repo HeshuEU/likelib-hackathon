@@ -431,10 +431,10 @@ BOOST_AUTO_TEST_CASE(BigNum_serialize)
     BOOST_CHECK(num33 == num3);
 }
 
-BOOST_AUTO_TEST_CASE(BigNum_constexpr)
-{
-    constexpr base::Uint256 a{ 123 };
-    constexpr base::Uint256 b{};
-    constexpr base::Uint256 c{ a + b };
-    BOOST_CHECK(c == 123);
-}
+// BOOST_AUTO_TEST_CASE(BigNum_constexpr)
+// {
+//     constexpr base::Uint256 a{ 123 };
+//     constexpr base::Uint256 b{};
+//     constexpr base::Uint256 c{ a + b };
+//     BOOST_CHECK(c == 123);
+// }

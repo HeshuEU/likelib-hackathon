@@ -12,6 +12,8 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 endif ()
 
+add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
+
 find_package(Backtrace)
 include_directories(SYSTEM ${Backtrace_INCLUDE_DIRS})
 include_directories(SYSTEM "/usr/lib/gcc/x86_64-linux-gnu/9/include/")

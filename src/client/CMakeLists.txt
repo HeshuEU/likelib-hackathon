@@ -20,8 +20,3 @@ add_executable(client ${CLIENT_HEADERS} ${CLIENT_SOURCES})
 target_link_libraries(client base core websocket vm ${READLINE_LIBRARY} ${TERMCAP_LIBRARY})
 target_include_directories(client SYSTEM PRIVATE ${READLINE_INCLUDE_DIR})
 target_compile_definitions(client PRIVATE -DUSE_READLINE=1)
-
-target_compile_definitions(client PRIVATE BOOST_STACKTRACE_USE_ADDR2LINE)
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_options(client PRIVATE "-no-pie")
-endif ()
