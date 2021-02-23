@@ -165,8 +165,7 @@ void Client::chooseAction(std::string& input)
                 return;
             }
 
-            const auto path = arguments[0];
-            compile_solidity_code(*this, path);
+            compile_solidity_code(*this, arguments);
         }
         else if (action_name == "encode") {
             if (arguments.size() != 2) {
@@ -174,9 +173,7 @@ void Client::chooseAction(std::string& input)
                 return;
             }
 
-            const auto path = arguments[0];
-            const auto message = arguments[1];
-            encode_message(*this, path, message);
+            encode_message(*this, arguments);
         }
         else if (action_name == "decode") {
             if (arguments.size() != 2) {
@@ -184,9 +181,7 @@ void Client::chooseAction(std::string& input)
                 return;
             }
 
-            const auto path = arguments[0];
-            const auto message = arguments[1];
-            decode_message(*this, path, message);
+            decode_message(*this, arguments);
         }
         else if (action_name == "keys_generate") {
             if (arguments.size() != 1) {
@@ -194,8 +189,7 @@ void Client::chooseAction(std::string& input)
                 return;
             }
 
-            const auto path = arguments[0];
-            generate_keys(*this, path);
+            generate_keys(*this, arguments);
         }
         else if (action_name == "keys_info") {
             if (arguments.size() != 1) {
@@ -203,8 +197,7 @@ void Client::chooseAction(std::string& input)
                 return;
             }
 
-            const auto path = arguments[0];
-            keys_info(*this, path);
+            keys_info(*this, arguments);
         }
         else if (action_name == "add_wallet") {
             if (arguments.size() != 2) {
@@ -212,9 +205,7 @@ void Client::chooseAction(std::string& input)
                 return;
             }
 
-            const auto wallet_name = arguments[0];
-            const auto keys_dir = arguments[1];
-            add_wallet(*this, keys_dir, wallet_name, _wallets);
+            add_wallet(*this, arguments);
         }
         else if (action_name == "delete_wallet") {
             if (arguments.size() != 1) {
@@ -222,15 +213,14 @@ void Client::chooseAction(std::string& input)
                 return;
             }
 
-            const auto wallet_name = arguments[0];
-            delete_wallet(*this, wallet_name, _wallets);
+            delete_wallet(*this, arguments);
         }
         else if (action_name == "show_wallets") {
             if (arguments.size() != 0) {
                 output("Wrong number of arguments for the keys_info command");
                 return;
             }
-            show_wallets(*this, _wallets);
+            show_wallets(*this, arguments);
         }
         else if (action_name == "last_block_info") {
             if (arguments.size() != 0) {
@@ -241,7 +231,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            call_last_block_info(_web_socket_client);
+            call_last_block_info(*this);
         }
         else if (action_name == "account_info") {
             if (arguments.size() != 1) {
@@ -252,7 +242,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            call_account_info(*this, _web_socket_client, arguments[0]);
+            call_account_info(*this, arguments);
         }
         else if (action_name == "subscribe_account_info") {
             if (arguments.size() != 1) {
@@ -264,7 +254,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            subscribe_account_info(*this, _web_socket_client, arguments[0]);
+            subscribe_account_info(*this, arguments);
         }
         else if (action_name == "unsubscribe_account_info") {
             if (arguments.size() != 1) {
@@ -276,7 +266,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            unsubscribe_account_info(*this, _web_socket_client, arguments[0]);
+            unsubscribe_account_info(*this, arguments);
         }
         else if (action_name == "find_transaction") {
             if (arguments.size() != 1) {
@@ -288,7 +278,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            call_find_transaction(*this, _web_socket_client, arguments[0]);
+            call_find_transaction(*this, arguments);
         }
         else if (action_name == "find_transaction_status") {
             if (arguments.size() != 1) {
@@ -300,7 +290,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            call_find_transaction_status(*this, _web_socket_client, arguments[0]);
+            call_find_transaction_status(*this, arguments);
         }
         else if (action_name == "find_block") {
             if (arguments.size() != 1) {
@@ -312,7 +302,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            call_find_block(*this, _web_socket_client, arguments[0]);
+            call_find_block(*this, arguments);
         }
         else if (action_name == "transfer") {
             if (arguments.size() != 4) {
@@ -324,7 +314,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            transfer(*this, _web_socket_client, arguments[1], arguments[3], arguments[2], arguments[0]);
+            transfer(*this, arguments);
         }
         else if (action_name == "contract_call") {
             if (arguments.size() != 5) {
@@ -337,7 +327,7 @@ void Client::chooseAction(std::string& input)
                 return;
             }
             contract_call(
-              *this, _web_socket_client, arguments[1], arguments[3], arguments[2], arguments[0], arguments[4]);
+              *this, arguments);
         }
         else if (action_name == "push_contract") {
             if (arguments.size() != 5) {
@@ -350,7 +340,7 @@ void Client::chooseAction(std::string& input)
                 return;
             }
             push_contract(
-              *this, _web_socket_client, arguments[2], arguments[1], arguments[0], arguments[3], arguments[4]);
+              *this, arguments);
         }
         else if (action_name == "subscribe_last_block_info") {
             if (arguments.size() != 0) {
@@ -362,7 +352,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            subscribe_last_block_info(_web_socket_client);
+            subscribe_last_block_info(*this);
         }
         else if (action_name == "unsubscribe_last_block_info") {
             if (arguments.size() != 0) {
@@ -374,7 +364,7 @@ void Client::chooseAction(std::string& input)
                 output("You have to connect to likelib node");
                 return;
             }
-            unsubscribe_last_block_info(_web_socket_client);
+            unsubscribe_last_block_info(*this);
         }
         else {
             output("There is no command with the name " + action_name);
@@ -505,6 +495,24 @@ void Client::remoteOutput(const std::string& str)
 const std::map<std::string, std::string>& Client::getWallets() const
 {
     return _wallets;
+}
+
+
+void Client::addWallet(const std::string wallet_name, const std::filesystem::path& keys_dir)
+{
+    _wallets[wallet_name] = keys_dir;
+}
+
+
+void Client::deleteWallet(const std::string wallet_name)
+{
+    _wallets.erase(wallet_name);
+}
+
+
+websocket::WebSocketClient& Client::getWebSocket()
+{
+    return _web_socket_client;
 }
 
 

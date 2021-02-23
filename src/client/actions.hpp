@@ -12,62 +12,42 @@
 
 void help(Client& client);
 
-void compile_solidity_code(Client& client, const std::string& code_file_path);
+void compile_solidity_code(Client& client, const std::vector<std::string>& arguments);
 
-void encode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message);
+void encode_message(Client& client, const std::vector<std::string>& arguments);
 
-void decode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message);
+void decode_message(Client& client, const std::vector<std::string>& arguments);
 
-void generate_keys(Client& client, const std::string& path);
+void generate_keys(Client& client, const std::vector<std::string>& arguments);
 
-void keys_info(Client& client, const std::string& path);
+void keys_info(Client& client, const std::vector<std::string>& arguments);
 
-void add_wallet(Client& client,
-                const std::string& keys_dir,
-                const std::string& wallet_name,
-                std::map<std::string, std::string>& wallets);
+void add_wallet(Client& client, const std::vector<std::string>& arguments);
 
-void delete_wallet(Client& client, const std::string& wallet_name, std::map<std::string, std::string>& wallets);
+void delete_wallet(Client& client, const std::vector<std::string>& arguments);
 
-void show_wallets(Client& client, const std::map<std::string, std::string>& wallets);
+void show_wallets(Client& client, const std::vector<std::string>& arguments);
 
-void call_last_block_info(websocket::WebSocketClient& web_socket);
+void call_last_block_info(Client& client);
 
-void call_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address);
+void call_account_info(Client& client, const std::vector<std::string>& arguments);
 
-void subscribe_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address);
+void subscribe_account_info(Client& client, const std::vector<std::string>& arguments);
 
-void unsubscribe_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address);
+void unsubscribe_account_info(Client& client, const std::vector<std::string>& arguments);
 
-void call_find_transaction(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash);
+void call_find_transaction(Client& client, const std::vector<std::string>& arguments);
 
-void call_find_transaction_status(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash);
+void call_find_transaction_status(Client& client, const std::vector<std::string>& arguments);
 
-void call_find_block(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash);
+void call_find_block(Client& client, const std::vector<std::string>& arguments);
 
-void transfer(Client& client,
-              websocket::WebSocketClient& web_socket,
-              const std::string& to_address,
-              const std::string& amount,
-              const std::string& fee,
-              const std::string& keys_dir);
+void transfer(Client& client, const std::vector<std::string>& arguments);
 
-void contract_call(Client& client,
-                   websocket::WebSocketClient& web_socket,
-                   const std::string& to_address,
-                   const std::string& amount,
-                   const std::string& fee,
-                   const std::string& keys_dir,
-                   const std::string& message);
+void contract_call(Client& client, const std::vector<std::string>& arguments);
 
-void push_contract(Client& client,
-                   websocket::WebSocketClient& web_socket,
-                   const std::string& amount,
-                   const std::string& fee,
-                   const std::string& keys_dir,
-                   const std::string& path_to_compiled_folder,
-                   const std::string& message);
+void push_contract(Client& client, const std::vector<std::string>& arguments);
 
-void subscribe_last_block_info(websocket::WebSocketClient& web_socket);
+void subscribe_last_block_info(Client& client);
 
-void unsubscribe_last_block_info(websocket::WebSocketClient& web_socket);
+void unsubscribe_last_block_info(Client& client);

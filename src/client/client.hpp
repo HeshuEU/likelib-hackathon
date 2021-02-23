@@ -11,10 +11,18 @@ class Client
 {
   public:
     explicit Client();
+
     void run();
+
     void output(const std::string& str);
     void remoteOutput(const std::string& str);
+
     const std::map<std::string, std::string>& getWallets() const;
+    websocket::WebSocketClient& getWebSocket();
+    
+    void addWallet(const std::string wallet_name, const std::filesystem::path& keys_dir);
+    void deleteWallet(const std::string wallet_name);
+    
 
   private:
     std::string _prompt;
@@ -33,7 +41,16 @@ class Client
 
     std::thread _thread;
 
+    struct Command
+    {
+      std::string _command_name;
+      std::string _command_description;
+      std::string _command_arguments_msg;
+      std::size_t _count_arguments;
+      std::function<void(Client&, const std::vector<std::string>&)> _function;
+    };
     std::map<std::string, std::string> _wallets;
+    std::vector<Command> _commands;
 
     void processLine(std::string line);
 

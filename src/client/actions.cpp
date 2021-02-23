@@ -145,9 +145,10 @@ void help(Client& client)
 }
 
 
-void compile_solidity_code(Client& client, const std::string& code_file_path)
+void compile_solidity_code(Client& client, const std::vector<std::string>& arguments)
 {
     std::optional<vm::Contracts> contracts;
+    std::string code_file_path{arguments[0]};
     try {
         contracts = vm::compile(code_file_path);
     }
@@ -200,8 +201,10 @@ void compile_solidity_code(Client& client, const std::string& code_file_path)
 }
 
 
-void encode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message)
+void encode_message(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string compiled_contract_folder_path{arguments[0]};
+    std::string message{arguments[1]};
     try {
         auto output_message = vm::encodeCall(compiled_contract_folder_path, message);
         if (output_message) {
@@ -223,8 +226,10 @@ void encode_message(Client& client, const std::string& compiled_contract_folder_
 }
 
 
-void decode_message(Client& client, const std::string& compiled_contract_folder_path, const std::string& message)
+void decode_message(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string compiled_contract_folder_path{arguments[0]};
+    std::string message{arguments[1]};
     try {
         auto output_message = vm::decodeOutput(compiled_contract_folder_path, message);
         if (output_message) {
@@ -246,8 +251,9 @@ void decode_message(Client& client, const std::string& compiled_contract_folder_
 }
 
 
-void generate_keys(Client& client, const std::string& path)
+void generate_keys(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string path{arguments[0]};
     const auto& priv = base::Secp256PrivateKey();
 
     auto private_path = base::config::makePrivateKeyPath(path);
@@ -272,8 +278,9 @@ void generate_keys(Client& client, const std::string& path)
 }
 
 
-void keys_info(Client& client, const std::string& path)
+void keys_info(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string path{arguments[0]};
     auto private_path = base::config::makePrivateKeyPath(path);
     std::stringstream output;
     if (!std::filesystem::exists(private_path)) {
@@ -292,11 +299,11 @@ void keys_info(Client& client, const std::string& path)
 }
 
 
-void add_wallet(Client& client,
-                const std::string& keys_dir_str,
-                const std::string& wallet_name,
-                std::map<std::string, std::string>& wallets)
+void add_wallet(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string keys_dir_str{arguments[0]};
+    std::string wallet_name{arguments[1]};
+    auto wallets = client.getWallets();
     std::filesystem::path keys_dir{ keys_dir_str };
 
     auto private_key_path = base::config::makePrivateKeyPath(keys_dir);
@@ -304,7 +311,8 @@ void add_wallet(Client& client,
     auto from_address = lk::Address(private_key.toPublicKey());
 
     if (wallets.find(wallet_name) == wallets.end()) {
-        wallets[wallet_name] = keys_dir;
+        //wallets[wallet_name] = keys_dir;
+        client.addWallet(wallet_name, keys_dir);
         client.output("Added a wallet with the name " + wallet_name);
     }
     else {
@@ -313,19 +321,25 @@ void add_wallet(Client& client,
 }
 
 
-void delete_wallet(Client& client, const std::string& wallet_name, std::map<std::string, std::string>& wallets)
+void delete_wallet(Client& client, const std::vector<std::string>& arguments)
 {
+    auto wallets = client.getWallets();
+    std::string wallet_name{arguments[0]};
+
     if (wallets.find(wallet_name) == wallets.end()) {
         client.output("Wallet with the name " + wallet_name + " does not exists");
     }
     else {
+        client.deleteWallet(wallet_name);
         client.output("Wallet with the name " + wallet_name + " deleted");
     }
 }
 
 
-void show_wallets(Client& client, const std::map<std::string, std::string>& wallets)
+void show_wallets(Client& client, const std::vector<std::string>& arguments)
 {
+    auto wallets = client.getWallets();
+
     if (wallets.empty()) {
         client.output("no wallets saved");
     }
@@ -337,15 +351,20 @@ void show_wallets(Client& client, const std::map<std::string, std::string>& wall
 }
 
 
-void call_last_block_info(websocket::WebSocketClient& client)
-{
+void call_last_block_info(Client& client)
+{   
+    auto& web_socket{client.getWebSocket()};
+
     LOG_INFO << "last_block_info";
-    client.send(websocket::Command::CALL_LAST_BLOCK_INFO, base::json::Value::object());
+    web_socket.send(websocket::Command::CALL_LAST_BLOCK_INFO, base::json::Value::object());
 }
 
 
-void call_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
+void call_account_info(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string address_str{arguments[0]};
+    auto& web_socket{client.getWebSocket()};
+
     auto address = takeAddress(client, address_str);
     if (!address) {
         return;
@@ -358,8 +377,11 @@ void call_account_info(Client& client, websocket::WebSocketClient& web_socket, c
 }
 
 
-void subscribe_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
+void subscribe_account_info(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string address_str{arguments[0]};
+    auto& web_socket{client.getWebSocket()};
+
     auto address = takeAddress(client, address_str);
     if (!address) {
         return;
@@ -372,8 +394,11 @@ void subscribe_account_info(Client& client, websocket::WebSocketClient& web_sock
 }
 
 
-void unsubscribe_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
+void unsubscribe_account_info(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string address_str{arguments[0]};
+    auto& web_socket{client.getWebSocket()};
+
     auto address = takeAddress(client, address_str);
     if (!address) {
         return;
@@ -386,8 +411,11 @@ void unsubscribe_account_info(Client& client, websocket::WebSocketClient& web_so
 }
 
 
-void call_find_transaction(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
+void call_find_transaction(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string hash_str{arguments[0]};
+    auto& web_socket{client.getWebSocket()};
+
     auto hash = takeHash(client, hash_str);
     if (!hash) {
         return;
@@ -400,8 +428,11 @@ void call_find_transaction(Client& client, websocket::WebSocketClient& web_socke
 }
 
 
-void call_find_transaction_status(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
+void call_find_transaction_status(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string hash_str{arguments[0]};
+    auto& web_socket{client.getWebSocket()};
+
     auto hash = takeHash(client, hash_str);
     if (!hash) {
         return;
@@ -414,8 +445,11 @@ void call_find_transaction_status(Client& client, websocket::WebSocketClient& we
 }
 
 
-void call_find_block(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
+void call_find_block(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string hash_str{arguments[0]};
+    auto& web_socket{client.getWebSocket()};
+
     auto hash = takeHash(client, hash_str);
     if (!hash) {
         return;
@@ -428,13 +462,14 @@ void call_find_block(Client& client, websocket::WebSocketClient& web_socket, con
 }
 
 
-void transfer(Client& client,
-              websocket::WebSocketClient& web_socket,
-              const std::string& to_address_str,
-              const std::string& amount_str,
-              const std::string& fee_str,
-              const std::string& keys_dir_str)
+void transfer(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string keys_dir_str{arguments[0]};
+    std::string to_address_str{arguments[1]};
+    std::string fee_str{arguments[2]};
+    std::string amount_str{arguments[3]};
+    auto& web_socket{client.getWebSocket()};
+
     auto to_address = takeAddress(client, to_address_str);
     if (!to_address) {
         return;
@@ -479,14 +514,15 @@ void transfer(Client& client,
 }
 
 
-void contract_call(Client& client,
-                   websocket::WebSocketClient& web_socket,
-                   const std::string& to_address_str,
-                   const std::string& amount_str,
-                   const std::string& fee_str,
-                   const std::string& keys_dir_str,
-                   const std::string& message)
+void contract_call(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string keys_dir_str{arguments[0]};
+    std::string to_address_str{arguments[1]};
+    std::string fee_str{arguments[2]};
+    std::string amount_str{arguments[3]};
+    std::string message{arguments[4]};
+    auto& web_socket{client.getWebSocket()};
+
     auto to_address = takeAddress(client, to_address_str);
     if (!to_address) {
         return;
@@ -537,14 +573,15 @@ void contract_call(Client& client,
 }
 
 
-void push_contract(Client& client,
-                   websocket::WebSocketClient& web_socket,
-                   const std::string& amount_str,
-                   const std::string& fee_str,
-                   const std::string& keys_dir_str,
-                   const std::string& path_to_compiled_folder,
-                   const std::string& message)
+void push_contract(Client& client, const std::vector<std::string>& arguments)
 {
+    std::string keys_dir_str{arguments[0]};
+    std::string fee_str{arguments[1]};
+    std::string amount_str{arguments[2]};
+    std::string path_to_compiled_folder{arguments[3]};
+    std::string message{arguments[4]};
+    auto& web_socket{client.getWebSocket()};
+
     auto amount = takeAmount(client, amount_str);
     if (!amount) {
         return;
@@ -602,15 +639,17 @@ void push_contract(Client& client,
 }
 
 
-void subscribe_last_block_info(websocket::WebSocketClient& web_socket)
+void subscribe_last_block_info(Client& client)
 {
+    auto& web_socket{client.getWebSocket()};
     LOG_INFO << "subscription last_block_info";
     web_socket.send(websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
 }
 
 
-void unsubscribe_last_block_info(websocket::WebSocketClient& web_socket)
+void unsubscribe_last_block_info(Client& client)
 {
+    auto& web_socket{client.getWebSocket()};
     LOG_INFO << "unsubscription last_block_info";
     web_socket.send(websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
 }
