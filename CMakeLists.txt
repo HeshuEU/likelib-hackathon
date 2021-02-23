@@ -12,8 +12,6 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 endif ()
 
-add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
-
 find_package(Backtrace)
 include_directories(SYSTEM ${Backtrace_INCLUDE_DIRS})
 include_directories(SYSTEM "/usr/lib/gcc/x86_64-linux-gnu/9/include/")
@@ -34,6 +32,9 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS system exception log log_setup program_options serialization unit_test_framework thread)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+
+#Macro required for linking with libdl on POSIX and libbacktrace libraries
+add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
 
 #==========================
 

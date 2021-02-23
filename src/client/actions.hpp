@@ -22,6 +22,15 @@ void generate_keys(Client& client, const std::string& path);
 
 void keys_info(Client& client, const std::string& path);
 
+void add_wallet(Client& client,
+                const std::string& keys_dir,
+                const std::string& wallet_name,
+                std::map<std::string, std::string>& wallets);
+
+void delete_wallet(Client& client, const std::string& wallet_name, std::map<std::string, std::string>& wallets);
+
+void show_wallets(Client& client, const std::map<std::string, std::string>& wallets);
+
 void call_last_block_info(websocket::WebSocketClient& web_socket);
 
 void call_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address);

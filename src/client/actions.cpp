@@ -108,6 +108,12 @@ void help(Client& client)
                          "      Generate new key and store to specific folder\n"
                          "- keys_info <path to folder with key\n"
                          "      Print info about specified key\n"
+                         "- add_wallet <name of new wallet> <path to foldef with key\n"
+                         "      Remembers the path to the key, under the selected name\n"
+                         "- delete_wallet <wallet name to delete>\n"
+                         "      Deletes the wallet with the selected name\n"
+                         "- show_wallets\n"
+                         "      Outputs all memorized wallet names and their corresponding paths\n"
                          "- last_block_info\n"
                          "      Get last block info\n"
                          "- account_info <address of base58>\n"
@@ -286,6 +292,51 @@ void keys_info(Client& client, const std::string& path)
 }
 
 
+void add_wallet(Client& client,
+                const std::string& keys_dir_str,
+                const std::string& wallet_name,
+                std::map<std::string, std::string>& wallets)
+{
+    std::filesystem::path keys_dir{ keys_dir_str };
+
+    auto private_key_path = base::config::makePrivateKeyPath(keys_dir);
+    auto private_key = base::Secp256PrivateKey::load(private_key_path);
+    auto from_address = lk::Address(private_key.toPublicKey());
+
+    if (wallets.find(wallet_name) == wallets.end()) {
+        wallets[wallet_name] = keys_dir;
+        client.output("Added a wallet with the name " + wallet_name);
+    }
+    else {
+        client.output("Wallet with the name " + wallet_name + " already exists");
+    }
+}
+
+
+void delete_wallet(Client& client, const std::string& wallet_name, std::map<std::string, std::string>& wallets)
+{
+    if (wallets.find(wallet_name) == wallets.end()) {
+        client.output("Wallet with the name " + wallet_name + " does not exists");
+    }
+    else {
+        client.output("Wallet with the name " + wallet_name + " deleted");
+    }
+}
+
+
+void show_wallets(Client& client, const std::map<std::string, std::string>& wallets)
+{
+    if (wallets.empty()) {
+        client.output("no wallets saved");
+    }
+    else {
+        for (const auto& wallet : wallets) {
+            client.output(wallet.first + " - " + wallet.second);
+        }
+    }
+}
+
+
 void call_last_block_info(websocket::WebSocketClient& client)
 {
     LOG_INFO << "last_block_info";
@@ -296,7 +347,7 @@ void call_last_block_info(websocket::WebSocketClient& client)
 void call_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
 {
     auto address = takeAddress(client, address_str);
-    if(!address){
+    if (!address) {
         return;
     }
 
@@ -310,7 +361,7 @@ void call_account_info(Client& client, websocket::WebSocketClient& web_socket, c
 void subscribe_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
 {
     auto address = takeAddress(client, address_str);
-    if(!address){
+    if (!address) {
         return;
     }
 
@@ -324,7 +375,7 @@ void subscribe_account_info(Client& client, websocket::WebSocketClient& web_sock
 void unsubscribe_account_info(Client& client, websocket::WebSocketClient& web_socket, const std::string& address_str)
 {
     auto address = takeAddress(client, address_str);
-    if(!address){
+    if (!address) {
         return;
     }
 
@@ -338,7 +389,7 @@ void unsubscribe_account_info(Client& client, websocket::WebSocketClient& web_so
 void call_find_transaction(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
 {
     auto hash = takeHash(client, hash_str);
-    if(!hash){
+    if (!hash) {
         return;
     }
 
@@ -352,7 +403,7 @@ void call_find_transaction(Client& client, websocket::WebSocketClient& web_socke
 void call_find_transaction_status(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
 {
     auto hash = takeHash(client, hash_str);
-    if(!hash){
+    if (!hash) {
         return;
     }
 
@@ -366,7 +417,7 @@ void call_find_transaction_status(Client& client, websocket::WebSocketClient& we
 void call_find_block(Client& client, websocket::WebSocketClient& web_socket, const std::string& hash_str)
 {
     auto hash = takeHash(client, hash_str);
-    if(!hash){
+    if (!hash) {
         return;
     }
 
@@ -385,21 +436,23 @@ void transfer(Client& client,
               const std::string& keys_dir_str)
 {
     auto to_address = takeAddress(client, to_address_str);
-    if(!to_address){
+    if (!to_address) {
         return;
     }
 
     auto amount = takeAmount(client, amount_str);
-    if(!amount){
+    if (!amount) {
         return;
     }
 
     auto fee = takeFee(client, fee_str);
-    if(!fee){
+    if (!fee) {
         return;
     }
 
-    std::filesystem::path keys_dir{ keys_dir_str };
+    auto wallets = client.getWallets();
+
+    std::filesystem::path keys_dir = wallets.find(keys_dir_str) != wallets.end() ? wallets[keys_dir_str] : keys_dir_str;
 
     auto private_key_path = base::config::makePrivateKeyPath(keys_dir);
     auto private_key = base::Secp256PrivateKey::load(private_key_path);
@@ -435,24 +488,26 @@ void contract_call(Client& client,
                    const std::string& message)
 {
     auto to_address = takeAddress(client, to_address_str);
-    if(!to_address){
+    if (!to_address) {
         return;
     }
 
     auto amount = takeAmount(client, amount_str);
-    if(!amount){
+    if (!amount) {
         return;
     }
 
     auto fee = takeFee(client, fee_str);
-    if(!fee){
+    if (!fee) {
         return;
     }
 
-    std::filesystem::path keys_dir{ keys_dir_str };
+    auto wallets = client.getWallets();
+
+    std::filesystem::path keys_dir = wallets.find(keys_dir_str) != wallets.end() ? wallets[keys_dir_str] : keys_dir_str;
 
     auto data = takeMessage(client, message);
-    if(!data){
+    if (!data) {
         return;
     }
 
@@ -474,8 +529,8 @@ void contract_call(Client& client,
     auto tx_hash = tx.hashOfTransaction();
     client.output("Transaction with hash[hex]: " + tx_hash.toHex());
 
-    LOG_INFO << "Contract_call from " << from_address << ", to " << to_address.value() << ", amount " << amount.value() << ",fee "
-             << fee.value() << ", message " << message;
+    LOG_INFO << "Contract_call from " << from_address << ", to " << to_address.value() << ", amount " << amount.value()
+             << ",fee " << fee.value() << ", message " << message;
 
     auto request_args = websocket::serializeTransaction(tx);
     web_socket.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));
@@ -486,24 +541,28 @@ void push_contract(Client& client,
                    websocket::WebSocketClient& web_socket,
                    const std::string& amount_str,
                    const std::string& fee_str,
-                   const std::string& keys_dir,
+                   const std::string& keys_dir_str,
                    const std::string& path_to_compiled_folder,
                    const std::string& message)
 {
     auto amount = takeAmount(client, amount_str);
-    if(!amount){
+    if (!amount) {
         return;
     }
 
     auto fee = takeFee(client, fee_str);
-    if(!fee){
+    if (!fee) {
         return;
     }
 
     auto data = takeMessage(client, message);
-    if(!data){
+    if (!data) {
         return;
     }
+
+    auto wallets = client.getWallets();
+
+    std::filesystem::path keys_dir = wallets.find(keys_dir_str) != wallets.end() ? wallets[keys_dir_str] : keys_dir_str;
 
     auto private_key_path = base::config::makePrivateKeyPath(keys_dir);
     auto private_key = base::Secp256PrivateKey::load(private_key_path);
@@ -535,8 +594,8 @@ void push_contract(Client& client,
     auto tx_hash = tx.hashOfTransaction();
     client.output("Transaction with hash[hex]: " + tx_hash.toHex());
 
-    LOG_INFO << "Push_contract from " << from_address << ", amount " << amount.value() << ", fee " << fee.value() << ", message "
-             << message;
+    LOG_INFO << "Push_contract from " << from_address << ", amount " << amount.value() << ", fee " << fee.value()
+             << ", message " << message;
 
     auto request_args = websocket::serializeTransaction(tx);
     web_socket.send(websocket::Command::SUBSCRIBE_PUSH_TRANSACTION, std::move(request_args));

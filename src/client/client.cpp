@@ -93,6 +93,7 @@ std::vector<std::string> parseAllArguments(std::string& input)
     return arguments;
 }
 
+
 void Client::chooseAction(std::string& input)
 {
     auto action_name = parseActionName(input);
@@ -204,6 +205,32 @@ void Client::chooseAction(std::string& input)
 
             const auto path = arguments[0];
             keys_info(*this, path);
+        }
+        else if(action_name == "add_wallet"){
+            if (arguments.size() != 2) {
+                output("Wrong number of arguments for the keys_info command");
+                return;
+            }
+
+            const auto wallet_name = arguments[0];
+            const auto keys_dir = arguments[1];
+            add_wallet(*this, keys_dir, wallet_name ,_wallets);
+        }
+        else if(action_name == "delete_wallet"){
+            if (arguments.size() != 1) {
+                output("Wrong number of arguments for the keys_info command");
+                return;
+            }
+
+            const auto wallet_name = arguments[0];
+            delete_wallet(*this, wallet_name, _wallets);
+        }
+        else if(action_name == "show_wallets"){
+            if (arguments.size() != 0) {
+                output("Wrong number of arguments for the keys_info command");
+                return;
+            }
+            show_wallets(*this, _wallets);
         }
         else if (action_name == "last_block_info") {
             if (arguments.size() != 0) {
@@ -372,8 +399,64 @@ void Client::processLine(std::string line)
     }
 }
 
+
+std::vector<char*> command_names{ "help",
+                                  "exit",
+                                  "connect",
+                                  "disconnect",
+                                  "compile",
+                                  "encode",
+                                  "decode",
+                                  "keys_generate",
+                                  "keys_info",
+                                  "add_wallet",
+                                  "delete_wallet",
+                                  "show_wallets",
+                                  "last_block_info",
+                                  "account_info",
+                                  "subscribe_account_info",
+                                  "unsubscribe_account_info",
+                                  "find_transaction",
+                                  "find_transaction_status",
+                                  "find_block",
+                                  "transfer",
+                                  "contract_call",
+                                  "push_contract",
+                                  "subscribe_last_block_info",
+                                  "unsubscribe_last_block_info" };
+
+
+char** Client::characterNameCompletion(const char* text, int start, int end)
+{
+    rl_attempted_completion_over = 1;
+    if (start == 0) {
+        return rl_completion_matches(text, characterNameGenerator);
+    }
+    return rl_completion_matches(text, rl_filename_completion_function);
+}
+
+char* Client::characterNameGenerator(const char* text, int state)
+{
+    static int len;
+    std::size_t list_index = 0;
+    char* name;
+
+    if (!state) {
+        list_index = 0;
+        len = strlen(text);
+    }
+
+    for (auto name : command_names)
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+
+    return nullptr;
+}
+
+
 Client::Client()
-  : _prompt("Likelib: ")
+  : _prompt("> ")
   , _io_context{}
   , _web_socket_client{ _io_context,
                         std::bind(&Client::printReceivedData, this, std::placeholders::_1, std::placeholders::_2),
@@ -381,7 +464,10 @@ Client::Client()
                             output("Disconnected from likelib node\n");
                             _connected = false;
                         } }
-{}
+
+{
+    rl_attempted_completion_function = characterNameCompletion;
+}
 
 
 void Client::run()
@@ -413,6 +499,12 @@ void Client::remoteOutput(const std::string& str)
     std::cout << str << std::endl;
     reactivateReadline();
     _out_mutex.unlock();
+}
+
+
+const std::map<std::string, std::string>& Client::getWallets() const
+{
+    return _wallets;
 }
 
 
