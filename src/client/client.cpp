@@ -206,7 +206,7 @@ void Client::chooseAction(std::string& input)
             const auto path = arguments[0];
             keys_info(*this, path);
         }
-        else if(action_name == "add_wallet"){
+        else if (action_name == "add_wallet") {
             if (arguments.size() != 2) {
                 output("Wrong number of arguments for the keys_info command");
                 return;
@@ -214,9 +214,9 @@ void Client::chooseAction(std::string& input)
 
             const auto wallet_name = arguments[0];
             const auto keys_dir = arguments[1];
-            add_wallet(*this, keys_dir, wallet_name ,_wallets);
+            add_wallet(*this, keys_dir, wallet_name, _wallets);
         }
-        else if(action_name == "delete_wallet"){
+        else if (action_name == "delete_wallet") {
             if (arguments.size() != 1) {
                 output("Wrong number of arguments for the keys_info command");
                 return;
@@ -225,7 +225,7 @@ void Client::chooseAction(std::string& input)
             const auto wallet_name = arguments[0];
             delete_wallet(*this, wallet_name, _wallets);
         }
-        else if(action_name == "show_wallets"){
+        else if (action_name == "show_wallets") {
             if (arguments.size() != 0) {
                 output("Wrong number of arguments for the keys_info command");
                 return;
@@ -423,7 +423,8 @@ std::vector<char*> command_names{ "help",
                                   "contract_call",
                                   "push_contract",
                                   "subscribe_last_block_info",
-                                  "unsubscribe_last_block_info" };
+                                  "unsubscribe_last_block_info",
+                                  nullptr };
 
 
 char** Client::characterNameCompletion(const char* text, int start, int end)
@@ -437,8 +438,7 @@ char** Client::characterNameCompletion(const char* text, int start, int end)
 
 char* Client::characterNameGenerator(const char* text, int state)
 {
-    static int len;
-    std::size_t list_index = 0;
+    static int list_index, len;
     char* name;
 
     if (!state) {
@@ -446,11 +446,11 @@ char* Client::characterNameGenerator(const char* text, int state)
         len = strlen(text);
     }
 
-    for (auto name : command_names)
+    while ((name = command_names[list_index++])) {
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
-
+    }
     return nullptr;
 }
 
