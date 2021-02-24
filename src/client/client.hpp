@@ -19,10 +19,11 @@ class Client
 
     const std::map<std::string, std::string>& getWallets() const;
     websocket::WebSocketClient& getWebSocket();
-    
+
     void addWallet(const std::string wallet_name, const std::filesystem::path& keys_dir);
     void deleteWallet(const std::string wallet_name);
     
+    bool isConnected() const;
 
   private:
     std::string _prompt;
@@ -49,8 +50,15 @@ class Client
       std::size_t _count_arguments;
       std::function<void(Client&, const std::vector<std::string>&)> _function;
     };
+
     std::map<std::string, std::string> _wallets;
-    std::vector<Command> _commands;
+    static std::vector<Command> _commands;
+
+    std::vector<Command> initCommands();
+    void help([[maybe_unused]] const std::vector<std::string>& arguments);
+    void exit([[maybe_unused]] const std::vector<std::string>& arguments);
+    void connect(const std::vector<std::string>& arguments);
+    void disconnect([[maybe_unused]] const std::vector<std::string>& arguments);
 
     void processLine(std::string line);
 

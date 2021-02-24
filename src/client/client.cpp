@@ -94,6 +94,111 @@ std::vector<std::string> parseAllArguments(std::string& input)
 }
 
 
+std::vector<Client::Command> Client::_commands{};
+
+
+std::vector<Client::Command> Client::initCommands()
+{
+    std::vector<Client::Command> commands;
+
+    commands.push_back({ "help", "Show help message", "", 0, std::bind(&Client::help, this, std::placeholders::_2) });
+
+    commands.push_back(
+      { "exit", "Exit fron likelib client", "", 0, std::bind(&Client::exit, this, std::placeholders::_2) });
+
+    commands.push_back({ "connect",
+                         "Connect client to specific likelib node",
+                         "<ip and port of likelib node>",
+                         1,
+                         std::bind(&Client::connect, this, std::placeholders::_2) });
+    commands.push_back({ "disconnect",
+                         "Disconnect client from likelib node",
+                         "",
+                         0,
+                         std::bind(&Client::disconnect, this, std::placeholders::_2) });
+    commands.push_back({ "compile",
+                         "Compile solidity code to binary format",
+                         "<path to solidity code file>",
+                         1,
+                         &compile_solidity_code });
+    commands.push_back({ "encode",
+                         "Encode message for contract call",
+                         "<path to folder with compiled contract data files> <message for encode>",
+                         2,
+                         &encode_message });
+    commands.push_back({ "decode",
+                         "Decode message which was returned by contract call",
+                         "<path to folder with compiled contract data files> <message for decode>",
+                         2,
+                         &decode_message });
+    commands.push_back({ "keys_generate",
+                         "Generate new key and store to specific folder",
+                         "<path to folder to save key>",
+                         1,
+                         &generate_keys });
+    commands.push_back({ "keys_info", "Print info about specified key", "<path to folder with key>", 1, &keys_info });
+    commands.push_back({ "add_wallet",
+                         "Remembers the path to the key, under the selected name",
+                         "<name of new wallet> <path to foldef with key>",
+                         2,
+                         &add_wallet });
+    commands.push_back(
+      { "delete_wallet", "Deletes the wallet with the selected name", "<wallet name to delete>", 1, &delete_wallet });
+    commands.push_back(
+      { "show_wallets", "Outputs all memorized wallet names and their corresponding paths", "", 0, &show_wallets });
+    commands.push_back({ "last_block_info", "Get last block info", "", 0, &call_last_block_info });
+    commands.push_back(
+      { "account_info", "Get account info by specific address", "<address of base58>", 1, &call_account_info });
+    commands.push_back({ "subscribe_account_info",
+                         "Subscribe on updates account info by specific address",
+                         "<address of base58>",
+                         1,
+                         &subscribe_account_info });
+    commands.push_back({ "unsubscribe_account_info",
+                         "Unsubscribe from account info updates by specific address",
+                         "<address at base58>",
+                         1,
+                         &unsubscribe_account_info });
+    commands.push_back(
+      { "subscribe_last_block_info", "Get last block info when apeared new block", "", 0, &subscribe_last_block_info });
+    commands.push_back({ "unsubscribe_last_block_info",
+                         "Get last block info when apeared new block",
+                         "",
+                         0,
+                         &unsubscribe_last_block_info });
+    commands.push_back({ "find_transaction",
+                         "Get transaction by specific hash",
+                         "<transaction hash at hex>",
+                         1,
+                         &call_find_transaction });
+    commands.push_back({ "find_transaction_status",
+                         "Get transaction status by specific hash",
+                         "<transaction hash at hex>",
+                         1,
+                         &call_find_transaction_status });
+    commands.push_back({ "find_block", "Get block by specific hash", "<block hash at hex>", 1, &call_find_block });
+    commands.push_back({ "transfer",
+                         "Transfer coins to specific address",
+                         "<path to folder with key\\or name of the wallet> <address of recipient at base58>"
+                         " <fee for transaction> <amount of coins for transfer>",
+                         4,
+                         &transfer });
+    commands.push_back({ "contract_call",
+                         "Call deployed contract",
+                         "<path to folder with key\\or name of the wallet> <address of contract at base58> "
+                         "<fee for contract call> <amount of coins for call> <message for call at hex>",
+                         5,
+                         &contract_call });
+    commands.push_back({ "push_contract",
+                         "Deploy compiled contract",
+                         "<path to folder with key\\or name of the wallet> <fee for contract call> <amount of coins for call>"
+                         "<path to compiled contract data files> <message for initializing contract at hex>",
+                         6,
+                         &push_contract });
+    return commands;
+}
+
+
 void Client::chooseAction(std::string& input)
 {
     auto action_name = parseActionName(input);
@@ -101,279 +206,69 @@ void Client::chooseAction(std::string& input)
         return;
     }
     const auto& arguments = parseAllArguments(input);
-    try {
-        if (action_name == "exit") {
-            if (arguments.size() != 0) {
-                output("Wrong number of arguments for the exit command");
+    for (const auto& command : _commands) {
+        if (action_name == command._command_name) {
+            if (arguments.size() != command._count_arguments) {
+                output("Wrong number of arguments for the " + command._command_name + " command");
                 return;
             }
-            _io_context.stop();
-            _web_socket_client.disconnect();
-            _exit = true;
-        }
-        else if (action_name == "help") {
-            if (arguments.size() != 0) {
-                output("Wrong number of arguments for the help command");
-                return;
+            try {
+                command._function(*this, arguments);
             }
-            help(*this);
-        }
-        else if (action_name == "connect") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the connect command");
-                return;
+            catch (const base::Error& e) {
+                output(e.what());
+                LOG_ERROR << e.what();
             }
-            if (_connected) {
-                output("You are already connected to host " + _host + "\n disconnect before new reconnecting");
-                return;
-            }
-
-            auto host = arguments[0];
-            _connected = _web_socket_client.connect(host);
-            if (_connected) {
-                _host = host;
-                _thread = std::thread{ [&]() {
-                    if (_io_context.stopped()) {
-                        _io_context.restart();
-                    }
-                    _io_context.run();
-                } };
-                output("Client connected to host " + host);
-            }
-            else {
-                output("Can't connect to host " + host);
-            }
-        }
-        else if (action_name == "disconnect") {
-            if (arguments.size() != 0) {
-                output("Wrong number of arguments for the disconnect command");
-                return;
-            }
-            if (!_connected) {
-                output("You aren't connected to the node");
-                return;
-            }
-
-            _connected = false;
-            _io_context.stop();
-            _web_socket_client.disconnect();
-            _thread.join();
-        }
-        else if (action_name == "compile") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the compile command");
-                return;
-            }
-
-            compile_solidity_code(*this, arguments);
-        }
-        else if (action_name == "encode") {
-            if (arguments.size() != 2) {
-                output("Wrong number of arguments for the encode command");
-                return;
-            }
-
-            encode_message(*this, arguments);
-        }
-        else if (action_name == "decode") {
-            if (arguments.size() != 2) {
-                output("Wrong number of arguments for the decode command");
-                return;
-            }
-
-            decode_message(*this, arguments);
-        }
-        else if (action_name == "keys_generate") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the keys_generate command");
-                return;
-            }
-
-            generate_keys(*this, arguments);
-        }
-        else if (action_name == "keys_info") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the keys_info command");
-                return;
-            }
-
-            keys_info(*this, arguments);
-        }
-        else if (action_name == "add_wallet") {
-            if (arguments.size() != 2) {
-                output("Wrong number of arguments for the keys_info command");
-                return;
-            }
-
-            add_wallet(*this, arguments);
-        }
-        else if (action_name == "delete_wallet") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the keys_info command");
-                return;
-            }
-
-            delete_wallet(*this, arguments);
-        }
-        else if (action_name == "show_wallets") {
-            if (arguments.size() != 0) {
-                output("Wrong number of arguments for the keys_info command");
-                return;
-            }
-            show_wallets(*this, arguments);
-        }
-        else if (action_name == "last_block_info") {
-            if (arguments.size() != 0) {
-                output("Wrong number of arguments for the last_block_info command");
-                return;
-            }
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            call_last_block_info(*this);
-        }
-        else if (action_name == "account_info") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the account_info command");
-                return;
-            }
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            call_account_info(*this, arguments);
-        }
-        else if (action_name == "subscribe_account_info") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the subscribe_account_info command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            subscribe_account_info(*this, arguments);
-        }
-        else if (action_name == "unsubscribe_account_info") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the unsubscribe_account_info command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            unsubscribe_account_info(*this, arguments);
-        }
-        else if (action_name == "find_transaction") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the find_transaction command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            call_find_transaction(*this, arguments);
-        }
-        else if (action_name == "find_transaction_status") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the find_transaction_status command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            call_find_transaction_status(*this, arguments);
-        }
-        else if (action_name == "find_block") {
-            if (arguments.size() != 1) {
-                output("Wrong number of arguments for the find_block command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            call_find_block(*this, arguments);
-        }
-        else if (action_name == "transfer") {
-            if (arguments.size() != 4) {
-                output("Wrong number of arguments for the transfer command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            transfer(*this, arguments);
-        }
-        else if (action_name == "contract_call") {
-            if (arguments.size() != 5) {
-                output("Wrong number of arguments for the contract_call command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            contract_call(
-              *this, arguments);
-        }
-        else if (action_name == "push_contract") {
-            if (arguments.size() != 5) {
-                output("Wrong number of arguments for the push_contract command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            push_contract(
-              *this, arguments);
-        }
-        else if (action_name == "subscribe_last_block_info") {
-            if (arguments.size() != 0) {
-                output("Wrong number of arguments for the subscribe_last_block_info command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            subscribe_last_block_info(*this);
-        }
-        else if (action_name == "unsubscribe_last_block_info") {
-            if (arguments.size() != 0) {
-                output("Wrong number of arguments for the unsubscribe_last_block_info command");
-                return;
-            }
-
-            if (!_connected) {
-                output("You have to connect to likelib node");
-                return;
-            }
-            unsubscribe_last_block_info(*this);
-        }
-        else {
-            output("There is no command with the name " + action_name);
+            return;
         }
     }
-    catch (const base::Error& e) {
-        output(e.what());
-        LOG_ERROR << e.what();
+    output("There is no command with the name " + action_name);
+}
+
+
+void Client::help(const std::vector<std::string>& arguments)
+{
+    for (const auto& command : _commands) {
+        output("- " + command._command_name + " " + command._command_arguments_msg + "\n\t\t" +
+               command._command_description + "\n");
     }
+}
+
+
+void Client::exit(const std::vector<std::string>& arguments)
+{
+    _io_context.stop();
+    _web_socket_client.disconnect();
+    _exit = true;
+}
+
+
+void Client::connect(const std::vector<std::string>& arguments)
+{
+    auto host = arguments[0];
+    _connected = _web_socket_client.connect(host);
+    if (_connected) {
+        _host = host;
+        _thread = std::thread{ [&]() {
+            if (_io_context.stopped()) {
+                _io_context.restart();
+            }
+            _io_context.run();
+        } };
+        output("Client connected to host " + host);
+    }
+    else {
+        output("Can't connect to host " + host);
+    }
+}
+
+
+void Client::disconnect(const std::vector<std::string>& arguments)
+{
+    _connected = false;
+    _io_context.stop();
+    _web_socket_client.disconnect();
+    _thread.join();
 }
 
 
@@ -390,33 +285,6 @@ void Client::processLine(std::string line)
 }
 
 
-std::vector<char*> command_names{ "help",
-                                  "exit",
-                                  "connect",
-                                  "disconnect",
-                                  "compile",
-                                  "encode",
-                                  "decode",
-                                  "keys_generate",
-                                  "keys_info",
-                                  "add_wallet",
-                                  "delete_wallet",
-                                  "show_wallets",
-                                  "last_block_info",
-                                  "account_info",
-                                  "subscribe_account_info",
-                                  "unsubscribe_account_info",
-                                  "find_transaction",
-                                  "find_transaction_status",
-                                  "find_block",
-                                  "transfer",
-                                  "contract_call",
-                                  "push_contract",
-                                  "subscribe_last_block_info",
-                                  "unsubscribe_last_block_info",
-                                  nullptr };
-
-
 char** Client::characterNameCompletion(const char* text, int start, int end)
 {
     rl_attempted_completion_over = 1;
@@ -428,15 +296,16 @@ char** Client::characterNameCompletion(const char* text, int start, int end)
 
 char* Client::characterNameGenerator(const char* text, int state)
 {
-    static int list_index, len;
-    char* name;
+    static std::size_t list_index, len;
+    const char* name;
 
     if (!state) {
         list_index = 0;
         len = strlen(text);
     }
 
-    while ((name = command_names[list_index++])) {
+    while (list_index < _commands.size()) {
+        name = _commands[list_index++]._command_name.c_str();
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
@@ -457,6 +326,7 @@ Client::Client()
 
 {
     rl_attempted_completion_function = characterNameCompletion;
+    _commands = initCommands();
 }
 
 
@@ -507,6 +377,12 @@ void Client::addWallet(const std::string wallet_name, const std::filesystem::pat
 void Client::deleteWallet(const std::string wallet_name)
 {
     _wallets.erase(wallet_name);
+}
+
+
+bool Client::isConnected() const
+{
+    return _connected;
 }
 
 

@@ -6,9 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if (CMAKE_COMPILER_IS_GNUCC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -D_FORTIFY_SOURCE=2 -fstack-protector -Wno-redundant-move")
-endif ()
-if (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-redundant-move -pedantic -D_FORTIFY_SOURCE=2 -fstack-protector-strong")
+elseif (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 endif ()
 
@@ -30,10 +29,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost REQUIRED COMPONENTS system exception log log_setup program_options serialization unit_test_framework thread)
+set(Boost_NO_BOOST_CMAKE TRUE)
+find_package(Boost REQUIRED COMPONENTS system exception log log_setup program_options serialization thread unit_test_framework)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
-#Macro required for linking with libdl on POSIX and libbacktrace libraries
+# Macro required for linking with dl on POSIX and backtrace libraries
 add_compile_definitions(BOOST_STACKTRACE_USE_BACKTRACE)
 
 #==========================
@@ -61,3 +61,9 @@ include_directories(./src)
 
 add_subdirectory(./src)
 add_subdirectory(./test/unit_test)
+
+get_cmake_property(_variableNames VARIABLES)
+list (SORT _variableNames)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()

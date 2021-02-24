@@ -87,68 +87,10 @@ std::optional<base::Sha256> takeHash(Client& client, const std::string hash)
     return base::Sha256{ hash_bytes };
 }
 
-
-void help(Client& client)
-{
-    std::string output = "- help\n"
-                         "      Show help message\n"
-                         "- exit\n"
-                         "      Exit fron likelib client\n"
-                         "- connect <ip and port of likelib node>\n"
-                         "      Connect client to specific likelib node\n"
-                         "- disconnect\n"
-                         "      Disconnect client from likelib node\n"
-                         "- compile <path to solidity code file>\n"
-                         "      Compile solidity code to binary format\n"
-                         "- encode <path to folder with compiled contract data files> <message for encode>\n"
-                         "      Encode message for contract call\n"
-                         "- decode <path to folder with compiled contract data files> <message for decode>\n"
-                         "      Decode message which was returned by contract call\n"
-                         "- keys_generate <path to folder to save key>\n"
-                         "      Generate new key and store to specific folder\n"
-                         "- keys_info <path to folder with key\n"
-                         "      Print info about specified key\n"
-                         "- add_wallet <name of new wallet> <path to foldef with key\n"
-                         "      Remembers the path to the key, under the selected name\n"
-                         "- delete_wallet <wallet name to delete>\n"
-                         "      Deletes the wallet with the selected name\n"
-                         "- show_wallets\n"
-                         "      Outputs all memorized wallet names and their corresponding paths\n"
-                         "- last_block_info\n"
-                         "      Get last block info\n"
-                         "- account_info <address of base58>\n"
-                         "      Get account info by specific address\n"
-                         "- subscribe_account_info <address of base58>\n"
-                         "      Subscribe on updates account info by specific address\n"
-                         "- unsubscribe_account_info <address at base58>\n"
-                         "      Unsubscribe from account info updates by specific address\n"
-                         "- subscribe_last_block_info\n"
-                         "      Get last block info when apeared new block\n"
-                         "- unsubscribe_last_block_info\n"
-                         "      Get last block info when apeared new block\n"
-                         "- find_transaction <transaction hash at hex>\n"
-                         "      Get transaction by specific hash\n"
-                         "- find_transaction_status <transaction hash at hex>\n"
-                         "      Get transaction status by specific hash\n"
-                         "- find_block <block hash at hex>\n"
-                         "      Get block by specific hash\n"
-                         "- transfer <path to folder with key> <address of recipient at base58>"
-                         " <fee for transaction> <amount of coins for transfer>\n"
-                         "      Transfer coins to specific address\n"
-                         "- contract_call <path to folder with key> <address of contract at base58> "
-                         "<fee for contract call> <amount of coins for call> <message for call at hex>\n"
-                         "      Call deployed contract\n"
-                         "- push_contract <path to folder with key> <fee for contract call> <amount of coins for call>"
-                         "<path to compiled contract data files> <message for initializing contract at hex>\n"
-                         "      Deploy compiled contract\n";
-    client.output(output);
-}
-
-
 void compile_solidity_code(Client& client, const std::vector<std::string>& arguments)
 {
     std::optional<vm::Contracts> contracts;
-    std::string code_file_path{arguments[0]};
+    std::string code_file_path{ arguments[0] };
     try {
         contracts = vm::compile(code_file_path);
     }
@@ -203,8 +145,8 @@ void compile_solidity_code(Client& client, const std::vector<std::string>& argum
 
 void encode_message(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string compiled_contract_folder_path{arguments[0]};
-    std::string message{arguments[1]};
+    std::string compiled_contract_folder_path{ arguments[0] };
+    std::string message{ arguments[1] };
     try {
         auto output_message = vm::encodeCall(compiled_contract_folder_path, message);
         if (output_message) {
@@ -228,8 +170,8 @@ void encode_message(Client& client, const std::vector<std::string>& arguments)
 
 void decode_message(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string compiled_contract_folder_path{arguments[0]};
-    std::string message{arguments[1]};
+    std::string compiled_contract_folder_path{ arguments[0] };
+    std::string message{ arguments[1] };
     try {
         auto output_message = vm::decodeOutput(compiled_contract_folder_path, message);
         if (output_message) {
@@ -253,7 +195,7 @@ void decode_message(Client& client, const std::vector<std::string>& arguments)
 
 void generate_keys(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string path{arguments[0]};
+    std::string path{ arguments[0] };
     const auto& priv = base::Secp256PrivateKey();
 
     auto private_path = base::config::makePrivateKeyPath(path);
@@ -280,7 +222,7 @@ void generate_keys(Client& client, const std::vector<std::string>& arguments)
 
 void keys_info(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string path{arguments[0]};
+    std::string path{ arguments[0] };
     auto private_path = base::config::makePrivateKeyPath(path);
     std::stringstream output;
     if (!std::filesystem::exists(private_path)) {
@@ -301,8 +243,8 @@ void keys_info(Client& client, const std::vector<std::string>& arguments)
 
 void add_wallet(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string keys_dir_str{arguments[0]};
-    std::string wallet_name{arguments[1]};
+    std::string wallet_name{ arguments[0] };
+    std::string keys_dir_str{ arguments[1] };
     auto wallets = client.getWallets();
     std::filesystem::path keys_dir{ keys_dir_str };
 
@@ -311,7 +253,7 @@ void add_wallet(Client& client, const std::vector<std::string>& arguments)
     auto from_address = lk::Address(private_key.toPublicKey());
 
     if (wallets.find(wallet_name) == wallets.end()) {
-        //wallets[wallet_name] = keys_dir;
+        // wallets[wallet_name] = keys_dir;
         client.addWallet(wallet_name, keys_dir);
         client.output("Added a wallet with the name " + wallet_name);
     }
@@ -324,7 +266,7 @@ void add_wallet(Client& client, const std::vector<std::string>& arguments)
 void delete_wallet(Client& client, const std::vector<std::string>& arguments)
 {
     auto wallets = client.getWallets();
-    std::string wallet_name{arguments[0]};
+    std::string wallet_name{ arguments[0] };
 
     if (wallets.find(wallet_name) == wallets.end()) {
         client.output("Wallet with the name " + wallet_name + " does not exists");
@@ -351,9 +293,13 @@ void show_wallets(Client& client, const std::vector<std::string>& arguments)
 }
 
 
-void call_last_block_info(Client& client)
-{   
-    auto& web_socket{client.getWebSocket()};
+void call_last_block_info(Client& client, const std::vector<std::string>& arguments)
+{
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+    auto& web_socket{ client.getWebSocket() };
 
     LOG_INFO << "last_block_info";
     web_socket.send(websocket::Command::CALL_LAST_BLOCK_INFO, base::json::Value::object());
@@ -362,8 +308,13 @@ void call_last_block_info(Client& client)
 
 void call_account_info(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string address_str{arguments[0]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string address_str{ arguments[0] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto address = takeAddress(client, address_str);
     if (!address) {
@@ -379,8 +330,13 @@ void call_account_info(Client& client, const std::vector<std::string>& arguments
 
 void subscribe_account_info(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string address_str{arguments[0]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string address_str{ arguments[0] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto address = takeAddress(client, address_str);
     if (!address) {
@@ -396,8 +352,13 @@ void subscribe_account_info(Client& client, const std::vector<std::string>& argu
 
 void unsubscribe_account_info(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string address_str{arguments[0]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string address_str{ arguments[0] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto address = takeAddress(client, address_str);
     if (!address) {
@@ -413,8 +374,13 @@ void unsubscribe_account_info(Client& client, const std::vector<std::string>& ar
 
 void call_find_transaction(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string hash_str{arguments[0]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string hash_str{ arguments[0] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto hash = takeHash(client, hash_str);
     if (!hash) {
@@ -430,8 +396,13 @@ void call_find_transaction(Client& client, const std::vector<std::string>& argum
 
 void call_find_transaction_status(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string hash_str{arguments[0]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string hash_str{ arguments[0] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto hash = takeHash(client, hash_str);
     if (!hash) {
@@ -447,8 +418,13 @@ void call_find_transaction_status(Client& client, const std::vector<std::string>
 
 void call_find_block(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string hash_str{arguments[0]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string hash_str{ arguments[0] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto hash = takeHash(client, hash_str);
     if (!hash) {
@@ -464,11 +440,16 @@ void call_find_block(Client& client, const std::vector<std::string>& arguments)
 
 void transfer(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string keys_dir_str{arguments[0]};
-    std::string to_address_str{arguments[1]};
-    std::string fee_str{arguments[2]};
-    std::string amount_str{arguments[3]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string keys_dir_str{ arguments[0] };
+    std::string to_address_str{ arguments[1] };
+    std::string fee_str{ arguments[2] };
+    std::string amount_str{ arguments[3] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto to_address = takeAddress(client, to_address_str);
     if (!to_address) {
@@ -516,12 +497,17 @@ void transfer(Client& client, const std::vector<std::string>& arguments)
 
 void contract_call(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string keys_dir_str{arguments[0]};
-    std::string to_address_str{arguments[1]};
-    std::string fee_str{arguments[2]};
-    std::string amount_str{arguments[3]};
-    std::string message{arguments[4]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string keys_dir_str{ arguments[0] };
+    std::string to_address_str{ arguments[1] };
+    std::string fee_str{ arguments[2] };
+    std::string amount_str{ arguments[3] };
+    std::string message{ arguments[4] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto to_address = takeAddress(client, to_address_str);
     if (!to_address) {
@@ -575,12 +561,17 @@ void contract_call(Client& client, const std::vector<std::string>& arguments)
 
 void push_contract(Client& client, const std::vector<std::string>& arguments)
 {
-    std::string keys_dir_str{arguments[0]};
-    std::string fee_str{arguments[1]};
-    std::string amount_str{arguments[2]};
-    std::string path_to_compiled_folder{arguments[3]};
-    std::string message{arguments[4]};
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    std::string keys_dir_str{ arguments[0] };
+    std::string fee_str{ arguments[1] };
+    std::string amount_str{ arguments[2] };
+    std::string path_to_compiled_folder{ arguments[3] };
+    std::string message{ arguments[4] };
+    auto& web_socket{ client.getWebSocket() };
 
     auto amount = takeAmount(client, amount_str);
     if (!amount) {
@@ -639,17 +630,27 @@ void push_contract(Client& client, const std::vector<std::string>& arguments)
 }
 
 
-void subscribe_last_block_info(Client& client)
+void subscribe_last_block_info(Client& client, const std::vector<std::string>& arguments)
 {
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    auto& web_socket{ client.getWebSocket() };
     LOG_INFO << "subscription last_block_info";
     web_socket.send(websocket::Command::SUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
 }
 
 
-void unsubscribe_last_block_info(Client& client)
+void unsubscribe_last_block_info(Client& client, const std::vector<std::string>& arguments)
 {
-    auto& web_socket{client.getWebSocket()};
+    if (!client.isConnected()) {
+        client.output("You have to connect to likelib node");
+        return;
+    }
+
+    auto& web_socket{ client.getWebSocket() };
     LOG_INFO << "unsubscription last_block_info";
     web_socket.send(websocket::Command::UNSUBSCRIBE_LAST_BLOCK_INFO, base::json::Value::object());
 }
