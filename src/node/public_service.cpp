@@ -566,7 +566,7 @@ const std::string& LoginTask::name() const noexcept
 
 PublicService::PublicService(base::json::Value config, lk::Core& core)
   : _core{ core }
-  , _login{ config["login"].as_string() }
+  //, _login{ config["login"].as_string() }
   , _acceptor{ std::move(config), std::bind(&PublicService::createSession, this, std::placeholders::_1) }
 
 {
