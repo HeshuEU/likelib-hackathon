@@ -34,10 +34,65 @@ boost::asio::ip::tcp::endpoint createEndpoint(const std::string& listening_addre
 }
 
 
+base::json::Value serializeLogin(const std::string& login)
+{
+    LOG_TRACE << "Serializing Login";
+    auto result = base::json::Value::object();
+    result["login"] = base::json::Value::string(login);
+    return result;
+}
+
+
+std::string deserializeLogin(const std::string& message)
+{
+    LOG_TRACE << "Deserializing Login";
+    return message;
+}
+
+
+base::json::Value serializeMessage(const std::string& message)
+{
+    LOG_TRACE << "Serializing Message";
+    auto result = base::json::Value::object();
+    result["message"] = base::json::Value::string(message);
+    return result;
+}
+
+
+std::string deserializeMessage(const std::string& message)
+{
+    LOG_TRACE << "Deserializing Message";
+    return message;
+}
+
+
+base::json::Value serializeSessionId(const websocket::SessionId& session_id)
+{
+    LOG_TRACE << "Serializing Session Id";
+    auto result = base::json::Value::object();
+    result["sessionId"] = base::json::Value::string(std::to_string(session_id));
+    return result;
+}
+
+
+websocket::SessionId deserializeSessionId(const std::string& message)
+{
+    LOG_TRACE << "Deserializing Session Id";
+    char* end = nullptr;
+    auto session_id = static_cast<uint64_t>(std::strtoll(message.c_str(), &end, 10));
+    if (end == nullptr) {
+        RAISE_ERROR(base::InvalidArgument, std::string("Error in deserialization of Fee: ") + message);
+    }
+    return session_id;
+}
+
+//FEE_INFO
 base::json::Value serializeCommandName(Command::Id command)
 {
     LOG_TRACE << "Serializing CommandName";
     switch (Command::Name(static_cast<std::uint64_t>(command) & static_cast<std::uint64_t>(Command::NameMask))) {
+        case Command::Name::FEE_INFO:
+            return base::json::Value::string("fee_info");
         case Command::Name::ACCOUNT_INFO:
             return base::json::Value::string("account_info");
         case Command::Name::FIND_BLOCK:
@@ -50,6 +105,8 @@ base::json::Value serializeCommandName(Command::Id command)
             return base::json::Value::string("push_transaction");
         case Command::Name::LAST_BLOCK_INFO:
             return base::json::Value::string("last_block_info");
+        case Command::Name::LOGIN:
+            return base::json::Value::string("login");
         default:
             RAISE_ERROR(base::LogicError, "used unexpected command name");
     }
@@ -59,6 +116,9 @@ base::json::Value serializeCommandName(Command::Id command)
 websocket::Command::Name deserializeCommandName(const std::string& command_name_str)
 {
     LOG_TRACE << "Deserializing CommandName";
+    if (command_name_str == "fee_info") {
+        return websocket::Command::Name::FEE_INFO;
+    }
     if (command_name_str == "account_info") {
         return websocket::Command::Name::ACCOUNT_INFO;
     }
@@ -76,6 +136,9 @@ websocket::Command::Name deserializeCommandName(const std::string& command_name_
     }
     if (command_name_str == "last_block_info") {
         return websocket::Command::Name::LAST_BLOCK_INFO;
+    }
+    if (command_name_str == "login") {
+        return websocket::Command::Name::LOGIN;
     }
     RAISE_ERROR(base::InvalidArgument, std::string("not any command name found by ") + command_name_str);
 }
@@ -195,6 +258,25 @@ lk::TransactionStatus::ActionType deserializeTransactionStatusActionType(std::ui
             RAISE_ERROR(base::InvalidArgument,
                         std::string("Error in deserialization of ActionType: ") + std::to_string(action_type));
     }
+}
+
+
+base::json::Value serializeDepth(const lk::BlockDepth& depth)
+{
+    LOG_TRACE << "Serializing Depth";
+    return base::json::Value::number(depth);
+}
+
+
+lk::BlockDepth deserializeDepth(const std::string& depth_str)
+{
+    LOG_TRACE << "Deserializing Depth";
+    char* end = nullptr;
+    auto depth = static_cast<uint64_t>(std::strtoll(depth_str.c_str(), &end, 10));
+    if (end == nullptr) {
+        RAISE_ERROR(base::InvalidArgument, std::string("Error in deserialization of Fee: ") + depth_str);
+    }
+    return depth;
 }
 
 
@@ -490,6 +572,19 @@ base::json::Value serializeBlock(const lk::ImmutableBlock& block)
     result["timestamp"] = base::json::Value::number(block.getTimestamp().getSeconds());
     result["transactions"] = base::json::Value::array(txs_values);
     return result;
+}
+
+
+base::json::Value serializeMidFee(const lk::ImmutableBlock& block)
+{
+    LOG_TRACE << "Serializing MiddleFee";
+
+    base::Uint256 all_fee{0};
+    for (auto& tx : block.getTransactions()) {
+        all_fee += tx.getFee();
+    }
+
+    return base::json::Value::string((all_fee / block.getTransactions().size()).str());
 }
 
 

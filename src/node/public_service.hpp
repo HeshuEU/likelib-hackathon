@@ -49,7 +49,7 @@ class FindBlockTask final : public Task
 
   private:
     std::optional<base::Sha256> _block_hash;
-    std::optional<std::uint64_t> _block_number;
+    std::optional<std::uint64_t> _block_depth;
 };
 
 
@@ -150,6 +150,21 @@ class AccountInfoCallTask final : public Task
 };
 
 
+class FeeInfoCallTask final : public Task
+{
+  public:
+    FeeInfoCallTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
+
+  protected:
+    void prepareArgs() override;
+    void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
+
+  private:
+    std::optional<lk::Address> _address;
+};
+
+
 class AccountInfoSubscribeTask final : public Task
 {
   public:
@@ -196,6 +211,21 @@ class UnsubscribeTransactionStatusUpdateTask final : public Task
     std::optional<base::Sha256> _tx_hash;
 };
 
+
+class LoginTask final : public Task
+{
+  public:
+    LoginTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args);
+
+  protected:
+    void prepareArgs() override;
+    void execute(PublicService& service) override;
+    const std::string& name() const noexcept override;
+
+  private:
+    std::string _login;
+};
+
 }
 
 class PublicService
@@ -207,10 +237,12 @@ class PublicService
     friend tasks::NodeInfoSubscribeTask;
     friend tasks::NodeInfoUnsubscribeTask;
     friend tasks::AccountInfoCallTask;
+    friend tasks::FeeInfoCallTask;
     friend tasks::PushTransactionTask;
     friend tasks::AccountInfoSubscribeTask;
     friend tasks::AccountInfoUnsubscribeTask;
     friend tasks::UnsubscribeTransactionStatusUpdateTask;
+    friend tasks::LoginTask;
 
   public:
     PublicService(base::json::Value config, lk::Core& core);
@@ -227,7 +259,6 @@ class PublicService
 
   private:
     lk::Core& _core;
-    websocket::WebSocketAcceptor _acceptor;
 
     websocket::SessionId _last_given_session_id{ 0 };
     std::unordered_map<websocket::SessionId, std::unique_ptr<websocket::WebSocketSession>> _running_sessions;
@@ -246,6 +277,11 @@ class PublicService
     std::unordered_map<websocket::SessionId, std::unordered_map<lk::Address, std::size_t>>
       _account_update_sessions_registry;
 
+    std::string _login;
+    std::vector<websocket::SessionId> _admins_sessions;
+
+    websocket::WebSocketAcceptor _acceptor;
+
     void createSession(boost::asio::ip::tcp::socket&& socket);
     websocket::SessionId createId();
 
@@ -261,4 +297,6 @@ class PublicService
     void on_added_new_block(const lk::ImmutableBlock& block);
     void on_updated_transaction_status(base::Sha256 tx_hash);
     void on_update_account(lk::Address account_address);
+
+    void addAdminSession(const websocket::SessionId& id);
 };

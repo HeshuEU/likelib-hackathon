@@ -14,6 +14,18 @@ namespace websocket
 
 boost::asio::ip::tcp::endpoint createEndpoint(const std::string& listening_address);
 
+base::json::Value serializeLogin(const std::string& login);
+
+std::string deserializeLogin(const std::string& message);
+
+base::json::Value serializeMessage(const std::string& message);
+
+std::string deserializeMessage(const std::string& message);
+
+base::json::Value serializeSessionId(const websocket::SessionId& session_id);
+
+websocket::SessionId deserializeSessionId(const std::string& message);
+
 base::json::Value serializeCommandName(websocket::Command::Id name);
 
 websocket::Command::Name deserializeCommandName(const std::string& message);
@@ -33,6 +45,10 @@ lk::TransactionStatus::StatusCode deserializeTransactionStatusStatusCode(std::ui
 base::json::Value serializeTransactionStatusActionType(lk::TransactionStatus::ActionType action_type);
 
 lk::TransactionStatus::ActionType deserializeTransactionStatusActionType(std::uint32_t type);
+
+base::json::Value serializeDepth(const lk::BlockDepth& depth);
+
+lk::BlockDepth deserializeDepth(const std::string& type);
 
 base::json::Value serializeBalance(const lk::Balance& balance);
 
@@ -73,6 +89,8 @@ lk::Transaction deserializeTransaction(base::json::Value input);
 base::json::Value serializeBlock(const lk::ImmutableBlock& block);
 
 lk::ImmutableBlock deserializeBlock(base::json::Value input);
+
+base::json::Value serializeMidFee(const lk::ImmutableBlock& block);
 
 base::json::Value serializeTransactionStatus(const lk::TransactionStatus& status);
 

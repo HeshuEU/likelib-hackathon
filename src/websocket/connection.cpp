@@ -48,6 +48,7 @@ void WebSocketConnection::onAccept(boost::beast::error_code ec)
         LOG_DEBUG << "websocket accept error: " << ec.message();
         return;
     }
+    
     LOG_TRACE << "websocket connection accepted " << _connected_endpoint;
     doRead();
 }

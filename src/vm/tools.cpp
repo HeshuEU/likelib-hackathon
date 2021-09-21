@@ -26,7 +26,7 @@ struct PyConnector
     PyConnector& operator=(const PyConnector& other) = delete;
     PyConnector& operator=(PyConnector&& other) = delete;
 
-    static const PyConnector& getInstance()
+    [[maybe_unused]] static const PyConnector& getInstance()
     {
         static auto instance = std::make_unique<PyConnector>();
         return *instance;
@@ -457,7 +457,7 @@ std::optional<std::string> decodeOutput(const std::filesystem::path& path_to_cod
 std::string encodeMessage(const std::string& contract_path, const std::string& data)
 {
     constexpr int ID_METHOD_SIZE = 8;
-    const auto& py_connector = PyConnector::getInstance();
+    PyConnector::getInstance();
 
     std::string encode_result;
     auto [bytecode, metadata] = loadContractData(contract_path);
@@ -494,7 +494,7 @@ std::string encodeMessage(const std::string& contract_path, const std::string& d
 
 std::string decodeMessage(const std::string& contract_path, const std::string& data)
 {
-    const auto& py_connector = PyConnector::getInstance();
+    PyConnector::getInstance();
 
     std::string decode_result;
     auto [bytecode, metadata] = loadContractData(contract_path);

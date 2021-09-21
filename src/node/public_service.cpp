@@ -53,15 +53,15 @@ void FindBlockTask::prepareArgs()
         _block_hash = websocket::deserializeHash(_args["hash"].as_string());
         return;
     }
-    if (_args.has_number_field("number")) {
-        auto number_json_value = _args["number"].as_number();
+    if (_args.has_number_field("depth")) {
+        auto number_json_value = _args["depth"].as_number();
         if (!number_json_value.is_uint64()) {
-            RAISE_ERROR(base::InvalidArgument, "args json \"number\" member is not a uint type");
+            RAISE_ERROR(base::InvalidArgument, "args json \"depth\" member is not a uint type");
         }
-        _block_number = number_json_value.to_uint64();
+        _block_depth = number_json_value.to_uint64();
         return;
     }
-    RAISE_ERROR(base::InvalidArgument, "args json is not contain \"hash\" or \"number\" member");
+    RAISE_ERROR(base::InvalidArgument, "args json is not contain \"hash\" or \"depth\" member");
 }
 
 
@@ -74,8 +74,8 @@ void FindBlockTask::execute(PublicService& service)
             service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
         }
     }
-    else {
-        auto block_hash = service._core.findBlockHash(_block_number.value());
+    else if (_block_depth) {
+        auto block_hash = service._core.findBlockHash(_block_depth.value());
         if (block_hash) {
             auto block = service._core.findBlock(block_hash.value());
             auto answer = websocket::serializeBlock(block.value());
@@ -355,6 +355,37 @@ const std::string& AccountInfoCallTask::name() const noexcept
 }
 
 
+FeeInfoCallTask::FeeInfoCallTask(websocket::SessionId session_id,
+                                         websocket::QueryId query_id,
+                                         base::json::Value&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+void FeeInfoCallTask::prepareArgs()
+{
+}
+
+
+void FeeInfoCallTask::execute(PublicService& service)
+{
+    auto last_block_hash = service._core.getTopBlockHash();
+    auto block = service._core.findBlock(last_block_hash);
+    //TODO: if(block) false
+    //answer["info"] = websocket::serializeMidFee(block.value());
+    auto answer = base::json::Value();
+    answer["fee"] = websocket::serializeMidFee(block.value());
+    service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
+}
+
+
+const std::string& FeeInfoCallTask::name() const noexcept
+{
+    static const std::string name("FeeInfoCallTask");
+    return name;
+}
+
+
 AccountInfoSubscribeTask::AccountInfoSubscribeTask(websocket::SessionId session_id,
                                                    websocket::QueryId query_id,
                                                    base::json::Value&& args)
@@ -495,12 +526,49 @@ const std::string& UnsubscribeTransactionStatusUpdateTask::name() const noexcept
     return name;
 }
 
+
+LoginTask::LoginTask(websocket::SessionId session_id, websocket::QueryId query_id, base::json::Value&& args)
+  : Task{ session_id, query_id, std::move(args) }
+{}
+
+
+void LoginTask::prepareArgs()
+{
+    if (!_args.has_string_field("login")) {
+        RAISE_ERROR(base::InvalidArgument, "args json is not contain a string \"login\" member");
+    }
+    _login = websocket::deserializeLogin(_args["login"].as_string());
+}
+
+
+void LoginTask::execute(PublicService& service)
+{
+    if (_login == service._login) {
+        service.addAdminSession(_session_id);
+        auto answer = websocket::serializeSessionId(_session_id);
+        service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
+    }
+    else {
+        auto answer = websocket::serializeMessage("Incorrect login");
+        service.sendCorrectResponse(_session_id, _query_id, std::move(answer));
+    }
+}
+
+
+const std::string& LoginTask::name() const noexcept
+{
+    static const std::string name("LoginTask");
+    return name;
+}
+
 }
 
 
 PublicService::PublicService(base::json::Value config, lk::Core& core)
   : _core{ core }
+  , _login{ config["login"].as_string() }
   , _acceptor{ std::move(config), std::bind(&PublicService::createSession, this, std::placeholders::_1) }
+
 {
     _core.subscribeToBlockAddition(std::bind(&PublicService::on_added_new_block, this, std::placeholders::_1));
     _core.subscribeToAnyTransactionStatusUpdate(
@@ -565,6 +633,9 @@ void PublicService::on_session_request(websocket::SessionId session_id,
         case websocket::Command::CALL_ACCOUNT_INFO:
             _input_tasks.push(std::make_unique<tasks::AccountInfoCallTask>(session_id, query_id, std::move(args)));
             break;
+        case websocket::Command::CALL_FEE_INFO:
+            _input_tasks.push(std::make_unique<tasks::FeeInfoCallTask>(session_id, query_id, std::move(args)));
+            break;
         case websocket::Command::CALL_FIND_TRANSACTION_STATUS:
             _input_tasks.push(
               std::make_unique<tasks::FindTransactionStatusTask>(session_id, query_id, std::move(args)));
@@ -593,6 +664,9 @@ void PublicService::on_session_request(websocket::SessionId session_id,
             break;
         case websocket::Command::UNSUBSCRIBE_ACCOUNT_INFO:
             break;
+        case websocket::Command::LOGIN:
+            _input_tasks.push(std::make_unique<tasks::LoginTask>(session_id, query_id, std::move(args)));
+            break;
         default:
             // TODO fail
             break;
@@ -602,6 +676,10 @@ void PublicService::on_session_request(websocket::SessionId session_id,
 
 void PublicService::on_session_close(websocket::SessionId session_id)
 {
+    auto closed_admin_session = std::find(_admins_sessions.begin(), _admins_sessions.end(), session_id);
+    if (closed_admin_session != _admins_sessions.end()) {
+        _admins_sessions.erase(closed_admin_session);
+    }
     // TODO
 }
 
@@ -660,4 +738,11 @@ void PublicService::on_updated_transaction_status(base::Sha256 tx_hash)
 void PublicService::on_update_account(lk::Address account_address)
 {
     _event_account_update.notify(account_address);
+}
+
+void PublicService::addAdminSession(const websocket::SessionId& id)
+{
+    if (std::find(_admins_sessions.begin(), _admins_sessions.end(), id) == _admins_sessions.end()) {
+        _admins_sessions.push_back(id);
+    }
 }

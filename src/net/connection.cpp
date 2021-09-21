@@ -190,7 +190,6 @@ void Connection::sendPendingMessages()
                                 LOG_DEBUG << "Sent " << bytes_sent << " bytes to "
                                           << connection->_connect_endpoint->toString();
                             }
-
                             if (callback) {
                                 callback();
                             }
