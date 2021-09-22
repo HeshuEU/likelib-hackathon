@@ -104,38 +104,46 @@ void WebSocketSession::_onReceivedFromConnection(base::json::Value&& query)
 {
     if (!query.has_number_field("id")) {
         return sendErrorMessage(0, "Request json is not contain number \"id\" member");
+        LOG_DEBUG << "Request json is not contain number \"id\" member\n" << query.serialize();
     }
     auto id_json_value = query["id"].as_number();
     if (!id_json_value.is_uint64()) {
         return sendErrorMessage(0, "Request \"id\" member is not an uint type");
+        LOG_DEBUG << "Request \"id\" member is not an uint type\n" << query.serialize();
     }
     QueryId query_id{ id_json_value.to_uint64() };
 
     if (!query.has_number_field("version")) {
         return sendErrorMessage(query_id, "Request json is not contain number \"version\" member");
+        LOG_DEBUG << "Request json is not contain number \"version\" member\n" << query.serialize();
     }
     auto version_json_value = query["version"].as_number();
     if (!version_json_value.is_uint64()) {
         return sendErrorMessage(query_id, "Request \"version\" member is not an uint type");
+        LOG_DEBUG << "Request \"version\" member is not an uint type\n" << query.serialize();
     }
     if (version_json_value.to_uint64() != base::config::PUBLIC_SERVICE_API_VERSION) {
         return sendErrorMessage(query_id,
                                 std::string("Request API version mismatch. Need API version = ") +
                                   std::to_string(base::config::PUBLIC_SERVICE_API_VERSION));
+        LOG_DEBUG << "Request API version mismatch\n" << query.serialize();
     }
 
     if (!query.has_string_field("type")) {
         return sendErrorMessage(query_id, "Request json is not contain string \"type\" member");
+        LOG_DEBUG << "Request json is not contain string \"type\" member\n" << query.serialize();
     }
     auto command_type = deserializeCommandType(query["type"].as_string());
 
     if (!query.has_string_field("name")) {
         return sendErrorMessage(query_id, "Request json is not contain string \"name\" member");
+        LOG_DEBUG << "Request json is not contain string \"name\" member\n" << query.serialize();
     }
     auto command_name = deserializeCommandName(query["name"].as_string());
 
     if (!query.has_object_field("args")) {
         return sendErrorMessage(query_id, "Request json is not contain object \"args\" member");
+        LOG_DEBUG << "Request json is not contain object \"args\" member\n" << query.serialize();
     }
     auto args_json_value = query["args"];
 
