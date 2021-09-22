@@ -108,7 +108,7 @@ void Core::addPendingTransaction(const lk::Transaction& tx)
     const auto& pending_from_account_balance = current_pending_balance.find(tx.getFrom());
     if ((pending_from_account_balance != current_pending_balance.end()) && (_state_manager.hasAccount(tx.getFrom()))) {
         auto current_account_balance = _state_manager.getAccountInfo(tx.getFrom()).balance;
-        if (pending_from_account_balance->second + transaction_cost < current_account_balance) {
+        if (pending_from_account_balance->second + transaction_cost > current_account_balance) {
             TransactionStatus status{
                 TransactionStatus::StatusCode::NotEnoughBalance, TransactionStatus::ActionType::None, 0, ""
             };
