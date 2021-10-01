@@ -145,15 +145,22 @@ std::optional<lk::Balance> takeAmount(Client& client, std::string amount_str)
     }
     try {
         if (is_token) {
-            amount_str.erase(amount_str.find('.'), 1);
             amount_str.erase(amount_str.size() - std::strlen(base::config::BC_TOKEN_NAME));
+            std::size_t lkl_size = std::to_string(base::config::BC_TOKEN_VALUE).size() - 1;
+            std::size_t numbers_size_after_dot = amount_str.size() - amount_str.find('.') - 1;
+            for (numbers_size_after_dot; numbers_size_after_dot < lkl_size; numbers_size_after_dot++) {
+                amount_str += '0';
+            }
+            amount_str.erase(amount_str.find('.'), 1);
+
             while (amount_str[0] == '0') {
                 amount_str.erase(0, 1);
             }
             amount = lk::Balance{ amount_str };
         }
         else {
-            amount = lk::Balance{ amount_str };
+            client.output("Wrong amount was entered");
+            return {};
         }
     }
     catch (const boost::wrapexcept<std::runtime_error>& er) {
