@@ -4,6 +4,47 @@
 
 #include <boost/spirit/include/qi.hpp>
 
+namespace
+{
+std::string toLkl(const lk::Balance& tokens)
+{
+    lk::Balance token_value{ base::config::BC_TOKEN_VALUE };
+    std::string tokens_str;
+    if (tokens >= token_value) {
+        std::size_t count_left_numbers = tokens.str().size() - token_value.str().size() + 1;
+        tokens_str = tokens.str().substr(0, count_left_numbers) + '.' + tokens.str().substr(count_left_numbers);
+    }
+    else {
+        std::size_t count_zero = token_value.str().size() - tokens.str().size() - 1;
+        tokens_str = "0.";
+        for (std::size_t i = 0; i < count_zero; i++) {
+            tokens_str += '0';
+        }
+        tokens_str += tokens.str();
+    }
+    tokens_str += base::config::BC_TOKEN_NAME;
+    return tokens_str;
+}
+
+
+lk::Balance fromLkl(const std::string& lkl_tokens)
+{ // TODO
+    if (lkl_tokens.find('.') != std::string::npos &&
+        lkl_tokens.substr(lkl_tokens.size() - strlen(base::config::BC_TOKEN_NAME)) == base::config::BC_TOKEN_NAME) {
+        std::string tokens{ lkl_tokens };
+        tokens.erase(tokens.find('.'), 1);
+        tokens.erase(tokens.size() - strlen(base::config::BC_TOKEN_NAME));
+        while(tokens[0] == '0'){
+            tokens.erase(0, 1);
+        }
+        return lk::Balance{ tokens };
+    }
+    return lk::Balance{ lkl_tokens };
+}
+
+}
+
+
 namespace websocket
 {
 
@@ -86,7 +127,7 @@ websocket::SessionId deserializeSessionId(const std::string& message)
     return session_id;
 }
 
-//FEE_INFO
+// FEE_INFO
 base::json::Value serializeCommandName(Command::Id command)
 {
     LOG_TRACE << "Serializing CommandName";
@@ -283,14 +324,15 @@ lk::BlockDepth deserializeDepth(const std::string& depth_str)
 base::json::Value serializeBalance(const lk::Balance& balance)
 {
     LOG_TRACE << "Serializing Balance";
-    return base::json::Value::string(balance.str());
+    auto lkl_balance{ toLkl(balance) };
+    return base::json::Value::string(lkl_balance);
 }
 
 
 lk::Balance deserializeBalance(const std::string& balance_str)
 {
     LOG_TRACE << "Deserializing Balance";
-    return lk::Balance{ balance_str };
+    return lk::Balance{ fromLkl(balance_str) };
 }
 
 
@@ -579,7 +621,7 @@ base::json::Value serializeMidFee(const lk::ImmutableBlock& block)
 {
     LOG_TRACE << "Serializing MiddleFee";
 
-    base::Uint256 all_fee{0};
+    base::Uint256 all_fee{ 0 };
     for (auto& tx : block.getTransactions()) {
         all_fee += tx.getFee();
     }

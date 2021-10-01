@@ -133,11 +133,28 @@ std::optional<lk::Fee> takeFee(Client& client, const std::string fee)
 }
 
 
-std::optional<lk::Balance> takeAmount(Client& client, const std::string amount_str)
+std::optional<lk::Balance> takeAmount(Client& client, std::string amount_str)
 {
     lk::Balance amount;
+    bool is_token{ false };
+    if (amount_str.size() >= std::strlen(base::config::BC_TOKEN_NAME) && (amount_str.find('.') != std::string::npos) &&
+        amount_str.substr(amount_str.size() - std::strlen(base::config::BC_TOKEN_NAME)) ==
+          base::config::BC_TOKEN_NAME) {
+        is_token = true;
+        // amount_str.erase(amount_str.size() - std::strlen(base::config::BC_TOKEN_NAME));
+    }
     try {
-        amount = lk::Balance{ amount_str };
+        if (is_token) {
+            amount_str.erase(amount_str.find('.'), 1);
+            amount_str.erase(amount_str.size() - std::strlen(base::config::BC_TOKEN_NAME));
+            while (amount_str[0] == '0') {
+                amount_str.erase(0, 1);
+            }
+            amount = lk::Balance{ amount_str };
+        }
+        else {
+            amount = lk::Balance{ amount_str };
+        }
     }
     catch (const boost::wrapexcept<std::runtime_error>& er) {
         client.output("Wrong amount was entered");
@@ -1628,7 +1645,7 @@ void FindBlockCommand::execute()
     if (_hash_block) {
         request_args["hash"] = websocket::serializeHash(_hash_block.value());
     }
-    else if(_depth){
+    else if (_depth) {
         request_args["depth"] = websocket::serializeDepth(_depth.value());
     }
     _client._web_socket_client.send(websocket::Command::CALL_FIND_BLOCK, std::move(request_args));
