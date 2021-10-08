@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(likelib VERSION 0.1)
+project(likelib VERSION 0.2)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
