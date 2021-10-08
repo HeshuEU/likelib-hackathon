@@ -22,17 +22,14 @@ std::string toLkl(const lk::Balance& tokens)
         }
         tokens_str += tokens.str();
     }
-    tokens_str += base::config::BC_TOKEN_NAME;
     return tokens_str;
 }
 
 
 lk::Balance fromLkl(const std::string& lkl_tokens)
 { // TODO
-    if (lkl_tokens.find('.') != std::string::npos &&
-        lkl_tokens.substr(lkl_tokens.size() - strlen(base::config::BC_TOKEN_NAME)) == base::config::BC_TOKEN_NAME) {
+    if (lkl_tokens.find('.') != std::string::npos) {
         std::string tokens{ lkl_tokens };
-        tokens.erase(tokens.size() - strlen(base::config::BC_TOKEN_NAME));
         std::size_t lkl_size = std::to_string(base::config::BC_TOKEN_VALUE).size() - 1;
         std::size_t numbers_size_after_dot = tokens.size() - tokens.find('.') - 1;
         for (numbers_size_after_dot; numbers_size_after_dot < lkl_size; numbers_size_after_dot++) {

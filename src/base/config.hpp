@@ -88,7 +88,6 @@ constexpr std::size_t BC_DIFFICULTY_RECALCULATION_RATE = 2; // how many blocks m
 constexpr std::size_t BC_MAXIMAL_CHANGE_MULTIPLIER = 1'000'000'000; // times complexity could change at once
 constexpr std::size_t BC_EMISSION_VALUE = 1000;
 constexpr std::size_t BC_TOKEN_VALUE = 1'000'000'000;
-constexpr const char* BC_TOKEN_NAME = "lkl";
 //------------------------
 
 // websocket

@@ -137,15 +137,12 @@ std::optional<lk::Balance> takeAmount(Client& client, std::string amount_str)
 {
     lk::Balance amount;
     bool is_token{ false };
-    if (amount_str.size() >= std::strlen(base::config::BC_TOKEN_NAME) && (amount_str.find('.') != std::string::npos) &&
-        amount_str.substr(amount_str.size() - std::strlen(base::config::BC_TOKEN_NAME)) ==
-          base::config::BC_TOKEN_NAME) {
+    if (amount_str.find('.') != std::string::npos) {
         is_token = true;
         // amount_str.erase(amount_str.size() - std::strlen(base::config::BC_TOKEN_NAME));
     }
     try {
         if (is_token) {
-            amount_str.erase(amount_str.size() - std::strlen(base::config::BC_TOKEN_NAME));
             std::size_t lkl_size = std::to_string(base::config::BC_TOKEN_VALUE).size() - 1;
             std::size_t numbers_size_after_dot = amount_str.size() - amount_str.find('.') - 1;
             for (numbers_size_after_dot; numbers_size_after_dot < lkl_size; numbers_size_after_dot++) {
