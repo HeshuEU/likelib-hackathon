@@ -44,7 +44,7 @@ const ImmutableBlock& Core::getGenesisBlock()
         TransactionsSet txset;
         lk::Address from{ lk::Address::null() };
         lk::Address to = initial_emission_address;
-        Balance emission_amount = Balance{ 1 } << 32;
+        Balance emission_amount = Balance{ 1 } << 64;
         std::uint64_t fee{ 0 };
         txset.add({ from, to, emission_amount, fee, timestamp, base::Bytes{} });
 
