@@ -21,12 +21,12 @@ By default it is config.json file of the following format:
         "net": {
             "listen_addr": "0.0.0.0:20203",
             "public_port": 20203,
-            "peers_db": "likelib/peers"
-        },
-        "nodes": [
+            "peers_db": "likelib/peers",
+            "nodes": [
             "127.0.0.1:20204",
             "127.0.0.1:20205"
-        ],
+        ]
+        },
         "database": {
             "path": "likelib/database",
             "clean": false
